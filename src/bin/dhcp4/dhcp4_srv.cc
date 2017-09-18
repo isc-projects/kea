@@ -132,20 +132,13 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Pointer to client's query.
     context_->query_ = query;
 
-    // Set client identifier if the match-client-id flag is enabled (default).
-    // If the subnet wasn't found it doesn't matter because we will not be
-    // able to allocate a lease anyway so this context will not be used.
+    // If subnet found, retrieve client identifier which will be needed
+    // for allocations and search for reservations associated with a
+    // subnet/shared network.
     if (subnet) {
-        if (subnet->getMatchClientId()) {
-            OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-            if (opt_clientid) {
-                context_->clientid_.reset(new ClientId(opt_clientid->getData()));
-            }
-        } else {
-            /// @todo When merging with #3806 use different logger.
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENTID_IGNORED_FOR_LEASES)
-                .arg(query->getLabel())
-                .arg(subnet->getID());
+        OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+        if (opt_clientid) {
+            context_->clientid_.reset(new ClientId(opt_clientid->getData()));
         }
 
         // Find static reservations if not disabled for our subnet.
@@ -1846,6 +1839,16 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         LOG_INFO(lease4_logger, fake_allocation ? DHCP4_LEASE_ADVERT : DHCP4_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText());
+
+        // We're logging this here, because this is the place where we know
+        // which subnet has been actually used for allocation. If the
+        // client identifier matching is disabled, we want to make sure that
+        // the user is notified.
+        if (!ctx->subnet_->getMatchClientId()) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENTID_IGNORED_FOR_LEASES)
+                .arg(ctx->query_->getLabel())
+                .arg(ctx->subnet_->getID());
+        }
 
         resp->setYiaddr(lease->addr_);
 

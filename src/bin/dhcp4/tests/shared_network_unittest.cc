@@ -596,6 +596,70 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
+    "}",
+
+    // Configuration #11.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"match-client-id\": false,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"match-client-id\": true,"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"match-client-id\": false"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"192.0.2.64/26\","
+    "                    \"id\": 100,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.65 - 192.0.2.127\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+    // Configuration #12.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"match-client-id\": false,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"match-client-id\": false,"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"match-client-id\": false"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"192.0.2.64/26\","
+    "                    \"id\": 100,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.65 - 192.0.2.127\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
     "}"
 };
 
@@ -1194,6 +1258,43 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByRelay) {
     // The client should be assigned an address from the 10.0.0.X
     // address range.
     EXPECT_EQ("10.0.0", resp2->getYiaddr().toText().substr(0, 6));
+}
+
+// Client id matching gets disabled on the shared network level.
+TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
+    // Create client using client identifier besides MAC address.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.includeClientId("01:02:03:04");
+    client.setIfaceName("eth1");
+
+    // Create server configuration with match-client-id value initially
+    // set to true. The client should be allocated a lease and the
+    // client identifier should be included in this lease.
+    configure(NETWORKS_CONFIG[11], *client.getServer());
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    Pkt4Ptr resp1 = client.getContext().response_;
+    ASSERT_TRUE(resp1);
+    ASSERT_EQ(DHCPACK, resp1->getType());
+
+    // Reconfigure the server and turn off client identifier matching
+    // on the shared network level. The subnet from which the client
+    // is allocated an address should derive the match-client-id value
+    // and ignore the fact that the client identifier is not matching.
+    configure(NETWORKS_CONFIG[12], *client.getServer());
+
+    client.includeClientId("01:01:01:01");
+    client.setState(Dhcp4Client::RENEWING);
+
+    // Try to renew the lease with modified MAC address.
+    ASSERT_NO_THROW(client.doRequest());
+    Pkt4Ptr resp2 = client.getContext().response_;
+    ASSERT_TRUE(resp2);
+    ASSERT_EQ(DHCPACK, resp2->getType());
+
+    // The lease should get rewnewed.
+    EXPECT_EQ(resp2->getYiaddr().toText(), resp1->getYiaddr().toText());
 }
 
 } // end of anonymous namespace
