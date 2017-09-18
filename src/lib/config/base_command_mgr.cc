@@ -14,11 +14,30 @@
 using namespace isc::data;
 using namespace isc::hooks;
 
+namespace {
+
+/// Structure that holds registered hook indexes
+struct BaseCommandMgrHooks {
+    int hook_index_command_processed_; ///< index for "command_processe" hook point
+
+    /// Constructor that registers hook points for AllocationEngine
+    BaseCommandMgrHooks() {
+        hook_index_command_processed_ = HooksManager::registerHook("command_processed");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+BaseCommandMgrHooks Hooks;
+
+}; // anonymous namespace
+
 namespace isc {
 namespace config {
 
 BaseCommandMgr::BaseCommandMgr() {
-    hook_index_command_processed_ = HooksManager::registerHook("command_processed");
     registerCommand("list-commands", boost::bind(&BaseCommandMgr::listCommandsHandler,
                                                  this, _1, _2));
 }
@@ -105,7 +124,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
         ConstElementPtr response = handleCommand(name, arg, cmd);
 
         // If there any callouts for command-processed hook point call them
-        if (HooksManager::calloutsPresent(hook_index_command_processed_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_command_processed_)) {
             // Commands are not associated with anything so there's no pre-existing
             // callout.
             CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
@@ -116,7 +135,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
             callout_handle->setArgument("response", response);
 
             // Call callouts
-            HooksManager::callCallouts(hook_index_command_processed_,
+            HooksManager::callCallouts(Hooks.hook_index_command_processed_,
                                         *callout_handle);
 
             // Refresh the response from the callout context in case it was modified.
