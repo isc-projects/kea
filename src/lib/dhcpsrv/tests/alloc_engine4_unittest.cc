@@ -503,16 +503,90 @@ public:
         network_.reset(new SharedNetwork4("test_network"));
         network_->add(subnet1_);
         network_->add(subnet2_);
+
+        std::vector<uint8_t> hwaddr_vec = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+        hwaddr2_.reset(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     }
 
-    /// Covenience pointers to configuration elements
+    /// @brief Inserts a new lease for specified address
+    ///
+    /// Creates a new lease for specified address and subnet-id and inserts
+    /// it into database. This is not particularly fancy method, it is used
+    /// just to mark existing addresses as used. It uses hwaddr2_ to allocate
+    /// the lease.
+    ///
+    /// @param addr text representation of the address
+    /// @param subnet_id ID of the subnet
+    /// @param return pointer to the lease
+    Lease4Ptr
+    insertLease(std::string addr, SubnetID subnet_id) {
+        Lease4Ptr lease(new Lease4(IOAddress(addr), hwaddr2_, ClientIdPtr(),
+                                   501, 502, 503, time(NULL), subnet_id));
+        lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            ADD_FAILURE() << "Attempt to add a lease for IP " << addr
+                          << " in subnet " << subnet_id << " failed";
+        }
+
+        return (lease);
+    }
+
+    /// Covenience pointers to configuration elements. These are initialized
+    /// in the constructor and are used throughout the tests.
     AllocEngine engine_;
     Subnet4Ptr subnet1_;
     Subnet4Ptr subnet2_;
     Pool4Ptr pool1_;
     Pool4Ptr pool2_;
     SharedNetwork4Ptr network_;
+
+    HWAddrPtr hwaddr2_; // Note there's hwaddr_ already defined in base class.
 };
+
+// This test verifies that the server can offer an address from a
+// subnet and the introduction of shared network doesn't break anything here.
+TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkSimple) {
+
+    // Create context which will be used to try to allocate leases from the
+    // shared network. The context points to subnet1, which address space
+    // is exhausted. We expect the allocation engine to find another subnet
+    // within the same shared network and offer an address from there.
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+
+    // The allocation engine should have assigned an address from the first
+    // subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.17", lease->addr_.toText());
+
+    // Make sure the lease is not in the the lease mgr (this is only
+    // discover).
+    ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+}
+
+// This test verifies that the server will pick a second subnet out of two
+// shared subnets if there is a hint for the second subnet.
+TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkHint) {
+
+    // Create context which will be used to try to allocate leases from the
+    // shared network. The context points to subnet1, which address space
+    // is exhausted. We expect the allocation engine to find another subnet
+    // within the same shared network and offer an address from there.
+
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress("10.1.2.25"),
+            false, false, "host.example.com.", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+
+    // The allocation engine should have assigned an address from the second
+    // subnet, because that's what the hint requested.
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
+}
 
 
 // This test verifies that the server can offer an address from a
@@ -521,12 +595,7 @@ public:
 TEST_F(SharedNetworkAlloc4Test, discoverSharedNetwork) {
     // Create a lease for a single address in the first address pool. The
     // pool is now exhausted.
-    std::vector<uint8_t> hwaddr_vec = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.17"), hwaddr, ClientIdPtr(),
-                               501, 502, 503, time(NULL), subnet1_->getID()));
-    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+    Lease4Ptr lease = insertLease("192.0.2.17", subnet1_->getID());
 
     // Create context which will be used to try to allocate leases from the
     // shared network. The context points to subnet1, which address space
@@ -558,7 +627,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetwork) {
     // to renew its lease regardless of a subnet it begins with. So, it has
     // an address assigned from subnet1, but we use subnet2 as a selected
     // subnet.
-    AllocEngine::ClientContext4 ctx2(subnet2_, ClientIdPtr(), hwaddr,
+    AllocEngine::ClientContext4 ctx2(subnet2_, ClientIdPtr(), hwaddr2_,
                                      IOAddress("0.0.0.0"), false, false,
                                      "host.example.com.", true);
     ctx2.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
@@ -658,19 +727,71 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
     EXPECT_EQ("10.2.3.23", lease->addr_.toText());
 }
 
+// This test verifies that the server can offer an address from a shared
+// subnet if there's at least 1 address left there, but will not offer
+// anything if both subnets are completely full.
+TEST_F(SharedNetworkAlloc4Test, runningOut) {
+
+    // Allocate everything in subnet1
+    insertLease("192.0.2.17", subnet1_->getID());
+
+    // Allocate everything, except one address in subnet2.
+    for (int i = 5; i < 100; i++) {
+        stringstream tmp;
+        tmp << "10.1.2." << i;
+        insertLease(tmp.str(), subnet2_->getID());
+    }
+
+    // Create context which will be used to try to allocate leases from the
+    // shared network. The context points to subnet1, which address space
+    // is exhausted. We expect the allocation engine to find another subnet
+    // within the same shared network and offer an address from there.
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+    EXPECT_TRUE(lease);
+
+    // Now allocate the last address. Now both subnets are exhausted.
+    insertLease("10.1.2.100", subnet2_->getID());
+
+    // Ok, we're out. We should not get anything now.
+    lease = engine_.allocateLease4(ctx);
+    EXPECT_FALSE(lease);
+}
+
+// This test verifies that the server can offer an address from a
+// subnet and the introduction of shared network doesn't break anything here.
+TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkSimple) {
+
+    // Create context which will be used to try to allocate leases from the
+    // shared network. The context points to subnet1, which address space
+    // is exhausted. We expect the allocation engine to find another subnet
+    // within the same shared network and offer an address from there.
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", false);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+
+    // The allocation engine should have assigned an address from the first
+    // subnet.
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.17", lease->addr_.toText());
+
+    // Make sure the lease is in the the lease mgr.
+    ASSERT_TRUE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+}
+
 // This test verifies that the server can allocate an address from a
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
-TEST_F(SharedNetworkAlloc4Test, reuqestSharedNetwork) {
+TEST_F(SharedNetworkAlloc4Test, requestSharedNetwork) {
 
     // Create a lease for a single address in the first address pool. The
     // pool is now exhausted.
-    std::vector<uint8_t> hwaddr_vec = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
-    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.17"), hwaddr, ClientIdPtr(),
-                               501, 502, 503, time(NULL), subnet1_->getID()));
-    lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+    Lease4Ptr lease = insertLease("192.0.2.17", subnet1_->getID());
 
     // Create context which will be used to try to allocate leases from the
     // shared network. The context points to subnet1, which address space
@@ -704,7 +825,7 @@ TEST_F(SharedNetworkAlloc4Test, reuqestSharedNetwork) {
     // to renew its lease regardless of a subnet it begins with. So, it has
     // an address assigned from subnet1, but we use subnet2 as a selected
     // subnet.
-    AllocEngine::ClientContext4 ctx2(subnet2_, ClientIdPtr(), hwaddr,
+    AllocEngine::ClientContext4 ctx2(subnet2_, ClientIdPtr(), hwaddr2_,
                                      IOAddress("0.0.0.0"), false, false,
                                      "host.example.com.", false);
     ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1234));
