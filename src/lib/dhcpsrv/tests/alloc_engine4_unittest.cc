@@ -49,7 +49,7 @@ TEST_F(AllocEngine4Test, constructor) {
 TEST_F(AllocEngine4Test, simpleAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     // Assigned addresses should be zero.
@@ -84,7 +84,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 TEST_F(AllocEngine4Test, fakeAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     // Assigned addresses should be zero.
@@ -120,7 +120,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
 TEST_F(AllocEngine4Test, allocWithValidHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -155,7 +155,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
@@ -202,7 +202,7 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
 TEST_F(AllocEngine4Test, allocBogusHint4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     // Client would like to get a 10.1.1.1 lease, which does not belong to any
@@ -234,7 +234,7 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
 TEST_F(AllocEngine4Test, allocateLease4Nulls) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     // Allocations without subnet are not allowed
@@ -284,7 +284,7 @@ TEST_F(AllocEngine4Test, allocateLease4Nulls) {
 TEST_F(AllocEngine4Test, simpleRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
@@ -393,7 +393,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
 TEST_F(AllocEngine4Test, smallPool4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.17");
@@ -438,7 +438,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
 TEST_F(AllocEngine4Test, outOfAddresses4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.17");
@@ -479,7 +479,7 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
 TEST_F(AllocEngine4Test, discoverSharedNetwork) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create two subnets, each with a single address pool. The first subnet
     // has only one address in its address pool to make it easier to simulate
@@ -507,7 +507,7 @@ TEST_F(AllocEngine4Test, discoverSharedNetwork) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Create context which will be used to try to allocate leases from the
-    // shared network. The context poits to subnet1, which address space
+    // shared network. The context points to subnet1, which address space
     // is exhausted. We expect the allocation engine to find another subnet
     // within the same shared network and offer an address from there.
     AllocEngine::ClientContext4
@@ -550,7 +550,7 @@ TEST_F(AllocEngine4Test, discoverSharedNetwork) {
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
 TEST_F(AllocEngine4Test, discoverSharedNetworkClassification) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create two subnets, each with a single address pool. The first subnet
     // has only one address in its address pool to make it easier to simulate
@@ -620,7 +620,7 @@ TEST_F(AllocEngine4Test, discoverSharedNetworkClassification) {
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong.
 TEST_F(AllocEngine4Test, discoverSharedNetworkReservations) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create two subnets, each with a single address pool. The first subnet
     // has only one address in its address pool to make it easier to simulate
@@ -674,7 +674,7 @@ TEST_F(AllocEngine4Test, discoverSharedNetworkReservations) {
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
 TEST_F(AllocEngine4Test, reuqestSharedNetwork) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create two subnets, each with a single address pool. The first subnet
     // has only one address in its address pool to make it easier to simulate
@@ -702,7 +702,7 @@ TEST_F(AllocEngine4Test, reuqestSharedNetwork) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Create context which will be used to try to allocate leases from the
-    // shared network. The context poits to subnet1, which address space
+    // shared network. The context points to subnet1, which address space
     // is exhausted. We expect the allocation engine to find another subnet
     // within the same shared network and offer an address from there.
     AllocEngine::ClientContext4
@@ -747,7 +747,7 @@ TEST_F(AllocEngine4Test, reuqestSharedNetwork) {
 // different subnet than orginally selected, when the address pool in
 // the first subnet is exhausted.
 TEST_F(AllocEngine4Test, requestSharedNetworkClassification) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create two subnets, each with a single address pool. The first subnet
     // has only one address in its address pool to make it easier to simulate
@@ -818,7 +818,7 @@ TEST_F(AllocEngine4Test, requestSharedNetworkClassification) {
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong (DHCPREQUEST case).
 TEST_F(AllocEngine4Test, requestSharedNetworkReservations) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create two subnets, each with a single address pool. The first subnet
     // has only one address in its address pool to make it easier to simulate
@@ -876,7 +876,7 @@ TEST_F(AllocEngine4Test, requestSharedNetworkReservations) {
 TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.15");
@@ -945,7 +945,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
 TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.105");
@@ -1007,7 +1007,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4) {
 
     AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                          100, false));
+                                          0, false));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1045,7 +1045,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
     // Now prepare for DISCOVER processing
     AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                          100, false));
+                                          0, false));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1080,7 +1080,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 
     AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                          100, false));
+                                          0, false));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1116,7 +1116,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
     AllocEnginePtr engine(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                          100, false));
+                                          0, false));
     ASSERT_TRUE(engine);
 
     // Now prepare a configuration with single address pool.
@@ -1158,7 +1158,7 @@ TEST_F(AllocEngine4Test, identifyClientLease) {
                                100, 30, 60, time(NULL), subnet_->getID()));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
                                     false, false, "", true);
@@ -1237,7 +1237,7 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     LeaseMgrFactory::instance().addLease(lease);
     LeaseMgrFactory::instance().addLease(lease2);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // First client requests the lease which belongs to the second client.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("192.0.2.102"),
@@ -1275,7 +1275,7 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Try to allocate a lease without specifying a hint. This is actually
     // incorrect behavior of the client to not send an address it wants to
@@ -1314,7 +1314,7 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Query allocation engine for the lease to be assigned to this
     // client without specifying the address to be assigned.
@@ -1355,7 +1355,7 @@ TEST_F(AllocEngine4Test, reservedAddressHint) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
                                     IOAddress("192.0.2.234"), false, false,
@@ -1404,7 +1404,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintFakeAllocation) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Query the allocation engine for the lease to be assigned to the client
     // and specify a hint being a different address than the reserved one.
@@ -1452,7 +1452,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Request allocation of the reserved address.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -1501,7 +1501,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Try to allocate the reserved lease to client B.
     AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
@@ -1558,7 +1558,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Query allocation engine for the lease to be allocated to the client B.
     // The allocation engine is not able to allocate the lease to the client
@@ -1618,7 +1618,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Try to allocate a lease and specify a different address than reserved
     // and different from the one that client is currently using.
@@ -1674,7 +1674,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Try to allocate a lease and use a completely different address
     // as a hint.
@@ -1739,7 +1739,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Try to allocate a lease with providing no hint.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -1791,7 +1791,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Query the allocation engine for the lease to be allocated for the
     // client.
@@ -1855,7 +1855,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
                                false, false, ""));
     LeaseMgrFactory::instance().addLease(lease);
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
 
     // Client B sends a DHCPREQUEST to allocate a reserved lease. The
@@ -1939,7 +1939,7 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Different client tries to allocate a lease. Note, that we're using
     // an iterative allocator which would pick the first address from the
@@ -1971,7 +1971,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Different client is requesting this address.
     AllocEngine::ClientContext4 ctx1(subnet_, ClientIdPtr(), hwaddr_,
@@ -2002,7 +2002,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
 // address when the pool is exhausted, and the only available
 // address is reserved for a different client.
 TEST_F(AllocEngine4Test, reservedAddressShortPool) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create short pool with only one address.
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.100"));
@@ -2044,7 +2044,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
 // dynamic pool if the client's reservation is made for a hostname but
 // not for an address.
 TEST_F(AllocEngine4Test, reservedHostname) {
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Create a reservation for a hostname. Address is set to 0 which
     // indicates that there is no reservation.
@@ -2079,7 +2079,7 @@ TEST_F(AllocEngine4Test, reservedHostname) {
 // the value of NULL in the host_ field of the client context.
 TEST_F(AllocEngine4Test, findReservation) {
     // Create the instance of the allocation engine.
-    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 100, false);
+    AllocEngine engine(AllocEngine::ALLOC_ITERATIVE, 0, false);
 
     // Context is required to call the AllocEngine::findReservation.
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
@@ -2154,7 +2154,7 @@ TEST_F(AllocEngine4Test, findReservation) {
 TEST_F(AllocEngine4Test, simpleAlloc4Stats) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+                                                 0, false)));
     ASSERT_TRUE(engine);
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),

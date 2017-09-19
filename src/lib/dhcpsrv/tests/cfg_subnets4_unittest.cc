@@ -223,6 +223,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByIface) {
     SharedNetwork4Ptr network_returned;
     selected->getSharedNetwork(network_returned);
     ASSERT_TRUE(network_returned);
+    EXPECT_EQ(network, network_returned);
 
     const Subnet4Collection* subnets_eth1 = network_returned->getAllSubnets();
     EXPECT_EQ(2, subnets_eth1->size());
@@ -248,6 +249,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByIface) {
     selector.iface_name_ = "eth0";
     selected = cfg.selectSubnet(selector);
     ASSERT_TRUE(selected);
+    EXPECT_EQ(subnet1, selected);
 }
 
 // This test verifies that when the classification information is specified for
@@ -367,7 +369,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByClasses) {
     selector.client_classes_ = client_classes;
     EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
 
-    // Switch to device-type1 and expect that we're assigned a subnet from
+    // Switch to device-type1 and expect that we assigned a subnet from
     // another shared network.
     client_classes.clear();
     client_classes.insert("device-type1");
@@ -459,7 +461,7 @@ TEST(CfgSubnets4Test, selectSubnetByRelayAddress) {
 
 // This test verifies that the relay information specified on the shared
 // network level can be used to select a subnet.
-TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddress) {
+TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddressNetworkLevel) {
     CfgSubnets4 cfg;
 
     // Create 3 subnets.
@@ -481,6 +483,45 @@ TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddress) {
     // relay info on the network level.
     subnet1->setRelayInfo(IOAddress("10.0.0.1"));
     network->setRelayInfo(IOAddress("10.0.0.2"));
+    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
+
+    // And try again. This time relay-info is there and should match.
+    selector.giaddr_ = IOAddress("10.0.0.1");
+    EXPECT_EQ(subnet1, cfg.selectSubnet(selector));
+    selector.giaddr_ = IOAddress("10.0.0.2");
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+    selector.giaddr_ = IOAddress("10.0.0.3");
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+}
+
+// This test verifies that the relay information specified on the subnet
+// level can be used to select a subnet and the fact that a subnet belongs
+// to a shared network doesn't affect the process.
+TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddressSubnetLevel) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    // Add them to the configuration.
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    SharedNetwork4Ptr network1(new SharedNetwork4("network1"));
+    network1->add(subnet1);
+
+    SharedNetwork4Ptr network2(new SharedNetwork4("network2"));
+    network2->add(subnet2);
+
+    SubnetSelector selector;
+
+    // Now specify relay info. Note that for the second subnet we specify
+    // relay info on the network level.
+    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
+    subnet2->setRelayInfo(IOAddress("10.0.0.2"));
     subnet3->setRelayInfo(IOAddress("10.0.0.3"));
 
     // And try again. This time relay-info is there and should match.

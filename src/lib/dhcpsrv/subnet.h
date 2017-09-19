@@ -406,7 +406,7 @@ public:
     ///
     /// If the current subnet doesn't belong to any shared network or if
     /// the next subnet is the same as first subnet (specified in the
-    /// arguments) a NULL pointer is returned.
+    /// argument) a NULL pointer is returned.
     ///
     /// @param first_subnet Pointer to the subnet from which iterations have
     /// started.
