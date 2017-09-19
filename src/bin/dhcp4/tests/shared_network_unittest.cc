@@ -757,6 +757,95 @@ public:
         StatsMgr::instance().removeAll();
     }
 
+    /// @brief Perform DORA exchange and checks the result
+    ///
+    /// This convenience method conducts DORA exchange with client
+    /// packets using hint values specified by third parameter.
+    /// The response is expected to be either ACK (ack = true) or
+    /// NAK (ack = false). The received address is checked against
+    /// exp_addr
+    ///
+    /// @param client client to perform the DORA exchange
+    /// @param exp_addr expected address (in yiaddr field)
+    /// @param hint the address the client is supposed to sent
+    ///             (empty string means send 0.0.0.0)
+    /// @param ack expected response (true = ACK, false = NAK)
+    void
+    doDORA(Dhcp4Client& client, std::string exp_addr, std::string hint = "",
+           bool ack = true) {
+
+        if (hint.empty()) {
+            ASSERT_NO_THROW(client.doDORA());
+        } else {
+            boost::shared_ptr<IOAddress> addr(new IOAddress(hint));
+            ASSERT_NO_THROW(client.doDORA(addr));
+        }
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        EXPECT_EQ((ack ? DHCPACK : DHCPNAK), resp->getType());
+        if (ack) {
+            EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+        } else {
+            EXPECT_EQ("0.0.0.0", resp->getYiaddr().toText());
+        }
+    }
+
+    /// @brief Perform Discover/Offer exchange and checks the result
+    ///
+    /// This convenience method conducts Discover/Offer exchange with client
+    /// packets using hint values specified by third parameter.
+    /// The response is expected to be either ACK (ack = true) or
+    /// NAK (ack = false). The received address is checked against
+    /// exp_addr
+    ///
+    /// @param client client to perform the DORA exchange
+    /// @param exp_addr expected address (in yiaddr field)
+    /// @param hint the address the client is supposed to sent
+    ///             (empty string means send 0.0.0.0)
+    /// @param ack expected response (true = ACK, false = NAK)
+    void
+    doDiscover(Dhcp4Client& client, std::string exp_addr, std::string hint,
+           bool ack = true) {
+
+        if (hint.empty()) {
+            ASSERT_NO_THROW(client.doDiscover());
+        } else {
+            boost::shared_ptr<IOAddress> addr(new IOAddress(hint));
+            ASSERT_NO_THROW(client.doDiscover(addr));
+        }
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        EXPECT_EQ((ack ? DHCPOFFER : DHCPNAK), resp->getType());
+        if (ack) {
+            EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+        } else {
+            EXPECT_EQ("0.0.0.0", resp->getYiaddr().toText());
+        }
+    }
+
+    /// @brief Perform Request/Reply exchange and checks the result
+    ///
+    /// This convenience method conducts Request/Reply exchange with client
+    /// packets using hint values specified by a parameter.  The response is
+    /// expected to be either ACK if exp_addr has a non-empty length,
+    /// or NAK when exp_addr context is empty.
+    ///
+    /// @param client client to perform the DORA exchange
+    /// @param exp_addr expected address (in yiaddr field)
+    void
+    doRequest(Dhcp4Client& client, std::string exp_addr) {
+        ASSERT_NO_THROW(client.doRequest());
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        if (exp_addr.empty()) {
+            EXPECT_EQ(DHCPNAK, resp->getType());
+            EXPECT_EQ("0.0.0.0", resp->getYiaddr().toText());
+        } else {
+            EXPECT_EQ(DHCPACK, resp->getType());
+            EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+        }
+    }
+
     /// @brief Destructor.
     virtual ~Dhcpv4SharedNetworkTest() {
         StatsMgr::instance().removeAll();
@@ -777,21 +866,14 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
     configure(NETWORKS_CONFIG[0], *client1.getServer());
 
     // Client #1 requests an address in first subnet within a shared network.
-    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.63"))));
-    Pkt4Ptr resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("192.0.2.63", resp1->getYiaddr().toText());
+    // We'll send a hint of 192.0.2.63 and expect to get it.
+    doDORA(client1, "192.0.2.63", "192.0.2.63");
 
     // Client #2 The second client will request a lease and should be assigned
     // an address from the second subnet.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
-    ASSERT_NO_THROW(client2.doDORA());
-    Pkt4Ptr resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("10.0.0.16", resp2->getYiaddr().toText());
+    doDORA(client2, "10.0.0.16");
 
     // Client #3. It sends DHCPDISCOVER which should be dropped by the server because
     // the server has no more addresses to assign.
@@ -803,27 +885,15 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
 
     // Client #3 should be assigned an address if subnet 3 is selected for this client.
     client3.setIfaceName("eth0");
-    ASSERT_NO_THROW(client3.doDORA());
-    resp3 = client3.getContext().response_;
-    ASSERT_TRUE(resp3);
-    EXPECT_EQ(DHCPACK, resp3->getType());
-    EXPECT_EQ("192.0.2.65", resp3->getYiaddr().toText());
+    doDORA(client3, "192.0.2.65");
 
     // Client #1 should be able to renew its address.
     client1.setState(Dhcp4Client::RENEWING);
-    ASSERT_NO_THROW(client1.doRequest());
-    resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("192.0.2.63", resp1->getYiaddr().toText());
+    doRequest(client1, "192.0.2.63");
 
     // Client #2 should be able to renew its address.
     client2.setState(Dhcp4Client::RENEWING);
-    ASSERT_NO_THROW(client2.doRequest());
-    resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("10.0.0.16", resp2->getYiaddr().toText());
+    doRequest(client2, "10.0.0.16");
 }
 
 // Shared network is selected based on giaddr value.
@@ -838,21 +908,13 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay) {
     configure(NETWORKS_CONFIG[1], *client1.getServer());
 
     // Client #1 should be assigned an address from shared network.
-    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.63"))));
-    Pkt4Ptr resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("192.0.2.63", resp1->getYiaddr().toText());
+    doDORA(client1, "192.0.2.63", "192.0.2.63");
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.1.2.3"), IOAddress("10.0.0.3"));
-    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.63"))));
-    Pkt4Ptr resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("192.0.2.65", resp2->getYiaddr().toText());
+    doDORA(client2, "192.0.2.65", "192.0.2.63");
 }
 
 // Providing a hint for any address belonging to a shared network.
@@ -867,24 +929,16 @@ TEST_F(Dhcpv4SharedNetworkTest, hintWithinSharedNetwork) {
 
     // Provide a hint to an existing address within first subnet. This address
     // should be offered out of this subnet.
-    ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.63"))));
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPOFFER, resp->getType());
-    EXPECT_EQ("192.0.2.63", resp->getYiaddr().toText());
+    doDiscover(client, "192.0.2.63", "192.0.2.63");
 
     // Similarly, we should be offered an address from another subnet within
     // the same shared network when we ask for it.
-    ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.16"))));
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPOFFER, resp->getType());
-    EXPECT_EQ("10.0.0.16", resp->getYiaddr().toText());
+    doDiscover(client, "10.0.0.16", "10.0.0.16");
 
     // Asking for an address that is not in address pool should result in getting
     // an address from one of the subnets, but generally hard to tell from which one.
     ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.23"))));
-    resp = client.getContext().response_;
+    Pkt4Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
     // We expect one of the two addresses available in this shared network.
@@ -908,11 +962,7 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 
     // Client #1 requests an address in the restricted subnet but can't be assigned
     // this address because the client doesn't belong to a certain class.
-    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.63"))));
-    Pkt4Ptr resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("10.0.0.16", resp1->getYiaddr().toText());
+    doDORA(client1, "10.0.0.16", "192.0.2.63");
 
     // Release the lease that the client has got, because we'll need this address
     // further in the test.
@@ -923,21 +973,13 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     client1.addExtraOption(option93);
 
     // This time, the allocation of the address provided as hint should be successful.
-    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.63"))));
-    resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("192.0.2.63", resp1->getYiaddr().toText());
+    doDORA(client1, "192.0.2.63", "192.0.2.63");
 
     // Client 2 should be assigned an address from the unrestricted subnet.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.3.5.6"));
     client2.setIfaceName("eth1");
-    ASSERT_NO_THROW(client2.doDORA());
-    Pkt4Ptr resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("10.0.0.16", resp2->getYiaddr().toText());
+    doDORA(client2, "10.0.0.16");
 
     // Now, let's reconfigure the server to also apply restrictions on the
     // subnet to which client2 now belongs.
@@ -946,21 +988,12 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // The client should be refused to renew the lease because it doesn't belong
     // to "b-devices" class.
     client2.setState(Dhcp4Client::RENEWING);
-    ASSERT_NO_THROW(client2.doRequest());
-    resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPNAK, resp2->getType());
+    doRequest(client2, "");
 
     // If we add option93 with a value matching this class, the lease should
     // get renewed.
     OptionPtr option93_bis(new OptionUint16(Option::V4, 93, 0x0002));
     client2.addExtraOption(option93_bis);
-
-    ASSERT_NO_THROW(client2.doRequest());
-    resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("10.0.0.16", resp2->getYiaddr().toText());
 }
 
 // IPv4 address reservation exists in one of the subnets within
@@ -978,11 +1011,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     configure(NETWORKS_CONFIG[4], *client1.getServer());
 
     // Client #1 should get his reserved address from the second subnet.
-    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.28"))));
-    Pkt4Ptr resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("10.0.0.29", resp1->getYiaddr().toText());
+    doDORA(client1, "10.0.0.29", "192.0.2.28");
 
     // Create client #2
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
@@ -990,11 +1019,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     client2.setHWAddress("aa:bb:cc:dd:ee:ff");
 
     // Client #2 should get its reserved address from the first subnet.
-    ASSERT_NO_THROW(client2.doDORA());
-    Pkt4Ptr resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("192.0.2.28", resp2->getYiaddr().toText());
+    doDORA(client2, "192.0.2.28");
 
     // Reconfigure the server. Now, the first client gets second client's
     // reservation and vice versa.
@@ -1002,25 +1027,19 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
 
     // The first client is trying to renew the lease and should get a DHCPNAK.
     client1.setState(Dhcp4Client::RENEWING);
-    ASSERT_NO_THROW(client1.doRequest());
-    resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPNAK, resp1->getType());
+    doRequest(client1, "");
 
     // Similarly, the second client is trying to renew the lease and should
     // get a DHCPNAK.
     client2.setState(Dhcp4Client::RENEWING);
-    ASSERT_NO_THROW(client2.doRequest());
-    resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPNAK, resp2->getType());
+    doRequest(client2, "");
 
     // But the client should get a lease, if it does 4-way exchange. However, it
     // must not get any of the reserved addresses because one of them is reserved
     // for another client and for another one there is a valid lease.
     client1.setState(Dhcp4Client::SELECTING);
     ASSERT_NO_THROW(client1.doDORA());
-    resp1 = client1.getContext().response_;
+    Pkt4Ptr resp1 = client1.getContext().response_;
     ASSERT_TRUE(resp1);
     EXPECT_EQ(DHCPACK, resp1->getType());
     EXPECT_NE("10.0.0.29", resp1->getYiaddr().toText());
@@ -1029,19 +1048,11 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     // Client #2 is now doing 4-way exchange and should get its newly reserved
     // address, released by the 4-way transaction of client 1.
     client2.setState(Dhcp4Client::SELECTING);
-    ASSERT_NO_THROW(client2.doDORA());
-    resp2 = client2.getContext().response_;
-    ASSERT_TRUE(resp2);
-    EXPECT_EQ(DHCPACK, resp2->getType());
-    EXPECT_EQ("10.0.0.29", resp2->getYiaddr().toText());
+    doDORA(client2, "10.0.0.29");
 
     // Same for client #1.
     client1.setState(Dhcp4Client::SELECTING);
-    ASSERT_NO_THROW(client1.doDORA());
-    resp1 = client1.getContext().response_;
-    ASSERT_TRUE(resp1);
-    EXPECT_EQ(DHCPACK, resp1->getType());
-    EXPECT_EQ("192.0.2.28", resp1->getYiaddr().toText());
+    doDORA(client1, "192.0.2.28");
 }
 
 // Reserved address can't be assigned as long as access to a subnet is
