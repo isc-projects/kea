@@ -462,8 +462,64 @@ hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54
 connected via relay at address: 192.2.16.33, identified by circuit-id:
 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
 </screen>
-          </para>
+        </para>
+        <para>
+        In addition to logging lease activity driven by DHCPv4 client traffic, it also
+        logs entries for the following lease management control channel commands:
+        lease4-add, lease4-update, and lease4-del.  Each entry is a single string
+        with no embedded end-of-line markers and they will typically have the following
+        forms:
+        </para>
+        <para>
+        <command>lease4-add:</command>
+<screen>
+Administrator added a lease of address: *address* to a device with hardware address: *device-id*
+</screen>
+        Dependent on the arguments of the add command, it may also include the
+        client-id and duration.
+        </para>
+        <para>
+        Example:
+<screen>
+Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
+</screen>
+        </para>
+        <para>
+        <command>lease4-update:</command>
+<screen>
+Administrator updated information on the lease of address: *address* to a device with hardware address: *device-id*
+</screen>
+        Dependent on the arguments of the update command, it may also include the
+        client-id and lease duration.
+        </para>
+        <para>
+        Example:
+<screen>
+Administrator updated information on the lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
+</screen>
+        </para>
+        <para>
+        <command>lease4-del:</command>
+        Deletes have two forms, one by address and one by identifier and identifier type:
+<screen>
+Administrator deleted the lease for address: *address*
+</screen>
+        or
+<screen>
+Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
+</screen>
+        Currently only a type of @b hw-address (hardware address) is supported.
+        </para>
+        <para>
+        Examples:
+<screen>
+Administrator deleted the lease for address: 192.0.2.202
+
+Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
+</screen>
+        </para>
         </section>
+
         <section>
         <title>DHCPv6 Log Entries</title>
           <para>
@@ -515,7 +571,60 @@ DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
 link address: 3001::1, hop count: 1, identified by remote-id:
 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
 </screen>
-          </para>
+        </para>
+        <para>
+        In addition to logging lease activity driven by DHCPv6 client traffic, it also
+        logs entries for the following lease management control channel commands:
+        lease6-add, lease6-update, and lease6-del.  Each entry is a single string
+        with no embedded end-of-line markers and they will typically have the following
+        forms:
+        </para>
+        <para>
+        <command>lease6-add:</command>
+<screen>
+    Administrator added a lease of address: *address* to a device with DUID: *DUID*
+</screen>
+        Dependent on the arguments of the add command, it may also include the hardware address and duration.
+        </para>
+        <para>
+        Example:
+<screen>
+Administrator added a lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
+</screen>
+        </para>
+        <para>
+        <command>lease6-update:</command>
+<screen>
+Administrator updated information on the lease of address: *address* to a device with DUID: *DUID*
+</screen>
+        Dependent on the arguments of the update command, it may also include the hardware address and lease duration.
+        </para>
+        <para>
+        Example:
+<screen>
+Administrator updated information on the lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
+</screen>
+        </para>
+        <para>
+        <command>lease6-del:</command>
+        Deletes have two forms, one by address and one by identifier and identifier type:
+<screen>
+Administrator deleted the lease for address: *address*
+</screen>
+        or
+<screen>
+Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
+</screen>
+        Currently only a type of DUID is supported.
+        </para>
+        <para>
+Examples:
+<screen>
+Administrator deleted the lease for address: 2001:db8::3
+
+Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
+</screen>
+        </para>
         </section>
         <section id="forensic-log-configuration">
         <title>Configuring the Forensic Log Hooks</title>
