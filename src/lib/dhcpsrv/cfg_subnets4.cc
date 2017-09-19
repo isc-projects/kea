@@ -128,7 +128,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
         for (Subnet4Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
 
-            // If relay information specified for this subnet it must match.
+            // If relay information is specified for this subnet, it must match.
             // Otherwise, we ignore this subnet.
             if (!(*subnet)->getRelayInfo().addr_.isV4Zero()) {
                 if (selector.giaddr_ != (*subnet)->getRelayInfo().addr_) {

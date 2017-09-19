@@ -1038,7 +1038,7 @@ public:
     /// that the big advantage of using the context structure to pass
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
-    struct ClientContext4 {
+    struct ClientContext4 : public boost::noncopyable {
         /// @brief Subnet selected for the client by the server.
         Subnet4Ptr subnet_;
 

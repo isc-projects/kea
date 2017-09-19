@@ -329,6 +329,9 @@ AllocEngine::findReservationInternal(ContextType& ctx,
             }
         }
 
+        // We need to get to the next subnet if this is a shared network. If it
+        // is not (a plain subnet), getNextSubnet will return NULL and we're
+        // done here.
         subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
     }
 }
@@ -442,10 +445,6 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         //       no: release existing leases, assign new ones based on reservations
         // Case 4/catch-all. if there are no leases and no reservations...
         //       assign new leases
-        //
-        // We could implement those checks as nested ifs, but the performance
-        // gain would be minimal and the code readability loss would be substantial.
-        // Hence independent checks.
 
         // Case 1: There are no leases and there's a reservation for this host.
         if (leases.empty() && ctx.currentHost()) {
@@ -2281,9 +2280,6 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 /// a pool within any of the subnets belonging to the current shared network.
 bool
 inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
-    SharedNetwork4Ptr network;
-    ctx.subnet_->getSharedNetwork(network);
-
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet4Ptr current_subnet = ctx.subnet_;
@@ -2835,7 +2831,11 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // version of dynamic_pointer_cast.
         Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(ctx.subnet_);
 
-        // Pass the parameters
+        // Pass the parameters. Note the clientid is passed only if match-client-id
+        // is set. This is done that way, because the lease4-renew hook point is
+        // about renewing a lease and the configuration parameter says the
+        // client-id should be ignored. Hence no clientid value if match-client-id
+        // is false.
         ctx.callout_handle_->setArgument("query4", ctx.query_);
         ctx.callout_handle_->setArgument("subnet4", subnet4);
         ctx.callout_handle_->setArgument("clientid", subnet4->getMatchClientId() ?
