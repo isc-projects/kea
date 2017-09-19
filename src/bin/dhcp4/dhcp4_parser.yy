@@ -1535,6 +1535,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
+                  | option_def_list
                   | option_data_list
                   | next_server
                   | server_hostname
