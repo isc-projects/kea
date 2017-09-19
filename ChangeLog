@@ -1,3 +1,10 @@
+1297.	[func]		tmark
+	Added a hook point, "command-processed", to kea-dhcp4
+	and kea-dhcp6 servers. This hook point occurs after
+	a control channel command has been received and
+	processed.
+	(Trac #5111, git 043d17b0688d4ab25b12469d27859983cb297d07)
+
 1296.	[bug]		tmark
 	Altered the mysql backend logic to disable auto_reconnect and
 	set session value of wait_timeout to a very large values. This
