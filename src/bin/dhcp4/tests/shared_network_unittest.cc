@@ -27,7 +27,9 @@ namespace {
 
 /// @brief Array of server configurations used throughout the tests.
 const char* NETWORKS_CONFIG[] = {
-// Configuration #0.
+// Configuration #0
+// - 1 shared network with 2 subnets (interface specified)
+// - 1 "plain" subnet (different interface specified)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -73,7 +75,9 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #1.
+// Configuration #1
+// - 1 shared networks with 1 subnet, relay ip specified
+// - 1 "plain" subnet, relay ip specified
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -114,7 +118,9 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #2.
+// Configuration #2
+// - 2 classes defined
+// - 1 shared network with 2 subnets (first has class restriction)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -161,7 +167,9 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #3.
+// Configuration #3
+// - 2 classes specified
+// - 1 shared network with 2 subnets (each with class restriction)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -209,7 +217,8 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #4.
+// Configuration #4
+// - 1 shared network with 2 subnets, each has one host reservation
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -257,7 +266,9 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #5.
+// Configuration #5
+// - 1 shared network, with 2 subnets. Each has host reservation
+// - similar to config #4, but with different hw-address reserved
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -306,6 +317,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #6
+// - 1 class
+// - 1 shared network, with 2 subnets. First has class restriction and
+//     host reservation
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -355,6 +369,10 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #7
+// - 1 global option
+// - 1 shared network with some options and 2 subnets (the first one has extra
+//     options)
+// - 1 plain subnet (that has an option)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -433,6 +451,7 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #8
+// - two shared networks, each with two subnets (each with interface specified)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -491,6 +510,7 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #9
+// - 2 shared networks, each with relay ip address and 2 subnets
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -548,6 +568,8 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 // Configuration #10.
+// - 1 client class
+// - 1 shared network with two subnets (second has a host reservation)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -598,7 +620,10 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-    // Configuration #11.
+// Configuration #11.
+// - global value of match-client-id set to false
+// - 1 shared network (match-client-id set to true) with 2 subnets
+// - the first subnet has match-client-id set to false
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -630,7 +655,10 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-    // Configuration #12.
+// Configuration #12.
+// - global value of match-client-id set to false
+// - 1 shared network (match-client-id set to false) with 2 subnets
+// - the first subnet has match-client-id set to false
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -663,6 +691,8 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #13.
+// - 2 classes
+// - 2 shared networks, each with 1 subnet and client class restricton
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -843,7 +873,7 @@ TEST_F(Dhcpv4SharedNetworkTest, hintWithinSharedNetwork) {
     EXPECT_EQ(DHCPOFFER, resp->getType());
     EXPECT_EQ("192.0.2.63", resp->getYiaddr().toText());
 
-    // Similarly, we should be offerred an address from another subnet within
+    // Similarly, we should be offered an address from another subnet within
     // the same shared network when we ask for it.
     ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.16"))));
     resp = client.getContext().response_;
@@ -861,7 +891,7 @@ TEST_F(Dhcpv4SharedNetworkTest, hintWithinSharedNetwork) {
     EXPECT_EQ(DHCPOFFER, resp->getType());
     if ((resp->getYiaddr() != IOAddress("10.0.0.16")) &&
         (resp->getYiaddr() != IOAddress("192.0.2.63"))) {
-        ADD_FAILURE() << "Unexpected address offerred by the server " << resp->getYiaddr();
+        ADD_FAILURE() << "Unexpected address offered by the server " << resp->getYiaddr();
     }
 }
 
@@ -934,7 +964,8 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 }
 
 // IPv4 address reservation exists in one of the subnets within
-// shared network.
+// shared network. This test also verifies that conflict resolution for
+// reserved addresses is working properly in case of shared networks.
 TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     // Create client #1. Explicitly set client's MAC address to the one that
     // has a reservation in the first subnet within shared network.
@@ -965,7 +996,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     EXPECT_EQ(DHCPACK, resp2->getType());
     EXPECT_EQ("192.0.2.28", resp2->getYiaddr().toText());
 
-    // Reconfigure the server. Now, the first client get's second client's
+    // Reconfigure the server. Now, the first client gets second client's
     // reservation and vice versa.
     configure(NETWORKS_CONFIG[5], *client1.getServer());
 
@@ -1035,7 +1066,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationAccessRestrictedByClass) {
     // client doesn't belong to the "a-devices" class.
     EXPECT_EQ("10.0.0.16", resp->getYiaddr().toText());
 
-    // Add option93 which would cause the client to be classified as "a-devices".
+    // Add option 93 which would cause the client to be classified as "a-devices".
     OptionPtr option93(new OptionUint16(Option::V4, 93, 0x0001));
     client.addExtraOption(option93);
 
@@ -1108,7 +1139,7 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     ASSERT_EQ(1, client2.config_.log_servers_.size());
     EXPECT_EQ("1.2.3.4", client2.config_.log_servers_[0].toText());
 
-    // This option is only specified on the shared network level and should be 
+    // This option is only specified on the shared network level and should be
     // inherited by all subnets within this network.
     ASSERT_EQ(1, client2.config_.quotes_servers_.size());
     EXPECT_EQ("10.6.5.4", client2.config_.quotes_servers_[0].toText());
@@ -1163,7 +1194,7 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
     // The client1 transitions to INIT-REBOOT state in which the client1 remembers the
     // lease and sends DHCPREQUEST to all servers (server id) is not specified. If
     // the server doesn't know the client1 (doesn't have its lease), it should
-    // drop the request. We want to make sure that the server resp1onds regardless
+    // drop the request. We want to make sure that the server responds (resp1) regardless
     // of the subnet from which the lease has been allocated.
     client1.setState(Dhcp4Client::INIT_REBOOT);
     ASSERT_NO_THROW(client1.doRequest());
@@ -1187,7 +1218,7 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
     // The client2 transitions to INIT-REBOOT state in which the client2 remembers the
     // lease and sends DHCPREQUEST to all servers (server id) is not specified. If
     // the server doesn't know the client2 (doesn't have its lease), it should
-    // drop the request. We want to make sure that the server resp2onds regardless
+    // drop the request. We want to make sure that the server responds (resp2) regardless
     // of the subnet from which the lease has been allocated.
     client2.setState(Dhcp4Client::INIT_REBOOT);
     ASSERT_NO_THROW(client2.doRequest());
@@ -1369,7 +1400,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
     Pkt4Ptr resp1 = client1.getContext().response_;
     ASSERT_TRUE(resp1);
     ASSERT_EQ(DHCPOFFER, resp1->getType());
-    // The client should be offerred a lease from the second shared network.
+    // The client should be offered a lease from the second shared network.
     EXPECT_EQ("10.0.0.63", resp1->getYiaddr().toText());
 
     // Create another client which will belong to a different class.
@@ -1381,7 +1412,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
     client2.addExtraOption(option93);
 
     // Send DHCPDISCOVER. There is no lease in the lease database so the
-    // client should be offerred a lease based on the client class selection.
+    // client should be offered a lease based on the client class selection.
     ASSERT_NO_THROW(client2.doDiscover());
     Pkt4Ptr resp = client2.getContext().response_;
     ASSERT_TRUE(resp);
