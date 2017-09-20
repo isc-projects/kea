@@ -113,7 +113,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     CfgOptionPtr options(new CfgOption());
     ConstElementPtr option_data = class_def_cfg->get("option-data");
     if (option_data) {
-        OptionDataListParser opts_parser(family);
+        OptionDataListParser opts_parser(family, defs);
         opts_parser.parse(options, option_data);
     }
 

@@ -9,6 +9,7 @@
 
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space_container.h>
+#include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
 #include <util/staged_value.h>
@@ -223,13 +224,16 @@ public:
     ///        to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
+    /// @param deferred Reference to an option code list. Options which
+    ///        processing is deferred will be put here.
     /// @return offset to the first byte after the last successfully
     /// parsed option or the offset of the DHO_END option type.
     ///
     /// The unpackOptions6 note applies too.
     static size_t unpackOptions4(const OptionBuffer& buf,
                                  const std::string& option_space,
-                                 isc::dhcp::OptionCollection& options);
+                                 isc::dhcp::OptionCollection& options,
+                                 std::list<uint16_t>& deferred);
 
     /// Registers factory method that produces options of specific option types.
     ///

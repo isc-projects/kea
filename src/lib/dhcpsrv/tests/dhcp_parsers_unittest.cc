@@ -1343,9 +1343,16 @@ TEST_F(ParseConfigTest, emptyOptionData) {
 
 // This test verifies an option data without suboptions is supported
 TEST_F(ParseConfigTest, optionDataNoSubOption) {
-    // Configuration string.
+    // Configuration string. A global definition for option 43 is needed.
     const std::string config =
-        "{ \"option-data\": [ {"
+        "{ \"option-def\": [ {"
+        " \"name\": \"vendor-encapsulated-options\","
+        " \"code\": 43,"
+        " \"type\": \"empty\","
+        " \"space\": \"dhcp4\","
+        " \"encapsulate\": \"vendor-encapsulated-options\""
+        " } ],"
+        " \"option-data\": [ {"
         "    \"name\": \"vendor-encapsulated-options\""
         " } ]"
         "}";

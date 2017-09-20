@@ -803,6 +803,14 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
+    /// @brief Perform deferred option unpacking.
+    ///
+    /// @note Options 43 and 224-254 are processed after classification.
+    /// If a class configures a definition it is applied, if none
+    /// the global (user) definition is applied. For option 43
+    /// a last resort definition (same than for previous Kea) is used.
+    void deferredUnpack(Pkt4Ptr& query);
+
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
