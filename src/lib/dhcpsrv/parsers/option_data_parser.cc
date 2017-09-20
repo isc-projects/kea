@@ -215,6 +215,11 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
         def = LibDHCP::getRuntimeOptionDef(option_space, search_key);
     }
 
+    if (!def) {
+        // Finish by last resort definitions.
+        def = LibDHCP::getLastResortOptionDef(option_space, search_key);
+    }
+
     return (def);
 }
 
