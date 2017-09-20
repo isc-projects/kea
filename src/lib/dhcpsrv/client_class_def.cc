@@ -138,8 +138,8 @@ ClientClassDef:: toElement() const {
     if (!test_.empty()) {
         result->set("test", Element::create(test_));
     }
-    // Set option-def
-    if (cfg_option_def_) {
+    // Set option-def (used only by DHCPv4)
+    if (cfg_option_def_ && (family == AF_INET)) {
         result->set("option-def", cfg_option_def_->toElement());
     }
     // Set option-data

@@ -793,9 +793,10 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
     isc::dhcp::OptionCollection options; // list of options
+    list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options);
+        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -957,8 +958,9 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
 
     // Parse options.
     OptionCollection options;
+    list<uint16_t> deferred;
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                            options));
+                                            options, deferred));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
@@ -1017,7 +1019,9 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar", options));
+    list<uint16_t> deferred;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar",
+                                            options, deferred));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());

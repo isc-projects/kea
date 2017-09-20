@@ -433,7 +433,8 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 
 size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
                                const std::string& option_space,
-                               isc::dhcp::OptionCollection& options) {
+                               isc::dhcp::OptionCollection& options,
+                               std::list<uint16_t>& deferred) {
     size_t offset = 0;
     size_t last_offset = 0;
 
@@ -514,6 +515,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         // Check if option unpacking must be deferred
         if (deferOption(option_space, opt_type)) {
             num_defs = 0;
+            deferred.push_back(opt_type);
         }
 
         OptionPtr opt;

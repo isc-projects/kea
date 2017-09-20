@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <list>
 
 #include <time.h>
 
@@ -363,6 +364,11 @@ public:
         return (local_hwaddr_);
     }
 
+    /// @brief Returns a reference to deferred option codes
+    std::list<uint16_t>& deferredOptions() {
+        return (deferred_options_);
+    }
+
     /// @brief Checks if a DHCPv4 message has been relayed.
     ///
     /// This function returns a boolean value which indicates whether a DHCPv4
@@ -375,7 +381,7 @@ public:
     /// (true) or non-relayed (false).
     bool isRelayed() const;
 
-    /// @brief Checks if a DHCPv4 message has beeb transported over DHCPv6
+    /// @brief Checks if a DHCPv4 message has been transported over DHCPv6
     ///
     /// @return Boolean value which indicates whether the message is
     /// transported over DHCPv6 (true) or native DHCPv4 (false)
@@ -477,8 +483,11 @@ protected:
         return(HWAddrPtr());
     }
 
-    /// local HW address (dst if receiving packet, src if sending packet)
+    /// @brief local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
+
+    // @brief List of deferred option codes
+    std::list<uint16_t> deferred_options_;
 
     /// @brief message operation code
     ///
