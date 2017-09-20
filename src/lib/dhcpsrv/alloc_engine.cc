@@ -388,7 +388,7 @@ namespace isc {
 namespace dhcp {
 
 AllocEngine::ClientContext6::ClientContext6()
-    : query_(), fake_allocation_(false), subnet_(), duid_(),
+    : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
       hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
       rev_dns_update_(false), hostname_(), callout_handle_(),
       ias_() {
@@ -443,8 +443,9 @@ isAllocated(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const {
 
 ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
-    if (subnet_) {
-        auto host = hosts_.find(subnet_->getID());
+    Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
+    if (subnet) {
+        auto host = hosts_.find(subnet->getID());
         if (host != hosts_.cend()) {
             return (host->second);
         }
@@ -853,6 +854,7 @@ void
 AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                                      Lease6Collection& existing_leases) {
 
+
     // If there are no reservations or the reservation is v4, there's nothing to do.
     if (ctx.hosts_.empty()) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -880,6 +882,37 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                     .arg(ctx.query_->getLabel())
                     .arg(lease->typeToText(lease->type_))
                     .arg(lease->addr_.toText());
+
+                // Besides IP reservations we're also going to return other reserved
+                // parameters, such as hostname. We want to hand out the hostname value
+                // from the same reservation entry as IP addresses. Thus, let's see if
+                // there is any hostname reservation.
+                if (!ctx.host_subnet_) {
+                    SharedNetwork6Ptr network;
+                    ctx.subnet_->getSharedNetwork(network);
+                    if (network) {
+                        // Remember the subnet that holds this preferred host
+                        // reservation. The server will use it to return appropriate
+                        // FQDN, classes etc.
+                        ctx.host_subnet_ = network->getSubnet(lease->subnet_id_);
+                        ConstHostPtr host = ctx.hosts_[lease->subnet_id_];
+                        // If there is a hostname reservation here we should stick
+                        // to this reservation. By updating the hostname in the
+                        // context we make sure that the database is updated with
+                        // this new value and the server doesn't need to do it and
+                        // its processing performance is not impacted by the hostname
+                        // updates.
+                        if (host && !host->getHostname().empty()) {
+                            // We have to determine whether the hostname is generated
+                            // in response to client's FQDN or not. If yes, we will
+                            // need to qualify the hostname. Otherwise, we just use
+                            // the hostname as it is specified for the reservation.
+                            OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
+                            ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
+                                qualifyName(host->getHostname(), static_cast<bool>(fqdn));
+                        }
+                    }
+                }
 
                 // If this is a real allocation, we may need to extend the lease
                 // lifetime.
@@ -919,7 +952,6 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             // We have allocated this address/prefix while processing one of the
             // previous IAs, so let's try another reservation.
             if (ctx.isAllocated(addr, prefix_len)) {
-                std::cout << "is allocated  " << addr << std::endl;
                 continue;
             }
 
@@ -931,10 +963,34 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                 // Ok, let's create a new lease...
                 ctx.subnet_ = subnet;
 
+                // Let's remember the subnet from which the reserved address has been
+                // allocated. We'll use this subnet for allocating other reserved
+                // resources.
+                if (!ctx.host_subnet_) {
+                    ctx.host_subnet_ = subnet;
+                    if (!host->getHostname().empty()) {
+                        // If there is a hostname reservation here we should stick
+                        // to this reservation. By updating the hostname in the
+                        // context we make sure that the database is updated with
+                        // this new value and the server doesn't need to do it and
+                        // its processing performance is not impacted by the hostname
+                        // updates.
+
+                        // We have to determine whether the hostname is generated
+                        // in response to client's FQDN or not. If yes, we will
+                        // need to qualify the hostname. Otherwise, we just use
+                        // the hostname as it is specified for the reservation.
+                        OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
+                        ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
+                            qualifyName(host->getHostname(), static_cast<bool>(fqdn));
+                    }
+                }
+
                 Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
 
                 // ... and add it to the existing leases list.
                 existing_leases.push_back(lease);
+
 
                 if (ctx.currentIA().type_ == Lease::TYPE_NA) {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_ADDR_GRANTED)

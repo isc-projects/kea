@@ -10,6 +10,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <stats/stats_mgr.h>
@@ -599,12 +600,13 @@ const char* NETWORKS_CONFIG[] = {
     "                    \"id\": 100,"
     "                    \"pools\": ["
     "                        {"
-    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::30\""
     "                        }"
     "                    ],"
     "                    \"reservations\": ["
     "                        {"
     "                            \"duid\": \"00:03:00:01:11:22:33:44:55:66\","
+    "                            \"ip-addresses\": [ \"2001:db8:2::20\" ],"
     "                            \"hostname\": \"test.example.org\","
     "                            \"client-classes\": [ \"class-with-dns-servers\" ]"
     "                        }"
@@ -1118,6 +1120,12 @@ TEST_F(Dhcpv6SharedNetworkTest, variousFieldsInReservation) {
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option6ClientFqdn>(opt_fqdn);
     ASSERT_TRUE(fqdn);
     ASSERT_EQ("test.example.org.", fqdn->getDomainName());
+
+    // Make sure that the correct hostname has been stored in the database.
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                            IOAddress("2001:db8:2::20"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("test.example.org.", lease->hostname_);
 
     // The DNS servers option should be derived from the client class based on the
     // static class reservations.

@@ -305,6 +305,11 @@ public:
         /// @brief Subnet selected for the client by the server.
         Subnet6Ptr subnet_;
 
+        /// @brief Subnet from which host reservations should be retrieved.
+        ///
+        /// It can be NULL, in which case @c subnet_ value is used.
+        Subnet6Ptr host_subnet_;
+
         /// @brief Client identifier
         DuidPtr duid_;
 
@@ -443,7 +448,7 @@ public:
             ias_.push_back(IAContext());
         };
 
-        /// @brief Returns host for currently selected subnet.
+        /// @brief Returns host from the most preferred subnet.
         ///
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
