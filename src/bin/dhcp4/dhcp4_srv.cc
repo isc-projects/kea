@@ -2858,9 +2858,9 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         if (!def) {
             def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, code);
         }
-        // Option 43 has a last resort definition
-        if ((code == DHO_VENDOR_ENCAPSULATED_OPTIONS) && !def) {
-            def = LibDHCP::last_resort_option43_def;
+        // Finish by last resort definition
+        if (!def) {
+            def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, code);
         }
         // If not defined go to the next option
         if (!def) {

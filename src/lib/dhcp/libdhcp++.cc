@@ -54,14 +54,14 @@ VendorOptionDefContainers LibDHCP::vendor4_defs_;
 // Static container with vendor option definitions for DHCPv6.
 VendorOptionDefContainers LibDHCP::vendor6_defs_;
 
+// Static container with last resort option definitions for DHCPv4.
+OptionDefContainerPtr LibDHCP::lastresort_defs_(new OptionDefContainer());
+
 // Static container with option definitions created in runtime.
 StagedValue<OptionDefSpaceContainer> LibDHCP::runtime_option_defs_;
 
 // Null container.
 const OptionDefContainerPtr null_option_def_container_(new OptionDefContainer());
-
-// Option 43 definition.
-OptionDefinitionPtr LibDHCP::last_resort_option43_def;
 
 // Those two vendor classes are used for cable modems:
 
@@ -86,6 +86,7 @@ LibDHCP::getOptionDefs(const std::string& space) {
         initVendorOptsDocsis4();
         initStdOptionDefs6();
         initVendorOptsDocsis6();
+        initLastResortOptionDefs();
     }
 
     if (space == DHCP4_OPTION_SPACE) {
@@ -258,6 +259,38 @@ LibDHCP::revertRuntimeOptionDefs() {
 void
 LibDHCP::commitRuntimeOptionDefs() {
     runtime_option_defs_.commit();
+}
+
+OptionDefinitionPtr
+LibDHCP::getLastResortOptionDef(const std::string& space, const uint16_t code) {
+    OptionDefContainerPtr container = getLastResortOptionDefs(space);
+    const OptionDefContainerTypeIndex& index = container->get<1>();
+    const OptionDefContainerTypeRange& range = index.equal_range(code);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+
+    return (OptionDefinitionPtr());
+}
+
+OptionDefinitionPtr
+LibDHCP::getLastResortOptionDef(const std::string& space, const std::string& name) {
+    OptionDefContainerPtr container = getLastResortOptionDefs(space);
+    const OptionDefContainerNameIndex& index = container->get<2>();
+    const OptionDefContainerNameRange& range = index.equal_range(name);
+    if (range.first != range.second) {
+        return (*range.first);
+    }
+
+    return (OptionDefinitionPtr());
+}
+
+OptionDefContainerPtr
+LibDHCP::getLastResortOptionDefs(const std::string& space) {
+    if (space == DHCP4_OPTION_SPACE) {
+        return (lastresort_defs_);
+    }
+    return (null_option_def_container_);
 }
 
 bool
@@ -831,11 +864,6 @@ void
 LibDHCP::initStdOptionDefs4() {
     initOptionSpace(v4option_defs_, STANDARD_V4_OPTION_DEFINITIONS,
                     STANDARD_V4_OPTION_DEFINITIONS_SIZE);
-    last_resort_option43_def.reset(new OptionDefinition(
-        LAST_RESORT_OPTION43_DEFINITION.name,
-        LAST_RESORT_OPTION43_DEFINITION.code,
-        LAST_RESORT_OPTION43_DEFINITION.type,
-        LAST_RESORT_OPTION43_DEFINITION.array));
 }
 
 void
@@ -852,6 +880,12 @@ LibDHCP::initStdOptionDefs6() {
                     V4V6_RULE_OPTION_DEFINITIONS_SIZE);
     initOptionSpace(option_defs_[V4V6_BIND_OPTION_SPACE], V4V6_BIND_OPTION_DEFINITIONS,
                     V4V6_BIND_OPTION_DEFINITIONS_SIZE);
+}
+
+void
+LibDHCP::initLastResortOptionDefs() {
+    initOptionSpace(lastresort_defs_, LAST_RESORT_V4_OPTION_DEFINITIONS,
+                    LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE);
 }
 
 void

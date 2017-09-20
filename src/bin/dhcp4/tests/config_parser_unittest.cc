@@ -3179,7 +3179,6 @@ TEST_F(Dhcp4ParserTest, domainSearchOption) {
                                      " domain-search option"));
 }
 
-#if 0
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
 TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
@@ -3430,7 +3429,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc2.option_);
 }
-#endif
+
 
 // Tests of the hooks libraries configuration.  All tests have the pre-
 // condition (checked in the test fixture's SetUp() method) that no hooks
