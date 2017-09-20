@@ -2461,6 +2461,8 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     appendRequestedOptions(solicit, response, co_list);
     appendRequestedVendorOptions(solicit, response, ctx, co_list);
 
+    updateReservedFqdn(ctx, response);
+
     // Only generate name change requests if sending a Reply as a result
     // of receiving Rapid Commit option.
     if (response->getType() == DHCPV6_REPLY) {
@@ -2492,6 +2494,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendRequestedOptions(request, reply, co_list);
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
+    updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -2520,6 +2523,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendRequestedOptions(renew, reply, co_list);
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
+    updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -2548,6 +2552,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     appendRequestedOptions(rebind, reply, co_list);
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
+    updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -3099,6 +3104,44 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
 }
 
 void
+Dhcpv6Srv::updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
+                              const Pkt6Ptr& answer) {
+    if (!answer) {
+        isc_throw(isc::Unexpected, "an instance of the object encapsulating"
+                  " a message must not be NULL when updating reserved FQDN");
+    }
+
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option6ClientFqdn>
+        (answer->getOption(D6O_CLIENT_FQDN));
+
+   // If Client FQDN option is not included, there is nothing to do.
+   if (!fqdn) {
+       return;
+   }
+
+   std::string name = fqdn->getDomainName();
+
+   // If there is a host reservation for this client we have to check whether
+   // this reservation has the same hostname as the hostname currently
+   // present in the FQDN option. If not, it indicates that the allocation
+   // engine picked a different subnet (from within a shared network) for
+   // reservations and we have to send this new value to the client.
+   if (ctx.currentHost() &&
+       !ctx.currentHost()->getHostname().empty()) {
+       std::string new_name = CfgMgr::instance().getD2ClientMgr().
+           qualifyName(ctx.currentHost()->getHostname(), true);
+
+       if (new_name != name) {
+           fqdn->setDomainName(new_name, Option6ClientFqdn::FULL);
+
+           // Replace previous instance of Client FQDN option.
+           answer->delOption(D6O_CLIENT_FQDN);
+           answer->addOption(fqdn);
+       }
+   }
+}
+
+void
 Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     if (!answer) {
         isc_throw(isc::Unexpected, "an instance of the object encapsulating"
@@ -3161,6 +3204,9 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
         }
         // Set the generated FQDN in the Client FQDN option.
         fqdn->setDomainName(generated_name, Option6ClientFqdn::FULL);
+
+       answer->delOption(D6O_CLIENT_FQDN);
+       answer->addOption(fqdn);
 
     } catch (const Exception& ex) {
         LOG_ERROR(ddns6_logger, DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL)
