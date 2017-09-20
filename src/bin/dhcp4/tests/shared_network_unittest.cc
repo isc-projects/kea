@@ -742,7 +742,66 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
-    "}"
+    "}",
+// Configuration #14
+// - 1 shared networks with 2 subnets, relay ip specified,
+//     each relay has its own relay ip specified
+// - 1 "plain" subnet, relay ip specified
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"relay\": {"
+    "                \"ip-address\": \"192.3.5.6\""
+    "            },"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"relay\": {"
+    "                        \"ip-address\": \"192.1.1.1\""
+    "                    },"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.63 - 192.0.2.63\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"10.0.0.0/24\","
+    "                    \"id\": 100,"
+    "                    \"relay\": {"
+    "                        \"ip-address\": \"192.2.2.2\""
+    "                    },"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"10.0.0.16 - 10.0.0.16\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ],"
+    "    \"subnet4\": ["
+    "        {"
+    "            \"subnet\": \"192.0.2.64/26\","
+    "            \"id\": 1000,"
+    "            \"relay\": {"
+    "                \"ip-address\": \"192.3.3.3\""
+    "            },"
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"192.0.2.65 - 192.0.2.65\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
 };
 
 /// @Brief Test fixture class for DHCPv4 server using shared networks.
@@ -896,8 +955,9 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
     doRequest(client2, "10.0.0.16");
 }
 
-// Shared network is selected based on giaddr value.
-TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay) {
+// Shared network is selected based on giaddr value (relay specified
+// on shared network level)
+TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay1) {
     // Create client #1. This is a relayed client which is using relay
     // address matching configured shared network.
     Dhcp4Client client1(Dhcp4Client::SELECTING);
@@ -915,6 +975,36 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay) {
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.1.2.3"), IOAddress("10.0.0.3"));
     doDORA(client2, "192.0.2.65", "192.0.2.63");
+}
+
+// Shared network is selected based on giaddr value (relay specified
+// on subnet in shared network level). Note the relay ip is specified
+// on the shared network level, but its value is overridden on subnet
+// level.
+TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay2) {
+    // Create client #1. This is a relayed client which is using relay
+    // address matching configured subnet 1 in shared network.
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.useRelay(true, IOAddress("192.1.1.1"), IOAddress("10.0.0.2"));
+
+    // Configure the server with one shared network and one subnet outside of the
+    // shared network.
+    configure(NETWORKS_CONFIG[14], *client1.getServer());
+
+    // Client #1 should be assigned an address from shared network.
+    doDORA(client1, "192.0.2.63");
+
+    // Create client #2. This is a relayed client which is using relay
+    // address that is used for subnet 2 in the shared network.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.useRelay(true, IOAddress("192.2.2.2"), IOAddress("10.0.0.3"));
+    doDORA(client2, "10.0.0.16");
+
+    // Create client #3. This is a relayed client which is using relay
+    // address matching subnet outside of the shared network.
+    Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
+    client3.useRelay(true, IOAddress("192.3.3.3"), IOAddress("10.0.0.4"));
+    doDORA(client3, "192.0.2.65");
 }
 
 // Providing a hint for any address belonging to a shared network.
