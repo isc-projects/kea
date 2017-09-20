@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,9 @@ StagedValue<OptionDefSpaceContainer> LibDHCP::runtime_option_defs_;
 
 // Null container.
 const OptionDefContainerPtr null_option_def_container_(new OptionDefContainer());
+
+// Option 43 definition.
+OptionDefinitionPtr LibDHCP::last_resort_option43_def;
 
 // Those two vendor classes are used for cable modems:
 
@@ -255,6 +258,13 @@ LibDHCP::revertRuntimeOptionDefs() {
 void
 LibDHCP::commitRuntimeOptionDefs() {
     runtime_option_defs_.commit();
+}
+
+bool
+LibDHCP::deferOption(const std::string& space, const uint16_t code) {
+    return ((space == DHCP4_OPTION_SPACE) &&
+            ((code == DHO_VENDOR_ENCAPSULATED_OPTIONS) ||
+             ((code >= 224) && (code <= 254))));
 }
 
 OptionPtr
@@ -499,6 +509,11 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
             num_defs = distance(range.first, range.second);
+        }
+
+        // Check if option unpacking must be deferred
+        if (deferOption(option_space, opt_type)) {
+            num_defs = 0;
         }
 
         OptionPtr opt;
@@ -814,6 +829,11 @@ void
 LibDHCP::initStdOptionDefs4() {
     initOptionSpace(v4option_defs_, STANDARD_V4_OPTION_DEFINITIONS,
                     STANDARD_V4_OPTION_DEFINITIONS_SIZE);
+    last_resort_option43_def.reset(new OptionDefinition(
+        LAST_RESORT_OPTION43_DEFINITION.name,
+        LAST_RESORT_OPTION43_DEFINITION.code,
+        LAST_RESORT_OPTION43_DEFINITION.type,
+        LAST_RESORT_OPTION43_DEFINITION.array));
 }
 
 void

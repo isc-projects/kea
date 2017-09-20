@@ -124,8 +124,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "nis-domain", DHO_NIS_DOMAIN, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "nis-servers", DHO_NIS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "ntp-servers", DHO_NTP_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    { "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
-      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" },
+    /// vendor-encapsulated-options (43) is deferred
     { "netbios-name-servers", DHO_NETBIOS_NAME_SERVERS,
       OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "netbios-dd-server", DHO_NETBIOS_DD_SERVER,
@@ -216,6 +215,12 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
 /// Number of option definitions defined.
 const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V4_OPTION_DEFINITIONS) / sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
+
+/// Last resort definition for option 43
+const OptionDefParams LAST_RESORT_OPTION43_DEFINITION = {
+    "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
+    OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space"
+};
 
 /// Start Definition of DHCPv6 options
 
