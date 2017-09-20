@@ -474,10 +474,11 @@ Dhcp6Client::doRequest() {
     copyIAs(context_.response_, query);
     appendRequestedIAs(query);
 
+    context_.query_ = query;
+
     // Add Client FQDN if configured.
     appendFQDN();
 
-    context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
 
@@ -589,6 +590,25 @@ Dhcp6Client::doDecline(const bool include_address) {
         applyRcvdConfiguration(context_.response_);
     }
 }
+
+void
+Dhcp6Client::doRelease() {
+    Pkt6Ptr query = createMsg(DHCPV6_RELEASE);
+    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    copyIAsFromLeases(query);
+
+    context_.query_ = query;
+
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+
+    // Apply configuration only if the server has responded.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
 
 void
 Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,

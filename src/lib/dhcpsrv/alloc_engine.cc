@@ -1352,9 +1352,19 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         }
 
         // Check if there are any leases for this client.
-        Lease6Collection leases = LeaseMgrFactory::instance()
-            .getLeases6(ctx.currentIA().type_, *ctx.duid_,
-                        ctx.currentIA().iaid_, ctx.subnet_->getID());
+        Subnet6Ptr subnet = ctx.subnet_;
+        Lease6Collection leases;
+        while (subnet) {
+            Lease6Collection leases_subnet =
+                LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
+                                                       *ctx.duid_,
+                                                       ctx.currentIA().iaid_,
+                                                       subnet->getID());
+            leases.insert(leases.end(), leases_subnet.begin(), leases_subnet.end());
+
+            subnet = subnet->getNextSubnet(ctx.subnet_);
+        }
+
 
         if (!leases.empty()) {
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -1366,7 +1376,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             removeNonmatchingReservedLeases6(ctx, leases);
         }
 
-        if (ctx.currentHost()) {
+        if (!ctx.hosts_.empty()) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V6_RENEW_HR)
