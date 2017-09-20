@@ -305,6 +305,12 @@ public:
     /// way, just stores it.
     void doInfRequest();
 
+    /// @brief Sends Release to the server.
+    ///
+    /// This function simulates sending the Release message to the server
+    /// and receiving server's response.
+    void doRelease();
+
     /// @brief Removes the stateful configuration obtained from the server.
     ///
     /// It removes all leases held by the client.
@@ -503,7 +509,7 @@ public:
     }
 
     /// @brief Returns the server that the client is communicating with.
-    boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv> getServer() const {
+    boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv>& getServer() {
         return (srv_);
     }
 
