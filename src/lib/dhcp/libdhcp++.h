@@ -112,6 +112,19 @@ public:
     static OptionDefContainerPtr
     getRuntimeOptionDefs(const std::string& space);
 
+    /// @brief Checks if an option unpacking has to be deferred.
+    ///
+    /// DHCPv4 option 43 and 224-254 unpacking is done after classification.
+    ///
+    /// @space Option space name.
+    /// @param code Option code.
+    ///
+    /// @return True if option processing should be deferred.
+    static bool deferOption(const std::string& space, const uint16_t code);
+
+    /// @brief Last resort definition for DHCPv4 option 43
+    static OptionDefinitionPtr last_resort_option43_def;
+
     /// @brief Factory function to create instance of option.
     ///
     /// Factory method creates instance of specified option. The option

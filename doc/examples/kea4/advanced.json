@@ -36,6 +36,15 @@
         "re-detect": true
     },
 
+    // Option 43 last resort definition can make legal messages to be
+    // rejected because they use not compatible "raw" value.
+    // The option definition can be applied to avoid this problem.
+    "option-def": [ {
+        "name": "vendor-encapsulated-options",
+        "code": 43,
+        "type": "binary"
+    } ],
+
     // We need to specify the the database used to store leases. As of
     // September 2016, four database backends are supported: MySQL,
     // PostgreSQL, Cassandra, and the in-memory database, Memfile.
