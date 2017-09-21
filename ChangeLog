@@ -1,7 +1,7 @@
 1299.	[doc]		fdupont, tmark
 	Added an example stunnel configuration file to demonstrate
 	using kea-shell through https.
-	(Trac #5282, git xxx)
+	(Trac #5282, git efe044fa90d53398e215d2bf31e00e83353e8774)
 
 1298.	[func]		marcin, tomek
 	DHCPv4 server supports shared networks. It allows for grouping
