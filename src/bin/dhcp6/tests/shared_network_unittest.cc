@@ -1002,7 +1002,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     client3.setInterface("eth0");
 
     // Request an address from the subnet outside of the shared network.
-    ASSERT_NO_THROW(client2.requestAddress(0xabca, IOAddress("3000::1")));
+    ASSERT_NO_THROW(client3.requestAddress(0xabca, IOAddress("3000::1")));
 
     // Request all configured options.
     ASSERT_NO_THROW(client3.requestOption(D6O_NIS_SERVERS));

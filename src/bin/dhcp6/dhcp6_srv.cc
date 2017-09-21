@@ -879,9 +879,18 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
         }
     };
 
-    // Next, subnet configured options.
-    if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
-        co_list.push_back(ctx.subnet_->getCfgOption());
+    if (ctx.subnet_) {
+        // Next, subnet configured options.
+        if (!ctx.subnet_->getCfgOption()->empty()) {
+            co_list.push_back(ctx.subnet_->getCfgOption());
+        }
+
+        // Then, shared network specific options.
+        SharedNetwork6Ptr network;
+        ctx.subnet_->getSharedNetwork(network);
+        if (network && !network->getCfgOption()->empty()) {
+            co_list.push_back(network->getCfgOption());
+        }
     }
 
     // Each class in the incoming packet
