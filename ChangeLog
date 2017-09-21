@@ -1,3 +1,13 @@
+1298.	[func]		marcin, tomek
+	DHCPv4 server supports shared networks. It allows for grouping
+	multiple subnets and use them interchangeably to allocate
+	IP addresses and other resources to a client located on the
+	particular link. This mechanism is useful to extend an
+	address space for the client belonging to a particular
+	subnet and/or to segregate clients being on the same link but
+	belonging to different classes, e.g. cable modem vs router.
+	(Trac #5306, git 4f2fca69be32997c718ab2c7f37ac80ed4e41d15)
+
 1297.	[func]		tmark
 	Added a hook point, "command-processed", to kea-dhcp4
 	and kea-dhcp6 servers. This hook point occurs after
