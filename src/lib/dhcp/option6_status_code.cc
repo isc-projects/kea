@@ -21,7 +21,7 @@ namespace {
 
 /// @brief Minimum length of the option (when status message is empty).
 const size_t OPTION6_STATUS_CODE_MIN_LEN = sizeof(uint16_t);
-const size_t OPTION4_SLP_SERVICE_SCOPEMIN_LEN = sizeof(bool);
+const size_t OPTION4_SLP_SERVICE_SCOPEMIN_LEN = sizeof(uint8_t);
 
 }; // end of anonymous namespace
 
@@ -39,7 +39,7 @@ Option6StatusCode::Option6StatusCode(OptionBufferConstIter begin,
     : Option(Option::V6, D6O_STATUS_CODE),
       status_code_(STATUS_Success), status_message_() {
 
-    // Parse data 
+    // Parse data
     unpack(begin, end);
 }
 
@@ -149,7 +149,7 @@ Option4SlpServiceScope::Option4SlpServiceScope(OptionBufferConstIter begin,
     : Option(Option::V4, DHO_SERVICE_SCOPE),
       mandatory_flag_(false), scope_list_() {
 
-    // Parse data 
+    // Parse data
     unpack(begin, end);
 }
 
@@ -188,7 +188,7 @@ Option4SlpServiceScope::unpack(OptionBufferConstIter begin, OptionBufferConstIte
         isc_throw(BadDataTypeCast, "unable to read the buffer as boolean"
                   << " value. Invalid value " << static_cast<int>(*begin));
     }
-    begin += sizeof(bool);
+    begin += sizeof(uint8_t);
 
     scope_list_.assign(begin, end);
 }
