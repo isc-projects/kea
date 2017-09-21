@@ -13,6 +13,7 @@ nobase_dist_doc_DATA += examples/ddns/sample1.json
 nobase_dist_doc_DATA += examples/ddns/template.json
 nobase_dist_doc_DATA += examples/https/httpd2/kea-httpd2.conf
 nobase_dist_doc_DATA += examples/https/nginx/kea-nginx.conf
+nobase_dist_doc_DATA += examples/https/shell/kea-stunnel.conf
 nobase_dist_doc_DATA += examples/kea4/advanced.json
 nobase_dist_doc_DATA += examples/kea4/backends.json
 nobase_dist_doc_DATA += examples/kea4/cassandra.json
