@@ -35,116 +35,77 @@ namespace lease_cmds {
 /// @brief Wrapper class around reservation command handlers.
 class LeaseCmdsImpl {
 public:
-    LeaseCmdsImpl();
-
-    ~LeaseCmdsImpl();
-
-/// @brief Parameters specified for reservation-get and reservation-del
-///
-/// As both call types (get and delete) need specify which reservation to
-/// act on, they have the same set of parameters. In particular, those
-/// two call types support the following sets of parameters:
-/// - address
-/// - subnet-id, identifier-type, identifier-value (v4)
-/// - subnet-id, lease-type, iaid, identifier-type, identifier-value (v6)
-///
-/// This class stores those parameters and is used to pass them around.
-class Parameters {
-public:
-
-    /// @brief specifies type of query (by IP addr, by hwaddr, by DUID)
-    typedef enum {
-        TYPE_ADDR,    ///< query by IP address (either v4 or v6)
-        TYPE_HWADDR,  ///< query by hardware address (v4 only)
-        TYPE_DUID     ///< query by DUID (v6 only)
-    } Type;
-
-    /// @brief Specifies subnet-id (always used)
-    SubnetID subnet_id;
-
-    /// @brief Specifies IPv4/v6 address (used when query_type is TYPE_ADDR)
-    IOAddress addr;
-
-    /// @brief Specifies hardware address (used when query_type is TYPE_HWADDR)
-    HWAddrPtr hwaddr;
-
-    /// @brief Specifies identifier value (used when query_type is TYPE_DUID)
-    isc::dhcp::DuidPtr duid;
-
-    /// @brief Attempts to covert text to one of specified types
+    /// @brief Parameters specified for reservation-get and reservation-del
     ///
-    /// Supported values are: "address", hw-address and duid.
+    /// As both call types (get and delete) need specify which reservation to
+    /// act on, they have the same set of parameters. In particular, those
+    /// two call types support the following sets of parameters:
+    /// - address
+    /// - subnet-id, identifier-type, identifier-value (v4)
+    /// - subnet-id, lease-type, iaid, identifier-type, identifier-value (v6)
     ///
-    /// @param txt text to be converted
-    /// @return value converted to Parameters::Type
-    /// @throw BadValue if unsupported type is specified
-    static Type txtToType(const std::string& txt) {
-        if (txt == "address") {
-            return (Parameters::TYPE_ADDR);
-        } else if (txt == "hw-address") {
-            return (Parameters::TYPE_HWADDR);
-        } else if (txt == "duid") {
-            return (Parameters::TYPE_DUID);
-        } else {
-            isc_throw(BadValue, "Incorrect identifier type: "
-                      << txt << ", the only supported values are: "
-                      "address, hw-address, duid");
+    /// This class stores those parameters and is used to pass them around.
+    class Parameters {
+    public:
+
+        /// @brief specifies type of query (by IP addr, by hwaddr, by DUID)
+        typedef enum {
+            TYPE_ADDR,    ///< query by IP address (either v4 or v6)
+            TYPE_HWADDR,  ///< query by hardware address (v4 only)
+            TYPE_DUID     ///< query by DUID (v6 only)
+        } Type;
+
+        /// @brief Specifies subnet-id (always used)
+        SubnetID subnet_id;
+
+        /// @brief Specifies IPv4/v6 address (used when query_type is TYPE_ADDR)
+        IOAddress addr;
+
+        /// @brief Specifies hardware address (used when query_type is TYPE_HWADDR)
+        HWAddrPtr hwaddr;
+
+        /// @brief Specifies identifier value (used when query_type is TYPE_DUID)
+        isc::dhcp::DuidPtr duid;
+
+        /// @brief Attempts to covert text to one of specified types
+        ///
+        /// Supported values are: "address", hw-address and duid.
+        ///
+        /// @param txt text to be converted
+        /// @return value converted to Parameters::Type
+        /// @throw BadValue if unsupported type is specified
+        static Type txtToType(const std::string& txt) {
+            if (txt == "address") {
+                return (Parameters::TYPE_ADDR);
+            } else if (txt == "hw-address") {
+                return (Parameters::TYPE_HWADDR);
+            } else if (txt == "duid") {
+                return (Parameters::TYPE_DUID);
+            } else {
+                isc_throw(BadValue, "Incorrect identifier type: "
+                          << txt << ", the only supported values are: "
+                          "address, hw-address, duid");
+            }
         }
-    }
 
-    /// @brief specifies parameter types (true = query by address, false =
-    ///         query by identifier-type,identifier)
-    Type query_type;
+        /// @brief specifies parameter types (true = query by address, false =
+        ///         query by identifier-type,identifier)
+        Type query_type;
 
-    /// @brief Lease type (NA,TA or PD) used for v6 leases
-    Lease::Type lease_type;
+        /// @brief Lease type (NA,TA or PD) used for v6 leases
+        Lease::Type lease_type;
 
-    /// @brief IAID identifier used for v6 leases
-    uint32_t iaid;
+        /// @brief IAID identifier used for v6 leases
+        uint32_t iaid;
 
-    /// @brief Default constructor.
-    Parameters()
-        :addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
-         iaid(0) {
-    }
-};
+        /// @brief Default constructor.
+        Parameters()
+            :addr("::"), query_type(TYPE_ADDR), lease_type(Lease::TYPE_NA),
+             iaid(0) {
+        }
+    };
 
-private:
-
-    /// @brief Registers commands:
-    ///
-    /// Registers:
-    /// - lease4-add
-    /// - lease6-add
-    /// - lease4-get
-    /// - lease6-get
-    /// - lease4-del
-    /// - lease6-del
-    /// - lease4-update
-    /// - lease6-update
-    /// - lease4-wipe
-    /// - lease6-wipe
-
-    /// @throw Unexpected if CommandMgr is not available (should not happen)
-    void registerCommands();
-
-    /// @brief Deregisters commands:
-    ///
-    /// Deregisters:
-    /// - lease4-add
-    /// - lease6-add
-    /// - lease4-get
-    /// - lease6-get
-    /// - lease4-del
-    /// - lease6-del
-    /// - lease4-update
-    /// - lease6-update
-    /// - lease4-wipe
-    /// - lease6-wipe
-    ///
-    /// @throw Unexpected if CommandMgr is not available (should not happen)
-    void deregisterCommands();
-
+public:
     /// @brief lease4-add, lease6-add command handler
     ///
     /// This command attempts to add a lease.
@@ -192,7 +153,7 @@ private:
     /// @param command should be 'lease4-add' or 'lease6-add'
     /// @param args must contain host reservation definition.
     /// @return result of the operation
-    static ConstElementPtr
+    ConstElementPtr
     leaseAddHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease4-get, lease6-get command handler
@@ -237,7 +198,7 @@ private:
     /// @param command "lease4-get" or "lease6-get"
     /// @param args must contain host reservation definition.
     /// @return result of the operation (includes lease details, if found)
-    static ConstElementPtr
+    ConstElementPtr
     leaseGetHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease4-del command handler
@@ -267,7 +228,7 @@ private:
     /// @param command should be 'lease4-del' (but it's ignored)
     /// @param args must contain host reservation definition.
     /// @return result of the operation (host will be included as parameters, if found)
-    static ConstElementPtr
+    ConstElementPtr
     lease4DelHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease6-del command handler
@@ -300,7 +261,7 @@ private:
     /// @param command should be 'lease6-del' (but it's ignored)
     /// @param args must contain host reservation definition.
     /// @return result of the operation (host will be included as parameters, if found)
-    static ConstElementPtr
+    ConstElementPtr
     lease6DelHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease4-update handler
@@ -323,7 +284,7 @@ private:
     ///
     /// @param command - should be "lease4-update", but it is ignored
     /// @param args arguments that describe the lease being updated.
-    static ConstElementPtr
+    ConstElementPtr
     lease4UpdateHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease6-update handler
@@ -347,7 +308,7 @@ private:
     ///
     /// @param command - should be "lease6-update" (but it is ignored)
     /// @param args arguments that describe the lease being updated.
-    static ConstElementPtr
+    ConstElementPtr
     lease6UpdateHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease4-wipe handler
@@ -366,7 +327,7 @@ private:
     /// }";
     /// @param command - should be "lease4-wipe" (but is ignored)
     /// @param args arguments that describe the lease being updated.
-    static ConstElementPtr
+    ConstElementPtr
     lease4WipeHandler(const string& command, ConstElementPtr args);
 
     /// @brief lease6-wipe handler
@@ -385,7 +346,7 @@ private:
     /// }";
     /// @param command - should be "lease4-wipe" (but is ignored)
     /// @param args arguments that describe the lease being updated.
-    static ConstElementPtr
+    ConstElementPtr
     lease6WipeHandler(const string& command, ConstElementPtr args);
 
     /// @brief Extracts parameters required for reservation-get and reservation-del
@@ -397,63 +358,8 @@ private:
     /// @param args arguments passed to command
     /// @return parsed parameters
     /// @throw BadValue if input arguments don't make sense.
-    static Parameters getParameters(bool v6, const ConstElementPtr& args);
+    Parameters getParameters(bool v6, const ConstElementPtr& args);
 };
-
-LeaseCmdsImpl::LeaseCmdsImpl() {
-    registerCommands();
-}
-
-LeaseCmdsImpl::~LeaseCmdsImpl() {
-    deregisterCommands();
-}
-
-void LeaseCmdsImpl::registerCommands() {
-    /// @todo: Use registration mechanism once #5314 is merged.
-    /// See #5321 discussion.
-    CommandMgr::instance().registerCommand("lease4-add",
-        boost::bind(&LeaseCmdsImpl::leaseAddHandler, _1, _2));
-    CommandMgr::instance().registerCommand("lease6-add",
-        boost::bind(&LeaseCmdsImpl::leaseAddHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("lease4-get",
-        boost::bind(&LeaseCmdsImpl::leaseGetHandler, _1, _2));
-    CommandMgr::instance().registerCommand("lease6-get",
-        boost::bind(&LeaseCmdsImpl::leaseGetHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("lease4-del",
-    boost::bind(&LeaseCmdsImpl::lease4DelHandler, _1, _2));
-    CommandMgr::instance().registerCommand("lease6-del",
-    boost::bind(&LeaseCmdsImpl::lease6DelHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("lease4-update",
-    boost::bind(&LeaseCmdsImpl::lease4UpdateHandler, _1, _2));
-    CommandMgr::instance().registerCommand("lease6-update",
-    boost::bind(&LeaseCmdsImpl::lease6UpdateHandler, _1, _2));
-
-    CommandMgr::instance().registerCommand("lease4-wipe",
-    boost::bind(&LeaseCmdsImpl::lease4WipeHandler, _1, _2));
-    CommandMgr::instance().registerCommand("lease6-wipe",
-    boost::bind(&LeaseCmdsImpl::lease6WipeHandler, _1, _2));
-}
-
-void LeaseCmdsImpl::deregisterCommands() {
-    /// @todo: Use deregistration mechanism once #5321 discussion is done
-    CommandMgr::instance().deregisterCommand("lease4-add");
-    CommandMgr::instance().deregisterCommand("lease6-add");
-
-    CommandMgr::instance().deregisterCommand("lease4-get");
-    CommandMgr::instance().deregisterCommand("lease6-get");
-
-    CommandMgr::instance().deregisterCommand("lease4-del");
-    CommandMgr::instance().deregisterCommand("lease6-del");
-
-    CommandMgr::instance().deregisterCommand("lease4-update");
-    CommandMgr::instance().deregisterCommand("lease6-update");
-
-    CommandMgr::instance().deregisterCommand("lease4-wipe");
-    CommandMgr::instance().deregisterCommand("lease6-wipe");
-}
 
 ConstElementPtr
 LeaseCmdsImpl::leaseAddHandler(const std::string& name,
@@ -883,12 +789,48 @@ LeaseCmdsImpl::lease6WipeHandler(const string& /*cmd*/, ConstElementPtr params) 
     }
 }
 
-LeaseCmds::LeaseCmds()
-    :impl_(new LeaseCmdsImpl()) {
+ConstElementPtr
+LeaseCmds::leaseAddHandler(const string& command, ConstElementPtr args) {
+    return(impl_->leaseAddHandler(command, args));
 }
 
-LeaseCmds::~LeaseCmds() {
-    impl_.reset();
+ConstElementPtr
+LeaseCmds::leaseGetHandler(const string& command, ConstElementPtr args) {
+    return(impl_->leaseGetHandler(command, args));
+}
+
+ConstElementPtr
+LeaseCmds::lease4DelHandler(const string& command, ConstElementPtr args) {
+    return(impl_->lease4DelHandler(command, args));
+}
+
+ConstElementPtr
+LeaseCmds::lease6DelHandler(const string& command, ConstElementPtr args) {
+    return(impl_->lease6DelHandler(command, args));
+}
+
+ConstElementPtr
+LeaseCmds::lease4UpdateHandler(const string& command, ConstElementPtr args) {
+    return(impl_->lease4UpdateHandler(command, args));
+}
+
+ConstElementPtr
+LeaseCmds::lease6UpdateHandler(const string& command, ConstElementPtr args) {
+    return(impl_->lease6UpdateHandler(command, args));
+}
+
+ConstElementPtr
+LeaseCmds::lease4WipeHandler(const string& command, ConstElementPtr args) {
+    return(impl_->lease4WipeHandler(command, args));
+}
+
+ConstElementPtr
+LeaseCmds::lease6WipeHandler(const string& command, ConstElementPtr args) {
+    return(impl_->lease6WipeHandler(command, args));
+}
+
+LeaseCmds::LeaseCmds()
+    :impl_(new LeaseCmdsImpl()) {
 }
 
 };
