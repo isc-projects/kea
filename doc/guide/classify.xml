@@ -33,23 +33,30 @@
       behavior of almost any part of the DHCP message processing, including the assignment of
       leases from different pools, the assignment of different options (or different values of
       the same options) etc. In the current release of the software however, there are
-      only three mechanisms that take
-      advantage of client classification: subnet selection, assignment of different
+      only four mechanisms that take
+      advantage of client classification: subnet selection, definition of DHCPv4 private (codes 224-254) and code 43 options, assignment of different
       options and, for DHCPv4 cable modems, the setting of specific options for use with
       the TFTP server address and the boot file field.
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps:
+      The process of doing classification is conducted in four steps:
       <orderedlist>
       <listitem><para>
       Assess an incoming packet and assign it to zero or more classes.
+      </para></listitem>
+      <listitem><para>
+      If a private or code 43 DHCPv4 option is received, decoding it
+      following its client class or global (or for option 43 last
+      resort) definition.
       </para></listitem>
       <listitem><para>
       Choose a subnet, possibly based on the class information.
       </para></listitem>
       <listitem><para>
       Assign options, again possibly based on the class information.
+      For DHCPv4 private and code 43 options this includes class local
+      option definitions.
       </para></listitem>
       </orderedlist>
       </para>
