@@ -1521,6 +1521,52 @@ It is merely echoed by the server
      </note>
     </section>
 
+    <section id="dhcp4-private-opts">
+      <title>DHCPv4 Private Options</title>
+      <para>
+      Options with code between 224 and 254 are reserved for private use.
+      They can be defined at the global scope or at client class local
+      scope: this allows to use option definitions depending on context
+      and to set option data accordingly.
+      As the Vendor Specific Information option (code 43) can carry
+      in a not compatible way a raw binary value or sub-options this
+      mechanism is available for this option too.
+      </para>
+      <para>
+      The definition used to decode a VSI option is:
+      <orderedlist>
+      <listitem><para>
+      The local definition of a client class the incoming packet belongs to
+      </para></listitem>
+      <listitem><para>
+      If none, the global definition
+      </para></listitem>
+      <listitem><para>
+      If none, the last resort definition described in the next section
+      <xref linkend="dhcp4-vendor-opts"/> (backward compatible with
+      previous Kea versions).
+      </para></listitem>
+      </orderedlist>
+      </para>
+      <note>
+      <para>
+      This last resort definition for the Vendor Specific Information
+      option (code 43) is not compatible with a raw binary value.
+      So when there are some known cases where a raw binary value
+      will be used, a client class must be defined with a classification
+      expression matching these cases and an option definition for
+      the VSI option with a binary type and no encapsulation.
+      </para>
+      </note>
+      <note>
+      <para>
+      Option definitions in client classes is allowed only for these
+      limited option set (codes 43 and from 224 to 254), and only
+      for DHCPv4.
+      </para>
+      </note>
+    </section>
+
     <section id="dhcp4-vendor-opts">
       <title>DHCPv4 Vendor Specific Options</title>
       <para>

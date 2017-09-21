@@ -2867,13 +2867,17 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
             continue;
         }
         // Get the existing option for its content and remove all
-        const OptionBuffer buf = query->getOption(code)->getData();
+        OptionPtr opt = query->getOption(code);
+        if (!opt) {
+            /* should not happen but do not crash anyway */
+            continue;
+        }
+        const OptionBuffer buf = opt->getData();
         while (query->delOption(code)) {
             /* continue */
         }
         // Unpack the option and add it
-        OptionPtr opt = def->optionFactory(Option::V4, code,
-                                           buf.cbegin(), buf.cend());
+        opt = def->optionFactory(Option::V4, code, buf.cbegin(), buf.cend());
         query->addOption(opt);
     }
 }                          
