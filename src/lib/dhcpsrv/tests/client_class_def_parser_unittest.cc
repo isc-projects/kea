@@ -480,6 +480,21 @@ TEST_F(ClientClassDefParserTest, invalidExpression) {
                  DhcpConfigError);
 }
 
+// Verifies that a class with invalid option-def, fails to parse.
+TEST_F(ClientClassDefParserTest, invalidOptionDef) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "    \"option-def\": [ \n"
+        "      { \"bogus\": \"bad\" } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
+                 DhcpConfigError);
+}
+
 // Verifies that a class with invalid option-data, fails to parse.
 TEST_F(ClientClassDefParserTest, invalidOptionData) {
     std::string cfg_text =
@@ -585,7 +600,112 @@ TEST_F(ClientClassDefParserTest, noFixedFields) {
     EXPECT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
     EXPECT_EQ(0, cclass->getSname().size());
     EXPECT_EQ(0, cclass->getFilename().size());
+
+    // Nor option definitions
+    CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg->getAll(DHCP4_OPTION_SPACE)->empty());
 }
+
+// Test verifies option-def for a bad option fails to parse.
+TEST_F(ClientClassDefParserTest, badOptionDef) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"foo\", \n"
+        "           \"code\": 222, \n"
+        "           \"type\": \"uint32\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
+                 DhcpConfigError);
+}
+
+// Test verifies option-def works for private options (224-254).
+TEST_F(ClientClassDefParserTest, privateOptionDef) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"foo\", \n"
+        "           \"code\": 232, \n"
+        "           \"type\": \"uint32\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And the option definition.
+    CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg);
+    EXPECT_TRUE(cfg->get(DHCP4_OPTION_SPACE, 232));
+    EXPECT_FALSE(cfg->get(DHCP6_OPTION_SPACE, 232));
+    EXPECT_FALSE(cfg->get(DHCP4_OPTION_SPACE, 233));
+}
+
+// Test verifies option-def works for option 43.
+TEST_F(ClientClassDefParserTest, option43Def) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"test\": \"option[60].text == 'MICROSOFT'\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"vendor-encapsulated-options\", \n"
+        "           \"code\": 43, \n"
+        "           \"space\": \"dhcp4\", \n"
+        "           \"type\": \"empty\", \n"
+        "           \"encapsulate\": \"vsi\" \n"
+        "        } \n"
+        "      ], \n"
+        "    \"option-data\": [ \n"
+        "      { \n"
+        "         \"name\": \"vendor-encapsulated-options\" \n"
+        "      }, \n"
+        "      { \n"
+        "         \"code\": 1, \n"
+        "         \"space\": \"vsi\", \n"
+        "         \"csv-format\": false, \n"
+        "         \"data\": \"C0000200\" \n"
+        "      } \n"
+        "    ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And the option definition.
+    CfgOptionDefPtr cfg_def = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg_def);
+    EXPECT_TRUE(cfg_def->get(DHCP4_OPTION_SPACE, 43));
+
+    // Verify the option data.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(43, od.option_->getType());
+    const OptionCollection& oc = od.option_->getOptions();
+    ASSERT_EQ(1, oc.size());
+    OptionPtr opt = od.option_->getOption(1);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(1, opt->getType());
+    ASSERT_EQ(4, opt->getData().size());
+    const uint8_t expected[4] = { 0xc0, 0x00, 0x02, 0x00 };
+    EXPECT_EQ(0, std::memcmp(expected, &opt->getData()[0], 4));
+}
+
 
 // Test verifies that it is possible to define next-server field and it
 // is actually set in the class properly.

@@ -11,6 +11,8 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <eval/eval_context.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
@@ -86,6 +88,12 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     CfgOptionDefPtr defs(new CfgOptionDef());
     ConstElementPtr option_defs = class_def_cfg->get("option-def");
     if (option_defs) {
+        // Apply defaults
+        SimpleParser::setListDefaults(option_defs,
+            family == AF_INET ?
+                SimpleParser4::OPTION4_DEF_DEFAULTS :
+                SimpleParser6::OPTION6_DEF_DEFAULTS);
+
         OptionDefParser parser;
         BOOST_FOREACH(ConstElementPtr option_def, option_defs->listValue()) {
             OptionDefinitionTuple def;
