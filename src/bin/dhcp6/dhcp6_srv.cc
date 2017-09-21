@@ -912,10 +912,12 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
             // Skip it
             continue;
         }
+
         if (ccdef->getCfgOption()->empty()) {
             // Skip classes which don't configure options
             continue;
         }
+
         co_list.push_back(ccdef->getCfgOption());
     }
 
@@ -2441,7 +2443,6 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(solicit, ctx);
-    setReservedClientClasses(solicit, ctx);
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
@@ -2462,6 +2463,8 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
+
+    setReservedClientClasses(solicit, ctx);
 
     copyClientOptions(solicit, response);
     CfgOptionList co_list;
@@ -2489,12 +2492,13 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(request, ctx);
-    setReservedClientClasses(request, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
+
+    setReservedClientClasses(request, ctx);
 
     copyClientOptions(request, reply);
     CfgOptionList co_list;
@@ -2518,12 +2522,13 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(renew, ctx);
-    setReservedClientClasses(renew, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
+
+    setReservedClientClasses(renew, ctx);
 
     copyClientOptions(renew, reply);
     CfgOptionList co_list;
@@ -2547,12 +2552,13 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(rebind, ctx);
-    setReservedClientClasses(rebind, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
+
+    setReservedClientClasses(rebind, ctx);
 
     copyClientOptions(rebind, reply);
     CfgOptionList co_list;

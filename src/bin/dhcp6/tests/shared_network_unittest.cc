@@ -1097,6 +1097,7 @@ TEST_F(Dhcpv6SharedNetworkTest, variousFieldsInReservation) {
     client.setInterface("eth1");
     client.setDUID("00:03:00:01:11:22:33:44:55:66");
     ASSERT_NO_THROW(client.requestAddress(0xabcd));
+    ASSERT_NO_THROW(client.requestOption(D6O_NAME_SERVERS));
 
     ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
                                    "bird.example.org",
