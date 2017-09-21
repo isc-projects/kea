@@ -371,6 +371,14 @@ protected:
 typedef boost::shared_ptr<Subnet> SubnetPtr;
 
 
+class Subnet4;
+
+/// @brief A const pointer to a @c Subnet4 object.
+typedef boost::shared_ptr<const Subnet4> ConstSubnet4Ptr;
+
+/// @brief A pointer to a @c Subnet4 object.
+typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
+
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
@@ -393,6 +401,49 @@ public:
             const Triplet<uint32_t>& t2,
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
+
+    /// @brief Returns next subnet within shared network.
+    ///
+    /// If the current subnet doesn't belong to any shared network or if
+    /// the next subnet is the same as first subnet (specified in the
+    /// argument) a NULL pointer is returned.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet) const;
+
+    /// @brief Returns next subnet within shared network that matches
+    /// client classes.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    /// @param client_classes List of classes that the client belongs to.
+    /// The subnets not matching the classes aren't returned by this
+    /// method.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
+                             const ClientClasses& client_classes) const;
+
+    /// @brief Checks whether this subnet and parent shared network supports
+    /// the client that belongs to specified classes.
+    ///
+    /// This method extends the @ref Network::clientSupported method with
+    /// additional checks whether shared network owning this class supports
+    /// the client belonging to specified classes. If the class doesn't
+    /// belong to a shared network this method only checks if the subnet
+    /// supports specified classes.
+    ///
+    /// @param client_classes List of classes the client belongs to.
+    /// @return true if client can be supported, false otherwise.
+    virtual bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
     /// @brief Sets siaddr for the Subnet4
     ///
@@ -450,12 +501,13 @@ private:
     Cfg4o6 dhcp4o6_;
 };
 
-/// @brief A const pointer to a @c Subnet4 object.
-typedef boost::shared_ptr<const Subnet4> ConstSubnet4Ptr;
+class Subnet6;
 
-/// @brief A pointer to a @c Subnet4 object.
-typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
+/// @brief A const pointer to a @c Subnet6 object.
+typedef boost::shared_ptr<const Subnet6> ConstSubnet6Ptr;
 
+/// @brief A pointer to a Subnet6 object
+typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
 /// @brief A configuration holder for IPv6 subnet.
 ///
@@ -482,6 +534,49 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
+    /// @brief Returns next subnet within shared network.
+    ///
+    /// If the current subnet doesn't belong to any shared network or if
+    /// the next subnet is the same as first subnet (specified in the
+    /// arguments) a NULL pointer is returned.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet) const;
+
+    /// @brief Returns next subnet within shared network that matches
+    /// client classes.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    /// @param client_classes List of classes that the client belongs to.
+    /// The subnets not matching the classes aren't returned by this
+    /// method.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
+                             const ClientClasses& client_classes) const;
+
+    /// @brief Checks whether this subnet and parent shared network supports
+    /// the client that belongs to specified classes.
+    ///
+    /// This method extends the @ref Network::clientSupported method with
+    /// additional checks whether shared network owning this class supports
+    /// the client belonging to specified classes. If the class doesn't
+    /// belong to a shared network this method only checks if the subnet
+    /// supports specified classes.
+    ///
+    /// @param client_classes List of classes the client belongs to.
+    /// @return true if client can be supported, false otherwise.
+    virtual bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
     /// @brief Unparse a subnet object.
     ///
     /// @return A pointer to unparsed subnet configuration.
@@ -504,12 +599,6 @@ private:
     virtual void checkType(Lease::Type type) const;
 
 };
-
-/// @brief A const pointer to a @c Subnet6 object.
-typedef boost::shared_ptr<const Subnet6> ConstSubnet6Ptr;
-
-/// @brief A pointer to a Subnet6 object
-typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
 /// @name Definition of the multi index container holding subnet information
 ///

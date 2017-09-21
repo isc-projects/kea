@@ -157,16 +157,7 @@ public:
     template<typename SubnetPtrType, typename SubnetCollectionType>
     static SubnetPtrType getNextSubnet(const SubnetCollectionType& subnets,
                                        const SubnetPtrType& first_subnet,
-                                       const SubnetPtrType& current_subnet) {
-        // Current subnet must not be null. The caller must explicitly set it
-        // to one of the pointers that belong to this shared network, typically
-        // to a selected subnet.
-        if (!current_subnet) {
-            isc_throw(BadValue, "null subnet specified for a shared"
-                      " network while searching for next subnet is this"
-                      " network");
-        }
-
+                                       const SubnetID& current_subnet) {
         // It is ok to have a shared network without any subnets, but in this
         // case there is nothing else we can return but null pointer.
         if (subnets.empty()) {
@@ -177,9 +168,9 @@ public:
         // subnet must exist in this container, thus we throw if the iterator
         // is not found.
         const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
-        auto subnet_id_it = index.find(current_subnet->getID());
+        auto subnet_id_it = index.find(current_subnet);
         if (subnet_id_it == index.cend()) {
-            isc_throw(BadValue, "no such subnet " << current_subnet->getID()
+            isc_throw(BadValue, "no such subnet " << current_subnet
                       << " within shared network");
         }
 
@@ -235,7 +226,7 @@ SharedNetwork4::getSubnet(const SubnetID& subnet_id) const {
 
 Subnet4Ptr
 SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
-                              const Subnet4Ptr& current_subnet) const {
+                              const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
 }
 
@@ -283,7 +274,7 @@ SharedNetwork6::getSubnet(const SubnetID& subnet_id) const {
 
 Subnet6Ptr
 SharedNetwork6::getNextSubnet(const Subnet6Ptr& first_subnet,
-                              const Subnet6Ptr& current_subnet) const {
+                              const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet,
                                          current_subnet));
 }

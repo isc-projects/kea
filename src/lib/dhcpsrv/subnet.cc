@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <algorithm>
 #include <sstream>
@@ -174,6 +175,56 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     setT1(t1);
     setT2(t2);
     setValid(valid_lifetime);
+}
+
+Subnet4Ptr
+Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet) const {
+    SharedNetwork4Ptr network;
+    getSharedNetwork(network);
+    if (network) {
+        return (network->getNextSubnet(first_subnet, getID()));
+    }
+
+    return (Subnet4Ptr());
+}
+
+Subnet4Ptr
+Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet,
+                       const ClientClasses& client_classes) const {
+    SharedNetwork4Ptr network;
+    getSharedNetwork(network);
+    // We can only get next subnet if shared network has been defined for
+    // the current subnet.
+    if (network) {
+        Subnet4Ptr subnet;
+        do {
+            // Use subnet identifier of this subnet if this is the first
+            // time we're calling getNextSubnet. Otherwise, use the
+            // subnet id of the previously returned subnet.
+            SubnetID subnet_id = subnet ? subnet->getID() : getID();
+            subnet = network->getNextSubnet(first_subnet, subnet_id);
+            // If client classes match the subnet, return it. Otherwise,
+            // try another subnet.
+            if (subnet && subnet->clientSupported(client_classes)) {
+                return (subnet);
+            }
+        } while (subnet);
+    }
+
+    // No subnet found.
+    return (Subnet4Ptr());
+}
+
+
+bool
+Subnet4::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
+    NetworkPtr network;
+    getSharedNetwork(network);
+    if (network && !network->clientSupported(client_classes)) {
+        return (false);
+    }
+
+    return (Network4::clientSupported(client_classes));
 }
 
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
@@ -437,6 +488,55 @@ void Subnet6::checkType(Lease::Type type) const {
                   << "(" << static_cast<int>(type)
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
     }
+}
+
+Subnet6Ptr
+Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet) const {
+    SharedNetwork6Ptr network;
+    getSharedNetwork(network);
+    if (network) {
+        return (network->getNextSubnet(first_subnet, getID()));
+    }
+
+    return (Subnet6Ptr());
+}
+
+Subnet6Ptr
+Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet,
+                       const ClientClasses& client_classes) const {
+    SharedNetwork6Ptr network;
+    getSharedNetwork(network);
+    // We can only get next subnet if shared network has been defined for
+    // the current subnet.
+    if (network) {
+        Subnet6Ptr subnet;
+        do {
+            // Use subnet identifier of this subnet if this is the first
+            // time we're calling getNextSubnet. Otherwise, use the
+            // subnet id of the previously returned subnet.
+            SubnetID subnet_id = subnet ? subnet->getID() : getID();
+            subnet = network->getNextSubnet(first_subnet, subnet_id);
+            // If client classes match the subnet, return it. Otherwise,
+            // try another subnet.
+            if (subnet && subnet->clientSupported(client_classes)) {
+                return (subnet);
+            }
+        } while (subnet);
+    }
+
+    // No subnet found.
+    return (Subnet6Ptr());
+}
+
+bool
+Subnet6::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
+    NetworkPtr network;
+    getSharedNetwork(network);
+    if (network && !network->clientSupported(client_classes)) {
+        return (false);
+    }
+
+    return (Network6::clientSupported(client_classes));
 }
 
 data::ElementPtr
