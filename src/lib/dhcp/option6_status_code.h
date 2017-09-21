@@ -50,6 +50,8 @@ public:
 
     /// @brief Parses received buffer.
     ///
+    /// @throw OutOfRange if specified option is truncated
+    ///
     /// @param begin Iterator to first byte of option data
     /// @param end Iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
@@ -143,6 +145,9 @@ public:
     virtual void pack(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer.
+    ///
+    /// @throw OutOfRange if specified option is truncated
+    /// @throw BadDataTypeCast if first byte is not 0 or 1
     ///
     /// @param begin Iterator to first byte of option data
     /// @param end Iterator to end of option data (first byte after option end)
