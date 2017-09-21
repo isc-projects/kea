@@ -9,6 +9,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <asiolink/io_address.h>
@@ -119,17 +120,29 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     }
 
     // If relayed message has been received, try to match the giaddr with the
-    // relay address specified for a subnet. It is also possible that the relay
-    // address will not match with any of the relay addresses across all
-    // subnets, but we need to verify that for all subnets before we can try
-    // to use the giaddr to match with the subnet prefix.
+    // relay address specified for a subnet and/or shared network. It is also
+    // possible that the relay address will not match with any of the relay
+    // addresses across all subnets, but we need to verify that for all subnets
+    // before we can try to use the giaddr to match with the subnet prefix.
     if (!selector.giaddr_.isV4Zero()) {
         for (Subnet4Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
 
-            // Check if the giaddr is equal to the one defined for the subnet.
-            if (selector.giaddr_ != (*subnet)->getRelayInfo().addr_) {
-                continue;
+            // If relay information is specified for this subnet, it must match.
+            // Otherwise, we ignore this subnet.
+            if (!(*subnet)->getRelayInfo().addr_.isV4Zero()) {
+                if (selector.giaddr_ != (*subnet)->getRelayInfo().addr_) {
+                    continue;
+                }
+
+            } else {
+                // Relay information is not specified on the subnet level,
+                // so let's try matching on the shared network level.
+                SharedNetwork4Ptr network;
+                (*subnet)->getSharedNetwork(network);
+                if (!network || (selector.giaddr_ != network->getRelayInfo().addr_)) {
+                    continue;
+                }
             }
 
             // If a subnet meets the client class criteria return it.
@@ -198,29 +211,40 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
 Subnet4Ptr
 CfgSubnets4::selectSubnet(const std::string& iface,
-                 const ClientClasses& client_classes) const {
+                          const ClientClasses& client_classes) const {
     for (Subnet4Collection::const_iterator subnet = subnets_.begin();
          subnet != subnets_.end(); ++subnet) {
 
-        // If there's no interface specified for this subnet, proceed to
-        // the next subnet.
-        if ((*subnet)->getIface().empty()) {
-            continue;
+        Subnet4Ptr subnet_selected;
+
+        // First, try subnet specific interface name.
+        if (!(*subnet)->getIface().empty()) {
+            if ((*subnet)->getIface() == iface) {
+                subnet_selected = (*subnet);
+            }
+
+        } else {
+            // Interface not specified for a subnet, so let's try if
+            // we can match with shared network specific setting of
+            // the interface.
+            SharedNetwork4Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network && !network->getIface().empty() &&
+                (network->getIface() == iface)) {
+                subnet_selected = (*subnet);
+            }
         }
 
-        // If it's specified, but does not match, proceed to the next
-        // subnet.
-        if ((*subnet)->getIface() != iface) {
-            continue;
-        }
+        if (subnet_selected) {
 
-        // If a subnet meets the client class criteria return it.
-        if ((*subnet)->clientSupported(client_classes)) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_CFGMGR_SUBNET4_IFACE)
-                .arg((*subnet)->toText())
-                .arg(iface);
-            return (*subnet);
+            // If a subnet meets the client class criteria return it.
+            if (subnet_selected->clientSupported(client_classes)) {
+                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                          DHCPSRV_CFGMGR_SUBNET4_IFACE)
+                    .arg((*subnet)->toText())
+                    .arg(iface);
+                return (subnet_selected);
+            }
         }
     }
 

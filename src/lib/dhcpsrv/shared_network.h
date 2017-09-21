@@ -103,7 +103,7 @@ public:
     /// @param first_subnet Pointer to a subnet from which the caller is
     /// iterating over subnets within shared network. This is typically a
     /// subnet selected during "subnet selection" step.
-    /// @param current_subnet Pointer to a subnet for which next subnet is
+    /// @param current_subnet Identifier of a subnet for which next subnet is
     /// to be found.
     ///
     /// @return Pointer to next subnet or null pointer if no more subnets found.
@@ -111,7 +111,7 @@ public:
     /// @throw isc::BadValue if invalid arguments specified, e.g. unable to
     /// find first or current subnet within shared network.
     Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
-                             const Subnet4Ptr& current_subnet) const;
+                             const SubnetID& current_subnet) const;
 
     /// @brief Unparses shared network object.
     ///
@@ -226,7 +226,7 @@ public:
     /// @param first_subnet Pointer to a subnet from which the caller is
     /// iterating over subnets within shared network. This is typically a
     /// subnet selected during "subnet selection" step.
-    /// @param current_subnet Pointer to a subnet for which next subnet is
+    /// @param current_subnet Identifier of a subnet for which next subnet is
     /// to be found.
     ///
     /// @return Pointer to next subnet or null pointer if no more subnets found.
@@ -234,7 +234,7 @@ public:
     /// @throw isc::BadValue if invalid arguments specified, e.g. unable to
     /// find first or current subnet within shared network.
     Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
-                             const Subnet6Ptr& current_subnet) const;
+                             const SubnetID& current_subnet) const;
 
     /// @brief Unparses shared network object.
     ///
