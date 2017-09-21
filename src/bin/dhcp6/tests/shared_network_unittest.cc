@@ -47,6 +47,13 @@ const char* NETWORKS_CONFIG[] = {
     "                        {"
     "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
     "                        }"
+    "                    ],"
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"4000::\","
+    "                            \"prefix-len\": 96,"
+    "                            \"delegated-len\": 96"
+    "                        }"
     "                    ]"
     "                },"
     "                {"
@@ -55,6 +62,13 @@ const char* NETWORKS_CONFIG[] = {
     "                    \"pools\": ["
     "                        {"
     "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ],"
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"5000::\","
+    "                            \"prefix-len\": 96,"
+    "                            \"delegated-len\": 96"
     "                        }"
     "                    ]"
     "                }"
@@ -234,6 +248,13 @@ const char* NETWORKS_CONFIG[] = {
     "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
     "                        }"
     "                    ],"
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"4000::\","
+    "                            \"prefix-len\": 96,"
+    "                            \"delegated-len\": 96"
+    "                        }"
+    "                    ],"
     "                    \"reservations\": ["
     "                        {"
     "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
@@ -249,10 +270,18 @@ const char* NETWORKS_CONFIG[] = {
     "                            \"pool\": \"2001:db8:2::1 - 2001:db8:2::64\""
     "                        }"
     "                    ],"
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"5000::\","
+    "                            \"prefix-len\": 96,"
+    "                            \"delegated-len\": 96"
+    "                        }"
+    "                    ],"
     "                    \"reservations\": ["
     "                        {"
     "                            \"duid\": \"00:03:00:01:11:22:33:44:55:66\","
-    "                            \"ip-addresses\": [ \"2001:db8:2::28\" ]"
+    "                            \"ip-addresses\": [ \"2001:db8:2::28\" ],"
+    "                            \"prefixes\": [ \"1234::/64\" ]"
     "                        }"
     "                    ]"
     "                }"
@@ -1167,5 +1196,89 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
     ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
 }
 
+// Client requests two addresses and two prefixes and obtains them from two
+// different subnets.
+TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
+    // Create client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabcd);
+    client.requestAddress(0x1234);
+    client.requestPrefix(0x1111);
+    client.requestPrefix(0x2222);
+
+    // Configure the server with a shared network including two subnets. Each
+    // subnet has an address and prefix pool with a single available address
+    // and prefix respectively.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[0], *client.getServer()));
+
+    // 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // The two addresses should come from different subnets.
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    // Same for prefixes.
+    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("4000::"), 96, 96));
+    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("5000::"), 96, 96));
+
+    // Try to renew.
+    ASSERT_NO_THROW(client.doRenew());
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("4000::"), 96, 96));
+    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("5000::"), 96, 96));
+}
+
+// Client requests 2 addresses and 2 prefixes. There is one address and one prefix
+// reserved for the client.
+TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
+    // Create client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.setDUID("00:03:00:01:11:22:33:44:55:66");
+
+    // Client will request two addresses and two prefixes.
+    client.requestAddress(0xabcd);
+    client.requestAddress(0x1234);
+    client.requestPrefix(0x1111);
+    client.requestPrefix(0x2222);
+
+    // The server configuration contains a shared network with two subnets. Each
+    // subnet has an address and prefix pool. One of the subnets includes a reservation
+    // for an address and prefix.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[4], *client.getServer()));
+
+    // 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(4, client.getLeaseNum());
+    // The client should have got one reserved address and one reserved prefix.
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::28")));
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("1234::"), 64, IAID(0x1111)));
+
+    // The client should have got dynamically allocated address too and it must be
+    // different than the reserved address.
+    std::vector<Lease6> leases_1234 = client.getLeasesByIAID(0x1234);
+    ASSERT_EQ(1, leases_1234.size());
+    ASSERT_NE("2001:db8:2::28", leases_1234[0].addr_.toText());
+
+    // Same for prefix.
+    std::vector<Lease6> leases_2222 = client.getLeasesByIAID(0x2222);
+    ASSERT_EQ(1, leases_2222.size());
+    ASSERT_NE("1234::", leases_2222[0].addr_.toText());
+
+    // Try to renew and check this again.
+    ASSERT_NO_THROW(client.doRenew());
+    ASSERT_EQ(4, client.getLeaseNum());
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::28")));
+    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("1234::"), 64, IAID(0x1111)));
+
+    leases_1234 = client.getLeasesByIAID(0x1234);
+    ASSERT_EQ(1, leases_1234.size());
+    ASSERT_NE("2001:db8:2::28", leases_1234[0].addr_.toText());
+
+    leases_2222 = client.getLeasesByIAID(0x2222);
+    ASSERT_EQ(1, leases_2222.size());
+    ASSERT_NE("1234::", leases_2222[0].addr_.toText());
+}
 
 } // end of anonymous namespace
