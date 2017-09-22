@@ -14,6 +14,7 @@ BUILT_SOURCES = config_messages.h config_messages.cc
 
 lib_LTLIBRARIES = libkea-cfgclient.la
 libkea_cfgclient_la_SOURCES = config_data.h config_data.cc
+libkea_cfgclient_la_SOURCES += cmds_impl.h
 libkea_cfgclient_la_SOURCES += module_spec.h module_spec.cc
 libkea_cfgclient_la_SOURCES += base_command_mgr.cc base_command_mgr.h
 libkea_cfgclient_la_SOURCES += client_connection.cc client_connection.h
