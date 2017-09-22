@@ -789,7 +789,7 @@ public:
     /// This function parses configuration entries and creates instances
     /// of prefix delegation pools .
     ///
-    /// @param storage is the pool storage in which to store the parsed
+    /// @param pools is the pool storage in which to store the parsed
     /// @param pd_pool_list pointer to an element that holds entries
     /// that define a prefix delegation pool.
     ///
