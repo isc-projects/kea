@@ -960,12 +960,11 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
             if (!LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_,
                                                    addr)) {
 
-                // Ok, let's create a new lease...
-                ctx.subnet_ = subnet;
-
                 // Let's remember the subnet from which the reserved address has been
                 // allocated. We'll use this subnet for allocating other reserved
                 // resources.
+                ctx.subnet_ = subnet;
+
                 if (!ctx.host_subnet_) {
                     ctx.host_subnet_ = subnet;
                     if (!host->getHostname().empty()) {
@@ -986,6 +985,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                     }
                 }
 
+                // Ok, let's create a new lease...
                 Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
 
                 // ... and add it to the existing leases list.
