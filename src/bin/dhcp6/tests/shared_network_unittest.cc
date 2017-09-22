@@ -713,6 +713,24 @@ public:
         StatsMgr::instance().removeAll();
     }
 
+    /// @brief Conducts 4 packets exchanges for a client
+    ///
+    /// @param client this client will conduct the exchange
+    /// @param exp_addr expected IPv6 address to be assigned
+    /// @param iaid the iaid to be used by a client
+    /// @param hint hint to be sent (if empty, no hint will be sent)
+    void
+    doSARR(Dhcp6Client& client, std::string exp_addr, uint32_t iaid,
+           std::string hint = "") {
+        if (hint.empty()) {
+            ASSERT_NO_THROW(client.requestAddress(iaid, IOAddress("::")));
+        } else {
+            ASSERT_NO_THROW(client.requestAddress(iaid, IOAddress(hint)));
+        }
+        ASSERT_NO_THROW(client.doSARR());
+        ASSERT_TRUE(client.hasLeaseForAddress(IOAddress(exp_addr)));
+    }
+
     /// @brief Destructor.
     virtual ~Dhcpv6SharedNetworkTest() {
         StatsMgr::instance().removeAll();
@@ -733,17 +751,13 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[0], *client1.getServer()));
 
     // Client #1 requests an address in first subnet within a shared network.
-    ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
-    ASSERT_NO_THROW(client1.doSARR());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    doSARR(client1, "2001:db8:1::20", 0xabca, "2001:db8:1::20");
 
     // Client #2 The second client will request a lease and should be assigned
     // an address from the second subnet.
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
-    ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    ASSERT_NO_THROW(client2.doSARR());
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    doSARR(client2, "2001:db8:2::20", 0xabca0, "");
 
     // Cient #3. It sends Solicit which should result in NoAddrsAvail status
     // code because all addresses available for this link have been assigned.
@@ -781,9 +795,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[1], *client1.getServer()));
 
     // Client #1 should be assigned an address from shared network.
-    ASSERT_NO_THROW(client1.requestAddress(0xabca));
-    ASSERT_NO_THROW(client1.doSARR());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    doSARR(client1, "2001:db8:1::20", 0xabca, "");
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
@@ -1280,5 +1292,12 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_EQ(1, leases_2222.size());
     ASSERT_NE("1234::", leases_2222[0].addr_.toText());
 }
+
+/// @todo: Add a test for relay information specified for shared network.
+/// @todo: Add a test for relay information specified on each subnet
+///        in a shared network.
+/// @todo: Add a test for interface-id specified for shared network.
+/// @todo: Add a test for interface-id on each subnet in a shared network.
+/// Also, see http://kea.isc.org/ticket/5364 for more ideas.
 
 } // end of anonymous namespace
