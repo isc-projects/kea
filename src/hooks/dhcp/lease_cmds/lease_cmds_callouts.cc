@@ -27,53 +27,13 @@ extern "C" {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease4_add(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.leaseAddHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_ADD4_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseAddHandler(handle));
 }
 
-/// @brief This is a command callout for 'lease6-add' command.
-///
-/// @param handle Callout handle used to retrieve a command and
-/// provide a response.
-/// @return 0 if this callout has been invoked successfully,
-/// 1 otherwise.
 int lease6_add(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.leaseAddHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_ADD6_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseAddHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-get' command.
@@ -83,25 +43,8 @@ int lease6_add(CalloutHandle& handle) {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease4_get(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.leaseGetHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_GET4_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseGetHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-get' command.
@@ -111,81 +54,8 @@ int lease4_get(CalloutHandle& handle) {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease6_get(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.leaseGetHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_GET6_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
-}
-
-/// @brief This is a command callout for 'lease4-update' command.
-///
-/// @param handle Callout handle used to retrieve a command and
-/// provide a response.
-/// @return 0 if this callout has been invoked successfully,
-/// 1 otherwise.
-int lease4_update(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.lease4UpdateHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_UPDATE4_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
-}
-
-/// @brief This is a command callout for 'lease6-update' command.
-///
-/// @param handle Callout handle used to retrieve a command and
-/// provide a response.
-/// @return 0 if this callout has been invoked successfully,
-/// 1 otherwise.
-int lease6_update(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.lease6UpdateHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_UPDATE6_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseGetHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-del' command.
@@ -195,25 +65,8 @@ int lease6_update(CalloutHandle& handle) {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease4_del(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.lease4DelHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_DEL4_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.lease4DelHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-del' command.
@@ -223,25 +76,30 @@ int lease4_del(CalloutHandle& handle) {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease6_del(CalloutHandle& handle) {
-    ConstElementPtr response;
+    LeaseCmds lease_cmds;
+    return(lease_cmds.lease6DelHandler(handle));
+}
 
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
+/// @brief This is a command callout for 'lease4-update' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease4_update(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return(lease_cmds.lease4UpdateHandler(handle));
+}
 
-        response = lease_cmds.lease6DelHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_DEL6_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+/// @brief This is a command callout for 'lease6-update' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease6_update(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return(lease_cmds.lease6UpdateHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-wipe' command.
@@ -251,25 +109,8 @@ int lease6_del(CalloutHandle& handle) {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease4_wipe(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.lease4WipeHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE4_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.lease4WipeHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease6-wipe' command.
@@ -279,25 +120,8 @@ int lease4_wipe(CalloutHandle& handle) {
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
 int lease6_wipe(CalloutHandle& handle) {
-    ConstElementPtr response;
-
-    try {
-        ConstElementPtr command;
-        handle.getArgument("command", command);
-        ConstElementPtr args;
-        std::string cmd_name = parseCommand(args, command);
-        LeaseCmds lease_cmds;
-
-        response = lease_cmds.lease6WipeHandler(cmd_name, args);
-    } catch (const std::exception& ex) {
-        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE6_MALFORMED)
-            .arg(ex.what());
-    }
-
-    handle.setArgument("response", response);
-    return (0);
+    LeaseCmds lease_cmds;
+    return(lease_cmds.lease6WipeHandler(handle));
 }
 
 /// @brief This function is called when the library is loaded.

@@ -8,6 +8,8 @@
 #define LEASE_CMDS_H
 
 #include <cc/data.h>
+#include <hooks/hooks.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -31,9 +33,10 @@ public:
     /// @brief lease4-add, lease6-add command handler
     ///
     /// This command attempts to add a lease.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
     ///
-    /// An example full command looks as follows. Note that the args
-    /// parameter is expected to contain the "arguments" portion of it.
     /// This function covers both v4 and v6 leases.
     ///
     /// Example command for v4:
@@ -70,17 +73,21 @@ public:
     ///         "hostname": "urania.example.org""
     ///     }
     /// }
-
     ///
-    /// @param command should be 'lease4-add' or 'lease6-add'
-    /// @param args must contain host reservation definition.
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// add command JSON text in the "command" argument
     /// @return result of the operation
-    data::ConstElementPtr
-    leaseAddHandler(const std::string& command, data::ConstElementPtr args);
+    int
+    leaseAddHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-get, lease6-get command handler
     ///
     /// This command attempts to retrieve a lease that match selected criteria.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
+    ///
     /// The following types of parameters are supported:
     /// - (subnet-id, address) for both v4 and v6
     /// - (subnet-id, identifier-type, identifier) for v4
@@ -117,17 +124,24 @@ public:
     ///     "identifier": "77:77:77:77:77:77:77:77"
     ///     }
     /// }
-    /// @param command "lease4-get" or "lease6-get"
-    /// @param args must contain host reservation definition.
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
     /// @return result of the operation (includes lease details, if found)
-    data::ConstElementPtr
-    leaseGetHandler(const std::string& command, data::ConstElementPtr args);
+    int
+    leaseGetHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///
     /// This command attempts to delete an IPv4 lease that match selected
-    /// criteria. Two types of parameters are supported: (subnet-id, address) or
+    /// criteria.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
+    ///
+    /// Two types of parameters are supported: (subnet-id, address) or
     /// (subnet-id, identifier-type, identifier).
+    ///
     ///
     /// Example command for deletion by (subnet-id, address):
     /// {
@@ -147,15 +161,20 @@ public:
     ///         "identifier": "00:01:02:03:04:05"
     ///     }
     /// }";
-    /// @param command should be 'lease4-del' (but it's ignored)
-    /// @param args must contain host reservation definition.
-    /// @return result of the operation (host will be included as parameters, if found)
-    data::ConstElementPtr
-    lease4DelHandler(const std::string& command, data::ConstElementPtr args);
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// delete command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease4DelHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease6-del command handler
     ///
     /// This command attempts to delete a lease that match selected criteria.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
+    ///
     /// Two types of parameters are supported: (subnet-id, address) or
     /// (subnet-id, type, iaid, identifier-type, identifier).
     ///
@@ -180,11 +199,12 @@ public:
     ///         "identifier": "00:01:02:03:04:05"
     ///     }
     /// }";
-    /// @param command should be 'lease6-del' (but it's ignored)
-    /// @param args must contain host reservation definition.
-    /// @return result of the operation (host will be included as parameters, if found)
-    data::ConstElementPtr
-    lease6DelHandler(const std::string& command, data::ConstElementPtr args);
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// delete command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease6DelHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-update handler
     ///
@@ -192,6 +212,9 @@ public:
     /// specified will replace existing lease. The only condition is that
     /// the IP address must not change. If you want to change the IP address,
     /// please use lease4-del and lease4-add instead.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
     ///
     /// Example command:
     /// {
@@ -204,10 +227,11 @@ public:
     ///     }
     /// };
     ///
-    /// @param command - should be "lease4-update", but it is ignored
-    /// @param args arguments that describe the lease being updated.
-    data::ConstElementPtr
-    lease4UpdateHandler(const std::string& command, data::ConstElementPtr args);
+    /// @param handle Callout context - which is expected to contain the
+    /// update command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease4UpdateHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease6-update handler
     ///
@@ -215,6 +239,9 @@ public:
     /// specified will replace existing lease. The only condition is that
     /// the IP address must not change. If you want to change the IP address,
     /// please use lease6-del and lease6-add instead.
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
     ///
     /// Example command:
     /// {
@@ -228,10 +255,11 @@ public:
     ///     }
     /// }";
     ///
-    /// @param command - should be "lease6-update" (but it is ignored)
-    /// @param args arguments that describe the lease being updated.
-    data::ConstElementPtr
-    lease6UpdateHandler(const std::string& command, data::ConstElementPtr args);
+    /// @param handle Callout context - which is expected to contain the
+    /// update command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease6UpdateHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-wipe handler
     ///
@@ -239,6 +267,9 @@ public:
     /// subnet. Currently the leases are removed from the database,
     /// without any processing (like calling hooks or doing DDNS
     /// cleanups).
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
     ///
     /// Example command:
     /// {\n"
@@ -247,10 +278,12 @@ public:
     ///         "subnet-id": 44
     ///     }\n"
     /// }";
-    /// @param command - should be "lease4-wipe" (but is ignored)
-    /// @param args arguments that describe the lease being updated.
-    data::ConstElementPtr
-    lease4WipeHandler(const std::string& command, data::ConstElementPtr args);
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// wipe command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease4WipeHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease6-wipe handler
     ///
@@ -258,6 +291,9 @@ public:
     /// subnet. Currently the leases are removed from the database,
     /// without any processing (like calling hooks or doing DDNS
     /// cleanups).
+    /// It extracts the command name and arguments from the given Callouthandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// argument accordingly.
     ///
     /// Example command:
     /// {\n"
@@ -266,10 +302,12 @@ public:
     ///         "subnet-id": 44
     ///     }\n"
     /// }";
-    /// @param command - should be "lease4-wipe" (but is ignored)
-    /// @param args arguments that describe the lease being updated.
-    data::ConstElementPtr
-    lease6WipeHandler(const std::string& command, data::ConstElementPtr args);
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// wipe command JSON text in the "command" argument
+    /// @return result of the operation
+    int
+    lease6WipeHandler(hooks::CalloutHandle& handle);
 
 private:
     /// Pointer to the actual implementation
