@@ -3288,33 +3288,30 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     blurred. Sometimes it is useful to have more than one logical IP subnet
     being deployed on the same physical link. The need to understand
     that two or more subnets are used on the same link requires additional logic
-    in the DHCP server. This capability has been added in Kea 1.3.</para>
-
-    <para>The ability to use more than one subnet is called shared networks in
-    Kea and ISC DHCP projects. This feature is often called shared
-    subnets. Microsoft nomenclature tends to call it 'multinet'.</para>
-
-
+    in the DHCP server. This capability has been added in Kea 1.3.0. It is
+    called "shared networks" in Kea and ISC DHCP projects. It is sometimes also
+    called "shared subnets". In Microsoft's nomenclature it is called "multinet".
+    </para>
 
     <para>There are many use cases where the feature is useful. This paragraph
-    explains just a handful of more common ones. The first and by far the most
+    explains just a handful of the most common ones. The first and by far the most
     common use case is an existing network that has grown and is running out of
-    available address space. Instead of migrating all devices to a new, larger
-    subnet, it is easier to simple configure additional subnet on top of
+    available address space. Rather than migrating all devices to a new, larger
+    subnet, it is easier to simply configure additional subnet on top of the
     existing one. Sometimes, due to address space fragmentation (e.g. only many
     disjoint /24s are available) this is the only choice. Also, configuring
-    additional subnet has the advantage of not distrupting existing
-    devices.</para>
+    additional subnet has the advantage of not distrupting the operation of
+    existing devices.</para>
 
-    <para>Another very frequent use case are cable networks. There are two types
+    <para>Another very frequent use case comes from cable networks. There are two types
     of devices in cable networks: cable modems and the end user devices behind
     them. It is a common practice to use different subnet for cable modems to
     prevent users from tinkering with their cable modems. In this case, the
-    distinction is based on the type of device, rather than coming out of
-    running out address space.</para>
+    distinction is based on the type of device, rather than address space
+    exhaustion.</para>
 
-    <para>Kea 1.3 introduced support for shared networks. To define a shared
-    network, an additional scope is now honored:
+    <para>In order to define a shared network an additional configuration scope
+    is introduced:
 <screen>
 {
 "Dhcp4": {
@@ -3345,8 +3342,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         // This is regular subnet. It's not part of any shared-network.
         "subnet4": [
             {
-                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
-                "subnet": "192.0.3.0/24"
+                "subnet": "192.0.3.0/24",
+                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ]
             }
         ]
 
@@ -3363,14 +3360,15 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     consist of two or more subnets. However, for testing purposes it is allowed
     to define a shared network with just one subnet or even an empty one.  This
     is not a recommended practice in production networks, as the shared network
-    logic requires additional processing and thus lowers performace. In general,
-    usage of shared networks is somewhat discouraged, unless they are really
-    needed.</para>
+    logic requires additional processing and thus lowers server's performace.
+    To avoid unnecessary peformance degradation the shared subnets should only
+    be defined when required by the deployment.
+    </para>
 
-    <para>Shared networks provide an ability to specify many parameters on
+    <para>Shared networks provide an ability to specify many parameters in
     the shared network scope that will apply to all subnets within it. If
     necessary, you can specify a parameter on the shared network scope and then
-    override its value on the subnet scope. For example:
+    override its value in the subnet scope. For example:
 <screen>
 "shared-networks": [
     {
@@ -3416,28 +3414,28 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
                      "data": "192.0.2.1"
                  } ]</userinput>
             }
-        ],
+        ]
     } ]</screen>
     In this example, there is a log-servers option defined that is available to
     clients in both subnets in this shared network. Also, a valid lifetime is
-    set to 10 minutes. However, the first subnet overrides some of the values
+    set to 10 minutes (600s). However, the first subnet overrides some of the values
     (valid lifetime is 20 minutes, different IP address for log-servers), but
     also adds its own option (router address). Assuming a client asking for
     router and log servers options is assigned a lease from this subnet, he will
     get a lease for 20 minutes and log-servers and routers value of 10.0.0.254.
-    If the same client is assigned to the second subnet, he will gett a 10
-    minutes lease, log-servers value of 1.2.3.4 and routers set to 192.0.2.1.
+    If the same client is assigned to the second subnet, he will get a 10
+    minutes long lease, log-servers value of 1.2.3.4 and routers set to 192.0.2.1.
     </para>
 
     <section>
       <title>Local and relayed traffic in shared networks</title>
 
-    <para>It is possible to specify interface name on shared network scope to
+    <para>It is possible to specify interface name in the shared network scope to
     tell the server that this specific shared network is reachable directly (not
     via relays) using local network interface. It is sufficient to specify
     it once on the shared network level. As all subnets in a shared network are
     expected to be used on the same physical link, it is a configuration error
-    to attempt to make a shared network out of subnets that are reachable over
+    to attempt to define a shared network using subnets that are reachable over
     different interfaces. It is allowed to specify interface parameter on each
     subnet, although its value must be the same for each subnet. Thus it's
     usually more convenient to specify it once on the shared network level.
@@ -3464,7 +3462,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
                  // error:
                  // "interface": "eth1"
             }
-        ],
+        ]
     } ]
 </screen>
 </para>
@@ -3512,9 +3510,9 @@ as long as it is valid IPv4 address.</para>
       <title>Client classification in shared networks</title>
 
 <para>Sometimes it is desired to segregate clients into specific subnets.
-A case of cable network where modems should use one subnet and everything else
-should use another is a good example. For that reason Kea allows restricting
-access to specific subnets based on client classification. See <xref
+A case of cable network where modems should use one subnet and other devices
+should use another subnet is a good example. For that reason Kea allows for
+restricting access to specific subnets based on client classification. See <xref
 linkend="classify"/> for details on how to define client classes.
 
 The following example defines two classes of devices. The decision is made
@@ -3552,10 +3550,10 @@ based on option 93 values.
 }
 </screen>
 In this example each class has its own restriction. Only clients that belong to
-class a-devices will be able to use subnet 192.0.2.0/26 and only clients
+class "a-devices" will be able to use subnet 192.0.2.0/26 and only clients
 belonging to b-devices will be able to use subnet 10.0.0.0/24. Care should be
 taken to not define too restrictive classification rules, as clients that are
-not able to use any subnets will be refused service. Although, this may be
+not able to use any subnets will be refused service. Although, this may be a
 desired outcome if one desires to service only clients of known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
@@ -3609,10 +3607,10 @@ one of the reasons why defining a shared network may impact performance. If
 there is a reservation for a client in any subnet, that particular subnet will
 be picked for the client. Although it's technically not an error, it is
 considered a bad practice to define reservations for the same host in multiple
-subnets belonging to the same client.</para>
+subnets belonging to the same shared network.</para>
 
 <para>While not strictly mandatory, it is strongly recommended to use explicit
-ID values for subnets if you plan to use database storage for host
+"id" values for subnets if you plan to use database storage for host
 reservations. If ID is not specified, the values for it be autogenerated,
 i.e. it will assign increasing integer values starting from 1.</para>
     </section>
