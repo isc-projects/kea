@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <config/command_mgr.h>
+#include <config/cmds_impl.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <asiolink/io_address.h>
@@ -36,7 +37,7 @@ namespace isc {
 namespace lease_cmds {
 
 /// @brief Wrapper class around reservation command handlers.
-class LeaseCmdsImpl {
+class LeaseCmdsImpl : private CmdsImpl {
 public:
     /// @brief Parameters specified for reservation-get and reservation-del
     ///
@@ -201,6 +202,7 @@ public:
     /// @throw BadValue if input arguments don't make sense.
     Parameters getParameters(bool v6, const ConstElementPtr& args);
 
+#if 0
 private:
     /// @brief Extracts the command name and arguments from a Callout handle
     ///
@@ -252,6 +254,7 @@ private:
 
     /// @brief Stores the command arguments extracted by a call to extractCommand
     ConstElementPtr cmd_args_;
+#endif
 };
 
 int
