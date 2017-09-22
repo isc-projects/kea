@@ -201,60 +201,6 @@ public:
     /// @return parsed parameters
     /// @throw BadValue if input arguments don't make sense.
     Parameters getParameters(bool v6, const ConstElementPtr& args);
-
-#if 0
-private:
-    /// @brief Extracts the command name and arguments from a Callout handle
-    ///
-    /// @param handle Callout context handle expected to contain the JSON command
-    /// text
-    ///
-    /// @throw isc::BadValue if the text does not contain a properly formed command
-    void extractCommand(CalloutHandle& handle) {
-        try {
-            ConstElementPtr command;
-            handle.getArgument("command", command);
-            cmd_name_ = parseCommand(cmd_args_, command);
-        } catch (std::exception& ex) {
-            isc_throw(isc::BadValue, "JSON command text is invalid: " << ex.what());
-        }
-    }
-
-    /// @brief Set the callout argument "response" to indicate success
-    ///
-    /// @param handle Callout context handle in which to set the "response" argument
-    /// @param text string text to be used as the response description
-    void setSuccessResponse(CalloutHandle& handle, const std::string& text) {
-        ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, text);
-        setResponse (handle, response);
-    }
-
-    /// @brief Set the callout argument "response" to indicate an error
-    ///
-    /// @param handle Callout context handle in which to set the "response" argument
-    /// @param text string text to be used as the response description
-    /// @param status numeric value to use as the response result, defaults to
-    /// CONTROL_RESULT_ERROR
-    void setErrorResponse(CalloutHandle& handle, const std::string& text,
-        int status=CONTROL_RESULT_ERROR) {
-        ConstElementPtr response = createAnswer(status, text);
-        setResponse (handle, response);
-    }
-
-    /// @brief Set the callout argument "response" to the given response
-    ///
-    /// @param handle Callout context handle in which to set the "response" argument
-    /// @param response ElementPtr to a the result to use as the reponse
-    void setResponse(CalloutHandle& handle, ConstElementPtr& response) {
-        handle.setArgument ("response", response);
-    }
-
-    /// @brief Stores the command name extracted by a call to extractCommand
-    std::string cmd_name_;
-
-    /// @brief Stores the command arguments extracted by a call to extractCommand
-    ConstElementPtr cmd_args_;
-#endif
 };
 
 int

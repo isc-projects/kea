@@ -31,6 +31,12 @@ int lease4_add(CalloutHandle& handle) {
     return(lease_cmds.leaseAddHandler(handle));
 }
 
+/// @brief This is a command callout for 'lease6-add' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
 int lease6_add(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
     return(lease_cmds.leaseAddHandler(handle));
