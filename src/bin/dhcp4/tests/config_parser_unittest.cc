@@ -2218,15 +2218,11 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    /// @todo The option 213 is a standard DHCPv4 option. However, at
-    /// this point there is no definition for this option in
-    /// libdhcp++, so it should be allowed to define it from the
-    /// configuration interface. This test will have to be removed
-    /// once definitions for remaining standard options are created.
+    /// There is no definition for unassigned option 170.
     config =
         "{ \"option-def\": [ {"
-        "      \"name\": \"access-network-domain-name\","
-        "      \"code\": 213,"
+        "      \"name\": \"unassigned-option-170\","
+        "      \"code\": 170,"
         "      \"type\": \"string\","
         "      \"space\": \"dhcp4\""
         "  } ]"
@@ -2241,12 +2237,12 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 213);
+        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 170);
     ASSERT_TRUE(def);
 
     // Check the option data.
-    EXPECT_EQ("access-network-domain-name", def->getName());
-    EXPECT_EQ(213, def->getCode());
+    EXPECT_EQ("unassigned-option-170", def->getName());
+    EXPECT_EQ(170, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
