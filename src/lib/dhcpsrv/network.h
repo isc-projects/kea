@@ -362,7 +362,7 @@ public:
 
     /// @brief Sets new preferred lifetime for a network.
     ///
-    /// @param valid New preferred lifetime in seconds.
+    /// @param preferred New preferred lifetime in seconds.
     void setPreferred(const Triplet<uint32_t>& preferred) {
         preferred_ = preferred;
     }
