@@ -2270,7 +2270,7 @@ TEST_F(Dhcpv4SrvTest, option43LastResort) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv.processDiscover(query);
@@ -2292,7 +2292,7 @@ TEST_F(Dhcpv4SrvTest, option43LastResort) {
     EXPECT_EQ(1, sopt->getType());
 }
 
-// Checks effect of raw not compatible option 43
+// Checks effect of raw not compatible option 43 (no failure)
 TEST_F(Dhcpv4SrvTest, option43BadRaw) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -2378,6 +2378,78 @@ TEST_F(Dhcpv4SrvTest, option43BadRaw) {
     EXPECT_EQ(0, opt->len() - opt->getHeaderLen());
 }
 
+// Checks effect of raw not compatible option 43 (failure)
+TEST_F(Dhcpv4SrvTest, option43FailRaw) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // The vendor-encapsulated-options has an incompatible data
+    // so won't have the expected content.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    // which will raise an exception
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    EXPECT_THROW(srv.deferredUnpack(query), InvalidOptionValue);
+}
+
 // Verifies raw option 43 can be handled (global)
 TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
     IfaceMgrTestConfig test_config(true);
@@ -2444,7 +2516,7 @@ TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2539,7 +2611,7 @@ TEST_F(Dhcpv4SrvTest, option43RawClass) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2650,7 +2722,7 @@ TEST_F(Dhcpv4SrvTest, option43Class) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2784,7 +2856,7 @@ TEST_F(Dhcpv4SrvTest, option43ClassPriority) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2924,7 +2996,7 @@ TEST_F(Dhcpv4SrvTest, option43Classes) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -3036,7 +3108,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     query->addOption(prl);
 
     srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
 
     // Check if the option 245 was re-unpacked
     opt2 = query->getOption(245);
