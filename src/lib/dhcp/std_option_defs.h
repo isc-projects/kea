@@ -37,6 +37,11 @@ namespace {
 #define NO_RECORD_DEF 0, 0
 #endif
 
+// SLP Service Scope option.
+//
+// The scope list is optional.
+RECORD_DECL(SERVICE_SCOPE_RECORDS, OPT_BOOLEAN_TYPE, OPT_STRING_TYPE);
+
 // fqdn option record fields.
 //
 // Note that the flags field indicates the type of domain
@@ -59,6 +64,11 @@ RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 // A client identifier: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
+
+// RFC7618 DHCPv4 Port Parameter option.
+//
+// PSID offset, PSID-len and PSID
+RECORD_DECL(V4_PORTPARAMS_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT16_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
@@ -174,10 +184,17 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "streettalk-server", DHO_STREETTALK_SERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "streettalk-directory-assistance-server", DHO_STDASERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "user-class", DHO_USER_CLASS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "slp-service-scope", DHO_SERVICE_SCOPE, OPT_RECORD_TYPE, false,
+      RECORD_DEF(SERVICE_SCOPE_RECORDS), "" },
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
-    // Unfortunately the AUTHENTICATE option contains a 64-bit
+    { "nds-servers", DHO_NDS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "nds-tree-name", DHO_NDS_TREE_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "nds-context", DHO_NDS_CONTEXT, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "bcms-controller-names", DHO_BCMCS_DOMAIN_NAME_LIST, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "bcms-controller-address", DHO_BCMCS_IPV4_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    // Unfortunatelly the AUTHENTICATE option contains a 64-bit
     // data field called 'replay-detection' that can't be added
     // as a record field to a custom option. Also, there is no
     // dedicated option class to handle it so we simply return
@@ -190,6 +207,15 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "client-system", DHO_SYSTEM, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "client-ndi", DHO_NDI, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NDI_RECORDS), "" },
     { "uuid-guid", DHO_UUID_GUID, OPT_RECORD_TYPE, false, RECORD_DEF(UUID_GUID_RECORDS), "" },
+    { "uap-servers", DHO_USER_AUTH, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "geoconf-civic", DHO_GEOCONF_CIVIC, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "pcode", DHO_PCODE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "tcode", DHO_TCODE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "netinfo-server-address", DHO_NETINFO_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "netinfo-server-tag", DHO_NETINFO_TAG, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "default-url", DHO_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "auto-config", DHO_AUTO_CONFIG, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "name-service-search", DHO_NAME_SERVICE_SEARCH, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "subnet-selection", DHO_SUBNET_SELECTION,
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "domain-search", DHO_DOMAIN_SEARCH, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
@@ -208,7 +234,15 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     /// ok to specify multiple instances of the "vivso-suboptions" which will be
     /// combined in a single option by the server before responding to a client.
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
-      false, NO_RECORD_DEF, "" }
+      false, NO_RECORD_DEF, "" },
+    { "pana-agent", DHO_PANA_AGENT, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "v4-lost", DHO_V4_LOST, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "capwap-ac-v4", DHO_CAPWAP_AC_V4, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "sip-ua-cs-domains", DHO_SIP_UA_CONF_SERVICE_DOMAINS, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "v4-portparams", DHO_V4_PORTPARAMS, OPT_RECORD_TYPE, false,
+      RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
+    { "v4-captive-portal", DHO_V4_CAPTIVE_PORTAL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaining options.
 };
@@ -349,6 +383,14 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
+    { "v6-lost", D6O_V6_LOST, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "capwap-ac-v6", D6O_CAPWAP_AC_V6, OPT_IPV6_ADDRESS_TYPE, true,
+      NO_RECORD_DEF, "" },
+    { "relay-id", D6O_RELAY_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "v6-access-domain", D6O_V6_ACCESS_DOMAIN, OPT_FQDN_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "sip-ua-cs-list", D6O_SIP_UA_CS_LIST, OPT_FQDN_TYPE, true,
+      NO_RECORD_DEF, "" },      
     { "bootfile-url", D6O_BOOTFILE_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
@@ -359,8 +401,16 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "pd-exclude", D6O_PD_EXCLUDE, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
+    { "link-address", D6O_LINK_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "solmax-rt", D6O_SOL_MAX_RT, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "inf-max-rt", D6O_INF_MAX_RT, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcp4o6-server-addr", D6O_DHCPV4_O_DHCPV6_SERVER, OPT_IPV6_ADDRESS_TYPE, true,
+      NO_RECORD_DEF, "" },
+    { "v6-captive-portal", D6O_V6_CAPTIVE_PORTAL, OPT_STRING_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
     { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
