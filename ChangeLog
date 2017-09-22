@@ -1,7 +1,7 @@
 1301.	[func]		fdupont
 	Added some standard option definitions which are supported
 	by ISC DHCP but not (yet) by Kea.
-	(Trac #5227, git xxx)
+	(Trac #5227, git 4bef838245f08fca5f2cf037cd3a75278b77f8f9)
 
 1300.	[doc]		tomek
 	Documentation for shared networks added.
