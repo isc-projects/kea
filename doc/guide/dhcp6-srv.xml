@@ -2991,6 +2991,353 @@ If not specified, the default value is:
   </section>
   <!-- end of host reservations section -->
 
+  <!-- shared networks starts here -->
+  <section id="shared-network6">
+    <title>Shared networks in DHCPv6</title>
+
+    <para>DHCP servers use subnet information in two ways. First, it is used
+    to determine the point of attachment, or simply put, where the client is
+    connected to the network. Second, the subnet information is used to group
+    information pertaining to specific location in the network. This approach
+    works well in general case, but the are scenarios where the boundaries are
+    blurred. Sometimes it is useful to have more than one logical IP subnet
+    being deployed on the same physical link. The need to understand
+    that two or more subnets are used on the same link requires additional logic
+    in the DHCP server. This capability has been added in Kea 1.3.0.  It is
+    called "shared networks" in Kea and ISC DHCP projects. It is sometimes also
+    called "shared subnets". In Microsoft's nomenclature it is called "multinet".
+    </para>
+
+    <para>There are many use cases where the feature is useful. The most common
+    example in the IPv4 case is when the server is running out of available
+    addresses in a subnet. This is less common in IPv6, but the shared networks
+    are still useful in IPv6. One of the use cases is an exhaustion of IPv6
+    delegated prefixes within a subnet. Another IPv6 specific example
+    is an experiment with addressing scheme. With the advent of IPv6 deployment
+    and vast address space, many organizations split the address space into
+    subnets, then deploy it and after a while discover that they want to split it
+    differently. In the transition period they want both old and new addressing
+    to be available. Thus the need for more than one subnet on the same physical
+    link.</para>
+
+    <para>Finally, the case of cable networks is directly applicable in
+    IPv6. There are two types of devices in cable networks: cable modems and the
+    end user devices behind them. It is a common practice to use different
+    subnet for cable modems to prevent users from tinkering with their cable
+    modems. In this case, the distinction is based on the type of device, rather
+    than coming out of running out address space.</para>
+
+    <para>In order to define a shared network an additional configuration scope
+    is introduced:
+<screen>
+{
+"Dhcp6": {
+    <userinput>"shared-networks": [
+        {
+            // Name of the shared network. It may be an arbitrary string
+            // and it must be unique among all shared networks.
+            "name": "ipv6-lab-1",
+
+            // This starts a list of subnets in this shared network.
+            // There are two subnets in this example.
+            "subnet6": [
+                {
+                    "subnet": "2001:db8::/48",
+                    "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
+                },
+                {
+                    "subnet": "3ffe:ffe::/64",
+                    "pools": [ { "pool":  "3ffe:ffe::/64" } ]
+                }
+            ]
+        } ]</userinput>, // end of shared-networks
+
+        // It is likely that in your network you'll have a mix of regular,
+        // "plain" subnets and shared networks. It is perfectly valid to mix
+        // them in the same config file.
+        //
+        // This is regular subnet. It's not part of any shared-network.
+        "subnet6": [
+            {
+                "subnet": "2001:db9::/48",
+                "pools": [ { "pool":  "2001:db9::/64" } ]
+            }
+        ]
+
+    } // end of Dhcp6
+}
+</screen>
+    </para>
+    <para>As you see in the example, it is possible to mix shared and regular
+    ("plain") subnets. Each shared network must have a unique name. This is a
+    similar concept to ID for subnets, but it offers more flexibility. This is used
+    for logging, but also internally for identifying shared networks.</para>
+
+    <para>In principle it makes sense to define only shared networks that
+    consist of two or more subnets. However, for testing purposes it is allowed
+    to define a shared network with just one subnet or even an empty one.  This
+    is not a recommended practice in production networks, as the shared network
+    logic requires additional processing and thus lowers server's performace.
+    To avoid unnecessary peformance degradation the shared subnets should only
+    be defined when required by the deployment.
+    </para>
+
+    <para>Shared networks provide an ability to specify many parameters in
+    the shared network scope that will apply to all subnets within it. If
+    necessary, you can specify a parameter in the shared network scope and then
+    override its value on the subnet scope. For example:
+<screen>
+"shared-networks": [
+    {
+        "name": "lab-network3",
+
+        // This applies to all subnets in this shared network, unless
+        // values are overridden on subnet scope.
+        <userinput>"valid-lifetime": 600</userinput>,
+
+        // This option is made available to all subnets in this shared
+        // network.
+        <userinput>"option-data": [ {
+            "name": "dns-servers",
+            "data": "2001:db8::8888"
+        } ]</userinput>,
+
+        "subnet6": [
+            {
+                "subnet": "2001:db8:1::/48",
+                "pools": [ { "pool":  "2001:db8:1::1 - 2001:db8:1::ffff" } ],
+
+                // This particular subnet uses different values.
+                <userinput>"valid-lifetime": 1200,
+                "option-data": [
+                {
+                    "name": "dns-servers",
+                    "data": "2001:db8::1:2"
+                },
+                {
+                    "name": "unicast",
+                    "data": "2001:abcd::1"
+                } ]</userinput>
+            },
+            {
+                 "subnet": "2001:db8:2::/48",
+                 "pools": [ { "pool":  "2001:db8:2::1 - 2001:db8:2::ffff" } ],
+
+                 // This subnet does not specify its own valid-lifetime value,
+                 // so it is inherited from shared network scope.
+                 <userinput>"option-data": [
+                 {
+                     "name": "dns-servers",
+                     "data": "2001:db8:cafe::1"
+                 } ]</userinput>
+            }
+        ],
+    } ]</screen>
+
+    In this example, there is a dns-servers option defined that is available to
+    clients in both subnets in this shared network. Also, a valid lifetime is
+    set to 10 minutes (600s). However, the first subnet overrides some of the values
+    (valid lifetime is 20 minutes, different IP address for dns-servers), but
+    also adds its own option (unicast address). Assuming a client asking for a
+    server unicast and dns servers options is assigned a lease from this subnet,
+    he will get a lease for 20 minutes and dns-servers and be allowed to use
+    server unicast at address 2001:abcd::1. If the same client is assigned to
+    the second subnet, he will get a 10 minutes long lease, dns-servers value of
+    2001:db8:cafe::1 and no server unicast.
+    </para>
+
+    <section>
+      <title>Local and relayed traffic in shared networks</title>
+
+    <para>It is possible to specify interface name in the shared network scope to
+    tell the server that this specific shared network is reachable directly (not
+    via relays) using local network interface. It is sufficient to specify
+    it once in the shared network level. As all subnets in a shared network are
+    expected to be used on the same physical link, it is a configuration error
+    to attempt to make a shared network out of subnets that are reachable over
+    different interfaces. It is allowed to specify interface parameter on each
+    subnet, although its value must be the same for each subnet. Thus it's
+    usually more convenient to specify it once on the shared network level.
+<screen>
+"shared-networks": [
+    {
+        "name": "office-floor-2",
+
+        // This tells Kea that the whole shared networks is reachable over
+        // local interface. This applies to all subnets in this network.
+        <userinput>"interface": "eth0"</userinput>,
+
+        "subnet6": [
+            {
+                "subnet": "2001:db8::/64",
+                "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ],
+                <userinput>"interface": "eth0"</userinput>
+            },
+            {
+                 "subnet": "3ffe:abcd::/64",
+                 "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ]
+
+                 // Specifying a different interface name is configuration
+                 // error:
+                 // "interface": "eth1"
+            }
+        ],
+    } ]
+</screen>
+</para>
+
+<para>Somewhat similar to interface names, also relay IP addresses can be
+specified for the whole shared network. However, depending on your relay
+configuration, it may use different IP addresses depending on which subnet
+is being used. Thus there is no requirement to use the same IP relay address
+for each subnet. Here's an example:
+
+<screen>
+"shared-networks": [
+    {"
+        "name": "kakapo",
+        <userinput>"relay": {
+            "ip-address": "2001:db8::abcd"
+        }</userinput>,
+        "subnet6": [
+            {
+                "subnet": "2001:db8::/64",
+                <userinput>"relay": {
+                    "ip-address": "2001:db8::1234"
+                }</userinput>,
+                "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
+            },
+            {
+                 "subnet": "3ffe:abcd::/64",
+                 "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
+                 <userinput>"relay": {
+                    "ip-address": "3ffe:abcd::cafe"
+                 }</userinput>
+            }
+        ]
+    }
+]</screen>
+In this particular case the relay IP address specified on network level doesn't
+have much sense, as it is overridden in both subnets, but it was left there
+as an example of how one could be defined on network level. Note that the
+relay agent IP address typically belongs to the subnet it relays packets from,
+but this is not a strict requirement. Therefore Kea accepts any value here
+as long as it is valid IPv6 address.</para>
+
+    </section>
+    <section>
+      <title>Client classification in shared networks</title>
+
+<para>Sometimes it is desired to segregate clients into specific subnets.
+A case of cable network where modems should use one subnet and other devices
+should use another subnet is a good example. For that reason Kea allows for
+restricting access to specific subnets based on client classification. See <xref
+linkend="classify"/> for details on how to define client classes.
+
+The following example defines two classes of devices. The decision is made
+based on option 1234 values.
+<screen>
+{
+    "client-classes": [
+        {
+
+            "name": "a-devices",
+            "test": "option[1234].hex == 0x0001"
+        },
+        {
+            "name": "b-devices",
+            "test": "option[1234].hex == 0x0002"
+        }
+    ],
+    "shared-networks": [
+        {
+            "name": "galah",
+            "subnet6": [
+                {
+                    "subnet": "2001:db8:1::/64",
+                    "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ],
+                    <userinput>"client-class": "a-devices"</userinput>
+                },
+                {
+                    "subnet": "2001:db8:3::/64",
+                    "pools": [ { "pool": "2001:db8:3::20 - 2001:db8:3::ff" } ],
+                    <userinput>"client-class": "b-devices"</userinput>
+                }
+            ]
+        }
+    ]
+}
+</screen>
+In this example each class has its own restriction. Only clients that belong to
+class a-devices will be able to use subnet 2001:db8:1::/64 and only clients
+belonging to b-devices will be able to use subnet 2001:db8:3::/64. Care should
+be taken to not define too restrictive classification rules, as clients that are
+not able to use any subnets will be refused service. Although, this may be
+desired outcome if one desires to service only clients of known properties
+(e.g. only VoIP phones allowed on a given link).</para>
+
+    </section>
+
+    <section>
+      <title>Host reservations in shared networks</title>
+
+<para>
+  Subnets being part of a shared network allow host reservations, similar to
+  regular subnets:
+  <screen>
+{
+    "shared-networks": [
+    {
+        "name": "frog",
+        "subnet6": [
+            {
+                "subnet": "2001:db8:1::/64",
+                "id": 100,
+                "pools": [ { "2001:db8:1::1 - 2001:db8:1::64" } ],
+                <userinput>"reservations": [
+                {
+                    "duid": "00:03:00:01:11:22:33:44:55:66",
+                    "ip-addresses": [ "2001:db8:1::28" ]
+                }
+                ]</userinput>
+            },
+            {
+                "subnet": "2001:db8:3::/64",
+                "id": 101,
+                "pools": [ { "pool": "2001:db8:3::1 - 2001:db8:3::64" } ],
+                <userinput>"reservations": [
+                    {
+                        "duid": "00:03:00:01:aa:bb:cc:dd:ee:ff",
+                        "ip-addresses": [ "2001:db8:2::28" ]
+                    }
+                ]</userinput>
+            }
+        ]
+    }
+    ]
+}
+  </screen>
+</para>
+<para>It is worth noting that Kea conducts additional checks when processing a
+packet if shared networks are defined. First, instead of simply checking if
+there's a reservation for a given client in his initially selected subnet, it
+goes through all subnets in a shared network looking for a reservation. This is
+one of the reasons why defining a shared network may impact performance. If
+there is a reservation for a client in any subnet, that particular subnet will
+be picked for the client. Although it's technically not an error, it is
+considered a bad practice to define reservations for the same host in multiple
+subnets belonging to the same shared network.</para>
+
+<para>While not strictly mandatory, it is strongly recommended to use explicit
+"id" values for subnets if you plan to use database storage for host
+reservations. If ID is not specified, the values for it be autogenerated,
+i.e. it will assign increasing integer values starting from 1.</para>
+    </section>
+
+  </section>
+
+  <!-- end of shared networks -->
+
     <section id="dhcp6-serverid">
       <title>Server Identifier in DHCPv6</title>
       <para>The DHCPv6 protocol uses a "server identifier" (also known
@@ -4250,21 +4597,16 @@ If not specified, the default value is:
       </itemizedlist>
     </section>
 
-    <!--
     <section id="dhcp6-srv-examples">
       <title>Kea DHCPv6 server examples</title>
 
       <para>
-        This section provides easy to use example. Each example can be read
-        separately. It is not intended to be read sequentially as there will
-        be many repetitions between examples. They are expected to serve as
-        easy to use copy-paste solutions to many common deployments.
+        A collection of simple to use examples for DHCPv6 component of Kea is
+        available with the sources. It is located in doc/examples/kea6
+        directory. At the time of writing this text there were 18 examples,
+        but the number is growing slowly with each release.
       </para>
 
-      @todo: add simple configuration for direct clients
-      @todo: add configuration for relayed clients
-      @todo: add client classification example
-
-    </section> -->
+    </section>
 
   </chapter>
