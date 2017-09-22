@@ -3003,22 +3003,19 @@ If not specified, the default value is:
     blurred. Sometimes it is useful to have more than one logical IP subnet
     being deployed on the same physical link. The need to understand
     that two or more subnets are used on the same link requires additional logic
-    in the DHCP server. This capability has been added in Kea 1.3.</para>
+    in the DHCP server. This capability has been added in Kea 1.3.0.  It is
+    called "shared networks" in Kea and ISC DHCP projects. It is sometimes also
+    called "shared subnets". In Microsoft's nomenclature it is called "multinet".
+    </para>
 
-    <para>The ability to use more than one subnet is called shared networks in
-    Kea and ISC DHCP projects. This feature is often called shared
-    subnets. Microsoft nomenclature tends to call it
-    'multinet'.</para>
-
-    <para>There are many use cases where the feature is useful. While the most
-    typical example of a subnet growing and running out of addresses is most
-    common in IPv4, there are several scenarios where it may be useful in IPv6
-    as well. It is very unlikely any reasonably managed IPv6 network to ever run
-    out of addresses. However, it may run out of address space when handling
-    IPv6 prefixes. Another IPv6 specific example is an experiment with
-    addressing scheme. With the advent of IPv6 deployment and vast address
-    space, many organizations split the address space into subnets, then
-    deploy it and after a while discover that they want to split it
+    <para>There are many use cases where the feature is useful. The most common
+    example in the IPv4 case is when the server is running out of available
+    addresses in a subnet. This is less common in IPv6, but the shared networks
+    are still useful in IPv6. One of the use cases is an exhaustion of IPv6
+    delegated prefixes within a subnet. Another IPv6 specific example
+    is an experiment with addressing scheme. With the advent of IPv6 deployment
+    and vast address space, many organizations split the address space into
+    subnets, then deploy it and after a while discover that they want to split it
     differently. In the transition period they want both old and new addressing
     to be available. Thus the need for more than one subnet on the same physical
     link.</para>
@@ -3030,8 +3027,8 @@ If not specified, the default value is:
     modems. In this case, the distinction is based on the type of device, rather
     than coming out of running out address space.</para>
 
-    <para>Kea 1.3 introduced support for shared networks. To define a shared
-    network, an additional scope is now honored:
+    <para>In order to define a shared network an additional configuration scope
+    is introduced:
 <screen>
 {
 "Dhcp6": {
@@ -3080,13 +3077,14 @@ If not specified, the default value is:
     consist of two or more subnets. However, for testing purposes it is allowed
     to define a shared network with just one subnet or even an empty one.  This
     is not a recommended practice in production networks, as the shared network
-    logic requires additional processing and thus lowers performace. In general,
-    usage of shared networks is somewhat discouraged, unless they are really
-    needed.</para>
+    logic requires additional processing and thus lowers server's performace.
+    To avoid unnecessary peformance degradation the shared subnets should only
+    be defined when required by the deployment.
+    </para>
 
-    <para>Shared networks provide an ability to specify many parameters on
+    <para>Shared networks provide an ability to specify many parameters in
     the shared network scope that will apply to all subnets within it. If
-    necessary, you can specify a parameter on the shared network scope and then
+    necessary, you can specify a parameter in the shared network scope and then
     override its value on the subnet scope. For example:
 <screen>
 "shared-networks": [
@@ -3138,23 +3136,23 @@ If not specified, the default value is:
 
     In this example, there is a dns-servers option defined that is available to
     clients in both subnets in this shared network. Also, a valid lifetime is
-    set to 10 minutes. However, the first subnet overrides some of the values
+    set to 10 minutes (600s). However, the first subnet overrides some of the values
     (valid lifetime is 20 minutes, different IP address for dns-servers), but
     also adds its own option (unicast address). Assuming a client asking for a
     server unicast and dns servers options is assigned a lease from this subnet,
     he will get a lease for 20 minutes and dns-servers and be allowed to use
     server unicast at address 2001:abcd::1. If the same client is assigned to
-    the second subnet, he will get a 10 minutes lease, dns-servers value of
+    the second subnet, he will get a 10 minutes long lease, dns-servers value of
     2001:db8:cafe::1 and no server unicast.
     </para>
 
     <section>
       <title>Local and relayed traffic in shared networks</title>
 
-    <para>It is possible to specify interface name on shared network scope to
+    <para>It is possible to specify interface name in the shared network scope to
     tell the server that this specific shared network is reachable directly (not
     via relays) using local network interface. It is sufficient to specify
-    it once on the shared network level. As all subnets in a shared network are
+    it once in the shared network level. As all subnets in a shared network are
     expected to be used on the same physical link, it is a configuration error
     to attempt to make a shared network out of subnets that are reachable over
     different interfaces. It is allowed to specify interface parameter on each
@@ -3231,9 +3229,9 @@ as long as it is valid IPv6 address.</para>
       <title>Client classification in shared networks</title>
 
 <para>Sometimes it is desired to segregate clients into specific subnets.
-A case of cable network where modems should use one subnet and everything else
-should use another is a good example. For that reason Kea allows restricting
-access to specific subnets based on client classification. See <xref
+A case of cable network where modems should use one subnet and other devices
+should use another subnet is a good example. For that reason Kea allows for
+restricting access to specific subnets based on client classification. See <xref
 linkend="classify"/> for details on how to define client classes.
 
 The following example defines two classes of devices. The decision is made
@@ -3328,10 +3326,10 @@ one of the reasons why defining a shared network may impact performance. If
 there is a reservation for a client in any subnet, that particular subnet will
 be picked for the client. Although it's technically not an error, it is
 considered a bad practice to define reservations for the same host in multiple
-subnets belonging to the same client.</para>
+subnets belonging to the same shared network.</para>
 
 <para>While not strictly mandatory, it is strongly recommended to use explicit
-ID values for subnets if you plan to use database storage for host
+"id" values for subnets if you plan to use database storage for host
 reservations. If ID is not specified, the values for it be autogenerated,
 i.e. it will assign increasing integer values starting from 1.</para>
     </section>
