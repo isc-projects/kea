@@ -1,3 +1,7 @@
+1300.	[doc]		tomek
+	Documentation for shared networks added.
+	(Trac #5310, git 41fd3bb7ed2f4cd15db6cbd14713f4474f659c92)
+
 1299.	[doc]		fdupont, tmark
 	Added an example stunnel configuration file to demonstrate
 	using kea-shell through https.
