@@ -155,19 +155,6 @@ public:
                           end, expected_type, encapsulates);
     }
 
-    /// @brief Create a sample DHCPv4 option 43 with suboptions.
-    static OptionBuffer createVendorOption() {
-        const uint8_t opt_data[] = {
-            0x2B, 0x0D,  // Vendor-Specific Information (CableLabs)
-            // Suboptions start here...
-            0x02, 0x05,  // Device Type Option (length = 5)
-            'D', 'u', 'm', 'm', 'y',
-            0x04, 0x04,   // Serial Number Option (length = 4)
-            0x42, 0x52, 0x32, 0x32 // Serial number
-        };
-        return (OptionBuffer(opt_data, opt_data + sizeof(opt_data)));
-    }
-
     /// @brief Create a sample DHCPv4 option 82 with suboptions.
     static OptionBuffer createAgentInformationOption() {
         const uint8_t opt_data[] = {
@@ -793,9 +780,10 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
     isc::dhcp::OptionCollection options; // list of options
+    list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options);
+        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -861,21 +849,6 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     Option4AddrLst::AddressContainer addresses = tftp->getAddresses();
     ASSERT_EQ(1, addresses.size());
     EXPECT_EQ("10.0.0.10", addresses[0].toText());
-
-    // Vendor Specific Information option
-    x = options.find(43);
-    ASSERT_FALSE(x == options.end());
-    OptionPtr vsi = x->second;
-    ASSERT_TRUE(vsi);
-    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, vsi->getType());
-    suboptions = vsi->getOptions();
-
-    // There should be one suboption of VSI.
-    ASSERT_EQ(1, suboptions.size());
-    OptionPtr eso = suboptions.begin()->second;
-    ASSERT_TRUE(eso);
-    EXPECT_EQ(0xdc, eso->getType());
-    EXPECT_EQ(2, eso->len());
 
     // Checking DHCP Relay Agent Information Option.
     x = options.find(DHO_DHCP_AGENT_OPTIONS);
@@ -955,8 +928,9 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
 
     // Parse options.
     OptionCollection options;
+    list<uint16_t> deferred;
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                            options));
+                                            options, deferred));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
@@ -1015,7 +989,9 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar", options));
+    list<uint16_t> deferred;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar",
+                                            options, deferred));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());
@@ -1173,15 +1149,6 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_NTP_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
-
-    // The following option requires well formed buffer to be created from.
-    // Not just a dummy one. This buffer includes some suboptions.
-    OptionBuffer vendor_opts_buf = createVendorOption();
-    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS,
-                                    vendor_opts_buf.begin(),
-                                    vendor_opts_buf.end(),
-                                    typeid(OptionCustom),
-                                    "vendor-encapsulated-options-space");
 
     LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NAME_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
@@ -1982,6 +1949,35 @@ TEST_F(LibDhcpTest, setRuntimeOptionDefs) {
 
     // All option definitions should be gone now.
     testRuntimeOptionDefs(5, 100, false);
+}
+
+// This test verifies the processing of option 43
+TEST_F(LibDhcpTest, option43) {
+    // Check shouldDeferOptionUnpack()
+    EXPECT_TRUE(LibDHCP::shouldDeferOptionUnpack(DHCP4_OPTION_SPACE, 43));
+    EXPECT_FALSE(LibDHCP::shouldDeferOptionUnpack(DHCP4_OPTION_SPACE, 44));
+    EXPECT_FALSE(LibDHCP::shouldDeferOptionUnpack(DHCP6_OPTION_SPACE, 43));
+
+    // Check last resort
+    OptionDefinitionPtr def;
+    def = LibDHCP::getLastResortOptionDef(DHCP6_OPTION_SPACE, 43);
+    EXPECT_FALSE(def);
+    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 44);
+    EXPECT_FALSE(def);
+    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(def);
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ(43, def->getCode());
+    EXPECT_EQ("vendor-encapsulated-options-space", def->getEncapsulatedSpace());
+    EXPECT_EQ("vendor-encapsulated-options", def->getName());
+    EXPECT_EQ(0, def->getRecordFields().size());
+    EXPECT_EQ(OptionDataType::OPT_EMPTY_TYPE, def->getType());
+
+    OptionDefinitionPtr def_by_name =
+        LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE,
+                                        "vendor-encapsulated-options");
+    EXPECT_TRUE(def_by_name);
+    EXPECT_EQ(def, def_by_name);
 }
 
 } // end of anonymous space

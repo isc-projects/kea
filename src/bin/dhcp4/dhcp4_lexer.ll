@@ -471,6 +471,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"option-def\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_OPTION_DEF(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("option-def", driver.loc_);

@@ -9,6 +9,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
@@ -950,6 +951,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
     // this before calling accept(), because getSubnet4() may need client
     // class information.
     classifyPacket(query);
+
+    // Now it is classified the deferred unpacking can be done.
+    deferredUnpack(query);
 
     // Check whether the message should be further processed or discarded.
     // There is no need to log anything here. This function logs by itself.
@@ -2873,6 +2877,65 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         }
     }
 }
+
+void
+Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
+{
+    // Iterate on the list of deferred option codes
+    BOOST_FOREACH(const uint16_t& code, query->getDeferredOptions()) {
+        OptionDefinitionPtr def;
+        // Iterate on client classes
+        const ClientClasses& classes = query->getClasses();
+        for (ClientClasses::const_iterator cclass = classes.begin();
+             cclass != classes.end(); ++cclass) {
+            // Get the client class definition for this class
+            const ClientClassDefPtr& ccdef =
+                CfgMgr::instance().getCurrentCfg()->
+                getClientClassDictionary()->findClass(*cclass);
+            // If not found skip it
+            if (!ccdef) {
+                continue;
+            }
+            // If there is no option definition skip it
+            if (!ccdef->getCfgOptionDef()) {
+                continue;
+            }
+            def = ccdef->getCfgOptionDef()->get(DHCP4_OPTION_SPACE, code);
+            // Stop at the first client class with a defition
+            if (def) {
+                break;
+            }
+        }
+        // If not found try the global definition
+        if (!def) {
+            def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, code);
+        }
+        if (!def) {
+            def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, code);
+        }
+        // Finish by last resort definition
+        if (!def) {
+            def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, code);
+        }
+        // If not defined go to the next option
+        if (!def) {
+            continue;
+        }
+        // Get the existing option for its content and remove all
+        OptionPtr opt = query->getOption(code);
+        if (!opt) {
+            // should not happen but do not crash anyway
+            continue;
+        }
+        const OptionBuffer buf = opt->getData();
+        while (query->delOption(code)) {
+            // continue
+        }
+        // Unpack the option and add it
+        opt = def->optionFactory(Option::V4, code, buf.cbegin(), buf.cend());
+        query->addOption(opt);
+    }
+}                          
 
 void
 Dhcpv4Srv::startD2() {

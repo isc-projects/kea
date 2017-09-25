@@ -36,6 +36,19 @@
         "re-detect": true
     },
 
+    // Option 43 last resort definition can make well-formed messages
+    // to be rejected because they use not compatible "raw" value,
+    // and different vendors may define different sub-options.
+    // The option definition should be applied to avoid these problems,
+    // for instance by defining at the global scope the option as binary.
+    // In client-classes the option may be redefined as carrying vendor
+    // dependent sub-options.
+    "option-def": [ {
+        "name": "vendor-encapsulated-options",
+        "code": 43,
+        "type": "binary"
+    } ],
+
     // We need to specify the the database used to store leases. As of
     // September 2016, four database backends are supported: MySQL,
     // PostgreSQL, Cassandra, and the in-memory database, Memfile.
