@@ -333,6 +333,13 @@ AllocEngine::findReservationInternal(ContextType& ctx,
                     break;
                 }
             }
+
+        } else {
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_RESERVATIONS_SKIPPED)
+                .arg(ctx.query_->getLabel())
+                .arg(subnet->toText());
+
         }
 
         // We need to get to the next subnet if this is a shared network. If it
@@ -771,9 +778,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  :
                                  subnet->getPoolCapacity(ctx.currentIA().type_));
 
-        total_attempts += max_attempts;
-
         for (uint64_t i = 0; i < max_attempts; ++i) {
+
+            ++total_attempts;
+
             IOAddress candidate = allocator->pickAddress(subnet, ctx.duid_,
                                                          hint);
 
