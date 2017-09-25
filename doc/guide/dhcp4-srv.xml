@@ -1639,7 +1639,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-      Another possibility adde din Kea 1.3 is to redefine the option,
+      Another possibility, added in Kea 1.3, is to redefine the option,
       see <xref linkend="dhcp4-private-opts"/>.
       </para>
     </section>

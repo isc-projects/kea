@@ -367,10 +367,12 @@ public:
     /// @brief Returns a reference to option codes which unpacking
     /// will be deferred.
     ///
-    /// @notes Only options 42 and 224-254 are subject of deferred
-    /// unpacking: when the packet unpacking is performed each time
-    /// such an option is found it is unpacked as an unknown option
+    /// Only options 43 and 224-254 are subject of deferred
+    /// unpacking: when the packet unpacking is performed, each time
+    /// such an option is found, it is unpacked as an unknown option
     /// and the code added in this list.
+    ///
+    /// @return List of codes of options which unpacking is deferred.
     std::list<uint16_t>& getDeferredOptions() {
         return (deferred_options_);
     }
