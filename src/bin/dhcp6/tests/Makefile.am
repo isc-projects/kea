@@ -97,6 +97,7 @@ dhcp6_unittests_SOURCES += classify_unittests.cc
 dhcp6_unittests_SOURCES += parser_unittest.cc
 dhcp6_unittests_SOURCES += simple_parser6_unittest.cc
 dhcp6_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
+dhcp6_unittests_SOURCES += shared_network_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 

@@ -305,6 +305,11 @@ public:
         /// @brief Subnet selected for the client by the server.
         Subnet6Ptr subnet_;
 
+        /// @brief Subnet from which host reservations should be retrieved.
+        ///
+        /// It can be NULL, in which case @c subnet_ value is used.
+        Subnet6Ptr host_subnet_;
+
         /// @brief Client identifier
         DuidPtr duid_;
 
@@ -443,7 +448,7 @@ public:
             ias_.push_back(IAContext());
         };
 
-        /// @brief Returns host for currently selected subnet.
+        /// @brief Returns host from the most preferred subnet.
         ///
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
@@ -727,10 +732,13 @@ private:
     /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
     /// @param host_get Pointer to the @ref HostMgr functions to be used
     /// to retrieve reservation by subnet identifier and host identifier.
+    /// @param ipv6_only Boolean value indicating if only IPv6 reservations
+    /// should be retrieved.
     /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
     template<typename ContextType>
     static void findReservationInternal(ContextType& ctx,
-                                        const HostGetFunc& host_get);
+                                        const HostGetFunc& host_get,
+                                        const bool ipv6_only = false);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
