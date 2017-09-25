@@ -53,8 +53,8 @@ is the same. First, it starts with parameters sanitization and then some
 interaction with isc::dhcp::LeaseMgr is conducted.
 
 For commands that do something with a specific lease (lease4-get, lease6-get,
-lease4-del, lease6-del), there is a @ref isc::lease_cmds::Parameters class that
-contains parsed elements.
+lease4-del, lease6-del), there is a @ref isc::lease_cmds::LeaseCmdsImpl::Parameters
+class that contains parsed elements.
 
 For details see documentation and code of the following handlers:
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseAddHandler (lease4-add, lease6-add)
