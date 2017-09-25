@@ -1,3 +1,10 @@
+1303.	[func]		tmark
+	The command handlers in the lease_cmds hook library are now
+	implemented has hook callouts and registered with the Hooks
+	manager. Prior to this they were registered as command handlers
+	with the Command Mgr.
+	(Trac #5332, git c902bda9f026720f6efbf2e5ad407302aeb5e466)
+
 1302.	[func]		marcin, tomek
 	DHCPv6 server supports shared networks. It allows for grouping
 	multiple subnets and use them interchangeably to allocate
