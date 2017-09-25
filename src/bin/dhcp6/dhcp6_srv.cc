@@ -879,9 +879,18 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
         }
     };
 
-    // Next, subnet configured options.
-    if (ctx.subnet_ && !ctx.subnet_->getCfgOption()->empty()) {
-        co_list.push_back(ctx.subnet_->getCfgOption());
+    if (ctx.subnet_) {
+        // Next, subnet configured options.
+        if (!ctx.subnet_->getCfgOption()->empty()) {
+            co_list.push_back(ctx.subnet_->getCfgOption());
+        }
+
+        // Then, shared network specific options.
+        SharedNetwork6Ptr network;
+        ctx.subnet_->getSharedNetwork(network);
+        if (network && !network->getCfgOption()->empty()) {
+            co_list.push_back(network->getCfgOption());
+        }
     }
 
     // Each class in the incoming packet
@@ -903,10 +912,12 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
             // Skip it
             continue;
         }
+
         if (ccdef->getCfgOption()->empty()) {
             // Skip classes which don't configure options
             continue;
         }
+
         co_list.push_back(ccdef->getCfgOption());
     }
 
@@ -2432,7 +2443,6 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(solicit, ctx);
-    setReservedClientClasses(solicit, ctx);
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
@@ -2454,12 +2464,16 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
 
+    setReservedClientClasses(solicit, ctx);
+
     copyClientOptions(solicit, response);
     CfgOptionList co_list;
     buildCfgOptionList(solicit, ctx, co_list);
     appendDefaultOptions(solicit, response, co_list);
     appendRequestedOptions(solicit, response, co_list);
     appendRequestedVendorOptions(solicit, response, ctx, co_list);
+
+    updateReservedFqdn(ctx, response);
 
     // Only generate name change requests if sending a Reply as a result
     // of receiving Rapid Commit option.
@@ -2478,12 +2492,13 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(request, ctx);
-    setReservedClientClasses(request, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
+
+    setReservedClientClasses(request, ctx);
 
     copyClientOptions(request, reply);
     CfgOptionList co_list;
@@ -2492,6 +2507,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendRequestedOptions(request, reply, co_list);
     appendRequestedVendorOptions(request, reply, ctx, co_list);
 
+    updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -2506,12 +2522,13 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(renew, ctx);
-    setReservedClientClasses(renew, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
+
+    setReservedClientClasses(renew, ctx);
 
     copyClientOptions(renew, reply);
     CfgOptionList co_list;
@@ -2520,6 +2537,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendRequestedOptions(renew, reply, co_list);
     appendRequestedVendorOptions(renew, reply, ctx, co_list);
 
+    updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -2534,12 +2552,13 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     initContext(rebind, ctx);
-    setReservedClientClasses(rebind, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
+
+    setReservedClientClasses(rebind, ctx);
 
     copyClientOptions(rebind, reply);
     CfgOptionList co_list;
@@ -2548,6 +2567,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     appendRequestedOptions(rebind, reply, co_list);
     appendRequestedVendorOptions(rebind, reply, ctx, co_list);
 
+    updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
@@ -3099,6 +3119,44 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
 }
 
 void
+Dhcpv6Srv::updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
+                              const Pkt6Ptr& answer) {
+    if (!answer) {
+        isc_throw(isc::Unexpected, "an instance of the object encapsulating"
+                  " a message must not be NULL when updating reserved FQDN");
+    }
+
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option6ClientFqdn>
+        (answer->getOption(D6O_CLIENT_FQDN));
+
+   // If Client FQDN option is not included, there is nothing to do.
+   if (!fqdn) {
+       return;
+   }
+
+   std::string name = fqdn->getDomainName();
+
+   // If there is a host reservation for this client we have to check whether
+   // this reservation has the same hostname as the hostname currently
+   // present in the FQDN option. If not, it indicates that the allocation
+   // engine picked a different subnet (from within a shared network) for
+   // reservations and we have to send this new value to the client.
+   if (ctx.currentHost() &&
+       !ctx.currentHost()->getHostname().empty()) {
+       std::string new_name = CfgMgr::instance().getD2ClientMgr().
+           qualifyName(ctx.currentHost()->getHostname(), true);
+
+       if (new_name != name) {
+           fqdn->setDomainName(new_name, Option6ClientFqdn::FULL);
+
+           // Replace previous instance of Client FQDN option.
+           answer->delOption(D6O_CLIENT_FQDN);
+           answer->addOption(fqdn);
+       }
+   }
+}
+
+void
 Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     if (!answer) {
         isc_throw(isc::Unexpected, "an instance of the object encapsulating"
@@ -3161,6 +3219,9 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
         }
         // Set the generated FQDN in the Client FQDN option.
         fqdn->setDomainName(generated_name, Option6ClientFqdn::FULL);
+
+       answer->delOption(D6O_CLIENT_FQDN);
+       answer->addOption(fqdn);
 
     } catch (const Exception& ex) {
         LOG_ERROR(ddns6_logger, DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL)
