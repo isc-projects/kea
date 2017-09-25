@@ -1527,10 +1527,105 @@ It is merely echoed by the server
       Options with code between 224 and 254 are reserved for private use.
       They can be defined at the global scope or at client class local
       scope: this allows to use option definitions depending on context
-      and to set option data accordingly.
+      and to set option data accordingly. For instance to configure
+      an old PXEClient vendor:
+<screen>
+"Dhcp4": {
+    "client-class": [
+        {
+            <userinput>"name": "pxeclient",
+            "test": "option[vendor-class-identifier].text == 'PXEClient'",
+            "option-def": [
+                {
+                    "name": "configfile",
+                    "code": 209,
+                    "type": "string"
+                }
+            ],</userinput>
+            ...
+        }, ...
+    ],
+    ...
+}
+</screen>
+      </para>
+      <para>
       As the Vendor Specific Information option (code 43) has vendor
       specific format, i.e. can carry either raw binary value or
       sub-options, this mechanism is available for this option too.
+      </para>
+      <para>
+      In the following example taken from a real configuration two vendor
+      classes use the option 43 for different and incompatible purposes:
+<screen>
+"Dhcp4": {
+    "option-def": [
+        {
+            <userinput>"name": "cookie",
+            "code": 1,
+            "type": "string",
+            "space": "APC"
+        },
+        {
+            "name": "mtftp-ip",
+            "code": 1,
+            "type": "ipv4-address",
+            "space": "PXE"
+        },</userinput>
+        ...
+    ],
+    "client-class": [
+        {
+            <userinput>"name": "APC",
+            "test": "(option[vendor-class-identifier].text == 'APC'",
+            "option-def": [
+                {
+                    "name": "vendor-encapsulated-options",
+                    "type": "empty",
+                    "encapsulate": "APC"
+                }
+            ],
+            "option-data": [
+                {
+                    "name": "cookie",
+                    "space": "APC",
+                    "data": "1APC"
+                },
+                {
+                    "name": "vendor-encapsulated-options"
+                },</userinput>
+                ...
+            ],
+            ...
+        },
+        {
+            <userinput>"name": "PXE",
+            "test": "(option[vendor-class-identifier].text == 'PXE'",
+            "option-def": [
+                {
+                    "name": "vendor-encapsulated-options",
+                    "type": "empty",
+                    "encapsulate": "PXE"
+                }
+            ],
+            "option-data": [
+                {
+                    "name": "mtftp-ip",
+                    "space": "PXE",
+                    "data": "0.0.0.0"
+                },
+                {
+                    "name": "vendor-encapsulated-options"
+                },</userinput>
+                ...
+            ],
+            ...
+        },
+        ...
+    ],
+    ...
+}
+</screen>
       </para>
       <para>
       The definition used to decode a VSI option is:
