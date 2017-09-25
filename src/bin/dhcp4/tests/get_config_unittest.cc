@@ -1547,8 +1547,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
-"    }\n"
-};
+"    }\n"};
 
 /// @brief unparsed configurations
 const char* UNPARSED_CONFIGS[] = {
@@ -5623,6 +5622,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"name\": \"one\",\n"
 "                \"next-server\": \"0.0.0.0\",\n"
 "                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
 "                \"server-hostname\": \"\"\n"
 "            },\n"
 "            {\n"
@@ -5630,6 +5630,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"name\": \"three\",\n"
 "                \"next-server\": \"0.0.0.0\",\n"
 "                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
 "                \"server-hostname\": \"\"\n"
 "            },\n"
 "            {\n"
@@ -5637,6 +5638,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"name\": \"two\",\n"
 "                \"next-server\": \"0.0.0.0\",\n"
 "                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
 "                \"server-hostname\": \"\"\n"
 "            }\n"
 "        ],\n"
@@ -5988,8 +5990,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            }\n"
 "        ]\n"
-"    }\n"
-};
+"    }\n"};
 
 /// @brief the number of configurations
 const size_t max_config_counter = sizeof(EXTRACTED_CONFIGS) / sizeof(char*);

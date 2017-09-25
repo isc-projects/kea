@@ -3427,7 +3427,6 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 }
 
 
-
 // Tests of the hooks libraries configuration.  All tests have the pre-
 // condition (checked in the test fixture's SetUp() method) that no hooks
 // libraries are loaded at the start of the tests.
