@@ -55,7 +55,7 @@
 // In this particular class, we want to set specific values
 // of certain DHCPv4 fields. If the incoming packet matches the
 // test, those fields will be set in outgoing responses.
-// The option 43 is defined to encapsulate suboption inf the aastra space.
+// The option 43 is defined to encapsulate suboption in the aastra space.
   {
       "name": "VoIP",
       "test": "substring(option[60].hex,0,6) == 'Aastra'",

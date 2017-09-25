@@ -101,7 +101,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
             def = parser.parse(option_def);
             // Verify if the defition is for an option which are
             // in a deferred processing list.
-            if (!LibDHCP::deferOption(def.second, def.first->getCode())) {
+            if (!LibDHCP::shouldDeferOptionUnpack(def.second,
+                                                  def.first->getCode())) {
                 isc_throw(DhcpConfigError,
                           "Not allowed option definition for code '"
                           << def.first->getCode() << "' in space '"

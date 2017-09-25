@@ -364,8 +364,14 @@ public:
         return (local_hwaddr_);
     }
 
-    /// @brief Returns a reference to deferred option codes
-    std::list<uint16_t>& deferredOptions() {
+    /// @brief Returns a reference to option codes which unpacking
+    /// will be deferred.
+    ///
+    /// @notes Only options 42 and 224-254 are subject of deferred
+    /// unpacking: when the packet unpacking is performed each time
+    /// such an option is found it is unpacked as an unknown option
+    /// and the code added in this list.
+    std::list<uint16_t>& getDeferredOptions() {
         return (deferred_options_);
     }
 

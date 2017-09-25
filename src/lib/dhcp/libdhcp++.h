@@ -144,11 +144,12 @@ public:
     ///
     /// DHCPv4 option 43 and 224-254 unpacking is done after classification.
     ///
-    /// @space Option space name.
+    /// @param space Option space name.
     /// @param code Option code.
     ///
     /// @return True if option processing should be deferred.
-    static bool deferOption(const std::string& space, const uint16_t code);
+    static bool shouldDeferOptionUnpack(const std::string& space,
+                                        const uint16_t code);
 
     /// @brief Factory function to create instance of option.
     ///
@@ -381,10 +382,13 @@ private:
     /// is incorrect. This is a programming error.
     static void initStdOptionDefs6();
 
+    /// Initialize last resort DHCPv4 option definitions.
     static void initLastResortOptionDefs();
 
+    /// Initialize DOCSIS DHCPv4 option definitions.
     static void initVendorOptsDocsis4();
 
+    /// Initialize DOCSIS DHCPv6 option definitions.
     static void initVendorOptsDocsis6();
 
     /// Initialize private DHCPv6 option definitions.

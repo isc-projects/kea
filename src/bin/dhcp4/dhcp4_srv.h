@@ -808,7 +808,10 @@ protected:
     /// @note Options 43 and 224-254 are processed after classification.
     /// If a class configures a definition it is applied, if none
     /// the global (user) definition is applied. For option 43
-    /// a last resort definition (same than for previous Kea) is used.
+    /// a last resort definition (same definition as used in previous Kea
+    /// versions) is applied when none is found.
+    ///
+    /// @param query Pointer to the client message.
     void deferredUnpack(Pkt4Ptr& query);
 
     /// @brief Allocation Engine.

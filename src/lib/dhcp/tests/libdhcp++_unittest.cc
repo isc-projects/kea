@@ -1815,10 +1815,10 @@ TEST_F(LibDhcpTest, setRuntimeOptionDefs) {
 
 // This test verifies the processing of option 43
 TEST_F(LibDhcpTest, option43) {
-    // Check deferOption()
-    EXPECT_TRUE(LibDHCP::deferOption(DHCP4_OPTION_SPACE, 43));
-    EXPECT_FALSE(LibDHCP::deferOption(DHCP4_OPTION_SPACE, 44));
-    EXPECT_FALSE(LibDHCP::deferOption(DHCP6_OPTION_SPACE, 43));
+    // Check shouldDeferOptionUnpack()
+    EXPECT_TRUE(LibDHCP::shouldDeferOptionUnpack(DHCP4_OPTION_SPACE, 43));
+    EXPECT_FALSE(LibDHCP::shouldDeferOptionUnpack(DHCP4_OPTION_SPACE, 44));
+    EXPECT_FALSE(LibDHCP::shouldDeferOptionUnpack(DHCP6_OPTION_SPACE, 43));
 
     // Check last resort
     OptionDefinitionPtr def;

@@ -2827,7 +2827,7 @@ void
 Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
 {
     // Iterate on the list of deferred option codes
-    BOOST_FOREACH(const uint16_t& code, query->deferredOptions()) {
+    BOOST_FOREACH(const uint16_t& code, query->getDeferredOptions()) {
         OptionDefinitionPtr def;
         // Iterate on client classes
         const ClientClasses& classes = query->getClasses();
@@ -2869,12 +2869,12 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         // Get the existing option for its content and remove all
         OptionPtr opt = query->getOption(code);
         if (!opt) {
-            /* should not happen but do not crash anyway */
+            // should not happen but do not crash anyway
             continue;
         }
         const OptionBuffer buf = opt->getData();
         while (query->delOption(code)) {
-            /* continue */
+            // continue
         }
         // Unpack the option and add it
         opt = def->optionFactory(Option::V4, code, buf.cbegin(), buf.cend());
