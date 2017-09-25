@@ -1528,9 +1528,9 @@ It is merely echoed by the server
       They can be defined at the global scope or at client class local
       scope: this allows to use option definitions depending on context
       and to set option data accordingly.
-      As the Vendor Specific Information option (code 43) can carry
-      in a not compatible way a raw binary value or sub-options this
-      mechanism is available for this option too.
+      As the Vendor Specific Information option (code 43) has vendor
+      specific format, i.e. can carry either raw binary value or
+      sub-options, this mechanism is available for this option too.
       </para>
       <para>
       The definition used to decode a VSI option is:
@@ -1636,6 +1636,11 @@ It is merely echoed by the server
     ],
     ...
 }</screen>
+      </para>
+
+      <para>
+      Another possibility adde din Kea 1.3 is to redefine the option,
+      see <xref linkend="dhcp4-private-opts"/>.
       </para>
     </section>
 

@@ -171,7 +171,7 @@ Private (codes 224-254) and VSI (code 43) options are not decoded
 by @c LibDHCP::unpackOptions4 but by @ref isc::dhcp::Dhcpv4Srv::deferredUnpack
 function after classification. To make this function to perform or not
 deferred processing the simplest is to add or not the option code
-to the @ref isc::dhcp::Pkt4::deferredOptions list.
+to the @ref isc::dhcp::Pkt4::getDeferredOptions list.
 
 @section dhcpv4DDNSIntegration DHCPv4 Server Support for the Dynamic DNS Updates
 The DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)

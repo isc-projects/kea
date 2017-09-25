@@ -216,7 +216,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
 const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V4_OPTION_DEFINITIONS) / sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
 
-/// Last resort definitions (only option 43 for now).
+/// Last resort definitions (only option 43 for now, these definitions
+/// are applied in deferred unpacking when none is found).
 const OptionDefParams LAST_RESORT_V4_OPTION_DEFINITIONS[] = {
     { "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" }

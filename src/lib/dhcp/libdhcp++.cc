@@ -294,7 +294,7 @@ LibDHCP::getLastResortOptionDefs(const std::string& space) {
 }
 
 bool
-LibDHCP::deferOption(const std::string& space, const uint16_t code) {
+LibDHCP::shouldDeferOptionUnpack(const std::string& space, const uint16_t code) {
     return ((space == DHCP4_OPTION_SPACE) &&
             ((code == DHO_VENDOR_ENCAPSULATED_OPTIONS) ||
              ((code >= 224) && (code <= 254))));
@@ -546,7 +546,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         }
 
         // Check if option unpacking must be deferred
-        if (deferOption(option_space, opt_type)) {
+        if (shouldDeferOptionUnpack(option_space, opt_type)) {
             num_defs = 0;
             deferred.push_back(opt_type);
         }

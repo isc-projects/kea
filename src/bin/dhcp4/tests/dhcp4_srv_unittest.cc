@@ -2300,7 +2300,9 @@ TEST_F(Dhcpv4SrvTest, option43BadRaw) {
     NakedDhcpv4Srv srv(0);
 
     // The vendor-encapsulated-options has an incompatible data
-    // so won't have the expected content.
+    // so won't have the expected content but processing of truncated
+    // (suboption length > available length) suboptions does not raise
+    // an exception.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"rebind-timer\": 2000, "
@@ -2343,7 +2345,7 @@ TEST_F(Dhcpv4SrvTest, option43BadRaw) {
     buf.push_back(0x02);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2386,7 +2388,9 @@ TEST_F(Dhcpv4SrvTest, option43FailRaw) {
     NakedDhcpv4Srv srv(0);
 
     // The vendor-encapsulated-options has an incompatible data
-    // so won't have the expected content.
+    // so won't have the expected content. Here the processing
+    // of suboptions tries to unpack the uitn32 foo suboption and
+    // raises an exception.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"rebind-timer\": 2000, "
@@ -2436,7 +2440,7 @@ TEST_F(Dhcpv4SrvTest, option43FailRaw) {
     buf.push_back(0x01);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2505,7 +2509,7 @@ TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
     buf.push_back(0x03);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2600,7 +2604,7 @@ TEST_F(Dhcpv4SrvTest, option43RawClass) {
     buf.push_back(0x03);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -2705,7 +2709,7 @@ TEST_F(Dhcpv4SrvTest, option43Class) {
     buf.push_back(0x21);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a vendor-class-identifier (code 60)
     OptionStringPtr iopt(new OptionString(Option::V4,
@@ -2839,7 +2843,7 @@ TEST_F(Dhcpv4SrvTest, option43ClassPriority) {
     buf.push_back(0x21);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a vendor-class-identifier (code 60)
     OptionStringPtr iopt(new OptionString(Option::V4,
@@ -2979,7 +2983,7 @@ TEST_F(Dhcpv4SrvTest, option43Classes) {
     buf.push_back(0x21);
     OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
     query->addOption(vopt);
-    query->deferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
 
     // Create and add a vendor-class-identifier (code 60)
     OptionStringPtr iopt(new OptionString(Option::V4,
@@ -3086,7 +3090,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     buf.push_back(0x01);
     OptionPtr opt1(new Option(Option::V4, 234, buf));
     query->addOption(opt1);
-    query->deferredOptions().push_back(234);
+    query->getDeferredOptions().push_back(234);
 
     // Create and add a private option with code 245
     buf.clear();
@@ -3096,7 +3100,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     buf.push_back(0x21);
     OptionPtr opt2(new Option(Option::V4, 245, buf));
     query->addOption(opt2);
-    query->deferredOptions().push_back(245);
+    query->getDeferredOptions().push_back(245);
 
 
     // Create and add a PRL option to the query
