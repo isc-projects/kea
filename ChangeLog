@@ -1,3 +1,12 @@
+1304.	[bug,func]	fdupont
+	The DHCPv4 Vendor Specific Information (code 43) option and
+	private options (codes 224-254) can be redefined at the global
+	scope or inside a client-class. This allows to support different
+	definitions following the DHCPv4 Vendor Class Identifier (code 60)
+	option or when defined as a binary option to accept with problems
+	option 43 carrying a raw value.
+	(Trac #5073, git xxx)
+
 1303.	[func]		tmark
 	The command handlers in the lease_cmds hook library are now
 	implemented has hook callouts and registered with the Hooks
