@@ -45,7 +45,7 @@ public:
     /// @param address_family Address family: @c AF_INET or @c AF_INET6.
     /// @param cfg_option_def Config option definitions (optional)
     OptionDataParser(const uint16_t address_family,
-                     CfgOptionDefPtr cfg_option_def = 0);
+                     CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr());
 
     /// @brief Parses ElementPtr containing option definition
     ///
@@ -167,7 +167,7 @@ public:
     /// @param address_family Address family: @c AF_INET or AF_INET6
     /// @param cfg_option_def Config option definitions (optional)
     OptionDataListParser(const uint16_t address_family,
-                         CfgOptionDefPtr cfg_option_def = 0);
+                         CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr());
 
     /// @brief Parses a list of options, instantiates them and stores in cfg
     ///
