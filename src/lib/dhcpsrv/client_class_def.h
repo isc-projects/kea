@@ -245,7 +245,7 @@ public:
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
                   const std::string& test, const CfgOptionPtr& options,
-                  CfgOptionDefPtr defs = 0,
+                  CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string());
