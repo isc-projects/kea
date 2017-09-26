@@ -59,7 +59,7 @@
 	Altered the mysql backend logic to disable auto_reconnect and
 	set session value of wait_timeout to a very large values. This
 	avoids a segfault in MySQL client library caused by auto-reconnects
-	occuring when kea server's MySQL connection is idle for longer
+	occurring when kea server's MySQL connection is idle for longer
 	than the global MySQL wait_timeout.
 	(Trac #5354, git 9881ef6d772f27de82c048e198ba0ff9e71b9351)
 
@@ -113,7 +113,7 @@
 1287.	[bug]		tmark
 	Logger configuration now correctly uses maxsize and maxver
 	parameters, allowing log rotation to function properly.  Prior to
-	this these values were not being propagatedc downard, causing log
+	this these values were not being propagated downward, causing log
 	rotation to always be disabled.  The defaults for maxsize and
 	maxver are 10Mb and 1 respectively.
 	(Trac #5324, git 75f148458bdeeed27eb877cc2c3ce3069b152f38)
