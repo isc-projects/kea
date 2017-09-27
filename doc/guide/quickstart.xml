@@ -62,6 +62,14 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
+          <para>Edit the Kea configuration files which by default are installed in
+          the <filename>[kea-install-dir]/etc/kea/</filename> directory. These are:
+          kea-dhcp4.conf, kea-dhcp6.conf, kea-dhcp-ddns.conf and kea-ctrl-agent.conf,
+          for DHCPv4 server, DHCPv6 server, D2 and Control Agent respectively.
+          </para>
+        </listitem>
+
+        <listitem>
           <para>Edit the configuration file which by default is installed in
           <filename>[kea-install-dir]/etc/kea/kea.conf</filename> and contains
           configuration for all Kea services. Configuration choices for DHCPv4
