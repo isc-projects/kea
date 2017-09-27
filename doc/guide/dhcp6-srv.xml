@@ -3087,8 +3087,8 @@ If not specified, the default value is:
     consist of two or more subnets. However, for testing purposes it is allowed
     to define a shared network with just one subnet or even an empty one.  This
     is not a recommended practice in production networks, as the shared network
-    logic requires additional processing and thus lowers server's performace.
-    To avoid unnecessary peformance degradation the shared subnets should only
+    logic requires additional processing and thus lowers server's performance.
+    To avoid unnecessary performance degradation the shared subnets should only
     be defined when required by the deployment.
     </para>
 

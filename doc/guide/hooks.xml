@@ -1239,7 +1239,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
         </para>
 
         <para><command>lease6-add</command> command requires four
-        paramaters: an IPv6 address, a subnet-id, and IAID value
+        parameters: an IPv6 address, a subnet-id, and IAID value
         (identity association identifier, a value sent by clients) and
         a DUID:
 <screen>
@@ -1294,7 +1294,7 @@ The commands can take a number of additional optional parameters:
               not be conducted at the lease insertion time. If configured, a DNS
               update to remove the A or AAAA records will be conducted when the
               lease is removed due to expiration or being released by a
-              client. If not specifed, the default value is false. Hostname
+              client. If not specified, the default value is false. Hostname
               parameter must be specified in fqdn-fwd is set to true.</para>
             </listitem>
             <listitem>
@@ -1304,7 +1304,7 @@ The commands can take a number of additional optional parameters:
               not be conducted at the lease insertion time. If configured, a DNS
               update to remove the PTR record will be conducted when the lease
               is removed due to expiration or being released by a client. If not
-              specifed, the default value is false. Hostname parameter must be
+              specified, the default value is false. Hostname parameter must be
               specified in fqdn-fwd is set to true.</para>
             </listitem>
             <listitem>
@@ -1535,7 +1535,7 @@ as follows:
           <command>leaseX-get</command>, if needed.</para>
 
           <para>
-            An example command updating IPv6 lease looks as follows:
+            An example command updating IPv4 lease looks as follows:
 <screen>{
   "command": "lease4-update",
   "arguments": {
@@ -1594,7 +1594,7 @@ as follows:
           number of leases removed and 0 (success) status code if any
           leases were removed and 2 (empty) if there were no
           leases. Status code 1 (error) may be returned in case the
-          parameeters are incorrect or some other exception is
+          parameters are incorrect or some other exception is
           encountered.</para>
 
           <para>Note: not all backends support this command.</para>
