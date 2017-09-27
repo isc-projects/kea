@@ -3468,7 +3468,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     subnet, it is easier to simply configure additional subnet on top of the
     existing one. Sometimes, due to address space fragmentation (e.g. only many
     disjoint /24s are available) this is the only choice. Also, configuring
-    additional subnet has the advantage of not distrupting the operation of
+    additional subnet has the advantage of not disrupting the operation of
     existing devices.</para>
 
     <para>Another very frequent use case comes from cable networks. There are two types
@@ -3528,8 +3528,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     consist of two or more subnets. However, for testing purposes it is allowed
     to define a shared network with just one subnet or even an empty one.  This
     is not a recommended practice in production networks, as the shared network
-    logic requires additional processing and thus lowers server's performace.
-    To avoid unnecessary peformance degradation the shared subnets should only
+    logic requires additional processing and thus lowers server's performance.
+    To avoid unnecessary performance degradation the shared subnets should only
     be defined when required by the deployment.
     </para>
 
