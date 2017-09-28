@@ -813,6 +813,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
 
+                ctx.subnet_ = subnet;
                 Lease6Ptr lease = createLease6(ctx, candidate, prefix_len);
                 if (lease) {
                     // We are allocating a new lease (not renewing). So, the
@@ -838,6 +839,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     Lease6Ptr old_lease(new Lease6(*existing));
                     ctx.currentIA().old_leases_.push_back(old_lease);
 
+                    ctx.subnet_ = subnet;
                     existing = reuseExpiredLease(existing, ctx, prefix_len);
 
                     leases.push_back(existing);

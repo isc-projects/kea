@@ -788,6 +788,8 @@ public:
     ///
     /// @param client Reference to the client.
     /// @param address Leased address.
+    /// @param lease_on_server Specify whether the lease should be also present or
+    /// absent in the lease database.
     ///
     /// @return true if the lease for the client has been found both in the
     /// database and in the server's response.
@@ -797,6 +799,95 @@ public:
         return ((((lease_on_server == LeaseOnServer::MUST_EXIST) && lease) ||
                 ((lease_on_server == LeaseOnServer::MUST_NOT_EXIST) && !lease)) &&
                 client.hasLeaseForAddress(address));
+    }
+
+    /// @brief Check if client has a lease for the specified prefix.
+    ///
+    /// Apart from checking whether the client has got the lease it also
+    /// checks whether this lease is stored in the lease database.
+    ///
+    /// @param client Reference to the client.
+    /// @param prefix Leased prefix.
+    /// @param prefix_len Leased prefix length.
+    /// @param lease_on_server Specify whether the lease should be also present or
+    /// absent in the lease database.
+    ///
+    /// @return true if the lease for the client has been found both in the
+    /// database and in the server's response.
+    bool hasLeaseForPrefix(Dhcp6Client& client, const IOAddress& prefix,
+                           const uint8_t prefix_len, const IAID& iaid,
+                           const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+        return ((((lease_on_server == LeaseOnServer::MUST_EXIST) && lease &&
+                  (lease->prefixlen_ = prefix_len) && (lease->iaid_ == iaid)) ||
+                ((lease_on_server == LeaseOnServer::MUST_NOT_EXIST) && !lease)) &&
+                client.hasLeaseForPrefix(prefix, prefix_len, iaid));
+    }
+
+    /// @brief Check if client has a lease belonging to address range.
+    ///
+    /// Apart from checking whether the client has got the lease it also
+    /// checks whether this lease is stored in the lease database.
+    ///
+    /// @param client Reference to the client.
+    /// @param first Lower bound of the address range.
+    /// @param last Upper bound of the address range.
+    /// @param lease_on_server Specify whether the lease should be also present or
+    /// absent in the lease database.
+    bool hasLeaseForAddressRange(Dhcp6Client& client, const IOAddress& first, const IOAddress& last,
+                                 const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
+        std::vector<Lease6> leases = client.getLeasesByAddressRange(first, last);
+        for (auto lease_it = leases.cbegin(); lease_it != leases.cend(); ++lease_it) {
+            // Take into account only valid leases.
+            if (lease_it->valid_lft_ == 0) {
+                continue;
+            }
+
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease_it->addr_);
+            if ((lease && (lease_on_server == LeaseOnServer::MUST_NOT_EXIST)) ||
+                (!lease && (lease_on_server == LeaseOnServer::MUST_EXIST))) {
+                return (false);
+            }
+        }
+
+        return (!leases.empty());
+    }
+
+    /// @brief Check if client has a lease belonging to a prefix pool.
+    ///
+    /// Apart from checking whether the client has got the lease it also
+    /// checks whether this lease is stored in the lease database.
+    ///
+    /// @param client Reference to the client.
+    /// @param prefix Pool prefix.
+    /// @param prefix_len Prefix length.
+    /// @param delegated_len Delegated prefix length.
+    /// @param lease_on_server Specify whether the lease should be also present or
+    /// absent in the lease database.
+    ///
+    /// @return true if client has a lease belonging to specified pool,
+    /// false otherwise.
+    bool hasLeaseForPrefixPool(Dhcp6Client& client, const asiolink::IOAddress& prefix,
+                               const uint8_t prefix_len, const uint8_t delegated_len,
+                               const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
+        std::vector<Lease6> leases = client.getLeasesByPrefixPool(prefix, prefix_len, delegated_len);
+
+        for (auto lease_it = leases.cbegin(); lease_it != leases.cend(); ++lease_it) {
+            // Take into account only valid leases.
+            if (lease_it->valid_lft_ == 0) {
+                continue;
+            }
+
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, lease_it->addr_);
+            if ((lease && (lease->prefixlen_ == lease->prefixlen_) &&
+                 (lease_on_server == LeaseOnServer::MUST_NOT_EXIST)) ||
+                (!lease && (lease_on_server == LeaseOnServer::MUST_EXIST))) {
+                return (false);
+            }
+        }
+
+        return (!leases.empty());
+
     }
 
     /// @brief Destructor.
@@ -1011,8 +1102,8 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     ASSERT_FALSE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::28")));
 
     // The client should be allocated a lease from one of the dynamic pools.
-    if (!client1.hasLeaseForAddressRange(IOAddress("2001:db8:2::1"), IOAddress("2001:db8:2::64")) &&
-        !client1.hasLeaseForAddressRange(IOAddress("2001:db8:1::1"), IOAddress("2001:db8:1::64"))) {
+    if (!hasLeaseForAddressRange(client1, IOAddress("2001:db8:2::1"), IOAddress("2001:db8:2::64")) &&
+        !hasLeaseForAddressRange(client1, IOAddress("2001:db8:1::1"), IOAddress("2001:db8:1::64"))) {
         ADD_FAILURE() << "unexpected lease allocated for renewing client";
     }
 
@@ -1340,15 +1431,15 @@ TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
     // Same for prefixes.
-    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("4000::"), 96, 96));
-    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("5000::"), 96, 96));
+    ASSERT_TRUE(hasLeaseForPrefixPool(client, IOAddress("4000::"), 96, 96));
+    ASSERT_TRUE(hasLeaseForPrefixPool(client, IOAddress("5000::"), 96, 96));
 
     // Try to renew.
     ASSERT_NO_THROW(client.doRenew());
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
-    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("4000::"), 96, 96));
-    ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("5000::"), 96, 96));
+    ASSERT_TRUE(hasLeaseForPrefixPool(client, IOAddress("4000::"), 96, 96));
+    ASSERT_TRUE(hasLeaseForPrefixPool(client, IOAddress("5000::"), 96, 96));
 }
 
 // Client requests 2 addresses and 2 prefixes. There is one address and one prefix
@@ -1375,7 +1466,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_EQ(4, client.getLeaseNum());
     // The client should have got one reserved address and one reserved prefix.
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
-    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("1234::"), 64, IAID(0x1111)));
+    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("1234::"), 64, IAID(0x1111)));
 
     // The client should have got dynamically allocated address too and it must be
     // different than the reserved address.
@@ -1392,7 +1483,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_NO_THROW(client.doRenew());
     ASSERT_EQ(4, client.getLeaseNum());
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
-    ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("1234::"), 64, IAID(0x1111)));
+    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("1234::"), 64, IAID(0x1111)));
 
     leases_1234 = client.getLeasesByIAID(0x1234);
     ASSERT_EQ(1, leases_1234.size());
