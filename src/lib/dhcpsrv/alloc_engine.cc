@@ -1508,9 +1508,25 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         return;
     }
 
-    // Check if the lease still belongs to the subnet. If it doesn't,
-    // we'll need to remove it.
-    if ((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) {
+    // It is likely that the lease for which we're extending the lifetime doesn't
+    // belong to the current but a sibling subnet.
+    if (ctx.subnet_->getID() != lease->subnet_id_) {
+        SharedNetwork6Ptr network;
+        ctx.subnet_->getSharedNetwork(network);
+        if (network) {
+            Subnet6Ptr subnet = network->getSubnet(SubnetID(lease->subnet_id_));
+            // Found the actual subnet this lease belongs to. Stick to this
+            // subnet.
+            if (subnet) {
+                ctx.subnet_ = subnet;
+            }
+        }
+    }
+
+    // Check if the lease still belongs to the subnet and that the use of this subnet
+    // is allowed per client classification. If not, remove this lease.
+    if (((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) ||
+        !ctx.subnet_->clientSupported(ctx.query_->getClasses())) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr

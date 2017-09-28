@@ -943,6 +943,12 @@ Dhcp6Client::addExtraOption(const OptionPtr& opt) {
     extra_options_.insert(std::make_pair(opt->getType(), opt));
 }
 
+void
+Dhcp6Client::clearExtraOptions() {
+    extra_options_.clear();
+}
+
+
 } // end of namespace isc::dhcp::test
 } // end of namespace isc::dhcp
 } // end of namespace isc
