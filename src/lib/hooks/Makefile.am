@@ -56,6 +56,7 @@ libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_hooks_la_LIBADD += $(BOOST_LIBS)
 libkea_hooks_la_LIBADD += $(LOG4CPLUS_LIBS)
 
 # Specify the headers for copying into the installation directory tree. User-
