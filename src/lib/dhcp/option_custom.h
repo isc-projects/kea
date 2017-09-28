@@ -427,6 +427,7 @@ private:
     /// @param end iterator to end of input data.
     ///
     /// @return size of data to copy to the buffer.
+    /// @throw isc::OutOfRange if option buffer is truncated.
     size_t bufferLength(const OptionDataType data_type, bool in_array,
                         OptionBuffer::const_iterator begin,
                         OptionBuffer::const_iterator end) const;
