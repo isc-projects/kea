@@ -1301,7 +1301,7 @@ TEST_F(OptionCustomTest, recordArrayData) {
     // Initialize field 0 to 8712.
     writeInt<uint16_t>(8712, buf);
     // Initialize field 1 to 'true'
-    buf.push_back(static_cast<unsigned short>(1));
+    writeInt<uint8_t>(1, buf);
     // Initialize field 2 to 'mydomain.example.com'.
     buf.insert(buf.end(), fqdn_data, fqdn_data + sizeof(fqdn_data));
     // Initialize field 3 to IPv4 address.
