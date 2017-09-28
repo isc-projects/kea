@@ -33,4 +33,5 @@ libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_asiodns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_asiodns_la_LIBADD += $(BOOST_LIBS)
 libkea_asiodns_la_LIBADD += $(LOG4CPLUS_LIBS)
