@@ -490,6 +490,13 @@ TEST_F(ExpressionsTest, evaluateString) {
                                            EvalContext::PARSER_STRING);
     testExpressionNegative<EvalParseError>("pkt6.msgtype == 1", Option::V6,
                                            EvalContext::PARSER_STRING);
+
+    // Check that ifelse works as expecting (it was added explicitely for
+    // the string evaluation).
+    testExpressionString(Option::V4,
+                         "ifelse(option[100].exists,'foo','bar')", "foo");
+    testExpressionString(Option::V4,
+                         "ifelse(option[200].exists,'foo','bar')", "bar");
 }
 
 };
