@@ -11,6 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <stats/stats_mgr.h>
@@ -844,6 +845,9 @@ public:
         EXPECT_EQ((ack ? DHCPACK : DHCPNAK), resp->getType());
         if (ack) {
             EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+            Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(resp->getYiaddr()));
+            ASSERT_TRUE(lease);
+
         } else {
             EXPECT_EQ("0.0.0.0", resp->getYiaddr().toText());
         }
@@ -902,6 +906,8 @@ public:
         } else {
             EXPECT_EQ(DHCPACK, resp->getType());
             EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+            Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(resp->getYiaddr()));
+            ASSERT_TRUE(lease);
         }
     }
 

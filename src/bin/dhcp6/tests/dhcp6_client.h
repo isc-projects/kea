@@ -741,6 +741,9 @@ public:
     /// @param opt additional option to be sent
     void addExtraOption(const OptionPtr& opt);
 
+    /// @brief Configures the client to not send any extra options.
+    void clearExtraOptions();
+
 private:
 
     /// @brief Applies the new leases for the client.

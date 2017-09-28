@@ -698,12 +698,62 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
+    "}",
+
+// Configuration #12.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[1234].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"id\": 100,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ],"
+    "                    \"client-class\": \"b-devices\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
     "}"
 };
 
 /// @Brief Test fixture class for DHCPv6 server using shared networks.
 class Dhcpv6SharedNetworkTest : public Dhcpv6SrvTest {
 public:
+
+    /// @brief Indicates how test functions should check presence of a lease on
+    /// the server.
+    enum class LeaseOnServer{
+        MUST_EXIST,
+        MUST_NOT_EXIST,
+    };
 
     /// @brief Constructor.
     Dhcpv6SharedNetworkTest()
@@ -728,7 +778,25 @@ public:
             ASSERT_NO_THROW(client.requestAddress(iaid, IOAddress(hint)));
         }
         ASSERT_NO_THROW(client.doSARR());
-        ASSERT_TRUE(client.hasLeaseForAddress(IOAddress(exp_addr)));
+        ASSERT_TRUE(hasLeaseForAddress(client, IOAddress(exp_addr)));
+    }
+
+    /// @brief Check if client has a lease for the specified address.
+    ///
+    /// Apart from checking whether the client has got the lease it also
+    /// checks whether this lease is stored in the lease database.
+    ///
+    /// @param client Reference to the client.
+    /// @param address Leased address.
+    ///
+    /// @return true if the lease for the client has been found both in the
+    /// database and in the server's response.
+    bool hasLeaseForAddress(Dhcp6Client& client, const IOAddress& address,
+                            const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, address);
+        return ((((lease_on_server == LeaseOnServer::MUST_EXIST) && lease) ||
+                ((lease_on_server == LeaseOnServer::MUST_NOT_EXIST) && !lease)) &&
+                client.hasLeaseForAddress(address));
     }
 
     /// @brief Destructor.
@@ -751,13 +819,17 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[0], *client1.getServer()));
 
     // Client #1 requests an address in first subnet within a shared network.
-    doSARR(client1, "2001:db8:1::20", 0xabca, "2001:db8:1::20");
+    ASSERT_NO_THROW(client1.requestAddress(0xabca0, IOAddress("2001:db8:1::20")));
+    ASSERT_NO_THROW(client1.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client #2 The second client will request a lease and should be assigned
     // an address from the second subnet.
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
-    doSARR(client2, "2001:db8:2::20", 0xabca0, "");
+    ASSERT_NO_THROW(client2.requestAddress(0xabca0));
+    ASSERT_NO_THROW(client2.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 
     // Cient #3. It sends Solicit which should result in NoAddrsAvail status
     // code because all addresses available for this link have been assigned.
@@ -775,12 +847,12 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     // Client #1 should be able to renew its lease.
     ASSERT_NO_THROW(client1.doRenew());
     EXPECT_EQ(1, client1.getLeaseNum());
-    EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    EXPECT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client #2 should be able to renew its lease too.
     ASSERT_NO_THROW(client2.doRenew());
     EXPECT_EQ(1, client2.getLeaseNum());
-    EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    EXPECT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 }
 
 // Shared network is selected based on relay link address.
@@ -795,7 +867,9 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[1], *client1.getServer()));
 
     // Client #1 should be assigned an address from shared network.
-    doSARR(client1, "2001:db8:1::20", 0xabca, "");
+    ASSERT_NO_THROW(client1.requestAddress(0xabca0));
+    ASSERT_NO_THROW(client1.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
@@ -803,7 +877,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
     client2.useRelay(true, IOAddress("3001::2"));
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     ASSERT_NO_THROW(client2.doSARR());
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 }
 
 // Providing a hint for any address belonging to a shared network.
@@ -820,14 +894,16 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     // should be offered out of this subnet.
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
     ASSERT_NO_THROW(client.doSolicit(true));
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20"),
+                                   LeaseOnServer::MUST_NOT_EXIST));
 
     // Similarly, we should be offerred an address from another subnet within
     // the same shared network when we ask for it.
     client.clearRequestedIAs();
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:2::20")));
     ASSERT_NO_THROW(client.doSolicit(true));
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20"),
+                                   LeaseOnServer::MUST_NOT_EXIST));
 
     // Asking for an address that is not in address pool should result in getting
     // an address from one of the subnets, but generally hard to tell from which one.
@@ -836,8 +912,10 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     ASSERT_NO_THROW(client.doSolicit(true));
     std::vector<Lease6> leases = client.getLeasesByType(Lease::TYPE_NA);
     ASSERT_EQ(1, leases.size());
-    if (!client.hasLeaseForAddress(IOAddress("2001:db8:1::20")) &&
-        !client.hasLeaseForAddress(IOAddress("2001:db8:2::20"))) {
+    if (!hasLeaseForAddress(client, IOAddress("2001:db8:1::20"),
+                            LeaseOnServer::MUST_NOT_EXIST) &&
+        !hasLeaseForAddress(client, IOAddress("2001:db8:2::20"),
+                            LeaseOnServer::MUST_NOT_EXIST)) {
         ADD_FAILURE() << "Unexpected address advertised by the server " << leases.at(0).addr_;
     }
 }
@@ -856,7 +934,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // this address because the client doesn't belong to a certain class.
     ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
     ASSERT_NO_THROW(client1.doSARR());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::20")));
 
     // Release the lease that the client has got, because we'll need this address
     // further in the test.
@@ -868,7 +946,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 
     // This time, the allocation of the address provided as hint should be successful.
     ASSERT_NO_THROW(client1.doSARR());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
 
     // Client 2 should be assigned an address from the unrestricted subnet.
@@ -876,7 +954,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     ASSERT_NO_THROW(client2.doSARR());
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 
     // Now, let's reconfigure the server to also apply restrictions on the
     // subnet to which client2 now belongs.
@@ -908,7 +986,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     // Client #1 should get his reserved address from the second subnet.
     ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
     ASSERT_NO_THROW(client1.doSARR());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:2::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::28")));
 
     // Create client #2.
     Dhcp6Client client2;
@@ -918,7 +996,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     // Client #2 should get its reserved address from the first subnet.
     ASSERT_NO_THROW(client2.requestAddress(0xabca, IOAddress("2001:db8:1::30")));
     ASSERT_NO_THROW(client2.doSARR());
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::28")));
 
     // Reconfigure the server. Now, the first client get's second client's
     // reservation and vice versa.
@@ -930,7 +1008,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     // this lease.
     ASSERT_NO_THROW(client1.doRenew());
     ASSERT_TRUE(client1.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:2::28")));
-    ASSERT_FALSE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
+    ASSERT_FALSE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::28")));
 
     // The client should be allocated a lease from one of the dynamic pools.
     if (!client1.hasLeaseForAddressRange(IOAddress("2001:db8:2::1"), IOAddress("2001:db8:2::64")) &&
@@ -941,11 +1019,11 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     // Client #2 is now renewing its lease and should get its newly reserved address.
     ASSERT_NO_THROW(client2.doRenew());
     ASSERT_TRUE(client2.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1::28")));
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:2::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::28")));
 
     // Same for client #1.
     ASSERT_NO_THROW(client1.doRenew());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::28")));
 }
 
 // Reserved address can't be assigned as long as access to a subnet is
@@ -965,7 +1043,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationAccessRestrictedByClass) {
     // client doesn't belong to the "a-devices" class.
     ASSERT_NO_THROW(client.requestAddress(0xabca));
     ASSERT_NO_THROW(client.doSARR());
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::16")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::16")));
 
     // Add option 1234 which would cause the client to be classified as "a-devices".
     OptionPtr option1234(new OptionUint16(Option::V6, 1234, 0x0001));
@@ -974,7 +1052,37 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationAccessRestrictedByClass) {
     // The client should now be assigned the reserved address from the first subnet.
     ASSERT_NO_THROW(client.doRenew());
     ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:2::16")));
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::28")));
+}
+
+// Subnet in which the client is renewing an address is restricted by classification.
+TEST_F(Dhcpv6SharedNetworkTest, renewalRestrictedByClass) {
+    // Create client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+
+    // Create server configuration with a shared network including two subnets. Access to
+    // the second subnet is restricted by client classification.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[12], *client.getServer()));
+
+    // Add option 1234 to cause the client to belong to the class.
+    OptionPtr option1234(new OptionUint16(Option::V6, 1234, 0x0002));
+    client.addExtraOption(option1234);
+
+    // Client requests an address from the second subnet which should be successful.
+    ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:2::20")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
+
+    // Now remove the client from this class.
+    client.clearExtraOptions();
+
+    // The client should not be able to renew the existing lease because it is now
+    // prohibited by the classification. Instead, the client should get a lease from the
+    // unrestricted subnet.
+    ASSERT_NO_THROW(client.doRenew());
+    ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
 }
 
 // Some options are specified on the shared subnet level, some on the
@@ -999,7 +1107,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     // Perform 4-way exchange and make sure we have been assigned address from the
     // subnet we wanted.
     ASSERT_NO_THROW(client1.doSARR());
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // This option is specified on the global level.
     ASSERT_TRUE(client1.hasOptionWithAddress(D6O_NIS_SERVERS, "3000::20"));
@@ -1029,7 +1137,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     // Perform 4-way exchange and make sure we have been assigned address from the
     // subnet we wanted.
     ASSERT_NO_THROW(client2.doSARR());
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 
     // This option is specified on the global level.
     ASSERT_TRUE(client2.hasOptionWithAddress(D6O_NIS_SERVERS, "3000::20"));
@@ -1054,7 +1162,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     // Perform 4-way exchange and make sure we have been assigned address from the
     // subnet we wanted.
     ASSERT_NO_THROW(client3.doSARR());
-    ASSERT_TRUE(client3.hasLeaseForAddress(IOAddress("3000::1")));
+    ASSERT_TRUE(hasLeaseForAddress(client3, IOAddress("3000::1")));
 
     // This option is specified on the global level.
     ASSERT_TRUE(client3.hasOptionWithAddress(D6O_NIS_SERVERS, "3000::20"));
@@ -1079,8 +1187,8 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
     // Client #1 should be assigned an address from one of the two subnets
     // belonging to the first shared network.
     ASSERT_NO_THROW(client1.doSARR());
-    if (!client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")) &&
-        !client1.hasLeaseForAddress(IOAddress("2001:db8:2::20"))) {
+    if (!hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")) &&
+        !hasLeaseForAddress(client1, IOAddress("2001:db8:2::20"))) {
         ADD_FAILURE() << "unexpected shared network selected for the client";
     }
 
@@ -1092,8 +1200,8 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
     // Client #2 should be assigned an address from one of the two subnets
     // belonging to the second shared network.
     ASSERT_NO_THROW(client2.doSARR());
-    if (!client2.hasLeaseForAddress(IOAddress("2001:db8:3::20")) &&
-        !client2.hasLeaseForAddress(IOAddress("2001:db8:4::20"))) {
+    if (!hasLeaseForAddress(client2, IOAddress("2001:db8:3::20")) &&
+        !hasLeaseForAddress(client2, IOAddress("2001:db8:4::20"))) {
         ADD_FAILURE() << "unexpected shared network selected for the client";
     }
 }
@@ -1112,8 +1220,8 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
     // Client #1 should be assigned an address from one of the two subnets
     // belonging to the first shared network.
     ASSERT_NO_THROW(client1.doSARR());
-    if (!client1.hasLeaseForAddress(IOAddress("2001:db8:1::20")) &&
-        !client1.hasLeaseForAddress(IOAddress("2001:db8:2::20"))) {
+    if (!hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")) &&
+        !hasLeaseForAddress(client1, IOAddress("2001:db8:2::20"))) {
         ADD_FAILURE() << "unexpected shared network selected for the client";
     }
 
@@ -1125,8 +1233,8 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
     // Client #2 should be assigned an address from one of the two subnets
     // belonging to the second shared network.
     ASSERT_NO_THROW(client2.doSARR());
-    if (!client2.hasLeaseForAddress(IOAddress("2001:db8:3::20")) &&
-        !client2.hasLeaseForAddress(IOAddress("2001:db8:4::20"))) {
+    if (!hasLeaseForAddress(client2, IOAddress("2001:db8:3::20")) &&
+        !hasLeaseForAddress(client2, IOAddress("2001:db8:4::20"))) {
         ADD_FAILURE() << "unexpected shared network selected for the client";
     }
 }
@@ -1192,7 +1300,8 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
 
     // The client 1 should be offerred an address from the second subnet.
     ASSERT_NO_THROW(client1.doSolicit(true));
-    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::20"),
+                                   LeaseOnServer::MUST_NOT_EXIST));
 
     // Create another client which will belong to a different class.
     Dhcp6Client client2;
@@ -1205,7 +1314,8 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
 
     // Client 2 should be offerred an address from the first subnet.
     ASSERT_NO_THROW(client2.doSolicit(true));
-    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::20"),
+                                   LeaseOnServer::MUST_NOT_EXIST));
 }
 
 // Client requests two addresses and two prefixes and obtains them from two
@@ -1227,16 +1337,16 @@ TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
     // 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // The two addresses should come from different subnets.
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
     // Same for prefixes.
     ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("4000::"), 96, 96));
     ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("5000::"), 96, 96));
 
     // Try to renew.
     ASSERT_NO_THROW(client.doRenew());
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:1::20")));
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
     ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("4000::"), 96, 96));
     ASSERT_TRUE(client.hasLeaseForPrefixPool(IOAddress("5000::"), 96, 96));
 }
@@ -1264,7 +1374,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_NO_THROW(client.doSARR());
     ASSERT_EQ(4, client.getLeaseNum());
     // The client should have got one reserved address and one reserved prefix.
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
     ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("1234::"), 64, IAID(0x1111)));
 
     // The client should have got dynamically allocated address too and it must be
@@ -1281,7 +1391,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     // Try to renew and check this again.
     ASSERT_NO_THROW(client.doRenew());
     ASSERT_EQ(4, client.getLeaseNum());
-    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::28")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
     ASSERT_TRUE(client.hasLeaseForPrefix(IOAddress("1234::"), 64, IAID(0x1111)));
 
     leases_1234 = client.getLeasesByIAID(0x1234);
