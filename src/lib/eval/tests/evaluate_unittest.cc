@@ -497,6 +497,13 @@ TEST_F(ExpressionsTest, evaluateString) {
                          "ifelse(option[100].exists,'foo','bar')", "foo");
     testExpressionString(Option::V4,
                          "ifelse(option[200].exists,'foo','bar')", "bar");
+
+    // Check that ifelse can be chained.
+    testExpressionString(Option::V4,
+                         "ifelse(option[200].exists,option[200].hex,"
+                                 "ifelse(option[100].exists,"
+                                         "option[100].hex,'none???'))",
+                         "hundred4");
 }
 
 };
