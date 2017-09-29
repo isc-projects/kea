@@ -31,7 +31,6 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 EXTRA_DIST =
 EXTRA_DIST += parsers/client_class_def_parser.cc
 EXTRA_DIST += parsers/client_class_def_parser.h
-EXTRA_DIST += parsers/dhcp_config_parser.h
 EXTRA_DIST += parsers/dbaccess_parser.cc
 EXTRA_DIST += parsers/dbaccess_parser.h
 EXTRA_DIST += parsers/dhcp_parsers.cc
