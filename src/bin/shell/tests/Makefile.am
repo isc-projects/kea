@@ -9,7 +9,7 @@ check-python:
 	@for pytest in $(PYTESTS) ; do \
 	echo Running python test: $$pytest ; \
 	chmod +x $(abs_builddir)/$$pytest ; \
-	PYTHONPATH=$(PYTHONPATH):$(abs_top_builddir)/src/bin/shell python $(abs_builddir)/$$pytest || exit ; \
+	PYTHONPATH=$(PYTHONPATH):$(abs_top_srcdir)/src/bin/shell python $(abs_builddir)/$$pytest || exit ; \
 	done
 
 check-shell:
@@ -17,6 +17,7 @@ check-shell:
 	echo Running shell test: $$shtest ; \
 	export KEA_LOCKFILE_DIR=$(abs_top_builddir); \
 	export KEA_PIDFILE_DIR=$(abs_top_builddir); \
+	export PYTHONPATH=$(PYTHONPATH):$(abs_top_srcdir)/src/bin/shell; \
 	${SHELL} $(abs_builddir)/$$shtest || exit ; \
 	done
 
