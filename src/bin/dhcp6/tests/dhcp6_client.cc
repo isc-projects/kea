@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <time.h>
+#include <utility>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -108,7 +109,8 @@ Dhcp6Client::Dhcp6Client() :
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
-    fqdn_() {
+    fqdn_(),
+    interface_id_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -125,7 +127,8 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
-    fqdn_() {
+    fqdn_(),
+    interface_id_() {
 }
 
 void
@@ -899,7 +902,14 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
             relay.peeraddr_ = asiolink::IOAddress("fe80::1");
             relay.msg_type_ = DHCPV6_RELAY_FORW;
             relay.hop_count_ = 1;
+
+            // Interface identifier, if specified.
+            if (interface_id_) {
+                relay.options_.insert(std::make_pair(D6O_INTERFACE_ID, interface_id_));
+            }
+
             msg->relay_info_.push_back(relay);
+
         } else {
             // The test provided relay_info_, let's use that.
             msg->relay_info_ = relay_info_;
@@ -930,6 +940,12 @@ Dhcp6Client::requestPrefix(const uint32_t iaid,
                            const uint8_t prefix_len,
                            const asiolink::IOAddress& prefix) {
     client_ias_.push_back(ClientIA(Lease::TYPE_PD, iaid, prefix, prefix_len));
+}
+
+void
+Dhcp6Client::useInterfaceId(const std::string& interface_id) {
+    OptionBuffer buf(interface_id.begin(), interface_id.end());
+    interface_id_.reset(new Option(Option::V6, D6O_INTERFACE_ID, buf));
 }
 
 void
