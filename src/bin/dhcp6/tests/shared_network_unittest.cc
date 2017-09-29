@@ -741,6 +741,149 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
+    "}",
+
+// Configuration #13.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"relay\": {"
+    "                        \"ip-address\": \"3001::1\""
+    "                    },"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"id\": 100,"
+    "                    \"relay\": {"
+    "                        \"ip-address\": \"3001::1\""
+    "                    },"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ],"
+    "    \"subnet6\": ["
+    "        {"
+    "            \"subnet\": \"2001:db8:3::/64\","
+    "            \"id\": 1000,"
+    "            \"relay\": {"
+    "                \"ip-address\": \"3001::2\""
+    "            },"
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"2001:db8:3::20 - 2001:db8:3::20\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #14.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface-id\": \"vlan10\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ],"
+    "    \"subnet6\": ["
+    "        {"
+    "            \"subnet\": \"2001:db8:2::/64\","
+    "            \"id\": 1000,"
+    "            \"interface-id\": \"vlan1000\","
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #15.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"interface-id\": \"vlan10\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"id\": 10,"
+    "                    \"interface-id\": \"vlan10\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ],"
+    "    \"subnet6\": ["
+    "        {"
+    "            \"subnet\": \"2001:db8:2::/64\","
+    "            \"id\": 1000,"
+    "            \"interface-id\": \"vlan1000\","
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
     "}"
 };
 
@@ -1494,11 +1637,86 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_NE("1234::", leases_2222[0].addr_.toText());
 }
 
-/// @todo: Add a test for relay information specified for shared network.
-/// @todo: Add a test for relay information specified on each subnet
-///        in a shared network.
-/// @todo: Add a test for interface-id specified for shared network.
-/// @todo: Add a test for interface-id on each subnet in a shared network.
-/// Also, see http://kea.isc.org/ticket/5364 for more ideas.
+// Relay address is specified for each subnet within shared network.
+TEST_F(Dhcpv6SharedNetworkTest, relaySpecifiedForEachSubnet) {
+    // Create client.
+    Dhcp6Client client;
+    client.useRelay(true, IOAddress("3001::1"));
+
+    // Client will request two addresses.
+    client.requestAddress(0xabcd);
+    client.requestAddress(0x1234);
+
+    // Configure the server with three subnets. Two of them belong to a shared network.
+    // Each subnet is configured with relay info, i.e. IP address of the relay agent
+    // for which the shared network is used.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[13], *client.getServer()));
+
+    // 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // The client should have got two leases, one from each subnet within the
+    // shared network.
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
+}
+
+// Shared network is selected based on interface id.
+TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
+    // Create client #1. This is a relayed client for which interface id
+    // has been spefified and this interface id is matching the one specified
+    // for the shared network.
+    Dhcp6Client client1;
+    client1.useRelay(true, IOAddress("3001::1"));
+    client1.useInterfaceId("vlan10");
+
+    // Configure the server with one shared network and one subnet outside of the
+    // shared network.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[14], *client1.getServer()));
+
+    // Client #1 should be assigned an address from shared network.
+    ASSERT_NO_THROW(client1.requestAddress(0xabca0));
+    ASSERT_NO_THROW(client1.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
+
+    // Create client #2. This is a relayed client which is using interface id
+    // matching a subnet outside of the shared network.
+    Dhcp6Client client2(client1.getServer());
+    client2.useRelay(true, IOAddress("3001::2"));
+    client2.useInterfaceId("vlan1000");
+    ASSERT_NO_THROW(client2.requestAddress(0xabca0));
+    ASSERT_NO_THROW(client2.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
+}
+
+// Shared network is selected based on interface id specified for a subnet
+// belonging to a shared network.
+TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
+    // Create client #1. This is a relayed client for which interface id
+    // has been spefified and this interface id is matching the one specified
+    // for the shared network.
+    Dhcp6Client client1;
+    client1.useRelay(true, IOAddress("3001::1"));
+    client1.useInterfaceId("vlan10");
+
+    // Configure the server with one shared network and one subnet outside of the
+    // shared network.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[15], *client1.getServer()));
+
+    // Client #1 should be assigned an address from shared network.
+    ASSERT_NO_THROW(client1.requestAddress(0xabca0));
+    ASSERT_NO_THROW(client1.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
+
+    // Create client #2. This is a relayed client which is using interface id
+    // matching a subnet outside of the shared network.
+    Dhcp6Client client2(client1.getServer());
+    client2.useRelay(true, IOAddress("3001::2"));
+    client2.useInterfaceId("vlan1000");
+    ASSERT_NO_THROW(client2.requestAddress(0xabca0));
+    ASSERT_NO_THROW(client2.doSARR());
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
+}
 
 } // end of anonymous namespace
