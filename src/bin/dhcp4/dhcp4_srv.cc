@@ -1667,6 +1667,11 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
                   "NULL lease specified when creating NameChangeRequest");
 
     } else if (!old_lease || !lease->hasIdenticalFqdn(*old_lease)) {
+        if (old_lease) {
+            // Queue's up a remove of the old lease's DNS (if needed)
+            queueNCR(CHG_REMOVE, old_lease);
+        }
+
         // We may need to generate the NameChangeRequest for the new lease. It
         // will be generated only if hostname is set and if forward or reverse
         // update has been requested.
