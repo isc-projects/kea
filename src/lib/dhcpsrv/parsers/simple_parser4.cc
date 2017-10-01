@@ -63,7 +63,9 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "dhcp4o6-port",             Element::integer, "0" },
     { "echo-client-id",           Element::boolean, "true" },
     { "match-client-id",          Element::boolean, "true" },
-    { "next-server",              Element::string,  "0.0.0.0" }
+    { "next-server",              Element::string,  "0.0.0.0" },
+    { "server-hostname",          Element::string,  "" },
+    { "boot-file-name",           Element::string,  "" }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -118,6 +120,7 @@ const SimpleDefaults SimpleParser4::IFACE4_DEFAULTS = {
 /// This list is also used for inheriting from global to shared networks
 /// and from shared networks to subnets within it.
 const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
+    "boot-file-name",
     "client-class",
     "interface",
     "match-client-id",
@@ -126,6 +129,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "relay",
     "renew-timer",
     "reservation-mode",
+    "server-hostname",
     "valid-lifetime"
 };
 

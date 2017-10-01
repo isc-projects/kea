@@ -2165,6 +2165,28 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
         if (!subnet_next_server.isV4Zero()) {
             response->setSiaddr(subnet_next_server);
         }
+
+        const string& sname = subnet->getSname();
+        if (!sname.empty()) {
+            // Converting string to (const uint8_t*, size_t len) format is
+            // tricky. reinterpret_cast is not the most elegant solution,
+            // but it does avoid us making unnecessary copy. We will convert
+            // sname and file fields in Pkt4 to string one day and life
+            // will be easier.
+            response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
+                               sname.size());
+        }
+
+        const string& filename = subnet->getFilename();
+        if (!filename.empty()) {
+            // Converting string to (const uint8_t*, size_t len) format is
+            // tricky. reinterpret_cast is not the most elegant solution,
+            // but it does avoid us making unnecessary copy. We will convert
+            // sname and file fields in Pkt4 to string one day and life
+            // will be easier.
+            response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
+                              filename.size());
+        }
     }
 
     // Step 2: Try to set the values based on classes.
