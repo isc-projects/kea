@@ -1255,7 +1255,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 // Checks if the next-server defined as global value is overridden by subnet
 // specific value and returned in server messages. There's also similar test for
 // checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
-// config_parser_unittest.cc.
+// config_parser_unittest.cc. This test was extended to other BOOTP fixed fields.
 TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -1270,9 +1270,13 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"nohost\", "
+        "\"boot-file-name\": \"nofile\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"some-name.example.org\", "
+        "    \"boot-file-name\": \"bootfile.efi\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1300,6 +1304,16 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
+    std::string sname("some-name.example.org");
+    uint8_t sname_buf[Pkt4::MAX_SNAME_LEN];
+    std::memset(sname_buf, 0, Pkt4::MAX_SNAME_LEN);
+    std::memcpy(sname_buf, sname.c_str(), sname.size());
+    EXPECT_EQ(0, std::memcmp(sname_buf, &offer->getSname()[0], Pkt4::MAX_SNAME_LEN));
+    std::string filename("bootfile.efi");
+    uint8_t filename_buf[Pkt4::MAX_FILE_LEN];
+    std::memset(filename_buf, 0, Pkt4::MAX_FILE_LEN);
+    std::memcpy(filename_buf, filename.c_str(), filename.size());
+    EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
 
 // Checks if the next-server defined as global value is used in responses
@@ -1320,6 +1334,8 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"some-name.example.org\", "
+        "\"boot-file-name\": \"bootfile.efi\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -1349,6 +1365,16 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
+    std::string sname("some-name.example.org");
+    uint8_t sname_buf[Pkt4::MAX_SNAME_LEN];
+    std::memset(sname_buf, 0, Pkt4::MAX_SNAME_LEN);
+    std::memcpy(sname_buf, sname.c_str(), sname.size());
+    EXPECT_EQ(0, std::memcmp(sname_buf, &offer->getSname()[0], Pkt4::MAX_SNAME_LEN));
+    std::string filename("bootfile.efi");
+    uint8_t filename_buf[Pkt4::MAX_FILE_LEN];
+    std::memset(filename_buf, 0, Pkt4::MAX_FILE_LEN);
+    std::memcpy(filename_buf, filename.c_str(), filename.size());
+    EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems

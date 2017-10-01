@@ -239,6 +239,21 @@ isc::asiolink::IOAddress Subnet4::getSiaddr() const {
     return (siaddr_);
 }
 
+void Subnet4::setSname(const std::string& sname) {
+    sname_ = sname;
+}
+
+const std::string& Subnet4::getSname() const {
+    return (sname_);
+}
+void Subnet4::setFilename(const std::string& filename) {
+    filename_ = filename;
+}
+
+const std::string& Subnet4::getFilename() const {
+    return (filename_);
+}
+
 const PoolCollection& Subnet::getPools(Lease::Type type) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
@@ -573,6 +588,12 @@ Subnet4::toElement() const {
 
     // Set next-server
     map->set("next-server", Element::create(getSiaddr().toText()));
+
+    // Set server-hostname
+    map->set("server-hostname", Element::create(getSname()));
+
+    // Set boot-file-name
+    map->set("boot-file-name",Element::create(getFilename()));
 
     // Set pools
     const PoolCollection& pools = getPools(Lease::TYPE_V4);

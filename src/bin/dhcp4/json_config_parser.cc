@@ -455,7 +455,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "echo-client-id") ||
                  (config_pair.first == "match-client-id") ||
-                 (config_pair.first == "next-server")) {
+                 (config_pair.first == "next-server") ||
+                 (config_pair.first == "server-hostname") ||
+                 (config_pair.first == "boot-file-name")) {
                 continue;
             }
 
