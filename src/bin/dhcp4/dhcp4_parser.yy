@@ -426,6 +426,8 @@ global_param: valid_lifetime
             | echo_client_id
             | match_client_id
             | next_server
+            | server_hostname
+            | boot_file_name
             | unknown_map_entry
             ;
 
@@ -894,6 +896,8 @@ subnet4_param: valid_lifetime
              | relay
              | match_client_id
              | next_server
+             | server_hostname
+             | boot_file_name
              | subnet_4o6_interface
              | subnet_4o6_interface_id
              | subnet_4o6_subnet
@@ -1021,6 +1025,8 @@ shared_network_param: name
                     | option_data_list
                     | match_client_id
                     | next_server
+                    | server_hostname
+                    | boot_file_name
                     | relay
                     | reservation_mode
                     | client_class
