@@ -1567,9 +1567,9 @@ static const flex_int16_t yy_rule_linenum[155] =
      1034, 1043, 1052, 1061, 1070, 1079, 1088, 1097, 1106, 1115,
      1124, 1133, 1142, 1151, 1160, 1169, 1178, 1188, 1198, 1208,
      1218, 1228, 1238, 1248, 1258, 1268, 1277, 1286, 1295, 1304,
-     1313, 1322, 1333, 1344, 1357, 1368, 1381, 1479, 1484, 1489,
-     1494, 1495, 1496, 1497, 1498, 1499, 1501, 1519, 1532, 1537,
-     1541, 1543, 1545, 1547
+     1313, 1322, 1331, 1342, 1355, 1368, 1383, 1481, 1486, 1491,
+     1496, 1497, 1498, 1499, 1500, 1501, 1503, 1521, 1534, 1539,
+     1543, 1545, 1547, 1549
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2442,7 +2442,7 @@ YY_RULE_SETUP
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("valid-lifetime", driver.loc_);
@@ -2456,7 +2456,7 @@ YY_RULE_SETUP
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_RENEW_TIMER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("renew-timer", driver.loc_);
@@ -2470,7 +2470,7 @@ YY_RULE_SETUP
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_REBIND_TIMER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("rebind-timer", driver.loc_);
@@ -2507,10 +2507,10 @@ YY_RULE_SETUP
 #line 463 "dhcp4_lexer.ll"
 {
     switch (driver.ctx_) {
-    case Parser4Context::DHCP4:
-        return Dhcp4Parser::make_SHARED_NETWORKS(driver.loc_);
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_SHARED_NETWORKS(driver.loc_);
     default:
-        return Dhcp4Parser::make_STRING("shared-networks", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("shared-networks", driver.loc_);
     }
 }
 	YY_BREAK
@@ -2534,11 +2534,11 @@ YY_RULE_SETUP
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CLIENT_CLASS:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_OPTION_DATA(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("option-data", driver.loc_);
@@ -2556,7 +2556,7 @@ YY_RULE_SETUP
     case isc::dhcp::Parser4Context::OPTION_DATA:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CLIENT_CLASS:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::LOGGERS:
         return isc::dhcp::Dhcp4Parser::make_NAME(driver.loc_);
     default:
@@ -2643,7 +2643,7 @@ YY_RULE_SETUP
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_INTERFACE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("interface", driver.loc_);
@@ -2899,8 +2899,8 @@ YY_RULE_SETUP
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("client-class", driver.loc_);
@@ -3076,7 +3076,7 @@ YY_RULE_SETUP
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_RELAY(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("relay", driver.loc_);
@@ -3639,8 +3639,6 @@ YY_RULE_SETUP
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_ECHO_CLIENT_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("echo-client-id", driver.loc_);
@@ -3649,12 +3647,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 1333 "dhcp4_lexer.ll"
+#line 1331 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_MATCH_CLIENT_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("match-client-id", driver.loc_);
@@ -3663,14 +3661,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 1344 "dhcp4_lexer.ll"
+#line 1342 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_NEXT_SERVER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("next-server", driver.loc_);
@@ -3679,10 +3677,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 1357 "dhcp4_lexer.ll"
+#line 1355 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_SERVER_HOSTNAME(driver.loc_);
@@ -3696,7 +3696,9 @@ YY_RULE_SETUP
 #line 1368 "dhcp4_lexer.ll"
 {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_BOOT_FILE_NAME(driver.loc_);
@@ -3707,7 +3709,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 1381 "dhcp4_lexer.ll"
+#line 1383 "dhcp4_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -3809,7 +3811,7 @@ YY_RULE_SETUP
 case 138:
 /* rule 138 can match eol */
 YY_RULE_SETUP
-#line 1479 "dhcp4_lexer.ll"
+#line 1481 "dhcp4_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
@@ -3818,7 +3820,7 @@ YY_RULE_SETUP
 case 139:
 /* rule 139 can match eol */
 YY_RULE_SETUP
-#line 1484 "dhcp4_lexer.ll"
+#line 1486 "dhcp4_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
@@ -3826,7 +3828,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 1489 "dhcp4_lexer.ll"
+#line 1491 "dhcp4_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
@@ -3834,37 +3836,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 1494 "dhcp4_lexer.ll"
+#line 1496 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 1495 "dhcp4_lexer.ll"
+#line 1497 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 1496 "dhcp4_lexer.ll"
+#line 1498 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 1497 "dhcp4_lexer.ll"
+#line 1499 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 1498 "dhcp4_lexer.ll"
+#line 1500 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 1499 "dhcp4_lexer.ll"
+#line 1501 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 1501 "dhcp4_lexer.ll"
+#line 1503 "dhcp4_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -3885,7 +3887,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 1519 "dhcp4_lexer.ll"
+#line 1521 "dhcp4_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -3901,7 +3903,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 1532 "dhcp4_lexer.ll"
+#line 1534 "dhcp4_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp4Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -3909,33 +3911,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 1537 "dhcp4_lexer.ll"
+#line 1539 "dhcp4_lexer.ll"
 {
    return isc::dhcp::Dhcp4Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 1541 "dhcp4_lexer.ll"
+#line 1543 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 1543 "dhcp4_lexer.ll"
+#line 1545 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 1545 "dhcp4_lexer.ll"
+#line 1547 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 1547 "dhcp4_lexer.ll"
+#line 1549 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1549 "dhcp4_lexer.ll"
+#line 1551 "dhcp4_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp4Parser::make_END(driver.loc_);
@@ -3961,10 +3963,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 1572 "dhcp4_lexer.ll"
+#line 1574 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 3967 "dhcp4_lexer.cc"
+#line 3969 "dhcp4_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -5069,7 +5071,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 1572 "dhcp4_lexer.ll"
+#line 1574 "dhcp4_lexer.ll"
 
 
 using namespace isc::dhcp;
