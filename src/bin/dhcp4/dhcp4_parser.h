@@ -1390,7 +1390,7 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 788,     ///< Last index in yytable_.
+      yylast_ = 797,     ///< Last index in yytable_.
       yynnts_ = 329,  ///< Number of nonterminal symbols.
       yyfinal_ = 26, ///< Termination state number.
       yyterror_ = 1,
