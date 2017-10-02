@@ -2877,7 +2877,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+            StatsMgr::generateName("subnet", client_lease->subnet_id_, "assigned-addresses"),
             static_cast<int64_t>(-1));
     }
 
