@@ -32,7 +32,8 @@
         &__VERSION__;.</releaseinfo>
 
     <copyright>
-      <year>2010-2017</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2010-2017</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
 
     <abstract>
