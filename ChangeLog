@@ -1,3 +1,5 @@
+Kea 1.3.0-beta released on September 29, 2017
+
 1304.	[bug,func]	fdupont
 	The DHCPv4 Vendor Specific Information (code 43) option and
 	private options (codes 224-254) can be redefined at the global
@@ -5,7 +7,7 @@
 	definitions following the DHCPv4 Vendor Class Identifier (code 60)
 	option or when defined as a binary option to accept with problems
 	option 43 carrying a raw value.
-	(Trac #5073, git xxx)
+	(Trac #5073, git b290b3cbaa926d4e9613f6607c5fcbae2301b266)
 
 1303.	[func]		tmark
 	The command handlers in the lease_cmds hook library are now
@@ -147,7 +149,7 @@
 	Now all interface service sockets are closed before interface
 	re-detection. Note if the re-configuration fails they remain
 	closed.
-	(Trac #5333, git xxx)
+	(Trac #5333, git 8bff2ec336456de51d0d9d3ff011d28a6a61ef66)
 
 1281.	[build]		tmark
 	Configure script now correctly recognizes static boost_system

@@ -10,7 +10,7 @@ Primary developers:
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
 		     host reservation, lease file cleanup, lease expiration,
-                     control agent)
+                     control agent, shared networks)
  - Thomas Markwalder (DDNS, user_chk)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
