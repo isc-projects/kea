@@ -10,6 +10,8 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
@@ -275,14 +277,14 @@ const char* NETWORKS_CONFIG[] = {
     "                        {"
     "                            \"prefix\": \"5000::\","
     "                            \"prefix-len\": 96,"
-    "                            \"delegated-len\": 96"
+    "                            \"delegated-len\": 112"
     "                        }"
     "                    ],"
     "                    \"reservations\": ["
     "                        {"
     "                            \"duid\": \"00:03:00:01:11:22:33:44:55:66\","
     "                            \"ip-addresses\": [ \"2001:db8:2::28\" ],"
-    "                            \"prefixes\": [ \"1234::/64\" ]"
+    "                            \"prefixes\": [ \"5000::8:0000/112\" ]"
     "                        }"
     "                    ]"
     "                }"
@@ -978,10 +980,30 @@ public:
         ASSERT_NO_FATAL_FAILURE(verifyAssignedStats());
     }
 
+    /// @brief Returns subnet having specified address or prefix in range.
+    ///
+    /// @param type Resource type: NA or PD.
+    /// @param resource Address or prefix for which subnet is being searched.
+    /// @return Pointer to the subnet having an resource in range or null pointer
+    /// if no subnet found.
+    Subnet6Ptr getConfiguredSubnet(const Lease::Type& type, const IOAddress& resource) const {
+        CfgSubnets6Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
+        const Subnet6Collection* subnets = cfg->getAll();
+        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend(); ++subnet_it) {
+            if ((*subnet_it)->inPool(type, resource)) {
+                return (*subnet_it);
+            }
+        }
+
+        return (Subnet6Ptr());
+
+    }
+
     /// @brief Check if client has a lease for the specified address.
     ///
     /// Apart from checking whether the client has got the lease it also
-    /// checks whether this lease is stored in the lease database.
+    /// checks whether this lease is stored in the lease database and that
+    /// it holds valid subnet identifier.
     ///
     /// @param client Reference to the client.
     /// @param address Leased address.
@@ -993,6 +1015,21 @@ public:
     bool hasLeaseForAddress(Dhcp6Client& client, const IOAddress& address,
                             const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
         Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, address);
+        // Sanity check the lease.
+        if (lease) {
+            Subnet6Ptr subnet = getConfiguredSubnet(Lease::TYPE_NA, address);
+            if (!subnet) {
+                ADD_FAILURE() << "unable to find configured subnet for the"
+                    " address " << address;
+                return (false);
+            }
+            // Make sure that the subnet id is not messed up in the lease.
+            if (subnet->getID() != lease->subnet_id_) {
+                ADD_FAILURE() << "invalid subnet identifier found in the lease for"
+                    " address " << address;
+                return (false);
+            }
+        }
         return ((((lease_on_server == LeaseOnServer::MUST_EXIST) && lease) ||
                 ((lease_on_server == LeaseOnServer::MUST_NOT_EXIST) && !lease)) &&
                 client.hasLeaseForAddress(address));
@@ -1001,7 +1038,8 @@ public:
     /// @brief Check if client has a lease for the specified prefix.
     ///
     /// Apart from checking whether the client has got the lease it also
-    /// checks whether this lease is stored in the lease database.
+    /// checks whether this lease is stored in the lease database and that
+    /// it holds valid subnet identifier.
     ///
     /// @param client Reference to the client.
     /// @param prefix Leased prefix.
@@ -1015,6 +1053,23 @@ public:
                            const uint8_t prefix_len, const IAID& iaid,
                            const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
         Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
+
+        // Sanity check the lease.
+        if (lease) {
+            Subnet6Ptr subnet = getConfiguredSubnet(Lease::TYPE_PD, prefix);
+            if (!subnet) {
+                ADD_FAILURE() << "unable to find configured subnet for the"
+                    " prefix " << prefix;
+                return (false);
+            }
+            // Make sure that the subnet id is not messed up in the lease.
+            if (subnet->getID() != lease->subnet_id_) {
+                ADD_FAILURE() << "invalid subnet identifier found in the lease for"
+                    " prefix " << prefix;
+                return (false);
+            }
+        }
+
         return ((((lease_on_server == LeaseOnServer::MUST_EXIST) && lease &&
                   (lease->prefixlen_ = prefix_len) && (lease->iaid_ == iaid)) ||
                 ((lease_on_server == LeaseOnServer::MUST_NOT_EXIST) && !lease)) &&
@@ -1740,7 +1795,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_EQ(4, client.getLeaseNum());
     // The client should have got one reserved address and one reserved prefix.
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
-    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("1234::"), 64, IAID(0x1111)));
+    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("5000::8:00000"), 112, IAID(0x1111)));
 
     // The client should have got dynamically allocated address too and it must be
     // different than the reserved address.
@@ -1759,7 +1814,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     });
     ASSERT_EQ(4, client.getLeaseNum());
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
-    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("1234::"), 64, IAID(0x1111)));
+    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("5000::8:0000"), 112, IAID(0x1111)));
 
     leases_1234 = client.getLeasesByIAID(0x1234);
     ASSERT_EQ(1, leases_1234.size());
@@ -1767,7 +1822,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
 
     leases_2222 = client.getLeasesByIAID(0x2222);
     ASSERT_EQ(1, leases_2222.size());
-    ASSERT_NE("1234::", leases_2222[0].addr_.toText());
+    ASSERT_NE(IOAddress("5000::8:0000").toText(), leases_2222[0].addr_.toText());
 }
 
 // Relay address is specified for each subnet within shared network.
