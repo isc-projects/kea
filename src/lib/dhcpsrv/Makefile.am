@@ -31,7 +31,6 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 EXTRA_DIST =
 EXTRA_DIST += parsers/client_class_def_parser.cc
 EXTRA_DIST += parsers/client_class_def_parser.h
-EXTRA_DIST += parsers/dhcp_config_parser.h
 EXTRA_DIST += parsers/dbaccess_parser.cc
 EXTRA_DIST += parsers/dbaccess_parser.h
 EXTRA_DIST += parsers/dhcp_parsers.cc
@@ -166,7 +165,6 @@ libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
 # Configuration parsers
 libkea_dhcpsrv_la_SOURCES += parsers/client_class_def_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/client_class_def_parser.h
-libkea_dhcpsrv_la_SOURCES += parsers/dhcp_config_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.cc

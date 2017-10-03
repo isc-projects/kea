@@ -22,7 +22,6 @@
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>

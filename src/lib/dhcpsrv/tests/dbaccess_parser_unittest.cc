@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/host_mgr.h>
