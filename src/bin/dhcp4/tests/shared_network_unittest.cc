@@ -814,36 +814,6 @@ const char* NETWORKS_CONFIG[] = {
 class Dhcpv4SharedNetworkTest : public Dhcpv4SrvTest {
 public:
 
-    /// @brief Wrapper around statistics value before transaction.
-    struct StatBefore {
-        /// @brief Constructor.
-        ///
-        /// @param value Statistic value.
-        explicit StatBefore(const int64_t value)
-            : value_(value) {
-        }
-        /// @brief Holds numeric statistic value.
-        int64_t value_;
-    };
-
-    /// @brief Wrapper around statistics value after transaction.
-    struct StatAfter {
-        /// @brief Constructor.
-        ///
-        /// @param value Statistic value.
-        StatAfter(const int64_t value)
-            : value_(value) {
-        }
-        /// @brief Holds numeric statistic value.
-        int64_t value_;
-    };
-
-    /// @brief Mode of statistics verificiation in statistics tests.
-    enum class StatsVerify {
-        NEW_ALLOCATION,
-        TRANSFER
-    };
-
     /// @brief Constructor.
     Dhcpv4SharedNetworkTest()
         : Dhcpv4SrvTest(),
