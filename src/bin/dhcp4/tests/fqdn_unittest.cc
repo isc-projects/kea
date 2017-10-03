@@ -1107,9 +1107,8 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message but with a different FQDN. Server
-    // should generate two NameChangeRequests: one to remove existing entry,
-    // another one to add new entry with updated domain-name.
+    // Create another Request message with the same FQDN. Server
+    // should generate no NameChangeRequests.
     Pkt4Ptr req2 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
                                        "myhost.example.com.",
@@ -1149,9 +1148,8 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message but with a different Hostname. Server
-    // should generate two NameChangeRequests: one to remove existing entry,
-    // another one to add new entry with updated domain-name.
+    // Create another Request message with the same Hostname. Server
+    // should generate no NameChangeRequests.
     Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
 
     // Set interface for the incoming packet. The server requires it to
