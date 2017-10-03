@@ -2995,10 +2995,6 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         if (ctx.old_lease_->expired()) {
             reclaimExpiredLease(ctx.old_lease_, ctx.callout_handle_);
 
-        } else if (!lease->hasIdenticalFqdn(*ctx.old_lease_)) {
-            // The lease is not expired but the FQDN information has
-            // changed. So, we have to remove the previous DNS entry.
-            queueNCR(CHG_REMOVE, ctx.old_lease_);
         }
 
         lease->state_ = Lease::STATE_DEFAULT;
