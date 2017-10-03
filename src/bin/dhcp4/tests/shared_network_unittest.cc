@@ -12,6 +12,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -850,6 +852,23 @@ public:
         StatsMgr::instance().removeAll();
     }
 
+    /// @brief Returns subnet having specified address in range.
+    ///
+    /// @param address Address for which subnet is being searched.
+    /// @return Pointer to the subnet having an address in range or null pointer
+    /// if no subnet found.
+    Subnet4Ptr getConfiguredSubnet(const IOAddress& address) {
+        CfgSubnets4Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
+        const Subnet4Collection* subnets = cfg->getAll();
+        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend();
+             ++subnet_it) {
+            if ((*subnet_it)->inRange(address)) {
+                return (*subnet_it);
+            }
+        }
+        return (Subnet4Ptr());
+    }
+
     /// @brief Perform DORA exchange and checks the result
     ///
     /// This convenience method conducts DORA exchange with client
@@ -880,6 +899,10 @@ public:
             EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
             Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(resp->getYiaddr()));
             ASSERT_TRUE(lease);
+            // Make sure that the subnet id in the lease database is not messed up.
+            Subnet4Ptr subnet = getConfiguredSubnet(resp->getYiaddr());
+            ASSERT_TRUE(subnet);
+            ASSERT_EQ(subnet->getID(), lease->subnet_id_);
 
         } else {
             EXPECT_EQ("0.0.0.0", resp->getYiaddr().toText());
@@ -941,6 +964,10 @@ public:
             EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
             Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(resp->getYiaddr()));
             ASSERT_TRUE(lease);
+            // Make sure that the subnet id in the lease database is not messed up.
+            Subnet4Ptr subnet = getConfiguredSubnet(resp->getYiaddr());
+            ASSERT_TRUE(subnet);
+            ASSERT_EQ(subnet->getID(), lease->subnet_id_);
         }
     }
 
