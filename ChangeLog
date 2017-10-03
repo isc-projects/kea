@@ -1,3 +1,10 @@
+1305.	[bug]	tmark
+	Corrected logic that was causing kea-dhcp4 to remove DNS entries
+	when renewing leases with generated FQDN names.  Prior to this
+	the server was incorrectly scheduling DNS removal when configured
+	to generate the client's FQDN.
+	(Trac #5369, git 18f57f502f1b9fb5bf7ef5ab995ddda60006fd39)
+
 Kea 1.3.0-beta released on September 29, 2017
 
 1304.	[bug,func]	fdupont
