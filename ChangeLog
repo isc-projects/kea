@@ -1,3 +1,12 @@
+1306.	[bug]*		marcin
+	Respective Kea daemons now use their own default configuration
+	files: kea-dhcp4.conf, kea-dhcp6.conf, kea-dhcp-ddns.conf and
+	kea-ctrl-agent.conf. This change is aimed at eliminating the
+	issue whereby 'config-write' command overrides configuration
+	of all servers rather than just a configuration of the deamon
+	to which this command has been sent.
+	(Trac #5338, git 252e5e8a75fa42271b0cdb6edad3c152bbf3c515)
+
 1305.	[bug]	tmark
 	Corrected logic that was causing kea-dhcp4 to remove DNS entries
 	when renewing leases with generated FQDN names.  Prior to this
