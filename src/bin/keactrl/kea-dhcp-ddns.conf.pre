@@ -8,6 +8,10 @@
 // your software should come with your Kea package, but it is also available
 // on Kea web page (http://kea.isc.org, click User's Guide, direct link for
 // stable version is http://kea.isc.org/docs/kea-guide.html).
+//
+// This configuration file contains only DHCP DDNS daemon's configuration.
+// If configurations for other Kea services are also included in this file they
+// are ignored by the DHCP DDNS daemon.
 {
 
 // DHCP DDNS configuration starts here. This is a very simple configuration
@@ -20,41 +24,6 @@
   "tsig-keys": [],
   "forward-ddns" : {},
   "reverse-ddns" : {}
-},
-
-// This is a basic configuration for the Kea Control Agent.
-// RESTful interface to be available at http://127.0.0.1:8080/
-"Control-agent": {
-    "http-host": "127.0.0.1",
-    "http-port": 8080,
-
-    // Specify location of the files to which the Control Agent
-    // should connect to forward commands to the DHCPv4 and DHCPv6
-    // server via unix domain socket.
-    "control-sockets": {
-        "dhcp4": {
-            "socket-type": "unix",
-            "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
-        },
-        "dhcp6": {
-            "socket-type": "unix",
-            "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
-        }
-    },
-
-    // Specify hooks libraries that are attached to the Control Agent.
-    // Such hooks libraries should support 'control_command_receive'
-    // hook point. This is currently commented out because it has to
-    // point to the existing hooks library. Otherwise the Control
-    // Agent will fail to start.
-    "hooks-libraries": [
-//  {
-//      "library": "/opt/local/control-agent-commands.so",
-//      "parameters": {
-//          "param1": "foo"
-//      }
-//  }
-    ]
 },
 
 // Logging configuration starts here. Kea uses different loggers to log various

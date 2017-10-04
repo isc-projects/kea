@@ -17,6 +17,10 @@
 // your software should come with your Kea package, but it is also available
 // on Kea web page (http://kea.isc.org, click User's Guide, direct link for
 // stable version is http://kea.isc.org/docs/kea-guide.html).
+//
+// This configuration file contains only DHCPv4 server's configuration.
+// If configurations for other Kea services are also included in this file they
+// are ignored by the DHCPv4 server.
 {
 
 // DHCPv4 configuration starts here. This section will be read by DHCPv4 server
