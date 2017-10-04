@@ -22,7 +22,8 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false),
+      outbound_iface_(SAME_AS_INBOUND) {
 }
 
 void
@@ -224,6 +225,35 @@ CfgIface::textToSocketType(const std::string& socket_type_name) const {
         isc_throw(InvalidSocketType, "unsupported socket type '"
                   << socket_type_name << "'");
     }
+}
+
+std::string
+CfgIface::outboundTypeToText() const {
+    switch (outbound_iface_) {
+    case SAME_AS_INBOUND: return ("same-as-inbound");
+    case USE_ROUTING:      return ("use-routing");
+    default: isc_throw(Unexpected, "unsupported outbound-type " << socket_type_);
+    }
+
+}
+
+CfgIface::OutboundIface
+CfgIface::textToOutboundIface(const std::string& txt) {
+    if (txt == "same-as-inbound") {
+        return (SAME_AS_INBOUND);
+
+    } else if (txt == "use-routing") {
+        return (USE_ROUTING);
+
+    } else {
+        isc_throw(InvalidSocketType, "unsupported socket type '"
+                  << txt << "'");
+    }
+}
+
+void
+CfgIface::setOutboundIface(const OutboundIface& traffic_type) {
+    outbound_iface_ = traffic_type;
 }
 
 void

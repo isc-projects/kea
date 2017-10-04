@@ -137,6 +137,12 @@ public:
         SOCKET_UDP
     };
 
+    enum OutboundIface {
+        SAME_AS_INBOUND,
+
+        USE_ROUTING
+    };
+
     /// @brief Keyword used to enable all interfaces.
     ///
     /// This keyword can be used instead of the interface name to specify
@@ -226,6 +232,14 @@ public:
 
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
+
+    void setOutboundIface(const OutboundIface& traffic_type);
+
+    OutboundIface getOutboundIface() const;
+
+    std::string outboundTypeToText() const;
+
+    static OutboundIface textToOutboundIface(const std::string& txt);
 
     /// @brief Converts the socket type in the textual format to the type
     /// represented by the @c SocketType.
@@ -340,6 +354,8 @@ private:
 
     /// @brief A boolean value which reflects current re-detect setting
     bool re_detect_;
+
+    OutboundIface outbound_iface_;
 };
 
 /// @brief A pointer to the @c CfgIface .
