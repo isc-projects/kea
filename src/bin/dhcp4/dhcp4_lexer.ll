@@ -225,6 +225,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"outbound-interface\" {
+    switch(driver.ctx_) {
+    case Parser4Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp4Parser::make_OUTBOUND_INTERFACE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("outbound-interface", driver.loc_);
+    }
+}
+
+\"same-as-inbound\" {
+    switch(driver.ctx_) {
+    case Parser4Context::OUTBOUND_INTERFACE:
+        return Dhcp4Parser::make_SAME_AS_INBOUND(driver.loc_);
+    default:
+        return Dhcp4Parser::make_STRING("same-as-inbound", driver.loc_);
+    }
+}
+
+\"use-routing\" {
+    switch(driver.ctx_) {
+    case Parser4Context::OUTBOUND_INTERFACE:
+        return Dhcp4Parser::make_USE_ROUTING(driver.loc_);
+    default:
+        return Dhcp4Parser::make_STRING("use-routing", driver.loc_);
+    }
+}
+
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
