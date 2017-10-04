@@ -59,11 +59,6 @@ using namespace isc::hooks;
 
 namespace {
 
-// Pointers to various parser objects.
-typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
-typedef boost::shared_ptr<StringParser> StringParserPtr;
-typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
 /// @brief Parser for list of RSOO options
 ///
 /// This parser handles a Dhcp6/relay-supplied-options entry. It contains a
