@@ -1237,7 +1237,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
-    if (subnet->getID() != ctx.subnet_->getID()) {
+    if (ctx.subnet_ && subnet && (subnet->getID() != ctx.subnet_->getID())) {
         SharedNetwork6Ptr network;
         subnet->getSharedNetwork(network);
         if (network) {
