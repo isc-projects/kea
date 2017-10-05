@@ -235,9 +235,12 @@ CfgIface::getOutboundIface() const {
 std::string
 CfgIface::outboundTypeToText() const {
     switch (outbound_iface_) {
-    case SAME_AS_INBOUND: return ("same-as-inbound");
-    case USE_ROUTING:      return ("use-routing");
-    default: isc_throw(Unexpected, "unsupported outbound-type " << socket_type_);
+    case SAME_AS_INBOUND:
+        return ("same-as-inbound");
+    case USE_ROUTING:
+        return ("use-routing");
+    default:
+        isc_throw(Unexpected, "unsupported outbound-type " << socket_type_);
     }
 
 }
@@ -257,7 +260,7 @@ CfgIface::textToOutboundIface(const std::string& txt) {
 }
 
 void
-CfgIface::setOutboundIface(const OutboundIface& traffic_type) {
+CfgIface::setOutboundIface(const OutboundIface& outbound_iface) {
     outbound_iface_ = traffic_type;
 }
 

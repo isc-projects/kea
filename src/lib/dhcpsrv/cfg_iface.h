@@ -137,9 +137,12 @@ public:
         SOCKET_UDP
     };
 
+    /// @brief Indicates how outbound interface is selected for relayed traffic.
     enum OutboundIface {
+        /// Server sends responses over the same interface on which queries are
+        /// received.
         SAME_AS_INBOUND,
-
+        /// Server uses routing to determine the right interface to send response.
         USE_ROUTING
     };
 
@@ -233,24 +236,25 @@ public:
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
 
-    /// @brief Sets outbound interface type
+    /// @brief Sets outbound interface selection mode.
     ///
-    /// @param traffic_type sets the type of traffic
-    void setOutboundIface(const OutboundIface& traffic_type);
+    /// @param outbound_iface New outbound interface selection mode setting.
+    void setOutboundIface(const OutboundIface& outbound_iface);
 
-    /// @brief Returns outbound interface traffic type
+    /// @brief Returns outbound interface selection mode.
     ///
-    /// @return type of traffic (use-routing or same-as-inbound)
+    /// @return Outbound interface selection mode.
     OutboundIface getOutboundIface() const;
 
-    /// @brief Returns outbound type as string
+    /// @brief Returns outbound interface selection mode as string.
     ///
-    /// @return text representation of the outbound type
+    /// @return text representation of the outbound interface selection mode.
     std::string outboundTypeToText() const;
 
-    /// @brief Converts text to outbound interface
+    /// @brief Converts text to outbound interface selection mode.
+    ///
     /// @param txt either 'same-as-inbound' or 'use-routing'
-    /// @return converted value
+    /// @return Outbound interface selection mode.
     static OutboundIface textToOutboundIface(const std::string& txt);
 
     /// @brief Converts the socket type in the textual format to the type
@@ -367,6 +371,7 @@ private:
     /// @brief A boolean value which reflects current re-detect setting
     bool re_detect_;
 
+    /// @brief Indicates how outbound interface is selected for relayed traffic.
     OutboundIface outbound_iface_;
 };
 
