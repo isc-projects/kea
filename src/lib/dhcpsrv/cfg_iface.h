@@ -233,12 +233,24 @@ public:
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
 
+    /// @brief Sets outbound interface type
+    ///
+    /// @param traffic_type sets the type of traffic
     void setOutboundIface(const OutboundIface& traffic_type);
 
+    /// @brief Returns outbound interface traffic type
+    ///
+    /// @return type of traffic (use-routing or same-as-inbound)
     OutboundIface getOutboundIface() const;
 
+    /// @brief Returns outbound type as string
+    ///
+    /// @return text representation of the outbound type
     std::string outboundTypeToText() const;
 
+    /// @brief Converts text to outbound interface
+    /// @param txt either 'same-as-inbound' or 'use-routing'
+    /// @return converted value
     static OutboundIface textToOutboundIface(const std::string& txt);
 
     /// @brief Converts the socket type in the textual format to the type

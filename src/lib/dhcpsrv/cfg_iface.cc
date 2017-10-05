@@ -227,6 +227,11 @@ CfgIface::textToSocketType(const std::string& socket_type_name) const {
     }
 }
 
+CfgIface::OutboundIface
+CfgIface::getOutboundIface() const {
+    return (outbound_iface_);
+}
+
 std::string
 CfgIface::outboundTypeToText() const {
     switch (outbound_iface_) {
@@ -246,7 +251,7 @@ CfgIface::textToOutboundIface(const std::string& txt) {
         return (USE_ROUTING);
 
     } else {
-        isc_throw(InvalidSocketType, "unsupported socket type '"
+        isc_throw(BadValue, "unsupported outbound interface type '"
                   << txt << "'");
     }
 }
@@ -453,6 +458,10 @@ CfgIface::toElement() const {
     // @todo emit raw if and only if DHCPv4
     if (socket_type_ != SOCKET_RAW) {
         result->set("dhcp-socket-type", Element::create(std::string("udp")));
+    }
+
+    if (outbound_iface_ != SAME_AS_INBOUND) {
+        result->set("outbound-interface", Element::create(outboundTypeToText()));
     }
 
     // Set re-detect
