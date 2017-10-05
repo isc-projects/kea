@@ -887,6 +887,75 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
+    "}",
+
+// Configuration #16.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"option-data\": ["
+    "        {"
+    "            \"name\": \"nis-servers\","
+    "            \"data\": \"3000::20\""
+    "        }"
+    "    ],"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"option-data\": ["
+    "                        {"
+    "                            \"name\": \"dns-servers\","
+    "                            \"data\": \"4004::22\""
+    "                        }"
+    "                    ],"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"id\": 100,"
+    "                    \"option-data\": ["
+    "                        {"
+    "                            \"name\": \"dns-servers\","
+    "                            \"data\": \"5555::33\""
+    "                        }"
+    "                    ],"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:3::/64\","
+    "                    \"id\": 1000,"
+    "                    \"option-data\": ["
+    "                        {"
+    "                            \"name\": \"dns-servers\","
+    "                            \"data\": \"1234::23\""
+    "                        }"
+    "                    ],"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:3::20 - 2001:db8:3::20\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
     "}"
 };
 
@@ -1569,6 +1638,67 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
 
     // Subnet specific value should be assigned.
     ASSERT_TRUE(client3.hasOptionWithAddress(D6O_NISP_SERVERS, "4000::5"));
+}
+
+// The same option is specified differently for each subnet belonging to the
+// same shared network.
+TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+
+    // Create configuration with one shared network including three subnets with
+    // the same option having different values.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[16], *client.getServer()));
+
+    // Client provides no hint and any subnet can be picked from the shared network.
+    ASSERT_NO_THROW(client.requestAddress(0xabca));
+
+    // Request Name Servers option.
+    ASSERT_NO_THROW(client.requestOption(D6O_NAME_SERVERS));
+
+    // Send solicit without a hint. The client should be offerred an address from the
+    // shared network. Depending on the subnet from which the address has been allocated
+    // a specific value of the Name Servers option should be returned.
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doSolicit(true));
+    });
+
+    if (client.hasLeaseForAddress(IOAddress("2001:db8:1::20"))) {
+        ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "4004::22"));
+
+    } else if (client.hasLeaseForAddress(IOAddress("2001:db8:2::20"))) {
+        ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "5555::33"));
+
+    } else if (client.hasLeaseForAddress(IOAddress("2001:db8:3::20"))) {
+        ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "1234::23"));
+    }
+
+    // This time let's provide a hint.
+    client.clearRequestedIAs();
+    client.requestAddress(0xabca, IOAddress("2001:db8:2::20"));
+
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doSolicit(true));
+    });
+
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "5555::33"));
+
+    // This time, let's do the 4-way exchange.
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doSARR());
+    });
+
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "5555::33"));
+
+    // And renew the lease.
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doRenew());
+    });
+    ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
+    ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "5555::33"));
 }
 
 // Different shared network is selected for different local interface.
