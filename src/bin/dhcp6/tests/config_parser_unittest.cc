@@ -5357,7 +5357,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextlw4over6) {
     bool bool_value;
     ASSERT_EQ(Element::boolean, exclude->getType());
     EXPECT_NO_THROW(exclude->getValue(bool_value));
-    EXPECT_EQ(true, bool_value);
+    EXPECT_TRUE(bool_value);
 
     ASSERT_TRUE(v6len);
     ASSERT_EQ(Element::integer, v6len->getType());
@@ -5721,7 +5721,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
     EXPECT_EQ(IOAddress("1111::1"), s->getRelayInfo().addr_);
-    EXPECT_EQ(true, s->getRapidCommit());
+    EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
@@ -5732,7 +5732,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
     EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
-    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_FALSE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
@@ -5747,7 +5747,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
     EXPECT_FALSE(s->getInterfaceId());
     EXPECT_EQ(IOAddress("::"), s->getRelayInfo().addr_);
-    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_FALSE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
 
