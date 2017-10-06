@@ -1,3 +1,11 @@
+1307.	[func]		fdupont
+	When an option is defined with a record type and the array
+	flag is true the last record field is an array. All standard
+	options supported by ISC DHCP and using this are now supported
+	by Kea (so now there is no standard option suported only by
+	ISC DHCP).
+	(Trac #5226, git xxx)
+
 1306.	[bug]*		marcin
 	Respective Kea daemons now use their own default configuration
 	files: kea-dhcp4.conf, kea-dhcp6.conf, kea-dhcp-ddns.conf and

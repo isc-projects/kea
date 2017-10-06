@@ -1252,6 +1252,15 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_DIRECTORY_AGENT, begin, begin + 5,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DIRECTORY_AGENT, begin, begin + 9,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DIRECTORY_AGENT, begin, begin + 45,
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs4(DHO_SERVICE_SCOPE, begin, end,
                                     typeid(Option4SlpServiceScope));
 
@@ -1398,11 +1407,31 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     fqdn_buf.end(),
                                     typeid(OptionCustom));
 
+    std::vector<uint8_t> rdnss1_buf(begin, begin + 9);
+    rdnss1_buf.insert(rdnss1_buf.end(), fqdn1_buf.begin(), fqdn1_buf.end());
+
+    LibDhcpTest::testStdOptionDefs4(DHO_RDNSS_SELECT, rdnss1_buf.begin(),
+                                    rdnss1_buf.end(),
+                                    typeid(OptionCustom));
+
+    std::vector<uint8_t> rdnss_buf(begin, begin + 9);
+    rdnss_buf.insert(rdnss_buf.end(), fqdn_buf.begin(), fqdn_buf.end());
+
+    LibDhcpTest::testStdOptionDefs4(DHO_RDNSS_SELECT, rdnss_buf.begin(),
+                                    rdnss_buf.end(),
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs4(DHO_V4_PORTPARAMS, begin, begin + 4,
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_V4_CAPTIVE_PORTAL, begin, end,
                                     typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_6RD, begin, begin + 22,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_6RD, begin, begin + 46,
+                                    typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_V4_ACCESS_DOMAIN, fqdn1_buf.begin(),
                                     fqdn1_buf.end(), typeid(OptionCustom));
@@ -1671,6 +1700,20 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_PD_EXCLUDE, begin, end,
                                     typeid(Option6PDExclude));
+
+    std::vector<uint8_t> rdnss1_buf(begin, begin + 17);
+    rdnss1_buf.insert(rdnss1_buf.end(), fqdn1_buf.begin(), fqdn1_buf.end());
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RDNSS_SELECTION, rdnss1_buf.begin(),
+                                    rdnss1_buf.end(),
+                                    typeid(OptionCustom));
+
+    std::vector<uint8_t> rdnss_buf(begin, begin + 17);
+    rdnss_buf.insert(rdnss_buf.end(), fqdn_buf.begin(), fqdn_buf.end());
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RDNSS_SELECTION, rdnss_buf.begin(),
+                                    rdnss_buf.end(),
+                                    typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_LINKLAYER_ADDR, begin, end,
                                     typeid(Option));
