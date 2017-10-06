@@ -34,6 +34,18 @@ the value stack.  The strings are displayed in hex.
 This debug message indicates that the given binary string is being pushed
 onto the value stack.  The string is displayed in hex.
 
+# For use with TokenIfElse
+
+% EVAL_DEBUG_IFELSE_FALSE Popping %1 (false) and %2, leaving %3
+This debug message indicates that the condition is false so
+the iftrue branch value is removed and the ifelse branch value
+is left on the value stack.
+
+% EVAL_DEBUG_IFELSE_TRUE Popping %1 (true) and %2, leaving %3
+This debug message indicates that the condition is true so
+the ifelse branch value is removed and the iftrue branch value
+is left on the value stack.
+
 # For use with TokenIpAddress
 
 % EVAL_DEBUG_IPADDRESS Pushing IPAddress %1
