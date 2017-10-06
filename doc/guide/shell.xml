@@ -25,7 +25,7 @@
     <title>Shell Usage</title>
     <para><command>kea-shell</command> is run as follows:
 <screen>
-kea-shell [--host hostname] [--port number] [--timeout seconds] [--service service-name] [command]
+kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [--service service-name] [command]
 </screen>
     where:
     </para>
@@ -41,6 +41,15 @@ kea-shell [--host hostname] [--port number] [--timeout seconds] [--service servi
         <simpara>
           <command>--port <replaceable>number</replaceable></command> specifies the TCP port
           on which the CA listens. If not specified, 8000 is used.
+        </simpara>
+      </listitem>
+
+      <listitem>
+        <simpara>
+          <command>--path <replaceable>path</replaceable></command> specifies
+          the path in the URL to connect to. If not specified,
+          empty path is used. As CA listens at the empty path
+          this parameter is useful only with a reverse proxy.
         </simpara>
       </listitem>
 
@@ -116,6 +125,15 @@ $ <userinput>kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-command
 $ cat param.json
 "filename": "my-config-file.json"
 $ <userinput>cat param.json | kea-shell --host 192.0.2.1 config-write > result.json</userinput>
+</screen>
+    </para>
+
+    <para>When a reverse proxy is used to de-multiplex requests to different
+    servers the default empty path in the URL is not enough so the
+    <command> --path </command> parameter should be used. For instance
+    if requests to the "/kea" path are forwarded to the CA this can be used:
+<screen>
+$ <userinput>kea-shell --host 192.0.2.1 --port 8001 --path kea ...</userinput>
 </screen>
     </para>
 
