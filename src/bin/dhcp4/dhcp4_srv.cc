@@ -847,11 +847,12 @@ Dhcpv4Srv::run_one() {
             .arg(rsp->getLabel())
             .arg(rsp->getName())
             .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->getLocalAddr())
+            .arg(rsp->getLocalAddr().isV4Zero() ? "*" : rsp->getLocalAddr().toText())
             .arg(rsp->getLocalPort())
             .arg(rsp->getRemoteAddr())
             .arg(rsp->getRemotePort())
-            .arg(rsp->getIface());
+            .arg(rsp->getIface().empty() ? "to be determined from routing" :
+                 rsp->getIface());
 
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
                   DHCP4_RESPONSE_DATA)
