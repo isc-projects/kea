@@ -3530,19 +3530,19 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             ],
         } ]</userinput>, // end of shared-networks
 
-        // It is likely that in your network you'll have a mix of regular,
-        // "plain" subnets and shared networks. It is perfectly valid to mix
-        // them in the same config file.
-        //
-        // This is regular subnet. It's not part of any shared-network.
-        "subnet4": [
-            {
-                "subnet": "192.0.3.0/24",
-                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ]
-            }
-        ]
+    // It is likely that in your network you'll have a mix of regular,
+    // "plain" subnets and shared networks. It is perfectly valid to mix
+    // them in the same config file.
+    //
+    // This is regular subnet. It's not part of any shared-network.
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ]
+        }
+    ]
 
-    } // end of Dhcp4
+} // end of Dhcp4
 }
 </screen>
     </para>
