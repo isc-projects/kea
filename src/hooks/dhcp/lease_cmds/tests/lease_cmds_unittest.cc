@@ -590,8 +590,8 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
-    EXPECT_EQ(false, l->fqdn_fwd_);
-    EXPECT_EQ(false, l->fqdn_rev_);
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
 
     // Test execution is fast. The cltt should be set to now. In some rare

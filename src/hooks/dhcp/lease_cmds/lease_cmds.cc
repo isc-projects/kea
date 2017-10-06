@@ -205,7 +205,9 @@ public:
 
 int
 LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
-    bool v4;
+    // Arbitrary defaulting to DHCPv4 or with other words extractCommand
+    // below is not expected to throw...
+    bool v4 = true;
     string txt = "malformed command";
     try {
         extractCommand(handle);
