@@ -261,7 +261,7 @@ CfgIface::textToOutboundIface(const std::string& txt) {
 
 void
 CfgIface::setOutboundIface(const OutboundIface& outbound_iface) {
-    outbound_iface_ = traffic_type;
+    outbound_iface_ = outbound_iface;
 }
 
 void

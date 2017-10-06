@@ -233,6 +233,11 @@ public:
     void useSocketType(const uint16_t family,
                        const std::string& socket_type_name);
 
+    /// @brief Returns DHCP socket type used by the server.
+    SocketType getSocketType() const {
+        return (socket_type_);
+    }
+
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
 

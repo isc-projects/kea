@@ -26,6 +26,7 @@
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -1139,13 +1140,20 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
 
 void
 Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
-    // The source address for the outbound message should have been set already.
-    // This is the address that to the best of the server's knowledge will be
-    // available from the client.
-    /// @todo: perhaps we should consider some more sophisticated server id
-    /// generation, but for the current use cases, it should be ok.
+
+    // Use local address on which the packet has been received as a
+    // server identifier. In some cases it may be a different address,
+    // e.g. broadcast packet or DHCPv4o6 packet.
+    IOAddress local_addr = ex.getQuery()->getLocalAddr();
+    Pkt4Ptr query = ex.getQuery();
+
+    if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
+        SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
+        local_addr = sock_info.addr_;
+    }
+
     OptionPtr opt_srvid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                           ex.getResponse()->getLocalAddr()));
+                                           local_addr));
     ex.getResponse()->addOption(opt_srvid);
 }
 
@@ -2027,38 +2035,52 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         response->setRemotePort(DHCP4_SERVER_PORT);
     }
 
-    IOAddress local_addr = query->getLocalAddr();
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
+    if (query->isRelayed() &&
+        (cfg_iface->getSocketType() == CfgIface::SOCKET_UDP) &&
+        (cfg_iface->getOutboundIface() == CfgIface::USE_ROUTING)) {
 
-    // In many cases the query is sent to a broadcast address. This address
-    // appears as a local address in the query message. We can't simply copy
-    // this address to a response message and use it as a source address.
-    // Instead we will need to use the address assigned to the interface
-    // on which the query has been received. In other cases, we will just
-    // use this address as a source address for the response.
-    // Do the same for DHCPv4-over-DHCPv6 exchanges.
-    if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
-        SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
-        local_addr = sock_info.addr_;
+        response->setLocalAddr(IOAddress::IPV4_ZERO_ADDRESS());
+        response->setIface("");
+        response->resetIndex();
+
+    } else {
+
+        IOAddress local_addr = query->getLocalAddr();
+
+        // In many cases the query is sent to a broadcast address. This address
+        // appears as a local address in the query message. We can't simply copy
+        // this address to a response message and use it as a source address.
+        // Instead we will need to use the address assigned to the interface
+        // on which the query has been received. In other cases, we will just
+        // use this address as a source address for the response.
+        // Do the same for DHCPv4-over-DHCPv6 exchanges.
+        if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
+            SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
+            local_addr = sock_info.addr_;
+        }
+
+        // We assume that there is an appropriate socket bound to this address
+        // and that the address is correct. This is safe assumption because
+        // the local address of the query is set when the query is received.
+        // The query sent to an incorrect address wouldn't have been received.
+        // However, if socket is closed for this address between the reception
+        // of the query and sending a response, the IfaceMgr should detect it
+        // and return an error.
+        response->setLocalAddr(local_addr);
+        // In many cases the query is sent to a broadcast address. This address
+        // appears as a local address in the query message. Therefore we can't
+        // simply copy local address from the query and use it as a source
+        // address for the response. Instead, we have to check what address our
+        // socket is bound to and use it as a source address. This operation
+        // may throw if for some reason the socket is closed.
+        /// @todo Consider an optimization that we use local address from
+        /// the query if this address is not broadcast.
+        response->setIface(query->getIface());
+        response->setIndex(query->getIndex());
     }
-    // We assume that there is an appropriate socket bound to this address
-    // and that the address is correct. This is safe assumption because
-    // the local address of the query is set when the query is received.
-    // The query sent to an incorrect address wouldn't have been received.
-    // However, if socket is closed for this address between the reception
-    // of the query and sending a response, the IfaceMgr should detect it
-    // and return an error.
-    response->setLocalAddr(local_addr);
-    // In many cases the query is sent to a broadcast address. This address
-    // appears as a local address in the query message. Therefore we can't
-    // simply copy local address from the query and use it as a source
-    // address for the response. Instead, we have to check what address our
-    // socket is bound to and use it as a source address. This operation
-    // may throw if for some reason the socket is closed.
-    /// @todo Consider an optimization that we use local address from
-    /// the query if this address is not broadcast.
+
     response->setLocalPort(DHCP4_SERVER_PORT);
-    response->setIface(query->getIface());
-    response->setIndex(query->getIndex());
 }
 
 void
