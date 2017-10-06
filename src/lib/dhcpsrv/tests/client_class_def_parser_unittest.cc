@@ -63,18 +63,27 @@ protected:
         ASSERT_TRUE(parsed_expr);
 
         // Build a packet that will fail evaluation.
-        boost::shared_ptr<PktType> pkt(new PktType(family == AF_INET ?
-                                                   DHCPDISCOVER : DHCPV6_SOLICIT,
-                                                   123));
+        uint8_t message_type;
+        if (family == AF_INET) {
+            message_type = DHCPDISCOVER;
+        } else {
+            message_type = DHCPV6_SOLICIT;
+        }
+        boost::shared_ptr<PktType> pkt(new PktType(message_type, 123));
         EXPECT_FALSE(evaluateBool(*parsed_expr, *pkt));
 
         // Now add the option so it will pass. Use a standard option carrying a
         // single string value, i.e. hostname for DHCPv4 and bootfile url for
         // DHCPv6.
         Option::Universe universe(family == AF_INET ? Option::V4 : Option::V6);
+        uint16_t option_type;
+        if (family == AF_INET) {
+            option_type = DHO_HOST_NAME;
+        } else {
+            option_type = D6O_BOOTFILE_URL;
+        }
         OptionPtr opt(new OptionString(universe, family == AF_INET ?
-                                       DHO_HOST_NAME : D6O_BOOTFILE_URL,
-                                       option_string));
+                                       option_type, option_string));
         pkt->addOption(opt);
         EXPECT_TRUE(evaluateBool(*parsed_expr, *pkt));
     }
