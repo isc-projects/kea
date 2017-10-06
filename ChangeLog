@@ -2,7 +2,7 @@
 	Support for conditional token ifelse(condition, iftrue, iffalse)
 	was added. It can be used in flex-id, client classification and
 	possibly other expressions that may appear in the future.
-	(Trac #5363, git xxx)
+	(Trac #5363, git 34c364abd23a1a745da79c10c69b94b8defad08b)
 
 1307.	[func]		fdupont
 	When an option is defined with a record type and the array
