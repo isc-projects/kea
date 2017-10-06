@@ -1,3 +1,9 @@
+1308.	[func]		fdupont
+	Support for conditional token ifelse(condition, iftrue, iffalse)
+	was added. It can be used in flex-id, client classification and
+	possibly other expressions that may appear in the future.
+	(Trac #5363, git xxx)
+
 1307.	[func]		fdupont
 	When an option is defined with a record type and the array
 	flag is true the last record field is an array. All standard
