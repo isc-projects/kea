@@ -4989,7 +4989,7 @@ TEST_F(Dhcp4ParserTest, poolUserContextData) {
     bool bool_value;
     ASSERT_EQ(Element::boolean, bool_param->getType());
     EXPECT_NO_THROW(bool_param->getValue(bool_value));
-    EXPECT_EQ(true, bool_value);
+    EXPECT_TRUE(bool_value);
 }
 
 // Test verifies that it's possible to specify parameters in the user context
@@ -5023,7 +5023,7 @@ TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
     bool bool_value;
     ASSERT_EQ(Element::boolean, bool_param->getType());
     EXPECT_NO_THROW(bool_param->getValue(bool_value));
-    EXPECT_EQ(true, bool_value);
+    EXPECT_TRUE(bool_value);
 }
 
 // Test verifies the error message for an incorrect pool range
@@ -5357,7 +5357,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
 
     // These are values derived from shared network scope:
     EXPECT_EQ("eth0", s->getIface());
-    EXPECT_EQ(false, s->getMatchClientId());
+    EXPECT_FALSE(s->getMatchClientId());
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
     EXPECT_EQ(IOAddress("5.6.7.8"), s->getRelayInfo().addr_);
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
@@ -5370,7 +5370,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
 
     // These are values derived from shared network scope:
     EXPECT_EQ("eth0", s->getIface());
-    EXPECT_EQ(true, s->getMatchClientId());
+    EXPECT_TRUE(s->getMatchClientId());
     EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
     EXPECT_EQ(IOAddress("55.66.77.88"), s->getRelayInfo().addr_);
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
@@ -5387,7 +5387,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // All other parameters should have default values.
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
     EXPECT_EQ("", s->getIface());
-    EXPECT_EQ(true, s->getMatchClientId());
+    EXPECT_TRUE(s->getMatchClientId());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getRelayInfo().addr_);
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
