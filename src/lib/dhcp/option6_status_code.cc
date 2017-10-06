@@ -195,7 +195,7 @@ Option4SlpServiceScope::unpack(OptionBufferConstIter begin, OptionBufferConstIte
 
 uint16_t
 Option4SlpServiceScope::len() const {
-    return (getHeaderLen() + sizeof(bool) + scope_list_.size());
+    return (getHeaderLen() + sizeof(uint8_t) + scope_list_.size());
 }
 
 std::string
