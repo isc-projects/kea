@@ -4,7 +4,7 @@
 	options supported by ISC DHCP and using this are now supported
 	by Kea (so now there is no standard option suported only by
 	ISC DHCP).
-	(Trac #5226, git xxx)
+	(Trac #5226, git f66951dbda8f62122187ac3a99f0fdcc65b383d8)
 
 1306.	[bug]*		marcin
 	Respective Kea daemons now use their own default configuration
