@@ -82,8 +82,7 @@ protected:
         } else {
             option_type = D6O_BOOTFILE_URL;
         }
-        OptionPtr opt(new OptionString(universe, family == AF_INET ?
-                                       option_type, option_string));
+        OptionPtr opt(new OptionString(universe, option_type, option_string));
         pkt->addOption(opt);
         EXPECT_TRUE(evaluateBool(*parsed_expr, *pkt));
     }
