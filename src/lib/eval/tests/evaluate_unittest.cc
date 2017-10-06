@@ -502,7 +502,7 @@ TEST_F(ExpressionsTest, evaluateString) {
     testExpressionString(Option::V4,
                          "ifelse(option[200].exists,option[200].hex,"
                                  "ifelse(option[100].exists,"
-                                         "option[100].hex,'none???'))",
+                                         "option[100].hex,'none?'))",
                          "hundred4");
 }
 
