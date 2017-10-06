@@ -681,12 +681,10 @@ protected:
 
     /// @brief Adds server identifier option to the server's response.
     ///
-    /// This method adds a server identifier to the DHCPv4 message. It expects
-    /// that the local (source) address is set for this message. If address is
-    /// not set, it will throw an exception. This method also expects that the
-    /// server identifier option is not present in the specified message.
-    /// Otherwise, it will throw an exception on attempt to add a duplicate
-    /// server identifier option.
+    /// This method adds a server identifier to the DHCPv4 message. This is set
+    /// to the local address on which the client's query has been received with
+    /// the exception of broadcast traffic and DHCPv4o6 query for which a socket
+    /// on the particular interface is found and its address is used as server id.
     ///
     /// @note This method doesn't throw exceptions by itself but the underlying
     /// classes being used my throw. The reason for this method to not sanity
