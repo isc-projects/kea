@@ -156,7 +156,11 @@ private:
     /// @param u universe (V4 or V6).
     /// @return DHCPv4 V-I Vendor Class or DHCPv6 Vendor Class option code.
     static uint16_t getOptionCode(Option::Universe u) {
-        return (u == V4 ? DHO_VIVCO_SUBOPTIONS : D6O_VENDOR_CLASS);
+        if (u == V4} {
+            return (DHO_VIVCO_SUBOPTIONS);
+        } else {
+            return (D6O_VENDOR_CLASS);
+        }
     }
 
     /// @brief Returns the tuple length field type for the given universe.
