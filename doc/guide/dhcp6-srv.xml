@@ -1201,6 +1201,7 @@ temporarily override a list of interface names and listen on all interfaces.
     </para>
 
 <!-- @todo: describe record types -->
+<!-- @todo: describe array in record types -->
 
       <para>
         The <xref linkend="dhcp6-custom-options"/> describes the configuration
@@ -1297,6 +1298,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
 <row><entry>pd-exclude</entry><entry>67</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>rdnss-selection</entry><entry>74</entry><entry>record (ipv6-address, uint8, fqdn)</entry><entry>true</entry></row>
 <row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>link-address</entry><entry>80</entry><entry>ipv6-address</entry><entry>false</entry></row>
 <row><entry>solmax-rt</entry><entry>82</entry><entry>uint32</entry><entry>false</entry></row>
@@ -1444,6 +1446,30 @@ temporarily override a list of interface names and listen on all interfaces.
       that the <command>data</command> field comprises a command-separated list
       of values.  The values in the "data" must correspond to the types set in
       the "record-types" field of the option definition.
+      </para>
+
+      <para>
+      When <command>array</command> is set to <command>true</command>
+      and <command>type</command> is set to "record", the last field
+      is an array, i.e., it can contain more than one value as in:
+<screen>
+"Dhcp6": {
+    "option-def": [
+        {
+            <userinput>"name": "bar",
+            "code": 101,
+            "space": "dhcp6",
+            "type": "record",
+            "array": true,
+            "record-types": "ipv6-address, uint16",
+            "encapsulate": ""</userinput>
+        }, ...
+    ],
+    ...
+}
+</screen>
+      The new option content is one IPv6 address followed by one or more 16
+      bit unsigned integers.
       </para>
 
       <note>

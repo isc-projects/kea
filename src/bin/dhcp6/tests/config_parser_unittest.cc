@@ -3474,6 +3474,65 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(1516, optionIA->getT2());
 }
 
+// Verify that specific option object is returned for standard
+// option with trailing domain list.
+TEST_F(Dhcp6ParserTest, rdnssOption) {
+    ConstElementPtr x;
+    std::map<std::string, std::string> params;
+    params["name"] = "rdnss-selection";
+    params["space"] = DHCP6_OPTION_SPACE;
+    // Option code 74 is D6O_RDNSS_SELECTION
+    params["code"] = "74";
+    params["data"] = "2001::1, 3, isc.org, example.org, example.com";
+    params["csv-format"] = "true";
+
+    std::string config = createConfigWithOption(params);
+    ConstElementPtr json = parseDHCP6(config, true);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ASSERT_TRUE(subnet);
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(1, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(D6O_RDNSS_SELECTION);
+    // Expect single option with the code equal to rndnss-selection option code.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // The actual pointer to the option is held in the option field
+    // in the structure returned.
+    OptionPtr option = range.first->option_;
+    ASSERT_TRUE(option);
+    // Option object returned for here is expected to be OptionCustom
+    // which is derived from Option. This class is dedicated to
+    // represent standard option D6O_RDNSS_SELECTION.
+    boost::shared_ptr<OptionCustom> optionCustom =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    // If cast is unsuccessful than option returned was of a
+    // different type than optionCustom. This is wrong.
+    ASSERT_TRUE(optionCustom);
+    // If cast was successful we may use accessors exposed by
+    // optionCustom to validate that the content of this option
+    // has been set correctly.
+    ASSERT_EQ(5, optionCustom->getDataFieldsNum());
+    EXPECT_EQ("2001::1", optionCustom->readAddress(0).toText());
+    EXPECT_EQ(3, optionCustom->readInteger<uint8_t>(1));
+    EXPECT_EQ("isc.org.", optionCustom->readFqdn(2));
+    EXPECT_EQ("example.org.", optionCustom->readFqdn(3));
+    EXPECT_EQ("example.com.", optionCustom->readFqdn(4));
+}
+
+
 // This test checks if vendor options can be specified in the config file
 // (in hex format), and later retrieved from configured subnet
 TEST_F(Dhcp6ParserTest, vendorOptionsHex) {

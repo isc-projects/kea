@@ -37,6 +37,9 @@ namespace {
 #define NO_RECORD_DEF 0, 0
 #endif
 
+// SLP Directory Agent option.
+RECORD_DECL(DIRECTORY_AGENT_RECORDS, OPT_BOOLEAN_TYPE, OPT_IPV4_ADDRESS_TYPE);
+
 // SLP Service Scope option.
 //
 // The scope list is optional.
@@ -65,10 +68,22 @@ RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 // A client identifier: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 
+// RFC6731 DHCPv4 Recursive DNS Server Selection option.
+//
+// Flag, two addresses and domain list
+RECORD_DECL(V4_RDNSS_SELECT_RECORDS, OPT_UINT8_TYPE, OPT_IPV4_ADDRESS_TYPE,
+            OPT_IPV4_ADDRESS_TYPE, OPT_FQDN_TYPE);
+
 // RFC7618 DHCPv4 Port Parameter option.
 //
 // PSID offset, PSID-len and PSID
 RECORD_DECL(V4_PORTPARAMS_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT16_TYPE);
+
+// RFC5969 DHCPv6 6RD option.
+//
+// two 8 bit lengthes, an IPv6 address and one or more IPv4 addresses
+RECORD_DECL(OPT_6RD_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
+            OPT_IPV6_ADDRESS_TYPE, OPT_IPV4_ADDRESS_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
@@ -183,6 +198,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "streettalk-server", DHO_STREETTALK_SERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "streettalk-directory-assistance-server", DHO_STDASERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "user-class", DHO_USER_CLASS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "slp-directory-agent", DHO_DIRECTORY_AGENT, OPT_RECORD_TYPE, true,
+      RECORD_DEF(DIRECTORY_AGENT_RECORDS), "" },
     { "slp-service-scope", DHO_SERVICE_SCOPE, OPT_RECORD_TYPE, false,
       RECORD_DEF(SERVICE_SCOPE_RECORDS), "" },
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
@@ -238,9 +255,12 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "v4-lost", DHO_V4_LOST, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
     { "capwap-ac-v4", DHO_CAPWAP_AC_V4, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "sip-ua-cs-domains", DHO_SIP_UA_CONF_SERVICE_DOMAINS, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "rdnss-selection", DHO_RDNSS_SELECT, OPT_RECORD_TYPE, true,
+      RECORD_DEF(V4_RDNSS_SELECT_RECORDS), "" },
     { "v4-portparams", DHO_V4_PORTPARAMS, OPT_RECORD_TYPE, false,
       RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
     { "v4-captive-portal", DHO_V4_CAPTIVE_PORTAL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "option-6rd", DHO_6RD, OPT_RECORD_TYPE, true, RECORD_DEF(OPT_6RD_RECORDS), "" },
     { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaining options.
@@ -293,6 +313,9 @@ RECORD_DECL(S46_PORTPARAMS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
 RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+// rdnss-selection
+RECORD_DECL(V6_RDNSS_SELECT_RECORDS, OPT_IPV6_ADDRESS_TYPE, OPT_UINT8_TYPE,
+            OPT_FQDN_TYPE);
 // sedhcpv6 signature
 RECORD_DECL(SIGNATURE_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_BINARY_TYPE);
@@ -407,6 +430,8 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "pd-exclude", D6O_PD_EXCLUDE, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" },
+    { "rdnss-selection", D6O_RDNSS_SELECTION, OPT_RECORD_TYPE, true,
+      RECORD_DEF(V6_RDNSS_SELECT_RECORDS), "" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "link-address", D6O_LINK_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false,

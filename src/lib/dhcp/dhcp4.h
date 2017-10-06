@@ -144,7 +144,7 @@ enum DHCPOptionType {
     DHO_STREETTALK_SERVER            = 75,
     DHO_STDASERVER                   = 76,
     DHO_USER_CLASS                   = 77,
-//  DHO_DIRECTORY_AGENT              = 78,
+    DHO_DIRECTORY_AGENT              = 78,
     DHO_SERVICE_SCOPE                = 79,
 //  DHO_RAPID_COMMIT                 = 80,
     DHO_FQDN                         = 81,
@@ -195,7 +195,7 @@ enum DHCPOptionType {
     // 143 is removed/unassigned
 //  DHO_GEOLOC                       = 144,
 //  DHO_FORCERENEW_NONCE_CAPABLE     = 145,
-//  DHO_RDNSS_SELECT                 = 146,
+    DHO_RDNSS_SELECT                 = 146,
     // 147-149 are removed/unassigned
     // 150 have multiple definitions
 //  DHO_STATUS_CODE                  = 151,
@@ -211,7 +211,7 @@ enum DHCPOptionType {
     // 161-209 are removed/unassigned
 //  DHO_PATH_PREFIX                  = 210,
 //  DHO_REBOOT_TIME                  = 211,    
-//  DHO_6RD                          = 212,
+    DHO_6RD                          = 212,
     DHO_V4_ACCESS_DOMAIN             = 213,
     // 214-219 are removed/unassigned
 //  DHO_SUBNET_ALLOC                 = 220,

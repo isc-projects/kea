@@ -3175,6 +3175,66 @@ TEST_F(Dhcp4ParserTest, domainSearchOption) {
                                      " domain-search option"));
 }
 
+// The goal of this test is to verify that the slp-directory-agent
+// option can be set using a trailing array of addresses and
+// slp-service-scope without option scope list
+TEST_F(Dhcp4ParserTest, slpOptions) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"slp-directory-agent\","
+        "    \"data\": \"true, 10.0.0.3, 127.0.0.1\""
+        " },"
+        " {"
+        "    \"name\": \"slp-service-scope\","
+        "    \"data\": \"false, \""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // Get options
+    OptionContainerPtr options = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->getAll(DHCP4_OPTION_SPACE);
+    ASSERT_EQ(2, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(DHO_DIRECTORY_AGENT);
+    // Expect a single option with the code equal to 78.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t sda_expected[] = {
+        0x01, 0x0a, 0x00, 0x00, 0x03, 0x7f, 0x00, 0x00, 0x01
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 78, sda_expected, sizeof(sda_expected));
+
+    range = idx.equal_range(DHO_SERVICE_SCOPE);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t sss_expected[] = {
+        0x00
+    };
+    testOption(*range.first, 79, sss_expected, sizeof(sss_expected));
+}
+
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
 TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
