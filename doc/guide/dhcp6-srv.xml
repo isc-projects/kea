@@ -3088,19 +3088,19 @@ If not specified, the default value is:
             ]
         } ]</userinput>, // end of shared-networks
 
-        // It is likely that in your network you'll have a mix of regular,
-        // "plain" subnets and shared networks. It is perfectly valid to mix
-        // them in the same config file.
-        //
-        // This is regular subnet. It's not part of any shared-network.
-        "subnet6": [
-            {
-                "subnet": "2001:db9::/48",
-                "pools": [ { "pool":  "2001:db9::/64" } ]
-            }
-        ]
+    // It is likely that in your network you'll have a mix of regular,
+    // "plain" subnets and shared networks. It is perfectly valid to mix
+    // them in the same config file.
+    //
+    // This is regular subnet. It's not part of any shared-network.
+    "subnet6": [
+        {
+            "subnet": "2001:db9::/48",
+            "pools": [ { "pool":  "2001:db9::/64" } ]
+        }
+    ]
 
-    } // end of Dhcp6
+} // end of Dhcp6
 }
 </screen>
     </para>
