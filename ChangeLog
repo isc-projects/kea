@@ -1,7 +1,7 @@
 1309.	[func]		fdupont
 	Kea-shell script now has an optional --path parameter that allows 
         using not empty URL path.
-	(Trac #5361, git xxx)
+	(Trac #5361, git 9a31c417d52f1481185b0880a10a4b5f16d8462a)
 
 1308.	[func]		fdupont
 	Support for conditional token ifelse(condition, iftrue, iffalse)
