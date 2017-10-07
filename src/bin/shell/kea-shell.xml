@@ -52,6 +52,7 @@
       <arg><option>-v</option></arg>
       <arg><option>--host</option></arg>
       <arg><option>--port</option></arg>
+      <arg><option>--path</option></arg>
       <arg><option>--timeout</option></arg>
       <arg><option>--service</option></arg>
       <arg><option>command</option></arg>
@@ -106,6 +107,15 @@
         <listitem><para>
           Specifies the TCP port to connect to. Control Agent must be
           listening at specified port. If not specified, 8000 is used.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--path</option></term>
+        <listitem><para>
+          Specifies the path in the URL to connect to. If not specified,
+          empty path is used. As Control Agent listens at the empty path
+          this parameter is useful only with a reverse proxy.
         </para></listitem>
       </varlistentry>
 
