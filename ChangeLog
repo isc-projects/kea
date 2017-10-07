@@ -1,3 +1,8 @@
+1309.	[func]		fdupont
+	Kea-shell script now has an optional --path parameter that allows 
+        using not empty URL path.
+	(Trac #5361, git xxx)
+
 1308.	[func]		fdupont
 	Support for conditional token ifelse(condition, iftrue, iffalse)
 	was added. It can be used in flex-id, client classification and
