@@ -31,13 +31,9 @@ namespace {
 /// @brief Array of server configurations used throughout the tests.
 const char* NETWORKS_CONFIG[] = {
 // Configuration #0.
+// - one shared network with two subnets, each with address and prefix pools
+// - one plain subnet
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -93,13 +89,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #1.
+// - one shared network with relay-ip specified and one subnet with address pool
+// - one plain subnet with relay-ip specified and one address pool
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -136,13 +128,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #2.
+// - two classes specified
+// - one shared network with two subnets (the first has class restrictions)
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"a-devices\","
@@ -183,13 +171,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #3.
+// - two classes defined
+// - one shared network with two subnets, each with a different class restriction
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"a-devices\","
@@ -231,13 +215,10 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #4.
+// - one shared network with two subnets. Each subnet has:
+//   - address and prefix pool
+//   - reservation
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -293,14 +274,9 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #5.
+// Configuration #5 (similar to #4, but without prefix pool and using different
+// DUID for reservations)
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -342,13 +318,11 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #6.
+// - one class
+// - one shared network with two subnets:
+//   - first subnet has address pool, class restriction and a reservation
+//   - second subnet has just an address pool
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"a-devices\","
@@ -391,13 +365,11 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #7.
+// - option defined on global level
+// - one shared network with two options and two subnets
+// - the first subnet has its own options defined as well
+// - plain subnet with its own options
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"option-data\": ["
     "        {"
     "            \"name\": \"nis-servers\","
@@ -471,13 +443,10 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #8.
+// - two shared networks
+//   - first network with two subnets, each with its own address pool
+//   - second network with two subnets, each with its own address pool
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -530,14 +499,9 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
-// Configuration #9.
+// Configuration #9 (similar to #8, but with relay-ip addresses specified)
+// - two shared networks, each with relay IP addresses specified
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -595,13 +559,11 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #10.
+// - one class with an option (and not test expression)
+// - one shared network with two subnets
+//   - first subnet with one address pool
+//   - second with a pool and reservation that assigns client to a class
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"class-with-dns-servers\","
@@ -650,13 +612,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #11.
+// - two classes defined
+// - two shared networks, each with one subnet and class restriction
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"a-devices\","
@@ -704,13 +662,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #12.
+// - one client class
+// - one shared network with two subnets, the second subnet has class restriction
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"b-devices\","
@@ -747,13 +701,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #13.
+// - one shared network, with two subnets, each with the same relay-ip addresses
+// - one plain subnet, with its own (different) relay-ip address
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -802,13 +752,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #14.
+// - one share network with interface-id specified and one subnet
+// - one plain subnet, with its own interface-id
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -841,13 +787,9 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #15.
+// - one shared network, with two subnets, each with the same interface-id
+// - one plain subnet, with its own interface-id
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
@@ -883,6 +825,41 @@ const char* NETWORKS_CONFIG[] = {
     "            \"pools\": ["
     "                {"
     "                    \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #16
+// - one shared network with two subnets
+//   - first subnet has the rapid commit enabled
+//   - second subnet has the rapid commit disabled
+    "{"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"rapid-commit\": true,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"id\": 100,"
+    "                    \"rapid-commit\": false,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ]"
     "                }"
     "            ]"
     "        }"
@@ -1026,7 +1003,8 @@ public:
             // Make sure that the subnet id is not messed up in the lease.
             if (subnet->getID() != lease->subnet_id_) {
                 ADD_FAILURE() << "invalid subnet identifier found in the lease for"
-                    " address " << address;
+                    " address " << address << ", expected " << subnet->getID()
+                              << ", got " << lease->subnet_id_;
                 return (false);
             }
         }
@@ -1915,6 +1893,69 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
+}
+
+// Check that the rapid-commit works with shared networks:
+// - that it can be defined on per subnet basis
+// - that its value can be mixed (some subnets have enabled, others disabled)
+TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit) {
+
+    // Create client #1. This clients wants to use rapid-commit.
+    Dhcp6Client client1;
+    client1.setInterface("eth1");
+    client1.useRapidCommit(true);
+
+    Dhcp6Client client2;
+    client2.setInterface("eth1");
+    client2.useRapidCommit(true);
+
+    // Configure the server with a shared network.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[16], *client1.getServer()));
+
+    // Ok, client should have one
+    EXPECT_EQ(0, client1.getLeaseNum());
+
+    std::cout << "Client 1 got " << client1.getLeaseNum() << " lease(s): ";
+    for (int i = 0; i < client1.getLeaseNum(); i++) {
+        Lease6 lease = client1.getLease(i);
+        std::cout << lease.addr_.toText() << " ";
+    }
+    std::cout << std::endl;
+
+    // Client #1 should be assigned an address from shared network. The first
+    // subnet has rapid-commit enabled, so the address should be assigned.
+    ASSERT_NO_THROW(client1.requestAddress(0xabca0));
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doSolicit());
+    });
+
+    std::cout << "Client 1 got " << client1.getLeaseNum() << " lease(s): ";
+    for (int i = 0; i < client1.getLeaseNum(); i++) {
+        Lease6 lease = client1.getLease(i);
+        std::cout << lease.addr_.toText() << " ";
+    }
+    std::cout << std::endl;
+
+    // Make sure that REPLY was sent back.
+    ASSERT_TRUE(client1.getContext().response_);
+    EXPECT_EQ(DHCPV6_REPLY, client1.getContext().response_->getType());
+
+    // Create client #2. This client behaves the same as the first one, but the
+    // first subnet is already full (it's a really small subnet) and the second
+    // subnet does not allow rapid-commit.
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doSolicit());
+    });
+
+    EXPECT_EQ(0, client2.getLeaseNum());
+
+    // Make sure that ADVERTISE was sent back.
+    ASSERT_TRUE(client2.getContext().response_);
+    EXPECT_EQ(DHCPV6_ADVERTISE, client2.getContext().response_->getType());
+
+    // Just make sure the client didn't get an address.
+    EXPECT_FALSE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20"),
+                                    LeaseOnServer::MUST_NOT_EXIST));
 }
 
 } // end of anonymous namespace
