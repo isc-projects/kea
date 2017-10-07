@@ -493,7 +493,7 @@ public:
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
-    /// This method uses host reservation if ctx.host_ is set. The easy way to
+    /// This method uses host reservation if ctx.hosts_ is set. The easy way to
     /// set it is to call @ref findReservationDecl.
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
@@ -562,8 +562,8 @@ public:
     ///        collection as old leases.<br/>
     /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
     ///        not available)<br/>
-    /// @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
-    ///        this field, if appropriate reservation is found.
+    /// @ref ClientContext6::hosts_ Host reservations. allocateLeases6 will set
+    ///        this field, if appropriate reservations are found.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
@@ -1252,8 +1252,6 @@ public:
     /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
     ///      or just picking an address for DISCOVER that is not really
     ///      allocated (true)
-    /// - @ref ClientContext4::host_ Pointer to the object representing the
-    //       static reservations (host reservations) for the client.
     /// - @ref ClientContext4::callout_handle_ A callout handle (used in hooks).
     ///      A lease callouts will be executed if this parameter is passed.
     /// - @ref ClientContext4::old_lease_ [out] Holds the pointer to a previous

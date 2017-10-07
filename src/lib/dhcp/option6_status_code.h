@@ -176,7 +176,7 @@ public:
 
     /// @brief Sets new mandatory flag.
     ///
-    /// @param status_code New numeric status code.
+    /// @param mandatory_flag New numeric status code.
     void setMandatoryFlag(const bool mandatory_flag) {
         mandatory_flag_ = mandatory_flag;
     }
