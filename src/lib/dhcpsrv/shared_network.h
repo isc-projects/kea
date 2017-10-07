@@ -98,7 +98,7 @@ public:
 
     /// @brief Retrieves next available IPv4 subnet within shared network.
     ///
-    /// See documentation for @ref SharedNetwork::getNextSubnet.
+    /// See documentation for @ref SharedNetwork4::getNextSubnet.
     ///
     /// @param first_subnet Pointer to a subnet from which the caller is
     /// iterating over subnets within shared network. This is typically a
@@ -221,7 +221,7 @@ public:
 
     /// @brief Retrieves next available IPv6 subnet within shared network.
     ///
-    /// See documentation for @ref SharedNetwork::getNextSubnet.
+    /// See documentation for @ref SharedNetwork6::getNextSubnet.
     ///
     /// @param first_subnet Pointer to a subnet from which the caller is
     /// iterating over subnets within shared network. This is typically a
