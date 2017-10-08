@@ -218,7 +218,7 @@ namespace isc { namespace agent {
     /// Both variants must be built beforehand, because swapping the actual
     /// data requires reading it (with as()), and this is not possible on
     /// unconstructed variants: it would require some dynamic testing, which
-    /// should not be the variant's responsibility.
+    /// should not be the variant's responsability.
     /// Swapping between built and (possibly) non-built is done with
     /// variant::move ().
     template <typename T>
