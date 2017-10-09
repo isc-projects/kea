@@ -6,7 +6,9 @@
 
 /**
 
-@mainpage Kea Lease Commands Hooks Library
+@page libdhcp_lease_cmds Kea Lease Commands Hooks Library
+
+@section libdhcp_lease_cmdsIntro Introduction
 
 Welcome to Kea Lease Commands Hooks Library. This documentation is addressed to
 developers who are interested in the internal operation of the Lease Commands
