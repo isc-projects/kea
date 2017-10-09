@@ -964,6 +964,22 @@ Dhcp6Client::clearExtraOptions() {
     extra_options_.clear();
 }
 
+void
+Dhcp6Client::printConfiguration() const {
+
+    // Print DUID
+    std::cout << "Client " << (duid_ ? duid_->toText() : "(without duid)")
+              << " got " << getLeaseNum() << " lease(s): ";
+
+    // Print leases
+    for (int i = 0; i < getLeaseNum(); i++) {
+        Lease6 lease = getLease(i);
+        std::cout << lease.addr_.toText() << " ";
+    }
+
+    /// @todo: Print many other parameters.
+    std::cout << std::endl;
+}
 
 } // end of namespace isc::dhcp::test
 } // end of namespace isc::dhcp

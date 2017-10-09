@@ -832,9 +832,7 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #16
-// - one shared network with two subnets
-//   - first subnet has the rapid commit enabled
-//   - second subnet has the rapid commit disabled
+// - one shared network with two subnets, both have rapid-commit enabled
     "{"
     "    \"shared-networks\": ["
     "        {"
@@ -854,7 +852,41 @@ const char* NETWORKS_CONFIG[] = {
     "                {"
     "                    \"subnet\": \"2001:db8:2::/64\","
     "                    \"id\": 100,"
-    "                    \"rapid-commit\": false,"
+    "                    \"rapid-commit\": true,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+
+// Configuration #17:
+// - one shared network with rapid-commit enabled
+// - two subnets (which should derive the rapid-commit setting)
+    "{"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"rapid-commit\": true,"
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"id\": 100,"
     "                    \"pools\": ["
     "                        {"
     "                            \"pool\": \"2001:db8:2::20 - 2001:db8:2::20\""
@@ -1118,6 +1150,98 @@ public:
 
         return (!leases.empty());
 
+    }
+
+    /// @brief Tests that for a given configuration the rapid-commit works (or not)
+    ///
+    /// The provided configuration is expected to be able to handle two clients.
+    /// The second parameter governs whether rapid-commit is expected to be enabled
+    /// or disabled. Third and fourth parameters are text representations of expected
+    /// leases to be assigned (if rapid-commit is enabled)
+    ///
+    /// @param config - text version of the configuration to be tested
+    /// @param enabled - true = rapid-commit is expected to work
+    /// @param exp_addr1 - an eddress the first client is expected to get (if
+    ///                    rapid-commit is enabled).
+    /// @param exp_addr2 - an eddress the second client is expected to get (if
+    ///                    rapid-commit is enabled).
+    void testRapidCommit(const std::string& config, bool enabled,
+                         const std::string& exp_addr1,
+                         const std::string& exp_addr2) {
+
+        // Create client #1. This clients wants to use rapid-commit.
+        Dhcp6Client client1;
+        client1.setInterface("eth1");
+        client1.useRapidCommit(true);
+
+        Dhcp6Client client2;
+        client2.setInterface("eth1");
+        client2.useRapidCommit(true);
+
+        // Configure the server with a shared network.
+        ASSERT_NO_FATAL_FAILURE(configure(config, *client1.getServer()));
+
+        // Ok, client should have one
+        EXPECT_EQ(0, client1.getLeaseNum());
+
+        // Client #1 should be assigned an address from shared network. The first
+        // subnet has rapid-commit enabled, so the address should be assigned.
+        ASSERT_NO_THROW(client1.requestAddress(0xabca0));
+        testAssigned([this, &client1] {
+                ASSERT_NO_THROW(client1.doSolicit());
+            });
+
+        // Make sure something was sent back.
+        ASSERT_TRUE(client1.getContext().response_);
+
+        if (enabled) {
+            // rapid-commit enabled.
+
+            // Make sure that REPLY was sent back.
+            EXPECT_EQ(DHCPV6_REPLY, client1.getContext().response_->getType());
+
+            // Just make sure the client didn't get an address.
+            EXPECT_TRUE(hasLeaseForAddress(client1, IOAddress(exp_addr1),
+                                           LeaseOnServer::MUST_EXIST));
+        } else {
+            // rapid-commit disabled.
+
+            // Make sure that ADVERTISE was sent back.
+            EXPECT_EQ(DHCPV6_ADVERTISE, client1.getContext().response_->getType());
+
+            // And that it doesn't have any leases.
+            EXPECT_EQ(0, client1.getLeaseNum());
+        }
+
+        // Create client #2. This client behaves the same as the first one, but the
+        // first subnet is already full (it's a really small subnet) and the second
+        // subnet does not allow rapid-commit.
+        ASSERT_NO_THROW(client2.requestAddress(0xabca0));
+        testAssigned([this, &client2] {
+                ASSERT_NO_THROW(client2.doSolicit());
+            });
+
+        // Make sure something was sent back.
+        ASSERT_TRUE(client2.getContext().response_);
+
+        if (enabled) {
+            // rapid-commit enabled.
+
+            // Make sure that REPLY was sent back.
+            EXPECT_EQ(DHCPV6_REPLY, client2.getContext().response_->getType());
+
+            // Just make sure the client didn't get an address.
+            EXPECT_TRUE(hasLeaseForAddress(client2, IOAddress(exp_addr2),
+                                           LeaseOnServer::MUST_EXIST));
+        } else {
+            // rapid-commit disabled.
+
+            // Make sure that ADVERTISE was sent back.
+            EXPECT_EQ(DHCPV6_ADVERTISE, client1.getContext().response_->getType());
+
+            // And that it doesn't have any leases.
+            EXPECT_EQ(0, client1.getLeaseNum());
+        }
     }
 
     /// @brief Destructor.
@@ -1895,67 +2019,22 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 }
 
-// Check that the rapid-commit works with shared networks:
-// - that it can be defined on per subnet basis
-// - that its value can be mixed (some subnets have enabled, others disabled)
-TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit) {
+// Check that the rapid-commit works with shared networks. Rapid-commit
+// enabled on each subnet separately.
+TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit1) {
+    testRapidCommit(NETWORKS_CONFIG[16], true, "2001:db8:1::20", "2001:db8:2::20");
+}
 
-    // Create client #1. This clients wants to use rapid-commit.
-    Dhcp6Client client1;
-    client1.setInterface("eth1");
-    client1.useRapidCommit(true);
+// Check that the rapid-commit works with shared networks. Rapid-commit
+// enabled for the whole shared network. This should be applied to both
+// subnets.
+TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit2) {
+    testRapidCommit(NETWORKS_CONFIG[17], true, "2001:db8:1::20", "2001:db8:2::20");
+}
 
-    Dhcp6Client client2;
-    client2.setInterface("eth1");
-    client2.useRapidCommit(true);
-
-    // Configure the server with a shared network.
-    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[16], *client1.getServer()));
-
-    // Ok, client should have one
-    EXPECT_EQ(0, client1.getLeaseNum());
-
-    std::cout << "Client 1 got " << client1.getLeaseNum() << " lease(s): ";
-    for (int i = 0; i < client1.getLeaseNum(); i++) {
-        Lease6 lease = client1.getLease(i);
-        std::cout << lease.addr_.toText() << " ";
-    }
-    std::cout << std::endl;
-
-    // Client #1 should be assigned an address from shared network. The first
-    // subnet has rapid-commit enabled, so the address should be assigned.
-    ASSERT_NO_THROW(client1.requestAddress(0xabca0));
-    testAssigned([this, &client1] {
-        ASSERT_NO_THROW(client1.doSolicit());
-    });
-
-    std::cout << "Client 1 got " << client1.getLeaseNum() << " lease(s): ";
-    for (int i = 0; i < client1.getLeaseNum(); i++) {
-        Lease6 lease = client1.getLease(i);
-        std::cout << lease.addr_.toText() << " ";
-    }
-    std::cout << std::endl;
-
-    // Make sure that REPLY was sent back.
-    ASSERT_TRUE(client1.getContext().response_);
-    EXPECT_EQ(DHCPV6_REPLY, client1.getContext().response_->getType());
-
-    // Create client #2. This client behaves the same as the first one, but the
-    // first subnet is already full (it's a really small subnet) and the second
-    // subnet does not allow rapid-commit.
-    testAssigned([this, &client2] {
-        ASSERT_NO_THROW(client2.doSolicit());
-    });
-
-    EXPECT_EQ(0, client2.getLeaseNum());
-
-    // Make sure that ADVERTISE was sent back.
-    ASSERT_TRUE(client2.getContext().response_);
-    EXPECT_EQ(DHCPV6_ADVERTISE, client2.getContext().response_->getType());
-
-    // Just make sure the client didn't get an address.
-    EXPECT_FALSE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20"),
-                                    LeaseOnServer::MUST_NOT_EXIST));
+// Check that the rapid-commit is disabled by default.
+TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit3) {
+    testRapidCommit(NETWORKS_CONFIG[1], false, "", "");
 }
 
 } // end of anonymous namespace
