@@ -1,3 +1,8 @@
+1310.	[bug]		marcin
+	Documented "ia_pd" parameter for lease6_renew and lease6_rebind
+	hook points.
+	(Trac #5368, git 6842036714f84bf12529e1a43e12ac5a07e2e5c0)
+
 1309.	[func]		fdupont
 	Kea-shell script now has an optional --path parameter that allows 
         using not empty URL path.
