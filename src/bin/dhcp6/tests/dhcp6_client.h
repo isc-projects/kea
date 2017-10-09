@@ -749,6 +749,12 @@ public:
     /// @brief Configures the client to not send any extra options.
     void clearExtraOptions();
 
+    /// @brief Debugging method the prints currently held configuration
+    ///
+    /// @todo: This is mostly useful when debugging tests. This method
+    /// is incomplete. Please extend it when needed.
+    void printConfiguration() const;
+
 private:
 
     /// @brief Applies the new leases for the client.
