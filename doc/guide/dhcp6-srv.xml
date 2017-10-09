@@ -3156,6 +3156,13 @@ If not specified, the default value is:
     2001:db8:cafe::1 and no server unicast.
     </para>
 
+    <para>Some parameters must be the same in all subnets in the same shared
+    network. This restriction applies to <command>interface</command> and
+    <command>rapid-commit</command> settings. The most convenient way is to
+    define them on shared network scope, but you may specify them for each
+    subnet. However, care should be taken for each subnet to have the same
+    value.</para>
+
     <section>
       <title>Local and relayed traffic in shared networks</title>
 
