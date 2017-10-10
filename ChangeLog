@@ -1,3 +1,8 @@
+1313.	[bug]		fdupont
+	Empty output_options structure is no longer returned by config-get
+	or config-write commands.
+	(Trac #5267, git xxx)
+
 1312.	[func]		marcin, tomek
 	Added new configuration parameter "outbound-interface", which
 	controls how the outbound interface and source address is
