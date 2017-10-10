@@ -890,19 +890,8 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #16.
+// - one shared network with three subnets, each with different option value
     "{"
-    "    \"interfaces-config\": {"
-    "        \"interfaces\": [ \"*\" ]"
-    "    },"
-    "    \"preferred-lifetime\": 3000,"
-    "    \"rebind-timer\": 2000, "
-    "    \"renew-timer\": 1000, "
-    "    \"option-data\": ["
-    "        {"
-    "            \"name\": \"nis-servers\","
-    "            \"data\": \"3000::20\""
-    "        }"
-    "    ],"
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
