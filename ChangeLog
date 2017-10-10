@@ -1,3 +1,13 @@
+1312.	[func]		marcin, tomek
+	Added new configuration parameter "outbound-interface", which
+	controls how the outbound interface and source address is
+	determined for the responses sent by DHCPv4 servers to relayed
+	clients. The default setting is to use the same interface as
+	the one over which the query has been received. The alternative
+	is to use system routing to determine the right interface and
+	source address.
+	(Trac #5377, git d08088923ec1ea0d1cb8a947bd520174d874d25e)
+
 1311.	[build]		fdupont
 	Improvements in --enable-shell and other parameters passed while
 	building dist tarball.
