@@ -1,3 +1,8 @@
+1311.	[build]		fdupont
+	Improvements in --enable-shell and other parameters passed while
+	building dist tarball.
+	(Trac #5210, #5339, #5352, git xxx)
+
 1310.	[bug]		marcin
 	Documented "ia_pd" parameter for lease6_renew and lease6_rebind
 	hook points.
