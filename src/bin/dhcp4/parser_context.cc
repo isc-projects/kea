@@ -144,6 +144,8 @@ Parser4Context::contextName()
         return ("interfaces-config");
     case DHCP_SOCKET_TYPE:
         return ("dhcp-socket-type");
+    case OUTBOUND_INTERFACE:
+        return ("outbound-interface");
     case LEASE_DATABASE:
         return ("lease-database");
     case HOSTS_DATABASE:

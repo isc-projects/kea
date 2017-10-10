@@ -31,6 +31,14 @@
         // Ethernet/IP stack processing.
         "dhcp-socket-type": "udp",
 
+        // Typically the DHCP server will send its response back on the same
+        // interface the query came in. This is the default ("same-as-inbound").
+        // However, sometimes it is useful to have the ability to send the
+        // packet as plain UDP packet and let the kernel and the routing tables
+        // determine the right interface ("use-routing"). This option  only works
+        // for "dhcp-socket-type" set to "udp" and is ignored otherwise.
+        "outbound-interface": "use-routing",
+
         // This makes interfaces to be re-detected at each (re-)configuration.
         // By default it is true.
         "re-detect": true

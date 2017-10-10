@@ -720,6 +720,31 @@ temporarily override a list of interface names and listen on all interfaces.
     fall back to use IP/UDP sockets.</para>
   </note>
 
+  <para>In typical environment the DHCP server is expected to send back a
+  response on the same network interface on which the query is received. This is
+  the default behavior. However, in some deployments it is desired that the
+  outbound (response) packets will be sent as regular traffic and the outbound
+  interface will be determined by the routing tables. This kind of asymetric
+  traffic is uncommon, but valid. Kea now supports a parameter called
+  <command>outbound-interface</command> that controls this behavior. It supports
+  two values. The first one, <userinput>same-as-inbound</userinput>, tells Kea
+  to send back the response on the same inteface the query packet is received. This
+  is the default behavior. The second one, <userinput>use-routing</userinput>
+  tells Kea to send regular UDP packets and let the kernel's routing table to
+  determine most appropriate interface. This only works when
+  <command>dhcp-socket-type</command> is  set to <userinput>udp</userinput>.
+  An example configuration looks as follows:
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ "eth1", "eth3" ],
+        "dhcp-socket-type": "udp",
+        <userinput>"outbound-interface": "use-routing"</userinput>
+    },
+    ...
+}</screen>
+  </para>
+
   <para>Interfaces are re-detected at each reconfiguration. This behavior
   can be disabled by setting <command>re-detect</command> value to
   <userinput>false</userinput>, for instance:

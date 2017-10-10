@@ -204,6 +204,88 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
 }
 
+// This test verifies that it is possible to configure the server to use
+// routing information to determine the right outbound interface to sent
+// responses to a relayed client.
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create configuration for interfaces. It includes the outbound-interface
+    // setting which indicates that the responses aren't neccessarily sent
+    // over the same interface via which a request has been received, but routing
+    // information is used to determine this interface.
+    CfgMgr::instance().clear();
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    cfg_iface->useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    cfg_iface->use(AF_INET, "eth0");
+    cfg_iface->use(AF_INET, "eth1");
+    cfg_iface->setOutboundIface(CfgIface::USE_ROUTING);
+    CfgMgr::instance().commit();;
+
+    // Create the instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
+    req->setGiaddr(IOAddress("192.0.1.1"));
+    req->setHops(2);
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.2.5"));
+    req->setLocalPort(1001);
+    req->setIface("eth1");
+    req->setIndex(1);
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+
+    Pkt4Ptr resp = ex.getResponse();
+    resp->setYiaddr(IOAddress("192.0.1.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
+
+    // This function never throws.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    // Now the destination address should be relay's address.
+    EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
+    // The query has been relayed, so the response must be sent to the port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
+
+    // The local port is always DHCPv4 server port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+
+    // No specific interface is selected as outbound interface and no specific
+    // local address is provided. The IfaceMgr will figure out which interface to use.
+    EXPECT_TRUE(resp->getLocalAddr().isV4Zero());
+    EXPECT_TRUE(resp->getIface().empty());
+    EXPECT_FALSE(resp->indexSet());
+
+    // Another test verifies that setting outbound interface to same as inbound will
+    // cause the server to set interface and local address as expected.
+
+    cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    cfg_iface->useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    cfg_iface->use(AF_INET, "eth0");
+    cfg_iface->use(AF_INET, "eth1");
+    cfg_iface->setOutboundIface(CfgIface::SAME_AS_INBOUND);
+    CfgMgr::instance().commit();
+
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
+    EXPECT_EQ("eth1", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+}
+
 // This test verifies that the destination address of the response message
 // is set to ciaddr when giaddr is set to zero and the ciaddr is set to
 // non-zero address in the received message. This is the case when the
@@ -487,7 +569,7 @@ TEST_F(Dhcpv4SrvTest, appendServerID) {
 
     // Set a local address. It is required by the function under test
     // to create the Server Identifier option.
-    response->setLocalAddr(IOAddress("192.0.3.1"));
+    query->setLocalAddr(IOAddress("192.0.3.1"));
 
     // Append the Server Identifier.
     ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(ex));
