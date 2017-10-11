@@ -245,8 +245,33 @@ public:
 
             const Subnet6Collection* subnets = (*net)->getAllSubnets();
             if (subnets) {
+
+                bool rapid_commit;
+
                 // For each subnet, add it to a list of regular subnets.
                 for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
+
+                    // Rapid commit must either be enabled or disabled in all subnets
+                    // in the shared network.
+                    if (subnet == subnets->begin()) {
+                        // If this is the first subnet, remember the value.
+                        rapid_commit = (*subnet)->getRapidCommit();
+                    } else {
+                        // Ok, this is the second or following subnets. The value
+                        // must match what was set in the first subnet.
+                        if (rapid_commit != (*subnet)->getRapidCommit()) {
+                            isc_throw(DhcpConfigError, "All subnets in a shared network "
+                                      "must have the same rapid-commit value. Subnet "
+                                      << (*subnet)->toText()
+                                      << " has specified rapid-commit "
+                                      << ( (*subnet)->getRapidCommit() ? "true" : "false")
+                                      << ", but earlier subnet in the same shared-network"
+                                      << " or the shared-network itself used rapid-commit "
+                                      << (rapid_commit ? "true" : "false"));
+                        }
+                    }
+
+
                     if (iface.empty()) {
                         iface = (*subnet)->getIface();
                         continue;
@@ -284,8 +309,8 @@ public:
 
         }
     }
-    
-    
+
+
 };
 
 } // anonymous namespace
@@ -562,7 +587,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
         // it checks that there is no conflict between plain subnets and those
         // defined as part of shared networks.
         global_parser.sanityChecks(srv_config, mutable_cfg);
-        
+
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
@@ -597,7 +622,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
 
             // Setup the command channel.
             configureCommandChannel();
-            
+
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 

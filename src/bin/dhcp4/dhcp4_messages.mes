@@ -663,6 +663,14 @@ the client. The first argument includes the client and the
 transaction identification information. The second arguments
 includes the subnet details.
 
+% DHCP4_SUBNET_DYNAMICALLY_CHANGED %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+This debug message indicates that the server is using another subnet
+than initially selected for client assignments. This newly selected
+subnet belongs to the same shared network as the original subnet.
+Some reasons why the new subnet was selected include: address pool
+exhaustion in the original subnet or the fact that the new subnet
+includes some static reservations for this client.
+
 % DHCP4_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
 This is a debug message noting the selection of a subnet to be used for
 address and option assignment. Subnet selection is one of the early
