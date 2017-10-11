@@ -1,3 +1,11 @@
+1315.	[bug]		marcin
+	Created unit test for the case when there are several IPv6 subnets
+	within a shared network and each subnet specifies the same
+	DHCP option with a different value. This test verifies the fix
+	applied with ticket #5364 which address the problem of assigning
+	options from invalid subnet.
+	(Trac #5366, git 112addd4619509c464dc051f4885e00dc1f69d26)
+
 1314.	[bug]		marcin, tomek
 	Improved unit tests for shared networks and corrected a bug
 	in the allocation engine which caused wrong subnet id to be
