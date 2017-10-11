@@ -1,3 +1,10 @@
+1314.	[bug]		marcin, tomek
+	Improved unit tests for shared networks and corrected a bug
+	in the allocation engine which caused wrong subnet id to be
+	stored in the lease database and wrong subnet be used by the
+	DHCPv6 server for options assignment.
+	(Trac #5364, git 07ce52ee4ce65eeeea1890201812ac83a286658f)
+
 1313.	[bug]		fdupont
 	Empty output_options structure is no longer returned by config-get
 	or config-write commands.
