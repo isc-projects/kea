@@ -639,6 +639,11 @@ public:
         relay_link_addr_ = link_addr;
     }
 
+    /// @brief Sets interface id value to be inserted into relay agent option.
+    ///
+    /// @param interface_id Value of the interface id as string.
+    void useInterfaceId(const std::string& interface_id);
+
     /// @brief Controls whether the client should send a client-id or not
     /// @param send should the client-id be sent?
     void useClientId(const bool send) {
@@ -740,6 +745,15 @@ public:
     ///
     /// @param opt additional option to be sent
     void addExtraOption(const OptionPtr& opt);
+
+    /// @brief Configures the client to not send any extra options.
+    void clearExtraOptions();
+
+    /// @brief Debugging method the prints currently held configuration
+    ///
+    /// @todo: This is mostly useful when debugging tests. This method
+    /// is incomplete. Please extend it when needed.
+    void printConfiguration() const;
 
 private:
 
@@ -906,6 +920,9 @@ private:
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
+
+    /// @brief Interface id.
+    OptionPtr interface_id_;
 };
 
 } // end of namespace isc::dhcp::test

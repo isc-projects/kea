@@ -5676,7 +5676,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "        },\n"
         "        \"valid-lifetime\": 400, \n"
         "        \"interface-id\": \"twotwo\",\n"
-        "        \"rapid-commit\": false,\n"
+        "        \"rapid-commit\": true,\n"
         "        \"reservation-mode\": \"out-of-pool\"\n"
         "    }\n"
         "    ]\n"
@@ -5732,7 +5732,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
     EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
-    EXPECT_FALSE(s->getRapidCommit());
+    EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
@@ -5837,6 +5837,38 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     EXPECT_EQ("", s->getIface());
 }
 
+
+// It is not allowed to have different values for interfaces names is subnets
+// in the same shared network.
+TEST_F(Dhcp6ParserTest, sharedNetworksInterfacesMixed) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"interface\": \"eth0\"\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"interface\": \"eth1\"\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR, "Subnet 2001:db2::/48 has specified "
+              "interface eth1, but earlier subnet in the same shared-network "
+              "or the shared-network itself used eth0");
+}
+
 // This test checks if client-class is derived properly.
 TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
 
@@ -5920,5 +5952,102 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     classes = s->getClientClasses();
     EXPECT_TRUE(classes.empty());
 }
+
+// Tests if rapid-commit is derived properly.
+TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"frog\"\n,"
+        "    \"rapid-commit\": true,\n"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"client-class\": \"beta\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // Two shared networks are expeced.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    ASSERT_EQ(2, subs->size());
+    EXPECT_TRUE(subs->at(0)->getRapidCommit());
+    EXPECT_TRUE(subs->at(1)->getRapidCommit());
+
+    // Ok, now check the second shared network. It doesn't have
+    // anything defined on shared-network or subnet level, so
+    // everything should have default values.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    EXPECT_FALSE(subs->at(0)->getRapidCommit());
+}
+
+// Tests that non-matching rapid-commit setting for subnets belonging to a
+// shared network cause configuration error.
+TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"frog\"\n,"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"rapid-commit\": true,\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"rapid-commit\": false,\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"client-class\": \"beta\"\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR, "All subnets in a shared network "
+              "must have the same rapid-commit value. Subnet 2001:db2::/48 has "
+              "specified rapid-commit false, but earlier subnet in the same "
+              "shared-network or the shared-network itself used rapid-commit true");
+}
+
 
 };

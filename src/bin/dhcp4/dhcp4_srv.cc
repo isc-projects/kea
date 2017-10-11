@@ -1849,7 +1849,18 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
-    subnet = ctx->subnet_;
+    if (subnet->getID() != ctx->subnet_->getID()) {
+        SharedNetwork4Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
+                .arg(query->getLabel())
+                .arg(subnet->toText())
+                .arg(ctx->subnet_->toText())
+                .arg(network->getName());
+        }
+        subnet = ctx->subnet_;
+    }
 
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to

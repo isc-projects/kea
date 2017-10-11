@@ -1195,6 +1195,8 @@ void
 Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
                         AllocEngine::ClientContext6& ctx) {
 
+    Subnet6Ptr subnet = ctx.subnet_;
+
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
     // @todo add support for IA_TA
@@ -1230,6 +1232,20 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
         default:
             break;
+        }
+    }
+
+    // Subnet may be modified by the allocation engine, if the initial subnet
+    // belongs to a shared network.
+    if (ctx.subnet_ && subnet && (subnet->getID() != ctx.subnet_->getID())) {
+        SharedNetwork6Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)
+                .arg(question->getLabel())
+                .arg(subnet->toText())
+                .arg(ctx.subnet_->toText())
+                .arg(network->getName());
         }
     }
 }
