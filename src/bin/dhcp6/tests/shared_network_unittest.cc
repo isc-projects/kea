@@ -1186,10 +1186,15 @@ public:
 
         // Client #1 should be assigned an address from shared network. The first
         // subnet has rapid-commit enabled, so the address should be assigned.
-        ASSERT_NO_THROW(client1.requestAddress(0xabca0));
+        // We provide a hint for this allocation to make sure that the address
+        // from the first subnet is allocated. In theory, an address from the
+        // second subnet could be allocated as well if the hint was not provided.
+        IOAddress requested_address = exp_addr1.empty() ? IOAddress::IPV6_ZERO_ADDRESS() :
+            IOAddress(exp_addr1);
+        ASSERT_NO_THROW(client1.requestAddress(0xabca0, requested_address));
         testAssigned([this, &client1] {
-                ASSERT_NO_THROW(client1.doSolicit());
-            });
+            ASSERT_NO_THROW(client1.doSolicit());
+        });
 
         // Make sure something was sent back.
         ASSERT_TRUE(client1.getContext().response_);
@@ -1218,8 +1223,8 @@ public:
         // subnet does not allow rapid-commit.
         ASSERT_NO_THROW(client2.requestAddress(0xabca0));
         testAssigned([this, &client2] {
-                ASSERT_NO_THROW(client2.doSolicit());
-            });
+            ASSERT_NO_THROW(client2.doSolicit());
+        });
 
         // Make sure something was sent back.
         ASSERT_TRUE(client2.getContext().response_);
