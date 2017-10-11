@@ -5961,7 +5961,8 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
     EXPECT_FALSE(subs->at(0)->getRapidCommit());
 }
 
-// Tests if rapid-commit is derived properly.
+// Tests that non-matching rapid-commit setting for subnets belonging to a
+// shared network cause configuration error.
 TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
 
     string config = "{\n"
