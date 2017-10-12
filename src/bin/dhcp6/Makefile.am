@@ -49,7 +49,9 @@ spec_config.h: spec_config.h.pre
 dhcp6_messages.h dhcp6_messages.cc: s-messages
 
 s-messages: dhcp6_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	[ -e dhcp6_messages.h ] || mv dhcp6_messages.h.def dhcp6_messages.h
+	[ -e dhcp6_messages.cc ] || mv dhcp6_messages.cc.def dhcp6_messages.cc
 	touch $@
 
 BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc

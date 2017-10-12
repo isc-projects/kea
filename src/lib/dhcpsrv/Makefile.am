@@ -56,11 +56,17 @@ alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
 dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
 
 s-messages: alloc_engine_messages.mes dhcpsrv_messages.mes hosts_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
+	[ -e alloc_engine_messages.h ] || mv alloc_engine_messages.h.def alloc_engine_messages.h
+	[ -e alloc_engine_messages.cc ] || mv alloc_engine_messages.cc.def alloc_engine_messages.cc
 	touch $@
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
+	[ -e dhcpsrv_messages.h ] || mv dhcpsrv_messages.h.def dhcpsrv_messages.h
+	[ -e dhcpsrv_messages.cc ] || mv dhcpsrv_messages.cc.def dhcpsrv_messages.cc
 	touch $@
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
+	[ -e hosts_messages.h ] || mv hosts_messages.h.def hosts_messages.h
+	[ -e hosts_messages.cc ] || mv hosts_messages.cc.def hosts_messages.cc
 	touch $@
 
 # Tell Automake that the {alloc_engine,dhcpsrv,hosts}_messages.{cc,h} source files

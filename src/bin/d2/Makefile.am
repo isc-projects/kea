@@ -51,7 +51,9 @@ endif
 d2_messages.h d2_messages.cc: s-messages
 
 s-messages: d2_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
+	[ -e d2_messages.h ] || mv d2_messages.h.def d2_messages.h
+	[ -e d2_messages.cc ] || mv d2_messages.cc.def d2_messages.cc
 	touch $@
 
 BUILT_SOURCES = d2_messages.h d2_messages.cc

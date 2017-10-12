@@ -19,7 +19,9 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 process_messages.h process_messages.cc: s-messages
 
 s-messages: process_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/process/process_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/process/process_messages.mes
+	[ -e process_messages.h ] || mv process_messages.h.def process_messages.h
+	[ -e process_messages.cc ] || mv process_messages.cc.def process_messages.cc
 	touch $@
 
 spec_config.h: spec_config.h.pre

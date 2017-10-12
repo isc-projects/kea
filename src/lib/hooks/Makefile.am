@@ -8,7 +8,9 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 hooks_messages.h hooks_messages.cc: s-messages
 
 s-messages: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	[ -e hooks_messages.h ] || mv hooks_messages.h.def hooks_messages.h
+	[ -e hooks_messages.c ] || mv hooks_messages.cc.def hooks_messages.cc
 	touch $@
 
 # Tell automake that the message files are built as part of the build process

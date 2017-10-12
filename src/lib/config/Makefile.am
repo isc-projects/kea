@@ -7,7 +7,9 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 config_messages.h config_messages.cc: s-messages
 
 s-messages: config_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/config/config_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/config/config_messages.mes
+	[ -e config_messages.h ] || mv config_messages.h.def config_messages.h
+	[ -e config_messages.cc ] || mv config_messages.cc.def config_messages.cc
 	touch $@
 
 BUILT_SOURCES = config_messages.h config_messages.cc

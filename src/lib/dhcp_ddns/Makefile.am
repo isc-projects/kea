@@ -8,7 +8,9 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 dhcp_ddns_messages.h dhcp_ddns_messages.cc: s-messages
 
 s-messages: dhcp_ddns_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
+	[ -e dhcp_ddns_messages.h ] || mv dhcp_ddns_messages.h.def dhcp_ddns_messages.h
+	[ -e dhcp_ddns_messages.cc ] || mv dhcp_ddns_messages.cc.def dhcp_ddns_messages.cc
 	touch $@
 
 # Tell automake that the message files are built as part of the build process

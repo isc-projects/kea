@@ -8,7 +8,9 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 http_messages.h http_messages.cc: s-messages
 
 s-messages: http_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
+	[ -e http_messages.h ] || mv http_messages.h.def http_messages.h
+	[ -e http_messages.cc ] || mv http_messages.cc.def http_messages.cc
 	touch $@
 
 # Tell automake that the message files are built as part of the build process
