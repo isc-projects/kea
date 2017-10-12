@@ -1142,6 +1142,12 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
 void
 Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
 
+    // Do not append generated server identifier if there is one appended already.
+    // This is when explicitly configured server identifier option is present.
+    if (ex.getResponse()->getOption(DHO_DHCP_SERVER_IDENTIFIER)) {
+        return;
+    }
+
     // Use local address on which the packet has been received as a
     // server identifier. In some cases it may be a different address,
     // e.g. broadcast packet or DHCPv4o6 packet.
@@ -1386,7 +1392,8 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
     static const uint16_t required_options[] = {
         DHO_ROUTERS,
         DHO_DOMAIN_NAME_SERVERS,
-        DHO_DOMAIN_NAME };
+        DHO_DOMAIN_NAME,
+        DHO_DHCP_SERVER_IDENTIFIER };
 
     static size_t required_options_size =
         sizeof(required_options) / sizeof(required_options[0]);
