@@ -26,6 +26,14 @@ isc::log::Logger logger("log");
 namespace isc {
 namespace log {
 
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0)
+log4cplus::tstring
+tstrEmpty = log4cplus::tstring();
+
+log4cplus::tstring
+tstrDebug = log4cplus::tstring("DEBUG");
+#endif /* LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0) */
+
 // Convert Kea level to a log4cplus logging level.
 log4cplus::LogLevel
 LoggerLevelImpl::convertFromBindLevel(const Level& level) {
@@ -178,19 +186,31 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
 // Convert logging level to string.  If the level is a valid debug level,
 // return the string DEBUG, else return the empty string.
 LoggerLevelImpl::LogLevelString
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0)
+const & LoggerLevelImpl::logLevelToString(log4cplus::LogLevel level) {
+#else
 LoggerLevelImpl::logLevelToString(log4cplus::LogLevel level) {
+#endif /* LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0) */
     Level bindlevel = convertToBindLevel(level);
     Severity& severity = bindlevel.severity;
     int& dbglevel = bindlevel.dbglevel;
 
     if ((severity == DEBUG) &&
         ((dbglevel >= MIN_DEBUG_LEVEL) && (dbglevel <= MAX_DEBUG_LEVEL))) {
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0)
+        return (tstrDebug);
+#else
         return (tstring("DEBUG"));
+#endif /* LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0) */
     }
 
     // Unknown, so return empty string for log4cplus to try other conversion
     // functions.
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0)
+    return (tstrEmpty);
+#else
     return (tstring());
+#endif /* LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0) */
 }
 
 // Initialization.  Register the conversion functions with the LogLevelManager.
