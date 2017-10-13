@@ -1,7 +1,7 @@
 1317.	[bug]		fdupont
 	The kea-admin script now behaves properly when -4 or -6 is missing
 	while using lease-dump command.
-	(Trac #5379, git xxx)
+	(Trac #5379, git 53870c07d1864faf2a25bdc4ed6c5cf2b0223f8d)
 
 1316.	[bug]		marcin
 	Corrected a bug which caused a returning DHCPv4 client performing
