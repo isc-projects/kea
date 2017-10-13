@@ -1,3 +1,8 @@
+1317.	[bug]		fdupont
+	The kea-admin script now behaves properly when -4 or -6 is missing
+	while using lease-dump command.
+	(Trac #5379, git xxx)
+
 1316.	[bug]		marcin
 	Corrected a bug which caused a returning DHCPv4 client performing
 	4-way exchange to be assigned a different address from a shared
