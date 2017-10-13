@@ -2443,6 +2443,10 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         // configured to ignore client identifier).
         if (client_id) {
             client_lease = lease_mgr.getLease4(*client_id, subnet->getID());
+            if (client_lease) {
+                ctx.subnet_ = subnet;
+                return;
+            }
         }
 
         // If no lease found using the client identifier, try the lookup using
