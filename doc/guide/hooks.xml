@@ -825,13 +825,20 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           When "replace-client-id" is set to false (which is the default setting),
           the flex-id hook library uses evaluated flexible identifier solely for
           identifying host reservations, i.e. searching for reservations within a
-          database. This mode of operation has an implication that replacement of
-          a client device may cause a conflict between an existing lease (allocated
+          database. This is a functional equivalent of other identifiers,
+          similar to hardware address or circuit-id. However,
+          this mode of operation has an implication that if a client device is
+          replaced, it may cause a conflict between an existing lease (allocated
           for old device) and the new lease being allocated for the new device. The
           conflict arises because the same flexible identifier is computed for the
           replaced device and the server will try to allocate the same lease. The
           mismatch between client identifiers sent by new device and old device causes
           the server to refuse this new allocation until the old lease expires.
+          A manifestation of this problem is dependant on specific expression
+          used as flexible identifier and is likely to appear if you only use options
+          and other parameters that are identifying where the device is
+          connected (e.g. circuit-id), rather than the device identification
+          itself (e.g. MAC address).
         </para>
 
         <para>
