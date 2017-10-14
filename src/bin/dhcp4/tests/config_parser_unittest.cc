@@ -1661,6 +1661,64 @@ TEST_F(Dhcp4ParserTest, badPools) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+// Goal of this test is to verify no pool definitions is invalid
+// and returns a location in the error message.
+TEST_F(Dhcp4ParserTest, noPools) {
+
+    // Configuration string.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"user-context\": { } } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    EXPECT_THROW(parseDHCP4(config, true), Dhcp4ParseError);
+}
+
+// Goal of this test is to verify that invalid subnet fails to be parsed.
+TEST_F(Dhcp4ParserTest, badSubnet) {
+
+    // Configuration string.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"192.0.2.0\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// Goal of this test is to verify that unknown interface fails
+// to be parsed.
+TEST_F(Dhcp4ParserTest, unknownInterface) {
+
+    // Configuration string.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"interface\": \"ethX\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
 // The goal of this test is to check whether an option definition
 // that defines an option carrying an IPv4 address can be created.
 TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {

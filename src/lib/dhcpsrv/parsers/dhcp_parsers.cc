@@ -72,10 +72,12 @@ MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr val
 // ******************** ControlSocketParser *************************
 void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value) {
     if (!value) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "Logic error: specified control-socket is null");
     }
 
     if (value->getType() != Element::map) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "Specified control-socket is expected to be a map"
                   ", i.e. a structure defined within { }");
     }
@@ -201,6 +203,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
 void
 OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_list) {
     if (!option_def_list) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                   << " option definitions is NULL ("
                   << option_def_list->getPosition() << ")");
@@ -355,6 +358,7 @@ PoolParser::parse(PoolStoragePtr pools,
     // If there's user-context specified, store it.
     ConstElementPtr user_context = pool_structure->get("user-context");
     if (user_context) {
+        // The grammar accepts only maps but still check it.
         if (user_context->getType() != Element::map) {
             isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
                       << user_context->getPosition() << ")");
@@ -445,6 +449,7 @@ SubnetConfigParser::hrModeFromText(const std::string& txt) {
     } else if (txt.compare("all") == 0) {
         return (Network::HR_ALL);
     } else {
+        // Should never happen...
         isc_throw(BadValue, "Can't convert '" << txt
                   << "' into any valid reservation-mode values");
     }
@@ -502,6 +507,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // If there's user-context specified, store it.
     ConstElementPtr user_context = params->get("user-context");
     if (user_context) {
+        // The grammar accepts only maps but still check it.
         if (user_context->getType() != Element::map) {
             isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
                       << user_context->getPosition() << ")");
@@ -529,6 +535,7 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
     SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
     if (!generic) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError,
                   "Failed to create an IPv4 subnet (" <<
                   subnet->getPosition() << ")");
@@ -875,6 +882,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
     if (!generic) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError,
                   "Failed to create an IPv6 subnet (" <<
                   subnet->getPosition() << ")");
