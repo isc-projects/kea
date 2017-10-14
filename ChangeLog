@@ -1,3 +1,9 @@
+1316.	[doc]		marcin
+	Updated Kea Administrator's Manual with the information about
+	new capability of flex-id hook library to use value derived from
+	flexible identifier as a client identifier or DUID.
+	(Trac #5384, git 91e1ff99b4dfb559733cf1189e927c0d98eae581)
+
 1315.	[bug]		marcin
 	Created unit test for the case when there are several IPv6 subnets
 	within a shared network and each subnet specifies the same
@@ -40,7 +46,7 @@
 	(Trac #5368, git 6842036714f84bf12529e1a43e12ac5a07e2e5c0)
 
 1309.	[func]		fdupont
-	Kea-shell script now has an optional --path parameter that allows 
+	Kea-shell script now has an optional --path parameter that allows
         using not empty URL path.
 	(Trac #5361, git 9a31c417d52f1481185b0880a10a4b5f16d8462a)
 
