@@ -246,7 +246,7 @@ public:
             const Subnet6Collection* subnets = (*net)->getAllSubnets();
             if (subnets) {
 
-                bool rapid_commit;
+                bool rapid_commit = false;
 
                 // For each subnet, add it to a list of regular subnets.
                 for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
