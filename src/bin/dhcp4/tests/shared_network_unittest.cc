@@ -1062,6 +1062,31 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
     });
 }
 
+// Returning client sends 4-way exchange.
+TEST_F(Dhcpv4SharedNetworkTest, returningClientStartsOver) {
+    // Create client.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.includeClientId("01:02:03:04");
+
+    // Configure the server with one shared network including two subnets and
+    // one subnet outside of the shared network.
+    configure(NETWORKS_CONFIG[0], *client.getServer());
+
+    // Client requests an address in first subnet within a shared network.
+    // We'll send a hint of 192.0.2.63 and expect to get it.
+    testAssigned([this, &client]() {
+        doDORA(client, "192.0.2.63", "192.0.2.63");
+    });
+
+
+    // The client reboots and performs 4-way exchange again without a hint.
+    // It should be assigned the same (existing) lease.
+    testAssigned([this, &client]() {
+        doDORA(client, "192.0.2.63");
+    });
+}
+
 // Shared network is selected based on giaddr value (relay specified
 // on shared network level)
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay1) {
