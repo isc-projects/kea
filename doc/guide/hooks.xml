@@ -697,7 +697,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           client classes and other features. The reservation can be based on
           hardware address, DUID, circuit-id or client-id in DHCPv4 and using
           hardware address or DUID in DHCPv6. However, there are sometimes
-          scenario where the reservation is more complex, e.g. uses other
+          scenarios where the reservation is more complex, e.g. uses other
           options that mentioned above, uses part of specific options or perhaps
           even a combination of several options and fields to uniquely identify
           a client. Those scenarios are addressed by the Flexible Identifiers
@@ -722,14 +722,16 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
 
         <para>
           The library can be loaded in similar way as other hook libraries. It
-          takes one mandatory parameter identifier-expression:
+          takes a mandatory parameter identifier-expression and optional
+          boolean parameter replace-client-id:
 <screen>
 "Dhcp6": { <userinput>
     "hooks-libraries": [
         {
             "library": "/path/libdhcp_flex_id.so",
             "parameters": {
-                "identifier-expression": "<userinput>expression</userinput>"
+                "identifier-expression": "<userinput>expression</userinput>",
+                "replace-client-id": "<userinput>false</userinput>"
             }
         },
         ...
@@ -818,6 +820,68 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
     ]
 }
 </screen>
+
+        <para>
+          When "replace-client-id" is set to false (which is the default setting),
+          the flex-id hook library uses evaluated flexible identifier solely for
+          identifying host reservations, i.e. searching for reservations within a
+          database. This is a functional equivalent of other identifiers,
+          similar to hardware address or circuit-id. However,
+          this mode of operation has an implication that if a client device is
+          replaced, it may cause a conflict between an existing lease (allocated
+          for old device) and the new lease being allocated for the new device. The
+          conflict arises because the same flexible identifier is computed for the
+          replaced device and the server will try to allocate the same lease. The
+          mismatch between client identifiers sent by new device and old device causes
+          the server to refuse this new allocation until the old lease expires.
+          A manifestation of this problem is dependant on specific expression
+          used as flexible identifier and is likely to appear if you only use options
+          and other parameters that are identifying where the device is
+          connected (e.g. circuit-id), rather than the device identification
+          itself (e.g. MAC address).
+        </para>
+
+        <para>
+          The flex-id library offers a way to overcome the problem with lease conflicts
+          by dynamically replacing client identifier (or DUID in DHCPv6 case) with a
+          value derived from flexible identifier. The server processes the client's
+          query as if flexible identifier was sent in the client identifier (or DUID)
+          option. This guarantees that returning client (for which the same flexible
+          identifier is evaluated) will be assigned the same lease desplite the client
+          identifier and/or MAC address change.
+        </para>
+
+        <para>
+          The following is a stub configuration that enables this behavior:
+<screen>
+"Dhcp4": { <userinput>
+    "hooks-libraries": [
+        {
+            "library": "/path/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "<userinput>expression</userinput>",
+                "replace-client-id": "<userinput>true</userinput>"
+            }
+        },
+        ...
+    ] </userinput>
+}
+</screen>
+        </para>
+
+        <para>
+          Note that for this mechanism to take effect, the DHCPv4 server must be configured
+          to respect the client identifier option value during lease allocation, i.e.
+          "match-client-id" must be set to true. See
+          <xref linkend="dhcp4-match-client-id"/> for details. No additional settings
+          are required for DHCPv6.
+        </para>
+        <para>
+          If "replace-client-id" option is set to true, the value of "echo-client-id"
+          parameter (that governs whether to send back a client-id option or
+          not) is ignored.
+        </para>
+
       </section>
 
       <section id="host-cmds">
