@@ -2,7 +2,7 @@
 	Updated Kea Administrator's Manual with the information about
 	new capability of flex-id hook library to use value derived from
 	flexible identifier as a client identifier or DUID.
-	(Trac #5384, git 91e1ff99b4dfb559733cf1189e927c0d98eae581)
+	(Trac #5384, git cce58fee4aa0476712209a7ed92fab587258b49b)
 
 1317.	[bug]		fdupont
 	The kea-admin script now behaves properly when -4 or -6 is missing
