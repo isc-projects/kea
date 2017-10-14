@@ -1,8 +1,19 @@
-1316.	[doc]		marcin
+1318.	[doc]		marcin
 	Updated Kea Administrator's Manual with the information about
 	new capability of flex-id hook library to use value derived from
 	flexible identifier as a client identifier or DUID.
 	(Trac #5384, git 91e1ff99b4dfb559733cf1189e927c0d98eae581)
+
+1317.	[bug]		fdupont
+	The kea-admin script now behaves properly when -4 or -6 is missing
+	while using lease-dump command.
+	(Trac #5379, git 53870c07d1864faf2a25bdc4ed6c5cf2b0223f8d)
+
+1316.	[bug]		marcin
+	Corrected a bug which caused a returning DHCPv4 client performing
+	4-way exchange to be assigned a different address from a shared
+	network than previously allocated.
+	(Trac #5388, git 601a387ba43d990947ee2e1a05e78851d8133a3c)
 
 1315.	[bug]		marcin
 	Created unit test for the case when there are several IPv6 subnets
