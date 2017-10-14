@@ -779,6 +779,23 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     cfg.runCfgOptionsTest(family_, expected);
 }
 
+/// @brief Check parsing of unknown options fails.
+TEST_F(ParseConfigTest, unknownOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"data\": \"01\","
+        "    \"space\": \"bar\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
 /// @brief Check parsing of options with invalid space fails.
 TEST_F(ParseConfigTest, badSpaceOptionDataTest) {
 
