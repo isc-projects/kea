@@ -915,6 +915,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     return (sn6ptr);
 }
 
+// Unused?
 void
 Subnet6ConfigParser::duplicate_option_warning(uint32_t code,
                                               asiolink::IOAddress& addr) {
