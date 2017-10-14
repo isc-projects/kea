@@ -872,9 +872,14 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         <para>
           Note that for this mechanism to take effect, the DHCPv4 server must be configured
           to respect the client identifier option value during lease allocation, i.e.
-          "dhcp4-match-client-id" must be set to true. See
+          "match-client-id" must be set to true. See
           <xref linkend="dhcp4-match-client-id"/> for details. No additional settings
           are required for DHCPv6.
+        </para>
+        <para>
+          If "replace-client-id" option is set to true, the value of "echo-client-id"
+          parameter (that governs whether to send back a client-id option or
+          not) is ignored.
         </para>
 
       </section>
