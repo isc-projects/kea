@@ -112,6 +112,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
             try {
                 defs->add(def.first, def.second);
             } catch (const std::exception& ex) {
+                // Sanity check: it should never happen
                 isc_throw(DhcpConfigError, ex.what() << " ("
                           << option_def->getPosition() << ")");
             }
