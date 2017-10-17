@@ -119,7 +119,7 @@ public:
     /// @param server_id Server identifier.
     ///
     /// @return true if there is a network with a specified server identifier.
-    bool hasSubnetWithServerId(const asiolink::IOAddress& server_id) const;
+    bool hasNetworkWithServerId(const asiolink::IOAddress& server_id) const;
 
 
 };

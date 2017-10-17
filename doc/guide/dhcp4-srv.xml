@@ -3852,17 +3852,9 @@ i.e. it will assign increasing integer values starting from 1.</para>
 
       <para>
         It is possible to override default server identifier values by specifying
-        "dhcp-server-identifier" option. This option can be specified at any
-        configuration level, but it is recommended to only specify this option on
-        global, shared network or subnet level. Specifying this option on a class
-        or host reservation level will work only in cases when the specified
-        server identifier is an IP address assigned to one of the interfaces on
-        which the server is listening to DHCP queries. Otherwise, the server
-        will drop the messages with these server identifiers. The server will
-        accept messages including server identifiers specified on the global,
-        shared network and subnet level, even if they point to IP addresses not
-        assigned to any interfaces, on which the server is listening to the
-        DHCP queries.
+        "dhcp-server-identifier" option. This option is only supported on the
+        global, shared network and subnet level. It must not be specified
+        on client class and host reservation level.
       </para>
 
       <para>

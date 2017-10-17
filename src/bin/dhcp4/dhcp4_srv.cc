@@ -2863,7 +2863,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // This server identifier is not configured for any of the subnets, so
     // check on the shared network level.
     CfgSharedNetworks4Ptr cfg_networks = cfg->getCfgSharedNetworks4();
-    if (cfg_networks->hasSubnetWithServerId(server_id)) {
+    if (cfg_networks->hasNetworkWithServerId(server_id)) {
         return (true);
     }
 

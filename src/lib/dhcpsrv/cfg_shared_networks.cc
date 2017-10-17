@@ -13,7 +13,7 @@ namespace isc {
 namespace dhcp {
 
 bool
-CfgSharedNetworks4::hasSubnetWithServerId(const IOAddress& server_id) const {
+CfgSharedNetworks4::hasNetworkWithServerId(const IOAddress& server_id) const {
     const auto& index = networks_.get<SharedNetworkServerIdIndexTag>();
     auto network_it = index.find(server_id);
     return (network_it != index.cend());
