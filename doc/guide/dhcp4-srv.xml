@@ -3532,6 +3532,32 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     distinction is based on the type of device, rather than address space
     exhaustion.</para>
 
+    <para>A client connected to a shared network may be assigned an address from
+    any of the address pools defined within the subnets belonging to the shared
+    network. Internally, the server selects one of the subnets belonging to a
+    shared network and tries to allocate an address from this subnet. If the
+    server is unable to allocate an address from the selected subnet (e.g. due
+    to address pools exhaustion) it will use another subnet from the same shared
+    network and try to allocate an address from this subnet etc. Therefore, in the
+    typical case, the server will allocate all addresses available for a given
+    subnet before it starts allocating addresses from other subnets belonging to
+    the same shared network. However, in certain situations the client can be
+    allocated an address from the other subnets before the address pools in the
+    first subnet get exhausted, e.g. when the client provides a hint that
+    belongs to another subnet or the client has reservations in a different than
+    default subnet.
+    </para>
+
+    <note>
+    <para>It is strongly discouraged for the Kea deployments to assume that the
+      server doesn't allocate addresses from other subnets until it uses all
+      the addresses from the first subnet in the shared network. Apart from the
+      fact that hints, host reservations and client classification affect subnet
+      selection, it is also foreseen that we will enhance allocation strategies
+      for shared networks in the future versions of Kea, so as the selection
+      of subnets within a shared network is equally probable (unpredictable).</para>
+    </note>
+
     <para>In order to define a shared network an additional configuration scope
     is introduced:
 <screen>
@@ -3542,6 +3568,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             // Name of the shared network. It may be an arbitrary string
             // and it must be unique among all shared networks.
             "name": "my-secret-lair-level-1",
+
+            // Subnet selector can be specifed on the shared network level.
+            // Subnets from this shared network will be selected for directly
+            // connected clients sending requests to server's "eth0" interface.
+            "interface": "eth0",
 
             // This starts a list of subnets in this shared network.
             // There are two subnets in this example.
@@ -3557,19 +3588,20 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             ],
         } ]</userinput>, // end of shared-networks
 
-        // It is likely that in your network you'll have a mix of regular,
-        // "plain" subnets and shared networks. It is perfectly valid to mix
-        // them in the same config file.
-        //
-        // This is regular subnet. It's not part of any shared-network.
-        "subnet4": [
-            {
-                "subnet": "192.0.3.0/24",
-                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ]
-            }
-        ]
+    // It is likely that in your network you'll have a mix of regular,
+    // "plain" subnets and shared networks. It is perfectly valid to mix
+    // them in the same config file.
+    //
+    // This is regular subnet. It's not part of any shared-network.
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+            "interface": "eth1"
+        }
+    ]
 
-    } // end of Dhcp4
+} // end of Dhcp4
 }
 </screen>
     </para>
@@ -3595,6 +3627,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 "shared-networks": [
     {
         "name": "lab-network3",
+
+        "interface": "eth0",
 
         // This applies to all subnets in this shared network, unless
         // values are overridden on subnet scope.
@@ -3755,6 +3789,7 @@ based on option 93 values.
     "shared-networks": [
         {
             "name": "galah",
+            "interface": "eth0",
             "subnet4": [
                 {
                     "subnet": "192.0.2.0/26",
@@ -3779,6 +3814,18 @@ not able to use any subnets will be refused service. Although, this may be a
 desired outcome if one desires to service only clients of known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
+    <para>
+      Note that it is possible to achieve similar effect as presented in this
+      section without the use of shared networks. If the subnets are placed in
+      the global subnets scope, rather than in the shared network, the server
+      will still use classification rules to pick the right subnet for a given
+      class of devices. The major benefit of placing subnets within the
+      shared network is that common parameters for the logically grouped
+      subnets can be specified once, in the shared network scope, e.g.
+      "interface" or "relay" parameter. All subnets belonging to this shared
+      network will inherit those parameters.
+    </para>
+
     </section>
 
     <section>
@@ -3792,6 +3839,7 @@ desired outcome if one desires to service only clients of known properties
     "shared-networks": [
     {
         "name": "frog",
+        "interface": "eth0",
         "subnet4": [
             {
                 "subnet": "192.0.2.0/26",
@@ -3834,7 +3882,8 @@ subnets belonging to the same shared network.</para>
 <para>While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if you plan to use database storage for host
 reservations. If ID is not specified, the values for it be autogenerated,
-i.e. it will assign increasing integer values starting from 1.</para>
+i.e. it will assign increasing integer values starting from 1. Thus, the
+autogenerated IDs are not stable across configuration changes.</para>
     </section>
 
   </section>
