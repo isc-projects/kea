@@ -88,8 +88,9 @@ namespace {
 ///
 /// - Configuration 7:
 ///   - Used for testing custom value of dhcp-server-identifier option.
-///   - 1 subnets: 10.0.0.0/24 and 192.0.2.0/24
-///   - Custom server identifier specified for each subnet.
+///   - 3 subnets: 10.0.0.0/24, 192.0.2.0/26 and 192.0.2.64/26
+///   - Custom server identifier specified for 2 subnets subnet.
+///   - Custom server identifier specified at global level.
 ///
 /// - Configuration 8:
 ///   - Simple configuration with a single subnet and single pool
@@ -291,6 +292,12 @@ const char* DORA_CONFIGS[] = {
         "      \"interfaces\": [ \"*\" ]"
         "},"
         "\"valid-lifetime\": 600,"
+        "\"option-data\": ["
+        "    {"
+        "        \"name\": \"dhcp-server-identifier\","
+        "        \"data\": \"3.4.5.6\""
+        "    }"
+        "],"
         "\"subnet4\": ["
         "    {"
         "        \"subnet\": \"10.0.0.0/24\", "
@@ -304,8 +311,8 @@ const char* DORA_CONFIGS[] = {
         "        ]"
         "    },"
         "    {"
-        "        \"subnet\": \"192.0.2.0/24\", "
-        "        \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.100\" } ],"
+        "        \"subnet\": \"192.0.2.0/26\", "
+        "        \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.63\" } ],"
         "        \"interface\": \"eth1\","
         "        \"option-data\": ["
         "            {"
@@ -313,7 +320,13 @@ const char* DORA_CONFIGS[] = {
         "                \"data\": \"2.3.4.5\""
         "            }"
         "        ]"
-
+        "    },"
+        "    {"
+        "        \"subnet\": \"192.0.2.64/26\", "
+        "        \"pools\": [ { \"pool\": \"192.0.2.65-192.0.2.100\" } ],"
+        "        \"relay\": {"
+        "            \"ip-address\": \"10.2.3.4\""
+        "        }"
         "    }"
         "]"
     "}",
@@ -1625,11 +1638,24 @@ TEST_F(DORATest, customServerIdentifier) {
     // Repeat the test for different subnet.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
+
     ASSERT_NO_THROW(client2.doDORA());
     ASSERT_TRUE(client2.getContext().response_);
     resp = client2.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     EXPECT_EQ("2.3.4.5", client2.config_.serverid_.toText());
+
+    // Create relayed client which will be assigned a lease from the third
+    // subnet. This subnet inherits server identifier value from the global
+    // scope.
+    Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
+    client3.useRelay(true, IOAddress("10.2.3.4"));
+
+    ASSERT_NO_THROW(client3.doDORA());
+    ASSERT_TRUE(client3.getContext().response_);
+    resp = client3.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_EQ("3.4.5.6", client3.config_.serverid_.toText());
 }
 
 // Starting tests which require MySQL backend availability. Those tests

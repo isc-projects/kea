@@ -11,6 +11,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
@@ -27,6 +28,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -62,6 +64,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iomanip>
@@ -2824,7 +2827,53 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // performance hit should be acceptable. If it turns out to
     // be significant, we will have to cache server identifiers
     // when sockets are opened.
-    return (IfaceMgr::instance().hasOpenSocket(server_id));
+    if (IfaceMgr::instance().hasOpenSocket(server_id)) {
+        return (true);
+    }
+
+    // There are some cases when an administrator explicitly sets server
+    // identifier (option 54) that should be used for a given, subnet,
+    // network etc. It doesn't have to be an address assigned to any of
+    // the server interfaces. Thus, we have to check if the server
+    // identifier received is the one that we explicitly set in the
+    // server configuration. At this point, we don't know which subnet
+    // the client belongs to so we can't match the server id with any
+    // subnet. We simply check if this server identifier is configured
+    // anywhere. This should be good enough to eliminate exchanges
+    // with other servers in the same network.
+
+    /// @todo Currently we only check subnet identifiers configured on the
+    /// subnet level, shared network level and global level. This should
+    /// be sufficient for most of cases. At this point, trying to support
+    /// server identifiers on the class level seems to be an overkill and
+    /// is probably not needed. Same with host reservations. In fact,
+    /// at this point we don't know the reservations for the client
+    /// communicating with the server. We may revise some of these choices
+    /// in the future.
+
+    SrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+
+    // Check if there is at least one subnet configured with this server
+    // identifier.
+    ConstCfgSubnets4Ptr cfg_subnets = cfg->getCfgSubnets4();
+    if (cfg_subnets->hasSubnetWithServerId(server_id)) {
+        return (true);
+    }
+
+    // This server identifier is not configured for any of the subnets, so
+    // check on the shared network level.
+    CfgSharedNetworks4Ptr cfg_networks = cfg->getCfgSharedNetworks4();
+    if (cfg_networks->hasSubnetWithServerId(server_id)) {
+        return (true);
+    }
+
+    // Finally, it is possible that the server identifier is specified
+    // on the global level.
+    ConstCfgOptionPtr cfg_global_options = cfg->getCfgOption();
+    OptionCustomPtr opt_server_id = boost::dynamic_pointer_cast<OptionCustom>
+        (cfg_global_options->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
+
+    return (opt_server_id && (opt_server_id->readAddress() == server_id));
 }
 
 void
