@@ -3063,29 +3063,29 @@ If not specified, the default value is:
     modems. In this case, the distinction is based on the type of device, rather
     than coming out of running out address space.</para>
 
-    <para>A client connected to a shared network may be assigned an address from
-    any of the address pools defined within the subnets belonging to the shared
-    network. Internally, the server selects one of the subnets belonging to a
-    shared network and tries to allocate an address from this subnet. If the
-    server is unable to allocate an address from the selected subnet (e.g. due
-    to address pools exhaustion) it will use another subnet from the same shared
-    network and try to allocate an address from this subnet etc. Therefore, in the
-    typical case, the server will allocate all addresses available for a given
-    subnet before it starts allocating addresses from other subnets belonging to
+    <para>A client connected to a shared network may be assigned a lease (address
+    or prefix) from any of the pools defined within the subnets belonging to the
+    shared network. Internally, the server selects one of the subnets belonging to the
+    shared network and tries to allocate a lease from this subnet. If the
+    server is unable to allocate a lease from the selected subnet (e.g. due
+    to pools exhaustion) it will use another subnet from the same shared
+    network and try to allocate a lease from this subnet etc. Therefore, in the
+    typical case, the server will allocate all leases available in a given
+    subnet before it starts allocating leases from other subnets belonging to
     the same shared network. However, in certain situations the client can be
-    allocated an address from the other subnets before the address pools in the
-    first subnet get exhausted. That is, when the client provides a hint that
-    belongs to another subnet or the client has reservations in a different than
+    allocated a lease from the other subnets before the pools in the first
+    subnet get exhausted, e.g. when the client provides a hint that belongs
+    to another subnet or the client has reservations in a different than
     default subnet.
     </para>
 
     <note>
     <para>It is strongly discouraged for the Kea deployments to assume that the
-      server doesn't allocate addresses from other subnets until it uses all
-      the addresses from the first subnet in the shared network. Apart from the
+      server doesn't allocate leases from other subnets until it uses all
+      the leases from the first subnet in the shared network. Apart from the
       fact that hints, host reservations and client classification affect subnet
-      selection, it is also considered that we will enhance allocation strategies
-      within a shared network in the future versions of Kea, so as the selection
+      selection, it is also foreseen that we will enhance allocation strategies
+      for shared networks in the future versions of Kea, so as the selection
       of subnets within a shared network is equally probable (unpredictable).</para>
     </note>
 
