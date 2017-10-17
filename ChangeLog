@@ -1,3 +1,8 @@
+1320.	[doc]		marcin
+	Improved documentation of shared networks within Kea Administrator
+	Reference Manual.
+	(Trac #5381, git c4be6a71ed3705c182d7ba4417a06ed8fa59f2b5)
+
 1319.	[func]		marcin
 	Added support for DHCPv4 option 54 (dhcp-server-identifier).
 	(Trac #5376, git aae2d91f101b8c61c0abfb3482de04a8dd074121)
