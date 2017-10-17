@@ -3516,6 +3516,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             // and it must be unique among all shared networks.
             "name": "my-secret-lair-level-1",
 
+            // Subnet selector can be specifed on the shared network level.
+            // Subnets from this shared network will be selected for directly
+            // connected clients sending requests to server's "eth0" interface.
+            "interface": "eth0",
+
             // This starts a list of subnets in this shared network.
             // There are two subnets in this example.
             "subnet4": [
@@ -3538,7 +3543,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     "subnet4": [
         {
             "subnet": "192.0.3.0/24",
-            "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ]
+            "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+            "interface": "eth1"
         }
     ]
 
@@ -3568,6 +3574,8 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 "shared-networks": [
     {
         "name": "lab-network3",
+
+        "interface": "eth0",
 
         // This applies to all subnets in this shared network, unless
         // values are overridden on subnet scope.
@@ -3728,6 +3736,7 @@ based on option 93 values.
     "shared-networks": [
         {
             "name": "galah",
+            "interface": "eth0",
             "subnet4": [
                 {
                     "subnet": "192.0.2.0/26",
@@ -3765,6 +3774,7 @@ desired outcome if one desires to service only clients of known properties
     "shared-networks": [
     {
         "name": "frog",
+        "interface": "eth0",
         "subnet4": [
             {
                 "subnet": "192.0.2.0/26",

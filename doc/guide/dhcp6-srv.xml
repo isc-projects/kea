@@ -3074,6 +3074,13 @@ If not specified, the default value is:
             // and it must be unique among all shared networks.
             "name": "ipv6-lab-1",
 
+            // Subnet selector can be specifed on the shared network level.
+            // Subnets from this shared network will be selected for clients
+            // communicating via relay agent having the specified IP address.
+            "relay": {
+                "ip-address": "2001:db8:2:34::1"
+            },
+
             // This starts a list of subnets in this shared network.
             // There are two subnets in this example.
             "subnet6": [
@@ -3096,7 +3103,10 @@ If not specified, the default value is:
     "subnet6": [
         {
             "subnet": "2001:db9::/48",
-            "pools": [ { "pool":  "2001:db9::/64" } ]
+            "pools": [ { "pool":  "2001:db9::/64" } ],
+            "relay": {
+                "ip-address": "2001:db8:1:2::1"
+            }
         }
     ]
 
@@ -3126,6 +3136,9 @@ If not specified, the default value is:
 "shared-networks": [
     {
         "name": "lab-network3",
+        "relay": {
+             "ip-address": "2001:db8:2:34::1"
+        },
 
         // This applies to all subnets in this shared network, unless
         // values are overridden on subnet scope.
@@ -3288,6 +3301,9 @@ based on option 1234 values.
     "shared-networks": [
         {
             "name": "galah",
+            "relay": {
+                "ip-address": "2001:db8:2:34::1"
+            },
             "subnet6": [
                 {
                     "subnet": "2001:db8:1::/64",
@@ -3325,6 +3341,9 @@ desired outcome if one desires to service only clients of known properties
     "shared-networks": [
     {
         "name": "frog",
+        "relay": {
+            "ip-address": "2001:db8:2:34::1"
+        },
         "subnet6": [
             {
                 "subnet": "2001:db8:1::/64",
