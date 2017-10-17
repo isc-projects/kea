@@ -1,3 +1,7 @@
+1319.	[func]		marcin
+	Added support for DHCPv4 option 54 (dhcp-server-identifier).
+	(Trac #5376, git aae2d91f101b8c61c0abfb3482de04a8dd074121)
+
 1318.	[doc]		marcin
 	Updated Kea Administrator's Manual with the information about
 	new capability of flex-id hook library to use value derived from
