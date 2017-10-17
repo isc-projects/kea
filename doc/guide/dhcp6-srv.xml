@@ -3328,6 +3328,18 @@ not able to use any subnets will be refused service. Although, this may be
 desired outcome if one desires to service only clients of known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
+    <para>
+      Note that it is possible to achieve similar effect as presented in this
+      section without the use of shared networks. If the subnets are placed in
+      the global subnets scope, rather than in the shared network, the server
+      will still use classification rules to pick the right subnet for a given
+      class of devices. The major benefit of placing subnets within the
+      shared network is that common parameters for the logically grouped
+      subnets can be specified once, in the shared network scope, e.g.
+      "interface" or "relay" parameter. All subnets belonging to this shared
+      network will inherit those parameters.
+    </para>
+
     </section>
 
     <section>
