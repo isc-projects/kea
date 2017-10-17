@@ -1328,9 +1328,11 @@ This rather belong to the DDNS configuration
 <row><entry>dhcp-lease-time</entry><entry>51</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 -->
 <row><entry>dhcp-option-overload</entry><entry>52</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
-<!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
+<!-- Message Type  should not be configured by a user.
 <row><entry>dhcp-message-type</entry><entry>53</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
+-->
 <row><entry>dhcp-server-identifier</entry><entry>54</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
+<!-- Parameter Request List should not be configured by a user.
 <row><entry>dhcp-parameter-request-list</entry><entry>55</entry><entry>uint8</entry><entry>true</entry><entry>true</entry></row>
 -->
 <row><entry>dhcp-message</entry><entry>56</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
@@ -3847,11 +3849,31 @@ i.e. it will assign increasing integer values starting from 1.</para>
         received. A single server instance will use multiple server identifiers
         if it is receiving queries on multiple interfaces.
       </para>
+
       <para>
-        Currently there is no mechanism to override the default server identifiers
-        by an administrator. In the future, the configuration mechanism will be used
-        to specify the custom server identifier.
+        It is possible to override default server identifier values by specifying
+        "dhcp-server-identifier" option. This option is only supported on the
+        global, shared network and subnet level. It must not be specified
+        on client class and host reservation level.
       </para>
+
+      <para>
+        The following example demonstrates how to override server identifier for
+        a subnet:
+<screen>
+"subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        "option-data": [
+            {
+                "name": "dhcp-server-identifier",
+                "data": "10.2.5.76"
+            }
+        ],
+        ...
+    }
+]</screen>
+</para>
     </section>
 
     <section id="dhcp4-subnet-selection">
