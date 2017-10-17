@@ -4,8 +4,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <dhcp/dhcp4.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_space.h>
 #include <dhcpsrv/network.h>
+#include <boost/pointer_cast.hpp>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 
 namespace isc {
@@ -110,6 +115,21 @@ Network4::toElement() const {
     map->set("match-client-id", Element::create(getMatchClientId()));
 
     return (map);
+}
+
+IOAddress
+Network4::getServerId() const {
+    try {
+        OptionCustomPtr opt_server_id = boost::dynamic_pointer_cast<OptionCustom>
+            (cfg_option_->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
+        if (opt_server_id) {
+            return (opt_server_id->readAddress());
+        }
+    } catch (const std::exception&) {
+        // Ignore any exceptions and simply return empty buffer.
+    }
+
+    return (IOAddress::IPV4_ZERO_ADDRESS());
 }
 
 ElementPtr

@@ -68,6 +68,13 @@ CfgSubnets4::getByPrefix(const std::string& subnet_text) const {
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
 }
 
+bool
+CfgSubnets4::hasSubnetWithServerId(const asiolink::IOAddress& server_id) const {
+    const auto& index = subnets_.get<SubnetServerIdIndexTag>();
+    auto subnet_it = index.find(server_id);
+    return (subnet_it != index.cend());
+}
+
 Subnet4Ptr
 CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 
