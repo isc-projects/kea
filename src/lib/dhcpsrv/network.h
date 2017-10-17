@@ -337,6 +337,12 @@ public:
     /// @return A pointer to unparsed network configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Returns binary representation of the dhcp-server-identifier option (54).
+    ///
+    /// @return Server identifier option as IPv4 address. Zero IPv4 address
+    /// indicates that server identifier hasn't been specified.
+    virtual asiolink::IOAddress getServerId() const;
+
 private:
 
     /// @brief Should server use client identifiers for client lease

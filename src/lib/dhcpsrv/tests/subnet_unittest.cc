@@ -7,13 +7,19 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_definition.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <limits>
@@ -495,6 +501,28 @@ TEST(Subnet4Test, PoolType) {
     EXPECT_THROW(subnet->addPool(pool3), BadValue);
     EXPECT_THROW(subnet->addPool(pool4), BadValue);
     EXPECT_THROW(subnet->addPool(pool5), BadValue);
+}
+
+// Tests if correct value of server identifier is returned when getServerId is
+// called.
+TEST(Subnet4Test, getServerId) {
+    // Initially, the subnet has no server identifier.
+    Subnet4 subnet(IOAddress("192.2.0.0"), 16, 1, 2, 3);
+    EXPECT_TRUE(subnet.getServerId().isV4Zero());
+
+    // Add server identifier.
+    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                         DHO_DHCP_SERVER_IDENTIFIER);
+    OptionCustomPtr option_server_id(new OptionCustom(*option_def, Option::V4));
+    option_server_id->writeAddress(IOAddress("1.2.3.4"));
+
+    CfgOptionPtr cfg_option = subnet.getCfgOption();
+    cfg_option->add(option_server_id, false, DHCP4_OPTION_SPACE);
+
+    // Verify that the server identifier returned by the Subnet4 object is
+    // correct.
+    OptionBuffer server_id_buf = { 1, 2, 3, 4 };
+    EXPECT_EQ("1.2.3.4", subnet.getServerId().toText());
 }
 
 // Tests for Subnet6

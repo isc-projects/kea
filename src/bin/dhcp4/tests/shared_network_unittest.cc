@@ -808,6 +808,59 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
+// Configuration #15
+// - two shared networks, each comes with its own server identifier.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"option-data\": ["
+    "                {"
+    "                    \"name\": \"dhcp-server-identifier\","
+    "                    \"data\": \"1.2.3.4\""
+    "                }"
+    "            ],"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        },"
+    "        {"
+    "            \"name\": \"dog\","
+    "            \"interface\": \"eth0\","
+    "            \"option-data\": ["
+    "                {"
+    "                    \"name\": \"dhcp-server-identifier\","
+    "                    \"data\": \"2.3.4.5\""
+    "                }"
+    "            ],"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"10.0.0.0/26\","
+    "                    \"id\": 1000,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"10.0.0.1 - 10.0.0.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}"
+
 };
 
 /// @Brief Test fixture class for DHCPv4 server using shared networks.
@@ -1684,6 +1737,46 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
     testAssigned([this, &client2] {
         doDiscover(client2, "192.0.2.63", "");
     });
+}
+
+// This test verifies that custom server identifier can be specified for a
+// shared network.
+TEST_F(Dhcpv4SharedNetworkTest, customServerIdentifier) {
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(NETWORKS_CONFIG[15], *client1.getServer()));
+
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doDORA());
+    });
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt4Ptr resp = client1.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // The explicitly configured server identifier should take precedence
+    // over generated server identifier.
+    EXPECT_EQ("1.2.3.4", client1.config_.serverid_.toText());
+
+    // Create another client using different interface.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth0");
+
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doDORA());
+    });
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client2.getContext().response_);
+    resp = client2.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // The explicitly configured server identifier should take precedence
+    // over generated server identifier.
+    EXPECT_EQ("2.3.4.5", client2.config_.serverid_.toText());
 }
 
 } // end of anonymous namespace
