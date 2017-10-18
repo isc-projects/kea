@@ -3765,14 +3765,66 @@ as long as it is valid IPv4 address.</para>
     <section>
       <title>Client classification in shared networks</title>
 
-<para>Sometimes it is desired to segregate clients into specific subnets.
-A case of cable network where modems should use one subnet and other devices
-should use another subnet is a good example. For that reason Kea allows for
-restricting access to specific subnets based on client classification. See <xref
-linkend="classify"/> for details on how to define client classes.
+      <para>Sometimes it is desired to segregate clients into specific subnets
+      based on some properties. This mechanism is called client classification
+      and is described in <xref linkend="classify"/>. Client classification
+      can be applied to subnets belonging to shared networks in the same way
+      as it is used for subnets specified outside of shared networks.
+      It is important to understand how the server selects subnets for
+      the clients when client classification is in use, to assure that the
+      desired subnet is selected for a given client type.</para>
 
-The following example defines two classes of devices. The decision is made
-based on option 93 values.
+      <para>If a subnet is associated with some classes, only the clients
+      belonging to any of these classes can use this subnet. If there are no
+      classes specified for a subnet, any client connected to a given shared
+      network can use this subnet. A common mistake is to assume that the
+      subnet including client classes is preferred over subnets without
+      client classes. Consider the following example:
+
+<screen>
+{
+    "client-classes": [
+        {
+            "name": "b-devices",
+            "test": "option[93].hex == 0x0002"
+        }
+    ],
+    "shared-networks": [
+        {
+            "name": "galah",
+            "interface": "eth0",
+            "subnet4": [
+                {
+                    "subnet": "192.0.2.0/26",
+                    "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ],
+                },
+                {
+                    "subnet": "10.0.0.0/24",
+                    "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
+                    <userinput>"client-class": "b-devices"</userinput>
+                }
+            ]
+        }
+    ]
+}
+</screen>
+
+        If the client belongs to "b-devices" class (because it includes option
+        93 with a value of 0x0002) it doesn't guarantee that the subnet 10.0.0.0/24
+        will be used (or preferred) for this client. The server can use any of
+        the two subnets because the subnet 192.0.2.0/26 is also allowed for
+        this client. The client classification used in this case should be pereceived
+        as a way to restrict access to certain subnets, rather than a way to express
+        subnet preference. For example, if the client doesn't belong to the
+        "b-devices" class it may only use the subnet 192.0.2.0/26 and will
+        never use the subnet 10.0.0.0/24.
+      </para>
+
+      <para>A typical use case for client classification is in the cable network,
+      where cable modems should use one subnet and other devices should use
+      another subnet within the same shared network. In this case it is required
+      to apply classification on all subnets. The following example defines two
+      classes of devices. The subnet selection is  made based on option 93 values.
 <screen>
 {
     "client-classes": [
@@ -3810,7 +3862,7 @@ In this example each class has its own restriction. Only clients that belong to
 class "a-devices" will be able to use subnet 192.0.2.0/26 and only clients
 belonging to b-devices will be able to use subnet 10.0.0.0/24. Care should be
 taken to not define too restrictive classification rules, as clients that are
-not able to use any subnets will be refused service. Although, this may be a
+unable to use any subnets will be refused service. Although, this may be a
 desired outcome if one desires to service only clients of known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
