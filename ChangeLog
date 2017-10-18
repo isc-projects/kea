@@ -1,3 +1,8 @@
+1321.	[doc]		marcin
+	Better explained subnet selection within shared networks when
+	client classification is in use.
+	(Trac #5367, git 26b4d240c5a1ba73e5b61f45d5a832e52f6472dd)
+
 1320.	[doc]		marcin
 	Improved documentation of shared networks within Kea Administrator
 	Reference Manual.
