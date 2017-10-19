@@ -251,8 +251,7 @@ TEST(ParserTest, file) {
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");
     configs.push_back("hooks.json");
-    // Removed because decommentJSON does not work with URLs
-    // configs.push_back("iPXE.json");
+    configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");
     configs.push_back("multiple-options.json");
     configs.push_back("mysql-reservations.json");
