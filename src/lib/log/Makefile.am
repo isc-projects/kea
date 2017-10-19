@@ -50,15 +50,30 @@ libkea_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
 libkea_log_la_LDFLAGS = -no-undefined -version-info 3:0:0
 
-# Specify the headers for copying into the installation directory tree. User-
-# written libraries only need the definitions for logger.h and dependencies.
+# Specify the headers for copying into the installation directory tree.
 libkea_log_includedir = $(pkgincludedir)/log
 libkea_log_include_HEADERS = \
-    log_dbglevels.h \
-    log_formatter.h \
-    logger.h \
-    logger_level.h \
-    macros.h \
-    message_initializer.h \
-    message_types.h
+	logimpl_messages.h \
+	log_dbglevels.h \
+	log_formatter.h \
+	logger.h \
+	logger_impl.h \
+	logger_level.h \
+	logger_level_impl.h \
+	logger_manager.h \
+	logger_manager_impl.h \
+	logger_name.h \
+	logger_specification.h \
+	logger_support.h \
+	logger_unittest_support.h \
+	log_messages.h \
+	macros.h \
+	message_dictionary.h \
+	message_exception.h \
+	message_initializer.h \
+	message_reader.h \
+	message_types.h \
+	output_option.h \
+	buffer_appender_impl.h
+
 

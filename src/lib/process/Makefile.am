@@ -69,4 +69,5 @@ libkea_process_include_HEADERS = \
 	d_cfg_mgr.h \
 	d_controller.h \
 	d_process.h \
-	io_service_signal.h
+	io_service_signal.h \
+	process_messages.h
