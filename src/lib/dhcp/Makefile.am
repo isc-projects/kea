@@ -123,7 +123,7 @@ libkea_dhcp___include_HEADERS = \
 	pkt_filter_inet.h \
 	pkt_filter_inet6.h \
 	protocol_util.h \
-	std_option_defs.h \
+	std_option_defs.h
 
 if OS_LINUX
 libkea_dhcp___include_HEADERS += \
