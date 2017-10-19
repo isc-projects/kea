@@ -43,12 +43,43 @@ libkea_util_la_LDFLAGS  = -no-undefined -version-info 2:1:0
 
 CLEANFILES = *.gcno *.gcda
 
+# Specify the headers for copying into the installation directory tree.
 libkea_util_includedir = $(pkgincludedir)/util
 libkea_util_include_HEADERS = \
-    buffer.h \
-    io_utilities.h \
-    optional_value.h \
-    pointer_util.h \
-    stopwatch.h \
-    strutil.h \
-    staged_value.h
+	boost_time_utils.h \
+	buffer.h \
+	io_utilities.h \
+	csv_file.h \
+	filename.h \
+	labeled_value.h \
+	memory_segment.h \
+	memory_segment_local.h \
+	optional_value.h \
+	pid_file.h \
+	pointer_util.h \
+	process_spawn.h \
+	range_utilities.h \
+	signal_set.h \
+	staged_value.h \
+	state_model.h \
+	stopwatch.h \
+	stopwatch_impl.h \
+	strutil.h \
+	time_utilities.h \
+	versioned_csv_file.h \
+	watch_socket.h
+
+libkea_util_encode_includedir = $(pkgincludedir)/util/encode
+libkea_util_encode_include_HEADERS = \
+	encode/base16_from_binary.h \
+	encode/base32hex.h \
+	encode/base64.h \
+	encode/base32hex_from_binary.h \
+	encode/binary_from_base32hex.h \
+	encode/binary_from_base16.h \
+	encode/hex.h
+
+libkea_util_random_includedir = $(pkgincludedir)/util/random
+libkea_util_random_include_HEADERS = \
+	random/qid_gen.h \
+	random/random_number_generator.h
