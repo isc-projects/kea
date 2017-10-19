@@ -107,11 +107,11 @@ endif
 # Specify the headers for copying into the installation directory tree.
 libkea_eval_includedir = $(pkgincludedir)/eval
 libkea_eval_include_HEADERS = \
-	eval_log.h \
-	evaluate.h \
-	token.h \
-	parser.h \
 	eval_context.h \
 	eval_context_decl.h \
-	eval_messages.h
-
+	eval_log.h \
+	eval_messages.h \
+	evaluate.h \
+	parser.h \
+	token.h
+# does not include *.hh generated headers as they come with lexer and parser.

@@ -65,10 +65,10 @@ libkea_hooks_include_HEADERS = \
 	callout_handle.h \
 	callout_manager.h \
 	hooks.h \
+	hooks_config.h \
 	hooks_log.h \
 	hooks_manager.h \
 	hooks_messages.h \
-	hooks_config.h \
 	hooks_parser.h \
 	libinfo.h \
 	library_handle.h \

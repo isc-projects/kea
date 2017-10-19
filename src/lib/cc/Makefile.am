@@ -21,10 +21,10 @@ libkea_cc_la_LDFLAGS = -no-undefined -version-info 2:0:0
 # Specify the headers for copying into the installation directory tree.
 libkea_cc_includedir = $(pkgincludedir)/cc
 libkea_cc_include_HEADERS = \
-	data.h \
 	cfg_to_element.h \
-	dhcp_config_error.h \
 	command_interpreter.h \
+	data.h \
+	dhcp_config_error.h \
 	json_feed.h \
 	simple_parser.h
 

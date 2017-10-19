@@ -34,9 +34,9 @@ libkea_cryptolink_la_LIBADD += $(CRYPTO_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_cryptolink_includedir = $(pkgincludedir)/cryptolink
 libkea_cryptolink_include_HEADERS = \
-	cryptolink.h \
 	crypto_hash.h \
-	crypto_hmac.h
+	crypto_hmac.h \
+	cryptolink.h
 
 if HAVE_BOTAN
 libkea_cryptolink_include_HEADERS += \
