@@ -47,8 +47,8 @@ libkea_asiolink_la_LIBADD += $(BOOST_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_asiolink_includedir = $(pkgincludedir)/asiolink
 libkea_asiolink_include_HEADERS = \
-	asiolink.h \
 	asio_wrapper.h \
+	asiolink.h \
 	dummy_io_cb.h \
 	interval_timer.h \
 	io_acceptor.h \

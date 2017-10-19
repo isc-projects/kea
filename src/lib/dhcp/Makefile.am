@@ -85,14 +85,15 @@ libkea_dhcp___include_HEADERS = \
 	classify.h \
 	dhcp4.h \
 	dhcp6.h \
+	docsis3_option_defs.h \
 	duid.h \
 	duid_factory.h \
-	docsis3_option_defs.h \
 	hwaddr.h \
 	iface_mgr.h \
 	iface_mgr_error_handler.h \
 	libdhcp++.h \
 	opaque_data_tuple.h \
+	option.h \
 	option4_addrlst.h \
 	option4_client_fqdn.h \
 	option6_addrlst.h \
@@ -102,7 +103,6 @@ libkea_dhcp___include_HEADERS = \
 	option6_iaprefix.h \
 	option6_pdexclude.h \
 	option6_status_code.h \
-	option.h \
 	option_custom.h \
 	option_data_types.h \
 	option_definition.h \
@@ -123,7 +123,7 @@ libkea_dhcp___include_HEADERS = \
 	pkt_filter_inet.h \
 	pkt_filter_inet6.h \
 	protocol_util.h \
-	std_option_defs.h
+	std_option_defs.h \
 
 if OS_LINUX
 libkea_dhcp___include_HEADERS += \

@@ -248,18 +248,18 @@ libkea_dhcpsrv_include_HEADERS = \
 	cfg_4o6.h \
 	cfg_db_access.h \
 	cfg_duid.h \
+	cfg_expiration.h \
+	cfg_host_operations.h \
 	cfg_hosts.h \
 	cfg_hosts_util.h \
 	cfg_iface.h \
-	cfg_expiration.h \
-	cfg_host_operations.h \
+	cfg_mac_source.h \
 	cfg_option.h \
 	cfg_option_def.h \
 	cfg_rsoo.h \
 	cfg_shared_networks.h \
 	cfg_subnets4.h \
 	cfg_subnets6.h \
-	cfg_mac_source.h \
 	cfgmgr.h \
 	client_class_def.h \
 	csv_lease_file4.h \
@@ -301,11 +301,17 @@ libkea_dhcpsrv_include_HEADERS = \
 	utils.h \
 	writable_host_data_source.h
 
+if HAVE_CQL
+libkea_dhcpsrv_include_HEADERS += \
+	cql_connection.h \
+	cql_lease_mgr.h
+endif
+
 if HAVE_MYSQL
 libkea_dhcpsrv_include_HEADERS += \
-	mysql_lease_mgr.h \
 	mysql_connection.h \
-	mysql_host_data_source.h
+	mysql_host_data_source.h \
+	mysql_lease_mgr.h
 endif
 
 if HAVE_PGSQL
@@ -314,12 +320,6 @@ libkea_dhcpsrv_include_HEADERS += \
 	pgsql_exchange.h \
 	pgsql_host_data_source.h \
 	pgsql_lease_mgr.h
-endif
-
-if HAVE_CQL
-libkea_dhcpsrv_include_HEADERS += \
-	cql_lease_mgr.h \
-	cql_connection.h
 endif
 
 # Specify parsers' headers for copying into installation directory tree.
@@ -331,6 +331,7 @@ libkea_dhcpsrv_parsers_include_HEADERS = \
 	parsers/duid_config_parser.h \
 	parsers/expiration_config_parser.h \
 	parsers/host_reservation_parser.h \
+	parsers/host_reservations_list_parser.h \
 	parsers/ifaces_config_parser.h \
 	parsers/option_data_parser.h \
 	parsers/shared_network_parser.h \

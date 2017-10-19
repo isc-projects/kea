@@ -53,9 +53,10 @@ libkea_log_la_LDFLAGS = -no-undefined -version-info 3:0:0
 # Specify the headers for copying into the installation directory tree.
 libkea_log_includedir = $(pkgincludedir)/log
 libkea_log_include_HEADERS = \
-	logimpl_messages.h \
+	buffer_appender_impl.h \
 	log_dbglevels.h \
 	log_formatter.h \
+	log_messages.h \
 	logger.h \
 	logger_impl.h \
 	logger_level.h \
@@ -66,14 +67,17 @@ libkea_log_include_HEADERS = \
 	logger_specification.h \
 	logger_support.h \
 	logger_unittest_support.h \
-	log_messages.h \
+	logimpl_messages.h \
 	macros.h \
 	message_dictionary.h \
 	message_exception.h \
 	message_initializer.h \
 	message_reader.h \
 	message_types.h \
-	output_option.h \
-	buffer_appender_impl.h
+	output_option.h
 
-
+libkea_log_interprocess_includedir = $(pkgincludedir)/log/interprocess
+libkea_log_interprocess_include_HEADERS = \
+	interprocess/interprocess_sync.h \
+	interprocess/interprocess_sync_file.h \
+	interprocess/interprocess_sync_null.h

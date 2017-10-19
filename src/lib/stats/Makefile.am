@@ -19,7 +19,7 @@ libkea_stats_la_LIBADD += $(BOOST_LIBS)
 
 libkea_stats_includedir = $(pkgincludedir)/stats
 libkea_stats_include_HEADERS = \
-	observation.h \
 	context.h \
+	observation.h \
 	stats_mgr.h
 
