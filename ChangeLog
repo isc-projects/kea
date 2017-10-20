@@ -1,3 +1,7 @@
+1322.	[build]		marcin
+	Copy all header files from Kea libraries during "make install".
+	(Trac #5372, git cb38d39a942351ec04a655a396dd7396ea20548b)
+
 1321.	[doc]		marcin
 	Better explained subnet selection within shared networks when
 	client classification is in use.
