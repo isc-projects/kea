@@ -2336,9 +2336,10 @@ namespace {
 
 /// @brief Check if the specific address is reserved for another client.
 ///
-/// This function uses the HW address from the context to check if the
-/// requested address (specified as first parameter) is reserved for
-/// another client, i.e. client using a different HW address.
+/// This function finds a host reservation for a given address and then
+/// it verifies if the host identifier for this reservation is matching
+/// a host identifier found for the current client. If it does not, the
+/// address is assumed to be reserved for another client.
 ///
 /// @param address An address for which the function should check if
 /// there is a reservation for the different client.
@@ -2349,20 +2350,14 @@ namespace {
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
     ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
-    HWAddrPtr host_hwaddr;
     if (host) {
-        host_hwaddr = host->getHWAddress();
-        if (ctx.hwaddr_ && host_hwaddr) {
-            /// @todo Use the equality operators for HWAddr class.
-            /// Currently, this is impossible because the HostMgr uses the
-            /// HTYPE_ETHER type, whereas the unit tests may use other types
-            /// which HostMgr doesn't support yet.
-            return (host_hwaddr->hwaddr_ != ctx.hwaddr_->hwaddr_);
-
-        } else {
-            return (false);
-
+        for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
+             ++id) {
+            if (id->first == host->getIdentifierType()) {
+                return (id->second != host->getIdentifier());
+            }
         }
+        return (true);
     }
     return (false);
 }
