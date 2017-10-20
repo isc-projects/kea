@@ -241,7 +241,6 @@ libkea_dhcpsrv_include_HEADERS = \
 	addr_utilities.h \
 	alloc_engine.h \
 	alloc_engine_log.h \
-	alloc_engine_messages.h \
 	assignable_network.h \
 	base_host_data_source.h \
 	callout_handle_store.h \
@@ -271,13 +270,11 @@ libkea_dhcpsrv_include_HEADERS = \
 	db_exceptions.h \
 	dhcp4o6_ipc.h \
 	dhcpsrv_log.h \
-	dhcpsrv_messages.h \
 	host.h \
 	host_container.h \
 	host_data_source_factory.h \
 	host_mgr.h \
 	hosts_log.h \
-	hosts_messages.h \
 	key_from_key.h \
 	lease.h \
 	lease_file_loader.h \

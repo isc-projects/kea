@@ -53,7 +53,6 @@ libkea_cfgclient_include_HEADERS = \
 	command_mgr.h \
 	config_data.h \
 	config_log.h \
-	config_messages.h \
 	hooked_command_mgr.h \
 	module_spec.h
 
