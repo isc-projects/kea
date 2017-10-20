@@ -1105,7 +1105,7 @@ is generated, the command handler must set it as "response" argument prior to re
 It is uncommon but valid scenario to have multiple hook libraries providing command
 handlers for the same command. They are invoked sequentially and each of them
 can freely modify a response set by a previous callout. This includes entirely
-replacing the response provided by previous callouts, if neccessary.
+replacing the response provided by previous callouts, if necessary.
 
 
 @subsubsection hooksdgMultipleCallouts Multiple Callouts on a Hook
