@@ -65,7 +65,6 @@ libkea_http_include_HEADERS = \
 	header_context.h \
 	http_acceptor.h \
 	http_log.h \
-	http_messages.h	\
 	http_types.h \
 	listener.h \
 	post_request.h \
