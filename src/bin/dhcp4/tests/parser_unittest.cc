@@ -242,8 +242,8 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs = { "advanced.json" ,
                                "backends.json",
-                               "classify.json",
                                "cassandra.json",
+                               "classify.json",
                                "dhcpv4-over-dhcpv6.json",
                                "hooks.json",
                                "leases-expiration.json",

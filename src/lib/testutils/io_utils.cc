@@ -69,8 +69,11 @@ std::string decommentJSONfile(const std::string& input_file) {
         }
 
         // Second, let's get rid of the // comments
+        // at the beginning or after a control character.
         size_t dblslash_pos = line.find("//");
-        if (dblslash_pos != string::npos) {
+        if ((dblslash_pos != string::npos) &&
+            ((dblslash_pos == 0) ||
+             ((unsigned) line[dblslash_pos - 1] <= 32))) {
             line = line.substr(0, dblslash_pos);
         }
 
