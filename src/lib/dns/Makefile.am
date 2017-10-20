@@ -13,6 +13,8 @@ CLEANFILES += s-rdatacode
 CLEANFILES += python/rrtype_constants_inc.cc
 CLEANFILES += python/rrclass_constants_inc.cc
 
+DISTCLEANFILES = gen-rdatacode.py
+
 EXTRA_DIST = rrclass-placeholder.h
 EXTRA_DIST += rrparamregistry-placeholder.cc
 EXTRA_DIST += rrtype-placeholder.h
