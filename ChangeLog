@@ -1,3 +1,9 @@
+1325.	[bug]		marcin
+	Fixed a bug whereby a reserved address could be allocated to
+	a different client when this client explicitly requested
+	this address.
+	(Trac #5393, git 0964c66d44516a04ec62c8e70be92f216fe3df5a)
+
 1324.   [doc]           wlodek
         Added examples of configuration for iPXE boot with DHCPv6 Kea server
         (Trac #5356, git c68b9b381930d1e44fd5daa1b9d033035e32cff2)
