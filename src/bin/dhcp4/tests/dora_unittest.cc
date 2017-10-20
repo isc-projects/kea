@@ -1702,7 +1702,7 @@ TEST_F(DORATest, changingCircuitId) {
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
     // Make sure that the client has been offerred a different address
     // given that circuit-id is not used.
-    ASSERT_NE(resp->getYiaddr().toText(), "10.0.0.9");
+    EXPECT_NE("10.0.0.9", resp->getYiaddr().toText());
 
     // Specify circuit-id matching the one in the configuration.
     client.setCircuitId("charter950");
@@ -1716,7 +1716,7 @@ TEST_F(DORATest, changingCircuitId) {
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
     // Make sure that the client has been offerred reserved address given that
     // matching circuit-id has been specified.
-    ASSERT_EQ("10.0.0.9", resp->getYiaddr().toText());
+    EXPECT_EQ("10.0.0.9", resp->getYiaddr().toText());
 
     // Let's now change the circuit-id.
     client.setCircuitId("gdansk");
@@ -1728,7 +1728,7 @@ TEST_F(DORATest, changingCircuitId) {
     ASSERT_TRUE(client.getContext().response_);
     resp = client.getContext().response_;
     // The client should be refused this address.
-    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+    EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
     // In this case, the client falls back to the 4-way exchange and should be
     // allocated an address from the dynamic pool.
@@ -1738,7 +1738,7 @@ TEST_F(DORATest, changingCircuitId) {
     resp = client.getContext().response_;
     // The client should be allocated some address.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    ASSERT_NE(client.config_.lease_.addr_.toText(), "10.0.0.9");
+    EXPECT_NE("10.0.0.9", client.config_.lease_.addr_.toText());
 }
 
 // Starting tests which require MySQL backend availability. Those tests
