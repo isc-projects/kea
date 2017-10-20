@@ -1,3 +1,7 @@
+1324.   [doc]           wlodek
+        Added examples of configuration for iPXE boot with DHCPv6 Kea server
+        (Trac #5356, git c68b9b381930d1e44fd5daa1b9d033035e32cff2)
+
 1323.	[doc]		marcin
 	Added new section to Kea Hooks Developer's Guide describing how
 	to implement new control commands within hooks libraries.
