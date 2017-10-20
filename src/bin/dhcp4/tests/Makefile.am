@@ -30,7 +30,8 @@ CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += $(builddir)/test_leases.csv.*
 CLEANFILES += *.json *.log
 
-DISTCLEANFILES = dhcp4_process_tests.sh
+DISTCLEANFILES = dhcp4_process_tests.sh marker_file.h
+DISTCLEANFILES += test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
