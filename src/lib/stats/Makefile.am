@@ -18,4 +18,8 @@ libkea_stats_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.l
 libkea_stats_la_LIBADD += $(BOOST_LIBS)
 
 libkea_stats_includedir = $(pkgincludedir)/stats
-libkea_stats_include_HEADERS = stats_mgr.h
+libkea_stats_include_HEADERS = \
+	context.h \
+	observation.h \
+	stats_mgr.h
+

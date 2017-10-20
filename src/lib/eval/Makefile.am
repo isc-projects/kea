@@ -102,3 +102,15 @@ parser location.hh position.hh stack.hh parser.cc parser.h lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif
+
+
+# Specify the headers for copying into the installation directory tree.
+libkea_eval_includedir = $(pkgincludedir)/eval
+libkea_eval_include_HEADERS = \
+	eval_context.h \
+	eval_context_decl.h \
+	eval_log.h \
+	evaluate.h \
+	parser.h \
+	token.h
+# does not include *.hh generated headers as they come with lexer and parser.
