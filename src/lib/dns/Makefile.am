@@ -178,27 +178,40 @@ s-rdatacode: Makefile $(EXTRA_DIST)
 
 libdns___includedir = $(pkgincludedir)/dns
 libdns___include_HEADERS = \
+	dns_fwd.h \
 	edns.h \
 	exceptions.h \
-	dns_fwd.h \
 	labelsequence.h \
-	message.h \
-	masterload.h \
 	master_lexer.h \
+	master_lexer_inputsource.h \
+	master_lexer_state.h \
 	master_loader.h \
 	master_loader_callbacks.h \
+	masterload.h \
+	message.h \
 	messagerenderer.h \
 	name.h \
-	question.h \
+	nsec3hash.h \
 	opcode.h \
+	question.h \
 	rcode.h \
 	rdata.h \
+	rdata_pimpl_holder.h \
+	rdataclass.h \
+	rdatafields.h \
+	rrclass.h \
+	rrcollator.h \
 	rrparamregistry.h \
 	rrset.h \
-	rrset_collection_base.h \
 	rrset_collection.h \
+	rrset_collection_base.h \
 	rrttl.h \
+	rrtype.h \
+	serial.h \
+	tsig.h \
+	tsigerror.h \
 	tsigkey.h \
+	tsigrecord.h \
 	zone_checker.h
 # Purposely not installing these headers:
 # name_internal.h: used only internally, and not actually DNS specific

@@ -43,3 +43,17 @@ nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 EXTRA_DIST = config_messages.mes command-socket.dox
 
 CLEANFILES = *.gcno *.gcda config_messages.h config_messages.cc s-messages
+
+# Specify the headers for copying into the installation directory tree.
+libkea_cfgclient_includedir = $(pkgincludedir)/config
+libkea_cfgclient_include_HEADERS = \
+	base_command_mgr.h \
+	client_connection.h \
+	cmds_impl.h \
+	command_mgr.h \
+	config_data.h \
+	config_log.h \
+	hooked_command_mgr.h \
+	module_spec.h
+
+
