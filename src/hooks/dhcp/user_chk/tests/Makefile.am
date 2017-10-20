@@ -18,6 +18,7 @@ endif
 EXTRA_DIST = test_users_1.txt test_users_err.txt
 
 CLEANFILES = *.gcno *.gcda
+DISTCLEANFILES = test_data_files_config.h
 
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
