@@ -58,8 +58,11 @@ public:
         auto& index = networks_.template get<SharedNetworkNameIndexTag>();
         auto shared_network = index.find(name);
         if (shared_network != index.end()) {
-            index.erase(shared_network);
+            // Delete all subnets from the network
+            (*shared_network)->delAll();
 
+            // Then delete the network from the networks list.
+            index.erase(shared_network);
         } else {
             isc_throw(BadValue, "unable to delete non-existing network '"
                       << name << "' from shared networks configuration");
