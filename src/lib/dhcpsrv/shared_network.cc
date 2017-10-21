@@ -219,6 +219,14 @@ SharedNetwork4::del(const SubnetID& subnet_id) {
     clearSharedNetwork(subnet);
 }
 
+void
+SharedNetwork4::delAll() {
+    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
+        clearSharedNetwork(*subnet);
+    }
+    subnets_.clear();
+}
+
 Subnet4Ptr
 SharedNetwork4::getSubnet(const SubnetID& subnet_id) const {
     return (Impl::getSubnet<Subnet4Ptr>(subnets_, subnet_id));
@@ -267,6 +275,13 @@ SharedNetwork6::del(const SubnetID& subnet_id) {
     clearSharedNetwork(subnet);
 }
 
+void
+SharedNetwork6::delAll() {
+    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
+        clearSharedNetwork(*subnet);
+    }
+    subnets_.clear();
+}
 Subnet6Ptr
 SharedNetwork6::getSubnet(const SubnetID& subnet_id) const {
     return (Impl::getSubnet<Subnet6Ptr>(subnets_, subnet_id));
