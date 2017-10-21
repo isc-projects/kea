@@ -1670,12 +1670,15 @@ as follows:
         <title>subnet_cmds: Subnet Commands</title>
         <para>
           This section describes a hook application that offers a number of new
-          commands used to query and manipulate subnet configurations in Kea.
-          This application is very useful in deployments with a large number of
-          subnets being managed by the DHCP servers and when the subnets are
-          frequently updated. The commands offer lightweight approach for
-          manipulating subnets without a need to fully reconfigure the server
-          and without affecting existing servers' configurations.
+          commands used to query and manipulate subnet and shared network
+          configurations in Kea.  This application is very useful in deployments
+          with a large number of subnets being managed by the DHCP servers and
+          when the subnets are frequently updated. The commands offer
+          lightweight approach for manipulating subnets without a need to fully
+          reconfigure the server and without affecting existing servers'
+          configurations. An ability to manage shared networks (listing,
+          retrieving details, adding new ones, removing existing ones, adding
+          subnets to and removing from shared networks) is also provided.
         </para>
 
         <para>Currently this library is only available to ISC customers with a
@@ -1689,7 +1692,7 @@ as follows:
           </listitem>
           <listitem>
           <simpara>
-            <command>subnet4-get/subnet6-get</command>: retrieves detailed information about a selected subnet
+            <command>subnet4-get/subnet6-get</command>: retrieves detailed information about a specified subnet
           </simpara>
           </listitem>
           <listitem>
@@ -1702,6 +1705,45 @@ as follows:
             <command>subnet4-del/subnet6-del</command>: removes a subnet from the server's configuration
           </simpara>
           </listitem>
+
+          <listitem>
+          <simpara>
+            <command>network4-list/network6-list</command>: lists all configured
+            shared networks
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-get/network6-get</command>: retrieves detailed
+            information about specified shared network
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-add/network6-add</command>: adds a new shared
+            network to the server's configuration
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-del/network6-del</command>: removes a shared
+            network from the server's configuration
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-subnet-add/network6-subnet-add</command>: adds
+            existing subnet to existing shared network
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-subnet-del/network6-subnet-del</command>: removes
+            a subnet from existing shared network and demotes it to a plain
+            subnet.
+          </simpara>
+          </listitem>
+
         </itemizedlist>
         </para>
 
@@ -2125,8 +2167,303 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
+      <section>
+        <title>network4-list, network6-list commands</title>
+        <para>
+          These commands are used to retrieve full list of currently configured
+          shared networks. The list contains only very basic information about
+          each shared network. If more details are needed, please use
+          <command>network4-get</command> or <command>network6-get</command> to
+          retrieve all information available. This command does not require any
+          parameters and its invocation is very simple:
+<screen>
+{
+    "command": "network4-list"
+}
+</screen>
+An example response for <command>network4-list</command> looks as follows:
+<screen>
+{
+    "arguments": {
+        "shared-networks": [
+            { "name": "floor1" },
+            { "name": "office" }
+        ]
+    },
+    "result": 0,
+    "text": "2 IPv4 network(s) found"
+}</screen>
+<command>network6-list</command> follows exactly the same syntax for
+both the query and the response.
+        </para>
     </section>
-</section> <!-- end of subnet commands -->
+
+    <section>
+        <title>network4-get, network6-get commands</title>
+        <para>
+          These commands are used to retrieve detailed information
+          about shared networks, including subnets currently
+          being part of a given network. Both commands take one
+          mandatory parameter <command>name</command>, which specify
+          the name of shared network. An example command to retrieve
+          details about IPv4 shared network with a name "floor13"
+          looks as follows:
+<screen>
+{
+    "command": "network4-get",
+    "arguments": {
+        "name": "floor13"
+    }
+}</screen>
+An example response could look as follows:
+<screen>
+{
+    "result": 0,
+    "text": "Info about IPv4 shared network 'floor13' returned",
+    "arguments": {
+        "shared-networks": [
+        {
+            "match-client-id": true,
+            "name": "floor13",
+            "option-data": [ ],
+            "rebind-timer": 90,
+            "relay": {
+                "ip-address": "0.0.0.0"
+            },
+            "renew-timer": 60,
+            "reservation-mode": "all",
+            "subnet4": [
+                {
+                    "subnet": "192.0.2.0/24",
+                    "id": 5,
+                    // many other subnet specific details here
+                },
+                {
+                    "id": 6,
+                    "subnet": "192.0.3.0/31",
+                    // many other subnet specific details here
+                }
+            ],
+            "valid-lifetime": 120
+        }
+        ]
+    }
+}
+</screen>
+Note that actual response contains many additional fields that are
+omitted here for clarity. The response format is exactly the same as
+used in <command>config-get</command>, just is limited to returning
+shared networks information.
+        </para>
+    </section>
+
+    <section>
+        <title>network4-add, network6-add commands</title>
+        <para>
+          These commands are used to add a new shared network. New
+          network has to have unique name. This command requires one parameter
+          <command>shared-networks</command>, which is a list and
+          should contain exactly one entry that defines the
+          network. The only mandatory element for a network is its
+          name. Although it does not make operational sense, it is
+          allowed to add an empty shared network that does not have
+          any subnets in it. That is allowed for testing purposes, but
+          having empty networks (or with only one subnet) is
+          discouraged in production environments. For details regarding
+          syntax, see <xref linkend="shared-network4"/> and <xref
+          linkend="shared-network6"/>.
+        </para>
+        <note><para>As opposed to parameter inheritance during full
+          new configuration processing, this command does not fully handle
+          parameter inheritance and any missing parameters will be
+          filled with default values, rather than inherited from
+          global scope.</para></note>
+        <para>
+          An example that showcases how to add a new IPv4 shared network looks
+          as follows:
+<screen>
+{
+    "command": "network4-add",
+    "arguments": {
+        "shared-networks": [ {
+            "name": "floor13",
+            "subnet4": [
+            {
+                "id": 100,
+                "pools": [ { "pool": "192.0.2.2-192.0.2.99" } ],
+                "subnet": "192.0.2.0/24",
+                "option-data": [
+                    {
+                        "name": "routers",
+                        "data": "192.0.2.1"
+                    }
+                ]
+            },
+            {
+                "id": 101,
+                "pools": [ { "pool": "192.0.3.2-192.0.3.99" } ],
+                "subnet": "192.0.3.0/24",
+                "option-data": [
+                    {
+                        "name": "routers",
+                        "data": "192.0.3.1"
+                    }
+                ]
+            } ]
+        } ]
+    }
+}
+</screen>
+Assuming there was no shared network with a name floor13 and no subnets with id
+100 and 101 previously configured, the command will be successful and will
+return the following response:
+<screen>
+{
+    "arguments": {
+        "shared-networks": [ { "name": "floor13" } ]
+    },
+    "result": 0,
+    "text": "A new IPv4 shared network 'floor13' added"
+}
+</screen>
+The <command>network6-add</command> uses the same syntax for both the query and
+the response. However, there are some parameters that are IPv4-only
+(e.g. match-client-id) and some are IPv6-only (e.g. interface-id). The same
+applies to subnets within the network.
+        </para>
+    </section>
+    <section>
+        <title>network4-del, network6-del commands</title>
+        <para>
+          These commands are used to delete existing shared networks. Each
+          subnet within the network being removed will be demoted to a plain
+          network. If you want to competely remove the subnets, please use
+          <command>subnet4-del</command> or <command>subnet6-del</command>
+          commands. Both commands take exactly one parameter 'name' that
+          specifies the name of the network to be removed. An example invocation
+          of <command>network4-del</command> command looks as follows:
+<screen>
+{
+    "command": "network4-del",
+    "arguments": {
+        "name": "floor13"
+    }
+}
+</screen>
+Assuming there was such a network configured, the response will look similar to
+the following:
+<screen>
+{
+    "arguments": {
+        "shared-networks": [
+            {
+                "name": "floor1"
+            }
+        ]
+    },
+    "result": 0,
+    "text": "IPv4 shared network 'floor13' deleted"
+}</screen>
+The <command>network6-del</command> command uses exactly the same syntax for
+both the command and the response.
+        </para>
+
+    </section>
+    <section>
+        <title>network4-subnet-add, network6-subnet-add commands</title>
+        <para>
+          These commands are used to add existing subnets to existing shared
+          networks. There are several ways to add new shared network. System
+          administrator can add the whole shared network at once, either by
+          editing a configuration file or by calling
+          <command>network4-add</command> or <command>network6-add</command>
+          commands with desired subnets in it. This approach works better for completely
+          new shared subnets. However, there may be cases when an existing
+          subnet is running out of addresses and needs to be extended with
+          additional address space. In other words another subnet has to be
+          added on top of it. For this scenario, a system administrator can use
+          <command>network4-add</command> or <command>network6-add</command> and
+          then add existing subnet to this newly created shared network  using
+          <command>network4-subnet-add</command> or
+          <command>network6-subnet-add</command>.
+        </para>
+        <para>
+          The <command>network4-subnet-add</command> and
+          <command>network6-subnet-add</command> commands take two parameters:
+          <command>id</command>, which is an integer and specifies subnet-id of existing subnet to
+          be added to a shared network; and <command>name</command>, which
+          specifies name of the shared network the subnet will be added to. The
+          subnet must not belong to any existing network. In case you want to
+          reassign a subnet from one shared network to another, please use
+          <command>network4-subnet-del</command> or
+          <command>network6-subnet-del</command> commands first.
+        </para>
+        <para>
+          An example invocation of <command>network4-subnet-add</command>
+          command looks as follows:
+<screen>
+{
+    "command": "network4-subnet-add",
+    "arguments": {
+        "name": "floor13",
+        "id": 5
+    }
+}</screen>
+Assuming there is a network named 'floor13', there is a subnet with subnet-id 5
+and it is not a part of existing network, the command will return a response
+similar to the following:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor1'"
+}</screen>
+        The <command>network6-subnet-add</command> command uses exactly the same syntax for
+both the command and the response.
+        </para>
+
+        <note><para>As opposed to parameter inheritance during full
+          new configuration processing or when adding a new shared network with
+          new subnets, this command does not fully handle
+          parameter inheritance and any missing parameters will be
+          filled with default values, rather than inherited from
+          global scope or from the shared network.</para></note>
+    </section>
+    <section>
+        <title>network4-subnet-del, network6-subnet-del commands</title>
+        <para>
+          These commands are used to remove a subnet that is part of existing shared
+          network and demote it to a plain, stand-alone subnet.  The
+          <command>network4-subnet-del</command> and
+          <command>network6-subnet-del</command> commands take two parameters:
+          <command>id</command>, which is an integer and specifies subnet-id of
+          existing subnet to be removed from a shared network; and
+          <command>name</command>, which specifies name of the shared network
+          the subnet will be removed from.
+        </para>
+        <para>An example invocation of the
+        <command>network4-subnet-del</command> command looks as follows:
+ <screen>
+ {
+    "command": "network4-subnet-del",
+    "arguments": {
+        "name": "floor13",
+        "id": 5
+    }
+ }</screen>
+ Assuming there was a subnet with subnet-id equal to 5 that was part of a shared
+ network named 'floor13', the response would look similar to the following:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'"
+}</screen>
+The <command>network6-subnet-del</command> command uses exactly the same syntax for
+both the command and the response.
+        </para>
+    </section>
+
+    </section>
+  </section> <!-- end of subnet commands -->
 
     <section id="user-context">
       <title>User contexts</title>
