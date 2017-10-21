@@ -2085,6 +2085,12 @@ If the subnet exists the response will be similar to this:
           new subnet. Thus, we recommend that this command is used with extreme
           caution.
         </para>
+        <para>
+          This command can also be used to completely delete an IPv4 subnet that
+          is part of a shared network. If you want to simply remove the subnet
+          from a shared network and keep the subnet configuration, use
+          <command>network4-subnet-del</command> command instead.
+        </para>
 
         <para>The command has the following structure:
 <screen>
@@ -2138,6 +2144,12 @@ If the subnet exists the response will be similar to this:
           leases and static reservations will be in conflict with this
           new subnet. Thus, we recommend that this command is used with extreme
           caution.
+        </para>
+        <para>
+          This command can also be used to completely delete an IPv6 subnet that
+          is part of a shared network. If you want to simply remove the subnet
+          from a shared network and keep the subnet configuration, use
+          <command>network6-subnet-del</command> command instead.
         </para>
 
         <para>The command has the following structure:
@@ -2432,8 +2444,10 @@ both the command and the response.
         <title>network4-subnet-del, network6-subnet-del commands</title>
         <para>
           These commands are used to remove a subnet that is part of existing shared
-          network and demote it to a plain, stand-alone subnet.  The
-          <command>network4-subnet-del</command> and
+          network and demote it to a plain, stand-alone subnet. If you want to
+          remove a subnet completely, use <command>subnet4-del</command> or
+          <command>subnet6-del</command> commands instead.
+          The <command>network4-subnet-del</command> and
           <command>network6-subnet-del</command> commands take two parameters:
           <command>id</command>, which is an integer and specifies subnet-id of
           existing subnet to be removed from a shared network; and
