@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium.
+// Copyright (C) 2010-2017 Internet Systems Consortium.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,9 +42,9 @@ namespace isc { namespace config {
         /// \param e The Element containing the data specification
         /// \param check If false, the module specification in the file
         /// is not checked to be of the correct form.
+        /// \throw ModuleSpecError
         explicit ModuleSpec(isc::data::ConstElementPtr e,
-                            const bool check = true)
-            throw(ModuleSpecError);
+                            const bool check = true);
 
         /// Returns the commands part of the specification as an
         /// ElementPtr, returns an empty ElementPtr if there is none
@@ -175,9 +175,9 @@ namespace isc { namespace config {
     /// \param file_name The file to be opened and parsed
     /// \param check If true, the module specification in the file
     /// is checked to be of the correct form
+    /// \throw isc::data::JSONError and ModuleSpecError
     ModuleSpec
-    moduleSpecFromFile(const std::string& file_name, const bool check = true)
-        throw(isc::data::JSONError, ModuleSpecError);
+    moduleSpecFromFile(const std::string& file_name, const bool check = true);
 
     /// Creates a \c ModuleSpec instance from the given input
     /// stream that contains the contents of a .spec file.
@@ -187,9 +187,9 @@ namespace isc { namespace config {
     /// \param in The std::istream containing the .spec file data
     /// \param check If true, the module specification is checked
     /// to be of the correct form
+    /// \throw isc::data::JSONError and ModuleSpecError
     ModuleSpec
-    moduleSpecFromFile(std::ifstream& in, const bool check = true)
-                       throw(isc::data::JSONError, ModuleSpecError);
+    moduleSpecFromFile(std::ifstream& in, const bool check = true);
 } }
 
 #endif // _DATA_DEF_H

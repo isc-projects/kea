@@ -210,7 +210,7 @@ void
 JSONFeed::receiveStartHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
-        switch(getNextEvent()) {
+        switch (getNextEvent()) {
         case START_EVT:
             switch (c) {
             case '\t':
@@ -229,6 +229,7 @@ JSONFeed::receiveStartHandler() {
 
             default:
                 feedFailure("invalid first character " + std::string(1, c));
+		break;
             }
 
         default:

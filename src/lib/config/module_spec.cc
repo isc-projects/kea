@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium.
+// Copyright (C) 2010-2017 Internet Systems Consortium.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -186,9 +186,9 @@ namespace config {
 // Public functions
 //
 
+// throw ModuleSpecError
 ModuleSpec::ModuleSpec(ConstElementPtr module_spec_element,
                        const bool check)
-                       throw(ModuleSpecError)
                        
 {
     module_specification = module_spec_element;
@@ -296,9 +296,9 @@ ModuleSpec::validateStatistics(ConstElementPtr data, const bool full,
     return (validateSpecList(spec, data, full, errors));
 }
 
+// throw JSONError and ModuleSpecError
 ModuleSpec
 moduleSpecFromFile(const std::string& file_name, const bool check)
-                   throw(JSONError, ModuleSpecError)
 {
     std::ifstream file;
 
@@ -320,9 +320,9 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
     }
 }
 
+// throw JSONError and ModuleSpecError
 ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
-                   throw(JSONError, ModuleSpecError)
 {
     ConstElementPtr module_spec_element = Element::fromJSON(in);
     if (module_spec_element->contains("module_spec")) {
