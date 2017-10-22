@@ -77,7 +77,6 @@ report-cpp-coverage:
 if HAVE_BOTAN
 			botan/\* \
 endif
-			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
 			log4cplus/\* \
@@ -119,9 +118,6 @@ install-exec-hook:
 
 EXTRA_DIST  = tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh
-
-#### include external sources in the distributed tarball:
-EXTRA_DIST += ext/coroutine/coroutine.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
