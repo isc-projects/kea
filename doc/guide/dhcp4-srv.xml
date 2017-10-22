@@ -2596,7 +2596,7 @@ It is merely echoed by the server
       can be up to 64 bytes long and will be sent in the sname field) and
       <command>boot-file-name</command> (that conveys the configuration file,
       can be up to 128 bytes long and will be sent using file field)
-      directives are handled the same way than <command>next-server</command>.
+      directives are handled the same way as <command>next-server</command>.
       </para>
 
 <screen>
