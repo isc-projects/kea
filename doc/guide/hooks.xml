@@ -891,7 +891,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         <para>
           The <xref linkend="lease-cmds"/> section describes commands used to retrieve,
           update and delete leases using various identifiers, e.g. "hw-address",
-          "client-id". The lease_cmds library doesn't navtively support querying for
+          "client-id". The lease_cmds library doesn't natively support querying for
           leases by flexible identifier. However, when "replace-client-id" is set to
           true, it makes it possible to query for leases using a value derived from
           the flexible identifier. In the DHCPv4 case, the query will look similar to this:
@@ -992,7 +992,7 @@ Requirements </ulink> document.</para>
         <section>
           <title>reservation-add command</title>
         <para>
-          <command>reservation-add</command> allows insertion of a new host.  It
+          <command>reservation-add</command> allows for the insertion of a new host.  It
           takes a set of arguments that vary depending on the nature of the host
           reservation. Any parameters allowed in the configuration file that
           pertain to host reservation are permitted here. For details regarding
@@ -1325,7 +1325,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           <title>lease4-add, lease6-add commands</title>
         <para>
           <command>lease4-add</command> and <command>lease6-add</command>
-          commands allow for creation of a new lease. Typically Kea creates a lease
+          commands allow for the creation of a new lease. Typically Kea creates a lease
           on its own, when it first sees a new device. However, sometimes it may
           be convenient to create the lease administratively. The
           <command>lease4-add</command> command requires at least three
@@ -1479,7 +1479,7 @@ The commands can take a number of additional optional parameters:
           used when the address (either IPv4 or IPv6) is known, but the details
           of the lease aren't. One common use case of this type of query is to
           find out whether a given address is being used or not. The second
-          query uses identifiers. Currently supported identifiers for are:
+          query uses identifiers. Currently supported identifiers for leases are:
           "hw-address" (IPv4 only), "client-id" (IPv4 only) and "duid" (IPv6 only).
           </para>
 
@@ -1626,7 +1626,7 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
 
           <para><command>leaseX-del</command> returns a result that
           indicates a outcome of the operation. It has one of the
-          following values: 0 (success), 1 (error) or 2 (empty). The
+          following values: 0 (success), 1 (error) or 3 (empty). The
           empty result means that a query has been completed properly,
           but the object (a lease in this case) has not been found.
           </para>

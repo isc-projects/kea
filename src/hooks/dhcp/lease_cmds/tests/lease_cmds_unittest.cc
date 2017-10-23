@@ -1169,6 +1169,26 @@ TEST_F(LeaseCmdsTest, Lease4GetByClientId) {
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
 }
 
+// Checks that lease6-get rejects queries by client-id.
+TEST_F(LeaseCmdsTest, Lease6GetByClientIdInvalidType) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // client-id query is allowed in v4 only.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Query by client-id is not allowed in v6.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Checks that lease6-get(subnet-id, addr) can handle a situation when
 // the query is correctly formed, but the lease is not there.
 TEST_F(LeaseCmdsTest, Lease6GetByDuidNotFound) {
