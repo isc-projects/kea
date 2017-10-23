@@ -2,6 +2,8 @@ PYTESTS = shell_unittest.py
 SHTESTS = shell_process_tests.sh
 noinst_SCRIPTS = $(PYTESTS) $(SHTESTS)
 
+DISTCLEANFILES = shell_process_tests.sh shell_unittest.py
+
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local: check-shell check-python
 

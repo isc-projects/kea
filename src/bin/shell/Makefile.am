@@ -7,7 +7,7 @@ sbin_SCRIPTS = kea-shell
 CLEANFILES = *.pyc
 
 man_MANS = kea-shell.8
-DISTCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(sbin_SCRIPTS) $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-shell.xml
 
 if GENERATE_DOCS
