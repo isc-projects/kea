@@ -2349,7 +2349,7 @@ applies to subnets within the network.
         <para>
           These commands are used to delete existing shared networks. Each
           subnet within the network being removed will be demoted to a plain
-          network. If you want to completely remove the subnets, please use
+          subnet. If you want to completely remove the subnets, please use
           <command>subnet4-del</command> or <command>subnet6-del</command>
           commands. Both commands take exactly one parameter 'name' that
           specifies the name of the network to be removed. An example invocation
