@@ -1,3 +1,9 @@
+1329.	[func]		marcin
+	Added support for "client-id" identifier when querying for
+	leases in the lease_cmds hooks library. Documentation
+	updated accordingly.
+	(Trac #5395, git aceafa67f4fbde55ed6724a7b7551ed251e4ee91)
+
 1328.	[doc]		vicky
 	Acknowledgements section updated.
 	(Trac #5385, git fe0658896f3784cd8f59bd5158244d6975cfe4c1)
