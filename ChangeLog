@@ -1,3 +1,8 @@
+1327.	[build]		marcin
+	Updated Kea libraries' version numbers and hooks version for
+	the 1.3.0 release.
+	(Trac #5375, git 70c0fc164c89716419b6ee42da3ca0d4be938a30)
+
 1326.	[func]		fdupont
 	server-hostname and boot-file-name are now allowed in global,
 	subnet4 and shared network scopes in DHCPv4.
