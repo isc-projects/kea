@@ -457,6 +457,26 @@ public:
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 
+    /// @brief Sets server hostname for the Subnet4 
+    ///
+    /// Will be used for server hostname field (may be empty if not defined)
+    void setSname(const std::string& sname);
+
+    /// @brief Returns server hostname for this subnet
+    ///
+    /// @return server hostname value
+    const std::string& getSname() const;
+
+    /// @brief Sets boot file name for the Subnet4 
+    ///
+    /// Will be used for boot file name (may be empty if not defined)
+    void setFilename(const std::string& filename);
+
+    /// @brief Returns boot file name for this subnet
+    ///
+    /// @return boot file name value
+    const std::string& getFilename() const;
+
     /// @brief Returns DHCP4o6 configuration parameters.
     ///
     /// This structure is always available. If the 4o6 is not enabled, its
@@ -496,6 +516,12 @@ private:
 
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
+
+    /// @brief server hostname for this subnet
+    std::string sname_;
+
+    /// @brief boot file name for this subnet
+    std::string filename_;
 
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;

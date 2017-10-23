@@ -622,6 +622,32 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                   << next_server << "(" << pos << ")");
     }
 
+    // Set server-hostname.
+    std::string sname = getString(params, "server-hostname");
+    if (!sname.empty()) {
+        if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
+            ConstElementPtr error = params->get("server-hostname");
+            isc_throw(DhcpConfigError, "server-hostname must be at most "
+                      << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
+                      << sname.length() << " ("
+                      << error->getPosition() << ")");
+        }
+        subnet4->setSname(sname);
+    }
+
+    // Set boot-file-name.
+    std::string filename =getString(params, "boot-file-name");
+    if (!filename.empty()) {
+        if (filename.length() > Pkt4::MAX_FILE_LEN) {
+            ConstElementPtr error = params->get("boot-file-name");
+            isc_throw(DhcpConfigError, "boot-file-name must be at most "
+                      << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
+                      << filename.length() << " ("
+                      << error->getPosition() << ")");
+        }
+        subnet4->setFilename(filename);
+    }
+
     // Get interface name. If it is defined, then the subnet is available
     // directly over specified network interface.
     std::string iface = getString(params, "interface");

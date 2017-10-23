@@ -278,6 +278,8 @@ const char* DORA_CONFIGS[] = {
         "},"
         "\"valid-lifetime\": 600,"
         "\"next-server\": \"10.0.0.1\","
+        "\"server-hostname\": \"nohost\","
+        "\"boot-file-name\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
