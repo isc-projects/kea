@@ -67,7 +67,7 @@ TEST(CfgSharedNetworks6Test, deleteByName) {
 // Checks that subnets have their shared network pointers updated when
 // the network is deleted. This is used when the shared network is deleted
 // by admin commands.
-TEST(CfgSharedNetworks4Test, deleteNetworkWithSubnets) {
+TEST(CfgSharedNetworks6Test, deleteNetworkWithSubnets) {
     CfgSharedNetworks6 cfg;
     SharedNetwork6Ptr network(new SharedNetwork6("frog"));
     SubnetID id1(100);
