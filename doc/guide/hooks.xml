@@ -847,7 +847,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           value derived from flexible identifier. The server processes the client's
           query as if flexible identifier was sent in the client identifier (or DUID)
           option. This guarantees that returning client (for which the same flexible
-          identifier is evaluated) will be assigned the same lease desplite the client
+          identifier is evaluated) will be assigned the same lease despite the client
           identifier and/or MAC address change.
         </para>
 
@@ -870,6 +870,12 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         </para>
 
         <para>
+          In the DHCPv4 case, the value derived from the flexible identifier is formed
+          by prepending 1 byte with a value of zero to flexible identifier. In the IPv6
+          case, it is formed by prepanding two zero bytes before the flexible identifier.
+        </para>
+
+        <para>
           Note that for this mechanism to take effect, the DHCPv4 server must be configured
           to respect the client identifier option value during lease allocation, i.e.
           "match-client-id" must be set to true. See
@@ -882,6 +888,41 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           not) is ignored.
         </para>
 
+        <para>
+          The <xref linkend="lease-cmds"/> section describes commands used to retrieve,
+          update and delete leases using various identifiers, e.g. "hw-address",
+          "client-id". The lease_cmds library doesn't navtively support querying for
+          leases by flexible identifier. However, when "replace-client-id" is set to
+          true, it makes it possible to query for leases using a value derived from
+          the flexible identifier. In the DHCPv4 case, the query will look similar to this:
+<screen>
+{
+    "command": "lease4-get",
+    "arguments": {
+        "identifier-type": "client-id",
+        "identifier": "00:<userinput>54:64:45:66</userinput>",
+        "subnet-id": 44
+    }
+}
+</screen>
+
+            where hexadecimal value of "54:64:45:66" is a flexible identifier computed
+            for the client.
+        </para>
+
+        <para>
+          In the DHCPv6 case, the corresponding query will look similar to this:
+<screen>
+{
+    "command": "lease6-get",
+    "arguments": {
+        "identifier-type": "duid",
+        "identifier": "00:00:<userinput>54:64:45:66</userinput>",
+        "subnet-id": 10
+    }
+}</screen>
+
+        </para>
       </section>
 
       <section id="host-cmds">
@@ -1284,7 +1325,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           <title>lease4-add, lease6-add commands</title>
         <para>
           <command>lease4-add</command> and <command>lease6-add</command>
-          commands allow creation of a new lease. Typically Kea creates a lease
+          commands allow for creation of a new lease. Typically Kea creates a lease
           on its own, when it first sees a new device. However, sometimes it may
           be convenient to create the lease administratively. The
           <command>lease4-add</command> command requires at least three
@@ -1438,13 +1479,9 @@ The commands can take a number of additional optional parameters:
           used when the address (either IPv4 or IPv6) is known, but the details
           of the lease aren't. One common use case of this type of query is to
           find out whether a given address is being used or not. The second
-          query uses identifiers. For maximum flexibility, Kea stores the host
-          identifying information as a pair of values: type and the actual
-          identifier. Currently supported identifiers are "hw-address", "duid",
-          "circuit-id", "client-id" and "flex-id", but additional types may be
-          added in the future. If any new identifier types are defined in the
-          future, reservation-get command will support them
-          automatically.</para>
+          query uses identifiers. Currently supported identifiers for are:
+          "hw-address" (IPv4 only), "client-id" (IPv4 only) and "duid" (IPv6 only).
+          </para>
 
           <para>
             An example <command>lease4-get</command> command for getting a lease
@@ -1471,14 +1508,28 @@ The commands can take a number of additional optional parameters:
 }</screen>
           </para>
 
-          <para>An example query by (subnet-id, identifier-type,
-          identifier) for IPv4 lease looks as follows:
+          <para>An example query by "hw-address" for IPv4 lease looks
+          as follows:
 <screen>
 {
     "command": "lease4-get",
     "arguments": {
         "identifier-type": "hw-address",
         "identifier": "08:08:08:08:08:08",
+        "subnet-id": 44
+    }
+}</screen>
+
+          </para>
+
+          <para>An example query by "client-id" for IPv4 lease looks
+          as follows:
+<screen>
+{
+    "command": "lease4-get",
+    "arguments": {
+        "identifier-type": "client-id",
+        "identifier": "01:01:02:03:04:05:06",
         "subnet-id": 44
     }
 }</screen>
@@ -1546,8 +1597,9 @@ An example result returned when the host was found:
           used, no matter who may use it). The second query uses
           identifiers. For maximum flexibility, this interface uses identifiers
           as a pair of values: type and the actual identifier. Currently
-          supported identifiers are "hw-address" and "duid", but additional
-          types may be added in the future. </para>
+          supported identifiers are "hw-address" (IPv4 only), "client-id"
+          (IPv4 only) and "duid" (IPv6 only), but additional types may be added
+          in the future. </para>
 
           <para>
             An example command for deleting a host reservation by address looks
@@ -1560,8 +1612,7 @@ An example result returned when the host was found:
     }
 }</screen>
 
-An example IPv4 lease deletion by (subnet-id, identifier-type, identifier) looks
-as follows:
+An example IPv4 lease deletion by "hw-address" looks as follows:
 
 <screen>{
   "command": "lease4-del",
@@ -1573,7 +1624,7 @@ as follows:
 }</screen>
           </para>
 
-          <para><command>leaseX-get</command> returns a result that
+          <para><command>leaseX-del</command> returns a result that
           indicates a outcome of the operation. It has one of the
           following values: 0 (success), 1 (error) or 2 (empty). The
           empty result means that a query has been completed properly,
