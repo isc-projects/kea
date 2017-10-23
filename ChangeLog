@@ -1,3 +1,7 @@
+1328.	[doc]		vicky
+	Acknowledgements section updated.
+	(Trac #5385, git fe0658896f3784cd8f59bd5158244d6975cfe4c1)
+
 1327.	[build]		marcin
 	Updated Kea libraries' version numbers and hooks version for
 	the 1.3.0 release.
