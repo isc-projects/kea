@@ -2645,14 +2645,24 @@ It is merely echoed by the server
       not be sent. It may also be set to an empty string, which means the same as if
       it was not defined at all, i.e. use the global value.
       </para>
+      <para>
+      The <command>server-hostname</command> (that conveys a server hostname,
+      can be up to 64 bytes long and will be sent in the sname field) and
+      <command>boot-file-name</command> (that conveys the configuration file,
+      can be up to 128 bytes long and will be sent using file field)
+      directives are handled the same way as <command>next-server</command>.
+      </para>
 
 <screen>
 "Dhcp4": {
-    <userinput>"next-server": "192.0.2.123"</userinput>,
+    <userinput>"next-server": "192.0.2.123",
+    "boot-file-name": "/dev/null"</userinput>,
     ...,
     "subnet4": [
         {
-            <userinput>"next-server": "192.0.2.234"</userinput>,
+            <userinput>"next-server": "192.0.2.234",
+            "server-hostname": "some-name.example.org",
+            "boot-file-name": "bootfile.efi"</userinput>,
             ...
         }
     ]

@@ -116,6 +116,34 @@ TEST(Subnet4Test, siaddr) {
         BadValue);
 }
 
+// Checks whether server-hostname field can be set and retrieved correctly.
+TEST(Subnet4Test, serverHostname) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is empty
+    EXPECT_TRUE(subnet.getSname().empty());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setSname("foobar"));
+
+    // Check that we can get it back
+    EXPECT_EQ("foobar", subnet.getSname());
+}
+
+// Checks whether boot-file-name field can be set and retrieved correctly.
+TEST(Subnet4Test, bootFileName) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is empty
+    EXPECT_TRUE(subnet.getFilename().empty());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setFilename("foobar"));
+
+    // Check that we can get it back
+    EXPECT_EQ("foobar", subnet.getFilename());
+}
+
 // Checks if the match-client-id flag can be set and retrieved.
 TEST(Subnet4Test, matchClientId) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);

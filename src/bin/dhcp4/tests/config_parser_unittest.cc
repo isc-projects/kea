@@ -1106,14 +1106,16 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 
 /// @todo: implement subnet removal test as part of #3281.
 
-// Checks if the next-server defined as global parameter is taken into
-// consideration.
+// Checks if the next-server and other fixed BOOTP fields defined as
+// global parameter are taken into consideration.
 TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"1.2.3.4\", "
+        "\"server-hostname\": \"foo\", "
+        "\"boot-file-name\": \"bar\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -1135,10 +1137,12 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+    EXPECT_EQ("foo", subnet->getSname());
+    EXPECT_EQ("bar", subnet->getFilename());
 }
 
-// Checks if the next-server defined as subnet parameter is taken into
-// consideration.
+// Checks if the next-server and other fixed BOOTP fields defined as
+// subnet parameter are taken into consideration.
 TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
     string config = "{ " + genIfaceConfig() + "," +
@@ -1147,6 +1151,8 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"foo\", "
+        "    \"boot-file-name\": \"bar\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1166,6 +1172,8 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+    EXPECT_EQ("foo", subnet->getSname());
+    EXPECT_EQ("bar", subnet->getFilename());
 }
 
 // Test checks several negative scenarios for next-server configuration: bogus
@@ -1209,12 +1217,43 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
+    // Config with too large server-hostname
+    string bigsname(Pkt4::MAX_SNAME_LEN + 1, ' ');
+    string config_bogus4 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"server-hostname\": \"" + bigsname + "\", " +
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Config with too large boot-file-hostname
+    string bigfilename(Pkt4::MAX_FILE_LEN + 1, ' ');
+    string config_bogus5 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"boot-file-name\": \"" + bigfilename + "\", " +
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+
     ConstElementPtr json1;
     ASSERT_NO_THROW(json1 = parseDHCP4(config_bogus1));
     ConstElementPtr json2;
     ASSERT_NO_THROW(json2 = parseDHCP4(config_bogus2));
     ConstElementPtr json3;
     ASSERT_NO_THROW(json3 = parseDHCP4(config_bogus3));
+    ConstElementPtr json4;
+    ASSERT_NO_THROW(json4 = parseDHCP4(config_bogus4));
+    ConstElementPtr json5;
+    ASSERT_NO_THROW(json5 = parseDHCP4(config_bogus5));
 
     // check if returned status is always a failure
     ConstElementPtr status;
@@ -1233,6 +1272,18 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
     checkResult(status, 0);
     EXPECT_FALSE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json4));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json5));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // Checks if the next-server defined as global value is overridden by subnet
@@ -1243,9 +1294,13 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"nohost\","
+        "\"boot-file-name\": \"nofile\","        
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"some-name.example.org\","
+        "    \"boot-file-name\": \"bootfile.efi\","
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1265,6 +1320,8 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+    EXPECT_EQ("some-name.example.org", subnet->getSname());
+    EXPECT_EQ("bootfile.efi", subnet->getFilename());
 }
 
 // Check whether it is possible to configure echo-client-id
@@ -5289,6 +5346,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "    \"interface\": \"eth0\",\n"
         "    \"match-client-id\": false,\n"
         "    \"next-server\": \"1.2.3.4\",\n"
+        "    \"server-hostname\": \"foo\",\n"
+        "    \"boot-file-name\": \"bar\",\n"
         "    \"relay\": {\n"
         "        \"ip-address\": \"5.6.7.8\"\n"
         "    },\n"
@@ -5309,6 +5368,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "        \"valid-lifetime\": 400,\n"
         "        \"match-client-id\": true,\n"
         "        \"next-server\": \"11.22.33.44\",\n"
+        "        \"server-hostname\": \"some-name.example.org\",\n"
+        "        \"boot-file-name\": \"bootfile.efi\",\n"
         "        \"relay\": {\n"
         "            \"ip-address\": \"55.66.77.88\"\n"
         "        },\n"
@@ -5359,6 +5420,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("eth0", s->getIface());
     EXPECT_FALSE(s->getMatchClientId());
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
+    EXPECT_EQ("foo", s->getSname());
+    EXPECT_EQ("bar", s->getFilename());
     EXPECT_EQ(IOAddress("5.6.7.8"), s->getRelayInfo().addr_);
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
@@ -5372,6 +5435,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("eth0", s->getIface());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
+    EXPECT_EQ("some-name.example.org", s->getSname());
+    EXPECT_EQ("bootfile.efi", s->getFilename());
     EXPECT_EQ(IOAddress("55.66.77.88"), s->getRelayInfo().addr_);
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
@@ -5389,6 +5454,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ("", s->getIface());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
+    EXPECT_TRUE(s->getSname().empty());
+    EXPECT_TRUE(s->getFilename().empty());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getRelayInfo().addr_);
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
