@@ -27,7 +27,7 @@ AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/ddns\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES = d2_process_tests.sh
+DISTCLEANFILES = d2_process_tests.sh test_data_files_config.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

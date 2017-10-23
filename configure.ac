@@ -1345,6 +1345,7 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/bin/shell/tests/shell_process_tests.sh
            chmod +x src/bin/shell/tests/shell_unittest.py
            chmod +x src/lib/dns/gen-rdatacode.py
+           chmod +x src/lib/log/tests/buffer_logger_test.sh
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
