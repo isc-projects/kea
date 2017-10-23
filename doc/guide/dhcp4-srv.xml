@@ -352,8 +352,8 @@ be followed by a comma and another object definition.</para>
       removes redundant (historical) information from the lease file
       and effectively reduces the lease file size. The cleanup process is described
       in more detailed fashion further in this section. The default value of the
-      <command>lfc-interval</command> is <userinput>0</userinput>, which disables
-      the LFC.</simpara>
+      <command>lfc-interval</command> is <userinput>3600</userinput>. A value of 0
+      disables the LFC.</simpara>
     </listitem>
 
   </itemizedlist>

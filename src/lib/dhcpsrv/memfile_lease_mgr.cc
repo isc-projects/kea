@@ -1219,11 +1219,11 @@ Memfile_LeaseMgr::lfcCallback() {
 
 void
 Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
-    std::string lfc_interval_str = "0";
+    std::string lfc_interval_str = "3600";
     try {
         lfc_interval_str = conn_.getParameter("lfc-interval");
     } catch (const std::exception&) {
-        // Ignore and default to 0.
+        // Ignore and default to 3600.
     }
 
     uint32_t lfc_interval = 0;
