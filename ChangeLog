@@ -1,7 +1,7 @@
 1326.	[func]		fdupont
 	server-hostname and boot-file-name are now allowed in global,
 	subnet4 and shared network scopes in DHCPv4.
-	(Trac #5277, git xxx)
+	(Trac #5277, git 5a2454ec063530867dca2c46a71e342ccd98a5bb)
 
 1325.	[bug]		marcin
 	Fixed a bug whereby a reserved address could be allocated to
