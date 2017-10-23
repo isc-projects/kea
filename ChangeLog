@@ -1,3 +1,8 @@
+1330.	[bug]		fdupont
+	The option length checks were relaxed for the V-I Vendor Class
+	option.
+	(Trac #5391, github #57, git xxx)
+
 1329.	[func]		marcin
 	Added support for "client-id" identifier when querying for
 	leases in the lease_cmds hooks library. Documentation
