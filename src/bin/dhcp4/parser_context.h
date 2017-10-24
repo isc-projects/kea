@@ -214,6 +214,9 @@ public:
         /// Used while parsing Dhcp4/interfaces/dhcp-socket-type structures.
         DHCP_SOCKET_TYPE,
 
+        /// Used while parsing Dhcp4/interfaces/outbound-interface structures.
+        OUTBOUND_INTERFACE,
+
         /// Used while parsing Dhcp4/lease-database structures.
         LEASE_DATABASE,
 

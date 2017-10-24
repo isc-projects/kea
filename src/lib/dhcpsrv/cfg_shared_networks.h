@@ -7,6 +7,7 @@
 #ifndef CFG_SHARED_NETWORKS_H
 #define CFG_SHARED_NETWORKS_H
 
+#include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -57,8 +58,11 @@ public:
         auto& index = networks_.template get<SharedNetworkNameIndexTag>();
         auto shared_network = index.find(name);
         if (shared_network != index.end()) {
-            index.erase(shared_network);
+            // Delete all subnets from the network
+            (*shared_network)->delAll();
 
+            // Then delete the network from the networks list.
+            index.erase(shared_network);
         } else {
             isc_throw(BadValue, "unable to delete non-existing network '"
                       << name << "' from shared networks configuration");
@@ -111,6 +115,15 @@ public:
     const SharedNetwork4Collection* getAll() const {
         return (&networks_);
     }
+
+    /// @brief Checks if specified server identifier has been specified for
+    /// any network.
+    ///
+    /// @param server_id Server identifier.
+    ///
+    /// @return true if there is a network with a specified server identifier.
+    bool hasNetworkWithServerId(const asiolink::IOAddress& server_id) const;
+
 
 };
 

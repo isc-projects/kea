@@ -5,6 +5,10 @@
    file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 %{ /* -*- C++ -*- */
+
+/* Generated files do not make clang static analyser so happy */
+#ifndef __clang_analyzer__
+
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -225,6 +229,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"outbound-interface\" {
+    switch(driver.ctx_) {
+    case Parser4Context::INTERFACES_CONFIG:
+        return  isc::dhcp::Dhcp4Parser::make_OUTBOUND_INTERFACE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("outbound-interface", driver.loc_);
+    }
+}
+
+\"same-as-inbound\" {
+    switch(driver.ctx_) {
+    case Parser4Context::OUTBOUND_INTERFACE:
+        return Dhcp4Parser::make_SAME_AS_INBOUND(driver.loc_);
+    default:
+        return Dhcp4Parser::make_STRING("same-as-inbound", driver.loc_);
+    }
+}
+
+\"use-routing\" {
+    switch(driver.ctx_) {
+    case Parser4Context::OUTBOUND_INTERFACE:
+        return Dhcp4Parser::make_USE_ROUTING(driver.loc_);
+    default:
+        return Dhcp4Parser::make_STRING("use-routing", driver.loc_);
+    }
+}
+
 \"interfaces\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
@@ -411,7 +442,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("valid-lifetime", driver.loc_);
@@ -422,7 +453,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_RENEW_TIMER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("renew-timer", driver.loc_);
@@ -433,7 +464,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_REBIND_TIMER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("rebind-timer", driver.loc_);
@@ -461,10 +492,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"shared-networks\" {
     switch (driver.ctx_) {
-    case Parser4Context::DHCP4:
-        return Dhcp4Parser::make_SHARED_NETWORKS(driver.loc_);
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_SHARED_NETWORKS(driver.loc_);
     default:
-        return Dhcp4Parser::make_STRING("shared-networks", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("shared-networks", driver.loc_);
     }
 }
 
@@ -482,11 +513,11 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CLIENT_CLASS:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_OPTION_DATA(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("option-data", driver.loc_);
@@ -501,7 +532,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::OPTION_DATA:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CLIENT_CLASS:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::LOGGERS:
         return isc::dhcp::Dhcp4Parser::make_NAME(driver.loc_);
     default:
@@ -567,7 +598,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"interface\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_INTERFACE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("interface", driver.loc_);
@@ -760,8 +791,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("client-class", driver.loc_);
@@ -895,7 +926,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"relay\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_RELAY(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("relay", driver.loc_);
@@ -1321,8 +1352,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"echo-client-id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_ECHO_CLIENT_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("echo-client-id", driver.loc_);
@@ -1333,7 +1362,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
-    case Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_MATCH_CLIENT_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("match-client-id", driver.loc_);
@@ -1344,9 +1373,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_NEXT_SERVER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("next-server", driver.loc_);
@@ -1355,7 +1384,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"server-hostname\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_SERVER_HOSTNAME(driver.loc_);
@@ -1366,7 +1397,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"boot-file-name\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_BOOT_FILE_NAME(driver.loc_);
@@ -1669,3 +1702,4 @@ class Dummy {
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
+#endif /* !__clang_analyzer__ */

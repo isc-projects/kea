@@ -697,7 +697,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           client classes and other features. The reservation can be based on
           hardware address, DUID, circuit-id or client-id in DHCPv4 and using
           hardware address or DUID in DHCPv6. However, there are sometimes
-          scenario where the reservation is more complex, e.g. uses other
+          scenarios where the reservation is more complex, e.g. uses other
           options that mentioned above, uses part of specific options or perhaps
           even a combination of several options and fields to uniquely identify
           a client. Those scenarios are addressed by the Flexible Identifiers
@@ -722,14 +722,16 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
 
         <para>
           The library can be loaded in similar way as other hook libraries. It
-          takes one mandatory parameter identifier-expression:
+          takes a mandatory parameter identifier-expression and optional
+          boolean parameter replace-client-id:
 <screen>
 "Dhcp6": { <userinput>
     "hooks-libraries": [
         {
             "library": "/path/libdhcp_flex_id.so",
             "parameters": {
-                "identifier-expression": "<userinput>expression</userinput>"
+                "identifier-expression": "<userinput>expression</userinput>",
+                "replace-client-id": "<userinput>false</userinput>"
             }
         },
         ...
@@ -818,6 +820,109 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
     ]
 }
 </screen>
+
+        <para>
+          When "replace-client-id" is set to false (which is the default setting),
+          the flex-id hook library uses evaluated flexible identifier solely for
+          identifying host reservations, i.e. searching for reservations within a
+          database. This is a functional equivalent of other identifiers,
+          similar to hardware address or circuit-id. However,
+          this mode of operation has an implication that if a client device is
+          replaced, it may cause a conflict between an existing lease (allocated
+          for old device) and the new lease being allocated for the new device. The
+          conflict arises because the same flexible identifier is computed for the
+          replaced device and the server will try to allocate the same lease. The
+          mismatch between client identifiers sent by new device and old device causes
+          the server to refuse this new allocation until the old lease expires.
+          A manifestation of this problem is dependant on specific expression
+          used as flexible identifier and is likely to appear if you only use options
+          and other parameters that are identifying where the device is
+          connected (e.g. circuit-id), rather than the device identification
+          itself (e.g. MAC address).
+        </para>
+
+        <para>
+          The flex-id library offers a way to overcome the problem with lease conflicts
+          by dynamically replacing client identifier (or DUID in DHCPv6 case) with a
+          value derived from flexible identifier. The server processes the client's
+          query as if flexible identifier was sent in the client identifier (or DUID)
+          option. This guarantees that returning client (for which the same flexible
+          identifier is evaluated) will be assigned the same lease despite the client
+          identifier and/or MAC address change.
+        </para>
+
+        <para>
+          The following is a stub configuration that enables this behavior:
+<screen>
+"Dhcp4": { <userinput>
+    "hooks-libraries": [
+        {
+            "library": "/path/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "<userinput>expression</userinput>",
+                "replace-client-id": "<userinput>true</userinput>"
+            }
+        },
+        ...
+    ] </userinput>
+}
+</screen>
+        </para>
+
+        <para>
+          In the DHCPv4 case, the value derived from the flexible identifier is formed
+          by prepending 1 byte with a value of zero to flexible identifier. In the IPv6
+          case, it is formed by prepanding two zero bytes before the flexible identifier.
+        </para>
+
+        <para>
+          Note that for this mechanism to take effect, the DHCPv4 server must be configured
+          to respect the client identifier option value during lease allocation, i.e.
+          "match-client-id" must be set to true. See
+          <xref linkend="dhcp4-match-client-id"/> for details. No additional settings
+          are required for DHCPv6.
+        </para>
+        <para>
+          If "replace-client-id" option is set to true, the value of "echo-client-id"
+          parameter (that governs whether to send back a client-id option or
+          not) is ignored.
+        </para>
+
+        <para>
+          The <xref linkend="lease-cmds"/> section describes commands used to retrieve,
+          update and delete leases using various identifiers, e.g. "hw-address",
+          "client-id". The lease_cmds library doesn't natively support querying for
+          leases by flexible identifier. However, when "replace-client-id" is set to
+          true, it makes it possible to query for leases using a value derived from
+          the flexible identifier. In the DHCPv4 case, the query will look similar to this:
+<screen>
+{
+    "command": "lease4-get",
+    "arguments": {
+        "identifier-type": "client-id",
+        "identifier": "00:<userinput>54:64:45:66</userinput>",
+        "subnet-id": 44
+    }
+}
+</screen>
+
+            where hexadecimal value of "54:64:45:66" is a flexible identifier computed
+            for the client.
+        </para>
+
+        <para>
+          In the DHCPv6 case, the corresponding query will look similar to this:
+<screen>
+{
+    "command": "lease6-get",
+    "arguments": {
+        "identifier-type": "duid",
+        "identifier": "00:00:<userinput>54:64:45:66</userinput>",
+        "subnet-id": 10
+    }
+}</screen>
+
+        </para>
       </section>
 
       <section id="host-cmds">
@@ -887,7 +992,7 @@ Requirements </ulink> document.</para>
         <section>
           <title>reservation-add command</title>
         <para>
-          <command>reservation-add</command> allows insertion of a new host.  It
+          <command>reservation-add</command> allows for the insertion of a new host.  It
           takes a set of arguments that vary depending on the nature of the host
           reservation. Any parameters allowed in the configuration file that
           pertain to host reservation are permitted here. For details regarding
@@ -1220,7 +1325,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           <title>lease4-add, lease6-add commands</title>
         <para>
           <command>lease4-add</command> and <command>lease6-add</command>
-          commands allow creation of a new lease. Typically Kea creates a lease
+          commands allow for the creation of a new lease. Typically Kea creates a lease
           on its own, when it first sees a new device. However, sometimes it may
           be convenient to create the lease administratively. The
           <command>lease4-add</command> command requires at least three
@@ -1374,13 +1479,9 @@ The commands can take a number of additional optional parameters:
           used when the address (either IPv4 or IPv6) is known, but the details
           of the lease aren't. One common use case of this type of query is to
           find out whether a given address is being used or not. The second
-          query uses identifiers. For maximum flexibility, Kea stores the host
-          identifying information as a pair of values: type and the actual
-          identifier. Currently supported identifiers are "hw-address", "duid",
-          "circuit-id", "client-id" and "flex-id", but additional types may be
-          added in the future. If any new identifier types are defined in the
-          future, reservation-get command will support them
-          automatically.</para>
+          query uses identifiers. Currently supported identifiers for leases are:
+          "hw-address" (IPv4 only), "client-id" (IPv4 only) and "duid" (IPv6 only).
+          </para>
 
           <para>
             An example <command>lease4-get</command> command for getting a lease
@@ -1407,14 +1508,28 @@ The commands can take a number of additional optional parameters:
 }</screen>
           </para>
 
-          <para>An example query by (subnet-id, identifier-type,
-          identifier) for IPv4 lease looks as follows:
+          <para>An example query by "hw-address" for IPv4 lease looks
+          as follows:
 <screen>
 {
     "command": "lease4-get",
     "arguments": {
         "identifier-type": "hw-address",
         "identifier": "08:08:08:08:08:08",
+        "subnet-id": 44
+    }
+}</screen>
+
+          </para>
+
+          <para>An example query by "client-id" for IPv4 lease looks
+          as follows:
+<screen>
+{
+    "command": "lease4-get",
+    "arguments": {
+        "identifier-type": "client-id",
+        "identifier": "01:01:02:03:04:05:06",
         "subnet-id": 44
     }
 }</screen>
@@ -1482,8 +1597,9 @@ An example result returned when the host was found:
           used, no matter who may use it). The second query uses
           identifiers. For maximum flexibility, this interface uses identifiers
           as a pair of values: type and the actual identifier. Currently
-          supported identifiers are "hw-address" and "duid", but additional
-          types may be added in the future. </para>
+          supported identifiers are "hw-address" (IPv4 only), "client-id"
+          (IPv4 only) and "duid" (IPv6 only), but additional types may be added
+          in the future. </para>
 
           <para>
             An example command for deleting a host reservation by address looks
@@ -1496,8 +1612,7 @@ An example result returned when the host was found:
     }
 }</screen>
 
-An example IPv4 lease deletion by (subnet-id, identifier-type, identifier) looks
-as follows:
+An example IPv4 lease deletion by "hw-address" looks as follows:
 
 <screen>{
   "command": "lease4-del",
@@ -1509,9 +1624,9 @@ as follows:
 }</screen>
           </para>
 
-          <para><command>leaseX-get</command> returns a result that
+          <para><command>leaseX-del</command> returns a result that
           indicates a outcome of the operation. It has one of the
-          following values: 0 (success), 1 (error) or 2 (empty). The
+          following values: 0 (success), 1 (error) or 3 (empty). The
           empty result means that a query has been completed properly,
           but the object (a lease in this case) has not been found.
           </para>
@@ -1606,12 +1721,15 @@ as follows:
         <title>subnet_cmds: Subnet Commands</title>
         <para>
           This section describes a hook application that offers a number of new
-          commands used to query and manipulate subnet configurations in Kea.
-          This application is very useful in deployments with a large number of
-          subnets being managed by the DHCP servers and when the subnets are
-          frequently updated. The commands offer lightweight approach for
-          manipulating subnets without a need to fully reconfigure the server
-          and without affecting existing servers' configurations.
+          commands used to query and manipulate subnet and shared network
+          configurations in Kea.  This application is very useful in deployments
+          with a large number of subnets being managed by the DHCP servers and
+          when the subnets are frequently updated. The commands offer
+          lightweight approach for manipulating subnets without a need to fully
+          reconfigure the server and without affecting existing servers'
+          configurations. An ability to manage shared networks (listing,
+          retrieving details, adding new ones, removing existing ones, adding
+          subnets to and removing from shared networks) is also provided.
         </para>
 
         <para>Currently this library is only available to ISC customers with a
@@ -1625,7 +1743,7 @@ as follows:
           </listitem>
           <listitem>
           <simpara>
-            <command>subnet4-get/subnet6-get</command>: retrieves detailed information about a selected subnet
+            <command>subnet4-get/subnet6-get</command>: retrieves detailed information about a specified subnet
           </simpara>
           </listitem>
           <listitem>
@@ -1638,6 +1756,45 @@ as follows:
             <command>subnet4-del/subnet6-del</command>: removes a subnet from the server's configuration
           </simpara>
           </listitem>
+
+          <listitem>
+          <simpara>
+            <command>network4-list/network6-list</command>: lists all configured
+            shared networks
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-get/network6-get</command>: retrieves detailed
+            information about specified shared network
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-add/network6-add</command>: adds a new shared
+            network to the server's configuration
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-del/network6-del</command>: removes a shared
+            network from the server's configuration
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-subnet-add/network6-subnet-add</command>: adds
+            existing subnet to existing shared network
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <command>network4-subnet-del/network6-subnet-del</command>: removes
+            a subnet from existing shared network and demotes it to a plain
+            subnet.
+          </simpara>
+          </listitem>
+
         </itemizedlist>
         </para>
 
@@ -1979,6 +2136,12 @@ If the subnet exists the response will be similar to this:
           new subnet. Thus, we recommend that this command is used with extreme
           caution.
         </para>
+        <para>
+          This command can also be used to completely delete an IPv4 subnet that
+          is part of a shared network. If you want to simply remove the subnet
+          from a shared network and keep the subnet configuration, use
+          <command>network4-subnet-del</command> command instead.
+        </para>
 
         <para>The command has the following structure:
 <screen>
@@ -2033,6 +2196,12 @@ If the subnet exists the response will be similar to this:
           new subnet. Thus, we recommend that this command is used with extreme
           caution.
         </para>
+        <para>
+          This command can also be used to completely delete an IPv6 subnet that
+          is part of a shared network. If you want to simply remove the subnet
+          from a shared network and keep the subnet configuration, use
+          <command>network6-subnet-del</command> command instead.
+        </para>
 
         <para>The command has the following structure:
 <screen>
@@ -2061,8 +2230,305 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
+      <section>
+        <title>network4-list, network6-list commands</title>
+        <para>
+          These commands are used to retrieve full list of currently configured
+          shared networks. The list contains only very basic information about
+          each shared network. If more details are needed, please use
+          <command>network4-get</command> or <command>network6-get</command> to
+          retrieve all information available. This command does not require any
+          parameters and its invocation is very simple:
+<screen>
+{
+    "command": "network4-list"
+}
+</screen>
+An example response for <command>network4-list</command> looks as follows:
+<screen>
+{
+    "arguments": {
+        "shared-networks": [
+            { "name": "floor1" },
+            { "name": "office" }
+        ]
+    },
+    "result": 0,
+    "text": "2 IPv4 network(s) found"
+}</screen>
+<command>network6-list</command> follows exactly the same syntax for
+both the query and the response.
+        </para>
     </section>
-</section> <!-- end of subnet commands -->
+
+    <section>
+        <title>network4-get, network6-get commands</title>
+        <para>
+          These commands are used to retrieve detailed information
+          about shared networks, including subnets currently
+          being part of a given network. Both commands take one
+          mandatory parameter <command>name</command>, which specify
+          the name of shared network. An example command to retrieve
+          details about IPv4 shared network with a name "floor13"
+          looks as follows:
+<screen>
+{
+    "command": "network4-get",
+    "arguments": {
+        "name": "floor13"
+    }
+}</screen>
+An example response could look as follows:
+<screen>
+{
+    "result": 0,
+    "text": "Info about IPv4 shared network 'floor13' returned",
+    "arguments": {
+        "shared-networks": [
+        {
+            "match-client-id": true,
+            "name": "floor13",
+            "option-data": [ ],
+            "rebind-timer": 90,
+            "relay": {
+                "ip-address": "0.0.0.0"
+            },
+            "renew-timer": 60,
+            "reservation-mode": "all",
+            "subnet4": [
+                {
+                    "subnet": "192.0.2.0/24",
+                    "id": 5,
+                    // many other subnet specific details here
+                },
+                {
+                    "id": 6,
+                    "subnet": "192.0.3.0/31",
+                    // many other subnet specific details here
+                }
+            ],
+            "valid-lifetime": 120
+        }
+        ]
+    }
+}
+</screen>
+Note that actual response contains many additional fields that are
+omitted here for clarity. The response format is exactly the same as
+used in <command>config-get</command>, just is limited to returning
+shared networks information.
+        </para>
+    </section>
+
+    <section>
+        <title>network4-add, network6-add commands</title>
+        <para>
+          These commands are used to add a new shared network. New
+          network has to have unique name. This command requires one parameter
+          <command>shared-networks</command>, which is a list and
+          should contain exactly one entry that defines the
+          network. The only mandatory element for a network is its
+          name. Although it does not make operational sense, it is
+          allowed to add an empty shared network that does not have
+          any subnets in it. That is allowed for testing purposes, but
+          having empty networks (or with only one subnet) is
+          discouraged in production environments. For details regarding
+          syntax, see <xref linkend="shared-network4"/> and <xref
+          linkend="shared-network6"/>.
+        </para>
+        <note><para>As opposed to parameter inheritance during full
+          new configuration processing, this command does not fully handle
+          parameter inheritance and any missing parameters will be
+          filled with default values, rather than inherited from
+          global scope.</para></note>
+        <para>
+          An example that showcases how to add a new IPv4 shared network looks
+          as follows:
+<screen>
+{
+    "command": "network4-add",
+    "arguments": {
+        "shared-networks": [ {
+            "name": "floor13",
+            "subnet4": [
+            {
+                "id": 100,
+                "pools": [ { "pool": "192.0.2.2-192.0.2.99" } ],
+                "subnet": "192.0.2.0/24",
+                "option-data": [
+                    {
+                        "name": "routers",
+                        "data": "192.0.2.1"
+                    }
+                ]
+            },
+            {
+                "id": 101,
+                "pools": [ { "pool": "192.0.3.2-192.0.3.99" } ],
+                "subnet": "192.0.3.0/24",
+                "option-data": [
+                    {
+                        "name": "routers",
+                        "data": "192.0.3.1"
+                    }
+                ]
+            } ]
+        } ]
+    }
+}
+</screen>
+Assuming there was no shared network with a name floor13 and no subnets with id
+100 and 101 previously configured, the command will be successful and will
+return the following response:
+<screen>
+{
+    "arguments": {
+        "shared-networks": [ { "name": "floor13" } ]
+    },
+    "result": 0,
+    "text": "A new IPv4 shared network 'floor13' added"
+}
+</screen>
+The <command>network6-add</command> uses the same syntax for both the query and
+the response. However, there are some parameters that are IPv4-only
+(e.g. match-client-id) and some are IPv6-only (e.g. interface-id). The same
+applies to subnets within the network.
+        </para>
+    </section>
+    <section>
+        <title>network4-del, network6-del commands</title>
+        <para>
+          These commands are used to delete existing shared networks. Each
+          subnet within the network being removed will be demoted to a plain
+          subnet. If you want to completely remove the subnets, please use
+          <command>subnet4-del</command> or <command>subnet6-del</command>
+          commands. Both commands take exactly one parameter 'name' that
+          specifies the name of the network to be removed. An example invocation
+          of <command>network4-del</command> command looks as follows:
+<screen>
+{
+    "command": "network4-del",
+    "arguments": {
+        "name": "floor13"
+    }
+}
+</screen>
+Assuming there was such a network configured, the response will look similar to
+the following:
+<screen>
+{
+    "arguments": {
+        "shared-networks": [
+            {
+                "name": "floor1"
+            }
+        ]
+    },
+    "result": 0,
+    "text": "IPv4 shared network 'floor13' deleted"
+}</screen>
+The <command>network6-del</command> command uses exactly the same syntax for
+both the command and the response.
+        </para>
+
+    </section>
+    <section>
+        <title>network4-subnet-add, network6-subnet-add commands</title>
+        <para>
+          These commands are used to add existing subnets to existing shared
+          networks. There are several ways to add new shared network. System
+          administrator can add the whole shared network at once, either by
+          editing a configuration file or by calling
+          <command>network4-add</command> or <command>network6-add</command>
+          commands with desired subnets in it. This approach works better for completely
+          new shared subnets. However, there may be cases when an existing
+          subnet is running out of addresses and needs to be extended with
+          additional address space. In other words another subnet has to be
+          added on top of it. For this scenario, a system administrator can use
+          <command>network4-add</command> or <command>network6-add</command> and
+          then add existing subnet to this newly created shared network  using
+          <command>network4-subnet-add</command> or
+          <command>network6-subnet-add</command>.
+        </para>
+        <para>
+          The <command>network4-subnet-add</command> and
+          <command>network6-subnet-add</command> commands take two parameters:
+          <command>id</command>, which is an integer and specifies subnet-id of existing subnet to
+          be added to a shared network; and <command>name</command>, which
+          specifies name of the shared network the subnet will be added to. The
+          subnet must not belong to any existing network. In case you want to
+          reassign a subnet from one shared network to another, please use
+          <command>network4-subnet-del</command> or
+          <command>network6-subnet-del</command> commands first.
+        </para>
+        <para>
+          An example invocation of <command>network4-subnet-add</command>
+          command looks as follows:
+<screen>
+{
+    "command": "network4-subnet-add",
+    "arguments": {
+        "name": "floor13",
+        "id": 5
+    }
+}</screen>
+Assuming there is a network named 'floor13', there is a subnet with subnet-id 5
+and it is not a part of existing network, the command will return a response
+similar to the following:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor1'"
+}</screen>
+        The <command>network6-subnet-add</command> command uses exactly the same syntax for
+both the command and the response.
+        </para>
+
+        <note><para>As opposed to parameter inheritance during full
+          new configuration processing or when adding a new shared network with
+          new subnets, this command does not fully handle
+          parameter inheritance and any missing parameters will be
+          filled with default values, rather than inherited from
+          global scope or from the shared network.</para></note>
+    </section>
+    <section>
+        <title>network4-subnet-del, network6-subnet-del commands</title>
+        <para>
+          These commands are used to remove a subnet that is part of existing shared
+          network and demote it to a plain, stand-alone subnet. If you want to
+          remove a subnet completely, use <command>subnet4-del</command> or
+          <command>subnet6-del</command> commands instead.
+          The <command>network4-subnet-del</command> and
+          <command>network6-subnet-del</command> commands take two parameters:
+          <command>id</command>, which is an integer and specifies subnet-id of
+          existing subnet to be removed from a shared network; and
+          <command>name</command>, which specifies name of the shared network
+          the subnet will be removed from.
+        </para>
+        <para>An example invocation of the
+        <command>network4-subnet-del</command> command looks as follows:
+ <screen>
+ {
+    "command": "network4-subnet-del",
+    "arguments": {
+        "name": "floor13",
+        "id": 5
+    }
+ }</screen>
+ Assuming there was a subnet with subnet-id equal to 5 that was part of a shared
+ network named 'floor13', the response would look similar to the following:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet 10.0.0.0/8 (id 5) is now removed from shared network 'floor13'"
+}</screen>
+The <command>network6-subnet-del</command> command uses exactly the same syntax for
+both the command and the response.
+        </para>
+    </section>
+
+    </section>
+  </section> <!-- end of subnet commands -->
 
     <section id="user-context">
       <title>User contexts</title>

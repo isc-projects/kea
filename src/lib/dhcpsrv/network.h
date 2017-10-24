@@ -28,11 +28,12 @@ namespace dhcp {
 ///
 /// The most common type of network, in Kea's terminology, is a subnet. The
 /// @ref Subnet implements this interface. Another types of objects implementing
-/// this interface are @ref SharedNetwork objects. They group multiple subnets
-/// together to provide means for extending available address pools (a single
-/// client may obtain IP address from any of the pools belonging to subnets in
-/// the shared network), or for selecting a subnet on a given link, depending
-/// on the class of the client (e.g. cable network case: different subnet is
+/// this interface are @ref SharedNetwork4 and @ref SharedNetwork6 objects.
+/// They group multiple subnets together to provide means for
+/// extending available address pools (a single client may obtain IP
+/// address from any of the pools belonging to subnets in the shared
+/// network), or for selecting a subnet on a given link, depending on the
+/// class of the client (e.g. cable network case: different subnet is
 /// selected for cable modems, different one for routers).
 ///
 /// The subnets and shared networks share many data structures, e.g. DHCP
@@ -335,6 +336,12 @@ public:
     ///
     /// @return A pointer to unparsed network configuration.
     virtual data::ElementPtr toElement() const;
+
+    /// @brief Returns binary representation of the dhcp-server-identifier option (54).
+    ///
+    /// @return Server identifier option as IPv4 address. Zero IPv4 address
+    /// indicates that server identifier hasn't been specified.
+    virtual asiolink::IOAddress getServerId() const;
 
 private:
 

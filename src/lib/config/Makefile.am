@@ -34,7 +34,7 @@ libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 3:0:0
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 4:0:0
 libkea_cfgclient_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
@@ -43,3 +43,17 @@ nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 EXTRA_DIST = config_messages.mes command-socket.dox
 
 CLEANFILES = *.gcno *.gcda config_messages.h config_messages.cc s-messages
+
+# Specify the headers for copying into the installation directory tree.
+libkea_cfgclient_includedir = $(pkgincludedir)/config
+libkea_cfgclient_include_HEADERS = \
+	base_command_mgr.h \
+	client_connection.h \
+	cmds_impl.h \
+	command_mgr.h \
+	config_data.h \
+	config_log.h \
+	hooked_command_mgr.h \
+	module_spec.h
+
+

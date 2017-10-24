@@ -49,7 +49,7 @@ nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 3:0:0
+libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 4:0:1
 libkea_hooks_la_LIBADD  =
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
@@ -59,14 +59,21 @@ libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.l
 libkea_hooks_la_LIBADD += $(BOOST_LIBS)
 libkea_hooks_la_LIBADD += $(LOG4CPLUS_LIBS)
 
-# Specify the headers for copying into the installation directory tree. User-
-# written libraries only need the definitions from the headers for the
-# CalloutHandle and LibraryHandle objects. CalloutManager may be required by
-# users testing statically linked KEA binaries.
+# Specify the headers for copying into the installation directory tree.
 libkea_hooks_includedir = $(pkgincludedir)/hooks
 libkea_hooks_include_HEADERS = \
-    callout_handle.h \
-    callout_manager.h \
-    library_handle.h \
-    hooks.h \
-    server_hooks.h
+	callout_handle.h \
+	callout_manager.h \
+	hooks.h \
+	hooks_config.h \
+	hooks_log.h \
+	hooks_manager.h \
+	hooks_parser.h \
+	libinfo.h \
+	library_handle.h \
+	library_manager.h \
+	library_manager_collection.h \
+	pointer_converter.h \
+	server_hooks.h
+
+

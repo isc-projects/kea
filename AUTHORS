@@ -148,6 +148,9 @@ We have received the following contributions:
    2017-07: Compilation fixed for Alpine Linux
    2017-07: option6_pdexclude.h now installed properly
 
+ - Ebben Aries
+   2017-10: Option length checks improvements for the V-I Vendor Class option
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for

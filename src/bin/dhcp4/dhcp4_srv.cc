@@ -11,6 +11,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
@@ -26,6 +27,8 @@
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
+#include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -61,6 +64,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iomanip>
@@ -846,11 +850,12 @@ Dhcpv4Srv::run_one() {
             .arg(rsp->getLabel())
             .arg(rsp->getName())
             .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->getLocalAddr())
+            .arg(rsp->getLocalAddr().isV4Zero() ? "*" : rsp->getLocalAddr().toText())
             .arg(rsp->getLocalPort())
             .arg(rsp->getRemoteAddr())
             .arg(rsp->getRemotePort())
-            .arg(rsp->getIface());
+            .arg(rsp->getIface().empty() ? "to be determined from routing" :
+                 rsp->getIface());
 
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
                   DHCP4_RESPONSE_DATA)
@@ -1139,13 +1144,26 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
 
 void
 Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
-    // The source address for the outbound message should have been set already.
-    // This is the address that to the best of the server's knowledge will be
-    // available from the client.
-    /// @todo: perhaps we should consider some more sophisticated server id
-    /// generation, but for the current use cases, it should be ok.
+
+    // Do not append generated server identifier if there is one appended already.
+    // This is when explicitly configured server identifier option is present.
+    if (ex.getResponse()->getOption(DHO_DHCP_SERVER_IDENTIFIER)) {
+        return;
+    }
+
+    // Use local address on which the packet has been received as a
+    // server identifier. In some cases it may be a different address,
+    // e.g. broadcast packet or DHCPv4o6 packet.
+    IOAddress local_addr = ex.getQuery()->getLocalAddr();
+    Pkt4Ptr query = ex.getQuery();
+
+    if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
+        SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
+        local_addr = sock_info.addr_;
+    }
+
     OptionPtr opt_srvid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                           ex.getResponse()->getLocalAddr()));
+                                           local_addr));
     ex.getResponse()->addOption(opt_srvid);
 }
 
@@ -1377,7 +1395,8 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
     static const uint16_t required_options[] = {
         DHO_ROUTERS,
         DHO_DOMAIN_NAME_SERVERS,
-        DHO_DOMAIN_NAME };
+        DHO_DOMAIN_NAME,
+        DHO_DHCP_SERVER_IDENTIFIER };
 
     static size_t required_options_size =
         sizeof(required_options) / sizeof(required_options[0]);
@@ -1667,6 +1686,11 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
                   "NULL lease specified when creating NameChangeRequest");
 
     } else if (!old_lease || !lease->hasIdenticalFqdn(*old_lease)) {
+        if (old_lease) {
+            // Queue's up a remove of the old lease's DNS (if needed)
+            queueNCR(CHG_REMOVE, old_lease);
+        }
+
         // We may need to generate the NameChangeRequest for the new lease. It
         // will be generated only if hostname is set and if forward or reverse
         // update has been requested.
@@ -1835,7 +1859,18 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
-    subnet = ctx->subnet_;
+    if (subnet->getID() != ctx->subnet_->getID()) {
+        SharedNetwork4Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
+                .arg(query->getLabel())
+                .arg(subnet->toText())
+                .arg(ctx->subnet_->toText())
+                .arg(network->getName());
+        }
+        subnet = ctx->subnet_;
+    }
 
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
@@ -2022,38 +2057,52 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         response->setRemotePort(DHCP4_SERVER_PORT);
     }
 
-    IOAddress local_addr = query->getLocalAddr();
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
+    if (query->isRelayed() &&
+        (cfg_iface->getSocketType() == CfgIface::SOCKET_UDP) &&
+        (cfg_iface->getOutboundIface() == CfgIface::USE_ROUTING)) {
 
-    // In many cases the query is sent to a broadcast address. This address
-    // appears as a local address in the query message. We can't simply copy
-    // this address to a response message and use it as a source address.
-    // Instead we will need to use the address assigned to the interface
-    // on which the query has been received. In other cases, we will just
-    // use this address as a source address for the response.
-    // Do the same for DHCPv4-over-DHCPv6 exchanges.
-    if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
-        SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
-        local_addr = sock_info.addr_;
+        response->setLocalAddr(IOAddress::IPV4_ZERO_ADDRESS());
+        response->setIface("");
+        response->resetIndex();
+
+    } else {
+
+        IOAddress local_addr = query->getLocalAddr();
+
+        // In many cases the query is sent to a broadcast address. This address
+        // appears as a local address in the query message. We can't simply copy
+        // this address to a response message and use it as a source address.
+        // Instead we will need to use the address assigned to the interface
+        // on which the query has been received. In other cases, we will just
+        // use this address as a source address for the response.
+        // Do the same for DHCPv4-over-DHCPv6 exchanges.
+        if (local_addr.isV4Bcast() || query->isDhcp4o6()) {
+            SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
+            local_addr = sock_info.addr_;
+        }
+
+        // We assume that there is an appropriate socket bound to this address
+        // and that the address is correct. This is safe assumption because
+        // the local address of the query is set when the query is received.
+        // The query sent to an incorrect address wouldn't have been received.
+        // However, if socket is closed for this address between the reception
+        // of the query and sending a response, the IfaceMgr should detect it
+        // and return an error.
+        response->setLocalAddr(local_addr);
+        // In many cases the query is sent to a broadcast address. This address
+        // appears as a local address in the query message. Therefore we can't
+        // simply copy local address from the query and use it as a source
+        // address for the response. Instead, we have to check what address our
+        // socket is bound to and use it as a source address. This operation
+        // may throw if for some reason the socket is closed.
+        /// @todo Consider an optimization that we use local address from
+        /// the query if this address is not broadcast.
+        response->setIface(query->getIface());
+        response->setIndex(query->getIndex());
     }
-    // We assume that there is an appropriate socket bound to this address
-    // and that the address is correct. This is safe assumption because
-    // the local address of the query is set when the query is received.
-    // The query sent to an incorrect address wouldn't have been received.
-    // However, if socket is closed for this address between the reception
-    // of the query and sending a response, the IfaceMgr should detect it
-    // and return an error.
-    response->setLocalAddr(local_addr);
-    // In many cases the query is sent to a broadcast address. This address
-    // appears as a local address in the query message. Therefore we can't
-    // simply copy local address from the query and use it as a source
-    // address for the response. Instead, we have to check what address our
-    // socket is bound to and use it as a source address. This operation
-    // may throw if for some reason the socket is closed.
-    /// @todo Consider an optimization that we use local address from
-    /// the query if this address is not broadcast.
+
     response->setLocalPort(DHCP4_SERVER_PORT);
-    response->setIface(query->getIface());
-    response->setIndex(query->getIndex());
 }
 
 void
@@ -2164,6 +2213,28 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
         IOAddress subnet_next_server = subnet->getSiaddr();
         if (!subnet_next_server.isV4Zero()) {
             response->setSiaddr(subnet_next_server);
+        }
+
+        const string& sname = subnet->getSname();
+        if (!sname.empty()) {
+            // Converting string to (const uint8_t*, size_t len) format is
+            // tricky. reinterpret_cast is not the most elegant solution,
+            // but it does avoid us making unnecessary copy. We will convert
+            // sname and file fields in Pkt4 to string one day and life
+            // will be easier.
+            response->setSname(reinterpret_cast<const uint8_t*>(sname.c_str()),
+                               sname.size());
+        }
+
+        const string& filename = subnet->getFilename();
+        if (!filename.empty()) {
+            // Converting string to (const uint8_t*, size_t len) format is
+            // tricky. reinterpret_cast is not the most elegant solution,
+            // but it does avoid us making unnecessary copy. We will convert
+            // sname and file fields in Pkt4 to string one day and life
+            // will be easier.
+            response->setFile(reinterpret_cast<const uint8_t*>(filename.c_str()),
+                              filename.size());
         }
     }
 
@@ -2778,7 +2849,53 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // performance hit should be acceptable. If it turns out to
     // be significant, we will have to cache server identifiers
     // when sockets are opened.
-    return (IfaceMgr::instance().hasOpenSocket(server_id));
+    if (IfaceMgr::instance().hasOpenSocket(server_id)) {
+        return (true);
+    }
+
+    // There are some cases when an administrator explicitly sets server
+    // identifier (option 54) that should be used for a given, subnet,
+    // network etc. It doesn't have to be an address assigned to any of
+    // the server interfaces. Thus, we have to check if the server
+    // identifier received is the one that we explicitly set in the
+    // server configuration. At this point, we don't know which subnet
+    // the client belongs to so we can't match the server id with any
+    // subnet. We simply check if this server identifier is configured
+    // anywhere. This should be good enough to eliminate exchanges
+    // with other servers in the same network.
+
+    /// @todo Currently we only check subnet identifiers configured on the
+    /// subnet level, shared network level and global level. This should
+    /// be sufficient for most of cases. At this point, trying to support
+    /// server identifiers on the class level seems to be an overkill and
+    /// is probably not needed. Same with host reservations. In fact,
+    /// at this point we don't know the reservations for the client
+    /// communicating with the server. We may revise some of these choices
+    /// in the future.
+
+    SrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+
+    // Check if there is at least one subnet configured with this server
+    // identifier.
+    ConstCfgSubnets4Ptr cfg_subnets = cfg->getCfgSubnets4();
+    if (cfg_subnets->hasSubnetWithServerId(server_id)) {
+        return (true);
+    }
+
+    // This server identifier is not configured for any of the subnets, so
+    // check on the shared network level.
+    CfgSharedNetworks4Ptr cfg_networks = cfg->getCfgSharedNetworks4();
+    if (cfg_networks->hasNetworkWithServerId(server_id)) {
+        return (true);
+    }
+
+    // Finally, it is possible that the server identifier is specified
+    // on the global level.
+    ConstCfgOptionPtr cfg_global_options = cfg->getCfgOption();
+    OptionCustomPtr opt_server_id = boost::dynamic_pointer_cast<OptionCustom>
+        (cfg_global_options->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
+
+    return (opt_server_id && (opt_server_id->readAddress() == server_id));
 }
 
 void

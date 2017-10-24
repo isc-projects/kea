@@ -65,172 +65,6 @@ public:
     }
 };
 
-
-/// @brief Check BooleanParser basic functionality.
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Rejects a non-boolean element.
-/// 3. Builds with a valid true value.
-/// 4. Bbuils with a valid false value.
-/// 5. Updates storage upon commit.
-TEST_F(DhcpParserTest, booleanParserTest) {
-
-    const std::string name = "boolParm";
-
-    // Verify that parser does not allow empty for storage.
-    BooleanStoragePtr bs;
-    EXPECT_THROW(BooleanParser(name, bs), isc::dhcp::DhcpConfigError);
-
-    // Construct parser for testing.
-    BooleanStoragePtr storage(new BooleanStorage());
-    BooleanParser parser(name, storage);
-
-    // Verify that parser with rejects a non-boolean element.
-    ElementPtr wrong_element = Element::create("I am a string");
-    EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
-
-    // Verify that parser will build with a valid true value.
-    bool test_value = true;
-    ElementPtr element = Element::create(test_value);
-    ASSERT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    bool actual_value = !test_value;
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-
-    // Verify that parser will build with a valid false value.
-    test_value = false;
-    element->setValue(test_value);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    actual_value = !test_value;
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-}
-
-/// @brief Check StringParser basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Builds with a nont string value.
-/// 3. Builds with a string value.
-/// 4. Updates storage upon commit.
-TEST_F(DhcpParserTest, stringParserTest) {
-
-    const std::string name = "strParm";
-
-    // Verify that parser does not allow empty for storage.
-    StringStoragePtr bs;
-    EXPECT_THROW(StringParser(name, bs), isc::dhcp::DhcpConfigError);
-
-    // Construct parser for testing.
-    StringStoragePtr storage(new StringStorage());
-    StringParser parser(name, storage);
-
-    // Verify that parser with accepts a non-string element.
-    ElementPtr element = Element::create(9999);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    std::string actual_value;
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ("9999", actual_value);
-
-    // Verify that parser will build with a string value.
-    const std::string test_value = "test value";
-    element = Element::create(test_value);
-    ASSERT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-
-    // Verify that parser with accepts a boolean true element.
-    element = Element::create(true);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ("true", actual_value);
-
-    // Verify that parser with accepts a boolean true element.
-    element = Element::create(false);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ("false", actual_value);
-}
-
-/// @brief Check Uint32Parser basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Rejects a non-integer element.
-/// 3. Rejects a negative value.
-/// 4. Rejects too large a value.
-/// 5. Builds with value of zero.
-/// 6. Builds with a value greater than zero.
-/// 7. Updates storage upon commit.
-TEST_F(DhcpParserTest, uint32ParserTest) {
-
-    const std::string name = "intParm";
-
-    // Verify that parser does not allow empty for storage.
-    Uint32StoragePtr bs;
-    EXPECT_THROW(Uint32Parser(name, bs), isc::dhcp::DhcpConfigError);
-
-    // Construct parser for testing.
-    Uint32StoragePtr storage(new Uint32Storage());
-    Uint32Parser parser(name, storage);
-
-    // Verify that parser with rejects a non-integer element.
-    ElementPtr wrong_element = Element::create("I am a string");
-    EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
-
-    // Verify that parser with rejects a negative value.
-    ElementPtr int_element = Element::create(-1);
-    EXPECT_THROW(parser.build(int_element), isc::BadValue);
-
-    // Verify that parser with rejects too large a value provided we are on
-    // 64-bit platform.
-    if (sizeof(long) > sizeof(uint32_t)) {
-        long max = (long)(std::numeric_limits<uint32_t>::max()) + 1;
-        int_element->setValue(max);
-        EXPECT_THROW(parser.build(int_element), isc::BadValue);
-    }
-
-    // Verify that parser will build with value of zero.
-    int test_value = 0;
-    int_element->setValue((long)test_value);
-    ASSERT_NO_THROW(parser.build(int_element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    uint32_t actual_value = 0;
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-
-    // Verify that parser will build with a valid positive value.
-    test_value = 77;
-    int_element->setValue((long)test_value);
-    ASSERT_NO_THROW(parser.build(int_element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-}
-
 /// Verifies the code that parses mac sources and adds them to CfgMgr
 TEST_F(DhcpParserTest, MacSources) {
 
@@ -843,6 +677,24 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
+/// @brief Check parsing of option definitions using invalid space fails.
+TEST_F(ParseConfigTest, badSpaceOptionDefTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100000,"
+        "      \"type\": \"ipv6-address\","
+        "      \"space\": \"-1\""
+        "  } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
 /// @brief Check basic parsing of options.
 ///
 /// Note that this tests basic operation of the OptionDataListParser and
@@ -925,6 +777,40 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     opt_data->set("code", Element::create(100));
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
     cfg.runCfgOptionsTest(family_, expected);
+}
+
+/// @brief Check parsing of unknown options fails.
+TEST_F(ParseConfigTest, unknownOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"data\": \"01\","
+        "    \"space\": \"bar\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
+/// @brief Check parsing of options with invalid space fails.
+TEST_F(ParseConfigTest, badSpaceOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"code\": 100,"
+        "    \"data\": \"01\","
+        "    \"space\": \"-1\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
 }
 
 /// @brief Check parsing of options with escape characters.

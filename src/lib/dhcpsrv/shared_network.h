@@ -7,6 +7,7 @@
 #ifndef SHARED_NETWORK_H
 #define SHARED_NETWORK_H
 
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/assignable_network.h>
@@ -29,6 +30,9 @@ struct SharedNetworkRandomAccessIndexTag { };
 
 /// @brief A tag for accessing index by shared network name.
 struct SharedNetworkNameIndexTag { };
+
+/// @brief A tag for accessing index by server identifier.
+struct SharedNetworkServerIdIndexTag { };
 
 /// @brief Shared network holding IPv4 subnets.
 ///
@@ -82,6 +86,9 @@ public:
     /// @throw BadValue When specified subnet doesn't exist.
     void del(const SubnetID& subnet_id);
 
+    /// @brief Removes all subnets from a shared network.
+    void delAll();
+
     /// @brief Returns a pointer to the collection of subnets within this
     /// shared network.
     const Subnet4Collection* getAllSubnets() const {
@@ -98,7 +105,7 @@ public:
 
     /// @brief Retrieves next available IPv4 subnet within shared network.
     ///
-    /// See documentation for @ref SharedNetwork::getNextSubnet.
+    /// See documentation for @ref SharedNetwork4::getNextSubnet.
     ///
     /// @param first_subnet Pointer to a subnet from which the caller is
     /// iterating over subnets within shared network. This is typically a
@@ -149,7 +156,15 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<SharedNetworkNameIndexTag>,
             boost::multi_index::const_mem_fun<SharedNetwork4, std::string,
                                               &SharedNetwork4::getName>
+        >,
+        // Third index allows for access by server identifier specified for the
+        // network.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SharedNetworkServerIdIndexTag>,
+            boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
+                                              &Network4::getServerId>
         >
+
     >
 > SharedNetwork4Collection;
 
@@ -205,6 +220,9 @@ public:
     /// @throw BadValue When specified subnet doesn't exist.
     void del(const SubnetID& subnet_id);
 
+    /// @brief Removes all subnets from a shared network.
+    void delAll();
+
     /// @brief Returns a pointer to the collection of subnets within this
     /// shared network.
     const Subnet6Collection* getAllSubnets() const {
@@ -221,7 +239,7 @@ public:
 
     /// @brief Retrieves next available IPv6 subnet within shared network.
     ///
-    /// See documentation for @ref SharedNetwork::getNextSubnet.
+    /// See documentation for @ref SharedNetwork6::getNextSubnet.
     ///
     /// @param first_subnet Pointer to a subnet from which the caller is
     /// iterating over subnets within shared network. This is typically a

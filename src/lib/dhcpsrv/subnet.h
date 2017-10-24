@@ -457,6 +457,26 @@ public:
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 
+    /// @brief Sets server hostname for the Subnet4 
+    ///
+    /// Will be used for server hostname field (may be empty if not defined)
+    void setSname(const std::string& sname);
+
+    /// @brief Returns server hostname for this subnet
+    ///
+    /// @return server hostname value
+    const std::string& getSname() const;
+
+    /// @brief Sets boot file name for the Subnet4 
+    ///
+    /// Will be used for boot file name (may be empty if not defined)
+    void setFilename(const std::string& filename);
+
+    /// @brief Returns boot file name for this subnet
+    ///
+    /// @return boot file name value
+    const std::string& getFilename() const;
+
     /// @brief Returns DHCP4o6 configuration parameters.
     ///
     /// This structure is always available. If the 4o6 is not enabled, its
@@ -496,6 +516,12 @@ private:
 
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
+
+    /// @brief server hostname for this subnet
+    std::string sname_;
+
+    /// @brief boot file name for this subnet
+    std::string filename_;
 
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;
@@ -613,13 +639,20 @@ struct SubnetSubnetIdIndexTag { };
 /// @brief Tag for the index for searching by subnet prefix.
 struct SubnetPrefixIndexTag { };
 
-/// @brief Multi index container holding subnets.
+/// @brief Tag for the index for searching by server identifier.
+struct SubnetServerIdIndexTag { };
+
+/// @brief A collection of @c Subnet4 objects
 ///
-/// This multi index container can hold pointers to @ref Subnet4 or
-/// @ref Subnet6 objects representing subnets. It provides indexes for
-/// subnet lookups using subnet properties such as: subnet identifier
-/// or subnet prefix. It also provides a random access index which
-/// allows for using the container like a vector.
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by various properties.
+///
+/// This multi index container can hold pointers to @ref Subnet4
+/// objects representing subnets. It provides indexes for subnet lookups
+/// using subnet properties such as: subnet identifier,
+/// subnet prefix or server identifier specified for a subnet. It also
+/// provides a random access index which allows for using the container
+/// like a vector.
 ///
 /// The random access index is used by the DHCP servers which perform
 /// a full scan on subnets to find the one that matches some specific
@@ -632,12 +665,61 @@ struct SubnetPrefixIndexTag { };
 /// @todo We should consider optimizing subnet selection by leveraging
 /// the indexing capabilities of this container, e.g. searching for
 /// a subnet by interface name, relay address etc.
-///
-/// @tparam SubnetType Type of the subnet: @ref Subnet4 or @ref Subnet6.
-template<typename SubnetType>
-using SubnetCollection = boost::multi_index_container<
+typedef boost::multi_index_container<
     // Multi index container holds pointers to the subnets.
-    boost::shared_ptr<SubnetType>,
+    Subnet4Ptr,
+    // The following holds all indexes.
+    boost::multi_index::indexed_by<
+        // First is the random access index allowing for accessing
+        // objects just like we'd do with a vector.
+        boost::multi_index::random_access<
+            boost::multi_index::tag<SubnetRandomAccessIndexTag>
+        >,
+        // Second index allows for searching using subnet identifier.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetSubnetIdIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
+        >,
+        // Third index allows for searching using an output from toText function.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetPrefixIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
+        >,
+
+        // Fourth index allows for searching using an output from getServerId
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetServerIdIndexTag>,
+            boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
+                                              &Network4::getServerId>
+        >
+    >
+> Subnet4Collection;
+
+/// @brief A collection of @c Subnet6 objects
+///
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by various properties.
+///
+/// This multi index container can hold pointers to @ref Subnet6 objects
+/// representing subnets. It provides indexes for subnet lookups using
+/// subnet properties such as: subnet identifier or subnet prefix. It
+/// also provides a random access index which allows for using the
+/// container like a vector.
+///
+/// The random access index is used by the DHCP servers which perform
+/// a full scan on subnets to find the one that matches some specific
+/// criteria for subnet selection.
+///
+/// The remaining indexes are used for searching for a specific subnet
+/// as a result of receiving a command over the control API, e.g.
+/// when 'subnet-get' command is received.
+///
+/// @todo We should consider optimizing subnet selection by leveraging
+/// the indexing capabilities of this container, e.g. searching for
+/// a subnet by interface name, relay address etc.
+typedef boost::multi_index_container<
+    // Multi index container holds pointers to the subnets.
+    Subnet6Ptr,
     // The following holds all indexes.
     boost::multi_index::indexed_by<
         // First is the random access index allowing for accessing
@@ -656,19 +738,7 @@ using SubnetCollection = boost::multi_index_container<
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
         >
     >
->;
-
-/// @brief A collection of @c Subnet4 objects
-///
-/// This container provides a set of indexes which can be used to retrieve
-/// subnets by various properties.
-typedef SubnetCollection<Subnet4> Subnet4Collection;
-
-/// @brief A collection of @c Subnet6 objects
-///
-/// This container provides a set of indexes which can be used to retrieve
-/// subnets by various properties.
-typedef SubnetCollection<Subnet6> Subnet6Collection;
+> Subnet6Collection;
 
 //@}
 

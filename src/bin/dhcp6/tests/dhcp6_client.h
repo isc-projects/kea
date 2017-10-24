@@ -325,7 +325,11 @@ public:
     /// lease has been later updated (e.g. as a result of Rebind) as it is
     /// expected that the fresh lease has cltt set to "now" (not to the time
     /// in the past).
-    void fastFwdTime(const uint32_t secs);
+    ///
+    /// @param secs Number of seconds by which the time should be moved.
+    /// @param update_server Indicates if the leases should be updated on the
+    /// server.
+    void fastFwdTime(const uint32_t secs, const bool update_server = false);
 
     /// @brief Returns DUID option used by the client.
     OptionPtr getClientId() const;
@@ -639,6 +643,11 @@ public:
         relay_link_addr_ = link_addr;
     }
 
+    /// @brief Sets interface id value to be inserted into relay agent option.
+    ///
+    /// @param interface_id Value of the interface id as string.
+    void useInterfaceId(const std::string& interface_id);
+
     /// @brief Controls whether the client should send a client-id or not
     /// @param send should the client-id be sent?
     void useClientId(const bool send) {
@@ -740,6 +749,15 @@ public:
     ///
     /// @param opt additional option to be sent
     void addExtraOption(const OptionPtr& opt);
+
+    /// @brief Configures the client to not send any extra options.
+    void clearExtraOptions();
+
+    /// @brief Debugging method the prints currently held configuration
+    ///
+    /// @todo: This is mostly useful when debugging tests. This method
+    /// is incomplete. Please extend it when needed.
+    void printConfiguration() const;
 
 private:
 
@@ -906,6 +924,9 @@ private:
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
+
+    /// @brief Interface id.
+    OptionPtr interface_id_;
 };
 
 } // end of namespace isc::dhcp::test

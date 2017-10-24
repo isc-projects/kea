@@ -36,92 +36,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-// **************************** DebugParser *************************
-
-DebugParser::DebugParser(const std::string& param_name)
-    :param_name_(param_name) {
-}
-
-void
-DebugParser::build(ConstElementPtr new_config) {
-    value_ = new_config;
-    std::cout << "Build for token: [" << param_name_ << "] = ["
-        << value_->str() << "]" << std::endl;
-}
-
-void
-DebugParser::commit() {
-    // Debug message. The whole DebugParser class is used only for parser
-    // debugging, and is not used in production code. It is very convenient
-    // to keep it around. Please do not turn this cout into logger calls.
-    std::cout << "Commit for token: [" << param_name_ << "] = ["
-                  << value_->str() << "]" << std::endl;
-}
-
-// **************************** BooleanParser  *************************
-
-template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
-    // Invoke common code for all specializations of build().
-    buildCommon(value);
-    // The Config Manager checks if user specified a
-    // valid value for a boolean parameter: true or false.
-    // We should have a boolean Element, use value directly
-    try {
-        value_ = value->boolValue();
-    } catch (const isc::data::TypeError &) {
-        isc_throw(BadValue, " Wrong value type for " << param_name_
-                  << " : build called with a non-boolean element "
-                  << "(" << value->getPosition() << ").");
-    }
-}
-
-// **************************** Uin32Parser  *************************
-
-template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
-    // Invoke common code for all specializations of build().
-    buildCommon(value);
-
-    int64_t check;
-    string x = value->str();
-    try {
-        check = boost::lexical_cast<int64_t>(x);
-    } catch (const boost::bad_lexical_cast &) {
-        isc_throw(BadValue, "Failed to parse value " << value->str()
-                  << " as unsigned 32-bit integer "
-                  "(" << value->getPosition() << ").");
-    }
-    if (check > std::numeric_limits<uint32_t>::max()) {
-        isc_throw(BadValue, "Value " << value->str() << " is too large"
-                  " for unsigned 32-bit integer "
-                  "(" << value->getPosition() << ").");
-    }
-    if (check < 0) {
-        isc_throw(BadValue, "Value " << value->str() << " is negative."
-               << " Only 0 or larger are allowed for unsigned 32-bit integer "
-                  "(" << value->getPosition() << ").");
-    }
-
-    // value is small enough to fit
-    value_ = static_cast<uint32_t>(check);
-}
-
-// **************************** StringParser  *************************
-
-template <> void ValueParser<std::string>::build(ConstElementPtr value) {
-    // Invoke common code for all specializations of build().
-    buildCommon(value);
-
-    // For strings we need to use stringValue() rather than str().
-    // str() returns fully escaped special characters, so
-    // single backslash would be misrepresented as "\\".
-    if (value->getType() == Element::string) {
-        value_ = value->stringValue();
-    } else {
-        value_ = value->str();
-    }
-    boost::erase_all(value_, "\"");
-}
-
 // ******************** MACSourcesListConfigParser *************************
 
 void
@@ -158,10 +72,12 @@ MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr val
 // ******************** ControlSocketParser *************************
 void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value) {
     if (!value) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "Logic error: specified control-socket is null");
     }
 
     if (value->getType() != Element::map) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "Specified control-socket is expected to be a map"
                   ", i.e. a structure defined within { }");
     }
@@ -287,6 +203,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
 void
 OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_list) {
     if (!option_def_list) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                   << " option definitions is NULL ("
                   << option_def_list->getPosition() << ")");
@@ -441,6 +358,7 @@ PoolParser::parse(PoolStoragePtr pools,
     // If there's user-context specified, store it.
     ConstElementPtr user_context = pool_structure->get("user-context");
     if (user_context) {
+        // The grammar accepts only maps but still check it.
         if (user_context->getType() != Element::map) {
             isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
                       << user_context->getPosition() << ")");
@@ -531,6 +449,7 @@ SubnetConfigParser::hrModeFromText(const std::string& txt) {
     } else if (txt.compare("all") == 0) {
         return (Network::HR_ALL);
     } else {
+        // Should never happen...
         isc_throw(BadValue, "Can't convert '" << txt
                   << "' into any valid reservation-mode values");
     }
@@ -588,6 +507,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // If there's user-context specified, store it.
     ConstElementPtr user_context = params->get("user-context");
     if (user_context) {
+        // The grammar accepts only maps but still check it.
         if (user_context->getType() != Element::map) {
             isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
                       << user_context->getPosition() << ")");
@@ -615,6 +535,7 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
     SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
     if (!generic) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError,
                   "Failed to create an IPv4 subnet (" <<
                   subnet->getPosition() << ")");
@@ -706,6 +627,32 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
         isc_throw(DhcpConfigError, "invalid parameter next-server : "
                   << next_server << "(" << pos << ")");
+    }
+
+    // Set server-hostname.
+    std::string sname = getString(params, "server-hostname");
+    if (!sname.empty()) {
+        if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
+            ConstElementPtr error = params->get("server-hostname");
+            isc_throw(DhcpConfigError, "server-hostname must be at most "
+                      << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
+                      << sname.length() << " ("
+                      << error->getPosition() << ")");
+        }
+        subnet4->setSname(sname);
+    }
+
+    // Set boot-file-name.
+    std::string filename =getString(params, "boot-file-name");
+    if (!filename.empty()) {
+        if (filename.length() > Pkt4::MAX_FILE_LEN) {
+            ConstElementPtr error = params->get("boot-file-name");
+            isc_throw(DhcpConfigError, "boot-file-name must be at most "
+                      << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
+                      << filename.length() << " ("
+                      << error->getPosition() << ")");
+        }
+        subnet4->setFilename(filename);
     }
 
     // Get interface name. If it is defined, then the subnet is available
@@ -961,6 +908,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
     if (!generic) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError,
                   "Failed to create an IPv6 subnet (" <<
                   subnet->getPosition() << ")");
@@ -993,6 +941,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     return (sn6ptr);
 }
 
+// Unused?
 void
 Subnet6ConfigParser::duplicate_option_warning(uint32_t code,
                                               asiolink::IOAddress& addr) {

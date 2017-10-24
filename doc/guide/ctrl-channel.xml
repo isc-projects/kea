@@ -175,7 +175,7 @@
     the form:
 <screen>
 {
-    "result": 0|1,
+    "result": 0|1|2|3,
     "text": "textual description",
     "arguments": {
         "argument1": "value1",
@@ -185,14 +185,26 @@
 }
 </screen>
     <command>result</command> indicates the outcome of the command. A value of 0
-    means success while any non-zero value designates an error. Currently 1 is
-    used as a generic error, but additional error codes may be added in the
-    future. The <command>text</command> field typically appears when result is
-    non-zero and contains a description of the error encountered, but it may
-    also appear for successful results (that is command specific).
-    <command>arguments</command> is a map of additional data values returned by
-    the server which is specific to the command issued. The map is always present, even
-    if it contains no data values.</para>
+    means success while any non-zero value designates an error or at least a
+    failure to complete the requested action. Currently 1 is used as a generic
+    error, 2 means that a command is not supported and 3 means that the
+    requested operation was completed, but the requested object was not
+    found. Additional error codes may be added in the future. For example a well
+    formed command that requests a subnet that exists in server's configuration
+    would return result 0. If the server encounters an error condition, it would
+    return 1. If the command was asking for IPv6 subnet, but was sent to DHCPv4
+    server, it would return 2. If the query was asking for a subnet-id and there
+    is no subnet with such id, the result would be set to 3.</para>
+
+    <para>
+    The <command>text</command> field typically appears when result is non-zero
+    and contains a description of the error encountered, but it often also appears
+    for successful outcomes. The exact text is command specific, but in general
+    uses plain English to describe the outcome of the command.
+    <command>arguments</command> is a map of additional data values
+    returned by the server which is specific to the command issued. The map is
+    may be present, but that depends on specific command.
+    </para>
 
     <note>
       <simpara>
@@ -211,7 +223,7 @@
     <para>Kea development team is actively working on providing client applications
     which can be used to control the servers. These applications are, however, in the
     early stages of development and as of Kea 1.2.0 release have certain limitations.
-    The easiest way to start playing with the control API is to use common Unix/Linux tools
+    The easiest way to start interacting with the control API is to use common Unix/Linux tools
     such as <command>socat</command> and <command>curl</command>.</para>
 
     <para>In order to control the given Kea service via unix domain socket, use
@@ -222,14 +234,16 @@ $ socat UNIX:/path/to/the/kea/socket -
 where <command>/path/to/the/kea/socket</command> is the path specified in the
 <command>Dhcp4/control-socket/socket-name</command> parameter in the Kea
 configuration file. Text passed to <command>socat</command>
-will be sent to Kea and the responses received from Kea printed to standard output.</para>
+will be sent to Kea and the responses received from Kea printed to standard
+    output. This approach communicates with the specific server directly and
+    bypasses Control Agent.</para>
 
     <para>It is also easy to open UNIX socket programmatically. An example of
     such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
 
-    <para>In order to use Kea's RESTful API with <command>curl</command> try the
-    following:
+    <para>In order to use Kea's RESTful API with <command>curl</command> you may
+    use the following:
 <screen>
 $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }' http://ca.example.org:8000/
 </screen>

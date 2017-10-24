@@ -297,7 +297,7 @@ http {
       The CA is started by running its binary and specifying the configuration file
       it should use. For example:
 <screen>
-$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea.conf
+$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 </screen>
     </para>
   </section>

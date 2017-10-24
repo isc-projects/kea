@@ -48,6 +48,7 @@
 
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
+#include <util/pointer_util.h>
 #include <util/range_utilities.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
@@ -1195,6 +1196,8 @@ void
 Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
                         AllocEngine::ClientContext6& ctx) {
 
+    Subnet6Ptr subnet = ctx.subnet_;
+
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
     // @todo add support for IA_TA
@@ -1230,6 +1233,20 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
         default:
             break;
+        }
+    }
+
+    // Subnet may be modified by the allocation engine, if the initial subnet
+    // belongs to a shared network.
+    if (ctx.subnet_ && subnet && (subnet->getID() != ctx.subnet_->getID())) {
+        SharedNetwork6Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)
+                .arg(question->getLabel())
+                .arg(subnet->toText())
+                .arg(ctx.subnet_->toText())
+                .arg(network->getName());
         }
     }
 }
@@ -1810,9 +1827,15 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // For the leases that we just retired, send the addresses with 0 lifetimes.
     for (Lease6Collection::const_iterator l = ctx.currentIA().old_leases_.begin();
                                           l != ctx.currentIA().old_leases_.end(); ++l) {
-        Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                                  (*l)->addr_, 0, 0));
-        ia_rsp->addOption(iaaddr);
+
+        // Send an address with zero lifetimes only when this lease belonged to
+        // this client. Do not send it when we're reusing an old lease that belonged
+        // to someone else.
+        if (equalValues(query->getClientId(), (*l)->duid_)) {
+            Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
+                                                      (*l)->addr_, 0, 0));
+            ia_rsp->addOption(iaaddr);
+        }
 
         // Now remove this address from the hints list.
         AllocEngine::ResourceType hint_type((*l)->addr_, 128);
@@ -1996,6 +2019,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
          prefix != hints.end(); ++prefix) {
+
         // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was
         // for the prefix length.

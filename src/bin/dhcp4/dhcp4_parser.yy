@@ -55,6 +55,9 @@ using namespace std;
   DHCP_SOCKET_TYPE "dhcp-socket-type"
   RAW "raw"
   UDP "udp"
+  OUTBOUND_INTERFACE "outbound-interface"
+  SAME_AS_INBOUND "same-as-inbound"
+  USE_ROUTING "use-routing"
   RE_DETECT "re-detect"
 
   ECHO_CLIENT_ID "echo-client-id"
@@ -212,6 +215,7 @@ using namespace std;
 %type <ElementPtr> value
 %type <ElementPtr> map_value
 %type <ElementPtr> socket_type
+%type <ElementPtr> outbound_interface_value
 %type <ElementPtr> db_type
 %type <ElementPtr> hr_mode
 %type <ElementPtr> ncr_protocol_value
@@ -426,6 +430,8 @@ global_param: valid_lifetime
             | echo_client_id
             | match_client_id
             | next_server
+            | server_hostname
+            | boot_file_name
             | unknown_map_entry
             ;
 
@@ -477,6 +483,7 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | dhcp_socket_type
+                       | outbound_interface
                        | re_detect
                        ;
 
@@ -509,6 +516,19 @@ dhcp_socket_type: DHCP_SOCKET_TYPE {
 socket_type: RAW { $$ = ElementPtr(new StringElement("raw", ctx.loc2pos(@1))); }
            | UDP { $$ = ElementPtr(new StringElement("udp", ctx.loc2pos(@1))); }
            ;
+
+outbound_interface: OUTBOUND_INTERFACE {
+    ctx.enter(ctx.OUTBOUND_INTERFACE);
+} COLON outbound_interface_value {
+    ctx.stack_.back()->set("outbound-interface", $4);
+    ctx.leave();
+}
+
+outbound_interface_value: SAME_AS_INBOUND {
+    $$ = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(@1)));
+} | USE_ROUTING {
+    $$ = ElementPtr(new StringElement("use-routing", ctx.loc2pos(@1)));
+    } ;
 
 re_detect: RE_DETECT COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
@@ -894,6 +914,8 @@ subnet4_param: valid_lifetime
              | relay
              | match_client_id
              | next_server
+             | server_hostname
+             | boot_file_name
              | subnet_4o6_interface
              | subnet_4o6_interface_id
              | subnet_4o6_subnet
@@ -1021,6 +1043,8 @@ shared_network_param: name
                     | option_data_list
                     | match_client_id
                     | next_server
+                    | server_hostname
+                    | boot_file_name
                     | relay
                     | reservation_mode
                     | client_class

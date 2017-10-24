@@ -112,11 +112,11 @@
           on the system:</para>
           <itemizedlist>
             <listitem>
-                <para>Boost build-time headers
+                <para>Boost C++ Libraries
           (<ulink url="http://www.boost.org/"/>).
-          At least Boost version 1.41 is required.
-          When header-only Boost error code is not available or wanted, the
-          Boost system library is required too.
+          The oldest Boost version used for testing is 1.57 (it may work with
+          older versions). Boost system library is required.  Building boost
+          header only is no longer recommended.
         </para>
         </listitem>
 
@@ -141,11 +141,10 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          A C++ compiler and standard development headers.
-          Kea 1.1.0 builds have been tested with GCC g++ 4.2.1,
-          4.4.7, 4.6.3, 4.8.3, 4.8.4, 4.8.5, 5.4.0; Clang++ 3.4.1;
-          and Apple Clang++ 703.0.31.
-	  <!-- @todo update this list -->
+          A C++ compiler (with C++11 support) and standard development
+          headers. Kea builds have been tested with GCC g++ 4.7.2 4.7.3
+          4.8.2 4.8.4 4.8.5 4.9.3 4.9.4 5.3.1 5.4.0 6.3.0 6.3.1
+          clang-800.0.38 clang-802.0.42 clang-900.0.37
         </para>
         </listitem>
 
@@ -180,7 +179,7 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          googletest (version 1.6 or later), when using the --with-gtest configuration
+          googletest (version 1.8 or later), when using the --with-gtest configuration
           option to build the unit tests.
         </para>
         </listitem>
@@ -194,12 +193,6 @@ Debian and Ubuntu:
         </listitem>
 
         </itemizedlist>
-
-        <para>
-          Visit the user-contributed wiki at
-          <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes" />
-          for system-specific installation tips.
-        </para>
 
     </section>
 
@@ -234,7 +227,7 @@ Debian and Ubuntu:
           <para>
             When building from source code retrieved via Git, additional
             software will be required:  automake (v1.11 or later),
-            libtoolize, and autoconf (v2.59 or later).
+            libtoolize, and autoconf (v2.69 or later).
             These may need to be installed.
           </para>
         </note>
@@ -481,12 +474,11 @@ Debian and Ubuntu:
         <varlistentry>
           <term>JSON</term>
           <listitem>
-	    <simpara>JSON is the new default configuration backend
+	    <simpara>JSON is the default configuration backend
 	    that allows Kea to read JSON configuration files from
 	    disk. It does not require any framework and thus is
-	    considered more lightweight. It will allow dynamic
-	    on-line reconfiguration, but lacks remote capabilities
-	    (i.e. no RESTful API).</simpara>
+	    considered more lightweight. It allows dynamic on-line
+            reconfiguration using Kea API.</simpara>
           </listitem>
         </varlistentry>
       </variablelist>

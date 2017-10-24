@@ -6,6 +6,10 @@
 
 #include <config.h>
 #include <dhcp/classify.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/option_space.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/cfg_subnets4.h>
@@ -748,6 +752,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"server-hostname\": \"\",\n"
+        "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"valid-lifetime\": 3,\n"
@@ -765,6 +771,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"interface\": \"lo\",\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"server-hostname\": \"\",\n"
+        "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"valid-lifetime\": 3,\n"
@@ -781,6 +789,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"server-hostname\": \"\",\n"
+        "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"valid-lifetime\": 3,\n"
@@ -815,6 +825,8 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
+        "    \"server-hostname\": \"\",\n"
+        "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"valid-lifetime\": 3,\n"
@@ -854,6 +866,25 @@ TEST(CfgSubnets4Test, getSubnet) {
     EXPECT_EQ(subnet2, cfg.getSubnet(200));
     EXPECT_EQ(subnet3, cfg.getSubnet(300));
     EXPECT_EQ(Subnet4Ptr(), cfg.getSubnet(400)); // no such subnet
+}
+
+// This test verifies that hasSubnetWithServerId returns correct value.
+TEST(CfgSubnets4Test, hasSubnetWithServerId) {
+    CfgSubnets4 cfg;
+
+    // Initially, there is no server identifier option present.
+    EXPECT_FALSE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));
+
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                    DHO_DHCP_SERVER_IDENTIFIER);
+    OptionCustomPtr opt_server_id(new OptionCustom(*def, Option::V4));
+    opt_server_id->writeAddress(IOAddress("1.2.3.4"));
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 100));
+    subnet->getCfgOption()->add(opt_server_id, false, DHCP4_OPTION_SPACE);
+    cfg.add(subnet);
+
+    EXPECT_TRUE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));
+    EXPECT_FALSE(cfg.hasSubnetWithServerId(IOAddress("2.3.4.5")));
 }
 
 } // end of anonymous namespace

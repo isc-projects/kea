@@ -50,6 +50,7 @@
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
  * - @subpage libdhcp_user_chk
+ * - @subpage libdhcp_lease_cmds
  *
  * @section dhcpMaintenanceGuide DHCP Maintenance Guide
  * - @subpage dhcp4

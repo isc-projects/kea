@@ -59,12 +59,6 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     return (s.str());
 }
 
-isc::dhcp::ParserPtr
-CtrlAgentCfgMgr::createConfigParser(const std::string& /*element_id*/,
-                                    const isc::data::Element::Position& /*pos*/) {
-    isc_throw(NotImplemented, "We don't use parser pointers anymore");
-}
-
 DCfgContextBasePtr
 CtrlAgentCfgMgr::createNewContext() {
     return (DCfgContextBasePtr(new CtrlAgentCfgContext()));

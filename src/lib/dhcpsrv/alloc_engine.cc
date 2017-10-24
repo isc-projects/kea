@@ -813,6 +813,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
 
+                ctx.subnet_ = subnet;
                 Lease6Ptr lease = createLease6(ctx, candidate, prefix_len);
                 if (lease) {
                     // We are allocating a new lease (not renewing). So, the
@@ -838,6 +839,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     Lease6Ptr old_lease(new Lease6(*existing));
                     ctx.currentIA().old_leases_.push_back(old_lease);
 
+                    ctx.subnet_ = subnet;
                     existing = reuseExpiredLease(existing, ctx, prefix_len);
 
                     leases.push_back(existing);
@@ -1508,9 +1510,25 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         return;
     }
 
-    // Check if the lease still belongs to the subnet. If it doesn't,
-    // we'll need to remove it.
-    if ((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) {
+    // It is likely that the lease for which we're extending the lifetime doesn't
+    // belong to the current but a sibling subnet.
+    if (ctx.subnet_->getID() != lease->subnet_id_) {
+        SharedNetwork6Ptr network;
+        ctx.subnet_->getSharedNetwork(network);
+        if (network) {
+            Subnet6Ptr subnet = network->getSubnet(SubnetID(lease->subnet_id_));
+            // Found the actual subnet this lease belongs to. Stick to this
+            // subnet.
+            if (subnet) {
+                ctx.subnet_ = subnet;
+            }
+        }
+    }
+
+    // Check if the lease still belongs to the subnet and that the use of this subnet
+    // is allowed per client classification. If not, remove this lease.
+    if (((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) ||
+        !ctx.subnet_->clientSupported(ctx.query_->getClasses())) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr
@@ -2318,9 +2336,10 @@ namespace {
 
 /// @brief Check if the specific address is reserved for another client.
 ///
-/// This function uses the HW address from the context to check if the
-/// requested address (specified as first parameter) is reserved for
-/// another client, i.e. client using a different HW address.
+/// This function finds a host reservation for a given address and then
+/// it verifies if the host identifier for this reservation is matching
+/// a host identifier found for the current client. If it does not, the
+/// address is assumed to be reserved for another client.
 ///
 /// @param address An address for which the function should check if
 /// there is a reservation for the different client.
@@ -2331,20 +2350,14 @@ namespace {
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
     ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
-    HWAddrPtr host_hwaddr;
     if (host) {
-        host_hwaddr = host->getHWAddress();
-        if (ctx.hwaddr_ && host_hwaddr) {
-            /// @todo Use the equality operators for HWAddr class.
-            /// Currently, this is impossible because the HostMgr uses the
-            /// HTYPE_ETHER type, whereas the unit tests may use other types
-            /// which HostMgr doesn't support yet.
-            return (host_hwaddr->hwaddr_ != ctx.hwaddr_->hwaddr_);
-
-        } else {
-            return (false);
-
+        for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
+             ++id) {
+            if (id->first == host->getIdentifierType()) {
+                return (id->second != host->getIdentifier());
+            }
         }
+        return (true);
     }
     return (false);
 }
@@ -2425,6 +2438,10 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         // configured to ignore client identifier).
         if (client_id) {
             client_lease = lease_mgr.getLease4(*client_id, subnet->getID());
+            if (client_lease) {
+                ctx.subnet_ = subnet;
+                return;
+            }
         }
 
         // If no lease found using the client identifier, try the lookup using
@@ -2859,7 +2876,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", ctx.subnet_->getID(), "assigned-addresses"),
+            StatsMgr::generateName("subnet", client_lease->subnet_id_, "assigned-addresses"),
             static_cast<int64_t>(-1));
     }
 
@@ -2995,10 +3012,6 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         if (ctx.old_lease_->expired()) {
             reclaimExpiredLease(ctx.old_lease_, ctx.callout_handle_);
 
-        } else if (!lease->hasIdenticalFqdn(*ctx.old_lease_)) {
-            // The lease is not expired but the FQDN information has
-            // changed. So, we have to remove the previous DNS entry.
-            queueNCR(CHG_REMOVE, ctx.old_lease_);
         }
 
         lease->state_ = Lease::STATE_DEFAULT;

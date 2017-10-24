@@ -347,8 +347,8 @@ be followed by a comma and another object definition.</para>
       removes redundant (historical) information from the lease file
       and effectively reduces the lease file size. The cleanup process is described
       in more detailed fashion further in this section. The default value of the
-      <command>lfc-interval</command> is <userinput>0</userinput>, which disables
-      the LFC.</simpara>
+      <command>lfc-interval</command> is <userinput>3600</userinput>. A value of 0
+      disables the LFC.</simpara>
     </listitem>
 
   </itemizedlist>
@@ -986,7 +986,7 @@ temporarily override a list of interface names and listen on all interfaces.
         ...
     ]
 }
-</screen>
+        </screen>
        </para>
        <note><para>
        The value for the setting of the "data" element is split across two
@@ -1201,6 +1201,7 @@ temporarily override a list of interface names and listen on all interfaces.
     </para>
 
 <!-- @todo: describe record types -->
+<!-- @todo: describe array in record types -->
 
       <para>
         The <xref linkend="dhcp6-custom-options"/> describes the configuration
@@ -1230,8 +1231,8 @@ temporarily override a list of interface names and listen on all interfaces.
         </thead>
         <tbody>
 <!-- Our engine uses those options on its own, admin must not configure them on his own
-<row><entry>clientid</entry><entry>1</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>serverid</entry><entry>2</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>clientid</entry><entry>1</entry><entry>hex</entry><entry>false</entry></row>
+<row><entry>serverid</entry><entry>2</entry><entry>hex</entry><entry>false</entry></row>
 <row><entry>ia-na</entry><entry>3</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>ia-ta</entry><entry>4</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>iaaddr</entry><entry>5</entry><entry>record</entry><entry>false</entry></row>
@@ -1240,20 +1241,20 @@ temporarily override a list of interface names and listen on all interfaces.
 
 <!-- Our engine uses those options on its own, admin must not configure them on his own
 <row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
-<row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>relay-msg</entry><entry>9</entry><entry>hex</entry><entry>false</entry></row>
+<row><entry>auth</entry><entry>11</entry><entry>hex</entry><entry>false</entry></row>
 -->
 <row><entry>unicast</entry><entry>12</entry><entry>ipv6-address</entry><entry>false</entry></row>
 <!--
 <row><entry>status-code</entry><entry>13</entry><entry>record</entry><entry>false</entry></row>
 <row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
-<row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>15</entry><entry>hex</entry><entry>false</entry></row>
 <row><entry>vendor-class</entry><entry>16</entry><entry>record</entry><entry>false</entry></row>
 -->
 <!-- Vendor-specific Information is configurable by the administrator -->
 <row><entry>vendor-opts</entry><entry>17</entry><entry>uint32</entry><entry>false</entry></row>
 <!--
-<row><entry>interface-id</entry><entry>18</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>interface-id</entry><entry>18</entry><entry>hex</entry><entry>false</entry></row>
 <row><entry>reconf-msg</entry><entry>19</entry><entry>uint8</entry><entry>false</entry></row>
 <row><entry>reconf-accept</entry><entry>20</entry><entry>empty</entry><entry>false</entry></row> -->
 -->
@@ -1271,22 +1272,22 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>information-refresh-time</entry><entry>32</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>bcmcs-server-dns</entry><entry>33</entry><entry>fqdn</entry><entry>true</entry></row>
 <row><entry>bcmcs-server-addr</entry><entry>34</entry><entry>ipv6-address</entry><entry>true</entry></row>
-<row><entry>geoconf-civic</entry><entry>36</entry><entry>record (uint8, uint16, binary)</entry><entry>false</entry></row>
-<row><entry>remote-id</entry><entry>37</entry><entry>record (uint32, binary)</entry><entry>false</entry></row>
-<row><entry>subscriber-id</entry><entry>38</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>geoconf-civic</entry><entry>36</entry><entry>record (uint8, uint16, hex)</entry><entry>false</entry></row>
+<row><entry>remote-id</entry><entry>37</entry><entry>record (uint32, hex)</entry><entry>false</entry></row>
+<row><entry>subscriber-id</entry><entry>38</entry><entry>hex</entry><entry>false</entry></row>
 <row><entry>client-fqdn</entry><entry>39</entry><entry>record (uint8, fqdn)</entry><entry>false</entry></row>
 <row><entry>pana-agent</entry><entry>40</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>new-posix-timezone</entry><entry>41</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>new-tzdb-timezone</entry><entry>42</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>ero</entry><entry>43</entry><entry>uint16</entry><entry>true</entry></row>
-<row><entry>lq-query</entry><entry>44</entry><entry>record (uint8, ipv6-address)</entry><entry>false</entry></row>
-<row><entry>client-data</entry><entry>45</entry><entry>empty</entry><entry>false</entry></row>
-<row><entry>clt-time</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
-<row><entry>lq-relay-data</entry><entry>47</entry><entry>record (ipv6-address, binary)</entry><entry>false</entry></row>
-<row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>lq-query (1)</entry><entry>44</entry><entry>record (uint8, ipv6-address)</entry><entry>false</entry></row>
+<row><entry>client-data (1)</entry><entry>45</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>clt-time (1)</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>lq-relay-data (1)</entry><entry>47</entry><entry>record (ipv6-address, hex)</entry><entry>false</entry></row>
+<row><entry>lq-client-link (1)</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>v6-lost</entry><entry>51</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>capwap-ac-v6</entry><entry>52</entry><entry>ipv6-address</entry><entry>true</entry></row>
-<row><entry>relay-id</entry><entry>53</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>relay-id</entry><entry>53</entry><entry>hex</entry><entry>false</entry></row>
 <row><entry>v6-access-domain</entry><entry>57</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>sip-ua-cs-list</entry><entry>58</entry><entry>fqdn</entry><entry>true</entry></row>
 <row><entry>bootfile-url</entry><entry>59</entry><entry>string</entry><entry>false</entry></row>
@@ -1296,18 +1297,26 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>aftr-name</entry><entry>64</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>erp-local-domain-name</entry><entry>65</entry><entry>fqdn</entry><entry>false</entry></row>
 <row><entry>rsoo</entry><entry>66</entry><entry>empty</entry><entry>false</entry></row>
-<row><entry>pd-exclude</entry><entry>67</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>client-linklayer-addr</entry><entry>79</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>pd-exclude</entry><entry>67</entry><entry>hex</entry><entry>false</entry></row>
+<row><entry>rdnss-selection</entry><entry>74</entry><entry>record (ipv6-address, uint8, fqdn)</entry><entry>true</entry></row>
+<row><entry>client-linklayer-addr</entry><entry>79</entry><entry>hex</entry><entry>false</entry></row>
 <row><entry>link-address</entry><entry>80</entry><entry>ipv6-address</entry><entry>false</entry></row>
 <row><entry>solmax-rt</entry><entry>82</entry><entry>uint32</entry><entry>false</entry></row>
 <row><entry>inf-max-rt</entry><entry>83</entry><entry>uint32</entry><entry>false</entry></row>
-<!-- <row><entry>dhcpv4-message</entry><entry>87</entry><entry>binary</entry><entry>false</entry></row> -->
+<!-- <row><entry>dhcpv4-message</entry><entry>87</entry><entry>hex</entry><entry>false</entry></row> -->
 <row><entry>dhcp4o6-server-addr</entry><entry>88</entry><entry>ipv6-address</entry><entry>true</entry></row>
 <row><entry>v6-captive-portal</entry><entry>103</entry><entry>string</entry><entry>false</entry></row>
 <row><entry>ipv6-address-andsf</entry><entry>143</entry><entry>ipv6-address</entry><entry>true</entry></row>
         </tbody>
         </tgroup>
       </table>
+      Options marked with (1) have option definitions, but the logic
+      behind them is not implemented. That means that technically Kea
+      knows how to parse them in incoming message or how to send them
+      if configured to do so, but not what to do with them. Since the
+      related RFCs require certain processing, the support for those
+      options is non-functional. However, it may be useful in some
+      limited lab testing, hence the definition formats are listed here.
     </para>
 
     <para>
@@ -1322,10 +1331,10 @@ temporarily override a list of interface names and listen on all interfaces.
           <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
         </thead>
         <tbody>
-<row><entry>public-key</entry><entry>701</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>certificate</entry><entry>702</entry><entry>binary</entry><entry>false</entry></row>
-<row><entry>signature</entry><entry>703</entry><entry>record (uint8, uint8, binary)</entry><entry>false</entry></row>
-<row><entry>timestamp</entry><entry>704</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>public-key</entry><entry>701</entry><entry>hex</entry><entry>false</entry></row>
+<row><entry>certificate</entry><entry>702</entry><entry>hex</entry><entry>false</entry></row>
+<row><entry>signature</entry><entry>703</entry><entry>record (uint8, uint8, hex)</entry><entry>false</entry></row>
+<row><entry>timestamp</entry><entry>704</entry><entry>hex</entry><entry>false</entry></row>
         </tbody>
         </tgroup>
       </table>
@@ -1444,6 +1453,30 @@ temporarily override a list of interface names and listen on all interfaces.
       that the <command>data</command> field comprises a command-separated list
       of values.  The values in the "data" must correspond to the types set in
       the "record-types" field of the option definition.
+      </para>
+
+      <para>
+      When <command>array</command> is set to <command>true</command>
+      and <command>type</command> is set to "record", the last field
+      is an array, i.e., it can contain more than one value as in:
+<screen>
+"Dhcp6": {
+    "option-def": [
+        {
+            <userinput>"name": "bar",
+            "code": 101,
+            "space": "dhcp6",
+            "type": "record",
+            "array": true,
+            "record-types": "ipv6-address, uint16",
+            "encapsulate": ""</userinput>
+        }, ...
+    ],
+    ...
+}
+</screen>
+      The new option content is one IPv6 address followed by one or more 16
+      bit unsigned integers.
       </para>
 
       <note>
@@ -2869,14 +2902,12 @@ should include options from the isc option space:
       <para>
         It is possible to store host reservations in MySQL or PostgreSQL. See <xref
         linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL or PostgreSQL. Kea does not provide any dedicated
-        tools for managing reservations in a database. The Kea wiki <ulink
-        url="http://kea.isc.org/wiki/HostReservationsHowTo" /> provides detailed
-        information and examples of how reservations can be inserted into the
-        database.
+        reservations stored in MySQL or PostgreSQL. Kea provides dedicated hook for
+        managing reservations in a database, section <xref linkend="host-cmds" /> provide
+        detailed information.
       </para>
 
-      <note><simpara>In Kea 1.1.0 maximum length of an option specified per host is
+      <note><simpara>In Kea maximum length of an option specified per host is
       arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
@@ -3037,6 +3068,32 @@ If not specified, the default value is:
     modems. In this case, the distinction is based on the type of device, rather
     than coming out of running out address space.</para>
 
+    <para>A client connected to a shared network may be assigned a lease (address
+    or prefix) from any of the pools defined within the subnets belonging to the
+    shared network. Internally, the server selects one of the subnets belonging to the
+    shared network and tries to allocate a lease from this subnet. If the
+    server is unable to allocate a lease from the selected subnet (e.g. due
+    to pools exhaustion) it will use another subnet from the same shared
+    network and try to allocate a lease from this subnet etc. Therefore, in the
+    typical case, the server will allocate all leases available in a given
+    subnet before it starts allocating leases from other subnets belonging to
+    the same shared network. However, in certain situations the client can be
+    allocated a lease from the other subnets before the pools in the first
+    subnet get exhausted, e.g. when the client provides a hint that belongs
+    to another subnet or the client has reservations in a different than
+    default subnet.
+    </para>
+
+    <note>
+    <para>It is strongly discouraged for the Kea deployments to assume that the
+      server doesn't allocate leases from other subnets until it uses all
+      the leases from the first subnet in the shared network. Apart from the
+      fact that hints, host reservations and client classification affect subnet
+      selection, it is also foreseen that we will enhance allocation strategies
+      for shared networks in the future versions of Kea, so as the selection
+      of subnets within a shared network is equally probable (unpredictable).</para>
+    </note>
+
     <para>In order to define a shared network an additional configuration scope
     is introduced:
 <screen>
@@ -3047,6 +3104,13 @@ If not specified, the default value is:
             // Name of the shared network. It may be an arbitrary string
             // and it must be unique among all shared networks.
             "name": "ipv6-lab-1",
+
+            // Subnet selector can be specifed on the shared network level.
+            // Subnets from this shared network will be selected for clients
+            // communicating via relay agent having the specified IP address.
+            "relay": {
+                "ip-address": "2001:db8:2:34::1"
+            },
 
             // This starts a list of subnets in this shared network.
             // There are two subnets in this example.
@@ -3062,19 +3126,22 @@ If not specified, the default value is:
             ]
         } ]</userinput>, // end of shared-networks
 
-        // It is likely that in your network you'll have a mix of regular,
-        // "plain" subnets and shared networks. It is perfectly valid to mix
-        // them in the same config file.
-        //
-        // This is regular subnet. It's not part of any shared-network.
-        "subnet6": [
-            {
-                "subnet": "2001:db9::/48",
-                "pools": [ { "pool":  "2001:db9::/64" } ]
+    // It is likely that in your network you'll have a mix of regular,
+    // "plain" subnets and shared networks. It is perfectly valid to mix
+    // them in the same config file.
+    //
+    // This is regular subnet. It's not part of any shared-network.
+    "subnet6": [
+        {
+            "subnet": "2001:db9::/48",
+            "pools": [ { "pool":  "2001:db9::/64" } ],
+            "relay": {
+                "ip-address": "2001:db8:1:2::1"
             }
-        ]
+        }
+    ]
 
-    } // end of Dhcp6
+} // end of Dhcp6
 }
 </screen>
     </para>
@@ -3100,6 +3167,9 @@ If not specified, the default value is:
 "shared-networks": [
     {
         "name": "lab-network3",
+        "relay": {
+             "ip-address": "2001:db8:2:34::1"
+        },
 
         // This applies to all subnets in this shared network, unless
         // values are overridden on subnet scope.
@@ -3155,6 +3225,13 @@ If not specified, the default value is:
     the second subnet, he will get a 10 minutes long lease, dns-servers value of
     2001:db8:cafe::1 and no server unicast.
     </para>
+
+    <para>Some parameters must be the same in all subnets in the same shared
+    network. This restriction applies to <command>interface</command> and
+    <command>rapid-commit</command> settings. The most convenient way is to
+    define them on shared network scope, but you may specify them for each
+    subnet. However, care should be taken for each subnet to have the same
+    value.</para>
 
     <section>
       <title>Local and relayed traffic in shared networks</title>
@@ -3238,14 +3315,68 @@ as long as it is valid IPv6 address.</para>
     <section>
       <title>Client classification in shared networks</title>
 
-<para>Sometimes it is desired to segregate clients into specific subnets.
-A case of cable network where modems should use one subnet and other devices
-should use another subnet is a good example. For that reason Kea allows for
-restricting access to specific subnets based on client classification. See <xref
-linkend="classify"/> for details on how to define client classes.
+      <para>Sometimes it is desired to segregate clients into specific subnets
+      based on some properties. This mechanism is called client classification
+      and is described in <xref linkend="classify"/>. Client classification
+      can be applied to subnets belonging to shared networks in the same way
+      as it is used for subnets specified outside of shared networks.
+      It is important to understand how the server selects subnets for
+      the clients when client classification is in use, to assure that the
+      desired subnet is selected for a given client type.</para>
 
-The following example defines two classes of devices. The decision is made
-based on option 1234 values.
+      <para>If a subnet is associated with some classes, only the clients
+      belonging to any of these classes can use this subnet. If there are no
+      classes specified for a subnet, any client connected to a given shared
+      network can use this subnet. A common mistake is to assume that the
+      subnet including client classes is preferred over subnets without
+      client classes. Consider the following example:
+
+<screen>
+{
+    "client-classes": [
+        {
+            "name": "b-devices",
+            "test": "option[1234].hex == 0x0002"
+        }
+    ],
+    "shared-networks": [
+        {
+            "name": "galah",
+            "relay": {
+                "ip-address": "2001:db8:2:34::1"
+            },
+            "subnet6": [
+                {
+                    "subnet": "2001:db8:1::/64",
+                    "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ],
+                },
+                {
+                    "subnet": "2001:db8:3::/64",
+                    "pools": [ { "pool": "2001:db8:3::20 - 2001:db8:3::ff" } ],
+                    <userinput>"client-class": "b-devices"</userinput>
+                }
+            ]
+        }
+    ]
+}
+</screen>
+
+        If the client belongs to "b-devices" class (because it includes option
+        1234 with a value of 0x0002) it doesn't guarantee that the subnet 2001:db8:3::/64
+        will be used (or preferred) for this client. The server can use any of
+        the two subnets because the subnet 2001:db8:1::/64 is also allowed for
+        this client. The client classification used in this case should be pereceived
+        as a way to restrict access to certain subnets, rather than a way to express
+        subnet preference. For example, if the client doesn't belong to the
+        "b-devices" class it may only use the subnet 2001:db8:1::/64 and will
+        never use the subnet 2001:db8:3::/64.
+      </para>
+
+      <para>A typical use case for client classification is in the cable network,
+      where cable modems should use one subnet and other devices should use
+      another subnet within the same shared network. In this case it is required
+      to apply classification on all subnets. The following example defines two
+      classes of devices. The subnet selection is made based on option 1234 values.
 <screen>
 {
     "client-classes": [
@@ -3262,6 +3393,9 @@ based on option 1234 values.
     "shared-networks": [
         {
             "name": "galah",
+            "relay": {
+                "ip-address": "2001:db8:2:34::1"
+            },
             "subnet6": [
                 {
                     "subnet": "2001:db8:1::/64",
@@ -3282,9 +3416,21 @@ In this example each class has its own restriction. Only clients that belong to
 class a-devices will be able to use subnet 2001:db8:1::/64 and only clients
 belonging to b-devices will be able to use subnet 2001:db8:3::/64. Care should
 be taken to not define too restrictive classification rules, as clients that are
-not able to use any subnets will be refused service. Although, this may be
+unable to use any subnets will be refused service. Although, this may be
 desired outcome if one desires to service only clients of known properties
 (e.g. only VoIP phones allowed on a given link).</para>
+
+    <para>
+      Note that it is possible to achieve similar effect as presented in this
+      section without the use of shared networks. If the subnets are placed in
+      the global subnets scope, rather than in the shared network, the server
+      will still use classification rules to pick the right subnet for a given
+      class of devices. The major benefit of placing subnets within the
+      shared network is that common parameters for the logically grouped
+      subnets can be specified once, in the shared network scope, e.g.
+      "interface" or "relay" parameter. All subnets belonging to this shared
+      network will inherit those parameters.
+    </para>
 
     </section>
 
@@ -3299,6 +3445,9 @@ desired outcome if one desires to service only clients of known properties
     "shared-networks": [
     {
         "name": "frog",
+        "relay": {
+            "ip-address": "2001:db8:2:34::1"
+        },
         "subnet6": [
             {
                 "subnet": "2001:db8:1::/64",
@@ -3341,7 +3490,9 @@ subnets belonging to the same shared network.</para>
 <para>While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if you plan to use database storage for host
 reservations. If ID is not specified, the values for it be autogenerated,
-i.e. it will assign increasing integer values starting from 1.</para>
+i.e. it will assign increasing integer values starting from 1. Thus, the
+autogenerated IDs are not stable across configuration changes.
+</para>
     </section>
 
   </section>

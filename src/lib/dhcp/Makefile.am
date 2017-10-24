@@ -73,7 +73,7 @@ libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp___la_LIBADD  += $(BOOST_LIBS)
 libkea_dhcp___la_LIBADD  += $(CRYPTO_LIBS)
-libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 5:0:0
+libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 6:0:0
 libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = README libdhcp++.dox
@@ -82,47 +82,55 @@ EXTRA_DIST  = README libdhcp++.dox
 # written libraries may need access to all libdhcp++ headers.
 libkea_dhcp___includedir = $(pkgincludedir)/dhcp
 libkea_dhcp___include_HEADERS = \
-    classify.h \
-    dhcp4.h \
-    dhcp6.h \
-    docsis3_option_defs.h \
-    duid.h \
-    duid_factory.h \
-    hwaddr.h \
-    iface_mgr.h \
-    iface_mgr_error_handler.h \
-    libdhcp++.h \
-    opaque_data_tuple.h \
-    option4_addrlst.h \
-    option4_client_fqdn.h \
-    option6_addrlst.h \
-    option6_client_fqdn.h \
-    option6_ia.h \
-    option6_iaaddr.h \
-    option6_iaprefix.h \
-    option6_pdexclude.h \
-    option6_status_code.h \
-    option.h \
-    option_custom.h \
-    option_data_types.h \
-    option_definition.h \
-    option_int.h \
-    option_int_array.h \
-    option_opaque_data_tuples.h \
-    option_space.h \
-    option_space_container.h \
-    option_string.h \
-    option_vendor.h \
-    option_vendor_class.h \
-    pkt.h \
-    pkt4.h \
-    pkt4o6.h \
-    pkt6.h \
-    pkt_filter.h \
-    pkt_filter6.h \
-    pkt_filter_bpf.h \
-    pkt_filter_inet.h \
-    pkt_filter_inet6.h \
-    pkt_filter_lpf.h \
-    protocol_util.h \
-    std_option_defs.h
+	classify.h \
+	dhcp4.h \
+	dhcp6.h \
+	docsis3_option_defs.h \
+	duid.h \
+	duid_factory.h \
+	hwaddr.h \
+	iface_mgr.h \
+	iface_mgr_error_handler.h \
+	libdhcp++.h \
+	opaque_data_tuple.h \
+	option.h \
+	option4_addrlst.h \
+	option4_client_fqdn.h \
+	option6_addrlst.h \
+	option6_client_fqdn.h \
+	option6_ia.h \
+	option6_iaaddr.h \
+	option6_iaprefix.h \
+	option6_pdexclude.h \
+	option6_status_code.h \
+	option_custom.h \
+	option_data_types.h \
+	option_definition.h \
+	option_int.h \
+	option_int_array.h \
+	option_opaque_data_tuples.h \
+	option_space.h \
+	option_space_container.h \
+	option_string.h \
+	option_vendor.h \
+	option_vendor_class.h \
+	pkt.h \
+	pkt4.h \
+	pkt4o6.h \
+	pkt6.h \
+	pkt_filter.h \
+	pkt_filter6.h \
+	pkt_filter_inet.h \
+	pkt_filter_inet6.h \
+	protocol_util.h \
+	std_option_defs.h
+
+if OS_LINUX
+libkea_dhcp___include_HEADERS += \
+	pkt_filter_lpf.h
+endif
+
+if OS_BSD
+libkea_dhcp___include_HEADERS += \
+	pkt_filter_bpf.h
+endif

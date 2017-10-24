@@ -39,24 +39,17 @@ namespace lease_cmds {
 /// @brief Wrapper class around reservation command handlers.
 class LeaseCmdsImpl : private CmdsImpl {
 public:
-    /// @brief Parameters specified for reservation-get and reservation-del
-    ///
-    /// As both call types (get and delete) need specify which reservation to
-    /// act on, they have the same set of parameters. In particular, those
-    /// two call types support the following sets of parameters:
-    /// - address
-    /// - subnet-id, identifier-type, identifier-value (v4)
-    /// - subnet-id, lease-type, iaid, identifier-type, identifier-value (v6)
-    ///
-    /// This class stores those parameters and is used to pass them around.
+
+    /// @brief Parameters specified for lease commands.
     class Parameters {
     public:
 
         /// @brief specifies type of query (by IP addr, by hwaddr, by DUID)
         typedef enum {
-            TYPE_ADDR,    ///< query by IP address (either v4 or v6)
-            TYPE_HWADDR,  ///< query by hardware address (v4 only)
-            TYPE_DUID     ///< query by DUID (v6 only)
+            TYPE_ADDR,      ///< query by IP address (either v4 or v6)
+            TYPE_HWADDR,    ///< query by hardware address (v4 only)
+            TYPE_DUID,      ///< query by DUID (v6 only)
+            TYPE_CLIENT_ID  ///< query by client identifier (v4 only).
         } Type;
 
         /// @brief Specifies subnet-id (always used)
@@ -70,6 +63,9 @@ public:
 
         /// @brief Specifies identifier value (used when query_type is TYPE_DUID)
         isc::dhcp::DuidPtr duid;
+
+        /// @brief Specifies identifier value (used when query_type is TYPE_CLIENT_ID)
+        isc::dhcp::ClientIdPtr client_id;
 
         /// @brief Attempts to covert text to one of specified types
         ///
@@ -85,6 +81,8 @@ public:
                 return (Parameters::TYPE_HWADDR);
             } else if (txt == "duid") {
                 return (Parameters::TYPE_DUID);
+            } else if (txt == "client-id") {
+                return (Parameters::TYPE_CLIENT_ID);
             } else {
                 isc_throw(BadValue, "Incorrect identifier type: "
                           << txt << ", the only supported values are: "
@@ -205,7 +203,9 @@ public:
 
 int
 LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
-    bool v4;
+    // Arbitrary defaulting to DHCPv4 or with other words extractCommand
+    // below is not expected to throw...
+    bool v4 = true;
     string txt = "malformed command";
     try {
         extractCommand(handle);
@@ -343,6 +343,10 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
         x.hwaddr = HWAddrPtr(new HWAddr(hw));
         break;
     }
+    case Parameters::TYPE_CLIENT_ID: {
+        x.client_id = ClientId::fromText(ident->stringValue());
+        break;
+    }
     case Parameters::TYPE_DUID: {
         DUID duid = DUID::fromText(ident->stringValue());
         x.duid = DuidPtr(new DUID(duid));
@@ -409,6 +413,19 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
             }
             break;
 
+        case Parameters::TYPE_CLIENT_ID:
+            if (v4) {
+                if (!p.client_id) {
+                    isc_throw(InvalidParameter, "Program error: Query by client-id "
+                                                "requires client-id to be specified");
+                }
+
+                lease4 = LeaseMgrFactory::instance().getLease4(*p.client_id, p.subnet_id);
+            } else {
+                isc_throw(isc::InvalidParameter, "Query by client-id is not allowed in v6.");
+            }
+            break;
+
         default: {
             isc_throw(InvalidOperation, "Unknown query type: " << static_cast<int>(p.query_type));
             break;
@@ -462,6 +479,23 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
 
             // Let's see if there's such a lease at all.
             lease4 = LeaseMgrFactory::instance().getLease4(*p.hwaddr, p.subnet_id);
+            if (!lease4) {
+                setErrorResponse(handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
+                return (0);
+            }
+
+            // Found it, can use it as is.
+            addr = lease4->addr_;
+            break;
+
+        case Parameters::TYPE_CLIENT_ID:
+            if (!p.client_id) {
+                isc_throw(InvalidParameter, "Program error: Query by client-id "
+                                            "requires client-id to be specified");
+            }
+
+            // Let's see if there's such a lease at all.
+            lease4 = LeaseMgrFactory::instance().getLease4(*p.client_id, p.subnet_id);
             if (!lease4) {
                 setErrorResponse(handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
                 return (0);

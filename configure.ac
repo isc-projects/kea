@@ -407,6 +407,7 @@ AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
   [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
 
+DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
 m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
  [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
@@ -427,12 +428,14 @@ if test "x$enable_shell" != xno ; then
     eval PKGPYTHONDIR="\"$OLD\""
   done
   prefix="$saved_prefix"
+  DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
 else
   PYTHON=no
 fi
 
 # Export to makefiles the info whether we have shell enabled or not
 AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
+AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
@@ -757,6 +760,7 @@ fi
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
 # Check for log4cplus
+DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
   AC_HELP_STRING([--with-log4cplus=PATH],
@@ -765,6 +769,7 @@ AC_ARG_WITH([log4cplus],
 if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
+  DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus=${log4cplus_path}"
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
@@ -778,10 +783,12 @@ else
                         break
                 fi
         done
+	DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus"
 fi
 
 LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus"
 
+AC_SUBST(DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG)
 AC_SUBST(LOG4CPLUS_LIBS)
 AC_SUBST(LOG4CPLUS_INCLUDES)
 
@@ -1338,6 +1345,7 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/bin/shell/tests/shell_process_tests.sh
            chmod +x src/bin/shell/tests/shell_unittest.py
            chmod +x src/lib/dns/gen-rdatacode.py
+           chmod +x src/lib/log/tests/buffer_logger_test.sh
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh

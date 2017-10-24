@@ -6,19 +6,25 @@
 
 #include <config.h>
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <stats/stats_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -802,6 +808,59 @@ const char* NETWORKS_CONFIG[] = {
     "    ]"
     "}",
 
+// Configuration #15
+// - two shared networks, each comes with its own server identifier.
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"option-data\": ["
+    "                {"
+    "                    \"name\": \"dhcp-server-identifier\","
+    "                    \"data\": \"1.2.3.4\""
+    "                }"
+    "            ],"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/26\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        },"
+    "        {"
+    "            \"name\": \"dog\","
+    "            \"interface\": \"eth0\","
+    "            \"option-data\": ["
+    "                {"
+    "                    \"name\": \"dhcp-server-identifier\","
+    "                    \"data\": \"2.3.4.5\""
+    "                }"
+    "            ],"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"10.0.0.0/26\","
+    "                    \"id\": 1000,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"10.0.0.1 - 10.0.0.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}"
+
 };
 
 /// @Brief Test fixture class for DHCPv4 server using shared networks.
@@ -814,6 +873,23 @@ public:
           iface_mgr_test_config_(true) {
         IfaceMgr::instance().openSockets4();
         StatsMgr::instance().removeAll();
+    }
+
+    /// @brief Returns subnet having specified address in range.
+    ///
+    /// @param address Address for which subnet is being searched.
+    /// @return Pointer to the subnet having an address in range or null pointer
+    /// if no subnet found.
+    Subnet4Ptr getConfiguredSubnet(const IOAddress& address) {
+        CfgSubnets4Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
+        const Subnet4Collection* subnets = cfg->getAll();
+        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend();
+             ++subnet_it) {
+            if ((*subnet_it)->inRange(address)) {
+                return (*subnet_it);
+            }
+        }
+        return (Subnet4Ptr());
     }
 
     /// @brief Perform DORA exchange and checks the result
@@ -844,6 +920,13 @@ public:
         EXPECT_EQ((ack ? DHCPACK : DHCPNAK), resp->getType());
         if (ack) {
             EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+            Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(resp->getYiaddr()));
+            ASSERT_TRUE(lease);
+            // Make sure that the subnet id in the lease database is not messed up.
+            Subnet4Ptr subnet = getConfiguredSubnet(resp->getYiaddr());
+            ASSERT_TRUE(subnet);
+            ASSERT_EQ(subnet->getID(), lease->subnet_id_);
+
         } else {
             EXPECT_EQ("0.0.0.0", resp->getYiaddr().toText());
         }
@@ -902,7 +985,72 @@ public:
         } else {
             EXPECT_EQ(DHCPACK, resp->getType());
             EXPECT_EQ(exp_addr, resp->getYiaddr().toText());
+            Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress(resp->getYiaddr()));
+            ASSERT_TRUE(lease);
+            // Make sure that the subnet id in the lease database is not messed up.
+            Subnet4Ptr subnet = getConfiguredSubnet(resp->getYiaddr());
+            ASSERT_TRUE(subnet);
+            ASSERT_EQ(subnet->getID(), lease->subnet_id_);
         }
+    }
+
+    /// @brief Verifies lease statistics against values held by StatsMgr.
+    ///
+    /// This method retrieves lease statistics from the database and then compares it
+    /// against values held by the StatsMgr. The compared statistics are number of
+    /// assigned addresses and prefixes for a subnet.
+    void verifyAssignedStats() {
+        LeaseStatsQueryPtr query = LeaseMgrFactory::instance().startLeaseStatsQuery4();
+        LeaseStatsRow row;
+        while (query->getNextRow(row)) {
+            // Only check valid leases.
+            if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                ASSERT_EQ(row.state_count_, getStatsAssignedAddresses(row.subnet_id_))
+                    << "test failed for subnet id " << row.subnet_id_;
+            }
+        }
+    }
+
+    /// @brief Retrieves subnet[id].assigned-addresses statistics for a subnet.
+    ///
+    /// @param subnet_id Identifier of a subnet for which statistics should be
+    /// retrieved.
+    /// @return Number of assigned addresses for a subnet.
+    int64_t getStatsAssignedAddresses(const SubnetID& subnet_id) const {
+        // Retrieve statistics name, e.g. subnet[1234].assigned-addresses.
+        const std::string stats_name = StatsMgr::generateName("subnet", subnet_id, "assigned-addresses");
+        // Top element is a map with a subnet[id].assigned-addresses parameter.
+        ConstElementPtr top_element = StatsMgr::instance().get(stats_name);
+        if (top_element && (top_element->getType() == Element::map)) {
+            // It contains two lists (nested).
+            ConstElementPtr first_list = top_element->get(stats_name);
+            if (first_list && (first_list->getType() == Element::list) &&
+                (first_list->size() > 0)) {
+                // Get the nested list which should have two elements, of which first
+                // is the statistics value we're looking for.
+                ConstElementPtr second_list = first_list->get(0);
+                if (second_list && (second_list->getType() == Element::list) &&
+                    (second_list->size() == 2)) {
+                    ConstElementPtr addresses_element = second_list->get(0);
+                    if (addresses_element && (addresses_element->getType() == Element::integer)) {
+                        return (addresses_element->intValue());
+                    }
+                }
+            }
+        }
+
+        // Statistics invalid or not found.
+        return (0);
+    }
+
+    /// @brief Launches specific operation and verifies lease statistics before and
+    /// after this operation.
+    ///
+    /// @param operation Operation to be launched.
+    void testAssigned(const std::function<void()>& operation) {
+        ASSERT_NO_FATAL_FAILURE(verifyAssignedStats());
+        operation();
+        ASSERT_NO_FATAL_FAILURE(verifyAssignedStats());
     }
 
     /// @brief Destructor.
@@ -926,33 +1074,70 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
 
     // Client #1 requests an address in first subnet within a shared network.
     // We'll send a hint of 192.0.2.63 and expect to get it.
-    doDORA(client1, "192.0.2.63", "192.0.2.63");
+    testAssigned([this, &client1]() {
+        doDORA(client1, "192.0.2.63", "192.0.2.63");
+    });
 
     // Client #2 The second client will request a lease and should be assigned
     // an address from the second subnet.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
-    doDORA(client2, "10.0.0.16");
+    testAssigned([this, &client2]() {
+        doDORA(client2, "10.0.0.16");
+    });
 
     // Client #3. It sends DHCPDISCOVER which should be dropped by the server because
     // the server has no more addresses to assign.
     Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
     client3.setIfaceName("eth1");
-    ASSERT_NO_THROW(client3.doDiscover());
-    Pkt4Ptr resp3 = client3.getContext().response_;
-    ASSERT_FALSE(resp3);
+    testAssigned([this, &client3]() {
+        ASSERT_NO_THROW(client3.doDiscover());
+        Pkt4Ptr resp3 = client3.getContext().response_;
+        ASSERT_FALSE(resp3);
+    });
 
     // Client #3 should be assigned an address if subnet 3 is selected for this client.
     client3.setIfaceName("eth0");
-    doDORA(client3, "192.0.2.65");
+    testAssigned([this, &client3]() {
+        doDORA(client3, "192.0.2.65");
+    });
 
     // Client #1 should be able to renew its address.
     client1.setState(Dhcp4Client::RENEWING);
-    doRequest(client1, "192.0.2.63");
+    testAssigned([this, &client1]() {
+        doRequest(client1, "192.0.2.63");
+    });
 
     // Client #2 should be able to renew its address.
     client2.setState(Dhcp4Client::RENEWING);
-    doRequest(client2, "10.0.0.16");
+    testAssigned([this, &client2]() {
+        doRequest(client2, "10.0.0.16");
+    });
+}
+
+// Returning client sends 4-way exchange.
+TEST_F(Dhcpv4SharedNetworkTest, returningClientStartsOver) {
+    // Create client.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.includeClientId("01:02:03:04");
+
+    // Configure the server with one shared network including two subnets and
+    // one subnet outside of the shared network.
+    configure(NETWORKS_CONFIG[0], *client.getServer());
+
+    // Client requests an address in first subnet within a shared network.
+    // We'll send a hint of 192.0.2.63 and expect to get it.
+    testAssigned([this, &client]() {
+        doDORA(client, "192.0.2.63", "192.0.2.63");
+    });
+
+
+    // The client reboots and performs 4-way exchange again without a hint.
+    // It should be assigned the same (existing) lease.
+    testAssigned([this, &client]() {
+        doDORA(client, "192.0.2.63");
+    });
 }
 
 // Shared network is selected based on giaddr value (relay specified
@@ -968,13 +1153,17 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay1) {
     configure(NETWORKS_CONFIG[1], *client1.getServer());
 
     // Client #1 should be assigned an address from shared network.
-    doDORA(client1, "192.0.2.63", "192.0.2.63");
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.63", "192.0.2.63");
+    });
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.1.2.3"), IOAddress("10.0.0.3"));
-    doDORA(client2, "192.0.2.65", "192.0.2.63");
+    testAssigned([this, &client2] {
+        doDORA(client2, "192.0.2.65", "192.0.2.63");
+    });
 }
 
 // Shared network is selected based on giaddr value (relay specified
@@ -992,19 +1181,25 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay2) {
     configure(NETWORKS_CONFIG[14], *client1.getServer());
 
     // Client #1 should be assigned an address from shared network.
-    doDORA(client1, "192.0.2.63");
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.63");
+    });
 
     // Create client #2. This is a relayed client which is using relay
     // address that is used for subnet 2 in the shared network.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.2.2.2"), IOAddress("10.0.0.3"));
-    doDORA(client2, "10.0.0.16");
+    testAssigned([this, &client2] {
+        doDORA(client2, "10.0.0.16");
+    });
 
     // Create client #3. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
     Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
     client3.useRelay(true, IOAddress("192.3.3.3"), IOAddress("10.0.0.4"));
-    doDORA(client3, "192.0.2.65");
+    testAssigned([this, &client3] {
+        doDORA(client3, "192.0.2.65");
+    });
 }
 
 // Providing a hint for any address belonging to a shared network.
@@ -1019,15 +1214,22 @@ TEST_F(Dhcpv4SharedNetworkTest, hintWithinSharedNetwork) {
 
     // Provide a hint to an existing address within first subnet. This address
     // should be offered out of this subnet.
-    doDiscover(client, "192.0.2.63", "192.0.2.63");
+    testAssigned([this, &client] {
+        doDiscover(client, "192.0.2.63", "192.0.2.63");
+    });
 
     // Similarly, we should be offered an address from another subnet within
     // the same shared network when we ask for it.
-    doDiscover(client, "10.0.0.16", "10.0.0.16");
+    testAssigned([this, &client] {
+        doDiscover(client, "10.0.0.16", "10.0.0.16");
+    });
 
     // Asking for an address that is not in address pool should result in getting
     // an address from one of the subnets, but generally hard to tell from which one.
-    ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.23"))));
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.23"))));
+    });
+
     Pkt4Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -1052,24 +1254,32 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 
     // Client #1 requests an address in the restricted subnet but can't be assigned
     // this address because the client doesn't belong to a certain class.
-    doDORA(client1, "10.0.0.16", "192.0.2.63");
+    testAssigned([this, &client1] {
+        doDORA(client1, "10.0.0.16", "192.0.2.63");
+    });
 
     // Release the lease that the client has got, because we'll need this address
     // further in the test.
-    ASSERT_NO_THROW(client1.doRelease());
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doRelease());
+    });
 
     // Add option93 which would cause the client to be classified as "a-devices".
     OptionPtr option93(new OptionUint16(Option::V4, 93, 0x0001));
     client1.addExtraOption(option93);
 
     // This time, the allocation of the address provided as hint should be successful.
-    doDORA(client1, "192.0.2.63", "192.0.2.63");
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.63", "192.0.2.63");
+    });
 
     // Client 2 should be assigned an address from the unrestricted subnet.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.3.5.6"));
     client2.setIfaceName("eth1");
-    doDORA(client2, "10.0.0.16");
+    testAssigned([this, &client2] {
+        doDORA(client2, "10.0.0.16");
+    });
 
     // Now, let's reconfigure the server to also apply restrictions on the
     // subnet to which client2 now belongs.
@@ -1078,12 +1288,18 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // The client should be refused to renew the lease because it doesn't belong
     // to "b-devices" class.
     client2.setState(Dhcp4Client::RENEWING);
-    doRequest(client2, "");
+    testAssigned([this, &client2] {
+        doRequest(client2, "");
+    });
 
     // If we add option93 with a value matching this class, the lease should
     // get renewed.
     OptionPtr option93_bis(new OptionUint16(Option::V4, 93, 0x0002));
     client2.addExtraOption(option93_bis);
+
+    testAssigned([this, &client2] {
+        doRequest(client2, "10.0.0.16");
+    });
 }
 
 // IPv4 address reservation exists in one of the subnets within
@@ -1101,7 +1317,9 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     configure(NETWORKS_CONFIG[4], *client1.getServer());
 
     // Client #1 should get his reserved address from the second subnet.
-    doDORA(client1, "10.0.0.29", "192.0.2.28");
+    testAssigned([this, &client1] {
+        doDORA(client1, "10.0.0.29", "192.0.2.28");
+    });
 
     // Create client #2
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
@@ -1109,7 +1327,9 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     client2.setHWAddress("aa:bb:cc:dd:ee:ff");
 
     // Client #2 should get its reserved address from the first subnet.
-    doDORA(client2, "192.0.2.28");
+    testAssigned([this, &client2] {
+        doDORA(client2, "192.0.2.28");
+    });
 
     // Reconfigure the server. Now, the first client gets second client's
     // reservation and vice versa.
@@ -1117,18 +1337,24 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
 
     // The first client is trying to renew the lease and should get a DHCPNAK.
     client1.setState(Dhcp4Client::RENEWING);
-    doRequest(client1, "");
+    testAssigned([this, &client1] {
+        doRequest(client1, "");
+    });
 
     // Similarly, the second client is trying to renew the lease and should
     // get a DHCPNAK.
     client2.setState(Dhcp4Client::RENEWING);
-    doRequest(client2, "");
+    testAssigned([this, &client2] {
+        doRequest(client2, "");
+    });
 
     // But the client should get a lease, if it does 4-way exchange. However, it
     // must not get any of the reserved addresses because one of them is reserved
     // for another client and for another one there is a valid lease.
     client1.setState(Dhcp4Client::SELECTING);
-    ASSERT_NO_THROW(client1.doDORA());
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(doDORA(client1, "192.0.2.29", "192.0.2.29"));
+    });
     Pkt4Ptr resp1 = client1.getContext().response_;
     ASSERT_TRUE(resp1);
     EXPECT_EQ(DHCPACK, resp1->getType());
@@ -1138,11 +1364,15 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     // Client #2 is now doing 4-way exchange and should get its newly reserved
     // address, released by the 4-way transaction of client 1.
     client2.setState(Dhcp4Client::SELECTING);
-    doDORA(client2, "10.0.0.29");
+    testAssigned([this, &client2] {
+        doDORA(client2, "10.0.0.29");
+    });
 
     // Same for client #1.
     client1.setState(Dhcp4Client::SELECTING);
-    doDORA(client1, "192.0.2.28");
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.28");
+    });
 }
 
 // Reserved address can't be assigned as long as access to a subnet is
@@ -1160,7 +1390,9 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationAccessRestrictedByClass) {
 
     // Assigned address should be allocated from the second subnet, because the
     // client doesn't belong to the "a-devices" class.
-    doDORA(client, "10.0.0.16");
+    testAssigned([this, &client] {
+        doDORA(client, "10.0.0.16");
+    });
 
     // Add option 93 which would cause the client to be classified as "a-devices".
     OptionPtr option93(new OptionUint16(Option::V4, 93, 0x0001));
@@ -1169,11 +1401,15 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationAccessRestrictedByClass) {
     // Client renews its lease and should get DHCPNAK because this client now belongs
     // to the "a-devices" class and can be assigned a reserved address instead.
     client.setState(Dhcp4Client::RENEWING);
-    doRequest(client, "");
+    testAssigned([this, &client] {
+        doRequest(client, "");
+    });
 
     // Perform 4-way exchange again. It should be assigned a reserved address this time.
     client.setState(Dhcp4Client::SELECTING);
-    doDORA(client, "192.0.2.28");
+    testAssigned([this, &client] {
+        doDORA(client, "192.0.2.28");
+    });
 }
 
 // Some options are specified on the shared subnet level, some on the
@@ -1262,7 +1498,9 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
 
     // Perform 4-way exchange to obtain a lease. The client should get the lease from
     // the second subnet.
-    doDORA(client1, "10.0.0.16", "10.0.0.16");
+    testAssigned([this, &client1] {
+        doDORA(client1, "10.0.0.16", "10.0.0.16");
+    });
 
     // The client1 transitions to INIT-REBOOT state in which the client1 remembers the
     // lease and sends DHCPREQUEST to all servers (server id) is not specified. If
@@ -1270,7 +1508,9 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
     // drop the request. We want to make sure that the server responds (resp1) regardless
     // of the subnet from which the lease has been allocated.
     client1.setState(Dhcp4Client::INIT_REBOOT);
-    doRequest(client1, "10.0.0.16");
+    testAssigned([this, &client1] {
+        doRequest(client1, "10.0.0.16");
+    });
 
     // Create client #2.
     Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
@@ -1278,7 +1518,9 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
 
     // Let's make sure that the behavior is the same for the other subnet within the
     // same shared network.
-    doDORA(client2, "192.0.2.63", "192.0.2.63");
+    testAssigned([this, &client2] {
+        doDORA(client2, "192.0.2.63", "192.0.2.63");
+    });
 
     // The client2 transitions to INIT-REBOOT state in which the client2 remembers the
     // lease and sends DHCPREQUEST to all servers (server id) is not specified. If
@@ -1286,7 +1528,9 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
     // drop the request. We want to make sure that the server responds (resp2) regardless
     // of the subnet from which the lease has been allocated.
     client2.setState(Dhcp4Client::INIT_REBOOT);
-    doRequest(client2, "192.0.2.63");
+    testAssigned([this, &client2] {
+        doRequest(client2, "192.0.2.63");
+    });
 }
 
 // Host reservations include hostname, next server and client class.
@@ -1305,7 +1549,9 @@ TEST_F(Dhcpv4SharedNetworkTest, variousFieldsInReservation) {
     configure(NETWORKS_CONFIG[10], *client.getServer());
 
     // Perform 4-way exchange.
-    ASSERT_NO_THROW(client.doDORA());
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doDORA());
+    });
     Pkt4Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
     EXPECT_EQ(DHCPACK, resp->getType());
@@ -1349,7 +1595,9 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByInterface) {
     configure(NETWORKS_CONFIG[8], *client1.getServer());
 
     // Perform 4-way exchange.
-    ASSERT_NO_THROW(client1.doDORA());
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doDORA());
+    });
     Pkt4Ptr resp1 = client1.getContext().response_;
     ASSERT_TRUE(resp1);
     EXPECT_EQ(DHCPACK, resp1->getType());
@@ -1362,7 +1610,9 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByInterface) {
     client2.setIfaceName("eth0");
 
     // Perform 4-way exchange.
-    ASSERT_NO_THROW(client2.doDORA());
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doDORA());
+    });
     Pkt4Ptr resp2 = client2.getContext().response_;
     ASSERT_TRUE(resp2);
     EXPECT_EQ(DHCPACK, resp2->getType());
@@ -1382,7 +1632,9 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByRelay) {
     configure(NETWORKS_CONFIG[9], *client1.getServer());
 
     // Perform 4-way exchange.
-    ASSERT_NO_THROW(client1.doDORA());
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doDORA());
+    });
     Pkt4Ptr resp1 = client1.getContext().response_;
     ASSERT_TRUE(resp1);
     EXPECT_EQ(DHCPACK, resp1->getType());
@@ -1395,7 +1647,9 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByRelay) {
     client2.useRelay(true, IOAddress("192.1.2.3"));
 
     // Perform 4-way exchange.
-    ASSERT_NO_THROW(client2.doDORA());
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doDORA());
+    });
     Pkt4Ptr resp2 = client2.getContext().response_;
     ASSERT_TRUE(resp2);
     EXPECT_EQ(DHCPACK, resp2->getType());
@@ -1417,7 +1671,9 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
     configure(NETWORKS_CONFIG[11], *client.getServer());
 
     // Perform 4-way exchange.
-    ASSERT_NO_THROW(client.doDORA());
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doDORA());
+    });
     Pkt4Ptr resp1 = client.getContext().response_;
     ASSERT_TRUE(resp1);
     ASSERT_EQ(DHCPACK, resp1->getType());
@@ -1432,7 +1688,9 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
     client.setState(Dhcp4Client::RENEWING);
 
     // Try to renew the lease with modified MAC address.
-    ASSERT_NO_THROW(client.doRequest());
+    testAssigned([this, &client] {
+        ASSERT_NO_THROW(client.doRequest());
+    });
     Pkt4Ptr resp2 = client.getContext().response_;
     ASSERT_TRUE(resp2);
     ASSERT_EQ(DHCPACK, resp2->getType());
@@ -1457,7 +1715,9 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
     configure(NETWORKS_CONFIG[13], *client1.getServer());
 
     // Simply send DHCPDISCOVER to avoid allocating a lease.
-    ASSERT_NO_THROW(client1.doDiscover());
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doDiscover());
+    });
     Pkt4Ptr resp1 = client1.getContext().response_;
     ASSERT_TRUE(resp1);
     ASSERT_EQ(DHCPOFFER, resp1->getType());
@@ -1474,7 +1734,49 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
 
     // Send DHCPDISCOVER. There is no lease in the lease database so the
     // client should be offered a lease based on the client class selection.
-    doDiscover(client2, "192.0.2.63", "");
+    testAssigned([this, &client2] {
+        doDiscover(client2, "192.0.2.63", "");
+    });
+}
+
+// This test verifies that custom server identifier can be specified for a
+// shared network.
+TEST_F(Dhcpv4SharedNetworkTest, customServerIdentifier) {
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(NETWORKS_CONFIG[15], *client1.getServer()));
+
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doDORA());
+    });
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt4Ptr resp = client1.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // The explicitly configured server identifier should take precedence
+    // over generated server identifier.
+    EXPECT_EQ("1.2.3.4", client1.config_.serverid_.toText());
+
+    // Create another client using different interface.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth0");
+
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doDORA());
+    });
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client2.getContext().response_);
+    resp = client2.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // The explicitly configured server identifier should take precedence
+    // over generated server identifier.
+    EXPECT_EQ("2.3.4.5", client2.config_.serverid_.toText());
 }
 
 } // end of anonymous namespace

@@ -3474,6 +3474,65 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(1516, optionIA->getT2());
 }
 
+// Verify that specific option object is returned for standard
+// option with trailing domain list.
+TEST_F(Dhcp6ParserTest, rdnssOption) {
+    ConstElementPtr x;
+    std::map<std::string, std::string> params;
+    params["name"] = "rdnss-selection";
+    params["space"] = DHCP6_OPTION_SPACE;
+    // Option code 74 is D6O_RDNSS_SELECTION
+    params["code"] = "74";
+    params["data"] = "2001::1, 3, isc.org, example.org, example.com";
+    params["csv-format"] = "true";
+
+    std::string config = createConfigWithOption(params);
+    ConstElementPtr json = parseDHCP6(config, true);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ASSERT_TRUE(subnet);
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(1, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(D6O_RDNSS_SELECTION);
+    // Expect single option with the code equal to rndnss-selection option code.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // The actual pointer to the option is held in the option field
+    // in the structure returned.
+    OptionPtr option = range.first->option_;
+    ASSERT_TRUE(option);
+    // Option object returned for here is expected to be OptionCustom
+    // which is derived from Option. This class is dedicated to
+    // represent standard option D6O_RDNSS_SELECTION.
+    boost::shared_ptr<OptionCustom> optionCustom =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    // If cast is unsuccessful than option returned was of a
+    // different type than optionCustom. This is wrong.
+    ASSERT_TRUE(optionCustom);
+    // If cast was successful we may use accessors exposed by
+    // optionCustom to validate that the content of this option
+    // has been set correctly.
+    ASSERT_EQ(5, optionCustom->getDataFieldsNum());
+    EXPECT_EQ("2001::1", optionCustom->readAddress(0).toText());
+    EXPECT_EQ(3, optionCustom->readInteger<uint8_t>(1));
+    EXPECT_EQ("isc.org.", optionCustom->readFqdn(2));
+    EXPECT_EQ("example.org.", optionCustom->readFqdn(3));
+    EXPECT_EQ("example.com.", optionCustom->readFqdn(4));
+}
+
+
 // This test checks if vendor options can be specified in the config file
 // (in hex format), and later retrieved from configured subnet
 TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
@@ -5298,7 +5357,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextlw4over6) {
     bool bool_value;
     ASSERT_EQ(Element::boolean, exclude->getType());
     EXPECT_NO_THROW(exclude->getValue(bool_value));
-    EXPECT_EQ(true, bool_value);
+    EXPECT_TRUE(bool_value);
 
     ASSERT_TRUE(v6len);
     ASSERT_EQ(Element::integer, v6len->getType());
@@ -5617,7 +5676,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
         "        },\n"
         "        \"valid-lifetime\": 400, \n"
         "        \"interface-id\": \"twotwo\",\n"
-        "        \"rapid-commit\": false,\n"
+        "        \"rapid-commit\": true,\n"
         "        \"reservation-mode\": \"out-of-pool\"\n"
         "    }\n"
         "    ]\n"
@@ -5662,7 +5721,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
     EXPECT_EQ(IOAddress("1111::1"), s->getRelayInfo().addr_);
-    EXPECT_EQ(true, s->getRapidCommit());
+    EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
@@ -5673,7 +5732,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
     EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
-    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
@@ -5688,7 +5747,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
     EXPECT_FALSE(s->getInterfaceId());
     EXPECT_EQ(IOAddress("::"), s->getRelayInfo().addr_);
-    EXPECT_EQ(false, s->getRapidCommit());
+    EXPECT_FALSE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
 
@@ -5778,6 +5837,38 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     EXPECT_EQ("", s->getIface());
 }
 
+
+// It is not allowed to have different values for interfaces names is subnets
+// in the same shared network.
+TEST_F(Dhcp6ParserTest, sharedNetworksInterfacesMixed) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"interface\": \"eth0\"\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"interface\": \"eth1\"\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR, "Subnet 2001:db2::/48 has specified "
+              "interface eth1, but earlier subnet in the same shared-network "
+              "or the shared-network itself used eth0");
+}
+
 // This test checks if client-class is derived properly.
 TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
 
@@ -5861,5 +5952,102 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     classes = s->getClientClasses();
     EXPECT_TRUE(classes.empty());
 }
+
+// Tests if rapid-commit is derived properly.
+TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"frog\"\n,"
+        "    \"rapid-commit\": true,\n"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"client-class\": \"beta\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"rapid-commit\": false,\n"
+        "    \"subnet6\": [\n"
+        "    {\n"
+        "        \"subnet\": \"2001:db3::/48\",\n"
+        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks6();
+
+    // Two shared networks are expeced.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork6Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork6Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    const Subnet6Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    ASSERT_EQ(2, subs->size());
+    EXPECT_TRUE(subs->at(0)->getRapidCommit());
+    EXPECT_TRUE(subs->at(1)->getRapidCommit());
+
+    // Ok, now check the second shared network. It doesn't have
+    // anything defined on shared-network or subnet level, so
+    // everything should have default values.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    EXPECT_FALSE(subs->at(0)->getRapidCommit());
+}
+
+// Tests that non-matching rapid-commit setting for subnets belonging to a
+// shared network cause configuration error.
+TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"frog\"\n,"
+        "    \"subnet6\": [\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"rapid-commit\": true,\n"
+        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"2001:db2::/48\",\n"
+        "        \"rapid-commit\": false,\n"
+        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
+        "        \"client-class\": \"beta\"\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR, "All subnets in a shared network "
+              "must have the same rapid-commit value. Subnet 2001:db2::/48 has "
+              "specified rapid-commit false, but earlier subnet in the same "
+              "shared-network or the shared-network itself used rapid-commit true");
+}
+
 
 };

@@ -579,6 +579,7 @@
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
 <row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
 concatenation of the strings</entry></row>
+<row><entry>Ifelse</entry><entry>ifelse('foo' == 'bar','us','them')</entry><entry>Return the branch value according to the condition</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -624,6 +625,15 @@ concatenation of the strings</entry></row>
         concat('foo', 'bar') == 'foobar'
           </screen>
        </section>
+       <section>
+         <title>Ifelse</title>
+         The ifelse function "ifelse(cond, iftrue, ifelse)" returns the
+         "iftrue" or "ifelse" branch value following the boolean
+         condition "cond". For instance:
+           <screen>
+         ifelse(option[230].exists, option[230].hex, 'none')
+           </screen>
+        </section>
     </section>
 
   <note>

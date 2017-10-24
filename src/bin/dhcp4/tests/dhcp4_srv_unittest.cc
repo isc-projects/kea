@@ -204,6 +204,88 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
 }
 
+// This test verifies that it is possible to configure the server to use
+// routing information to determine the right outbound interface to sent
+// responses to a relayed client.
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create configuration for interfaces. It includes the outbound-interface
+    // setting which indicates that the responses aren't neccessarily sent
+    // over the same interface via which a request has been received, but routing
+    // information is used to determine this interface.
+    CfgMgr::instance().clear();
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    cfg_iface->useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    cfg_iface->use(AF_INET, "eth0");
+    cfg_iface->use(AF_INET, "eth1");
+    cfg_iface->setOutboundIface(CfgIface::USE_ROUTING);
+    CfgMgr::instance().commit();;
+
+    // Create the instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
+    req->setGiaddr(IOAddress("192.0.1.1"));
+    req->setHops(2);
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.2.5"));
+    req->setLocalPort(1001);
+    req->setIface("eth1");
+    req->setIndex(1);
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+
+    Pkt4Ptr resp = ex.getResponse();
+    resp->setYiaddr(IOAddress("192.0.1.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
+
+    // This function never throws.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    // Now the destination address should be relay's address.
+    EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
+    // The query has been relayed, so the response must be sent to the port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
+
+    // The local port is always DHCPv4 server port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+
+    // No specific interface is selected as outbound interface and no specific
+    // local address is provided. The IfaceMgr will figure out which interface to use.
+    EXPECT_TRUE(resp->getLocalAddr().isV4Zero());
+    EXPECT_TRUE(resp->getIface().empty());
+    EXPECT_FALSE(resp->indexSet());
+
+    // Another test verifies that setting outbound interface to same as inbound will
+    // cause the server to set interface and local address as expected.
+
+    cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    cfg_iface->useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    cfg_iface->use(AF_INET, "eth0");
+    cfg_iface->use(AF_INET, "eth1");
+    cfg_iface->setOutboundIface(CfgIface::SAME_AS_INBOUND);
+    CfgMgr::instance().commit();
+
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
+    EXPECT_EQ("eth1", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+}
+
 // This test verifies that the destination address of the response message
 // is set to ciaddr when giaddr is set to zero and the ciaddr is set to
 // non-zero address in the received message. This is the case when the
@@ -487,7 +569,7 @@ TEST_F(Dhcpv4SrvTest, appendServerID) {
 
     // Set a local address. It is required by the function under test
     // to create the Server Identifier option.
-    response->setLocalAddr(IOAddress("192.0.3.1"));
+    query->setLocalAddr(IOAddress("192.0.3.1"));
 
     // Append the Server Identifier.
     ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(ex));
@@ -1255,7 +1337,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 // Checks if the next-server defined as global value is overridden by subnet
 // specific value and returned in server messages. There's also similar test for
 // checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
-// config_parser_unittest.cc.
+// config_parser_unittest.cc. This test was extended to other BOOTP fixed fields.
 TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -1270,9 +1352,13 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"nohost\", "
+        "\"boot-file-name\": \"nofile\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"some-name.example.org\", "
+        "    \"boot-file-name\": \"bootfile.efi\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1300,6 +1386,16 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
+    std::string sname("some-name.example.org");
+    uint8_t sname_buf[Pkt4::MAX_SNAME_LEN];
+    std::memset(sname_buf, 0, Pkt4::MAX_SNAME_LEN);
+    std::memcpy(sname_buf, sname.c_str(), sname.size());
+    EXPECT_EQ(0, std::memcmp(sname_buf, &offer->getSname()[0], Pkt4::MAX_SNAME_LEN));
+    std::string filename("bootfile.efi");
+    uint8_t filename_buf[Pkt4::MAX_FILE_LEN];
+    std::memset(filename_buf, 0, Pkt4::MAX_FILE_LEN);
+    std::memcpy(filename_buf, filename.c_str(), filename.size());
+    EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
 
 // Checks if the next-server defined as global value is used in responses
@@ -1320,6 +1416,8 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"some-name.example.org\", "
+        "\"boot-file-name\": \"bootfile.efi\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -1349,6 +1447,16 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
+    std::string sname("some-name.example.org");
+    uint8_t sname_buf[Pkt4::MAX_SNAME_LEN];
+    std::memset(sname_buf, 0, Pkt4::MAX_SNAME_LEN);
+    std::memcpy(sname_buf, sname.c_str(), sname.size());
+    EXPECT_EQ(0, std::memcmp(sname_buf, &offer->getSname()[0], Pkt4::MAX_SNAME_LEN));
+    std::string filename("bootfile.efi");
+    uint8_t filename_buf[Pkt4::MAX_FILE_LEN];
+    std::memset(filename_buf, 0, Pkt4::MAX_FILE_LEN);
+    std::memcpy(filename_buf, filename.c_str(), filename.size());
+    EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
@@ -3136,6 +3244,148 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     opt32 = boost::dynamic_pointer_cast<OptionUint32>(opt);
     ASSERT_TRUE(opt32);
     EXPECT_EQ(12345678, opt32->getValue());
+}
+
+// Checks effect of raw not compatible option 43 sent by a client (failure)
+TEST_F(Dhcpv4SrvTest, clientOption43FailRaw) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options has an incompatible data
+    // so won't have the expected content. Here the processing
+    // of suboptions tries to unpack the uint32 foo suboption and
+    // raises an exception.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    // which will raise an exception
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is not able to process this packet
+    // and raises an exception so the response is empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_FALSE(client.getContext().response_);
+}
+
+// Verifies raw option 43 sent by a client can be handled (global)
+TEST_F(Dhcpv4SrvTest, clientOption43RawGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a global definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" },"
+        "{   \"code\": 43, "
+        "    \"name\": \"vendor-encapsulated-options\", "
+        "    \"type\": \"binary\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions so the response is not empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_TRUE(client.getContext().response_);
+}
+
+// Verifies raw option 43 sent by a client can be handled (catch-all class)
+TEST_F(Dhcpv4SrvTest, clientOption43RawClass) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a class definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"vendor\", "
+        "    \"test\": \"option[vendor-encapsulated-options].exists\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"binary\" } ],"
+        "    \"option-data\": [ "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"bar\" }, "
+        "    {   \"name\": \"vendor-encapsulated-options\", "
+        "        \"csv-format\": false, "
+        "        \"data\": \"0102\" } ] } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions so the response is not empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_TRUE(client.getContext().response_);
 }
 
 // Checks effect of persistency (aka always-true) flag on the PRL
