@@ -1,3 +1,9 @@
+1334.	[bug]		marcin
+	Fixed a bug in the DHCPv6 server whereby a lease with zero
+	lifetimes could be mistakenly included in the server's
+	response.
+	(Trac #5387, git 140e7239096c0d5b9fc82b2c9c461476bf9d5729)
+
 1333.	[doc]		tmark
 	Added a discussion of conflict resoltuion to the DHCP-DDNS chapter
 	of the Kea admin guide.
