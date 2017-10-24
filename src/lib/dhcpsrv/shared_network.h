@@ -86,6 +86,9 @@ public:
     /// @throw BadValue When specified subnet doesn't exist.
     void del(const SubnetID& subnet_id);
 
+    /// @brief Removes all subnets from a shared network.
+    void delAll();
+
     /// @brief Returns a pointer to the collection of subnets within this
     /// shared network.
     const Subnet4Collection* getAllSubnets() const {
@@ -216,6 +219,9 @@ public:
     ///
     /// @throw BadValue When specified subnet doesn't exist.
     void del(const SubnetID& subnet_id);
+
+    /// @brief Removes all subnets from a shared network.
+    void delAll();
 
     /// @brief Returns a pointer to the collection of subnets within this
     /// shared network.

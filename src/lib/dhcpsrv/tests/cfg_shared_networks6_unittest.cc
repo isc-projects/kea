@@ -7,11 +7,13 @@
 #include <config.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfg_shared_networks.h>
+#include <asiolink/io_address.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace asiolink;
 
 namespace {
 
@@ -60,6 +62,37 @@ TEST(CfgSharedNetworks6Test, deleteByName) {
     // Check that attempting to delete the same subnet twice will fail.
     ASSERT_THROW(cfg.del(network1->getName()), BadValue);
     ASSERT_THROW(cfg.del(network2->getName()), BadValue);
+}
+
+// Checks that subnets have their shared network pointers updated when
+// the network is deleted. This is used when the shared network is deleted
+// by admin commands.
+TEST(CfgSharedNetworks6Test, deleteNetworkWithSubnets) {
+    CfgSharedNetworks6 cfg;
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    SubnetID id1(100);
+    SubnetID id2(101);
+    Subnet6Ptr sub1(new Subnet6(IOAddress("2001:db8::"), 48, 1, 2, 3, 4, id1));
+    Subnet6Ptr sub2(new Subnet6(IOAddress("fec0::"), 12, 1, 2, 3, 4, id2));
+    network->add(sub1);
+    network->add(sub2);
+    cfg.add(network);
+
+    // Make sure the subnets are part of the network.
+    SharedNetwork6Ptr test;
+    sub1->getSharedNetwork(test);
+    EXPECT_TRUE(test);
+    EXPECT_EQ(network->toElement()->str(), test->toElement()->str());
+    sub2->getSharedNetwork(test);
+    EXPECT_TRUE(test);
+    EXPECT_EQ(network->toElement()->str(), test->toElement()->str());
+
+    // Now remove the network. Subnets should be disassociated with the network.
+    cfg.del("frog");
+    sub1->getSharedNetwork(test);
+    EXPECT_FALSE(test);
+    sub2->getSharedNetwork(test);
+    EXPECT_FALSE(test);
 }
 
 // This test verifies that shared networks must have unique names.
