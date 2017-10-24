@@ -56,7 +56,7 @@
             // {
             //     "name": "dns-servers",
             //     "code": 23,
-            //     "csv-format": "true",
+            //     "csv-format": true,
             //     "space": "dhcp6",
             //     "data": "2001:db8:2::45, 2001:db8:2::100"
             // }
@@ -76,6 +76,15 @@
             {
                 "code": 12,
                 "data": "2001:db8:1:0:ff00::1"
+            },
+
+            // Options can also be specified using hexadecimal format.
+            // This should be avoided if possible, because Kea ability to
+            // validate correctness is limited when using hex values.
+            {
+                "name": "sntp-servers",
+                "csv-format": false,
+                "data": "20010db8000000000000000000000001"
             },
 
             // String options that have a comma in their values need to have
@@ -144,7 +153,7 @@
              "option-data": [
                {
                    "code": 12,
-                   "data": "3001:cafe::12:"
+                   "data": "3001:cafe::12"
                }
              ]
          }
