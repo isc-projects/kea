@@ -1,3 +1,7 @@
+1331.	[func]		marcin
+	Default "lfc-interval" value is now set to 3600.
+	(Trac #5341, git dd1af78a49bfb68b88e8215dde65e40a470af81c)
+
 1330.	[bug]		fdupont
 	The option length checks were relaxed for the V-I Vendor Class
 	option.
