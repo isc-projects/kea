@@ -1,13 +1,11 @@
-// This is and example configuration for iPXE boot in Kea6.
+// This is an example configuration for iPXE boot in Kea6.
 
 {
    "Dhcp6": {
-   // mandatory part of the config that list interfaces on which
-   //  kea will listen to incoming traffic
+   // Mandatory part of the config that list interfaces on which
+   // Kea will listen for incoming traffic.
       "interfaces-config": {
-         "interfaces": [
-            "ethX"
-         ]
+         "interfaces": [ "ethX" ]
       },
 
 // Two classes are migrated form ISC-DHCP example:

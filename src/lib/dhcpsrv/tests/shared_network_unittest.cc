@@ -288,6 +288,27 @@ TEST(SharedNetwork4Test, destructSharedNetwork) {
     ASSERT_FALSE(subnet_to_network);
 }
 
+// This test verifies that it is possible to remove all subnets.
+TEST(SharedNetwork4Test, delAll) {
+    // Create two subnets and add them to the shared network.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                                   SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
+                                   SubnetID(2)));
+
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+    ASSERT_NO_THROW(network->add(subnet1));
+    ASSERT_NO_THROW(network->add(subnet2));
+
+    // Make sure they have been added successfully.
+    ASSERT_EQ(2, network->getAllSubnets()->size());
+
+    ASSERT_NO_THROW(network->delAll());
+
+    // Now check that there are no subnets.
+    ASSERT_EQ(0, network->getAllSubnets()->size());
+}
+
 // This test verifies that shared network can be given a name and that
 // this name can be retrieved.
 TEST(SharedNetwork6Test, getName) {
@@ -543,6 +564,27 @@ TEST(SharedNetwork6Test, destructSharedNetwork) {
     // The reference to the network from the subnet should be lost.
     subnet->getSharedNetwork(subnet_to_network);
     ASSERT_FALSE(subnet_to_network);
+}
+
+// This test verifies that it is possible to remove all subnets.
+TEST(SharedNetwork6Test, delAll) {
+    // Create two subnets and add them to the shared network.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
+                                   40, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 16, 10, 20, 30, 40,
+                                   SubnetID(2)));
+
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    ASSERT_NO_THROW(network->add(subnet1));
+    ASSERT_NO_THROW(network->add(subnet2));
+
+    // Make sure they have been added successfully.
+    ASSERT_EQ(2, network->getAllSubnets()->size());
+
+    ASSERT_NO_THROW(network->delAll());
+
+    // Now check that there are no subnets.
+    ASSERT_EQ(0, network->getAllSubnets()->size());
 }
 
 
