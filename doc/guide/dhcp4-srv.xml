@@ -3362,7 +3362,7 @@ It is merely echoed by the server
       <para>
         It is possible to store host reservations in MySQL or PostgreSQL. See <xref
         linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL or PostgreSQL. Kea provide dedicated hook for
+        reservations stored in MySQL or PostgreSQL. Kea provides dedicated hook for
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information.
       </para>
