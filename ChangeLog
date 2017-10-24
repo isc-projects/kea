@@ -1,3 +1,8 @@
+1332.	[doc]		tomek
+	Clarified list of supported options, added examples for using
+	hex notation to specify option values.
+	(Trac #5068, git c942586172a68a7fac09e366383d996ade7f3840)
+
 1331.	[func]		marcin
 	Default "lfc-interval" value is now set to 3600.
 	(Trac #5341, git dd1af78a49bfb68b88e8215dde65e40a470af81c)
