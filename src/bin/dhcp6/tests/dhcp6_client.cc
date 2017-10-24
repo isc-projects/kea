@@ -16,6 +16,7 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pool.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
@@ -635,10 +636,14 @@ Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
 }
 
 void
-Dhcp6Client::fastFwdTime(const uint32_t secs) {
+Dhcp6Client::fastFwdTime(const uint32_t secs, const bool update_server) {
     // Iterate over all leases and move their cltt backwards.
     for (size_t i = 0; i < config_.leases_.size(); ++i) {
         config_.leases_[i].cltt_ -= secs;
+        if (update_server) {
+            Lease6Ptr lease(new Lease6(config_.leases_[i]));
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
     }
 }
 
