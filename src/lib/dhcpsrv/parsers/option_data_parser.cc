@@ -36,6 +36,7 @@ OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
     std::pair<OptionDescriptor, std::string> opt = createOption(single_option);
 
     if (!opt.first.option_) {
+        // Should never happen (@todo: update message)
         isc_throw(isc::InvalidOperation,
             "parser logic error: no option has been configured and"
             " thus there is nothing to commit. Has build() been called?");

@@ -768,9 +768,21 @@ TEST_F(ClientClassDefParserTest, nextServerBogus) {
         "        } \n"
         "      ] \n"
         "} \n";
+    std::string bogus_broadcast =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"next-server\": \"255.255.255.255\",\n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
 
     EXPECT_THROW(parseClientClassDef(bogus_v6, AF_INET), DhcpConfigError);
     EXPECT_THROW(parseClientClassDef(bogus_junk, AF_INET), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(bogus_broadcast, AF_INET), DhcpConfigError);
 }
 
 // Test verifies that it is possible to define server-hostname field and it

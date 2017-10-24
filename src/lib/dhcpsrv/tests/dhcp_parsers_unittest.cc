@@ -677,6 +677,24 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
+/// @brief Check parsing of option definitions using invalid space fails.
+TEST_F(ParseConfigTest, badSpaceOptionDefTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100000,"
+        "      \"type\": \"ipv6-address\","
+        "      \"space\": \"-1\""
+        "  } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
 /// @brief Check basic parsing of options.
 ///
 /// Note that this tests basic operation of the OptionDataListParser and
@@ -759,6 +777,40 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     opt_data->set("code", Element::create(100));
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
     cfg.runCfgOptionsTest(family_, expected);
+}
+
+/// @brief Check parsing of unknown options fails.
+TEST_F(ParseConfigTest, unknownOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"data\": \"01\","
+        "    \"space\": \"bar\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
+/// @brief Check parsing of options with invalid space fails.
+TEST_F(ParseConfigTest, badSpaceOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"code\": 100,"
+        "    \"data\": \"01\","
+        "    \"space\": \"-1\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
 }
 
 /// @brief Check parsing of options with escape characters.
