@@ -3246,6 +3246,148 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     EXPECT_EQ(12345678, opt32->getValue());
 }
 
+// Checks effect of raw not compatible option 43 sent by a client (failure)
+TEST_F(Dhcpv4SrvTest, clientOption43FailRaw) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options has an incompatible data
+    // so won't have the expected content. Here the processing
+    // of suboptions tries to unpack the uint32 foo suboption and
+    // raises an exception.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    // which will raise an exception
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is not able to process this packet
+    // and raises an exception so the response is empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_FALSE(client.getContext().response_);
+}
+
+// Verifies raw option 43 sent by a client can be handled (global)
+TEST_F(Dhcpv4SrvTest, clientOption43RawGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a global definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" },"
+        "{   \"code\": 43, "
+        "    \"name\": \"vendor-encapsulated-options\", "
+        "    \"type\": \"binary\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions so the response is not empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_TRUE(client.getContext().response_);
+}
+
+// Verifies raw option 43 sent by a client can be handled (catch-all class)
+TEST_F(Dhcpv4SrvTest, clientOption43RawClass) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a class definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"vendor\", "
+        "    \"test\": \"option[vendor-encapsulated-options].exists\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"binary\" } ],"
+        "    \"option-data\": [ "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"bar\" }, "
+        "    {   \"name\": \"vendor-encapsulated-options\", "
+        "        \"csv-format\": false, "
+        "        \"data\": \"0102\" } ] } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions so the response is not empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_TRUE(client.getContext().response_);
+}
+
 // Checks effect of persistency (aka always-true) flag on the PRL
 TEST_F(Dhcpv4SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
