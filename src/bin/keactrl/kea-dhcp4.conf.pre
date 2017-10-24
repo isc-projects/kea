@@ -61,7 +61,8 @@
     "lease-database": {
         // Memfile is the simplest and easiest backend to use. It's a in-memory
         // C++ database that stores its state in CSV file.
-        "type": "memfile"
+        "type": "memfile",
+        "lfc-interval": 3600
     },
 
     // Kea allows storing host reservations in a database. If your network is

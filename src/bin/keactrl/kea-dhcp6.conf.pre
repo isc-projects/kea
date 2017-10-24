@@ -53,7 +53,8 @@
     // There are dedicated examples for each backend. See Section 8.2.2 "Lease
     // Storage" for details.
     "lease-database": {
-        "type": "memfile"
+        "type": "memfile",
+        "lfc-interval": 3600
     },
 
     // Kea allows storing host reservations in a database. If your network is
