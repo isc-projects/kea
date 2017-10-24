@@ -3146,7 +3146,7 @@ TEST_F(Dhcpv4SrvTest, clientOption43FailRaw) {
 
     // The vendor-encapsulated-options has an incompatible data
     // so won't have the expected content. Here the processing
-    // of suboptions tries to unpack the uitn32 foo suboption and
+    // of suboptions tries to unpack the uint32 foo suboption and
     // raises an exception.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
