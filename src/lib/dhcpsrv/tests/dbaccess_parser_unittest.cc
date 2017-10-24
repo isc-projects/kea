@@ -248,6 +248,20 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
 
+// Check that the parser works with a simple configuration for host database.
+TEST_F(DbAccessParserTest, hosts) {
+    const char* config[] = {"type", "memfile",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser(DbAccessParser::HOSTS_DB);
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
+}
+
 // Check that the parser works with a simple configuration that
 // includes empty elements.
 TEST_F(DbAccessParserTest, emptyKeyword) {
