@@ -325,7 +325,11 @@ public:
     /// lease has been later updated (e.g. as a result of Rebind) as it is
     /// expected that the fresh lease has cltt set to "now" (not to the time
     /// in the past).
-    void fastFwdTime(const uint32_t secs);
+    ///
+    /// @param secs Number of seconds by which the time should be moved.
+    /// @param update_server Indicates if the leases should be updated on the
+    /// server.
+    void fastFwdTime(const uint32_t secs, const bool update_server = false);
 
     /// @brief Returns DUID option used by the client.
     OptionPtr getClientId() const;
