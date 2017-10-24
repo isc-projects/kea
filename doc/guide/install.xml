@@ -112,7 +112,7 @@
           on the system:</para>
           <itemizedlist>
             <listitem>
-                <para>Boost build-time headers
+                <para>Boost C++ Libraries
           (<ulink url="http://www.boost.org/"/>).
           The oldest Boost version used for testing is 1.57 (it may work with
           older versions). Boost system library is required.  Building boost
