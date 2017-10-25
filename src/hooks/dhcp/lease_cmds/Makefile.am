@@ -14,8 +14,9 @@ s-messages: lease_cmds_messages.mes
 # (so that they are built before the main library is built).
 BUILT_SOURCES = lease_cmds_messages.h lease_cmds_messages.cc
 
-# Ensure that the message file is included in the distribution
+# Ensure that the message file and doxygen file is included in the distribution
 EXTRA_DIST = lease_cmds_messages.mes
+EXTRA_DIST += lease_cmds.dox
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda lease_cmds_messages.h lease_cmds_messages.cc s-messages
