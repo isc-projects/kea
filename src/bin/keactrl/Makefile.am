@@ -52,12 +52,24 @@ kea-ctrl-agent.conf: kea-ctrl-agent.conf.pre
 
 if INSTALL_CONFIGURATIONS
 
+# Since Kea 1.3.0 release we have 4 different Kea configuration files
+# instead of one, i.e. kea-dhcp4.conf, kea-dhcp6.conf, kea-dhcp-ddns.conf
+# and kea-ctrl-agent.conf. To facilitate the use of these new files
+# the keactrl.conf has been updated in Kea 1.3.0 release. Therefore,
+# we install new version of thea keactrl.conf file unconditionally.
+# To preserve any user modifications to the old version of the file,
+# this old file is backed up as keactrl.conf.bak.
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
 	for f in $(CONFIGFILES) ; do	\
-	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
-	    ${INSTALL_DATA} $$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
-	  fi ;	\
+		if test -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f && \
+		   test $$f = "keactrl.conf"; then \
+			mv $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f \
+			   $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f.bak; \
+		fi; \
+		if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then \
+			${INSTALL_DATA} $$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/; \
+		fi; \
 	done
 
 endif
