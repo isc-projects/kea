@@ -1430,8 +1430,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 836,     ///< Last index in yytable_.
-      yynnts_ = 346,  ///< Number of nonterminal symbols.
+      yylast_ = 838,     ///< Last index in yytable_.
+      yynnts_ = 347,  ///< Number of nonterminal symbols.
       yyfinal_ = 28, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1531,9 +1531,9 @@ namespace isc { namespace dhcp {
       case 174: // map_value
       case 218: // db_type
       case 294: // hr_mode
-      case 425: // duid_type
-      case 458: // ncr_protocol_value
-      case 466: // replace_client_name_value
+      case 426: // duid_type
+      case 459: // ncr_protocol_value
+      case 467: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -1574,9 +1574,9 @@ namespace isc { namespace dhcp {
       case 174: // map_value
       case 218: // db_type
       case 294: // hr_mode
-      case 425: // duid_type
-      case 458: // ncr_protocol_value
-      case 466: // replace_client_name_value
+      case 426: // duid_type
+      case 459: // ncr_protocol_value
+      case 467: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
@@ -1676,9 +1676,9 @@ namespace isc { namespace dhcp {
       case 174: // map_value
       case 218: // db_type
       case 294: // hr_mode
-      case 425: // duid_type
-      case 458: // ncr_protocol_value
-      case 466: // replace_client_name_value
+      case 426: // duid_type
+      case 459: // ncr_protocol_value
+      case 467: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1725,9 +1725,9 @@ namespace isc { namespace dhcp {
       case 174: // map_value
       case 218: // db_type
       case 294: // hr_mode
-      case 425: // duid_type
-      case 458: // ncr_protocol_value
-      case 466: // replace_client_name_value
+      case 426: // duid_type
+      case 459: // ncr_protocol_value
+      case 467: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
