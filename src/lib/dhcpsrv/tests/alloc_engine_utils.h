@@ -409,6 +409,7 @@ public:
     bool fqdn_fwd_;           ///< Perform forward update for a lease.
     bool fqdn_rev_;           ///< Perform reverse update for a lease.
     LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
+    ClientClasses cc_;        ///< client classes
 };
 
 /// @brief Used in Allocation Engine tests for IPv4
@@ -510,6 +511,7 @@ public:
     Pool4Ptr pool_;             ///< Pool belonging to subnet_
     LeaseMgrFactory factory_;   ///< Pointer to LeaseMgr factory
     AllocEngine::ClientContext4 ctx_; ///< Context information passed to various
+    ClientClasses cc_;          ///< Client classes
                                      ///< allocation engine functions.
 };
 

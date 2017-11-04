@@ -326,7 +326,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
         alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
 
     for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, clientid_,
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
                                                  IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
     }
@@ -359,7 +359,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
     std::set<IOAddress> generated_addrs;
     int cnt = 0;
     while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(subnet_, clientid_, IOAddress("0.0.0.0"));
+        IOAddress candidate = alloc.pickAddress(subnet_, cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
 
         // One way to easily verify that the iterative allocator really works is

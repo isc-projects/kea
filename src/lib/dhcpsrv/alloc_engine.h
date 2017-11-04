@@ -8,6 +8,7 @@
 #define ALLOC_ENGINE_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt4.h>
@@ -78,13 +79,19 @@ protected:
         /// than pickResource(), because nobody would immediately know what the
         /// resource means in this context.
         ///
+        /// Pools which are not allowed for client classes are skipped.
+        ///
         /// @param subnet next address will be returned from pool of that subnet
+        /// @param client_classes list of classes client belongs to
+
         /// @param duid Client's DUID
         /// @param hint client's hint
         ///
         /// @return the next address
         virtual isc::asiolink::IOAddress
-        pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
+        pickAddress(const SubnetPtr& subnet,
+                    const ClientClasses& client_classes,
+                    const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
         /// @brief Default constructor.
@@ -125,11 +132,13 @@ protected:
         /// @brief returns the next address from pools in a subnet
         ///
         /// @param subnet next address will be returned from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID (ignored)
         /// @param hint client's hint (ignored)
         /// @return the next address
         virtual isc::asiolink::IOAddress
             pickAddress(const SubnetPtr& subnet,
+                        const ClientClasses& client_classes,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
     protected:
@@ -147,6 +156,20 @@ protected:
         static isc::asiolink::IOAddress
         increasePrefix(const isc::asiolink::IOAddress& prefix,
                        const uint8_t prefix_len);
+
+        /// @brief Returns the next address or prefix
+        ///
+        /// This method works for IPv4 addresses, IPv6 addresses and
+        /// IPv6 prefixes.
+        ///
+        /// @param address address or prefix to be increased
+        /// @param prefix true when the previous argument is a prefix
+        /// @param prefix_len length of the prefix
+        /// @return result address or prefix
+        static isc::asiolink::IOAddress
+        increaseAddress(const isc::asiolink::IOAddress& address,
+                        bool prefix, const uint8_t prefix_len);
+
     };
 
     /// @brief Address/prefix allocator that gets an address based on a hash
@@ -164,12 +187,15 @@ protected:
         /// @todo: Implement this method
         ///
         /// @param subnet an address will be picked from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID
         /// @param hint a hint (last address that was picked)
         /// @return selected address
-        virtual isc::asiolink::IOAddress pickAddress(const SubnetPtr& subnet,
-                                                     const DuidPtr& duid,
-                                                     const isc::asiolink::IOAddress& hint);
+        virtual isc::asiolink::IOAddress
+            pickAddress(const SubnetPtr& subnet,
+                        const ClientClasses& client_classes,
+                        const DuidPtr& duid,
+                        const isc::asiolink::IOAddress& hint);
     };
 
     /// @brief Random allocator that picks address randomly
@@ -191,7 +217,9 @@ protected:
         /// @param hint the last address that was picked (ignored)
         /// @return a random address from the pool
         virtual isc::asiolink::IOAddress
-        pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
+        pickAddress(const SubnetPtr& subnet,
+                    const ClientClasses& client_classes,
+                    const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint);
     };
 
