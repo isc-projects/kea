@@ -74,6 +74,7 @@ public:
             :IterativeAllocator(type) {
         }
 
+        using AllocEngine::IterativeAllocator::increaseAddress;
         using AllocEngine::IterativeAllocator::increasePrefix;
     };
 };
@@ -221,10 +222,10 @@ public:
     /// @param input address to be increased
     /// @param exp_output expected address after increase
     void
-    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator&,
+    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator& alloc,
                       std::string input, std::string exp_output) {
-        EXPECT_EQ(exp_output, asiolink::IOAddress::increase(
-                      asiolink::IOAddress(input)).toText());
+        EXPECT_EQ(exp_output, alloc.increaseAddress(asiolink::IOAddress(input),
+                                                    false, 0).toText());
     }
 
     /// @brief Checks if increasePrefix() works as expected

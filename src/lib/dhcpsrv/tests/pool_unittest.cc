@@ -190,6 +190,106 @@ TEST(Pool4Test, userContext) {
     EXPECT_EQ(ctx->str(), pool->getContext()->str());
 }
 
+// This test checks that handling for client-class is valid.
+TEST(Pool4Test, clientClass) {
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool->getClientClasses().size());
+    EXPECT_TRUE(pool->clientSupported(no_class));
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(three_classes));
+
+    // Let's allow only clients belonging to "bar" class.
+    pool->allowClientClass("bar");
+    EXPECT_EQ(1, pool->getClientClasses().size());
+
+    EXPECT_FALSE(pool->clientSupported(no_class));
+    EXPECT_FALSE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(three_classes));
+}
+
+// This test checks that handling for multiple client-classes is valid.
+TEST(Pool4Test, clientClasses) {    
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool->getClientClasses().size());
+    EXPECT_TRUE(pool->clientSupported(no_class));
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+
+    // Let's allow clients belonging to "bar" or "foo" class.
+    pool->allowClientClass("bar");
+    pool->allowClientClass("foo");
+    EXPECT_EQ(2, pool->getClientClasses().size());
+
+    // Class-less clients are to be rejected.
+    EXPECT_FALSE(pool->clientSupported(no_class));
+
+    // Clients in foo class should be accepted.
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+
+    // Clients in bar class should be accepted as well.
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+}
+
+// This test checks that handling for last allocated address/prefix is valid.
+TEST(Pool4Test, lastAllocated) {
+    // Create a pool.
+    IOAddress first("192.0.2.0");
+    Pool4Ptr pool(new Pool4(first, IOAddress("192.0.2.255")));
+
+    // Initial values are first invalid.
+    EXPECT_EQ(first.toText(), pool->getLastAllocated().toText());
+    EXPECT_FALSE(pool->isLastAllocatedValid());
+
+    // Now set last allocated
+    IOAddress addr("192.0.2.100");
+    EXPECT_NO_THROW(pool->setLastAllocated(addr));
+    EXPECT_EQ(addr.toText(), pool->getLastAllocated().toText());
+    EXPECT_TRUE(pool->isLastAllocatedValid());
+
+    // Reset makes it invalid and does not touch address
+    pool->resetLastAllocated();
+    EXPECT_EQ(addr.toText(), pool->getLastAllocated().toText());
+    EXPECT_FALSE(pool->isLastAllocatedValid());
+}
+
 TEST(Pool6Test, constructor_first_last) {
 
     // let's construct 2001:db8:1:: - 2001:db8:1::ffff:ffff:ffff:ffff pool
@@ -492,6 +592,106 @@ TEST(Pool6Test, userContext) {
     EXPECT_NO_THROW(pool.setContext(ctx));
     ASSERT_TRUE(pool.getContext());
     EXPECT_EQ(ctx->str(), pool.getContext()->str());
+}
+
+// This test checks that handling for client-class is valid.
+TEST(Pool6Test, clientClass) {
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool.getClientClasses().size());
+    EXPECT_TRUE(pool.clientSupported(no_class));
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(three_classes));
+
+    // Let's allow only clients belonging to "bar" class.
+    pool.allowClientClass("bar");
+    EXPECT_EQ(1, pool.getClientClasses().size());
+
+    EXPECT_FALSE(pool.clientSupported(no_class));
+    EXPECT_FALSE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(three_classes));
+}
+
+// This test checks that handling for multiple client-classes is valid.
+TEST(Pool6Test, clientClasses) {    
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool.getClientClasses().size());
+    EXPECT_TRUE(pool.clientSupported(no_class));
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+
+    // Let's allow clients belonging to "bar" or "foo" class.
+    pool.allowClientClass("bar");
+    pool.allowClientClass("foo");
+    EXPECT_EQ(2, pool.getClientClasses().size());
+
+    // Class-less clients are to be rejected.
+    EXPECT_FALSE(pool.clientSupported(no_class));
+
+    // Clients in foo class should be accepted.
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+
+    // Clients in bar class should be accepted as well.
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+}
+
+// This test checks that handling for last allocated address/prefix is valid.
+TEST(Pool6Test, lastAllocated) {
+    // Create a pool.
+    IOAddress first("2001:db8::1");
+    Pool6 pool(Lease::TYPE_NA, first, IOAddress("2001:db8::200"));
+
+    // Initial values are first invalid.
+    EXPECT_EQ(first.toText(), pool.getLastAllocated().toText());
+    EXPECT_FALSE(pool.isLastAllocatedValid());
+
+    // Now set last allocated
+    IOAddress addr("2001:db8::100");
+    EXPECT_NO_THROW(pool.setLastAllocated(addr));
+    EXPECT_EQ(addr.toText(), pool.getLastAllocated().toText());
+    EXPECT_TRUE(pool.isLastAllocatedValid());
+
+    // Reset makes it invalid and does not touch address
+    pool.resetLastAllocated();
+    EXPECT_EQ(addr.toText(), pool.getLastAllocated().toText());
+    EXPECT_FALSE(pool.isLastAllocatedValid());
 }
 
 }; // end of anonymous namespace
