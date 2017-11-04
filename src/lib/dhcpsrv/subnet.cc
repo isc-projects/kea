@@ -135,9 +135,48 @@ Subnet::getPoolCapacity(Lease::Type type) const {
 }
 
 uint64_t
+Subnet::getPoolCapacity(Lease::Type type,
+                        const ClientClasses& client_classes) const {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        return sumPoolCapacity(pools_, client_classes);
+    case Lease::TYPE_TA:
+        return sumPoolCapacity(pools_ta_, client_classes);
+    case Lease::TYPE_PD:
+        return sumPoolCapacity(pools_pd_, client_classes);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
+    }
+}
+
+uint64_t
 Subnet::sumPoolCapacity(const PoolCollection& pools) const {
     uint64_t sum = 0;
     for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
+        uint64_t x = (*p)->getCapacity();
+
+        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // overflown if we tried to add it.
+        if (x > std::numeric_limits<uint64_t>::max() - sum) {
+            return (std::numeric_limits<uint64_t>::max());
+        }
+
+        sum += x;
+    }
+
+    return (sum);
+}
+
+uint64_t
+Subnet::sumPoolCapacity(const PoolCollection& pools,
+                        const ClientClasses& client_classes) const {
+    uint64_t sum = 0;
+    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
+        if (!(*p)->clientSupported(client_classes)) {
+            continue;
+        }
         uint64_t x = (*p)->getCapacity();
 
         // Check if we can add it. If sum + x > uint64::max, then we would have
@@ -322,6 +361,33 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
         // If we don't find anything better, then let's just use the first pool
         if (!candidate && anypool) {
             candidate = *pools.begin();
+        }
+    }
+
+    // Return a pool or NULL if no match found.
+    return (candidate);
+}
+
+const PoolPtr Subnet::getPool(Lease::Type type,
+                              const ClientClasses& client_classes,
+                              const isc::asiolink::IOAddress& hint) const {
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
+    const PoolCollection& pools = getPools(type);
+
+    PoolPtr candidate;
+
+    if (!pools.empty()) {
+        PoolCollection::const_iterator ub =
+            std::upper_bound(pools.begin(), pools.end(), hint,
+                             prefixLessThanFirstAddress);
+
+        if (ub != pools.begin()) {
+            --ub;
+            if ((*ub)->inRange(hint) && (*ub)->clientSupported(client_classes)) {
+                candidate = *ub;
+            }
         }
     }
 

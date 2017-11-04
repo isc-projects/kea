@@ -378,6 +378,12 @@ PoolParser::parse(PoolStoragePtr pools,
                       << " (" << option_data->getPosition() << ")");
         }
     }
+
+    // Client-class.
+    string client_class = getString(pool_structure, "client-class");
+    if (!client_class.empty()) {
+        pool->allowClientClass(client_class);
+    }
 }
 
 //****************************** Pool4Parser *************************
@@ -870,6 +876,11 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         pool_->setContext(user_context_);
     }
 
+    string client_class = getString(pd_pool_, "client-class");
+    if (!client_class.empty()) {
+        pool_->allowClientClass(client_class);
+    }
+        
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
 }
