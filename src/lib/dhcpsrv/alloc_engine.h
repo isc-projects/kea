@@ -831,14 +831,25 @@ private:
     /// @brief Removes leases that are reserved for someone else.
     ///
     /// Goes through the list specified in existing_leases and removes those that
-    /// are reserved by someone else. The removed leases are added to the
-    /// ctx.removed_leases_ collection.
+    /// are reserved by someone else or do not belong to an allowed pool.
+    /// The removed leases are added to the ctx.removed_leases_ collection.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases [in/out] leases that should be checked
     void
     removeNonmatchingReservedLeases6(ClientContext6& ctx,
                                      Lease6Collection& existing_leases);
+
+    /// @brief Removes leases that are reserved for someone else.
+    ///
+    /// Simplified version of removeNonmatchingReservedLeases6 to be
+    /// used when host reservations are disabled.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases [in/out] leases that should be checked
+    void
+    removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
+                                           Lease6Collection& existing_leases);
 
     /// @brief Removed leases that are not reserved for this client
     ///

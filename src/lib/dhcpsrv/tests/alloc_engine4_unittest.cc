@@ -999,10 +999,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
-#if 0
-    // It should work but currently it does not...
     EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
-#endif
 }
 
 // Test that reservations within shared network take precedence over the
