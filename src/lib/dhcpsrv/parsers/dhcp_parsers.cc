@@ -380,9 +380,12 @@ PoolParser::parse(PoolStoragePtr pools,
     }
 
     // Client-class.
-    string client_class = getString(pool_structure, "client-class");
-    if (!client_class.empty()) {
-        pool->allowClientClass(client_class);
+    ConstElementPtr client_class = pool_structure->get("client-class");
+    if (client_class) {
+        string cclass = client_class->stringValue();
+        if (!cclass.empty()) {
+            pool->allowClientClass(cclass);
+        }
     }
 }
 
@@ -853,6 +856,11 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         user_context_ = user_context;
     }
 
+    ConstElementPtr client_class = pd_pool_->get("client-class");
+    if (client_class) {
+        client_class_ = client_class;
+    }
+
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -876,9 +884,12 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         pool_->setContext(user_context_);
     }
 
-    string client_class = getString(pd_pool_, "client-class");
-    if (!client_class.empty()) {
-        pool_->allowClientClass(client_class);
+
+    if (client_class_) {
+        string cclass = client_class_->stringValue();
+        if (!cclass.empty()) {
+            pool_->allowClientClass(cclass);
+        }
     }
         
     // Add the local pool to the external storage ptr.

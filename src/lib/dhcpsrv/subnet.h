@@ -54,6 +54,19 @@ public:
     /// @return true if the address is in any of the pools
     bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
+    /// @brief checks if the specified address is in allowed pools
+    ///
+    /// This takes also into account client classes
+    ///
+    /// @param type type of pools to iterate over
+    /// @param addr this address will be checked if it belongs to any pools in
+    ///        that subnet
+    /// @param client_classes client class list which must be allowed
+    /// @return true if the address is in any of the allowed pools
+    bool inPool(Lease::Type type,
+                const isc::asiolink::IOAddress& addr,
+                const ClientClasses& client_classes) const;
+
     /// @brief returns the last address that was tried from this subnet
     ///
     /// This method returns the last address that was attempted to be allocated

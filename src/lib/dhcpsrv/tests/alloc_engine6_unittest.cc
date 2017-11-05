@@ -2185,6 +2185,58 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkClassification) {
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
 }
 
+// This test verifies that the server can offer an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet requires another class.
+TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkPoolClassification) {
+    // Try to offer address from subnet1. There is an address available so
+    // it should be offerred.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet1_->inRange(lease->addr_));
+
+    // Apply restrictions on the pool1. This should be only assigned
+    // to clients belonging to cable-modem class.
+    pool1_->allowClientClass("cable-modem");
+
+    // The allocation engine should determine that the pool1 is not
+    // available for the client not belonging to the cable-modem class.
+    // Instead, it should offer an address from subnet2 that belongs
+    // to the same shared network.
+    AllocEngine::ClientContext6 ctx2(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx2.currentIA().iaid_ = iaid_;
+    ctx2.query_ = query;
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet2_->inRange(lease->addr_));
+
+    AllocEngine::ClientContext6 ctx3(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx3.currentIA().iaid_ = iaid_;
+    ctx3.query_ = query;
+
+    AllocEngine::ClientContext6 ctx4(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx4.currentIA().iaid_ = iaid_;
+    ctx4.query_ = query;
+
+    // Assign cable-modem class and try again. This time, we should
+    // offer an address from the pool1_.
+    ctx4.query_->addClass(ClientClass("cable-modem"));
+
+    AllocEngine::findReservation(ctx4);
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx4)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
+}
+
 // This test verifies that the client is offerred a reserved address
 // even if this address belongs to another subnet within the same
 // shared network.

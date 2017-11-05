@@ -111,7 +111,6 @@ Pool::toElement() const {
     // Set pool options
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
-    return (map);
 
     // Set client-class
     const ClientClasses& cclasses = getClientClasses();
@@ -121,6 +120,8 @@ Pool::toElement() const {
     } else if (!cclasses.empty()) {
         map->set("client-class", Element::create(*cclasses.cbegin()));
     }
+
+    return (map);
 }
 
 data::ElementPtr

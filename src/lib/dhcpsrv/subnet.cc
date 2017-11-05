@@ -476,6 +476,31 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 }
 
 bool
+Subnet::inPool(Lease::Type type,
+               const isc::asiolink::IOAddress& addr,
+               const ClientClasses& client_classes) const {
+
+    // Let's start with checking if it even belongs to that subnet.
+    if ((type != Lease::TYPE_PD) && !inRange(addr)) {
+        return (false);
+    }
+
+    const PoolCollection& pools = getPools(type);
+
+    for (PoolCollection::const_iterator pool = pools.begin();
+         pool != pools.end(); ++pool) {
+        if (!(*pool)->clientSupported(client_classes)) {
+            continue;
+        }
+        if ((*pool)->inRange(addr)) {
+            return (true);
+        }
+    }
+    // There's no pool that address belongs to
+    return (false);
+}
+
+bool
 Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
     const PoolCollection& pools = getPools(pool_type);
 
@@ -709,6 +734,14 @@ Subnet6::toElement() const {
         // Set pool options
         ConstCfgOptionPtr opts = (*pool)->getCfgOption();
         pool_map->set("option-data", opts->toElement());
+        // Set client-class
+        const ClientClasses& cclasses = (*pool)->getClientClasses();
+        if (cclasses.size() > 1) {
+            isc_throw(ToElementError, "client-class has too many items: "
+                      << cclasses.size());
+        } else if (!cclasses.empty()) {
+            pool_map->set("client-class", Element::create(*cclasses.cbegin()));
+        }
         // Push on the pool list
         pool_list->add(pool_map);
     }
@@ -763,6 +796,14 @@ Subnet6::toElement() const {
         // Set pool options
         ConstCfgOptionPtr opts = pdpool->getCfgOption();
         pool_map->set("option-data", opts->toElement());
+        // Set client-class
+        const ClientClasses& cclasses = pdpool->getClientClasses();
+        if (cclasses.size() > 1) {
+            isc_throw(ToElementError, "client-class has too many items: "
+                      << cclasses.size());
+        } else if (!cclasses.empty()) {
+            pool_map->set("client-class", Element::create(*cclasses.cbegin()));
+        }
         // Push on the pool list
         pdpool_list->add(pool_map);
     }

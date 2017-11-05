@@ -262,10 +262,10 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
             }
 
             valid = false;
-	    (*it)->resetLastAllocated();
+            (*it)->resetLastAllocated();
         }
         // We hit pool boundary, let's try to jump to the next pool and try again
-	++it;
+        ++it;
         retrying = true;
     }
 
@@ -2572,7 +2572,8 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     Subnet4Ptr current_subnet = ctx.subnet_;
     while (current_subnet) {
 
-        if (current_subnet->inPool(Lease::TYPE_V4, address)) {
+        if (current_subnet->inPool(Lease::TYPE_V4, address,
+                                   ctx.query_->getClasses())) {
             // We found a subnet that this address belongs to, so it
             // seems that this subnet is the good candidate for allocation.
             // Let's update the selected subnet.

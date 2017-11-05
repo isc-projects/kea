@@ -954,7 +954,41 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
-    "}"
+    "}",
+
+// Configuration #19.
+// - one shared network with on subnet and two pools (the first has
+//   class restrictions)
+    "{"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[1234].hex == 0x0001\""
+    "        }"
+    "    ],"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\","
+    "                            \"client-class\": \"a-devices\""
+    "                        },"
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::50 - 2001:db8:1::50\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
 };
 
 /// @Brief Test fixture class for DHCPv6 server using shared networks.
@@ -2159,6 +2193,51 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit2) {
 // Check that the rapid-commit is disabled by default.
 TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit3) {
     testRapidCommit(NETWORKS_CONFIG[1], false, "", "");
+}
+
+// Pool is selected based on the client class specified.
+TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
+    // Create client #1.
+    Dhcp6Client client1;
+    client1.setInterface("eth1");
+
+    // Configure the server with one shared network including one subnet and
+    // two pools. The access to one of the pools is restricted by
+    // by client classification.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[19], *client1.getServer()));
+
+    // Client #1 requests an address in the restricted pool but can't be assigned
+    // this address because the client doesn't belong to a certain class.
+    ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doSARR());
+    });
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::50")));
+
+    // Release the lease that the client has got, because we'll need this address
+    // further in the test.
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doRelease());
+    });
+
+    // Add option 1234 which would cause the client to be classified as "a-devices".
+    OptionPtr option1234(new OptionUint16(Option::V6, 1234, 0x0001));
+    client1.addExtraOption(option1234);
+
+    // This time, the allocation of the address provided as hint should be successful.
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doSARR());
+    });
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
+
+    // Client 2 should be assigned an address from the unrestricted subnet.
+    Dhcp6Client client2(client1.getServer());
+    client2.setInterface("eth1");
+    ASSERT_NO_THROW(client2.requestAddress(0xabca0));
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doSARR());
+    });
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::50")));
 }
 
 } // end of anonymous namespace
