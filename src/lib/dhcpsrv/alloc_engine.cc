@@ -427,20 +427,29 @@ namespace {
 /// function when it belongs to a shared network.
 /// @param lease_type Type of the lease.
 /// @param address IPv6 address or prefix to be checked.
+/// @param check_subnet if true only subnets are checked else both subnets
+/// and pools are checked
 ///
 /// @return true if address belongs to a pool in a selected subnet or in
 /// a pool within any of the subnets belonging to the current shared network.
 bool
 inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
-              const IOAddress& address) {
+              const IOAddress& address, bool check_subnet) {
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet6Ptr current_subnet = ctx.subnet_;
     while (current_subnet) {
 
         if (current_subnet->clientSupported(ctx.query_->getClasses())) {
-            if (current_subnet->inPool(lease_type, address)) {
-                return (true);
+            if (check_subnet) {
+                if (current_subnet->inPool(lease_type, address)) {
+                    return (true);
+                }
+            } else {
+                if (current_subnet->inPool(lease_type, address,
+                                           ctx.query_->getClasses())) {
+                    return (true);
+                }
             }
         }
 
@@ -1114,11 +1123,14 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
 void
 AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
                                               Lease6Collection& existing_leases) {
-    // If there are no leases (so nothing to remove) or
-    // host reservation is disabled (so there are no reserved leases),
-    // just return.
-    if (existing_leases.empty() || !ctx.subnet_ ||
-        (ctx.subnet_->getHostReservationMode() == Network::HR_DISABLED) ) {
+    // If there are no leases (so nothing to remove) just return.
+    if (existing_leases.empty() || !ctx.subnet_) {
+        return;
+    }
+    // If host reservation is disabled (so there are no reserved leases)
+    // use the simplified version.
+    if (ctx.subnet_->getHostReservationMode() == Network::HR_DISABLED) {
+        removeNonmatchingReservedNoHostLeases6(ctx, existing_leases);
         return;
     }
 
@@ -1155,7 +1167,8 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // be allocated to us from a dynamic pool, but we must check if
         // this lease belongs to any pool. If it does, we can proceed to
         // checking the next lease.
-        if (!host && inAllowedPool(ctx, candidate->type_, candidate->addr_)) {
+        if (!host && inAllowedPool(ctx, candidate->type_,
+                                   candidate->addr_, false)) {
             continue;
         }
 
@@ -1193,6 +1206,44 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // only if we get serious complaints from actual users. We want the
         // conflict resolution procedure to really work and user libraries
         // should not interfere with it.
+
+        // Add this to the list of removed leases.
+        ctx.currentIA().old_leases_.push_back(candidate);
+
+        // Let's remove this candidate from existing leases
+        removeLeases(existing_leases, candidate->addr_);
+    }
+}
+
+void
+AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
+                                                    Lease6Collection& existing_leases) {
+    // We need a copy, so we won't be iterating over a container and
+    // removing from it at the same time. It's only a copy of pointers,
+    // so the operation shouldn't be that expensive.
+    Lease6Collection copy = existing_leases;
+
+    BOOST_FOREACH(const Lease6Ptr& candidate, copy) {
+        // Lease can be allocated to us from a dynamic pool, but we must
+        // check if this lease belongs to any allowed pool. If it does,
+        // we can proceed to checking the next lease.
+        if (inAllowedPool(ctx, candidate->type_,
+                          candidate->addr_, false)) {
+            continue;
+        }
+
+        // Remove this lease from LeaseMgr as it doesn't belong to a pool.
+        LeaseMgrFactory::instance().deleteLease(candidate->addr_);
+
+        // Update DNS if needed.
+        queueNCR(CHG_REMOVE, candidate);
+
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", candidate->subnet_id_,
+                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            static_cast<int64_t>(-1));
 
         // Add this to the list of removed leases.
         ctx.currentIA().old_leases_.push_back(candidate);
@@ -1755,7 +1806,8 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 
                 // If the lease is in the current subnet we need to account
                 // for the re-assignment of The lease.
-                if (inAllowedPool(ctx, ctx.currentIA().type_, lease->addr_)) {
+                if (inAllowedPool(ctx, ctx.currentIA().type_,
+                                  lease->addr_, true)) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", lease->subnet_id_,
                                                ctx.currentIA().type_ == Lease::TYPE_NA ?
@@ -2558,6 +2610,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 /// within a shared network.
 ///
 /// @todo Update this function to take client classification into account.
+/// @note client classification in pools (vs subnets) is checked
 ///
 /// @param ctx Client context. Current subnet may be modified by this
 /// function when it belongs to a shared network.
@@ -2897,9 +2950,13 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // If the client is requesting an address which is assigned to the client
     // let's just renew this address. Also, renew this address if the client
     // doesn't request any specific address.
+    // Added extra checks: the address is reserved or belongs to the dynamic
+    // pool for the case the pool class has changed before the request.
     if (client_lease) {
-        if ((client_lease->addr_ == ctx.requested_address_) ||
-            ctx.requested_address_.isV4Zero()) {
+        if (((client_lease->addr_ == ctx.requested_address_) ||
+             ctx.requested_address_.isV4Zero()) &&
+            (hasAddressReservation(ctx) ||
+             inAllowedPool(ctx, client_lease->addr_))) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V4_REQUEST_EXTEND_LEASE)

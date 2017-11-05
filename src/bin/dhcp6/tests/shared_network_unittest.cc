@@ -2356,9 +2356,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     testAssigned([this, &client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-#if 0
-    EXPECT_EQ(0, client2.getLeaseNum());
-#endif
+    EXPECT_EQ(0, client2.getLeasesWithNonZeroLifetime().size());
 
     // If we add option 1234 with a value matching this class, the lease should
     // get renewed.
@@ -2368,6 +2366,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(1, client2.getLeaseNum());
+    EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
 }
 
 // Pool is selected based on the client class specified using a plain subnet.
@@ -2420,9 +2419,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     testAssigned([this, &client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-#if 0
-    EXPECT_EQ(0, client2.getLeaseNum());
-#endif
+    EXPECT_EQ(0, client2.getLeasesWithNonZeroLifetime().size());
 
     // If we add option 1234 with a value matching this class, the lease should
     // get renewed.
@@ -2432,6 +2429,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(1, client2.getLeaseNum());
+    EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
 }
 
 } // end of anonymous namespace
