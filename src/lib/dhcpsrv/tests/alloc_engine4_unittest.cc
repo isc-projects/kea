@@ -332,6 +332,29 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
     }
 }
 
+// This test verifies that the allocator picks addresses that belong to the
+// pool using classification
+TEST_F(AllocEngine4Test, IterativeAllocator_class) {
+    boost::scoped_ptr<NakedAllocEngine::Allocator>
+        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
+
+    // Restrict pool_ to the foo class. Add a second pool with bar class.
+    pool_->allowClientClass("foo");
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.200"),
+                            IOAddress("192.0.2.209")));
+    pool->allowClientClass("bar");
+    subnet_->addPool(pool);
+
+    // Clients are in bar
+    cc_.insert("bar");
+
+    for (int i = 0; i < 1000; ++i) {
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
+                                                 IOAddress("0.0.0.0"));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
+    }
+}
 
 // This test verifies that the iterative allocator really walks over all addresses
 // in all pools in specified subnet. It also must not pick the same address twice
