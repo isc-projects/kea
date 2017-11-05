@@ -503,6 +503,7 @@ TEST(CfgSubnets6Test, unparsePool) {
                              IOAddress("2001:db8:1::100"),
                              IOAddress("2001:db8:1::199")));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+    pool2->allowClientClass("bar");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -526,7 +527,8 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"client-class\": \"bar\"\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -547,6 +549,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
                                IOAddress("2001:db8:2::"), 48, 64));
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
+    pdpool2->allowClientClass("bar");
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
@@ -577,7 +580,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"delegated-len\": 56,\n"
         "            \"excluded-prefix\": \"2001:db8:3::\",\n"
         "            \"excluded-prefix-len\": 64,\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"client-class\": \"bar\"\n"
         "        }\n"
         "    ],\n"
         "    \"option-data\": [ ]\n"

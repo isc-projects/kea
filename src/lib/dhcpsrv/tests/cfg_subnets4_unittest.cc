@@ -812,6 +812,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 123));
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
+    pool2->allowClientClass("bar");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -841,7 +842,8 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"pool\": \"192.0.2.1-192.0.2.10\"\n"
         "        },{\n"
         "            \"option-data\": [ ],\n"
-        "            \"pool\": \"192.0.2.64/26\"\n"
+        "            \"pool\": \"192.0.2.64/26\",\n"
+        "            \"client-class\": \"bar\"\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

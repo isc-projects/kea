@@ -698,7 +698,7 @@ const char* NETWORKS_CONFIG[] = {
 
 // Configuration #13.
 // - 2 classes
-// - 2 shared networks, each with 1 subnet and client class restricton
+// - 2 shared networks, each with 1 subnet and client class restriction
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -853,6 +853,42 @@ const char* NETWORKS_CONFIG[] = {
     "                    \"pools\": ["
     "                        {"
     "                            \"pool\": \"10.0.0.1 - 10.0.0.63\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #16
+// - 1 shared network with 1 subnet and 2 pools and client class restriction
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[93].hex == 0x0001\""
+    "        }"
+    "    ],"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/24\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.63\","
+    "                            \"client-class\": \"a-devices\""
+    "                        },"
+    "                        {"
+    "                            \"pool\": \"192.0.2.100 - 192.0.2.100\""
     "                        }"
     "                    ]"
     "                }"
@@ -1777,6 +1813,47 @@ TEST_F(Dhcpv4SharedNetworkTest, customServerIdentifier) {
     // The explicitly configured server identifier should take precedence
     // over generated server identifier.
     EXPECT_EQ("2.3.4.5", client2.config_.serverid_.toText());
+}
+
+// Access to a pool within shared network is restricted by client
+// classification.
+TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
+    // Create client #1
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+
+    // Configure the server with one shared network including one subnet and
+    // in 2 pools in it. The access to one of the pools is restricted
+    // by client classification.
+    configure(NETWORKS_CONFIG[16], *client1.getServer());
+
+    // Client #1 requests an address in the restricted pool but can't be assigned
+    // this address because the client doesn't belong to a certain class.
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.100", "192.0.2.63");
+    });
+
+    // Release the lease that the client has got, because we'll need this address
+    // further in the test.
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doRelease());
+    });
+
+    // Add option93 which would cause the client to be classified as "a-devices".
+    OptionPtr option93(new OptionUint16(Option::V4, 93, 0x0001));
+    client1.addExtraOption(option93);
+
+    // This time, the allocation of the address provided as hint should be successful.
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.63", "192.0.2.63");
+    });
+
+    // Client 2 should be assigned an address from the unrestricted pool.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+    testAssigned([this, &client2] {
+        doDORA(client2, "192.0.2.100");
+    });
 }
 
 } // end of anonymous namespace

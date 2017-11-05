@@ -521,19 +521,44 @@ TEST(Subnet4Test, inRangeinPool) {
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.0.0")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.0.0")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.0.0")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.3.4")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.255.255")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.255.255")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.255.255")));
 
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.3.0.0")));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.3.0.0")));
+
+    // Add with classes
+    pool1->allowClientClass("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), no_class));
+
+    // This client belongs to foo only
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), foo_class));
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), bar_class));
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes));
 }
 
 // This test checks if the toText() method returns text representation
@@ -1351,11 +1376,11 @@ TEST(Subnet6Test, inRangeinPool) {
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::10")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::10")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::10")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::18")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::20")));
@@ -1364,6 +1389,31 @@ TEST(Subnet6Test, inRangeinPool) {
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::21")));
+
+    // Add with classes
+    pool1->allowClientClass("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), no_class));
+
+    // This client belongs to foo only
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), foo_class));
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), bar_class));
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes));
 }
 
 // This test verifies that inRange() and inPool() methods work properly
