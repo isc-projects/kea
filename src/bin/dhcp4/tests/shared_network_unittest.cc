@@ -862,7 +862,7 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #16
-// - 1 shared network with 1 subnet and 2 pools and client class restriction
+// - 1 shared network with 1 subnet and 2 pools (first pool has class restriction)
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [ \"*\" ]"
@@ -871,6 +871,10 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"a-devices\","
     "            \"test\": \"option[93].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[93].hex == 0x0002\""
     "        }"
     "    ],"
     "    \"valid-lifetime\": 600,"
@@ -891,6 +895,118 @@ const char* NETWORKS_CONFIG[] = {
     "                            \"pool\": \"192.0.2.100 - 192.0.2.100\""
     "                        }"
     "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #17
+// - 1 shared network with 1 subnet and 2 pools (each with class restriction)
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[93].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[93].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/24\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.63\","
+    "                            \"client-class\": \"a-devices\""
+    "                        },"
+    "                        {"
+    "                            \"pool\": \"192.0.2.100 - 192.0.2.100\","
+    "                            \"client-class\": \"b-devices\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #18
+// - plain subnet and 2 pools (first pool has class restriction)
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[93].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[93].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"valid-lifetime\": 600,"
+    "    \"subnet4\": ["
+    "        {"
+    "            \"subnet\": \"192.0.2.0/24\","
+    "            \"id\": 10,"
+    "            \"interface\": \"eth1\","
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"192.0.2.1 - 192.0.2.63\","
+    "                    \"client-class\": \"a-devices\""
+    "                },"
+    "                {"
+    "                    \"pool\": \"192.0.2.100 - 192.0.2.100\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #19
+// - plain subnet and 2 pools (each with class restriction)
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[93].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[93].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"valid-lifetime\": 600,"
+    "    \"subnet4\": ["
+    "        {"
+    "            \"subnet\": \"192.0.2.0/24\","
+    "            \"id\": 10,"
+    "            \"interface\": \"eth1\","
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"192.0.2.1 - 192.0.2.63\","
+    "                    \"client-class\": \"a-devices\""
+    "                },"
+    "                {"
+    "                    \"pool\": \"192.0.2.100 - 192.0.2.100\","
+    "                    \"client-class\": \"b-devices\""
     "                }"
     "            ]"
     "        }"
@@ -1854,6 +1970,84 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     testAssigned([this, &client2] {
         doDORA(client2, "192.0.2.100");
     });
+
+    // Now, let's reconfigure the server to also apply restrictions on the
+    // pool to which client2 now belongs.
+    configure(NETWORKS_CONFIG[17], *client1.getServer());
+
+    // The client should be refused to renew the lease because it doesn't belong
+    // to "b-devices" class.
+    client2.setState(Dhcp4Client::RENEWING);
+    testAssigned([this, &client2] {
+        doRequest(client2, "");
+    });
+
+    // If we add option93 with a value matching this class, the lease should
+    // get renewed.
+    OptionPtr option93_bis(new OptionUint16(Option::V4, 93, 0x0002));
+    client2.addExtraOption(option93_bis);
+
+    testAssigned([this, &client2] {
+        doRequest(client2, "192.0.2.100");
+    });
 }
 
+// Access to a pool within plain subnet is restricted by client classification.
+TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
+    // Create client #1
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+
+    // Configure the server with one plain subnet including two pools.
+    // The access to one of the pools is restricted by client classification.
+    configure(NETWORKS_CONFIG[18], *client1.getServer());
+
+    // Client #1 requests an address in the restricted pool but can't be assigned
+    // this address because the client doesn't belong to a certain class.
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.100", "192.0.2.63");
+    });
+
+    // Release the lease that the client has got, because we'll need this address
+    // further in the test.
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doRelease());
+    });
+
+    // Add option93 which would cause the client to be classified as "a-devices".
+    OptionPtr option93(new OptionUint16(Option::V4, 93, 0x0001));
+    client1.addExtraOption(option93);
+
+    // This time, the allocation of the address provided as hint should be successful.
+    testAssigned([this, &client1] {
+        doDORA(client1, "192.0.2.63", "192.0.2.63");
+    });
+
+    // Client 2 should be assigned an address from the unrestricted pool.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+    testAssigned([this, &client2] {
+        doDORA(client2, "192.0.2.100");
+    });
+
+    // Now, let's reconfigure the server to also apply restrictions on the
+    // pool to which client2 now belongs.
+    configure(NETWORKS_CONFIG[19], *client1.getServer());
+
+    // The client should be refused to renew the lease because it doesn't belong
+    // to "b-devices" class.
+    client2.setState(Dhcp4Client::RENEWING);
+    testAssigned([this, &client2] {
+        doRequest(client2, "");
+    });
+
+    // If we add option93 with a value matching this class, the lease should
+    // get renewed.
+    OptionPtr option93_bis(new OptionUint16(Option::V4, 93, 0x0002));
+    client2.addExtraOption(option93_bis);
+
+    testAssigned([this, &client2] {
+        doRequest(client2, "192.0.2.100");
+    });
+}
 } // end of anonymous namespace
