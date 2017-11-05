@@ -957,13 +957,17 @@ const char* NETWORKS_CONFIG[] = {
     "}",
 
 // Configuration #19.
-// - one shared network with on subnet and two pools (the first has
+// - one shared network with one subnet and two pools (the first has
 //   class restrictions)
     "{"
     "    \"client-classes\": ["
     "        {"
     "            \"name\": \"a-devices\","
     "            \"test\": \"option[1234].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[1234].hex == 0x0002\""
     "        }"
     "    ],"
     "    \"shared-networks\": ["
@@ -988,6 +992,112 @@ const char* NETWORKS_CONFIG[] = {
     "        }"
     "    ]"
     "}",
+
+// Configuration #20.
+// - one shared network with one subnet and two pools (each with class
+//   restriction)
+    "{"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[1234].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[1234].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\","
+    "                            \"client-class\": \"a-devices\""
+    "                        },"
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::50 - 2001:db8:1::50\","
+    "                            \"client-class\": \"b-devices\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #21.
+// - one plain subnet with two pools (the first has class restrictions)
+    "{"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[1234].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[1234].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"subnet6\": ["
+    "        {"
+    "            \"subnet\": \"2001:db8:1::/64\","
+    "            \"id\": 10,"
+    "            \"interface\": \"eth1\","
+    "            \"pools\": ["
+    "                {"
+    "                    \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\","
+    "                    \"client-class\": \"a-devices\""
+    "                },"
+    "                {"
+    "                    \"pool\": \"2001:db8:1::50 - 2001:db8:1::50\""
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #22.
+// - one plain subnet with two pools (each with class restriction)
+    "{"
+    "    \"client-classes\": ["
+    "        {"
+    "            \"name\": \"a-devices\","
+    "            \"test\": \"option[1234].hex == 0x0001\""
+    "        },"
+    "        {"
+    "            \"name\": \"b-devices\","
+    "            \"test\": \"option[1234].hex == 0x0002\""
+    "        }"
+    "    ],"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"id\": 10,"
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::20 - 2001:db8:1::20\","
+    "                            \"client-class\": \"a-devices\""
+    "                        },"
+    "                        {"
+    "                            \"pool\": \"2001:db8:1::50 - 2001:db8:1::50\","
+    "                            \"client-class\": \"b-devices\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}"
 
 };
 
@@ -2230,7 +2340,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
-    // Client 2 should be assigned an address from the unrestricted subnet.
+    // Client 2 should be assigned an address from the unrestricted pool.
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
@@ -2238,6 +2348,90 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::50")));
+
+    // Now, let's reconfigure the server to also apply restrictions on the
+    // pool to which client2 now belongs.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[20], *client1.getServer()));
+
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doRenew());
+    });
+#if 0
+    EXPECT_EQ(0, client2.getLeaseNum());
+#endif
+
+    // If we add option 1234 with a value matching this class, the lease should
+    // get renewed.
+    OptionPtr option1234_bis(new OptionUint16(Option::V6, 1234, 0x0002));
+    client2.addExtraOption(option1234_bis);
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doRenew());
+    });
+    EXPECT_EQ(1, client2.getLeaseNum());
+}
+
+// Pool is selected based on the client class specified using a plain subnet.
+TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
+    // Create client #1.
+    Dhcp6Client client1;
+    client1.setInterface("eth1");
+
+    // Configure the server with one plain subnet including two pools.
+    // The access to one of the pools is restricted by client classification.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[21], *client1.getServer()));
+
+    // Client #1 requests an address in the restricted pool but can't be assigned
+    // this address because the client doesn't belong to a certain class.
+    ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doSARR());
+    });
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::50")));
+
+    // Release the lease that the client has got, because we'll need this address
+    // further in the test.
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doRelease());
+    });
+
+    // Add option 1234 which would cause the client to be classified as "a-devices".
+    OptionPtr option1234(new OptionUint16(Option::V6, 1234, 0x0001));
+    client1.addExtraOption(option1234);
+
+    // This time, the allocation of the address provided as hint should be successful.
+    testAssigned([this, &client1] {
+        ASSERT_NO_THROW(client1.doSARR());
+    });
+    ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
+
+    // Client 2 should be assigned an address from the unrestricted pool.
+    Dhcp6Client client2(client1.getServer());
+    client2.setInterface("eth1");
+    ASSERT_NO_THROW(client2.requestAddress(0xabca0));
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doSARR());
+    });
+    ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::50")));
+
+    // Now, let's reconfigure the server to also apply restrictions on the
+    // pool to which client2 now belongs.
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[22], *client1.getServer()));
+
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doRenew());
+    });
+#if 0
+    EXPECT_EQ(0, client2.getLeaseNum());
+#endif
+
+    // If we add option 1234 with a value matching this class, the lease should
+    // get renewed.
+    OptionPtr option1234_bis(new OptionUint16(Option::V6, 1234, 0x0002));
+    client2.addExtraOption(option1234_bis);
+    testAssigned([this, &client2] {
+        ASSERT_NO_THROW(client2.doRenew());
+    });
+    EXPECT_EQ(1, client2.getLeaseNum());
 }
 
 } // end of anonymous namespace
