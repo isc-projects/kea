@@ -83,6 +83,26 @@ const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_T
 /// options associated with a host to minimize impact on performance. Other
 /// classes derived from @ref MySqlHostExchange should be used to retrieve
 /// information about IPv6 reservations and options.
+///
+/// Database schema contains several unique indexes to guard against adding
+/// multiple hosts for the same client identifier in a single subnet and for
+/// adding multiple hosts with a reservation for the same IPv4 address in a
+/// single subnet. The exceptions that has to be taken into account are
+/// listed below:
+/// - zero or null IPv4 address indicates that there is no reservation for the
+///   IPv4 address for the host,
+/// - zero or null subnet identifier (either IPv4 or IPv6) indicates that
+///   this subnet identifier must be ignored. Specifically, this is the case
+///   when host reservation is created DHCPv4 server, the IPv6 subnet id should
+///   be ignored. Conversely, when host reservation is created for DHCPv6 server,
+///   the IPv4 subnet id should be ignored.
+///
+/// To exclude those special case values from the unique indexes, the MySQL
+/// backend relies on the property of the unique indexes in MySQL, i.e. null
+/// values are excluded from unique indexes. That means that there might be
+/// multiple null values in a given column on which unique index is applied.
+/// Therefore, the MySQL backend converts subnet identifiers and IPv4 addresses
+/// of 0 to null before inserting a host to the database.
 class MySqlHostExchange {
 private:
 
@@ -279,17 +299,21 @@ public:
             // Can't take an address of intermediate object, so let's store it
             // in dhcp4_subnet_id_
             dhcp4_subnet_id_ = host->getIPv4SubnetID();
+            dhcp4_subnet_id_null_ = host->getIPv4SubnetID() == 0 ? MLM_TRUE : MLM_FALSE;
             bind_[3].buffer_type = MYSQL_TYPE_LONG;
             bind_[3].buffer = reinterpret_cast<char*>(&dhcp4_subnet_id_);
             bind_[3].is_unsigned = MLM_TRUE;
+            bind_[3].is_null = &dhcp4_subnet_id_null_;
 
             // dhcp6_subnet_id : INT UNSIGNED NULL
             // Can't take an address of intermediate object, so let's store it
             // in dhcp6_subnet_id_
             dhcp6_subnet_id_ = host->getIPv6SubnetID();
+            dhcp6_subnet_id_null_ = host->getIPv6SubnetID() == 0 ? MLM_TRUE : MLM_FALSE;
             bind_[4].buffer_type = MYSQL_TYPE_LONG;
             bind_[4].buffer = reinterpret_cast<char*>(&dhcp6_subnet_id_);
             bind_[4].is_unsigned = MLM_TRUE;
+            bind_[4].is_null = &dhcp6_subnet_id_null_;
 
             // ipv4_address : INT UNSIGNED NULL
             // The address in the Host structure is an IOAddress object.  Convert
