@@ -426,6 +426,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "nii", D6O_NII, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NII_RECORDS), "" },
+    { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
     { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
@@ -453,7 +454,6 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       RECORD_DEF(SIGNATURE_RECORDS), "" },
     { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
-    { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
