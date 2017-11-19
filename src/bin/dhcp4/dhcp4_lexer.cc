@@ -2706,6 +2706,7 @@ YY_RULE_SETUP
         return isc::dhcp::Dhcp4Parser::make_KNOWN_CLIENTS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("known-clients", driver.loc_);
+    }
 }
 
 \"only\" {
@@ -2714,6 +2715,7 @@ YY_RULE_SETUP
         return isc::dhcp::Dhcp4Parser::make_ONLY(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("only", driver.loc_);
+    }
 }
 
 \"never\" {
@@ -2723,6 +2725,7 @@ YY_RULE_SETUP
         return isc::dhcp::Dhcp4Parser::make_NEVER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("never", driver.loc_);
+    }
 }
 
 \"subnet\" {
