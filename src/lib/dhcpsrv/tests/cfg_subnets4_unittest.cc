@@ -813,6 +813,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
     pool2->allowClientClass("bar");
+    pool2->setKnownClients(Pool::SERVE_KNOWN);
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -843,7 +844,8 @@ TEST(CfgSubnets4Test, unparsePool) {
         "        },{\n"
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\",\n"
-        "            \"client-class\": \"bar\"\n"
+        "            \"client-class\": \"bar\",\n"
+        "            \"known-clients\": \"only\"\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

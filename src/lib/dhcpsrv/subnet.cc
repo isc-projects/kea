@@ -742,6 +742,13 @@ Subnet6::toElement() const {
         } else if (!cclasses.empty()) {
             pool_map->set("client-class", Element::create(*cclasses.cbegin()));
         }
+        // Set known-clients
+        Pool::KnownClients kc = (*pool)->getKnownClients();
+        if (kc != Pool::SERVE_BOTH) {
+            pool_map->set("known-clients",
+                          Element::create(kc == Pool::SERVE_KNOWN ?
+                                          "only" : "never"));
+        }
         // Push on the pool list
         pool_list->add(pool_map);
     }
@@ -803,6 +810,13 @@ Subnet6::toElement() const {
                       << cclasses.size());
         } else if (!cclasses.empty()) {
             pool_map->set("client-class", Element::create(*cclasses.cbegin()));
+        }
+        // Set known-clients
+        Pool::KnownClients kc = pdpool->getKnownClients();
+        if (kc != Pool::SERVE_BOTH) {
+            pool_map->set("known-clients",
+                          Element::create(kc == Pool::SERVE_KNOWN ?
+                                          "only" : "never"));
         }
         // Push on the pool list
         pdpool_list->add(pool_map);

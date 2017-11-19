@@ -268,6 +268,20 @@ TEST(Pool4Test, clientClasses) {
     EXPECT_TRUE(pool->clientSupported(bar_class));
 }
 
+// This test checks that handling for known-clients is valid.
+TEST(Pool4Test, knownClients) {
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This pool serves everybody by default.
+    EXPECT_EQ(Pool::SERVE_BOTH, pool->getKnownClients());
+
+    // Set it to only known clients.
+    pool->setKnownClients(Pool::SERVE_KNOWN);
+    EXPECT_EQ(Pool::SERVE_KNOWN,pool->getKnownClients());
+}
+
 // This test checks that handling for last allocated address/prefix is valid.
 TEST(Pool4Test, lastAllocated) {
     // Create a pool.
@@ -638,7 +652,7 @@ TEST(Pool6Test, clientClass) {
 TEST(Pool6Test, clientClasses) {    
     // Create a pool.
     Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
-                IOAddress("2001:db8::2"));
+               IOAddress("2001:db8::2"));
 
     // This client does not belong to any class.
     isc::dhcp::ClientClasses no_class;
@@ -670,6 +684,20 @@ TEST(Pool6Test, clientClasses) {
 
     // Clients in bar class should be accepted as well.
     EXPECT_TRUE(pool.clientSupported(bar_class));
+}
+
+// This test checks that handling for known-clients is valid.
+TEST(Pool6Test, knownClients) {
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+               IOAddress("2001:db8::2"));
+
+    // This pool serves everybody by default.
+    EXPECT_EQ(Pool::SERVE_BOTH, pool.getKnownClients());
+
+    // Set it to only known clients.
+    pool.setKnownClients(Pool::SERVE_KNOWN);
+    EXPECT_EQ(Pool::SERVE_KNOWN,pool.getKnownClients());
 }
 
 // This test checks that handling for last allocated address/prefix is valid.
