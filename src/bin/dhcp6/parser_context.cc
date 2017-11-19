@@ -176,6 +176,8 @@ Parser6Context::contextName()
         return ("pools");
     case PD_POOLS:
         return ("pd-pools");
+    case KNOWN_CLIENTS:
+        return ("known-clients");
     case RESERVATIONS:
         return ("reservations");
     case RELAY:

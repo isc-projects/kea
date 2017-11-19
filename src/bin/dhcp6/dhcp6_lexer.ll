@@ -361,6 +361,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     return isc::dhcp::Dhcp6Parser::make_STRING(tmp, driver.loc_);
 }
 
+\"never\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::KNOWN_CLIENTS:
+    case isc::dhcp::Parser6Context::REPLACE_CLIENT_NAME:
+        return isc::dhcp::Dhcp6Parser::make_NEVER(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("never", driver.loc_);
+}
+
 (?i:\"never\") {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser6Context::REPLACE_CLIENT_NAME) {
@@ -815,6 +824,22 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user-context", driver.loc_);
     }
+}
+
+\"known-clients\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::POOLS:
+        return isc::dhcp::Dhcp6Parser::make_KNOWN_CLIENTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("known-clients", driver.loc_);
+}
+
+\"only\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::KNOWN_CLIENTS:
+        return isc::dhcp::Dhcp6Parser::make_ONLY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("only", driver.loc_);
 }
 
 \"subnet\" {

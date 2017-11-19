@@ -174,6 +174,8 @@ Parser4Context::contextName()
         return ("control-socket");
     case POOLS:
         return ("pools");
+    case KNOWN_CLIENTS:
+        return ("known-clients");
     case RESERVATIONS:
         return ("reservations");
     case RELAY:

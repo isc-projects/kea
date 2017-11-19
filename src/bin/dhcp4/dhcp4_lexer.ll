@@ -586,6 +586,31 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"known-clients\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_KNOWN_CLIENTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("known-clients", driver.loc_);
+}
+
+\"only\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::KNOWN_CLIENTS:
+        return isc::dhcp::Dhcp4Parser::make_ONLY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("only", driver.loc_);
+}
+
+\"never\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::KNOWN_CLIENTS:
+    case isc::dhcp::Parser4Context::REPLACE_CLIENT_NAME:
+        return isc::dhcp::Dhcp4Parser::make_NEVER(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("never", driver.loc_);
+}
+
 \"subnet\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
