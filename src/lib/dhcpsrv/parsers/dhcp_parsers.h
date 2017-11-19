@@ -655,6 +655,7 @@ private:
 
     isc::data::ConstElementPtr client_class_;
 
+    isc::data::ConstElementPtr known_clients_;
 };
 
 /// @brief Parser for a list of prefix delegation pools.

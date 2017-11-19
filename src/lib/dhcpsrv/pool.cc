@@ -19,6 +19,7 @@ Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
      capacity_(0), cfg_option_(new CfgOption()), white_list_(),
+     known_clients_(SERVE_BOTH),
      last_allocated_(first), last_allocated_valid_(false) {
 }
 
@@ -119,6 +120,13 @@ Pool::toElement() const {
                   << cclasses.size());
     } else if (!cclasses.empty()) {
         map->set("client-class", Element::create(*cclasses.cbegin()));
+    }
+
+    // Set known-clients
+    KnownClients kc = getKnownClients();
+    if (kc != SERVE_BOTH) {
+        map->set("known-clients",
+                 Element::create(kc == SERVE_KNOWN ? "only" : "never"));
     }
 
     return (map);

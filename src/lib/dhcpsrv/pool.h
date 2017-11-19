@@ -28,6 +28,13 @@ namespace dhcp {
 class Pool {
 
 public:
+    /// @brief Value of known clients
+    typedef enum {
+        SERVE_BOTH = 0,   ///< the pool serves both known and unknown clients
+        SERVE_KNOWN = 1,  ///< the pool serves only known clients
+        SERVE_UNKNOWN = 2 ///< the pool never serves known clients
+    } KnownClients;
+
     /// @note:
     /// PoolType enum was removed. Please use Lease::Type instead
 
@@ -133,6 +140,16 @@ public:
         return (white_list_);
     }
 
+    /// @brief Returns the value of known clients
+    KnownClients getKnownClients() const {
+        return (known_clients_);
+    }
+
+    /// @brief Sets the value of known clients
+    void setKnownClients(KnownClients known_clients) {
+        known_clients_ = known_clients;
+    }
+
     /// @brief returns the last address that was tried from this pool
     ///
     /// @return address/prefix that was last tried from this pool
@@ -221,6 +238,9 @@ protected:
     ///
     /// @ref Network::white_list_
     ClientClasses white_list_;
+
+    /// @brief Value of known clients
+    KnownClients known_clients_;
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;

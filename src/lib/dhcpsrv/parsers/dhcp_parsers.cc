@@ -387,6 +387,19 @@ PoolParser::parse(PoolStoragePtr pools,
             pool->allowClientClass(cclass);
         }
     }
+
+    // Known-clients.
+    ConstElementPtr known_clients = pool_structure->get("known-clients");
+    if (known_clients) {
+        string kc = known_clients->stringValue();
+        if (kc == "only") {
+            pool->setKnownClients(Pool::SERVE_KNOWN);
+        } else if (kc == "never") {
+            pool->setKnownClients(Pool::SERVE_UNKNOWN);
+        } else
+            isc_throw(DhcpConfigError, "invalid known-clients value: " << kc
+                      << " (" << known_clients->getPosition() << ")");
+    }
 }
 
 //****************************** Pool4Parser *************************
@@ -861,6 +874,11 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         client_class_ = client_class;
     }
 
+    ConstElementPtr known_clients = pd_pool_->get("known-clients");
+    if (known_clients) {
+        known_clients_ = known_clients;
+    }
+
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -884,7 +902,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         pool_->setContext(user_context_);
     }
 
-
     if (client_class_) {
         string cclass = client_class_->stringValue();
         if (!cclass.empty()) {
@@ -892,6 +909,18 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         }
     }
         
+    if (known_clients_) {
+        string kc = known_clients_->stringValue();
+        if (kc == "only") {
+            pool_->setKnownClients(Pool::SERVE_KNOWN);
+        } else if (kc == "never") {
+            pool_->setKnownClients(Pool::SERVE_UNKNOWN);
+        } else
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "invalid known-clients value: " << kc
+                      << " (" << known_clients_->getPosition() << ")");
+    }
+
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
 }

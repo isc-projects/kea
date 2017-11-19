@@ -504,6 +504,7 @@ TEST(CfgSubnets6Test, unparsePool) {
                              IOAddress("2001:db8:1::199")));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
     pool2->allowClientClass("bar");
+    pool2->setKnownClients(Pool::SERVE_UNKNOWN);
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -528,7 +529,8 @@ TEST(CfgSubnets6Test, unparsePool) {
         "        },{\n"
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
         "            \"option-data\": [ ],\n"
-        "            \"client-class\": \"bar\"\n"
+        "            \"client-class\": \"bar\",\n"
+        "            \"known-clients\": \"never\"\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -550,6 +552,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
     pdpool2->allowClientClass("bar");
+    pdpool2->setKnownClients(Pool::SERVE_KNOWN);
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
@@ -581,7 +584,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"excluded-prefix\": \"2001:db8:3::\",\n"
         "            \"excluded-prefix-len\": 64,\n"
         "            \"option-data\": [ ],\n"
-        "            \"client-class\": \"bar\"\n"
+        "            \"client-class\": \"bar\",\n"
+        "            \"known-clients\": \"only\"\n"
         "        }\n"
         "    ],\n"
         "    \"option-data\": [ ]\n"
