@@ -133,7 +133,7 @@
         // and another is when there is a shared subnet scenario.
         "relay": {
             "ip-address": "3000::1"
-        },
+        }
     },
     {
         // This subnet is divided in two pools for unknown and
