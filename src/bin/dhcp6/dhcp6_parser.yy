@@ -99,6 +99,9 @@ using namespace std;
   EXCLUDED_PREFIX_LEN "excluded-prefix-len"
   DELEGATED_LEN "delegated-len"
   USER_CONTEXT "user-context"
+  KNOWN_CLIENTS "known-clients"
+  ONLY "only"
+  NEVER "never"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -176,7 +179,6 @@ using namespace std;
   TCP "TCP"
   JSON "JSON"
   WHEN_PRESENT "when-present"
-  NEVER "never"
   ALWAYS "always"
   WHEN_NOT_PRESENT "when-not-present"
 
@@ -1294,6 +1296,7 @@ pool_param: pool_entry
           | option_data_list
           | client_class
           | user_context
+          | known_clients
           | unknown_map_entry
           ;
 
@@ -1311,6 +1314,18 @@ user_context: USER_CONTEXT {
     ctx.stack_.back()->set("user-context", $4);
     ctx.leave();
 };
+
+known_clients: KNOWN_CLIENTS {
+    ctx.enter(ctx.KNOWN_CLIENTS);
+} COLON known_clients_value {
+    ctx.stack_.back()->set("known-clients", $4);
+    ctx.leave();
+}
+
+known_clients_value:
+    ONLY { $$ = ElementPtr(new StringElement("only", ctx.loc2pos(@1))); }
+  | NEVER { $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1))); }
+;
 
 // --- end of pools definition -------------------------------
 
@@ -1371,6 +1386,7 @@ pd_pool_param: pd_prefix
              | excluded_prefix
              | excluded_prefix_len
              | user_context
+             | known_clients
              | unknown_map_entry
              ;
 

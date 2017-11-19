@@ -264,6 +264,9 @@ public:
         /// Used while parsing Dhcp4/subnet4/pools structures.
         POOLS,
 
+        /// Used while parsing Dhcp4/subnet4/pools/known_client structures.
+        KNOWN_CLIENTS,
+
         /// Used while parsing Dhcp4/reservations structures.
         RESERVATIONS,
 

@@ -270,6 +270,9 @@ public:
         /// Used while parsing Dhcp6/subnet6/pd-pools structures.
         PD_POOLS,
 
+        /// Used while parsing Dhcp4/subnet6/pools/known_client structures.
+        KNOWN_CLIENTS,
+
         /// Used while parsing Dhcp6/reservations structures.
         RESERVATIONS,
 
