@@ -222,6 +222,7 @@ using namespace std;
 %type <ElementPtr> map_value
 %type <ElementPtr> db_type
 %type <ElementPtr> hr_mode
+%type <ElementPtr> known_clients_value
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> replace_client_name_value
