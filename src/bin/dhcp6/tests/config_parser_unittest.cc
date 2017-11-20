@@ -4149,11 +4149,13 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
         "     },"
         "     {"
         "        \"pool\": \"2001:db8:2::/80\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-class\": \"beta\", "
+        "        \"known-clients\": \"never\" "
         "     },"
         "     {"
         "        \"pool\": \"2001:db8:3::/80\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-class\": \"gamma\", "
+        "        \"known-clients\": \"only\" "
         "     },"
         "     {"
         "         \"pool\": \"2001:db8:4::/80\" "
@@ -4181,10 +4183,14 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
     // everyone).
     ClientClasses classes;
     classes.insert("alpha");
-    EXPECT_TRUE (pools.at(0)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to beta class is supported in pool[1]
     // and not supported in any other pool  (except pool[3], which allows
@@ -4192,9 +4198,13 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
     classes.clear();
     classes.insert("beta");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to gamma class is supported in pool[2]
     // and not supported in any other pool  (except pool[3], which allows
@@ -4202,26 +4212,38 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
     classes.clear();
     classes.insert("gamma");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to some other class (not mentioned in
     // the config) is supported only in pool[3], which allows everyone.
     classes.clear();
     classes.insert("delta");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Finally, let's check class-less client. He should be allowed only in
     // the last pool, which does not have any class restrictions.
     classes.clear();
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 }
 
 // Goal of this test is to verify that multiple pdpools can be configured
@@ -4243,13 +4265,15 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
         "        \"prefix-len\": 48, "
         "        \"delegated-len\": 64, "
         "        \"prefix\": \"2001:db8:2::\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-class\": \"beta\", "
+        "        \"known-clients\": \"never\" "
         "     },"
         "     {"
         "        \"prefix-len\": 48, "
         "        \"delegated-len\": 64, "
         "        \"prefix\": \"2001:db8:3::\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-class\": \"gamma\", "
+        "        \"known-clients\": \"only\" "
         "     },"
         "     {"
         "        \"prefix-len\": 48, "
@@ -4279,10 +4303,14 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
     // everyone).
     ClientClasses classes;
     classes.insert("alpha");
-    EXPECT_TRUE (pools.at(0)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to beta class is supported in pool[1]
     // and not supported in any other pool  (except pool[3], which allows
@@ -4290,9 +4318,13 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
     classes.clear();
     classes.insert("beta");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to gamma class is supported in pool[2]
     // and not supported in any other pool  (except pool[3], which allows
@@ -4300,26 +4332,38 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
     classes.clear();
     classes.insert("gamma");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to some other class (not mentioned in
     // the config) is supported only in pool[3], which allows everyone.
     classes.clear();
     classes.insert("delta");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Finally, let's check class-less client. He should be allowed only in
     // the last pool, which does not have any class restrictions.
     classes.clear();
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
-    EXPECT_TRUE (pools.at(3)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 }
 
 // This test checks the ability of the server to parse a configuration

@@ -4112,11 +4112,13 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
         "     },"
         "     {"
         "        \"pool\": \"192.0.3.101 - 192.0.3.150\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-class\": \"beta\", "
+        "        \"known-clients\": \"never\" "
         "     },"
         "     {"
         "        \"pool\": \"192.0.4.101 - 192.0.4.150\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-class\": \"gamma\", "
+        "        \"known-clients\": \"only\" "
         "     },"
         "     {"
         "        \"pool\": \"192.0.5.101 - 192.0.5.150\" "
@@ -4145,9 +4147,13 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     ClientClasses classes;
     classes.insert("alpha");
     EXPECT_TRUE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
     EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to beta class is supported in pool[1]
     // and not supported in any other pool  (except pools[3], which allows
@@ -4155,9 +4161,13 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     classes.clear();
     classes.insert("beta");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_TRUE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
     EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to gamma class is supported in pool[2]
     // and not supported in any other pool  (except pool[3], which allows
@@ -4165,26 +4175,38 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     classes.clear();
     classes.insert("gamma");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
-    EXPECT_TRUE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(2)->clientSupported(classes, true));
     EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Let's check if client belonging to some other class (not mentioned in
     // the config) is supported only in pool[3], which allows everyone.
     classes.clear();
     classes.insert("delta");
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
     EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 
     // Finally, let's check class-less client. He should be allowed only in
     // the last pool, which does not have any class restrictions.
     classes.clear();
     EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, true));
     EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, true));
     EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, true));
 }
 
 // This test verifies that the host reservations can be specified for
