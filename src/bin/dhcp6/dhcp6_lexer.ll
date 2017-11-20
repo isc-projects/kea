@@ -830,6 +830,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"known-clients\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
         return isc::dhcp::Dhcp6Parser::make_KNOWN_CLIENTS(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("known-clients", driver.loc_);

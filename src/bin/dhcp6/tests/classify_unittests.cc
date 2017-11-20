@@ -735,6 +735,93 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     EXPECT_TRUE(ia_na3->getOption(D6O_IAADDR));
 }
 
+// Checks if the known-clients field is indeed used for pool selection.
+TEST_F(ClassifyTest, clientKnownPool) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // This test configures 2 pools.
+    std::string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"client-classes\": [ "
+        " { "
+        "    \"name\": \"foo\" "
+        " }, "
+        " { "
+        "    \"name\": \"bar\" "
+        " } "
+        "], "
+        "\"subnet6\": [ "
+        " {  \"pools\": [ "
+        "    { "
+        "       \"pool\": \"2001:db8:1::/64\", "
+        "       \"known-clients\": \"only\" "
+        "    }, "
+        "    { "
+        "       \"pool\": \"2001:db8:2::/64\", "
+        "       \"known-clients\": \"never\" "
+        "    } "
+        "   ], "
+        "   \"subnet\": \"2001:db8:2::/40\", "
+        "   \"reservations\": [ "
+        "      { \"duid\": \"01:02:03:04\", \"hostname\": \"foo\" } ] "
+        " } "
+        "], "
+        "\"valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    OptionPtr clientid1 = generateClientId();
+    Pkt6Ptr query1 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    query1->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    query1->addOption(clientid1);
+    query1->setIface("eth1");
+
+    // First pool requires reservation so the second will be used
+    srv.classifyPacket(query1);
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    ASSERT_TRUE(response1);
+    OptionPtr ia_na1 = response1->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na1);
+    EXPECT_FALSE(ia_na1->getOption(D6O_STATUS_CODE));
+    OptionPtr iaaddr1 = ia_na1->getOption(D6O_IAADDR);
+    ASSERT_TRUE(iaaddr1);
+    boost::shared_ptr<Option6IAAddr> addr1 =
+        boost::dynamic_pointer_cast<Option6IAAddr>(iaaddr1);
+    ASSERT_TRUE(addr1);
+    EXPECT_EQ("2001:db8:2::", addr1->getAddress().toText());
+
+    // Try with DUID 01:02:03:04
+    uint8_t duid[] = { 0x01, 0x02, 0x03, 0x04 };
+    OptionBuffer buf(duid, duid + sizeof(duid));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
+    Pkt6Ptr query2 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 2345));
+    query2->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    query2->addOption(clientid2);
+    query2->setIface("eth1");
+
+    // Now the first pool will be used
+    srv.classifyPacket(query2);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    ASSERT_TRUE(response2);
+    OptionPtr ia_na2 = response2->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na2);
+    EXPECT_FALSE(ia_na2->getOption(D6O_STATUS_CODE));
+    OptionPtr iaaddr2 = ia_na2->getOption(D6O_IAADDR);
+    ASSERT_TRUE(iaaddr2);
+    boost::shared_ptr<Option6IAAddr> addr2 =
+        boost::dynamic_pointer_cast<Option6IAAddr>(iaaddr2);
+    ASSERT_TRUE(addr2);
+    EXPECT_EQ("2001:db8:1::", addr2->getAddress().toText());
+}
+
 // Tests whether a packet with custom vendor-class (not erouter or docsis)
 // is classified properly.
 TEST_F(ClassifyTest, vendorClientClassification2) {
