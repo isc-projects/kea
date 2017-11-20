@@ -411,6 +411,7 @@ public:
     bool fqdn_rev_;           ///< Perform reverse update for a lease.
     LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
     ClientClasses cc_;        ///< client classes
+    bool known_client_;       ///< client has a reservation
 };
 
 /// @brief Used in Allocation Engine tests for IPv4
@@ -513,6 +514,7 @@ public:
     LeaseMgrFactory factory_;   ///< Pointer to LeaseMgr factory
     AllocEngine::ClientContext4 ctx_; ///< Context information passed to various
     ClientClasses cc_;          ///< Client classes
+    bool known_client_;         ///< client has a reservation
                                      ///< allocation engine functions.
 };
 

@@ -27,21 +27,39 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
 }
 
-bool Pool::clientSupported(const ClientClasses& classes) const {
+bool Pool::clientSupported(const ClientClasses& classes,
+                           bool known_client) const {
+    bool match = false;
     if (white_list_.empty()) {
         // There is no class defined for this pool, so we do
         // support everyone.
-        return (true);
-    }
+        match = true;
+    } else {
 
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
-            return (true);
+        for (ClientClasses::const_iterator it = white_list_.begin();
+             it != white_list_.end(); ++it) {
+            if (classes.contains(*it)) {
+                match = true;
+                break;
+            }
         }
     }
 
-    return (false);
+    if (!match) {
+        return (false);
+    }
+
+    switch (known_clients_) {
+    case SERVE_BOTH:
+        return (true);
+    case SERVE_KNOWN:
+        return (known_client);
+    case SERVE_UNKNOWN:
+        return (!known_client);
+    default:
+        // Saninity check for an impossible condition
+        isc_throw(BadValue, "Invalid value of known clients");
+    }
 }
 
 void Pool::allowClientClass(const ClientClass& class_name) {

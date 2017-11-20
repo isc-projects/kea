@@ -215,19 +215,19 @@ TEST(Pool4Test, clientClass) {
 
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, pool->getClientClasses().size());
-    EXPECT_TRUE(pool->clientSupported(no_class));
-    EXPECT_TRUE(pool->clientSupported(foo_class));
-    EXPECT_TRUE(pool->clientSupported(bar_class));
-    EXPECT_TRUE(pool->clientSupported(three_classes));
+    EXPECT_TRUE(pool->clientSupported(no_class, false));
+    EXPECT_TRUE(pool->clientSupported(foo_class, false));
+    EXPECT_TRUE(pool->clientSupported(bar_class, false));
+    EXPECT_TRUE(pool->clientSupported(three_classes, false));
 
     // Let's allow only clients belonging to "bar" class.
     pool->allowClientClass("bar");
     EXPECT_EQ(1, pool->getClientClasses().size());
 
-    EXPECT_FALSE(pool->clientSupported(no_class));
-    EXPECT_FALSE(pool->clientSupported(foo_class));
-    EXPECT_TRUE(pool->clientSupported(bar_class));
-    EXPECT_TRUE(pool->clientSupported(three_classes));
+    EXPECT_FALSE(pool->clientSupported(no_class, false));
+    EXPECT_FALSE(pool->clientSupported(foo_class, false));
+    EXPECT_TRUE(pool->clientSupported(bar_class, false));
+    EXPECT_TRUE(pool->clientSupported(three_classes, false));
 }
 
 // This test checks that handling for multiple client-classes is valid.
@@ -249,9 +249,9 @@ TEST(Pool4Test, clientClasses) {
 
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, pool->getClientClasses().size());
-    EXPECT_TRUE(pool->clientSupported(no_class));
-    EXPECT_TRUE(pool->clientSupported(foo_class));
-    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(no_class, false));
+    EXPECT_TRUE(pool->clientSupported(foo_class, false));
+    EXPECT_TRUE(pool->clientSupported(bar_class, false));
 
     // Let's allow clients belonging to "bar" or "foo" class.
     pool->allowClientClass("bar");
@@ -259,13 +259,13 @@ TEST(Pool4Test, clientClasses) {
     EXPECT_EQ(2, pool->getClientClasses().size());
 
     // Class-less clients are to be rejected.
-    EXPECT_FALSE(pool->clientSupported(no_class));
+    EXPECT_FALSE(pool->clientSupported(no_class, false));
 
     // Clients in foo class should be accepted.
-    EXPECT_TRUE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(foo_class, false));
 
     // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class, false));
 }
 
 // This test checks that handling for known-clients is valid.
@@ -633,19 +633,19 @@ TEST(Pool6Test, clientClass) {
 
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, pool.getClientClasses().size());
-    EXPECT_TRUE(pool.clientSupported(no_class));
-    EXPECT_TRUE(pool.clientSupported(foo_class));
-    EXPECT_TRUE(pool.clientSupported(bar_class));
-    EXPECT_TRUE(pool.clientSupported(three_classes));
+    EXPECT_TRUE(pool.clientSupported(no_class, false));
+    EXPECT_TRUE(pool.clientSupported(foo_class, false));
+    EXPECT_TRUE(pool.clientSupported(bar_class, false));
+    EXPECT_TRUE(pool.clientSupported(three_classes, false));
 
     // Let's allow only clients belonging to "bar" class.
     pool.allowClientClass("bar");
     EXPECT_EQ(1, pool.getClientClasses().size());
 
-    EXPECT_FALSE(pool.clientSupported(no_class));
-    EXPECT_FALSE(pool.clientSupported(foo_class));
-    EXPECT_TRUE(pool.clientSupported(bar_class));
-    EXPECT_TRUE(pool.clientSupported(three_classes));
+    EXPECT_FALSE(pool.clientSupported(no_class, false));
+    EXPECT_FALSE(pool.clientSupported(foo_class, false));
+    EXPECT_TRUE(pool.clientSupported(bar_class, false));
+    EXPECT_TRUE(pool.clientSupported(three_classes, false));
 }
 
 // This test checks that handling for multiple client-classes is valid.
@@ -667,9 +667,9 @@ TEST(Pool6Test, clientClasses) {
 
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, pool.getClientClasses().size());
-    EXPECT_TRUE(pool.clientSupported(no_class));
-    EXPECT_TRUE(pool.clientSupported(foo_class));
-    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(no_class, false));
+    EXPECT_TRUE(pool.clientSupported(foo_class, false));
+    EXPECT_TRUE(pool.clientSupported(bar_class, false));
 
     // Let's allow clients belonging to "bar" or "foo" class.
     pool.allowClientClass("bar");
@@ -677,13 +677,13 @@ TEST(Pool6Test, clientClasses) {
     EXPECT_EQ(2, pool.getClientClasses().size());
 
     // Class-less clients are to be rejected.
-    EXPECT_FALSE(pool.clientSupported(no_class));
+    EXPECT_FALSE(pool.clientSupported(no_class, false));
 
     // Clients in foo class should be accepted.
-    EXPECT_TRUE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(foo_class, false));
 
     // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class, false));
 }
 
 // This test checks that handling for known-clients is valid.

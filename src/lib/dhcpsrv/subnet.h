@@ -56,16 +56,18 @@ public:
 
     /// @brief checks if the specified address is in allowed pools
     ///
-    /// This takes also into account client classes
+    /// This takes also into account client classes and known client
     ///
     /// @param type type of pools to iterate over
     /// @param addr this address will be checked if it belongs to any pools in
     ///        that subnet
     /// @param client_classes client class list which must be allowed
+    /// @param known_client true if the client is known, i.e. has a reservation
     /// @return true if the address is in any of the allowed pools
     bool inPool(Lease::Type type,
                 const isc::asiolink::IOAddress& addr,
-                const ClientClasses& client_classes) const;
+                const ClientClasses& client_classes,
+                bool known_client) const;
 
     /// @brief returns the last address that was tried from this subnet
     ///
@@ -157,13 +159,15 @@ public:
 
     /// @brief Returns a pool that specified address belongs to with classes
     ///
-    /// Variant using only pools allowing given classes
+    /// Variant using only pools allowing given classes and known clients
     ///
     /// @param type pool type that the pool is looked for
     /// @param client_classes client class list which must be allowed
+    /// @param known_client true if the client is known, i.e. has a reservation
     /// @param addr address that the returned pool should cover (optional)
     const PoolPtr getPool(Lease::Type type,
                           const ClientClasses& client_classes,
+                          bool known_client,
                           const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns a pool without any address specified
@@ -194,12 +198,15 @@ public:
     uint64_t getPoolCapacity(Lease::Type type) const;
 
     /// @brief Returns the number of possible leases for specified lease type
-    /// allowed for a client which belongs to classes.
+    /// allowed for a client which belongs to classes and matches known
+    /// clients constraint.
     ///
     /// @param type type of the lease
     /// @param client_classes List of classes the client belongs to.
+    /// @param known_client true if the client is known, i.e. has a reservation
     uint64_t getPoolCapacity(Lease::Type type,
-                             const ClientClasses& client_classes) const;
+                             const ClientClasses& client_classes,
+                             bool known_client) const;
 
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
@@ -335,9 +342,11 @@ protected:
     /// @brief returns a sum of possible leases in all pools allowing classes
     /// @param pools list of pools
     /// @param client_classes list of classes
+    /// @param known_client true if the client is known, i.e. has a reservation
     /// @return sum of possible/allowed leases
     uint64_t sumPoolCapacity(const PoolCollection& pools,
-                             const ClientClasses& client_classes) const;
+                             const ClientClasses& client_classes,
+                             bool known_client) const;
 
     /// @brief Checks if the specified pool overlaps with an existing pool.
     ///
