@@ -158,6 +158,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                                              const ClientClasses& client_classes,
+                                             bool known_client,
                                              const DuidPtr&,
                                              const IOAddress&) {
 
@@ -183,7 +184,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     PoolCollection::const_iterator first = pools.end();
     PoolPtr first_pool;
     for (it = pools.begin(); it != pools.end(); ++it) {
-        if (!(*it)->clientSupported(client_classes)) {
+        if (!(*it)->clientSupported(client_classes, known_client)) {
             continue;
         }
         if (first == pools.end()) {
@@ -212,7 +213,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
         // Trying next pool
         if (retrying) {
             for (; it != pools.end(); ++it) {
-                if ((*it)->clientSupported(client_classes)) {
+                if ((*it)->clientSupported(client_classes, known_client)) {
                     break;
                 }
             }
@@ -271,7 +272,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     // Let's rewind to the beginning.
     for (it = first; it != pools.end(); ++it) {
-        if ((*it)->clientSupported(client_classes)) {
+        if ((*it)->clientSupported(client_classes, known_client)) {
             (*it)->setLastAllocated((*it)->getFirstAddress());
             (*it)->resetLastAllocated();
         }
@@ -293,6 +294,7 @@ AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
 isc::asiolink::IOAddress
 AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
                                           const ClientClasses&,
+                                          bool known_client,
                                           const DuidPtr&,
                                           const IOAddress&) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
@@ -307,6 +309,7 @@ AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type)
 isc::asiolink::IOAddress
 AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
                                           const ClientClasses&,
+                                          bool known_client,
                                           const DuidPtr&,
                                           const IOAddress&) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
@@ -447,7 +450,8 @@ inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
                 }
             } else {
                 if (current_subnet->inPool(lease_type, address,
-                                           ctx.query_->getClasses())) {
+                                           ctx.query_->getClasses(),
+                                           !ctx.hosts_.empty())) {
                     return (true);
                 }
             }
@@ -752,10 +756,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), hint));
+            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(),
+                             !ctx.hosts_.empty(), hint));
 
         // check if the pool is allowed
-        if (pool && !pool->clientSupported(ctx.query_->getClasses())) {
+        if (pool && !pool->clientSupported(ctx.query_->getClasses(),
+                                           !ctx.hosts_.empty())) {
             pool.reset();
         }
 
@@ -857,7 +863,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // - we exhaust number of tries
         uint64_t possible_attempts =
             subnet->getPoolCapacity(ctx.currentIA().type_,
-                                    ctx.query_->getClasses());
+                                    ctx.query_->getClasses(),
+                                    !ctx.hosts_.empty());
         // Try next subnet if there is no chance to get something
         if (possible_attempts == 0) {
             subnet = subnet->getNextSubnet(original_subnet);
@@ -871,6 +878,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
             IOAddress candidate = allocator->pickAddress(subnet,
                                                          ctx.query_->getClasses(),
+                                                         !ctx.hosts_.empty(),
                                                          ctx.duid_,
                                                          hint);
 
@@ -889,7 +897,10 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             uint8_t prefix_len = 128;
             if (ctx.currentIA().type_ == Lease::TYPE_PD) {
                 pool = boost::dynamic_pointer_cast<Pool6>(
-                        subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), candidate));
+                        subnet->getPool(ctx.currentIA().type_,
+                                        ctx.query_->getClasses(),
+                                        !ctx.hosts_.empty(),
+                                        candidate));
                 if (pool) {
                     prefix_len = pool->getLength();
                 }
@@ -2626,7 +2637,8 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     while (current_subnet) {
 
         if (current_subnet->inPool(Lease::TYPE_V4, address,
-                                   ctx.query_->getClasses())) {
+                                   ctx.query_->getClasses(),
+                                   !ctx.hosts_.empty())) {
             // We found a subnet that this address belongs to, so it
             // seems that this subnet is the good candidate for allocation.
             // Let's update the selected subnet.
@@ -3354,7 +3366,8 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
         uint64_t possible_attempts =
             subnet->getPoolCapacity(Lease::TYPE_V4,
-                                    ctx.query_->getClasses());
+                                    ctx.query_->getClasses(),
+                                    !ctx.hosts_.empty());
         uint64_t max_attempts = (attempts_ > 0 ? attempts_ : possible_attempts);
         // Skip trying if there is no chance to get something
         if (possible_attempts == 0) {
@@ -3364,6 +3377,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
         for (uint64_t i = 0; i < max_attempts; ++i) {
             IOAddress candidate = allocator->pickAddress(subnet,
                                                          ctx.query_->getClasses(),
+                                                         !ctx.hosts_.empty(),
                                                          client_id,
                                                          ctx.requested_address_);
             // If address is not reserved for another client, try to allocate it.

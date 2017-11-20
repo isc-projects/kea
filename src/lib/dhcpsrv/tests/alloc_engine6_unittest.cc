@@ -189,7 +189,8 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
         alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_NA));
 
     for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_, duid_, IOAddress("::"));
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, known_client_,
+                                                 duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
     }
 }
@@ -211,9 +212,10 @@ TEST_F(AllocEngine6Test, IterativeAllocator_class) {
     cc_.insert("bar");
 
     for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_, duid_, IOAddress("::"));
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, known_client_,
+                                                 duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_, known_client_));
     }
 }
 
@@ -233,23 +235,43 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStep) {
     subnet_->addPool(pool3);
 
     // Let's check the first pool (5 addresses here)
-    EXPECT_EQ("2001:db8:1::1", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::3", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::4", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::5", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::3",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::4",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::5",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // The second pool is easy - only one address here
-    EXPECT_EQ("2001:db8:1::100", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::100",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // This is the third and last pool, with 2 addresses in it
-    EXPECT_EQ("2001:db8:1::105", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::106", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::105",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::106",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // We iterated over all addresses and reached to the end of the last pool.
     // Let's wrap around and start from the beginning
-    EXPECT_EQ("2001:db8:1::1", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepInClass) {
@@ -274,23 +296,43 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepInClass) {
     cc_.insert("foo");
 
     // Let's check the first pool (5 addresses here)
-    EXPECT_EQ("2001:db8:1::1", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::3", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::4", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::5", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::3",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::4",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::5",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // The second pool is easy - only one address here
-    EXPECT_EQ("2001:db8:1::100", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::100",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // This is the third and last pool, with 2 addresses in it
-    EXPECT_EQ("2001:db8:1::105", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::106", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::105",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::106",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // We iterated over all addresses and reached to the end of the last pool.
     // Let's wrap around and start from the beginning
-    EXPECT_EQ("2001:db8:1::1", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepOutClass) {
@@ -311,22 +353,40 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepOutClass) {
     subnet_->addPool(pool3);
 
     // Let's check the first pool (5 addresses here)
-    EXPECT_EQ("2001:db8:1::1", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::3", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::4", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::5", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::3",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::4",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::5",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // The second pool is skipped
 
     // This is the third and last pool, with 2 addresses in it
-    EXPECT_EQ("2001:db8:1::105", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::106", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::105",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::106",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // We iterated over all addresses and reached to the end of the last pool.
     // Let's wrap around and start from the beginning
-    EXPECT_EQ("2001:db8:1::1", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:1::2", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStep) {
@@ -347,41 +407,85 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStep) {
     // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
 
     // First pool check (Let's check over all 16 leases)
-    EXPECT_EQ("2001:db8::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:20::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:30::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:40::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:50::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:60::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:70::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:80::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:90::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:a0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:b0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:c0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:d0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:e0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:f0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:20::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:30::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:40::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:50::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:60::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:70::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:80::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:90::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:a0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:b0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:c0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:d0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:e0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:f0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Second pool (just one lease here)
-    EXPECT_EQ("2001:db8:1::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
-    EXPECT_EQ("2001:db8:2::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:2::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
-        EXPECT_EQ(exp.str(), alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+        EXPECT_EQ(exp.str(),
+                  alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                    IOAddress("::")).toText());
 
     }
-    EXPECT_EQ("2001:db8:2:ff::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:2:ff::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
-    EXPECT_EQ("2001:db8::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepInClass) {
@@ -408,41 +512,85 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepInClass) {
     // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
 
     // First pool check (Let's check over all 16 leases)
-    EXPECT_EQ("2001:db8::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:20::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:30::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:40::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:50::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:60::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:70::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:80::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:90::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:a0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:b0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:c0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:d0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:e0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:f0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:20::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:30::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:40::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:50::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:60::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:70::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:80::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:90::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:a0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:b0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:c0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:d0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:e0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:f0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Second pool (just one lease here)
-    EXPECT_EQ("2001:db8:1::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
-    EXPECT_EQ("2001:db8:2::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:2::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
-        EXPECT_EQ(exp.str(), alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+        EXPECT_EQ(exp.str(),
+                  alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                    IOAddress("::")).toText());
 
     }
-    EXPECT_EQ("2001:db8:2:ff::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:2:ff::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
-    EXPECT_EQ("2001:db8::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 }
 
 TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepOutClass) {
@@ -465,40 +613,82 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepOutClass) {
     // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
 
     // First pool check (Let's check over all 16 leases)
-    EXPECT_EQ("2001:db8::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:20::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:30::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:40::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:50::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:60::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:70::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:80::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:90::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:a0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:b0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:c0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:d0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:e0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:f0::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:20::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:30::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:40::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:50::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:60::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:70::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:80::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:90::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:a0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:b0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:c0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:d0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:e0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:f0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // The second pool is skipped
 
     // Third pool (256 leases, let's check first and last explicitly and the
     // rest over in a pool
-    EXPECT_EQ("2001:db8:2::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:2::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
     for (int i = 1; i < 255; i++) {
         stringstream exp;
         exp << "2001:db8:2:" << hex << i << dec << "::";
-        EXPECT_EQ(exp.str(), alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+        EXPECT_EQ(exp.str(),
+                  alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                    IOAddress("::")).toText());
 
     }
-    EXPECT_EQ("2001:db8:2:ff::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:2:ff::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 
     // Ok, we've iterated over all prefixes in all pools. We now wrap around.
     // We're looping over now (iterating over first pool again)
-    EXPECT_EQ("2001:db8::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
-    EXPECT_EQ("2001:db8:0:10::", alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
 }
 
 // This test verifies that the iterative allocator can step over addresses
@@ -506,7 +696,8 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddressIncrease) {
     NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
     // Let's pick the first address
-    IOAddress addr1 = alloc.pickAddress(subnet_, cc_, duid_, IOAddress("2001:db8:1::10"));
+    IOAddress addr1 = alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                        IOAddress("2001:db8:1::10"));
 
     // Check that we can indeed pick the first address from the pool
     EXPECT_EQ("2001:db8:1::10", addr1.toText());
@@ -596,7 +787,8 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
     std::set<IOAddress> generated_addrs;
     int cnt = 0;
     while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(subnet_, cc_, duid_, IOAddress("::"));
+        IOAddress candidate = alloc.pickAddress(subnet_, cc_, known_client_,
+                                                duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
 
         // One way to easily verify that the iterative allocator really works is
@@ -634,8 +826,9 @@ TEST_F(AllocEngine6Test, smallPool6) {
     IOAddress addr("2001:db8:1::ad");
 
     // Create a subnet with a pool that has one address.
-    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
-
+    initSubnet(IOAddress("2001:db8:1::"),
+               addr, addr);
+    
     // Initialize FQDN for a lease.
     initFqdn("myhost.example.com", true, true);
 

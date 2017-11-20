@@ -4144,47 +4144,47 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     // everyone).
     ClientClasses classes;
     classes.insert("alpha");
-    EXPECT_TRUE(pools.at(0)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
 
     // Let's check if client belonging to beta class is supported in pool[1]
     // and not supported in any other pool  (except pools[3], which allows
     // everyone).
     classes.clear();
     classes.insert("beta");
-    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(1)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
 
     // Let's check if client belonging to gamma class is supported in pool[2]
     // and not supported in any other pool  (except pool[3], which allows
     // everyone).
     classes.clear();
     classes.insert("gamma");
-    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(2)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
 
     // Let's check if client belonging to some other class (not mentioned in
     // the config) is supported only in pool[3], which allows everyone.
     classes.clear();
     classes.insert("delta");
-    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
 
     // Finally, let's check class-less client. He should be allowed only in
     // the last pool, which does not have any class restrictions.
     classes.clear();
-    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
-    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes, false));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes, false));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes, false));
 }
 
 // This test verifies that the host reservations can be specified for

@@ -121,8 +121,11 @@ public:
     /// is known to be improved.
     ///
     /// @param client_classes list of all classes the client belongs to
+    /// @param known_client true if the client is known, i.e. has a
+    /// reservation
     /// @return true if client can be supported, false otherwise
-    bool clientSupported(const ClientClasses& client_classes) const;
+    bool clientSupported(const ClientClasses& client_classes,
+                         bool known_client) const;
 
     /// @brief Adds class class_name to the list of supported classes
     ///
