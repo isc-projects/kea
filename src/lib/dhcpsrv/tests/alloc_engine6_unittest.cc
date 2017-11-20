@@ -219,6 +219,31 @@ TEST_F(AllocEngine6Test, IterativeAllocator_class) {
     }
 }
 
+// This test verifies that the allocator picks addresses that belong to the
+// pool not requiring reservations
+TEST_F(AllocEngine6Test, IterativeAllocator_unknown) {
+    boost::scoped_ptr<NakedAllocEngine::Allocator>
+        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_NA));
+
+    // Restrict pool_ to known clients. Add a second pool for unknown clients.
+    pool_->setKnownClients(Pool::SERVE_KNOWN);
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
+                            IOAddress("2001:db8:1::109")));
+    pool->setKnownClients(Pool::SERVE_UNKNOWN);
+    subnet_->addPool(pool);
+
+    // Clients are unknown
+    known_client_ = false;
+
+    for (int i = 0; i < 1000; ++i) {
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, known_client_,
+                                                 duid_, IOAddress("::"));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_, known_client_));
+        EXPECT_FALSE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_, !known_client_));
+    }
+}
+
 TEST_F(AllocEngine6Test, IterativeAllocatorAddrStep) {
     NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
 
@@ -351,6 +376,66 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepOutClass) {
     subnet_->addPool(pool1);
     subnet_->addPool(pool2);
     subnet_->addPool(pool3);
+
+    // Let's check the first pool (5 addresses here)
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::3",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::4",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::5",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+
+    // The second pool is skipped
+
+    // This is the third and last pool, with 2 addresses in it
+    EXPECT_EQ("2001:db8:1::105",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::106",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+
+    // We iterated over all addresses and reached to the end of the last pool.
+    // Let's wrap around and start from the beginning
+    EXPECT_EQ("2001:db8:1::1",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:1::2",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+}
+
+TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepKnown) {
+    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
+
+    subnet_->delPools(Lease::TYPE_NA); // Get rid of default pool
+
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::5")));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
+                             IOAddress("2001:db8:1::100")));
+    Pool6Ptr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::105"),
+                             IOAddress("2001:db8:1::106")));
+    // The pool1 serves everybody, pool2 known clients, pool3 unknown clients.
+    // Set pool1 and pool3 but not pool2 in foo class
+    pool1->setKnownClients(Pool::SERVE_BOTH);
+    pool2->setKnownClients(Pool::SERVE_KNOWN);
+    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
+    subnet_->addPool(pool1);
+    subnet_->addPool(pool2);
+    subnet_->addPool(pool3);
+
+    // Clients have no reservation
+    known_client_ = false;
 
     // Let's check the first pool (5 addresses here)
     EXPECT_EQ("2001:db8:1::1",
@@ -606,6 +691,109 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixStepOutClass) {
     subnet_->addPool(pool1);
     subnet_->addPool(pool2);
     subnet_->addPool(pool3);
+
+    // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
+    // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
+    // 2001:db8:1::/48 split into a single /48 prefix (just 1 lease)
+    // 2001:db8:2::/56 split into /64 prefixes (256 leases) (or 2001:db8:2:XX::)
+
+    // First pool check (Let's check over all 16 leases)
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:20::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:30::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:40::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:50::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:60::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:70::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:80::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:90::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:a0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:b0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:c0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:d0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:e0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:f0::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+
+    // The second pool is skipped
+
+    // Third pool (256 leases, let's check first and last explicitly and the
+    // rest over in a pool
+    EXPECT_EQ("2001:db8:2::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    for (int i = 1; i < 255; i++) {
+        stringstream exp;
+        exp << "2001:db8:2:" << hex << i << dec << "::";
+        EXPECT_EQ(exp.str(),
+                  alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                    IOAddress("::")).toText());
+
+    }
+    EXPECT_EQ("2001:db8:2:ff::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+
+    // Ok, we've iterated over all prefixes in all pools. We now wrap around.
+    // We're looping over now (iterating over first pool again)
+    EXPECT_EQ("2001:db8::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+    EXPECT_EQ("2001:db8:0:10::",
+              alloc.pickAddress(subnet_, cc_, known_client_, duid_,
+                                IOAddress("::")).toText());
+}
+
+TEST_F(AllocEngine6Test, IterativeAllocatorPrefixKnown) {
+    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_PD);
+
+    subnet_.reset(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
+
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 56, 60));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
+    Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
+    // Set pool2 in foo
+    pool1->setKnownClients(Pool::SERVE_BOTH);
+    pool2->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool3->setKnownClients(Pool::SERVE_KNOWN);
+    subnet_->addPool(pool1);
+    subnet_->addPool(pool2);
+    subnet_->addPool(pool3);
+
+    // Clients have reservations
+    known_client_ = true;
 
     // We have a 2001:db8::/48 subnet that has 3 pools defined in it:
     // 2001:db8::/56 split into /60 prefixes (16 leases) (or 2001:db8:0:X0::)
@@ -2642,6 +2830,62 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkPoolClassification) {
     ctx4.query_->addClass(ClientClass("cable-modem"));
 
     AllocEngine::findReservation(ctx4);
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx4)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
+}
+
+// This test verifies that the server can offer an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet requires a reservation.
+TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkPoolKnown) {
+    // Try to offer address from subnet1. There is an address available so
+    // it should be offerred.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet1_->inRange(lease->addr_));
+
+    // Apply restrictions on the pool1. This should be only assigned
+    // to clients with have a reservation.
+    pool1_->setKnownClients(Pool::SERVE_KNOWN);
+
+    // The allocation engine should determine that the pool1 is not
+    // available for the client without a reservation.
+    // Instead, it should offer an address from subnet2 that belongs
+    // to the same shared network.
+    AllocEngine::ClientContext6 ctx2(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx2.currentIA().iaid_ = iaid_;
+    ctx2.query_ = query;
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx2)));
+    ASSERT_TRUE(lease);
+    ASSERT_TRUE(subnet2_->inRange(lease->addr_));
+
+    AllocEngine::ClientContext6 ctx3(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx3.currentIA().iaid_ = iaid_;
+    ctx3.query_ = query;
+
+    AllocEngine::ClientContext6 ctx4(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx4.currentIA().iaid_ = iaid_;
+    ctx4.query_ = query;
+
+    // Add a host reservation and try again. This time, we should
+    // offer an address from the pool1_.
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                          Host::IDENT_DUID, SubnetID(0), subnet1_->getID(),
+                          IOAddress::IPV4_ZERO_ADDRESS(), "foo"));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+    AllocEngine::findReservation(ctx4);
+
     ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx4)));
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
