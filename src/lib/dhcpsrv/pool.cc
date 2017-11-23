@@ -18,7 +18,7 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
-     capacity_(0), cfg_option_(new CfgOption()), white_list_(),
+     capacity_(0), cfg_option_(new CfgOption()), client_class_(""),
      known_clients_(SERVE_BOTH),
      last_allocated_(first), last_allocated_valid_(false) {
 }
@@ -30,19 +30,12 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
 bool Pool::clientSupported(const ClientClasses& classes,
                            bool known_client) const {
     bool match = false;
-    if (white_list_.empty()) {
+    if (client_class_.empty()) {
         // There is no class defined for this pool, so we do
         // support everyone.
         match = true;
-    } else {
-
-        for (ClientClasses::const_iterator it = white_list_.begin();
-             it != white_list_.end(); ++it) {
-            if (classes.contains(*it)) {
-                match = true;
-                break;
-            }
-        }
+    } else if (classes.contains(client_class_)) {
+        match = true;
     }
 
     if (!match) {
@@ -63,7 +56,7 @@ bool Pool::clientSupported(const ClientClasses& classes,
 }
 
 void Pool::allowClientClass(const ClientClass& class_name) {
-    white_list_.insert(class_name);
+    client_class_ = class_name;
 }
 
 std::string
@@ -132,12 +125,9 @@ Pool::toElement() const {
     map->set("option-data", opts->toElement());
 
     // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
+    const ClientClass& cclass = getClientClass();
+    if (!cclass.empty()) {
+        map->set("client-class", Element::create(cclass));
     }
 
     // Set known-clients

@@ -159,9 +159,7 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    const ClientClasses classes = network->getClientClasses();
-    ASSERT_EQ(1, classes.size());
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", network->getClientClass());
 
     EXPECT_FALSE(network->getMatchClientId());
 }
@@ -278,9 +276,7 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    const ClientClasses classes = network->getClientClasses();
-    ASSERT_EQ(1, classes.size());
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", network->getClientClass());
 }
 
 } // end of anonymous namespace

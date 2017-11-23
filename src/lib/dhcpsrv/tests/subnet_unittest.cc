@@ -469,7 +469,7 @@ TEST(Subnet4Test, clientClasses) {
     four_classes.insert("network");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, subnet->getClientClasses().size());
+    EXPECT_TRUE(subnet->getClientClass().empty());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -477,7 +477,7 @@ TEST(Subnet4Test, clientClasses) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
-    EXPECT_EQ(1, subnet->getClientClasses().size());
+    EXPECT_EQ("bar", subnet->getClientClass());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -497,44 +497,6 @@ TEST(Subnet4Test, clientClasses) {
 
     // If the classes include "network", the subnet is selected.
     EXPECT_TRUE(subnet->clientSupported(four_classes));
-}
-
-// Tests whether Subnet4 object is able to store and process properly
-// information about allowed client classes (multiple classes allowed).
-TEST(Subnet4Test, clientClassesMultiple) {
-    // Create the V4 subnet.
-    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
-
-    // This client does not belong to any class.
-    isc::dhcp::ClientClasses no_class;
-
-    // This client belongs to foo only.
-    isc::dhcp::ClientClasses foo_class;
-    foo_class.insert("foo");
-
-    // This client belongs to bar only. I like that client.
-    isc::dhcp::ClientClasses bar_class;
-    bar_class.insert("bar");
-
-    // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, subnet->getClientClasses().size());
-    EXPECT_TRUE(subnet->clientSupported(no_class));
-    EXPECT_TRUE(subnet->clientSupported(foo_class));
-    EXPECT_TRUE(subnet->clientSupported(bar_class));
-
-    // Let's allow clients belonging to "bar" or "foo" class.
-    subnet->allowClientClass("bar");
-    subnet->allowClientClass("foo");
-    EXPECT_EQ(2, subnet->getClientClasses().size());
-
-    // Class-less clients are to be rejected.
-    EXPECT_FALSE(subnet->clientSupported(no_class));
-
-    // Clients in foo class should be accepted.
-    EXPECT_TRUE(subnet->clientSupported(foo_class));
-
-    // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(subnet->clientSupported(bar_class));
 }
 
 TEST(Subnet4Test, addInvalidOption) {
@@ -1093,7 +1055,7 @@ TEST(Subnet6Test, clientClasses) {
     four_classes.insert("network");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, subnet->getClientClasses().size());
+    EXPECT_TRUE(subnet->getClientClass().empty());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -1101,7 +1063,7 @@ TEST(Subnet6Test, clientClasses) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
-    EXPECT_EQ(1, subnet->getClientClasses().size());
+    EXPECT_EQ("bar", subnet->getClientClass());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -1121,44 +1083,6 @@ TEST(Subnet6Test, clientClasses) {
 
     // If the classes include "network", the subnet is selected.
     EXPECT_TRUE(subnet->clientSupported(four_classes));
-}
-
-// Tests whether Subnet6 object is able to store and process properly
-// information about allowed client class (multiple classes allowed).
-TEST(Subnet6Test, clientClassesMultiple) {
-    // Create the V6 subnet.
-    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-
-    // This client does not belong to any class.
-    isc::dhcp::ClientClasses no_class;
-
-    // This client belongs to foo only.
-    isc::dhcp::ClientClasses foo_class;
-    foo_class.insert("foo");
-
-    // This client belongs to bar only. I like that client.
-    isc::dhcp::ClientClasses bar_class;
-    bar_class.insert("bar");
-
-    // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, subnet->getClientClasses().size());
-    EXPECT_TRUE(subnet->clientSupported(no_class));
-    EXPECT_TRUE(subnet->clientSupported(foo_class));
-    EXPECT_TRUE(subnet->clientSupported(bar_class));
-
-    // Let's allow only clients belonging to "foo" or "bar" class.
-    subnet->allowClientClass("foo");
-    subnet->allowClientClass("bar");
-    EXPECT_EQ(2, subnet->getClientClasses().size());
-
-    // Class-less clients are to be rejected.
-    EXPECT_FALSE(subnet->clientSupported(no_class));
-
-    // Clients in foo class should be accepted.
-    EXPECT_TRUE(subnet->clientSupported(foo_class));
-
-    // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(subnet->clientSupported(bar_class));
 }
 
 // Checks that it is not allowed to add invalid pools.

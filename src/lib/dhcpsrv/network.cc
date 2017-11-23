@@ -22,25 +22,18 @@ Network::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
 
 bool
 Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (white_list_.empty()) {
+    if (client_class_.empty()) {
         // There is no class defined for this network, so we do
         // support everyone.
         return (true);
     }
 
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
-            return (true);
-        }
-    }
-
-    return (false);
+    return (classes.contains(client_class_));
 }
 
 void
 Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    white_list_.insert(class_name);
+    client_class_ = class_name;
 }
 
 ElementPtr
@@ -60,12 +53,9 @@ Network::toElement() const {
     map->set("relay", relay);
 
     // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
+    const ClientClass& cclass = getClientClass();
+    if (!cclass.empty()) {
+        map->set("client-class", Element::create(cclass));
     }
 
     // Set renew-timer

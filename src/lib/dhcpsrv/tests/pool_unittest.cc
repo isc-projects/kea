@@ -214,7 +214,7 @@ TEST(Pool4Test, clientClass) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool->getClientClasses().size());
+    EXPECT_TRUE(pool->getClientClass().empty());
     EXPECT_TRUE(pool->clientSupported(no_class, false));
     EXPECT_TRUE(pool->clientSupported(foo_class, false));
     EXPECT_TRUE(pool->clientSupported(bar_class, false));
@@ -222,50 +222,12 @@ TEST(Pool4Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     pool->allowClientClass("bar");
-    EXPECT_EQ(1, pool->getClientClasses().size());
+    EXPECT_EQ("bar", pool->getClientClass());
 
     EXPECT_FALSE(pool->clientSupported(no_class, false));
     EXPECT_FALSE(pool->clientSupported(foo_class, false));
     EXPECT_TRUE(pool->clientSupported(bar_class, false));
     EXPECT_TRUE(pool->clientSupported(three_classes, false));
-}
-
-// This test checks that handling for multiple client-classes is valid.
-TEST(Pool4Test, clientClasses) {    
-    // Create a pool.
-    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
-                            IOAddress("192.0.2.255")));
-
-    // This client does not belong to any class.
-    isc::dhcp::ClientClasses no_class;
-
-    // This client belongs to foo only.
-    isc::dhcp::ClientClasses foo_class;
-    foo_class.insert("foo");
-
-    // This client belongs to bar only. I like that client.
-    isc::dhcp::ClientClasses bar_class;
-    bar_class.insert("bar");
-
-    // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool->getClientClasses().size());
-    EXPECT_TRUE(pool->clientSupported(no_class, false));
-    EXPECT_TRUE(pool->clientSupported(foo_class, false));
-    EXPECT_TRUE(pool->clientSupported(bar_class, false));
-
-    // Let's allow clients belonging to "bar" or "foo" class.
-    pool->allowClientClass("bar");
-    pool->allowClientClass("foo");
-    EXPECT_EQ(2, pool->getClientClasses().size());
-
-    // Class-less clients are to be rejected.
-    EXPECT_FALSE(pool->clientSupported(no_class, false));
-
-    // Clients in foo class should be accepted.
-    EXPECT_TRUE(pool->clientSupported(foo_class, false));
-
-    // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(pool->clientSupported(bar_class, false));
 }
 
 // This test checks that handling for known-clients is valid.
@@ -632,7 +594,7 @@ TEST(Pool6Test, clientClass) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool.getClientClasses().size());
+    EXPECT_TRUE(pool.getClientClass().empty());
     EXPECT_TRUE(pool.clientSupported(no_class, false));
     EXPECT_TRUE(pool.clientSupported(foo_class, false));
     EXPECT_TRUE(pool.clientSupported(bar_class, false));
@@ -640,50 +602,12 @@ TEST(Pool6Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     pool.allowClientClass("bar");
-    EXPECT_EQ(1, pool.getClientClasses().size());
+    EXPECT_EQ("bar", pool.getClientClass());
 
     EXPECT_FALSE(pool.clientSupported(no_class, false));
     EXPECT_FALSE(pool.clientSupported(foo_class, false));
     EXPECT_TRUE(pool.clientSupported(bar_class, false));
     EXPECT_TRUE(pool.clientSupported(three_classes, false));
-}
-
-// This test checks that handling for multiple client-classes is valid.
-TEST(Pool6Test, clientClasses) {    
-    // Create a pool.
-    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
-               IOAddress("2001:db8::2"));
-
-    // This client does not belong to any class.
-    isc::dhcp::ClientClasses no_class;
-
-    // This client belongs to foo only.
-    isc::dhcp::ClientClasses foo_class;
-    foo_class.insert("foo");
-
-    // This client belongs to bar only. I like that client.
-    isc::dhcp::ClientClasses bar_class;
-    bar_class.insert("bar");
-
-    // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool.getClientClasses().size());
-    EXPECT_TRUE(pool.clientSupported(no_class, false));
-    EXPECT_TRUE(pool.clientSupported(foo_class, false));
-    EXPECT_TRUE(pool.clientSupported(bar_class, false));
-
-    // Let's allow clients belonging to "bar" or "foo" class.
-    pool.allowClientClass("bar");
-    pool.allowClientClass("foo");
-    EXPECT_EQ(2, pool.getClientClasses().size());
-
-    // Class-less clients are to be rejected.
-    EXPECT_FALSE(pool.clientSupported(no_class, false));
-
-    // Clients in foo class should be accepted.
-    EXPECT_TRUE(pool.clientSupported(foo_class, false));
-
-    // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(pool.clientSupported(bar_class, false));
 }
 
 // This test checks that handling for known-clients is valid.

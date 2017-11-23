@@ -740,12 +740,9 @@ Subnet6::toElement() const {
         ConstCfgOptionPtr opts = (*pool)->getCfgOption();
         pool_map->set("option-data", opts->toElement());
         // Set client-class
-        const ClientClasses& cclasses = (*pool)->getClientClasses();
-        if (cclasses.size() > 1) {
-            isc_throw(ToElementError, "client-class has too many items: "
-                      << cclasses.size());
-        } else if (!cclasses.empty()) {
-            pool_map->set("client-class", Element::create(*cclasses.cbegin()));
+        const ClientClass& cclass = (*pool)->getClientClass();
+        if (!cclass.empty()) {
+            pool_map->set("client-class", Element::create(cclass));
         }
         // Set known-clients
         Pool::KnownClients kc = (*pool)->getKnownClients();
@@ -809,12 +806,9 @@ Subnet6::toElement() const {
         ConstCfgOptionPtr opts = pdpool->getCfgOption();
         pool_map->set("option-data", opts->toElement());
         // Set client-class
-        const ClientClasses& cclasses = pdpool->getClientClasses();
-        if (cclasses.size() > 1) {
-            isc_throw(ToElementError, "client-class has too many items: "
-                      << cclasses.size());
-        } else if (!cclasses.empty()) {
-            pool_map->set("client-class", Element::create(*cclasses.cbegin()));
+        const ClientClass& cclass = pdpool->getClientClass();
+        if (!cclass.empty()) {
+            pool_map->set("client-class", Element::create(cclass));
         }
         // Set known-clients
         Pool::KnownClients kc = pdpool->getKnownClients();
