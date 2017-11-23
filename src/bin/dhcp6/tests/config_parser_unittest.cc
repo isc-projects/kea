@@ -6146,9 +6146,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     // Let's check the first one.
     SharedNetwork6Ptr net = nets->at(0);
     ASSERT_TRUE(net);
-
-    auto classes = net->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", net->getClientClass());
 
     const Subnet6Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
@@ -6158,16 +6156,13 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     // shared-network level.
     Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", s->getClientClass());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("beta")); // beta defined on subnet level
-    EXPECT_FALSE(classes.contains("alpha")); // alpha defined on shared-network level
+    EXPECT_EQ("beta", s->getClientClass()); // beta defined on subnet level
 
     // Ok, now check the second shared network. It doesn't have
     // anything defined on shared-network or subnet level, so
@@ -6181,8 +6176,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
 
     // This subnet should derive its renew-timer from global scope.
     s = checkSubnet(*subs, "2001:db3::/48", 900, 1800, 3600, 7200);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.empty());
+    EXPECT_TRUE(s->getClientClass().empty());
 }
 
 // Tests if rapid-commit is derived properly.

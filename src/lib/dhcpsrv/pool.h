@@ -117,9 +117,6 @@ public:
     /// @Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
-    /// @todo: currently doing the same than network which
-    /// is known to be improved.
-    ///
     /// @param client_classes list of all classes the client belongs to
     /// @param known_client true if the client is known, i.e. has a
     /// reservation
@@ -127,20 +124,19 @@ public:
     bool clientSupported(const ClientClasses& client_classes,
                          bool known_client) const;
 
-    /// @brief Adds class class_name to the list of supported classes
+    /// @brief Sets the supported class to  class class_name
     ///
     /// @param class_name client class to be supported by this pool
     void allowClientClass(const ClientClass& class_name);
 
-    /// @brief returns the client class white list
+    /// @brief returns the client class
     ///
-    /// @note Currently white list is empty or has one element
     /// @note The returned reference is only valid as long as the object
     /// returned is valid.
     ///
-    /// @return client classes @ref white_list_
-    const ClientClasses& getClientClasses() const {
-        return (white_list_);
+    /// @return client class @ref client_class_
+    const ClientClass& getClientClass() const {
+        return (client_class_);
     }
 
     /// @brief Returns the value of known clients
@@ -239,8 +235,8 @@ protected:
 
     /// @brief Optional definition of a client class
     ///
-    /// @ref Network::white_list_
-    ClientClasses white_list_;
+    /// @ref Network::client_class_
+    ClientClass client_class_;
 
     /// @brief Value of known clients
     KnownClients known_clients_;
