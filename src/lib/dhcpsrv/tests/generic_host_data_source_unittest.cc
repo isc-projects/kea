@@ -333,7 +333,7 @@ GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
 void
 GenericHostDataSourceTest::compareClientClasses(const ClientClasses& classes1,
                                                 const ClientClasses& classes2) {
-    EXPECT_TRUE(std::equal(classes1.begin(), classes1.end(), classes2.begin()));
+    EXPECT_TRUE(std::equal(classes1.cbegin(), classes1.cend(), classes2.cbegin()));
 }
 
 void

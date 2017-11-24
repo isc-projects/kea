@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,12 +93,12 @@ Pkt::delOption(uint16_t type) {
 
 bool
 Pkt::inClass(const std::string& client_class) {
-    return (classes_.find(client_class) != classes_.end());
+    return (classes_.contains(client_class));
 }
 
 void
 Pkt::addClass(const std::string& client_class) {
-    if (classes_.find(client_class) == classes_.end()) {
+    if (!classes_.contains(client_class)) {
         classes_.insert(client_class);
     }
 }

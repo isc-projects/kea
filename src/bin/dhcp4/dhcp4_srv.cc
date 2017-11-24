@@ -159,10 +159,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
     const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
-        std::string joined_classes = boost::algorithm::join(classes, ", ");
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(query_->getLabel())
-            .arg(joined_classes);
+            .arg(classes.toText());
     }
 };
 
@@ -381,9 +380,10 @@ Dhcpv4Exchange::setHostIdentifiers() {
 void
 Dhcpv4Exchange::setReservedClientClasses() {
     if (context_->currentHost() && query_) {
-        BOOST_FOREACH(const std::string& client_class,
-                      context_->currentHost()->getClientClasses4()) {
-            query_->addClass(client_class);
+        const ClientClasses& classes = context_->currentHost()->getClientClasses4();
+        for (ClientClasses::const_iterator cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            query_->addClass(*cclass);
         }
     }
 }
@@ -1199,8 +1199,8 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // Each class in the incoming packet
     const ClientClasses& classes = ex.getQuery()->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.begin();
-         cclass != classes.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
             getClientClassDictionary()->findClass(*cclass);
@@ -2249,8 +2249,8 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
         // Now we need to iterate over the classes assigned to the
         // query packet and find corresponding class definitions for it.
-        for (ClientClasses::const_iterator name = classes.begin();
-             name != classes.end(); ++name) {
+        for (ClientClasses::const_iterator name = classes.cbegin();
+             name != classes.cend(); ++name) {
 
             ClientClassDefMap::const_iterator cl = defs->find(*name);
             if (cl == defs->end()) {
@@ -2960,8 +2960,8 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
         getClientClassDictionary()->getClasses();
-    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
-         it != defs_ptr->end(); ++it) {
+    for (ClientClassDefMap::const_iterator it = defs_ptr->cbegin();
+         it != defs_ptr->cend(); ++it) {
         // Note second cannot be null
         const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
         // Nothing to do without an expression to evaluate
@@ -3003,8 +3003,8 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         OptionDefinitionPtr def;
         // Iterate on client classes
         const ClientClasses& classes = query->getClasses();
-        for (ClientClasses::const_iterator cclass = classes.begin();
-             cclass != classes.end(); ++cclass) {
+        for (ClientClasses::const_iterator cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
             // Get the client class definition for this class
             const ClientClassDefPtr& ccdef =
                 CfgMgr::instance().getCurrentCfg()->

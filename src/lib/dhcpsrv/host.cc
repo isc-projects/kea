@@ -451,7 +451,7 @@ Host::toElement4() const {
     const ClientClasses& cclasses = getClientClasses4();
     ElementPtr classes = Element::createList();
     for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-         cclass != cclasses.end(); ++cclass) {
+         cclass != cclasses.cend(); ++cclass) {
         classes->add(Element::create(*cclass));
     }
     map->set("client-classes", classes);
@@ -508,7 +508,7 @@ Host::toElement6() const {
     const ClientClasses& cclasses = getClientClasses6();
     ElementPtr classes = Element::createList();
     for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-         cclass != cclasses.end(); ++cclass) {
+         cclass != cclasses.cend(); ++cclass) {
         classes->add(Element::create(*cclass));
     }
     map->set("client-classes", classes);
@@ -568,18 +568,18 @@ Host::toText() const {
     }
 
     // Add DHCPv4 client classes.
-    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.begin();
-         cclass != dhcp4_client_classes_.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.cbegin();
+         cclass != dhcp4_client_classes_.cend(); ++cclass) {
         s << " dhcp4_class"
-          << std::distance(dhcp4_client_classes_.begin(), cclass)
+          << std::distance(dhcp4_client_classes_.cbegin(), cclass)
           << "=" << *cclass;
     }
 
     // Add DHCPv6 client classes.
-    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.begin();
-         cclass != dhcp6_client_classes_.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.cbegin();
+         cclass != dhcp6_client_classes_.cend(); ++cclass) {
         s << " dhcp6_class"
-          << std::distance(dhcp6_client_classes_.begin(), cclass)
+          << std::distance(dhcp6_client_classes_.cbegin(), cclass)
           << "=" << *cclass;
     }
 
