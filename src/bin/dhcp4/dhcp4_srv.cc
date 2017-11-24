@@ -2244,16 +2244,17 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
     if (!classes.empty()) {
 
         // Let's get class definitions
-        const ClientClassDefMapPtr& defs = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->getClasses();
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+        const ClientClassDefListPtr& defs = dict->getClasses();
 
         // Now we need to iterate over the classes assigned to the
         // query packet and find corresponding class definitions for it.
         for (ClientClasses::const_iterator name = classes.cbegin();
              name != classes.cend(); ++name) {
 
-            ClientClassDefMap::const_iterator cl = defs->find(*name);
-            if (cl == defs->end()) {
+            ClientClassDefPtr cl = dict->findClass(*name);
+            if (!cl) {
                 // Let's skip classes that don't have definitions. Currently
                 // these are automatic classes VENDOR_CLASS_something, but there
                 // may be other classes assigned under other circumstances, e.g.
@@ -2261,12 +2262,12 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                 continue;
             }
 
-            IOAddress next_server = cl->second->getNextServer();
+            IOAddress next_server = cl->getNextServer();
             if (!next_server.isV4Zero()) {
                 response->setSiaddr(next_server);
             }
 
-            const string& sname = cl->second->getSname();
+            const string& sname = cl->getSname();
             if (!sname.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
                 // tricky. reinterpret_cast is not the most elegant solution,
@@ -2277,7 +2278,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                                    sname.size());
             }
 
-            const string& filename = cl->second->getFilename();
+            const string& filename = cl->getFilename();
             if (!filename.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
                 // tricky. reinterpret_cast is not the most elegant solution,
@@ -2958,12 +2959,13 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
 
     // Run match expressions
     // Note getClientClassDictionary() cannot be null
-    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
-        getClientClassDictionary()->getClasses();
-    for (ClientClassDefMap::const_iterator it = defs_ptr->cbegin();
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
          it != defs_ptr->cend(); ++it) {
         // Note second cannot be null
-        const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
+        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
             continue;
@@ -2974,22 +2976,22 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
             bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(options4_logger, EVAL_RESULT)
-                    .arg(it->first)
+                    .arg((*it)->getName())
                     .arg(status);
                 // Matching: add the class
-                pkt->addClass(it->first);
+                pkt->addClass((*it)->getName());
             } else {
                 LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
-                    .arg(it->first)
+                    .arg((*it)->getName())
                     .arg(status);
             }
         } catch (const Exception& ex) {
             LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg(it->first)
+                .arg((*it)->getName())
                 .arg(ex.what());
         } catch (...) {
             LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg(it->first)
+                .arg((*it)->getName())
                 .arg("get exception?");
         }
     }

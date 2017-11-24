@@ -226,7 +226,7 @@ bool_expr : "(" bool_expr ")"
                       error(@3, "Unknown client class '" + cc + "'");
                   }
                   TokenPtr member(new TokenMember(cc));
-                  ctx.expression.push_back(member)
+                  ctx.expression.push_back(member);
               }
           ;
 
