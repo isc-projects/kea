@@ -896,8 +896,8 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 
     // Each class in the incoming packet
     const ClientClasses& classes = question->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.begin();
-         cclass != classes.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
             getClientClassDictionary()->findClass(*cclass);
@@ -3087,8 +3087,8 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
         getClientClassDictionary()->getClasses();
-    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
-         it != defs_ptr->end(); ++it) {
+    for (ClientClassDefMap::const_iterator it = defs_ptr->cbegin();
+         it != defs_ptr->cend(); ++it) {
         // Note second cannot be null
         const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
         // Nothing to do without an expression to evaluate
@@ -3127,18 +3127,18 @@ void
 Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
                                     const AllocEngine::ClientContext6& ctx) {
     if (ctx.currentHost() && pkt) {
-        BOOST_FOREACH(const std::string& client_class,
-                      ctx.currentHost()->getClientClasses6()) {
-            pkt->addClass(client_class);
+        const ClientClasses& classes = ctx.currentHost()->getClientClasses6();
+        for (ClientClasses::const_iterator cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            pkt->addClass(*cclass);
         }
     }
 
     const ClientClasses& classes = pkt->getClasses();
     if (!classes.empty()) {
-        std::string joined_classes = boost::algorithm::join(classes, ", ");
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
-            .arg(joined_classes);
+            .arg(classes.toText());
     }
 }
 

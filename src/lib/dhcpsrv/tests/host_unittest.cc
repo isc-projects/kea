@@ -1000,13 +1000,14 @@ TEST_F(HostTest, toText) {
     host->addClientClass6("hub");
     host->addClientClass6("device");
 
+    // Note that now classes are in insert order.
     EXPECT_EQ("duid=1112131415 hostname=myhost ipv4_reservation=(no)"
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router"
-              " dhcp6_class0=device dhcp6_class1=hub",
+              " dhcp6_class0=hub dhcp6_class1=device",
               host->toText());
 }
 
