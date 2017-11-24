@@ -47,6 +47,7 @@ using namespace isc::eval;
   OPTION "option"
   RELAY4 "relay4"
   RELAY6 "relay6"
+  MEMBER "member"
   PEERADDR "peeraddr"
   LINKADDR "linkaddr"
   LBRACKET "["
@@ -212,6 +213,21 @@ bool_expr : "(" bool_expr ")"
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS, $8));
                   ctx.expression.push_back(exist);
                }
+          | MEMBER "(" STRING ")"
+              {
+                  // Expression member('foo')
+                  //
+                  // This token will check if the packet is a member of
+                  // the specified client class.
+                  // To avoid loops at evaluation only already known and
+                  // built-in classes are allowed.
+                  std::string cc = $3;
+                  if (!ctx.isClientClassKnown(cc)) {
+                      error(@3, "Unknown client class '" + cc + "'");
+                  }
+                  TokenPtr member(new TokenMember(cc));
+                  ctx.expression.push_back(member)
+              }
           ;
 
 string_expr : STRING
