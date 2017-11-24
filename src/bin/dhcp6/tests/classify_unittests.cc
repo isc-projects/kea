@@ -992,5 +992,137 @@ TEST_F(ClassifyTest, clientClassesInHostReservations) {
                                                  "2001:db8:1::100"));
 }
 
+// Check classification using membership expressions.
+TEST_F(ClassifyTest, member) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"not-foo\", "
+        "    \"test\": \"not (option[host-name].text == 'foo')\""
+        "},"
+        "{   \"name\": \"foo\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"not member('not-foo')\""
+        "},"
+        "{   \"name\": \"bar\", "
+        "    \"test\": \"option[host-name].text == 'bar'\""
+        "},"
+        "{   \"name\": \"baz\", "
+        "    \"test\": \"option[host-name].text == 'baz'\""
+        "},"
+        "{   \"name\": \"barz\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"false\" } ], "
+        "    \"test\": \"member('bar') or member('baz')\" } ] }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create packets with enough to select the subnet
+    OptionPtr clientid = generateClientId();
+    Pkt6Ptr query1(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("fe80::abcd"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query2->setRemoteAddr(IOAddress("fe80::abcd"));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query3->setRemoteAddr(IOAddress("fe80::abcd"));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
+    query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
+
+    // Create and add an ORO option to queries
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query1->addOption(oro);
+    query2->addOption(oro);
+    query3->addOption(oro);
+
+    // Create and add a host-name option to the first and last queries
+    OptionStringPtr hostname1(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname1);
+    query1->addOption(hostname1);
+    OptionStringPtr hostname3(new OptionString(Option::V6, 1234, "baz"));
+    ASSERT_TRUE(hostname3);
+    query3->addOption(hostname3);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+    srv.classifyPacket(query2);
+    srv.classifyPacket(query3);
+
+    // Check classes
+    EXPECT_FALSE(query1->inClass("not-foo"));
+    EXPECT_TRUE(query1->inClass("foo"));
+    EXPECT_FALSE(query1->inClass("bar"));
+    EXPECT_FALSE(query1->inClass("baz"));
+    EXPECT_FALSE(query1->inClass("barz"));
+
+    EXPECT_TRUE(query2->inClass("not-foo"));
+    EXPECT_FALSE(query2->inClass("foo"));
+    EXPECT_FALSE(query2->inClass("bar"));
+    EXPECT_FALSE(query2->inClass("baz"));
+    EXPECT_FALSE(query2->inClass("barz"));
+
+    EXPECT_TRUE(query3->inClass("not-foo"));
+    EXPECT_FALSE(query3->inClass("foo"));
+    EXPECT_FALSE(query3->inClass("bar"));
+    EXPECT_TRUE(query3->inClass("baz"));
+    EXPECT_TRUE(query3->inClass("barz"));
+
+    // Process queries
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    Pkt6Ptr response3 = srv.processSolicit(query3);
+
+    // Classification processing should add an ip-forwarding option
+    OptionPtr opt1 = response1->getOption(2345);
+    EXPECT_TRUE(opt1);
+    OptionCustomPtr ipf1 =
+        boost::dynamic_pointer_cast<OptionCustom>(opt1);
+    ASSERT_TRUE(ipf1);
+    EXPECT_TRUE(ipf1->readBoolean());
+
+    // But not the second query which was not classified
+    OptionPtr opt2 = response2->getOption(2345);
+    EXPECT_FALSE(opt2);
+
+    // The third has the option but with another value
+    OptionPtr opt3 = response3->getOption(2345);
+    EXPECT_TRUE(opt3);
+    OptionCustomPtr ipf3 =
+        boost::dynamic_pointer_cast<OptionCustom>(opt3);
+    ASSERT_TRUE(ipf3);
+    EXPECT_FALSE(ipf3->readBoolean());
+}
 
 } // end of anonymous namespace

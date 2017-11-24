@@ -61,6 +61,13 @@
       </orderedlist>
       </para>
 
+      <note>
+      <para>
+      Beginning with 1.4 client classes follow now the insertion order
+      (vs. alphabetical order in previous versions).
+      </para>
+      </note>
+
       <para>
       When determining which options to include in the response the server will examine
       the union of options from all of the assigned classes. In the case two or more
@@ -222,6 +229,13 @@
               <entry>'true'</entry>
               <entry>If the option with given code is present in the
               packet "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>Client class membership</entry>
+              <entry>member('foobar')</entry>
+              <entry>'true'</entry>
+              <entry>If the packet belongs to the given client class
+              "true" else "false"</entry>
             </row>
             <row>
               <entry>DHCPv4 relay agent sub-option</entry>
@@ -470,6 +484,15 @@
       <listitem><para>
       "option[code].exists" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
+      </para></listitem>
+
+      <listitem><para>
+      "member('foobar')" checks if the packet belongs to the client
+      class "foobar". To avoid dependency loops the configuration file
+      parser checks if client classes were already defined or are
+      built-in, i.e., beginning by &quot;VENDOR_CLASS_&quot;,
+      &quot;AFTER__&quot; (for the to come "after" hook) and
+      &quot;EXTERNAL_&quot;.
       </para></listitem>
 
       <listitem><para>
