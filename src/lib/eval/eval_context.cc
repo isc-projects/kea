@@ -16,14 +16,20 @@
 #include <fstream>
 #include <limits>
 
-EvalContext::EvalContext(const Option::Universe& option_universe)
-  : trace_scanning_(false), trace_parsing_(false),
-    option_universe_(option_universe)
+EvalContext::EvalContext(const Option::Universe& option_universe,
+                         std::function<bool(const ClientClass&)> check_known)
+    : trace_scanning_(false), trace_parsing_(false),
+      option_universe_(option_universe), check_known_(check_known)
 {
 }
 
 EvalContext::~EvalContext()
 {
+}
+
+bool
+EvalContext::acceptAll(const ClientClass&) {
+    return (true);
 }
 
 bool
@@ -181,6 +187,11 @@ EvalContext::fromUint32(const uint32_t integer) {
     tmp[3] = integer & 0xff;
 
     return (tmp);
+}
+
+bool
+EvalContext::isClientClassKnown(const ClientClass& client_class) {
+    return (check_known_(client_class));
 }
 
 void

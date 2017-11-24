@@ -18,6 +18,7 @@
 #include <asiolink/io_error.h>
 
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -35,7 +36,8 @@ namespace dhcp {
 void
 ExpressionParser::parse(ExpressionPtr& expression,
                         ConstElementPtr expression_cfg,
-                        uint16_t family) {
+                        uint16_t family,
+                        std::function<bool(const ClientClass&)> check_known) {
     if (expression_cfg->getType() != Element::string) {
         isc_throw(DhcpConfigError, "expression ["
             << expression_cfg->str() << "] must be a string, at ("
@@ -47,7 +49,8 @@ ExpressionParser::parse(ExpressionPtr& expression,
     std::string value;
     expression_cfg->getValue(value);
     try {
-        EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6);
+        EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6,
+                             check_known);
         eval_ctx.parseString(value);
         expression.reset(new Expression());
         *expression = eval_ctx.expression;
@@ -80,7 +83,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     std::string test;
     if (test_cfg) {
         ExpressionParser parser;
-        parser.parse(match_expr, test_cfg, family);
+        using std::placeholders::_1;
+        auto check_known = std::bind(isClientClassKnown, class_dictionary, _1);
+        parser.parse(match_expr, test_cfg, family, check_known);
         test = test_cfg->stringValue();
     }
 
@@ -188,6 +193,36 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");
     }
+}
+
+std::list<std::string>
+ClientClassDefParser::builtinPrefixes = {
+    "VENDOR_CLASS_", "AFTER_", "EXTERNAL_"
+};
+
+bool
+ClientClassDefParser::isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
+                                         const ClientClass& client_class) {
+    // First check built-in prefixes
+    for (std::list<std::string>::const_iterator bt = builtinPrefixes.cbegin();
+         bt != builtinPrefixes.cend(); ++bt) {
+        if (client_class.size() <= bt->size()) {
+            continue;
+        }
+        auto mis = std::mismatch(bt->cbegin(), bt->cend(), client_class.cbegin());
+        if (mis.first == bt->cend()) {
+            return true;
+        }
+    }
+
+    // Second check already defined, i.e. in the dictionary
+    ClientClassDefPtr def = class_dictionary->findClass(client_class);
+    if (def) {
+        return (true);
+    }
+
+    // Unknown...
+    return (false);
 }
 
 // ****************** ClientClassDefListParser ************************
