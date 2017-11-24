@@ -819,6 +819,16 @@ public:
     /// @param values true (if found) or false (if not found) will be pushed here
     void evaluate(Pkt& pkt, ValueStack& values);
 
+    /// @brief Returns client class name
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenMember with correct parameters.
+    ///
+    /// @return client class name the token expects to check membership.
+    const ClientClass& getClientClass() const {
+        return (client_class_);
+    }
+
 protected:
     /// @brief The client class name
     ClientClass client_class_;

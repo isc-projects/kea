@@ -218,9 +218,9 @@ TEST(ClientClassDictionary, basics) {
     // Verify constructor doesn't throw
     ASSERT_NO_THROW(dictionary.reset(new ClientClassDictionary()));
 
-    // Verify we can fetch a pointer the map of classes and
+    // Verify we can fetch a pointer the list of classes and
     // that we start with no classes defined
-    const ClientClassDefMapPtr classes = dictionary->getClasses();
+    const ClientClassDefListPtr classes = dictionary->getClasses();
     ASSERT_TRUE(classes);
     EXPECT_EQ(0, classes->size());
 
@@ -297,7 +297,7 @@ TEST(ClientClassDictionary, copyAndEquality) {
     // Copy constructor should succeed.
     ASSERT_NO_THROW(dictionary2.reset(new ClientClassDictionary(*dictionary)));
 
-    // Allocated class map pointers should not be equal
+    // Allocated class list pointers should not be equal
     EXPECT_NE(dictionary->getClasses().get(), dictionary2->getClasses().get());
 
     // Equality tools should reflect that the dictionaries are equal.

@@ -880,7 +880,7 @@ namespace isc { namespace eval {
                       error(yystack_[1].location, "Unknown client class '" + cc + "'");
                   }
                   TokenPtr member(new TokenMember(cc));
-                  ctx.expression.push_back(member)
+                  ctx.expression.push_back(member);
               }
 #line 886 "parser.cc" // lalr1.cc:859
     break;

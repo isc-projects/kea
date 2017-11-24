@@ -165,13 +165,13 @@ std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
 //********** ClientClassDictionary ******************//
 
 ClientClassDictionary::ClientClassDictionary()
-    : classes_(new ClientClassDefMap()) {
+    : map_(new ClientClassDefMap()), list_(new ClientClassDefList()) {
 }
 
 ClientClassDictionary::ClientClassDictionary(const ClientClassDictionary& rhs)
-    : classes_(new ClientClassDefMap()) {
-    BOOST_FOREACH(ClientClassMapPair cclass, *(rhs.classes_)) {
-        ClientClassDefPtr copy(new ClientClassDef(*(cclass.second)));
+    : map_(new ClientClassDefMap()), list_(new ClientClassDefList()) {
+    BOOST_FOREACH(ClientClassDefPtr cclass, *(rhs.list_)) {
+        ClientClassDefPtr copy(new ClientClassDef(*cclass));
         addClass(copy);
     }
 }
@@ -209,13 +209,14 @@ ClientClassDictionary::addClass(ClientClassDefPtr& class_def) {
                   << class_def->getName() << " has already been defined");
     }
 
-    (*classes_)[class_def->getName()] = class_def;
+    list_->push_back(class_def);
+    (*map_)[class_def->getName()] = class_def;
 }
 
 ClientClassDefPtr
 ClientClassDictionary::findClass(const std::string& name) const {
-    ClientClassDefMap::iterator it = classes_->find(name);
-    if (it != classes_->end()) {
+    ClientClassDefMap::iterator it = map_->find(name);
+    if (it != map_->end()) {
         return (*it).second;
     }
 
@@ -224,26 +225,33 @@ ClientClassDictionary::findClass(const std::string& name) const {
 
 void
 ClientClassDictionary::removeClass(const std::string& name) {
-    classes_->erase(name);
+    for (ClientClassDefList::const_iterator this_class = list_->cbegin();
+         this_class != list_->cend(); ++this_class) {
+        if ((*this_class)->getName() == name) {
+            list_->erase(this_class);
+            break;
+        }
+    }
+    map_->erase(name);
 }
 
-const ClientClassDefMapPtr&
+const ClientClassDefListPtr&
 ClientClassDictionary::getClasses() const {
-    return (classes_);
+    return (list_);
 }
 
 bool
 ClientClassDictionary::equals(const ClientClassDictionary& other) const {
-    if (classes_->size() != other.classes_->size()) {
+    if (list_->size() != other.list_->size()) {
         return (false);
     }
 
-    ClientClassDefMap::iterator this_class = classes_->begin();
-    ClientClassDefMap::iterator other_class = other.classes_->begin();
-    while (this_class != classes_->end() &&
-           other_class != other.classes_->end()) {
-        if (!(*this_class).second || !(*other_class).second ||
-            (*(*this_class).second) != (*(*other_class).second)) {
+    ClientClassDefList::const_iterator this_class = list_->cbegin();
+    ClientClassDefList::const_iterator other_class = other.list_->cbegin();
+    while (this_class != list_->cend() &&
+           other_class != other.list_->cend()) {
+        if (!*this_class || !*other_class ||
+            **this_class != **other_class) {
                 return false;
         }
 
@@ -258,9 +266,9 @@ ElementPtr
 ClientClassDictionary::toElement() const {
     ElementPtr result = Element::createList();
     // Iterate on the map
-    for (ClientClassDefMap::iterator this_class = classes_->begin();
-         this_class != classes_->end(); ++this_class) {
-        result->add(this_class->second->toElement());
+    for (ClientClassDefList::const_iterator this_class = list_->begin();
+         this_class != list_->cend(); ++this_class) {
+        result->add((*this_class)->toElement());
     }
     return (result);
 }

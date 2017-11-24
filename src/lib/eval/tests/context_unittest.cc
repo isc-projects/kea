@@ -390,6 +390,54 @@ public:
         checkTokenRelay6Field(eval.expression.at(0), exp_level, exp_type);
     }
 
+    /// @brief checks if the given token is a TokenMember with the
+    /// correct client class name.
+    /// @param token token to be checked
+    /// @param expected_client_class expected client class name
+    void checkTokenMember(const TokenPtr& token,
+                          const std::string& expected_client_class) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenMember> member =
+            boost::dynamic_pointer_cast<TokenMember>(token);
+        ASSERT_TRUE(member);
+
+        EXPECT_EQ(expected_client_class, member->getClientClass());
+    }
+
+    /// @rief This tests attempts to parse the expression then checks          
+    /// if the number of tokens is correct and the TokenMember is as
+    /// expected.
+    ///
+    /// @param expr expression to be parsed
+    /// @param check_known closure checking if the client class is known
+    /// @param exp_client_class expected client class name to be parsed
+    /// @param exp_tokens expected number of tokens
+    void testMember(const std::string& expr,
+                    std::function<bool(const ClientClass&)> check_known,
+                    const std::string& exp_client_class,
+                    int exp_tokens) {
+        EvalContext eval(Option::V6, check_known);
+
+        // parse the expression
+        try {
+            parsed_ = eval.parseString(expr);
+        }
+        catch (const EvalParseError& ex) {
+            FAIL() <<"Exception thrown: " << ex.what();
+            return;
+        }
+
+        // Parsing should succeed and return a token.
+        EXPECT_TRUE(parsed_);
+
+        // There should be the expected number of tokens.
+        ASSERT_EQ(exp_tokens, eval.expression.size());
+
+        // checked that the first token is TokenRelay6Field and that
+        // is has the correct attributes
+        checkTokenMember(eval.expression.at(0), exp_client_class);
+    }
+
     /// @brief checks if the given token is a substring operator
     void checkTokenSubstring(const TokenPtr& token) {
         ASSERT_TRUE(token);
@@ -1071,6 +1119,31 @@ TEST_F(EvalContextTest, relay6FieldError) {
                "<string>:1.8: Nest level invalid for DHCPv4 packets");
 }
 
+// Tests parsing of member with known class
+TEST_F(EvalContextTest, member) {
+    auto check_known = [](const ClientClass& cc) { return (cc == "foo"); };
+    testMember("member('foo')", check_known, "foo", 1);
+}
+
+// Test parsing of member with unknown class
+TEST_F(EvalContextTest, memberError) {
+    auto check_known = [](const ClientClass& cc) { return (cc == "foo"); };
+    EvalContext eval(Option::V6, check_known);
+    parsed_ = false;
+    try {
+        parsed_ = eval.parseString("member('bar')");
+        FAIL() << "Expected EvalParseError but nothing was raised";
+    }
+    catch (const EvalParseError& ex) {
+        EXPECT_EQ("<string>:1.8-12: Unknown client class 'bar'",
+                  std::string(ex.what()));
+        EXPECT_FALSE(parsed_);
+    }
+    catch (...) {
+        FAIL() << "Expected EvalParseError but something else was raised";
+    }
+}
+
 // Test parsing of logical operators
 TEST_F(EvalContextTest, logicalOps) {
     // option.exists
@@ -1249,11 +1322,11 @@ TEST_F(EvalContextTest, scanErrors) {
 
     // Typo should be handled as well.
     checkError("subtring", "<string>:1.1: Invalid character: s");
-
     checkError("foo", "<string>:1.1: Invalid character: f");
     checkError(" bar", "<string>:1.2: Invalid character: b");
     checkError("relay[12].hex == 'foo'", "<string>:1.1: Invalid character: r");
     checkError("pkt4.ziaddr", "<string>:1.6: Invalid character: z");
+    checkError("members('foo'", "<string>:1.7: Invalid character: s");
 }
 
 // Tests some scanner/parser error cases
@@ -1428,6 +1501,9 @@ TEST_F(EvalContextTest, typeErrors) {
                "expecting \",\"");
     checkError("ifelse('foo'=='bar','foo','bar'=='bar')",
                "<string>:1.32-33: syntax error, unexpected ==, expecting )");
+
+    // Member uses quotes around the client class name.
+    checkError("member(foo)", "<string>:1.8: Invalid character: f");
 }
 
 

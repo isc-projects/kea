@@ -3085,12 +3085,13 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
 
     // Run match expressions
     // Note getClientClassDictionary() cannot be null
-    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
-        getClientClassDictionary()->getClasses();
-    for (ClientClassDefMap::const_iterator it = defs_ptr->cbegin();
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
          it != defs_ptr->cend(); ++it) {
         // Note second cannot be null
-        const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
+        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
             continue;
@@ -3101,23 +3102,23 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
             bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(dhcp6_logger, EVAL_RESULT)
-                    .arg(it->first)
+                    .arg((*it)->getName())
                     .arg(status);
                 // Matching: add the class
-                pkt->addClass(it->first);
-                classes += it->first + " ";
+                pkt->addClass((*it)->getName());
+                classes += (*it)->getName() + " ";
             } else {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
-                    .arg(it->first)
+                    .arg((*it)->getName())
                     .arg(status);
             }
         } catch (const Exception& ex) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
-                .arg(it->first)
+                .arg((*it)->getName())
                 .arg(ex.what());
         } catch (...) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
-                .arg(it->first)
+                .arg((*it)->getName())
                 .arg("get exception?");
         }
     }

@@ -14,6 +14,8 @@
 #include <exceptions/exceptions.h>
 
 #include <string>
+#include <unordered_map>
+#include <list>
 
 /// @file client_class_def.h
 ///
@@ -209,13 +211,16 @@ private:
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
 /// @brief Defines a map of ClientClassDef's, keyed by the class name.
-typedef std::map<std::string, ClientClassDefPtr> ClientClassDefMap;
+typedef std::unordered_map<std::string, ClientClassDefPtr> ClientClassDefMap;
 
 /// @brief Defines a pointer to a ClientClassDefMap
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
-/// @brief Defines a pair for working with ClientClassMap
-typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
+/// @brief Defines a list of ClientClassDefPtr's, using insert order.
+typedef std::list<ClientClassDefPtr> ClientClassDefList;
+
+/// @brief Defines a pointer to a ClientClassDefList
+typedef boost::shared_ptr<ClientClassDefList> ClientClassDefListPtr;
 
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary : public isc::data::CfgToElement {
@@ -274,10 +279,10 @@ public:
     /// @param name the name of the class to remove
     void removeClass(const std::string& name);
 
-    /// @brief Fetches the dictionary's map of classes
+    /// @brief Fetches the dictionary's list of classes
     ///
-    /// @return ClientClassDefMapPtr to the map of classes
-    const ClientClassDefMapPtr& getClasses() const;
+    /// @return ClientClassDefListPtr to the list of classes
+    const ClientClassDefListPtr& getClasses() const;
 
     /// @brief Compares two @c ClientClassDictionary objects for equality.
     ///
@@ -312,8 +317,10 @@ public:
 private:
 
     /// @brief Map of the class definitions
-    ClientClassDefMapPtr classes_;
+    ClientClassDefMapPtr map_;
 
+    /// @brief List of the class definitions
+    ClientClassDefListPtr list_;
 };
 
 /// @brief Defines a pointer to a ClientClassDictionary
