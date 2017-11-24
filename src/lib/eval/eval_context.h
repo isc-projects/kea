@@ -47,10 +47,20 @@ public:
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
     /// by the parser to determine which option definitions set should be used
     /// to map option names to option codes.
-    EvalContext(const Option::Universe& option_universe);
+    /// @param check_known A closure called to check if a client class
+    /// used for membership is already known. If it is not the parser
+    /// will fail: only backward or built-in references are accepted.
+    EvalContext(const Option::Universe& option_universe,
+                std::function<bool(const ClientClass&)> check_known = acceptAll);
 
     /// @brief destructor
     virtual ~EvalContext();
+
+    /// @brief Accept all client class names
+    ///
+    /// @param client_class (unused)
+    /// @return true
+    static bool acceptAll(const ClientClass& client_class);
 
     /// @brief Parsed expression (output tokens are stored here)
     isc::dhcp::Expression expression;
@@ -169,6 +179,12 @@ public:
         return (option_universe_);
     }
 
+    /// @brief Check if a client class is already known
+    ///
+    /// @param client_class the client class name to check
+    /// @return true if the client class is known, false if not
+    bool isClientClassKnown(const ClientClass& client_class);
+
  private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
@@ -181,6 +197,9 @@ public:
     /// This is used by the parser to determine which option definitions
     /// set should be used to map option name to option code.
     Option::Universe option_universe_;
+
+    /// @brief Closure to check if a client class is already known
+    std::function<bool(const ClientClass&)> check_known_;
 
 };
 

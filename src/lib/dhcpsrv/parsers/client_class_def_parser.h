@@ -9,7 +9,10 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <eval/eval_context.h>
 #include <dhcpsrv/client_class_def.h>
+#include <functional>
+#include <list>
 
 /// @file client_class_def_parser.h
 ///
@@ -64,10 +67,14 @@ public:
     /// @param expression variable in which to store the new expression
     /// @param expression_cfg the configuration entry to be parsed.
     /// @param family the address family of the expression.
+    /// @param check_known a closure to check if a client class is known.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ExpressionPtr& expression,
-               isc::data::ConstElementPtr expression_cfg, uint16_t family);
+               isc::data::ConstElementPtr expression_cfg,
+               uint16_t family,
+               std::function<bool(const ClientClass&)> check_known =
+                   isc::eval::EvalContext::acceptAll);
 };
 
 /// @brief Parser for a single client class definition.
@@ -87,6 +94,20 @@ public:
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ClientClassDictionaryPtr& class_dictionary,
                isc::data::ConstElementPtr client_class_def, uint16_t family);
+
+    /// @brief List of built-in client class prefixes
+    /// i.e. VENDOR_CLASS_, AFTER_ and EXTERNAL_.
+    static std::list<std::string> builtinPrefixes;
+
+    /// @brief Check if a client class name is already known,
+    /// i.e. beginning by a built-in prefix or in the dictionary,
+    ///
+    /// @param class_dictionary A class dictionary where to look for.
+    /// @param client_class A client class name to look for.
+    /// @return true if known or built-in, false if not.
+    static bool
+    isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
+                       const ClientClass& client_class);
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser
