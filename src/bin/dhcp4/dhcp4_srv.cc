@@ -2325,11 +2325,13 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         return (Pkt4Ptr());
     }
 
-    // Assign reserved classes.
-    ex.setReservedClientClasses();
-
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        // Assign reserved classes.
+        ex.setReservedClientClasses();
+        // Late classification
+        lateClassify(ex);
+
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
@@ -2380,11 +2382,13 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
         return (Pkt4Ptr());
     }
 
-    // Assign reserved classes.
-    ex.setReservedClientClasses();
-
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        // Assign reserved classes.
+        ex.setReservedClientClasses();
+        // Late classification
+        lateClassify(ex);
+
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
@@ -2668,6 +2672,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     Pkt4Ptr ack = ex.getResponse();
 
     ex.setReservedClientClasses();
+    lateClassify(ex);
 
     buildCfgOptionList(ex);
     appendRequestedOptions(ex);
@@ -2970,6 +2975,10 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         if (!expr_ptr) {
             continue;
         }
+        // Not the right time if on demand
+        if ((*it)->getOnDemand()) {
+            continue;
+        }
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
@@ -2992,6 +3001,94 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         } catch (...) {
             LOG_ERROR(options4_logger, EVAL_RESULT)
                 .arg((*it)->getName())
+                .arg("get exception?");
+        }
+    }
+}
+
+void Dhcpv4Srv::lateClassify(Dhcpv4Exchange& ex) {
+    // First collect on-demand classes
+    Pkt4Ptr query = ex.getQuery();
+    ClientClasses classes = query->getClasses(true);
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+
+    if (subnet) {
+        // Begin by the shared-network
+        SharedNetwork4Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            const ClientClasses& to_add = network->getOnDemandClasses();
+            for (ClientClasses::const_iterator cclass = to_add.cbegin();
+                 cclass != to_add.cend(); ++cclass) {
+                classes.insert(*cclass);
+            }
+        }
+
+        // Followed by the subnet
+        const ClientClasses& to_add = subnet->getOnDemandClasses();
+        for(ClientClasses::const_iterator cclass = to_add.cbegin();
+            cclass != to_add.cend(); ++cclass) {
+            classes.insert(*cclass);
+        }
+
+        // And finish by the pool
+        Pkt4Ptr resp = ex.getResponse();
+        IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
+        if (resp) {
+            addr = resp->getYiaddr();
+        }
+        if (!addr.isV4Zero()) {
+            PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
+            if (pool) {
+                const ClientClasses& to_add = pool->getOnDemandClasses();
+                for (ClientClasses::const_iterator cclass = to_add.cbegin();
+                     cclass != to_add.cend(); ++cclass) {
+                    classes.insert(*cclass);
+                }
+            }
+        }
+
+        // host reservation???
+    }
+
+    // Run match expressions
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        const ClientClassDefPtr class_def = dict->findClass(*cclass);
+        // Todo: log unknown classes
+        if (!class_def) {
+            continue;
+        }
+        const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluateBool(*expr_ptr, *query);
+            if (status) {
+                LOG_INFO(options4_logger, EVAL_RESULT)
+                    .arg(*cclass)
+                    .arg(status);
+                // Matching: add the class
+                query->addClass(*cclass);
+            } else {
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
+                    .arg(*cclass)
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(*cclass)
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(*cclass)
                 .arg("get exception?");
         }
     }

@@ -82,6 +82,12 @@ public:
     /// @param test the original expression to assign the class
     void setTest(const std::string& test);
 
+    /// @brief Fetches the on demand flag
+    bool getOnDemand() const;
+
+    /// @brief Sets the on demand flag
+    void setOnDemand(bool on_demand);
+
     /// @brief Fetches the class's option definitions
     const CfgOptionDefPtr& getCfgOptionDef() const;
 
@@ -182,6 +188,12 @@ private:
     /// this class.
     std::string test_;
 
+    /// @brief The on demand flag: when false (the defaul) membership
+    /// is determined during classification so is for instance
+    /// available for subnet selection, when true membership is evaluated
+    /// only if asked for and is usable only for option configuration.
+    bool on_demand_;
+
     /// @brief The option definition configuration for this class
     CfgOptionDefPtr cfg_option_def_;
 
@@ -239,6 +251,7 @@ public:
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
+    /// @param on_demand Original value of the on demand flag
     /// @param options Collection of options members should be given
     /// @param defs Option definitions (optional)
     /// @param next_server next-server value for this class (optional)
@@ -249,7 +262,8 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const std::string& test, const CfgOptionPtr& options,
+                  const std::string& test, bool on_demand,
+                  const CfgOptionPtr& options,
                   CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),

@@ -649,6 +649,19 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
+    /// @brief Assigns incoming packet to zero or more classes (late pass).
+    ///
+    /// @note This late classification evaluates all classes which
+    /// were marked for this deferred/on-demand pass. Classes are
+    /// collected in the reversed order than output option processing.
+    ///
+    /// @note The eval-on-demand flag is related because it avoids
+    /// double evaluation (which is not forbidden).
+    ///
+    /// @param pkt packet to be classified
+    /// @param ctx allocation context where to get informations
+    void lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+
     /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
     /// Tries to extract MAC/hardware address information from the packet

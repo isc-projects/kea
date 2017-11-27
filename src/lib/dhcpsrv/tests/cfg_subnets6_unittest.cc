@@ -438,6 +438,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setIface("lo");
     subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
+    subnet3->deferClientClass("foo");
+    subnet3->deferClientClass("bar");
 
     cfg.add(subnet1);
     cfg.add(subnet2);
@@ -487,7 +489,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
-        "    \"option-data\": [ ]\n"
+        "    \"option-data\": [ ],\n"
+        "    \"eval-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
 }
@@ -505,6 +508,7 @@ TEST(CfgSubnets6Test, unparsePool) {
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
     pool2->allowClientClass("bar");
     pool2->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool2->deferClientClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -530,7 +534,8 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
         "            \"option-data\": [ ],\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"known-clients\": \"never\"\n"
+        "            \"known-clients\": \"never\",\n"
+        "            \"eval-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -551,8 +556,10 @@ TEST(CfgSubnets6Test, unparsePdPool) {
                                IOAddress("2001:db8:2::"), 48, 64));
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
+    pdpool1->deferClientClass("bar");
     pdpool2->allowClientClass("bar");
     pdpool2->setKnownClients(Pool::SERVE_KNOWN);
+
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
@@ -576,7 +583,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix\": \"2001:db8:2::\",\n"
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"eval-client-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"

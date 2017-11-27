@@ -279,9 +279,6 @@ public:
         /// Used while parsing Dhcp6/subnet6/relay structures.
         RELAY,
 
-        /// Used while parsing Dhcp6/client-classes structures.
-        CLIENT_CLASS,
-
         /// Used while parsing Logging/loggers structures.
         LOGGERS,
 

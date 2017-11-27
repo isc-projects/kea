@@ -36,6 +36,18 @@ Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
     client_class_ = class_name;
 }
 
+void
+Network::deferClientClass(const isc::dhcp::ClientClass& class_name) {
+    if (!on_demand_classes_.contains(class_name)) {
+        on_demand_classes_.insert(class_name);
+    }
+}
+
+const ClientClasses&
+Network::getOnDemandClasses() const {
+    return (on_demand_classes_);
+}
+
 ElementPtr
 Network::toElement() const {
     ElementPtr map = Element::createMap();
@@ -56,6 +68,17 @@ Network::toElement() const {
     const ClientClass& cclass = getClientClass();
     if (!cclass.empty()) {
         map->set("client-class", Element::create(cclass));
+    }
+
+    // Set eval-client-classes
+    const ClientClasses& classes = getOnDemandClasses();
+    if (!classes.empty()) {
+        ElementPtr class_list = Element::createList();
+        for (ClientClasses::const_iterator it = classes.cbegin();
+             it != classes.cend(); ++it) {
+            class_list->add(Element::create(*it));
+        }
+        map->set("eval-client-classes", class_list);
     }
 
     // Set renew-timer

@@ -65,9 +65,12 @@ public:
         }
 
         // Build our reference dictionary of client classes
-        ref_dictionary_->addClass("cc1", ExpressionPtr(), "", CfgOptionPtr());
-        ref_dictionary_->addClass("cc2", ExpressionPtr(), "", CfgOptionPtr());
-        ref_dictionary_->addClass("cc3", ExpressionPtr(), "", CfgOptionPtr());
+        ref_dictionary_->addClass("cc1", ExpressionPtr(),
+                                  "", false, CfgOptionPtr());
+        ref_dictionary_->addClass("cc2", ExpressionPtr(),
+                                  "", false, CfgOptionPtr());
+        ref_dictionary_->addClass("cc3", ExpressionPtr(),
+                                  "", false, CfgOptionPtr());
     }
 
 

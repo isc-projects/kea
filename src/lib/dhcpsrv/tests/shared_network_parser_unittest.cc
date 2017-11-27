@@ -52,6 +52,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
+                "            \"eval-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
@@ -72,6 +73,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
+                "            \"eval-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
@@ -192,6 +194,7 @@ public:
                 "            \"preferred-lifetime\": 300,"
                 "            \"valid-lifetime\": 400,"
                 "            \"client-class\": \"\","
+                "            \"eval-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"decline-probation-period\": 86400,"
                 "            \"dhcp4o6-port\": 0,"
@@ -207,6 +210,7 @@ public:
                 "            \"preferred-lifetime\": 30,"
                 "            \"valid-lifetime\": 40,"
                 "            \"client-class\": \"\","
+                "            \"eval-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"decline-probation-period\": 86400,"
                 "            \"dhcp4o6-port\": 0,"
@@ -277,6 +281,57 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     ASSERT_TRUE(network);
 
     EXPECT_EQ("alpha", network->getClientClass());
+}
+
+// This test verifies that it's possible to specify eval-client-classes
+// on shared-network level.
+TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    ElementPtr class_list = Element::createList();
+    class_list->add(Element::create("alpha"));
+    class_list->add(Element::create("beta"));
+    config_element->set("eval-client-classes", class_list);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+    network = parser.parse(config_element);
+    ASSERT_TRUE(network);
+
+    const ClientClasses& classes = network->getOnDemandClasses();
+    EXPECT_EQ(2, classes.size());
+    EXPECT_EQ("alpha, beta", classes.toText());
+}
+
+// This test verifies that bad eval-client-classes configs raise
+// expected errors.
+TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
+    std::string config = getWorkingConfig();
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Element of the list must be strings.
+    ElementPtr class_list = Element::createList();
+    class_list->add(Element::create("alpha"));
+    class_list->add(Element::create(1234));
+    config_element->set("eval-client-classes", class_list);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+    EXPECT_THROW(network = parser.parse(config_element), DhcpConfigError);
+
+    // Empty class name is forbidden.
+    class_list = Element::createList();
+    class_list->add(Element::create("alpha"));
+    class_list->add(Element::create(""));
+    EXPECT_THROW(network = parser.parse(config_element), DhcpConfigError);
+
+    // And of course the list must be a list even the parser can only
+    // trigger the previous error case...
+    class_list = Element::createMap();
+    EXPECT_THROW(network = parser.parse(config_element), DhcpConfigError);
 }
 
 } // end of anonymous namespace

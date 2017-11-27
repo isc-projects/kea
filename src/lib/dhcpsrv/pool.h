@@ -149,6 +149,20 @@ public:
         known_clients_ = known_clients;
     }
 
+    /// @brief Adds class class_name to classes to be evaluated later
+    ///
+    /// @param class_name client class to be evaluated later
+    void deferClientClass(const ClientClass& class_name) {
+        if (!on_demand_classes_.contains(class_name)) {
+            on_demand_classes_.insert(class_name);
+        }
+    }
+
+    /// @brief Returns classes which will be evaluated later
+    const ClientClasses& getOnDemandClasses() const {
+        return (on_demand_classes_);
+    }
+
     /// @brief returns the last address that was tried from this pool
     ///
     /// @return address/prefix that was last tried from this pool
@@ -240,6 +254,11 @@ protected:
 
     /// @brief Value of known clients
     KnownClients known_clients_;
+
+    /// @brief On demand classes
+    ///
+    /// @ref isc::dhcp::Network::on_demand_classes
+    ClientClasses on_demand_classes_;
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;

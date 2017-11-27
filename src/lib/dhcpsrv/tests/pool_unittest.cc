@@ -244,6 +244,35 @@ TEST(Pool4Test, knownClients) {
     EXPECT_EQ(Pool::SERVE_KNOWN,pool->getKnownClients());
 }
 
+// This test checks that handling for eval-client-classes is valid.
+TEST(Pool4Test, onDemandClasses) {
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This client starts with no deferred classes.
+    EXPECT_TRUE(pool->getOnDemandClasses().empty());
+
+    // Add the first class
+    pool->deferClientClass("router");
+    EXPECT_EQ(1, pool->getOnDemandClasses().size());
+
+    // Add a second class
+    pool->deferClientClass("modem");
+    EXPECT_EQ(2, pool->getOnDemandClasses().size());
+    EXPECT_TRUE(pool->getOnDemandClasses().contains("router"));
+    EXPECT_TRUE(pool->getOnDemandClasses().contains("modem"));
+    EXPECT_FALSE(pool->getOnDemandClasses().contains("foo"));
+
+    // Check that it's ok to add the same class repeatedly
+    EXPECT_NO_THROW(pool->deferClientClass("foo"));
+    EXPECT_NO_THROW(pool->deferClientClass("foo"));
+    EXPECT_NO_THROW(pool->deferClientClass("foo"));
+
+    // Check that 'foo' is marked for late evaluation
+    EXPECT_TRUE(pool->getOnDemandClasses().contains("foo"));
+}
+
 // This test checks that handling for last allocated address/prefix is valid.
 TEST(Pool4Test, lastAllocated) {
     // Create a pool.
@@ -622,6 +651,35 @@ TEST(Pool6Test, knownClients) {
     // Set it to only known clients.
     pool.setKnownClients(Pool::SERVE_KNOWN);
     EXPECT_EQ(Pool::SERVE_KNOWN,pool.getKnownClients());
+}
+
+// This test checks that handling for eval-client-classes is valid.
+TEST(Pool6Test, onDemandClasses) {
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+               IOAddress("2001:db8::2"));
+
+    // This client starts with no deferred classes.
+    EXPECT_TRUE(pool.getOnDemandClasses().empty());
+
+    // Add the first class
+    pool.deferClientClass("router");
+    EXPECT_EQ(1, pool.getOnDemandClasses().size());
+
+    // Add a second class
+    pool.deferClientClass("modem");
+    EXPECT_EQ(2, pool.getOnDemandClasses().size());
+    EXPECT_TRUE(pool.getOnDemandClasses().contains("router"));
+    EXPECT_TRUE(pool.getOnDemandClasses().contains("modem"));
+    EXPECT_FALSE(pool.getOnDemandClasses().contains("foo"));
+
+    // Check that it's ok to add the same class repeatedly
+    EXPECT_NO_THROW(pool.deferClientClass("foo"));
+    EXPECT_NO_THROW(pool.deferClientClass("foo"));
+    EXPECT_NO_THROW(pool.deferClientClass("foo"));
+
+    // Check that 'foo' is marked for late evaluation
+    EXPECT_TRUE(pool.getOnDemandClasses().contains("foo"));
 }
 
 // This test checks that handling for last allocated address/prefix is valid.

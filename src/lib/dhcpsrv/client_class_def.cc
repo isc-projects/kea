@@ -18,7 +18,8 @@ namespace dhcp {
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
-    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option),
+    : name_(name), match_expr_(match_expr), on_demand_(false),
+      cfg_option_(cfg_option),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     // Name can't be blank
@@ -37,7 +38,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      cfg_option_(new CfgOption()),
+      on_demand_(false), cfg_option_(new CfgOption()),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     if (rhs.match_expr_) {
@@ -53,6 +54,7 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
 
+    on_demand_ = rhs.on_demand_;
     next_server_ = rhs.next_server_;
     sname_ = rhs.sname_;
     filename_ = rhs.filename_;
@@ -91,6 +93,16 @@ ClientClassDef::setTest(const std::string& test) {
     test_ = test;
 }
 
+bool
+ClientClassDef::getOnDemand() const {
+    return (on_demand_);
+}
+
+void
+ClientClassDef::setOnDemand(bool on_demand) {
+    on_demand_ = on_demand;
+}
+
 const CfgOptionDefPtr&
 ClientClassDef::getCfgOptionDef() const {
     return (cfg_option_def_);
@@ -123,6 +135,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
         ((!cfg_option_def_ && !other.cfg_option_def_) ||
         (cfg_option_def_ && other.cfg_option_def_ &&
          (*cfg_option_def_ == *other.cfg_option_def_))) &&
+            (on_demand_ == other.on_demand_) &&
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
             (filename_ == other.filename_));
@@ -137,6 +150,10 @@ ClientClassDef:: toElement() const {
     // Set original match expression (empty string won't parse)
     if (!test_.empty()) {
         result->set("test", Element::create(test_));
+    }
+    // Set eval-on-demand
+    if (on_demand_) {
+        result->set("eval-on-demand", Element::create(on_demand_));
     }
     // Set option-def (used only by DHCPv4)
     if (cfg_option_def_ && (family == AF_INET)) {
@@ -183,6 +200,7 @@ void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const std::string& test,
+                                bool on_demand,
                                 const CfgOptionPtr& cfg_option,
                                 CfgOptionDefPtr cfg_option_def,
                                 asiolink::IOAddress next_server,
@@ -190,6 +208,7 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
+    cclass->setOnDemand(on_demand);
     cclass->setCfgOptionDef(cfg_option_def);
     cclass->setNextServer(next_server);
     cclass->setSname(sname);

@@ -388,6 +388,21 @@ PoolParser::parse(PoolStoragePtr pools,
         }
     }
 
+    // Try setting up on demand client classes.
+    ConstElementPtr class_list = pool_structure->get("eval-client-classes");
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            pool->deferClientClass((*cclass)->stringValue());
+        }
+    }
+
     // Known-clients.
     ConstElementPtr known_clients = pool_structure->get("known-clients");
     if (known_clients) {
@@ -709,6 +724,21 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet4->allowClientClass(client_class);
     }
 
+    // Try setting up on demand client classes.
+    ConstElementPtr class_list = params->get("eval-client-classes");
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            subnet4->deferClientClass((*cclass)->stringValue());
+        }
+    }
+
     // 4o6 specific parameter: 4o6-interface. If not explicitly specified,
     // it will have the default value of "".
     string iface4o6 = getString(params, "4o6-interface");
@@ -879,6 +909,8 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         known_clients_ = known_clients;
     }
 
+    ConstElementPtr class_list = pd_pool_->get("eval-client-classes");
+
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -920,6 +952,20 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
                       "invalid known-clients value: " << kc
                       << " (" << known_clients_->getPosition() << ")");
     }
+
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            pool_->deferClientClass((*cclass)->stringValue());
+        }
+    }
+
 
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
@@ -1093,6 +1139,21 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     string client_class = getString(params, "client-class");
     if (!client_class.empty()) {
         subnet6->allowClientClass(client_class);
+    }
+
+    // Try setting up on demand client classes.
+    ConstElementPtr class_list = params->get("eval-client-classes");
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            subnet6->deferClientClass((*cclass)->stringValue());
+        }
     }
 
     /// client-class processing is now generic and handled in the common

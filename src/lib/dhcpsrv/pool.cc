@@ -137,6 +137,17 @@ Pool::toElement() const {
                  Element::create(kc == SERVE_KNOWN ? "only" : "never"));
     }
 
+    // Set eval-client-classes
+    const ClientClasses& classes = getOnDemandClasses();
+    if (!classes.empty()) {
+        ElementPtr class_list =Element::createList();
+        for (ClientClasses::const_iterator it = classes.cbegin();
+             it != classes.cend(); ++it) {
+            class_list->add(Element::create(*it));
+        }
+        map->set("eval-client-classes", class_list);
+    }
+
     return (map);
 }
 
@@ -359,6 +370,7 @@ Pool6::toElement() const {
                 isc_throw(ToElementError, "invalid prefix range "
                           << prefix.toText() << "-" << last.toText());
             }
+            map->set("prefix-len", Element::create(prefix_len));
 
             // Set delegated-len
             uint8_t len = getLength();
@@ -373,9 +385,6 @@ Pool6::toElement() const {
                 uint8_t xlen = xopt->getExcludedPrefixLength();
                 map->set("excluded-prefix-len",
                          Element::create(static_cast<int>(xlen)));
-            } else {
-                map->set("excluded-prefix", Element::create(std::string("::")));
-                map->set("excluded-prefix-len", Element::create(0));
             }
 
             break;
