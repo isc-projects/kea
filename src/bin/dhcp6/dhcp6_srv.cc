@@ -902,10 +902,8 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
             getClientClassDictionary()->findClass(*cclass);
         if (!ccdef) {
-            // Not found: the class is not configured
-            if (((*cclass).size() <= VENDOR_CLASS_PREFIX.size()) ||
-                ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
-                // Not a VENDOR_CLASS_* so should be configured
+            // Not found: the class is built-in or not configured
+            if (!isClientClassBuiltIn(*cclass)) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNCONFIGURED)
                     .arg(question->getLabel())
                     .arg(*cclass);
@@ -3207,13 +3205,16 @@ Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
         const ClientClassDefPtr class_def = dict->findClass(*cclass);
-        // Todo: log unknown classes
         if (!class_def) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNKNOWN)
+                .arg(*cclass);
             continue;
         }
         const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNTESTABLE)
+                .arg(*cclass);
             continue;
         }
         // Evaluate the expression which can return false (no match),
