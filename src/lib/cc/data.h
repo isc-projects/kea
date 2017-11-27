@@ -732,6 +732,23 @@ ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
 
+/// @brief Combines the data from other into element.
+/// (on the first level). Both elements must be
+/// MapElements.
+/// Every string,value pair in other is copied into element
+/// (the ElementPtr of value is copied, this is not a new object)
+/// When there is already a value for a key in element if both are lists
+/// the other list is appended to the element list, if only one is a
+/// list the not list value is added to the list. If none is a list
+/// a list is created, the element value is added and the other value
+/// is added.
+///
+/// @param element target map
+/// @param other the map to combine with element
+/// @throw raises a TypeError if either ElementPtr is not a MapElement
+/// @throw raises a BadValue is a null pointer occurs.
+void combine(ElementPtr element, ConstElementPtr other);
+
 /// @brief Copy the data up to a nesting level.
 ///
 /// The copy is a deep copy so nothing is shared if it is not

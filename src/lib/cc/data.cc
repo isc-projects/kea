@@ -1068,6 +1068,48 @@ merge(ElementPtr element, ConstElementPtr other) {
     }
 }
 
+void
+combine(ElementPtr element, ConstElementPtr other) {
+    if (element->getType() != Element::map ||
+        other->getType() != Element::map) {
+        isc_throw(TypeError, "combine arguments not MapElements");
+    }
+
+    const std::map<std::string, ConstElementPtr>& m = other->mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
+         it != m.end() ; ++it) {
+        if (isNull(it->second)) {
+            isc_throw(BadValue, "combine got a null pointer");
+        }
+        if (!element->contains(it->first)) {
+            element->set(it->first, it->second);
+            continue;
+        }
+        ConstElementPtr e = element->get(it->first);
+        if (isNull(e)) {
+            isc_throw(BadValue, "combine got a null pointer");
+        }
+        ElementPtr le = Element::createList();
+        size_t i;
+        if (e->getType() == Element::list) {
+            le = Element::createList(e->getPosition());
+            for (i = 0; i < e->size(); ++i) {
+                le->add(e->getNonConst(i));
+            }
+        } else {
+            le->add(boost::const_pointer_cast<Element>(e));
+        }
+        if (it->second->getType() == Element::list) {
+            for (i = 0; i < it->second->size(); ++i) {
+                le->add(it->second->getNonConst(i));
+            }
+        } else {
+            le->add(boost::const_pointer_cast<Element>(it->second));
+        }
+        element->set(it->first, le);
+    }
+}       
+
 ElementPtr
 copy(ConstElementPtr from, int level) {
     if (isNull(from)) {
