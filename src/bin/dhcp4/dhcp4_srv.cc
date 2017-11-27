@@ -1185,12 +1185,25 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
         co_list.push_back(host->getCfgOption4());
     }
 
-    // Secondly, subnet configured options.
+    // Secondly, pool specific options.
+    Pkt4Ptr resp = ex.getResponse();
+    IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
+    if (resp) {
+        addr = resp->getYiaddr();
+    }
+    if (!addr.isV4Zero()) {
+        PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
+        if (pool && !pool->getCfgOption()->empty()) {
+            co_list.push_back(pool->getCfgOption());
+        }
+    }
+
+    // Thirdly, subnet configured options.
     if (!subnet->getCfgOption()->empty()) {
         co_list.push_back(subnet->getCfgOption());
     }
 
-    // Thirdly, shared network specific options.
+    // Forthly, shared network specific options.
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
     if (network && !network->getCfgOption()->empty()) {
