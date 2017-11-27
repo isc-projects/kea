@@ -985,6 +985,89 @@ TEST(Element, merge) {
 
 }
 
+// This test checks combine.
+TEST(Element, combine) {
+    ElementPtr a = Element::createMap();
+    ElementPtr b = Element::createMap();
+    ConstElementPtr c = Element::createMap();
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("1");
+    b = Element::createMap();
+    EXPECT_THROW(combine(a, b), TypeError);
+
+    a = Element::createMap();
+    b = Element::fromJSON("{ \"a\": 1 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::createMap();
+    b = Element::fromJSON("{ \"a\": 1 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
+    combine(b, a);
+    EXPECT_EQ(*b, *c);
+
+    a = Element::fromJSON("{ \"a\": 1 }");
+    b = Element::fromJSON("{ \"a\": 2 }");
+    c = Element::fromJSON("{ \"a\": [ 1, 2 ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("{ \"a\": 1 }");
+    b = Element::fromJSON("{ \"a\": 2 }");
+    c = Element::fromJSON("{ \"a\": [ 2, 1 ] }");
+    combine(b, a);
+    EXPECT_EQ(*b, *c);
+
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::fromJSON("{ \"a\": [ { \"b\": \"c\" } ,{ \"b\": \"d\" } ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::fromJSON("{ \"a\": [ { \"b\": \"d\" }, { \"b\": \"c\" } ] }");
+    combine(b, a);
+    EXPECT_EQ(*b, *c);
+
+    a = Element::fromJSON("{ \"a\": 1, \"b\": 2 }");
+    b = Element::fromJSON("{ \"a\": 2, \"b\": 1 }");
+    c = Element::fromJSON("{ \"a\": [ 1, 2 ], \"b\": [ 2, 1 ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("{ \"a\": [] }");
+    b = Element::fromJSON("{ \"a\": 1 }");
+    c = Element::fromJSON("{ \"a\": [ 1 ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+    combine(b, a);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("{ \"a\": [] }");
+    b = Element::fromJSON("{ \"a\": [ 1 ] }");
+    c = Element::fromJSON("{ \"a\": [ 1 ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+    combine(b, a);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("{ \"a\": [ 1 ] }");
+    b = Element::fromJSON("{ \"a\": [ 2 ] }");
+    c = Element::fromJSON("{ \"a\": [ 1, 2 ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+
+    a = Element::fromJSON("{ \"a\": [ 1, 2, 3 ] }");
+    b = Element::fromJSON("{ \"a\": [ 2, 3, 4 ] }");
+    c = Element::fromJSON("{ \"a\": [ 1, 2, 3, 2, 3, 4 ] }");
+    combine(a, b);
+    EXPECT_EQ(*a, *c);
+}
+
 // This test checks copy.
 TEST(Element, copy) {
     // Null pointer
