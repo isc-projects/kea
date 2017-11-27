@@ -3352,7 +3352,7 @@ YY_RULE_SETUP
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_EVAL_CLIENT_CLASSES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("eval-client-classes", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("eval-client-classes", driver.loc_);
     }
 }
 	YY_BREAK
