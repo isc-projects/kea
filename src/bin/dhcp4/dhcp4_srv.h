@@ -803,6 +803,18 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
+    /// @brief Assigns incoming packet to zero or more classes (late pass).
+    ///
+    /// @note This late classification evaluates all classes which
+    /// were marked for this deferred/on-demand pass. Classes are
+    /// collected in the reversed order than output option processing.
+    ///
+    /// @note The eval-on-demand flag is related because it avoids
+    /// double evaluation (which is not forbidden).
+    ///
+    /// @param ex The exchange holding needed informations.
+    void lateClassify(Dhcpv4Exchange& ex);
+
     /// @brief Perform deferred option unpacking.
     ///
     /// @note Options 43 and 224-254 are processed after classification.

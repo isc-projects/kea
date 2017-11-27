@@ -285,13 +285,19 @@ public:
     /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
-    void addClass(const isc::dhcp::ClientClass& client_class);
+    /// @param deferred the class is marked for late evaluation
+    void addClass(const isc::dhcp::ClientClass& client_class,
+                  bool deferred = false);
 
     /// @brief Returns the class set
     ///
     /// @note This should be used only to iterate over the class set.
-    /// @return
-    const ClientClasses& getClasses() const { return (classes_); }
+    /// @param deferred return classes or to be evaluated classes.
+    /// @return if deferred is false (the default) the claases the
+    /// packet belongs to else the classes which will be evaluated later.
+    const ClientClasses& getClasses(bool deferred = false) const {
+        return (!deferred ? classes_ : on_demand_classes_);
+    }
 
     /// @brief Unparsed data (in received packets).
     ///
@@ -578,6 +584,14 @@ public:
     /// of returned reference lifetime. It is preferred to use @ref inClass and
     /// @ref addClass should be used to operate on this field.
     ClientClasses classes_;
+
+    /// @brief Classes which will be evaluated later.
+    ///
+    /// The comment on @ref classes_ applies here.
+    ///
+    /// Before output option processing these classes will be evaluated
+    /// and if evaluation status is true added to the previous collection.
+    ClientClasses on_demand_classes_;
 
     /// @brief Collection of options present in this message.
     ///

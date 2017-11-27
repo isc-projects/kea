@@ -97,9 +97,10 @@ Pkt::inClass(const std::string& client_class) {
 }
 
 void
-Pkt::addClass(const std::string& client_class) {
-    if (!classes_.contains(client_class)) {
-        classes_.insert(client_class);
+Pkt::addClass(const std::string& client_class, bool deferred) {
+    ClientClasses& classes = !deferred ? classes_ : on_demand_classes_;
+    if (!classes.contains(client_class)) {
+        classes.insert(client_class);
     }
 }
 

@@ -2489,6 +2489,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     assignLeases(solicit, response, ctx);
 
     setReservedClientClasses(solicit, ctx);
+    lateClassify(solicit, ctx);
 
     copyClientOptions(solicit, response);
     CfgOptionList co_list;
@@ -2523,6 +2524,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     assignLeases(request, reply, ctx);
 
     setReservedClientClasses(request, ctx);
+    lateClassify(request, ctx);
 
     copyClientOptions(request, reply);
     CfgOptionList co_list;
@@ -2553,6 +2555,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     extendLeases(renew, reply, ctx);
 
     setReservedClientClasses(renew, ctx);
+    lateClassify(renew, ctx);
 
     copyClientOptions(renew, reply);
     CfgOptionList co_list;
@@ -2583,6 +2586,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     extendLeases(rebind, reply, ctx);
 
     setReservedClientClasses(rebind, ctx);
+    lateClassify(rebind, ctx);
 
     copyClientOptions(rebind, reply);
     CfgOptionList co_list;
@@ -2607,6 +2611,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     AllocEngine::ClientContext6 ctx;
     initContext(confirm, ctx);
     setReservedClientClasses(confirm, ctx);
+    lateClassify(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
     // invalid and must be discarded. There is nothing more to do.
@@ -2700,6 +2705,7 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     AllocEngine::ClientContext6 ctx;
     initContext(release, ctx);
     setReservedClientClasses(release, ctx);
+    lateClassify(release, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
@@ -2729,6 +2735,7 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     AllocEngine::ClientContext6 ctx;
     initContext(decline, ctx);
     setReservedClientClasses(decline, ctx);
+    lateClassify(decline, ctx);
 
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(decline, reply);
@@ -3010,6 +3017,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     AllocEngine::ClientContext6 ctx;
     initContext(inf_request, ctx);
     setReservedClientClasses(inf_request, ctx);
+    lateClassify(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
@@ -3096,6 +3104,10 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
         if (!expr_ptr) {
             continue;
         }
+        // Not the right time if on demand
+        if ((*it)->getOnDemand()) {
+            continue;
+        }
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
@@ -3140,6 +3152,94 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(pkt->getLabel())
             .arg(classes.toText());
+    }
+}
+
+void
+Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
+    // First collect on-demand classes
+    ClientClasses classes = pkt->getClasses(true);
+    Subnet6Ptr subnet = ctx.subnet_;
+
+    if (subnet) {
+        // Begin by the shared-network
+        SharedNetwork6Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            const ClientClasses& to_add = network->getOnDemandClasses();
+            for (ClientClasses::const_iterator cclass = to_add.cbegin();
+                 cclass != to_add.cend(); ++cclass) {
+                classes.insert(*cclass);
+            }
+        }
+
+        // Followed by the subnet
+        const ClientClasses& to_add = subnet->getOnDemandClasses();
+        for(ClientClasses::const_iterator cclass = to_add.cbegin();
+            cclass != to_add.cend(); ++cclass) {
+            classes.insert(*cclass);
+        }
+
+        // And finish by pools
+        BOOST_FOREACH(const AllocEngine::ResourceType& resource,
+                      ctx.allocated_resources_) {
+            PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
+                                                    Lease::TYPE_NA :
+                                                    Lease::TYPE_PD,
+                                                resource.first,
+                                                false);
+            if (pool) {
+                const ClientClasses& to_add = pool->getOnDemandClasses();
+                for (ClientClasses::const_iterator cclass = to_add.cbegin();
+                     cclass != to_add.cend(); ++cclass) {
+                    classes.insert(*cclass);
+                }
+            }
+        }
+
+        // host reservation???
+    }
+
+    // Run match expressions
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        const ClientClassDefPtr class_def = dict->findClass(*cclass);
+        // Todo: log unknown classes
+        if (!class_def) {
+            continue;
+        }
+        const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluateBool(*expr_ptr, *pkt);
+            if (status) {
+                LOG_INFO(dhcp6_logger, EVAL_RESULT)
+                    .arg(*cclass)
+                    .arg(status);
+                // Matching: add the class
+                pkt->addClass(*cclass);
+            } else {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
+                    .arg(*cclass)
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(dhcp6_logger, EVAL_RESULT)
+                .arg(*cclass)
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(dhcp6_logger, EVAL_RESULT)
+                .arg(*cclass)
+                .arg("get exception?");
+        }
     }
 }
 

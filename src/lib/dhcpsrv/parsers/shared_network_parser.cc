@@ -70,6 +70,20 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        if (shared_network_data->contains("eval-client-classes")) {
+            const std::vector<data::ElementPtr>& class_list =
+                shared_network_data->get("eval-client-classes")->listValue();
+            for (auto cclass = class_list.cbegin();
+                 cclass != class_list.cend(); ++cclass) {
+                if (((*cclass)->getType() != Element::string) ||
+                    (*cclass)->stringValue().empty()) {
+                    isc_throw(DhcpConfigError, "invalid class name ("
+                              << (*cclass)->getPosition() << ")");
+                }
+                shared_network->deferClientClass((*cclass)->stringValue());
+            }
+        }
+
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;
@@ -108,6 +122,20 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             std::string client_class = getString(shared_network_data, "client-class");
             if (!client_class.empty()) {
                 shared_network->allowClientClass(client_class);
+            }
+        }
+
+        if (shared_network_data->contains("eval-client-classes")) {
+            const std::vector<data::ElementPtr>& class_list =
+                shared_network_data->get("eval-client-classes")->listValue();
+            for (auto cclass = class_list.cbegin();
+                 cclass != class_list.cend(); ++cclass) {
+                if (((*cclass)->getType() != Element::string) ||
+                    (*cclass)->stringValue().empty()) {
+                    isc_throw(DhcpConfigError, "invalid class name ("
+                              << (*cclass)->getPosition() << ")");
+                }
+                shared_network->deferClientClass((*cclass)->stringValue());
             }
         }
 

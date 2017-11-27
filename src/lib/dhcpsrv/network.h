@@ -169,8 +169,16 @@ public:
 
     /// @brief Sets the supported class to class class_name
     ///
-    /// @param class_name client class to be supported by this subnet
+    /// @param class_name client class to be supported by this network
     void allowClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief Adds class class_name to classes to be evaluated later
+    ///
+    /// @param class_name client class to be evaluated later
+    void deferClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief Returns classes which will be evaluated later
+    const isc::dhcp::ClientClasses& getOnDemandClasses() const;
 
     /// @brief returns the client class
     ///
@@ -272,6 +280,12 @@ protected:
     /// this particular network. The default value for this is an empty list,
     /// which means that any client is allowed, regardless of its class.
     ClientClass client_class_;
+
+    /// @brief On demand classes
+    ///
+    /// If the network is selected these classes will be added to the
+    /// incoming packet and evaluated later.
+    ClientClasses on_demand_classes_;
 
     /// @brief a Triplet (min/default/max) holding allowed renew timer values
     Triplet<uint32_t> t1_;

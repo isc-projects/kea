@@ -132,6 +132,12 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         opts_parser.parse(options, option_data);
     }
 
+    // Let's try to parse the eval-on-demand flag
+    bool on_demand = false;
+    if (class_def_cfg->contains("eval-on-demand")) {
+        on_demand = getBoolean(class_def_cfg, "eval-on-demand");
+    }
+
     // Let's try to parse the next-server field
     IOAddress next_server("0.0.0.0");
     if (class_def_cfg->contains("next-server")) {
@@ -187,7 +193,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Add the client class definition
     try {
-        class_dictionary->addClass(name, match_expr, test, options,
+        class_dictionary->addClass(name, match_expr, test, on_demand, options,
                                    defs, next_server, sname, filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()

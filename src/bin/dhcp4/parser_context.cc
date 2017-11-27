@@ -180,8 +180,6 @@ Parser4Context::contextName()
         return ("reservations");
     case RELAY:
         return ("relay");
-    case CLIENT_CLASS:
-        return ("client-class");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:

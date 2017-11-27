@@ -440,7 +440,7 @@ TEST(Subnet4Test, pool4Checks) {
 
 // Tests whether Subnet4 object is able to store and process properly
 // information about allowed client class (a single class).
-TEST(Subnet4Test, clientClasses) {
+TEST(Subnet4Test, clientClass) {
     // Create the V4 subnet.
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
 
@@ -1026,7 +1026,7 @@ TEST(Subnet6Test, poolTypes) {
 
 // Tests whether Subnet6 object is able to store and process properly
 // information about allowed client class (a single class).
-TEST(Subnet6Test, clientClasses) {
+TEST(Subnet6Test, clientClass) {
     // Create the V6 subnet.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
