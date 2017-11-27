@@ -2727,7 +2727,7 @@ namespace isc { namespace dhcp {
 #line 1613 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("eval-on-demand");
+    ctx.stack_.back()->set("eval-on-demand", b);
 }
 #line 2733 "dhcp4_parser.cc" // lalr1.cc:859
     break;

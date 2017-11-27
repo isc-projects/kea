@@ -1634,7 +1634,7 @@ client_class_test: TEST {
 
 eval_on_demand: EVAL_ON_DEMAND COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("eval-on-demand");
+    ctx.stack_.back()->set("eval-on-demand", b);
 };
 
 // --- end of client classes ---------------------------------
