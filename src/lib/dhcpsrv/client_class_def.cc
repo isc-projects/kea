@@ -292,5 +292,44 @@ ClientClassDictionary::toElement() const {
     return (result);
 }
 
+std::list<std::string>
+builtinPrefixes = {
+    "VENDOR_CLASS_", "AFTER_", "EXTERNAL_"
+};
+
+bool
+isClientClassBuiltIn(const ClientClass& client_class) {
+    for (std::list<std::string>::const_iterator bt = builtinPrefixes.cbegin();
+         bt != builtinPrefixes.cend(); ++bt) {
+        if (client_class.size() <= bt->size()) {
+            continue;
+        }
+        auto mis = std::mismatch(bt->cbegin(), bt->cend(), client_class.cbegin());
+        if (mis.first == bt->cend()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
+                   const ClientClass& client_class) {
+    // First check built-in prefixes
+    if (isClientClassBuiltIn(client_class)) {
+        return (true);
+    }
+
+    // Second check already defined, i.e. in the dictionary
+    ClientClassDefPtr def = class_dictionary->findClass(client_class);
+    if (def) {
+        return (true);
+    }
+
+    // Unknown...
+    return (false);
+}
+
 } // namespace isc::dhcp
 } // namespace isc

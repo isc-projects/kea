@@ -94,20 +94,6 @@ public:
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ClientClassDictionaryPtr& class_dictionary,
                isc::data::ConstElementPtr client_class_def, uint16_t family);
-
-    /// @brief List of built-in client class prefixes
-    /// i.e. VENDOR_CLASS_, AFTER_ and EXTERNAL_.
-    static std::list<std::string> builtinPrefixes;
-
-    /// @brief Check if a client class name is already known,
-    /// i.e. beginning by a built-in prefix or in the dictionary,
-    ///
-    /// @param class_dictionary A class dictionary where to look for.
-    /// @param client_class A client class name to look for.
-    /// @return true if known or built-in, false if not.
-    static bool
-    isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
-                       const ClientClass& client_class);
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser
