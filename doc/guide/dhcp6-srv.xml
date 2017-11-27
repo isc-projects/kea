@@ -1960,10 +1960,13 @@ should include options from the isc option space:
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps. The first step
+      The process of doing classification is conducted in five steps. The first step
       is to assess an incoming packet and assign it to zero or more classes.  The
       second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign options again possibly based on the class
+      The third step is to assign classes from host reservations.
+      The forth step is to build the list of on-demand classes and perform
+      deferred evaluation for each class of the list.
+      The last step is to assign options again possibly based on the class
       information.
       </para>
 
@@ -2046,6 +2049,60 @@ should include options from the isc option space:
 </screen>
         </para>
       </section>
+
+      <section id="dhcp6-on-demand-class">
+        <title>On-demand classification</title>
+        <para>
+        In some cases it is useful to limit the scope of class.
+        Two devices are available to perform evaluation of test
+        expressions so assignment when it returns true only on-demand.
+        </para>
+
+        <para>
+        The first one is the per-class <command>eval-on-demand</command>
+        flag which is false by default. When it is set to
+        <command>true</command> the test expression of the class is not
+        evaluated at the reception of a new incoming ticket.
+        </para>
+
+        <para>
+        The second is the <command>eval-client-classes</command> which
+        takes a list of class names and is valid in shared-network,
+        subnet and pool scope. Classes in these lists are evaluated
+        after resource assignment and before output option processing.
+        </para>
+
+        <para>
+        In this example a class is assigned to the incoming packet
+        when the specified subnet is used.
+
+        <screen>
+"Dhcp6": {
+    "client-classes": [
+       {<userinput>
+           "name": "Client_foo",
+           "test": "'' == ''",
+           "eval-on-demand": true</userinput>
+       },
+       ...
+    ],
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64"
+            "pools": [
+                 {
+                     "pool": "2001:db8:1::-2001:db8:1::ffff"
+                 }
+             ],
+            <userinput>"eval-client-classes": [ "Client_foo" ],</userinput>
+            ...
+        },
+        ...
+    ],
+    ...
+}</screen>
+         </para>
+       </section>
     </section>
 
     <section id="dhcp6-ddns-config">
@@ -3300,7 +3357,7 @@ for each subnet. Here's an example:
 
 <screen>
 "shared-networks": [
-    {"
+    {
         "name": "kakapo",
         <userinput>"relay": {
             "ip-address": "2001:db8::abcd"

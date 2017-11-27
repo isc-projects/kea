@@ -40,7 +40,7 @@
       </para>
 
       <para>
-      The process of doing classification is conducted in four steps:
+      The process of doing classification is conducted in six steps:
       <orderedlist>
       <listitem><para>
       Assess an incoming packet and assign it to zero or more classes.
@@ -52,6 +52,13 @@
       </para></listitem>
       <listitem><para>
       Choose a subnet, possibly based on the class information.
+      </para></listitem>
+      <listitem><para>
+      Assign classes from host reservations
+      </para></listitem>
+      <listitem><para>
+      Perform a second pass by evaluating match expressions of on-demand
+      classes.
       </para></listitem>
       <listitem><para>
       Assign options, again possibly based on the class information.
@@ -140,6 +147,11 @@
       The packet belongs to
       the class (and the class name is added to the list of classes) if the result
       is &quot;true&quot;. Expressions are written in standard format and can be nested.
+      </para>
+
+      <para>
+      When the eval-on-demand flag is set to true in a class definition,
+      the match expression is skipped during the first evaluation pass.
       </para>
 
       <para>
@@ -671,9 +683,11 @@ concatenation of the strings</entry></row>
   <section id="classification-configuring">
     <title>Configuring Classes</title>
       <para>
-      A class contains three items: a name, a test expression and option data.
+      A class contains five items: a name, a test expression, option data,
+      option definition and eval on-demand flag.
       The name must exist and must be unique amongst all classes. The test
-      expression and option data are optional.
+      expression, option data and definition, and eval on-demand flag are
+      optional.
       </para>
 
       <para>
@@ -685,6 +699,33 @@ concatenation of the strings</entry></row>
       <para>
       The option data is a list which defines any options that should be assigned
       to members of this class.
+      </para>
+
+      <para>
+      The option definition is for DHCPv4 option 43 (<xref
+      linkend="dhcp4-vendor-opts"/> and DHCPv4 private options
+      (<xref linkend="dhcp4-private-opts"/>).
+      </para>
+
+      <para>
+      Usually the test expression is evaluated before subnet selection
+      but in some cases it is useful to evaluate it later when the
+      subnet, shared-network or pools are known but output option
+      processing not yet done. The eval-on-demand flag, false by default,
+      allows to defer and make only on-demand the evaluation of the
+      test expression.
+      </para>
+
+      <para>
+      The eval-client-classes list which is valid for shared-network,
+      subnet and pool scope specifies the classes which are evaluated
+      in the second pass before output option processing.
+      The list is built in the reversed precedence order of option
+      data, i.e. an option data in a subnet takes precedence on one
+      in a shared-network but an on-demand class in a subnet is added
+      after one in a shared-network.
+      The mechanism is related to the eval-on-demand flag but it is
+      not required that the flag was set to true.
       </para>
 
       <para>

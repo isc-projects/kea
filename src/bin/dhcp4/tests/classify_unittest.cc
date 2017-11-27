@@ -54,6 +54,16 @@ namespace {
 ///     option[93].hex == 0x0006
 ///     option[93].hex == 0x0001
 ///     or member(<last two>), set boot-file-name to pxelinux.0
+///
+/// - Configuration 3:
+///   - Used for late/on-demand classification
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - the following classes defined:
+///     option[93].hex == 0x0009, next-server set to 1.2.3.4
+///     option[93].hex == 0x0007, set server-hostname to deneb
+///     option[93].hex == 0x0006, set boot-file-name to pxelinux.0
+///     option[93].hex == 0x0001, set boot-file-name to ipxe.efi
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -164,7 +174,45 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
         " } ]"
+    "}",
+
+    // Configuration 3
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"pxe1\","
+        "   \"test\": \"option[93].hex == 0x0009\","
+        "   \"eval-on-demand\": true,"
+        "   \"next-server\": \"1.2.3.4\""
+        "},"
+        "{"
+        "   \"name\": \"pxe2\","
+        "   \"test\": \"option[93].hex == 0x0007\","
+        "   \"eval-on-demand\": true,"
+        "   \"server-hostname\": \"deneb\""
+        "},"
+        "{"
+        "   \"name\": \"pxe3\","
+        "   \"test\": \"option[93].hex == 0x0006\","
+        "   \"eval-on-demand\": false,"
+        "   \"boot-file-name\": \"pxelinux.0\""
+        "},"
+        "{"
+        "   \"name\": \"pxe4\","
+        "   \"test\": \"option[93].hex == 0x0001\","
+        "   \"boot-file-name\": \"ipxe.efi\""
+        "}],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"eval-client-classes\": [ \"pxe2\" ]"
+        " } ]"
     "}"
+
 };
 
 /// @brief Test fixture class for testing classification.
@@ -505,6 +553,396 @@ TEST_F(ClassifyTest, fixedFieldsInformFile22) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
 
     testFixedFields(CONFIGS[2], DHCPINFORM, pxe, "0.0.0.0", "", "pxelinux.0");
+}
+
+// No class
+TEST_F(ClassifyTest, fixedFieldsDiscoverNoClasses3) {
+    testFixedFields(CONFIGS[3], DHCPDISCOVER, OptionPtr(), "0.0.0.0", "", "");
+}
+TEST_F(ClassifyTest, fixedFieldsRequestNoClasses3) {
+    testFixedFields(CONFIGS[3], DHCPREQUEST, OptionPtr(), "0.0.0.0", "", "");
+}
+TEST_F(ClassifyTest, fixedFieldsInformNoClasses3) {
+    testFixedFields(CONFIGS[3], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
+}
+
+// Class 'pxe1' is on-demand and not subject to late evaluation
+TEST_F(ClassifyTest, fixedFieldsDiscoverNextServer3) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+
+    testFixedFields(CONFIGS[3], DHCPDISCOVER, pxe, "0.0.0.0", "", "");
+}
+TEST_F(ClassifyTest, fixedFieldsRequestNextServer3) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+
+    testFixedFields(CONFIGS[3], DHCPREQUEST, pxe, "0.0.0.0", "", "");
+}
+TEST_F(ClassifyTest, fixedFieldsInformNextServer3) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+
+    testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "", "");
+}
+
+
+// Class pxe2 is on-demand but the subnet requests its late evaluation
+TEST_F(ClassifyTest, fixedFieldsDiscoverHostname3) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
+
+    testFixedFields(CONFIGS[3], DHCPDISCOVER, pxe, "0.0.0.0", "deneb", "");
+}
+TEST_F(ClassifyTest, fixedFieldsRequestHostname3) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
+
+    testFixedFields(CONFIGS[3], DHCPREQUEST, pxe, "0.0.0.0", "deneb", "");
+}
+TEST_F(ClassifyTest, fixedFieldsInformHostname3) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
+
+    testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "deneb", "");
+}
+
+// No change from config #0 for pxe3 and pxe4
+TEST_F(ClassifyTest, fixedFieldsDiscoverFile31) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0006));
+
+    testFixedFields(CONFIGS[3], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
+}
+TEST_F(ClassifyTest, fixedFieldsRequestFile31) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0006));
+
+    testFixedFields(CONFIGS[3], DHCPREQUEST, pxe, "0.0.0.0", "", "pxelinux.0");
+}
+TEST_F(ClassifyTest, fixedFieldsInformFile31) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0006));
+
+    testFixedFields(CONFIGS[3], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
+}
+TEST_F(ClassifyTest, fixedFieldsDiscoverFile32) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
+
+    testFixedFields(CONFIGS[3], DHCPDISCOVER, pxe, "0.0.0.0", "", "ipxe.efi");
+}
+TEST_F(ClassifyTest, fixedFieldsRequestFile32) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
+
+    testFixedFields(CONFIGS[3], DHCPREQUEST, pxe, "0.0.0.0", "", "ipxe.efi");
+}
+TEST_F(ClassifyTest, fixedFieldsInformFile32) {
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
+
+    testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
+}
+
+// This test checks the precedence order in requested late evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedenceNone) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\""
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Create a client requesting domain-name-servers option
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Load the config and perform a DORA
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Check response
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Check domain-name-servers option
+    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+    EXPECT_FALSE(opt);
+}
+
+// This test checks the precedence order in requested late evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedencePool) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\","
+        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Create a client requesting domain-name-servers option
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Load the config and perform a DORA
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Check response
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Check domain-name-servers option
+    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option4AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.0.0.1", addrs[0].toText());
+}
+
+// This test checks the precedence order in requested late evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedenceSubnet) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"eval-client-classes\": [ \"for-subnet\" ],"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\","
+        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Create a client requesting domain-name-servers option
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Load the config and perform a DORA
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Check response
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Check domain-name-servers option
+    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option4AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.0.0.2", addrs[0].toText());
+}
+
+// This test checks the precedence order in requested late evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedenceNetwork) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"eval-on-demand\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"eval-client-classes\": [ \"for-network\" ],"
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"eval-client-classes\": [ \"for-subnet\" ],"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\","
+        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Create a client requesting domain-name-servers option
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Load the config and perform a DORA
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Check response
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Check domain-name-servers option
+    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option4AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.0.0.3", addrs[0].toText());
 }
 
 } // end of anonymous namespace
