@@ -949,7 +949,7 @@ client_class: CLIENT_CLASS {
     ctx.leave();
 };
 
-+eval_client_classes: EVAL_CLIENT_CLASSES {
+eval_client_classes: EVAL_CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("eval-client-classes", c);
     ctx.stack_.push_back(c);
