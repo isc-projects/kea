@@ -172,6 +172,11 @@ Element::set(const std::string&, ConstElementPtr) {
 }
 
 void
+Element::combine_set(const std::string&, ConstElementPtr) {
+    throwTypeError("combine_set(name, element) called on a non-map Element");
+}
+
+void
 Element::remove(const std::string&) {
     throwTypeError("remove(string) called on a non-map Element");
 }
@@ -902,6 +907,18 @@ MapElement::set(const std::string& key, ConstElementPtr value) {
     m[key] = value;
 }
 
+void
+MapElement::combine_set(const std::string& key, ConstElementPtr value) {
+    auto previous = m.find(key);
+    if (previous == m.end()) {
+        m[key] = value;
+        return;
+    }
+    ElementPtr mutable_ = boost::const_pointer_cast<Element>(previous->second);
+    combine(mutable_, value);
+    m[key] = mutable_;
+}
+
 bool
 MapElement::find(const std::string& id, ConstElementPtr& t) const {
     try {
@@ -1313,13 +1330,32 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // open the map
         out << "{\n";
 
+        bool first = true;
+        // output comment first
+        if (element->contains("comment")) {
+            // add indentation
+            out << std::string(indent + step, ' ');
+            // add keyword:
+            out << "\"comment\": ";
+            // recursive call
+            prettyPrint(element->get("comment"), out, indent + step, step);
+            // it was the first
+            first = false;
+        }
+
         // iterate on keyword: value
         typedef std::map<std::string, ConstElementPtr> MapType;
         const MapType& m = element->mapValue();
         for (MapType::const_iterator it = m.begin();
              it != m.end(); ++it) {
+            // skip comment
+            if (it->first == "comment") {
+                continue;
+            }
             // add the separator if not the first item
-            if (it != m.begin()) {
+            if (first) {
+                first = false;
+            } else {
                 out << ",\n";
             }
             // add indentation

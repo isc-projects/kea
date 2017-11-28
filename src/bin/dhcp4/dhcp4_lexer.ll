@@ -586,6 +586,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"comment\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_COMMENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("comment", driver.loc_);
+    }
+}
+
 \"subnet\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:

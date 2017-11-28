@@ -654,6 +654,28 @@ TEST(Element, MapElement) {
     el->remove("value3");
     EXPECT_TRUE(isNull(el->get("value3")));
 
+    EXPECT_TRUE(isNull(el->get("value4")));
+
+    ElementPtr em = Element::fromJSON("{ \"a\": 1 }");
+    el->combine_set("value4", em);
+    ASSERT_FALSE(isNull(el->get("value4")));
+    EXPECT_EQ(em, el->get("value4"));
+
+    em = Element::fromJSON("{ \"a\": 2 }");
+    el->combine_set("value4", em);
+    ASSERT_FALSE(isNull(el->get("value4")));
+    ASSERT_EQ(Element::map, el->get("value4")->getType());
+    EXPECT_EQ(1, el->get("value4")->size());
+    ASSERT_FALSE(isNull(el->get("value4")->get("a")));
+    ASSERT_EQ(Element::list, el->get("value4")->get("a")->getType());
+    EXPECT_EQ(2, el->get("value4")->get("a")->size());
+    ASSERT_EQ(Element::integer,
+              el->get("value4")->get("a")->get(0)->getType());
+    EXPECT_EQ(1, el->get("value4")->get("a")->get(0)->intValue());
+    ASSERT_EQ(Element::integer,
+              el->get("value4")->get("a")->get(1)->getType());
+    EXPECT_EQ(2, el->get("value4")->get("a")->get(1)->intValue());
+
     EXPECT_EQ(el->find("value2/number")->intValue(), 42);
     EXPECT_TRUE(isNull(el->find("value2/nothing/")));
 
@@ -1199,6 +1221,7 @@ TEST(Element, prettyPrint) {
 
     // default step is 2, order is alphabetic, no \n at the end
     string text = "{\n"
+        "  \"comment\": \"this is an exception\",\n"
         "  \"boolean\": true,\n"
         "  \"empty-list\": [ ],\n"
         "  \"empty-map\": { },\n"

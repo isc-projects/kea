@@ -321,6 +321,12 @@ public:
     /// @param element The ElementPtr to set at the given key.
     virtual void set(const std::string& name, ConstElementPtr element);
 
+    /// Sets the ElementPtr at the given key, if there was a previous
+    /// value it is combined with it
+    /// @param name The key of the Element to set
+    /// @param element The ElementPtr to set at the given key.
+    virtual void combine_set(const std::string& name, ConstElementPtr element);
+
     /// Remove the ElementPtr at the given key
     /// @param name The key of the Element to remove
     virtual void remove(const std::string& name);
@@ -667,6 +673,7 @@ public:
     }
     using Element::set;
     void set(const std::string& key, ConstElementPtr value);
+    void combine_set(const std::string& key, ConstElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) const {
@@ -773,6 +780,7 @@ bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
 /// This operator converts the @c ConstElementPtr into a string and
 /// inserts it into the output stream @c out with an initial
 /// indentation @c indent and add at each level @c step spaces.
+/// For maps if there is a comment property it is printed first.
 ///
 /// @param element A @c ConstElementPtr to pretty print
 /// @param out A @c std::ostream on which the print operation is performed
@@ -785,6 +793,7 @@ void prettyPrint(ConstElementPtr element, std::ostream& out,
 ///
 /// This operator converts the @c ConstElementPtr into a string with
 /// an initial indentation @c indent and add at each level @c step spaces.
+/// For maps if there is a comment property it is printed first.
 ///
 /// @param element A @c ConstElementPtr to pretty print
 /// @param indent An initial number of spaces to add each new line

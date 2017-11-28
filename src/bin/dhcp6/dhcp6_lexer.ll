@@ -817,6 +817,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"comment\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::SUBNET6:
+        return isc::dhcp::Dhcp6Parser::make_COMMENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("comment", driver.loc_);
+    }
+}
+
 \"subnet\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
