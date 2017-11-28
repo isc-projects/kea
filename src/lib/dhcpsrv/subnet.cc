@@ -566,9 +566,20 @@ Subnet::toElement() const {
     map->set("subnet", Element::create(toText()));
 
     // Add user-context, but only if defined. Omit if it was not.
+    // Extract comment so it will be printed first.
     ConstElementPtr ctx = getContext();
     if (ctx) {
-        map->set("user-context", ctx);
+        if ((ctx->getType() == Element::map) &&
+            ctx->contains("comment")) {
+            ElementPtr copied = isc::data::copy(ctx);
+            map->set("comment",copied->get("comment"));
+            copied->remove("comment");
+            if (copied->size() > 0) {
+                map->set("user-context", copied);
+            }
+        } else {
+            map->set("user-context", ctx);
+        }
     }
 
     return (map);
@@ -638,7 +649,17 @@ Subnet6::toElement() const {
         // Set user-context
         ConstElementPtr context = (*pool)->getContext();
         if (!isNull(context)) {
-            pool_map->set("user-context", context);
+            if ((context->getType() == Element::map) &&
+                context->contains("comment")) {
+                ElementPtr copied = isc::data::copy(context);
+                pool_map->set("comment", copied->get("comment"));
+                copied->remove("comment");
+                if (copied->size() > 0) {
+                    pool_map->set("user-context", copied);
+                }
+            } else {
+                pool_map->set("user-context", context);
+            }
         }
         // Set pool options
         ConstCfgOptionPtr opts = (*pool)->getCfgOption();
@@ -692,7 +713,17 @@ Subnet6::toElement() const {
         // Set user-context
         ConstElementPtr context = pdpool->getContext();
         if (!isNull(context)) {
-            pool_map->set("user-context", context);
+            if ((context->getType() == Element::map) &&
+                context->contains("comment")) {
+                ElementPtr copied = isc::data::copy(context);
+                pool_map->set("comment", copied->get("comment"));
+                copied->remove("comment");
+                if (copied->size() > 0) {
+                    pool_map->set("user-context", copied);
+                }
+            } else {
+                pool_map->set("user-context", context);
+            }
         }
         // Set pool options
         ConstCfgOptionPtr opts = pdpool->getCfgOption();

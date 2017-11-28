@@ -740,6 +740,11 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setRelayInfo(IOAddress("10.0.0.1"));
     subnet3->setIface("eth1");
 
+    data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
+    subnet1->setContext(ctx1);
+    data::ElementPtr ctx2 = data::Element::createMap();
+    subnet2->setContext(ctx2);
+
     cfg.add(subnet1);
     cfg.add(subnet2);
     cfg.add(subnet3);
@@ -747,6 +752,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     // Unparse
     std::string expected = "[\n"
         "{\n"
+        "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/26\",\n"
         "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
@@ -780,6 +786,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
         "    \"reservation-mode\": \"all\",\n"
+        "    \"user-context\": {},\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n"
         "},{\n"
@@ -813,6 +820,12 @@ TEST(CfgSubnets4Test, unparsePool) {
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
 
+    std::string json1 = "{ \"comment\": \"foo\", \"version\": 1 }";
+    data::ElementPtr ctx1 = data::Element::fromJSON(json1);
+    pool1->setContext(ctx1);
+    data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
+    pool2->setContext(ctx2);
+
     subnet->addPool(pool1);
     subnet->addPool(pool2);
     cfg.add(subnet);
@@ -837,11 +850,14 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"option-data\": [],\n"
         "    \"pools\": [\n"
         "        {\n"
+        "            \"comment\": \"foo\",\n"
         "            \"option-data\": [ ],\n"
-        "            \"pool\": \"192.0.2.1-192.0.2.10\"\n"
+        "            \"pool\": \"192.0.2.1-192.0.2.10\",\n"
+        "            \"user-context\": { \"version\": 1 }\n"
         "        },{\n"
         "            \"option-data\": [ ],\n"
-        "            \"pool\": \"192.0.2.64/26\"\n"
+        "            \"pool\": \"192.0.2.64/26\"\n,"
+        "            \"user-context\": { \"foo\": \"bar\" }\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

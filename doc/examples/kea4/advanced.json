@@ -107,6 +107,10 @@
     // It is intended to keep anything you may want to put there - comments,
     // extra designations, floor or department names etc. These structures
     // will be made available to Kea hooks.
+    // You can define multiple user-contexts in the same scope without
+    // the last one replacing previous values. A comment entry is
+    // translated into a user-context with a "comment" property so
+    // you can include comments inside the configuration itself.
     "subnet4": [
         {
             "pools": [ {
@@ -117,6 +121,8 @@
             "user-context": {
                 "comment": "Our first subnet!"
             }
+            // Equivalent using smart parser
+            // "comment": "Our first subnet!"
         },
         {
             // This particular subnet has match-client-id value changed.

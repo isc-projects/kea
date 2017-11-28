@@ -80,10 +80,20 @@ Pool::toElement() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
 
-    // Set user-context
+    // Set user-context extracting comment
     ConstElementPtr context = getContext();
     if (!isNull(context)) {
-        map->set("user-context", context);
+        if ((context->getType() == Element::map) &&
+            context->contains("comment")) {
+            ElementPtr copied = isc::data::copy(context);
+            map->set("comment", copied->get("comment"));
+            copied->remove("comment");
+            if (copied->size() > 0) {
+                map->set("user-context", copied);
+            }
+        } else {
+            map->set("user-context", context);
+        }
     }
 
     // Set pool options
