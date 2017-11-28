@@ -109,6 +109,7 @@ using namespace std;
   POOLS "pools"
   POOL "pool"
   USER_CONTEXT "user-context"
+  COMMENT "comment"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -920,6 +921,7 @@ subnet4_param: valid_lifetime
              | subnet_4o6_interface_id
              | subnet_4o6_subnet
              | user_context
+             | comment
              | unknown_map_entry
              ;
 
@@ -1330,6 +1332,7 @@ pool_params: pool_param
 pool_param: pool_entry
           | option_data_list
           | user_context
+          | comment
           | unknown_map_entry
           ;
 
@@ -1344,7 +1347,16 @@ pool_entry: POOL {
 user_context: USER_CONTEXT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON map_value {
-    ctx.stack_.back()->set("user-context", $4);
+    ctx.stack_.back()->combine_set("user-context", $4);
+    ctx.leave();
+};
+
+comment: COMMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ElementPtr e(new MapElement(ctx.loc2pos(@1)));
+    e->set("comment", $4);
+    ctx.stack_.back()->combine_set("user-context", e);
     ctx.leave();
 };
 

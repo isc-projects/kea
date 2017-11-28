@@ -2304,7 +2304,7 @@ namespace isc { namespace dhcp {
   case 377:
 #line 1346 "dhcp4_parser.yy" // lalr1.cc:859
     {
-    ctx.stack_.back()->set("user-context", yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.back()->combine_set("user-context", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
 #line 2311 "dhcp4_parser.cc" // lalr1.cc:859
