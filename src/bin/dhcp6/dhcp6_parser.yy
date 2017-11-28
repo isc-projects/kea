@@ -1015,6 +1015,8 @@ shared_network_param: name
                     | preferred_lifetime
                     | rapid_commit
                     | valid_lifetime
+                    | user_context
+                    | comment
                     | unknown_map_entry
                     ;
 

@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/triplet.h>
+#include <dhcpsrv/user_context.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <cstdint>
@@ -41,7 +42,7 @@ namespace dhcp {
 /// class provides an abstract interface that must be implemented by derived
 /// classes and, where appropriate, implements common methods used by the
 /// derived classes.
-class Network : public data::CfgToElement {
+class Network : public virtual UserContext, public data::CfgToElement {
 public:
 
     /// @brief Holds optional information about relay.

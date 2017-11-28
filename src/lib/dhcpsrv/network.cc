@@ -47,6 +47,9 @@ ElementPtr
 Network::toElement() const {
     ElementPtr map = Element::createMap();
 
+    // Set user-context
+    contextToElement(map);
+
     // Set interface
     const std::string& iface = getIface();
     if (!iface.empty()) {
