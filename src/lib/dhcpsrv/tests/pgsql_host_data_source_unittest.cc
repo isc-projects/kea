@@ -562,4 +562,15 @@ TEST_F(PgSqlHostDataSourceTest, deleteById6Options) {
     testDeleteById6Options();
 }
 
+// Tests that multiple reservations without IPv4 addresses can be
+// specified within a subnet.
+TEST_F(PgSqlHostDataSourceTest, testMultipleHostsNoAddress4) {
+    testMultipleHostsNoAddress4();
+}
+
+// Tests that multiple hosts can be specified within an IPv6 subnet.
+TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6) {
+    testMultipleHosts6();
+}
+
 }; // Of anonymous namespace
