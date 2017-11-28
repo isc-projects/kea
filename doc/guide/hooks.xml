@@ -2544,11 +2544,26 @@ both the command and the response.
       and makes it available for the hook libraries.
       </para>
       <para>
+        Usually when an entry is defined multiple times in the same scope
+        the last value is used overwriting previous values (silently:
+        this behavior should be fixed soon). With user contexts values
+        are combined at the first level, for instance multiple user context
+        with a "comment" entry gives an entry with the list of accumulated
+        values.
+      </para>
+      <para>
         Another use case for user contexts may be storing comments and other
         information that will be retained by Kea. Regular comments are discarded
         when configuration is loaded, but user contexts are retained. This is
         useful if you want your comments to survive config-set, config-get
         operations for example.
+      </para>
+      <para>
+        The parser translates "comment" entries at locations user context
+        are valid into a user context with a "comment" entry. The pretty
+        print of a configuration does the opposite operation and puts
+        "comment" entries at the beginning of maps as it seems to be the
+        common usage.
       </para>
       <para>
         As of Kea 1.3, the structures that allow user contexts are pools of all
