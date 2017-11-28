@@ -28,7 +28,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public UserContext, public data::CfgToElement {
+class Subnet : public virtual UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.
@@ -367,6 +367,8 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
 class Subnet4 : public Subnet, public Network4 {
 public:
 
@@ -523,6 +525,8 @@ typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
 class Subnet6 : public Subnet, public Network6 {
 public:
 

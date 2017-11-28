@@ -1051,6 +1051,8 @@ shared_network_param: name
                     | reservation_mode
                     | client_class
                     | valid_lifetime
+                    | user_context
+                    | comment
                     | unknown_map_entry
                     ;
 

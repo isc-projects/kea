@@ -195,6 +195,9 @@ TEST(SharedNetwork4Test, unparse) {
     network->setValid(200);
     network->setMatchClientId(false);
 
+    data::ElementPtr ctx = data::Element::fromJSON("{ \"comment\": \"foo\" }");
+    network->setContext(ctx);
+
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
                                    SubnetID(1)));
@@ -204,6 +207,7 @@ TEST(SharedNetwork4Test, unparse) {
     network->add(subnet2);
 
     std::string expected = "{\n"
+        "    \"comment\": \"foo\",\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": false,\n"
         "    \"name\": \"frog\",\n"
@@ -480,6 +484,9 @@ TEST(SharedNetwork6Test, unparse) {
     network->setValid(300);
     network->setRapidCommit(true);
 
+    data::ElementPtr ctx = data::Element::fromJSON("{ \"foo\": \"bar\" }");
+    network->setContext(ctx);
+
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
                                    40, SubnetID(1)));
@@ -534,6 +541,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"valid-lifetime\": 40\n"
         "      }\n"
         "    ],\n"
+        "    \"user-context\": { \"foo\": \"bar\" },\n"
         "    \"valid-lifetime\": 300\n"
         "}\n";
 
