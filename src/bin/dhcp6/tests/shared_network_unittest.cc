@@ -13,8 +13,10 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <cc/command_interpreter.h>
 #include <stats/stats_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <functional>
@@ -38,6 +40,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"interface\": \"eth1\","
+    "            \"comment\": \"example\","
     "            \"subnet6\": ["
     "                {"
     "                    \"subnet\": \"2001:db8:1::/64\","
@@ -1315,6 +1318,33 @@ public:
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
+
+// Check user-context parsing
+TEST_F(Dhcpv6SharedNetworkTest, parse) {
+    // Create client
+    Dhcp6Client client1;
+
+    // Don't use configure from utils
+    Parser6Context ctx;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(NETWORKS_CONFIG[0], true));
+    ConstElementPtr status;
+    disableIfacesReDetect(json);
+    EXPECT_NO_THROW(status = configureDhcp6Server(*client1.getServer(), json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+    CfgMgr::instance().commit();
+
+    CfgSharedNetworks6Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSharedNetworks6();
+    SharedNetwork6Ptr network = cfg->getByName("frog");
+    ConstElementPtr context = network->getContext();
+    ASSERT_TRUE(context);
+    ASSERT_EQ(1, context->size());
+    ASSERT_TRUE(context->get("comment"));
+    EXPECT_EQ("\"example\"", context->get("comment")->str());
+}
 
 // Running out of addresses within a subnet in a shared network.
 TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
