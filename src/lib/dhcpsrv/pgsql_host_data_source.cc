@@ -57,6 +57,23 @@ const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
 /// options associated with a host to minimize impact on performance. Other
 /// classes derived from @ref PgSqlHostExchange should be used to retrieve
 /// information about IPv6 reservations and options.
+///
+/// Database schema contains several unique indexes to guard against adding
+/// multiple hosts for the same client identifier in a single subnet and for
+/// adding multiple hosts with a reservation for the same IPv4 address in a
+/// single subnet. The exceptions that have to be taken into account are
+/// listed below:
+/// - zero or null IPv4 address indicates that there is no reservation for the
+///   IPv4 address for the host,
+/// - zero or null subnet identifier (either IPv4 or IPv6) indicates that
+///   this subnet identifier must be ignored. Specifically, this is the case
+///   when host reservation is created for the DHCPv4 server, the IPv6 subnet id
+///   should be ignored. Conversely, when host reservation is created for the
+///   DHCPv6 server, the IPv4 subnet id should be ignored.
+///
+/// To exclude those special case values, the Postgres backend uses partial
+/// indexes, i.e. the only values that are included in the index are those that
+/// are non-zero and non-null.
 class PgSqlHostExchange : public PgSqlExchange {
 private:
 
