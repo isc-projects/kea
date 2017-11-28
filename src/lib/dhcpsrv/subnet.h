@@ -15,6 +15,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
+#include <dhcpsrv/user_context.h>
 
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/indexed_by.hpp>
@@ -27,7 +28,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public data::CfgToElement {
+class Subnet : public UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.
@@ -219,19 +220,6 @@ private:
         shared_network_ = shared_network;
     }
 
-public:
-
-    /// @brief Sets user context.
-    /// @param ctx user context to be stored.
-    void setContext(const data::ConstElementPtr& ctx) {
-        user_context_ = ctx;
-    }
-
-    /// @brief Returns const pointer to the user context.
-    data::ConstElementPtr getContext() const {
-        return (user_context_);
-    }
-
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -362,9 +350,6 @@ protected:
 
     /// @brief Pointer to a shared network that subnet belongs to.
     WeakNetworkPtr shared_network_;
-
-    /// @brief Pointer to the user context (may be NULL)
-    data::ConstElementPtr user_context_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object

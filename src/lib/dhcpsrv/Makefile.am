@@ -159,6 +159,7 @@ libkea_dhcpsrv_la_SOURCES += subnet_id.h
 libkea_dhcpsrv_la_SOURCES += subnet_selector.h
 libkea_dhcpsrv_la_SOURCES += timer_mgr.cc timer_mgr.h
 libkea_dhcpsrv_la_SOURCES += triplet.h
+libkea_dhcpsrv_la_SOURCES += user_context.cc user_context.h
 libkea_dhcpsrv_la_SOURCES += utils.h
 libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
 
@@ -295,6 +296,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	subnet_selector.h \
 	timer_mgr.h \
 	triplet.h \
+	user_context.h \
 	utils.h \
 	writable_host_data_source.h
 
