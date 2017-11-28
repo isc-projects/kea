@@ -1,3 +1,10 @@
+1335.	[bug]		marcin
+	Fixed a bug which prevented inserting multiple host reservations
+	where IPv4 address was unspecified or when selected subnet
+	identifier was not specified. This change affects both Postgres
+	and MySQL backend.
+	(Trac #5416, git 03fab8f7d5c2e8a5ea735b11ff75652aa31d791d)
+
 Kea 1.3.0 released on October 27, 2017
 
 1334.	[bug]		marcin
