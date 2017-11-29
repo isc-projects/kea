@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
+#include <testutils/user_context_utils.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -30,6 +31,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -101,7 +103,7 @@ static_assert(max_config_counter == sizeof(UNPARSED_CONFIGS) / sizeof(char*),
 void
 outputFormatted(const std::string& config) {
     // pretty print it
-    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr json = extractComments(parseDHCP4(config));
     std::string prettier = prettyPrint(json, 4, 4);
     // get it as a line array
     std::list<std::string> lines;
@@ -315,10 +317,12 @@ TEST_P(Dhcp4GetConfigTest, run) {
         ASSERT_NO_THROW(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
-        ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseDHCP4(expected, true));
-        ASSERT_NO_THROW(json = parseJSON(expected));
-        EXPECT_TRUE(isEquivalent(dhcp, json));
+        ElementPtr jsond;
+        ASSERT_NO_THROW(jsond = parseDHCP4(expected, true));
+        ElementPtr jsonj;
+        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {
