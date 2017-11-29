@@ -214,6 +214,8 @@ SrvConfig::toElement() const {
     ElementPtr result = Element::createMap();
     // DhcpX global map
     ElementPtr dhcp = Element::createMap();
+    // Set user-context
+    contextToElement(dhcp);
     // Set decline-probation-period
     dhcp->set("decline-probation-period",
               Element::create(static_cast<long long>(decline_timer_)));

@@ -5611,9 +5611,17 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
 TEST_F(Dhcp4ParserTest, comments) {
 
     string config = "{\n"
+        "\"comment\": \"A DHCPv4 server\",\n"
+        "\"option-def\": [ {\n"
+        "    \"name\": \"foo\",\n"
+        "    \"code\": 100,\n"
+        "    \"comment\": \"An option definition\",\n"
+        "    \"type\": \"ipv4-address\",\n"
+        "    \"space\": \"isc\"\n"
+        " } ],\n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
-        "    \"comment\": \"A shared-network\"\n,"
+        "    \"comment\": \"A shared network\"\n,"
         "    \"subnet4\": [\n"
         "    { \n"
         "        \"subnet\": \"192.0.1.0/24\",\n"
@@ -5632,6 +5640,32 @@ TEST_F(Dhcp4ParserTest, comments) {
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
+    // Check global user context.
+    ConstElementPtr ctx = CfgMgr::instance().getStagingCfg()->getContext();
+    ASSERT_TRUE(ctx);
+    ASSERT_EQ(1, ctx->size());
+    ASSERT_TRUE(ctx->get("comment"));
+    EXPECT_EQ("\"A DHCPv4 server\"", ctx->get("comment")->str());
+
+    // Make the option definition available.
+    LibDHCP::commitRuntimeOptionDefs();
+
+    // Get and verify the option definition.
+    OptionDefinitionPtr opt_def = LibDHCP::getRuntimeOptionDef("isc", 100);
+    ASSERT_TRUE(opt_def);
+    EXPECT_EQ("foo", opt_def->getName());
+    EXPECT_EQ(1, opt_def->getCode());
+    EXPECT_FALSE(opt_def->getArrayType());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, opt_def->getType());
+    EXPECT_TRUE(opt_def->getEncapsulatedSpace().empty());
+
+    // Check option definition user context
+    ConstElementPtr ctx_opt_def = opt_def->getContext();
+    ASSERT_TRUE(ctx_opt_def);
+    ASSERT_EQ(1, ctx_opt_def->size());
+    ASSERT_TRUE(ctx_opt_def->get("comment"));
+    EXPECT_EQ("\"An option definition\"", ctx_opt_def->get("comment")->str());
+
     // Now verify that the shared network was indeed configured.
     CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
         ->getCfgSharedNetworks4();
@@ -5647,7 +5681,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(ctx_net);
     ASSERT_EQ(1, ctx_net->size());
     ASSERT_TRUE(ctx_net->get("comment"));
-    EXPECT_EQ("\"A shared-network\"", ctx_net->get("comment")->str());
+    EXPECT_EQ("\"A shared network\"", ctx_net->get("comment")->str());
 
     // The shared network has a subnet.
     const Subnet4Collection * subs = net->getAllSubnets();

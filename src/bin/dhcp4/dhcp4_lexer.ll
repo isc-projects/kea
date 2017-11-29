@@ -578,9 +578,11 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"user-context\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::OPTION_DEF:
         return isc::dhcp::Dhcp4Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("user-context", driver.loc_);
@@ -589,9 +591,11 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"comment\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::OPTION_DEF:
         return isc::dhcp::Dhcp4Parser::make_COMMENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("comment", driver.loc_);

@@ -1081,9 +1081,9 @@ TEST_F(Dhcpv4SharedNetworkTest, parse) {
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode);
     ASSERT_NO_THROW( {
-	CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
-	cfg_db->setAppendedParameters("universe=4");
-	cfg_db->createManagers();
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=4");
+        cfg_db->createManagers();
     } );
     CfgMgr::instance().commit();
 

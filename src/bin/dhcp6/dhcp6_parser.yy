@@ -435,6 +435,8 @@ global_param: preferred_lifetime
             | dhcp4o6_port
             | control_socket
             | dhcp_ddns
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 
@@ -1100,6 +1102,8 @@ option_def_param: option_def_name
                 | option_def_space
                 | option_def_encapsulate
                 | option_def_array
+                | user_context
+                | comment
                 | unknown_map_entry
                 ;
 

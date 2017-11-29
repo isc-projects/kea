@@ -10,12 +10,12 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/triplet.h>
-#include <dhcpsrv/user_context.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <cstdint>
