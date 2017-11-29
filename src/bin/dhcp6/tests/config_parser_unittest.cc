@@ -6104,7 +6104,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     OptionDefinitionPtr opt_def = LibDHCP::getRuntimeOptionDef("isc", 100);
     ASSERT_TRUE(opt_def);
     EXPECT_EQ("foo", opt_def->getName());
-    EXPECT_EQ(1, opt_def->getCode());
+    EXPECT_EQ(100, opt_def->getCode());
     EXPECT_FALSE(opt_def->getArrayType());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def->getType());
     EXPECT_TRUE(opt_def->getEncapsulatedSpace().empty());
