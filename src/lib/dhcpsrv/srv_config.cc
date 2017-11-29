@@ -237,14 +237,40 @@ SrvConfig::toElement() const {
     ConstElementPtr subnets;
     if (family == AF_INET) {
         subnets = cfg_subnets4_->toElement();
-        dhcp->set("subnet4", subnets);
+
+        ElementPtr plain_subnets = Element::createList();
+        const Subnet4Collection* subs = cfg_subnets4_->getAll();
+        for (Subnet4Collection::const_iterator subnet = subs->cbegin();
+             subnet != subs->cend(); ++subnet) {
+            // Skip subnets which are in a shared-network
+            SharedNetwork4Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network) {
+                continue;
+            }
+            plain_subnets->add((*subnet)->toElement());
+        }
+        dhcp->set("subnet4", plain_subnets);
 
         ConstElementPtr shared_networks = cfg_shared_networks4_->toElement();
         dhcp->set("shared-networks", shared_networks);
 
     } else {
         subnets = cfg_subnets6_->toElement();
-        dhcp->set("subnet6", subnets);
+
+        ElementPtr plain_subnets = Element::createList();
+        const Subnet6Collection* subs = cfg_subnets6_->getAll();
+        for (Subnet6Collection::const_iterator subnet = subs->cbegin();
+             subnet != subs->cend(); ++subnet) {
+            // Skip subnets which are in a shared-network
+            SharedNetwork6Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network) {
+                continue;
+            }
+            plain_subnets->add((*subnet)->toElement());
+        }
+        dhcp->set("subnet6", plain_subnets);
 
         ConstElementPtr shared_networks = cfg_shared_networks6_->toElement();
         dhcp->set("shared-networks", shared_networks);
