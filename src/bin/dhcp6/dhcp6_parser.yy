@@ -1604,6 +1604,8 @@ not_empty_client_class_params: client_class_param
 client_class_param: client_class_name
                   | client_class_test
                   | option_data_list
+                  | user_context
+                  | comment
                   | unknown_map_entry
                   ;
 
