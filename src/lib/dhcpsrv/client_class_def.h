@@ -8,6 +8,7 @@
 #define CLIENT_CLASS_DEF_H
 
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <eval/token.h>
@@ -39,7 +40,7 @@ public:
 };
 
 /// @brief Embodies a single client class definition
-class ClientClassDef : public isc::data::CfgToElement {
+class ClientClassDef : public UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -236,6 +237,7 @@ public:
     /// @param test Original version of match_expr
     /// @param options Collection of options members should be given
     /// @param defs Option definitions (optional)
+    /// @param user_context User context (optional)
     /// @param next_server next-server value for this class (optional)
     /// @param sname server-name value for this class (optional)
     /// @param filename boot-file-name value for this class (optional)
@@ -246,6 +248,7 @@ public:
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
                   const std::string& test, const CfgOptionPtr& options,
                   CfgOptionDefPtr defs = CfgOptionDefPtr(),
+                  isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string());

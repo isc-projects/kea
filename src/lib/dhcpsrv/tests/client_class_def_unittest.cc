@@ -386,6 +386,9 @@ TEST(ClientClassDef, unparseDef) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
     std::string test = "option[12].text == 'foo'";
     cclass->setTest(test);
+    std::string comment = "bar";
+    std::string user_context = "{ \"comment\": \"" + comment + "\" }";
+    cclass->setContext(isc::data::Element::fromJSON(user_context));
     std::string next_server = "1.2.3.4";
     cclass->setNextServer(IOAddress(next_server));
     std::string sname = "my-server.example.com";
@@ -395,6 +398,7 @@ TEST(ClientClassDef, unparseDef) {
 
     // Unparse it
     std::string expected = "{\n"
+        "\"comment\": \"" + comment + "\",\n"
         "\"name\": \"" + name + "\",\n"
         "\"test\": \"" + test + "\",\n"
         "\"next-server\": \"" + next_server + "\",\n"

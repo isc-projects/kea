@@ -132,6 +132,8 @@ ElementPtr
 ClientClassDef:: toElement() const {
     uint16_t family = CfgMgr::instance().getFamily();
     ElementPtr result = Element::createMap();
+    // Set user-context
+    contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
     // Set original match expression (empty string won't parse)
@@ -185,12 +187,14 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const std::string& test,
                                 const CfgOptionPtr& cfg_option,
                                 CfgOptionDefPtr cfg_option_def,
+                                ConstElementPtr user_context,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
                                 const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
     cclass->setCfgOptionDef(cfg_option_def);
+    cclass->setContext(user_context),
     cclass->setNextServer(next_server);
     cclass->setSname(sname);
     cclass->setFilename(filename);

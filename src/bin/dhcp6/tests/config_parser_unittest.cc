@@ -6067,6 +6067,11 @@ TEST_F(Dhcp6ParserTest, comments) {
         "    \"data\": \"ABCDEF0105\",\n"
         "        \"csv-format\": false\n"
         " } ],\n"
+        "\"client-classes\": [ {\n"
+        "    \"name\": \"all\",\n"
+        "    \"comment\": \"match all\",\n"
+        "    \"test\": \"'' == ''\"\n"
+        " } ],\n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"comment\": \"A shared network\"\n,"
@@ -6132,6 +6137,23 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, ctx_opt_desc->size());
     ASSERT_TRUE(ctx_opt_desc->get("comment"));
     EXPECT_EQ("\"Set option value\"", ctx_opt_desc->get("comment")->str());
+
+    // And there is a client class.
+    ClientClassDictionaryPtr dict =
+        CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dict);
+    EXPECT_EQ(1, dict->getClasses()->size());
+    ClientClassDefPtr cclass = dict->findClass("all");
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("all", cclass->getName());
+    EXPECT_EQ("'' == ''", cclass->getTest());
+
+    // Check client class user context.
+    ConstElementPtr ctx_class = cclass->getContext();
+    ASSERT_TRUE(ctx_class);
+    ASSERT_EQ(1, ctx_class->size());
+    ASSERT_TRUE(ctx_class->get("comment"));
+    EXPECT_EQ("\"match all\"", ctx_class->get("comment")->str());
 
     // Now verify that the shared network was indeed configured.
     CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
