@@ -1261,6 +1261,8 @@ option_data_param: option_data_name
                  | option_data_space
                  | option_data_csv_format
                  | option_data_always_send
+                 | user_context
+                 | comment
                  | unknown_map_entry
                  ;
 
