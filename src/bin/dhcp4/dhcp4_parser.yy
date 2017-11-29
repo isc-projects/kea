@@ -1584,6 +1584,8 @@ client_class_param: client_class_name
                   | next_server
                   | server_hostname
                   | boot_file_name
+                  | user_context
+                  | comment
                   | unknown_map_entry
                   ;
 

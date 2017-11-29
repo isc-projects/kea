@@ -815,6 +815,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user-context", driver.loc_);
@@ -830,6 +831,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp6Parser::make_COMMENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("comment", driver.loc_);
