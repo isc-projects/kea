@@ -5607,4 +5607,74 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     EXPECT_TRUE(classes.empty());
 }
 
+// This test checks comments. Please keep it last.
+TEST_F(Dhcp4ParserTest, comments) {
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"comment\": \"A shared-network\"\n,"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"comment\": \"A subnet\"\n,"
+        "        \"pools\": [\n"
+        "        {\n"
+        "             \"pool\": \"192.0.1.1-192.0.1.10\",\n"
+        "             \"comment\": \"A pool\"\n"
+        "        }\n"
+        "        ]\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+    SharedNetwork4Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    // Check shared network user context
+    ConstElementPtr ctx_net = net->getContext();
+    ASSERT_TRUE(ctx_net);
+    ASSERT_EQ(1, ctx_net->size());
+    ASSERT_TRUE(ctx_net->get("comment"));
+    EXPECT_EQ("\"A shared-network\"", ctx_net->get("comment")->str());
+
+    // The shared network has a subnet.
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    ASSERT_EQ(1, subs->size());
+    Subnet4Ptr sub = subs->at(0);
+    ASSERT_TRUE(sub);
+
+    // Check subnet user context
+    ConstElementPtr ctx_sub = sub->getContext();
+    ASSERT_TRUE(ctx_sub);
+    ASSERT_EQ(1, ctx_sub->size());
+    ASSERT_TRUE(ctx_sub->get("comment"));
+    EXPECT_EQ("\"A subnet\"", ctx_sub->get("comment")->str());
+
+    // The subnet has a pool
+    const PoolCollection& pools = sub->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools.size());
+    PoolPtr pool = pools.at(0);
+    ASSERT_TRUE(pool);
+
+    // Check pool user context                                               
+    ConstElementPtr ctx_pool = pool->getContext();
+    ASSERT_TRUE(ctx_pool);
+    ASSERT_EQ(1, ctx_pool->size());
+    ASSERT_TRUE(ctx_pool->get("comment"));
+    EXPECT_EQ("\"A pool\"", ctx_pool->get("comment")->str());
+}
+
 }
