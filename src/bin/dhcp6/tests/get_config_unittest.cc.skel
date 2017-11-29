@@ -320,6 +320,7 @@ TEST_P(Dhcp6GetConfigTest, run) {
         expected = UNPARSED_CONFIGS[config_counter];
         ConstElementPtr json;
         ASSERT_NO_THROW(json = parseDHCP6(expected, true));
+        ASSERT_NO_THROW(json = parseJSON(expected));
         EXPECT_TRUE(isEquivalent(dhcp, json));
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
