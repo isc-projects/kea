@@ -84,12 +84,6 @@ void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr v
     srv_cfg.setControlSocketInfo(value);
 }
 
-
-
-
-
-
-
 template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
@@ -132,6 +126,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     std::string record_types = getString(option_def, "record-types");
     std::string space = getString(option_def, "space");
     std::string encapsulates = getString(option_def, "encapsulate");
+    ConstElementPtr user_context = option_def->get("user-context");
 
     if (!OptionSpace::validateName(space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
@@ -166,6 +161,10 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     } else {
         def.reset(new OptionDefinition(name, code, type, array_type));
 
+    }
+
+    if (user_context) {
+        def->setContext(user_context);
     }
 
     // Split the list of record types into tokens.

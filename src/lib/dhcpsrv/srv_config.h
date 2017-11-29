@@ -26,6 +26,7 @@
 #include <dhcpsrv/logging_info.h>
 #include <hooks/hooks_config.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <stdint.h>
@@ -39,7 +40,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig : public isc::data::CfgToElement {
+class SrvConfig : public UserContext, public isc::data::CfgToElement {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///

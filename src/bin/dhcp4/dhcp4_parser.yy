@@ -433,6 +433,8 @@ global_param: valid_lifetime
             | next_server
             | server_hostname
             | boot_file_name
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 
@@ -1136,6 +1138,8 @@ option_def_param: option_def_name
                 | option_def_space
                 | option_def_encapsulate
                 | option_def_array
+                | user_context
+                | comment
                 | unknown_map_entry
                 ;
 

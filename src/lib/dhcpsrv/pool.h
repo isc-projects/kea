@@ -11,9 +11,9 @@
 #include <dhcp/option6_pdexclude.h>
 #include <boost/shared_ptr.hpp>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
-#include <dhcpsrv/user_context.h>
 #include <boost/shared_ptr.hpp>
 
 #include <vector>

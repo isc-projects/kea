@@ -9,13 +9,13 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
-#include <dhcpsrv/user_context.h>
 
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/indexed_by.hpp>

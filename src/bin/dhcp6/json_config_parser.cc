@@ -144,6 +144,7 @@ public:
     ///
     /// - decline-probation-period
     /// - dhcp4o6-port
+    /// - user-context
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
@@ -157,6 +158,12 @@ public:
         // Set the DHCPv4-over-DHCPv6 interserver port.
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
+
+        // Set the global user context.
+        ConstElementPtr user_context = global->get("user-context");
+        if (user_context) {
+            srv_config->setContext(user_context);
+        }
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -557,14 +564,16 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
 
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
-            // decline-probation-period and dhcp4o6-port are handled in the
-            // global_parser.parse() which sets global parameters.
+            // decline-probation-period, dhcp4o6-port and user-context
+            // are handled in the global_parser.parse() which sets
+            // global parameters.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "preferred-lifetime") ||
                  (config_pair.first == "valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
-                 (config_pair.first == "dhcp4o6-port")) {
+                 (config_pair.first == "dhcp4o6-port") ||
+                 (config_pair.first == "user-context")) {
                 continue;
             }
 
