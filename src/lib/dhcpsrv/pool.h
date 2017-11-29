@@ -135,11 +135,6 @@ protected:
     /// @brief The last address in a pool
     isc::asiolink::IOAddress last_;
 
-    /// @brief Comments field
-    ///
-    /// @todo: This field is currently not used.
-    std::string comments_;
-
     /// @brief defines a lease type that will be served from this pool
     Lease::Type type_;
 

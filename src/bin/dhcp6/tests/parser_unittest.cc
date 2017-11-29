@@ -8,6 +8,7 @@
 #include <cc/data.h>
 #include <dhcp6/parser_context.h>
 #include <testutils/io_utils.h>
+#include <testutils/user_context_utils.h>
 
 using namespace isc::data;
 using namespace std;
@@ -212,6 +213,7 @@ TEST(ParserTest, multilineComments) {
 ///
 /// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
+    ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
@@ -219,7 +221,8 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << "(" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    reference_json = moveComments(json);
 
     // remove the temporary file
     EXPECT_NO_THROW(::remove(decommented.c_str()));
