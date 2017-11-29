@@ -600,6 +600,7 @@ TEST_F(CfgOptionTest, unparse) {
     cfg.add(opt1, false, "dns");
     OptionPtr opt2(new Option(Option::V6, 101, OptionBuffer(4, 12)));
     OptionDescriptor desc2(opt2, false, "12, 12, 12, 12");
+    desc2.setContext(data::Element::fromJSON("{ \"comment\": \"foo\" }"));
     cfg.add(desc2, "dns");
     OptionPtr opt3(new Option(Option::V6, D6O_STATUS_CODE, OptionBuffer(2, 0)));
     cfg.add(opt3, false, DHCP6_OPTION_SPACE);
@@ -615,6 +616,7 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"data\": \"12121212\",\n"
         "    \"always-send\": false\n"
         "},{\n"
+        "    \"comment\": \"foo\",\n"
         "    \"code\": 101,\n"
         "    \"space\": \"dns\",\n"
         "    \"csv-format\": true,\n"
