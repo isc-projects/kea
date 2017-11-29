@@ -5625,11 +5625,28 @@ TEST_F(Dhcp4ParserTest, comments) {
         "    \"data\": \"ABCDEF0105\",\n"
         "    \"csv-format\": false\n"
         " } ],\n"
-        "\"client-classes\": [ {\n"
-        "    \"name\": \"all\",\n"
-        "    \"comment\": \"match all\",\n"
-        "    \"test\": \"'' == ''\"\n"
-        " } ],\n"
+        "\"client-classes\": [\n"
+        "    {\n"
+        "       \"name\": \"all\",\n"
+        "       \"comment\": \"match all\",\n"
+        "       \"test\": \"'' == ''\"\n"
+        "    },\n"
+        "    {\n"
+        "       \"name\": \"none\"\n"
+        "    },\n"
+        "    {\n"
+        "       \"name\": \"two\",\n"
+        "       \"comment\": \"first comment\",\n"
+        "       \"comment\": \"second comment\"\n"
+        "    },\n"
+        "    {\n"
+        "       \"name\": \"both\",\n"
+        "       \"comment\": \"a comment\",\n"
+        "       \"user-context\": {\n"
+        "           \"version\": 1\n"
+        "       }\n"
+        "    }\n"
+        "    ],\n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"comment\": \"A shared network\"\n,"
@@ -5688,11 +5705,11 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(ctx_opt_desc->get("comment"));
     EXPECT_EQ("\"Set option value\"", ctx_opt_desc->get("comment")->str());
 
-    // And there is a client class.
+    // And there are some client classes.
     ClientClassDictionaryPtr dict =
         CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dict);
-    EXPECT_EQ(1, dict->getClasses()->size());
+    EXPECT_EQ(4, dict->getClasses()->size());
     ClientClassDefPtr cclass = dict->findClass("all");
     ASSERT_TRUE(cclass);
     EXPECT_EQ("all", cclass->getName());
@@ -5704,6 +5721,36 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_EQ(1, ctx_class->size());
     ASSERT_TRUE(ctx_class->get("comment"));
     EXPECT_EQ("\"match all\"", ctx_class->get("comment")->str());
+
+    // The 'none' class has no user-context/comment.
+    cclass = dict->findClass("none");
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("none", cclass->getName());
+    EXPECT_EQ("", cclass->getTest());
+    EXPECT_FALSE(cclass->getContext());
+
+    // The 'two' class has two comments.
+    cclass = dict->findClass("two");
+    EXPECT_EQ("two", cclass->getName());
+    EXPECT_EQ("", cclass->getTest());
+    ctx_class = cclass->getContext();
+    ASSERT_TRUE(ctx_class);
+    ASSERT_EQ(1, ctx_class->size());
+    ASSERT_TRUE(ctx_class->get("comment"));
+    ASSERT_EQ(Element::list, cclass->getContext()->get("comment")->getType());
+    ASSERT_EQ(2, cclass->getContext()->get("comment")->size());
+
+    // The 'both' class has a user context and a comment.
+    cclass = dict->findClass("both");
+    EXPECT_EQ("both", cclass->getName());
+    EXPECT_EQ("", cclass->getTest());
+    ctx_class = cclass->getContext();
+    ASSERT_TRUE(ctx_class);
+    ASSERT_EQ(2, ctx_class->size());
+    ASSERT_TRUE(ctx_class->get("comment"));
+    EXPECT_EQ("\"a comment\"", ctx_class->get("comment")->str());
+    ASSERT_TRUE(ctx_class->get("version"));
+    EXPECT_EQ("1", ctx_class->get("version")->str());
 
     // Now verify that the shared network was indeed configured.
     CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()

@@ -10,6 +10,8 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
+#include <testutils/user_context_utils.h>
+#include <testutils/user_context_utils.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
@@ -30,6 +32,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -68,7 +71,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -79,7 +83,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 1
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -99,7 +104,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 2
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -144,7 +150,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 3
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -192,7 +199,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 4
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -240,7 +248,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 5
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -264,7 +273,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 6
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -303,7 +313,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 8
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -337,7 +348,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 9
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -357,7 +369,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 10
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -379,7 +392,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 11
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -403,7 +417,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 12
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -440,7 +455,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 13
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -526,7 +542,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 19
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -557,7 +574,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 20
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -588,7 +606,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 21
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -628,7 +647,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 22
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -664,7 +684,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 23
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -721,7 +742,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 24
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -763,7 +785,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 25
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -826,7 +849,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 26
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -862,7 +886,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 27
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -898,7 +923,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 28
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"eth0\" ]\n"
+"            \"interfaces\": [ \"eth0\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -908,7 +934,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 29
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ]\n"
+"            \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -918,7 +945,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 30
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -941,7 +969,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 31
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1004,7 +1033,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"server-port\": 777\n"
 "        },\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1024,7 +1054,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 33
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1110,7 +1141,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 34
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -1149,7 +1181,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 35
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"mac-sources\": [ \"rfc6939\", \"rfc4649\", \"rfc4580\" ],\n"
 "        \"preferred-lifetime\": 3000,\n"
@@ -1161,7 +1194,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 36
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"mac-sources\": [ \"client-link-addr-option\", \"remote-id\", \"subscriber-id\" ],\n"
 "        \"preferred-lifetime\": 3000,\n"
@@ -1217,7 +1251,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 38
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1229,14 +1264,16 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 39
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
     // CONFIGURATION 40
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
@@ -1244,7 +1281,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "{\n"
 "        \"decline-probation-period\": 12345,\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
@@ -1259,7 +1297,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"unwarned-reclaim-cycles\": 10\n"
 "        },\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
@@ -1277,7 +1316,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1297,7 +1337,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 44
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1317,7 +1358,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 45
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1338,7 +1380,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 46
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1364,7 +1407,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 47
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1390,7 +1434,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 48
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1412,7 +1457,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 49
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1435,7 +1481,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 50
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1468,6 +1515,20 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"comment\": \"match all\",\n"
 "                \"name\": \"all\",\n"
 "                \"test\": \"'' == ''\"\n"
+"            },\n"
+"            {\n"
+"                \"name\": \"none\"\n"
+"            },\n"
+"            {\n"
+"                \"comment\": [ \"first comment\", \"second comment\" ],\n"
+"                \"name\": \"two\"\n"
+"            },\n"
+"            {\n"
+"                \"comment\": \"a comment\",\n"
+"                \"name\": \"both\",\n"
+"                \"user-context\": {\n"
+"                    \"version\": 1\n"
+"                }\n"
 "            }\n"
 "        ],\n"
 "        \"option-data\": [\n"
@@ -5894,6 +5955,23 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"name\": \"all\",\n"
 "                \"option-data\": [ ],\n"
 "                \"test\": \"'' == ''\"\n"
+"            },\n"
+"            {\n"
+"                \"comment\": \"a comment\",\n"
+"                \"name\": \"both\",\n"
+"                \"option-data\": [ ],\n"
+"                \"user-context\": {\n"
+"                    \"version\": 1\n"
+"                }\n"
+"            },\n"
+"            {\n"
+"                \"name\": \"none\",\n"
+"                \"option-data\": [ ]\n"
+"            },\n"
+"            {\n"
+"                \"comment\": [ \"first comment\", \"second comment\" ],\n"
+"                \"name\": \"two\",\n"
+"                \"option-data\": [ ]\n"
 "            }\n"
 "        ],\n"
 "        \"decline-probation-period\": 86400,\n"
@@ -6045,7 +6123,7 @@ static_assert(max_config_counter == sizeof(UNPARSED_CONFIGS) / sizeof(char*),
 void
 outputFormatted(const std::string& config) {
     // pretty print it
-    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr json = extractComments(parseDHCP6(config));
     std::string prettier = prettyPrint(json, 4, 4);
     // get it as a line array
     std::list<std::string> lines;
@@ -6262,10 +6340,12 @@ TEST_P(Dhcp6GetConfigTest, run) {
         ASSERT_NO_THROW(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
-        ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseDHCP6(expected, true));
-        ASSERT_NO_THROW(json = parseJSON(expected));
-        EXPECT_TRUE(isEquivalent(dhcp, json));
+        ElementPtr jsond;
+        ASSERT_NO_THROW(jsond = parseDHCP6(expected, true));
+        ElementPtr jsonj;
+        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {

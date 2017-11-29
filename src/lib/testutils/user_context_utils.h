@@ -18,6 +18,12 @@ namespace test {
 /// @return a processed copy of element or unmodified element
 isc::data::ElementPtr moveComments(isc::data::ElementPtr element);
 
+/// @brief Extract comment entries from user-context
+///
+/// @param element
+/// @return a processed copy of element or unmodified element
+ isc::data::ElementPtr extractComments(isc::data::ElementPtr element);
+
 }; // end of isc::test namespace
 }; // end of isc namespace
 
