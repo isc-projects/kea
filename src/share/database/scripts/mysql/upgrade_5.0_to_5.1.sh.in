@@ -35,6 +35,10 @@ END
 $$
 DELIMITER ;
 
+# Add user contexts into tables holding DHCP options
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT NULL;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT NULL;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '5', minor = '1';
