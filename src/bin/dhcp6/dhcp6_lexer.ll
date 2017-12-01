@@ -809,13 +809,21 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"user-context\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-    case isc::dhcp::Parser6Context::POOLS:
-    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser6Context::SERVER_ID:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::LOGGERS:
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user-context", driver.loc_);
@@ -825,13 +833,21 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"comment\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-    case isc::dhcp::Parser6Context::POOLS:
-    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::INTERFACES_CONFIG:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser6Context::SERVER_ID:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::LOGGERS:
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
         return isc::dhcp::Dhcp6Parser::make_COMMENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("comment", driver.loc_);

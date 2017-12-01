@@ -488,6 +488,9 @@ interfaces_config_param: interfaces_list
                        | dhcp_socket_type
                        | outbound_interface
                        | re_detect
+                       | user_context
+                       | comment
+                       | unknown_map_entry
                        ;
 
 sub_interfaces4: LCURLY_BRACKET {
@@ -579,8 +582,10 @@ database_map_param: database_type
                   | connect_timeout
                   | contact_points
                   | keyspace
+                  | user_context
+                  | comment
                   | unknown_map_entry
-;
+                  ;
 
 database_type: TYPE {
     ctx.enter(ctx.DATABASE_TYPE);
@@ -755,11 +760,13 @@ sub_hooks_library: LCURLY_BRACKET {
 
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
-            | unknown_map_entry
             ;
 
 hooks_param: library
            | parameters
+           | user_context
+           | comment
+           | unknown_map_entry
            ;
 
 library: LIBRARY {
@@ -1428,6 +1435,8 @@ reservation_param: duid
                  | next_server
                  | server_hostname
                  | boot_file_name
+                 | user_context
+                 | comment
                  | unknown_map_entry
                  ;
 
@@ -1686,6 +1695,8 @@ dhcp_ddns_param: enable_updates
                | override_client_update
                | replace_client_name
                | generated_prefix
+               | user_context
+               | comment
                | unknown_map_entry
                ;
 
@@ -1851,7 +1862,7 @@ logging_params: logging_param
 logging_param: loggers;
 
 // "loggers", the only parameter currently defined in "Logging" object,
-// is "Loggers": [ ... ].
+// is "loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
@@ -1885,6 +1896,8 @@ logger_param: name
             | output_options_list
             | debuglevel
             | severity
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 
