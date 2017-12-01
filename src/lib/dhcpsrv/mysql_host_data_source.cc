@@ -34,6 +34,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::data;
 using namespace std;
 
 namespace {
@@ -62,6 +63,9 @@ const size_t OPTION_FORMATTED_VALUE_MAX_LEN = 8192;
 
 /// @brief Maximum length of option space name.
 const size_t OPTION_SPACE_MAX_LEN = 128;
+
+/// @brief Maximum length of user context.
+const size_t USER_CONTEXT_MAX_LEN = 8192;
 
 /// @brief Maximum length of the server hostname.
 const size_t SERVER_HOSTNAME_MAX_LEN = 64;
@@ -758,7 +762,7 @@ class MySqlHostWithOptionsExchange : public MySqlHostExchange {
 private:
 
     /// @brief Number of columns holding DHCPv4  or DHCPv6 option information.
-    static const size_t OPTION_COLUMNS = 6;
+    static const size_t OPTION_COLUMNS = 7;
 
     /// @brief Receives DHCPv4 or DHCPv6 options information from the
     /// dhcp4_options or dhcp6_options tables respectively.
@@ -787,19 +791,22 @@ private:
                         const size_t start_column)
         : universe_(universe), start_column_(start_column), option_id_(0),
           code_(0), value_length_(0), formatted_value_length_(0),
-          space_length_(0), persistent_(false), option_id_null_(MLM_FALSE),
-          code_null_(MLM_FALSE), value_null_(MLM_FALSE),
-          formatted_value_null_(MLM_FALSE), space_null_(MLM_FALSE),
+          space_length_(0), persistent_(false), user_context_length_(0),
+          option_id_null_(MLM_FALSE), code_null_(MLM_FALSE),
+          value_null_(MLM_FALSE), formatted_value_null_(MLM_FALSE),
+          space_null_(MLM_FALSE), user_context_null_(MLM_FALSE),
           option_id_index_(start_column), code_index_(start_column_ + 1),
           value_index_(start_column_ + 2),
           formatted_value_index_(start_column_ + 3),
           space_index_(start_column_ + 4),
           persistent_index_(start_column_ + 5),
+          user_context_index_(start_column_ + 6),
           most_recent_option_id_(0) {
 
             memset(value_, 0, sizeof(value_));
             memset(formatted_value_, 0, sizeof(formatted_value_));
             memset(space_, 0, sizeof(space_));
+            memset(user_context_, 0, sizeof(user_context_));
         }
 
         /// @brief Returns identifier of the currently processed option.
@@ -858,6 +865,13 @@ private:
                 formatted_value.assign(formatted_value_);
             }
 
+            // Convert user_context to string as well.
+            std::string user_context;
+            if (user_context_null_ == MLM_FALSE) {
+                user_context_[user_context_length_] = '\0';
+                user_context.assign(user_context_);
+            }
+
             // Options are held in a binary or textual format in the database.
             // This is similar to having an option specified in a server
             // configuration file. Such option is converted to appropriate C++
@@ -909,6 +923,22 @@ private:
             }
 
             OptionDescriptor desc(option, persistent_, formatted_value);
+
+            // Set the user context if there is one into the option descriptor.
+            if (!user_context.empty()) {
+                try {
+                    ConstElementPtr ctx = Element::fromJSON(user_context);
+                    if (!ctx || (ctx->getType() != Element::map)) {
+                        isc_throw(BadValue, "user context '" << user_context
+                                  << "' is no a JSON map");
+                    }
+                    desc.setContext(ctx);
+                } catch (const isc::data::JSONError& ex) {
+                    isc_throw(BadValue, "user context '" << user_context
+                              << "' is invalid JSON: " << ex.what());
+                }
+            }
+
             cfg->add(desc, space);
         }
 
@@ -923,6 +953,7 @@ private:
             columns[formatted_value_index_] = "formatted_value";
             columns[space_index_] = "space";
             columns[persistent_index_] = "persistent";
+            columns[user_context_index_] = "user_context";
         }
 
         /// @brief Initialize binding table fields for options.
@@ -975,6 +1006,14 @@ private:
             bind[persistent_index_].buffer_type = MYSQL_TYPE_TINY;
             bind[persistent_index_].buffer = reinterpret_cast<char*>(&persistent_);
             bind[persistent_index_].is_unsigned = MLM_TRUE;
+
+            // user_context : TEXT NULL
+            user_context_length_ = sizeof(user_context_);
+            bind[user_context_index_].buffer_type = MYSQL_TYPE_STRING;
+            bind[user_context_index_].buffer = reinterpret_cast<char*>(user_context_);
+            bind[user_context_index_].buffer_length = user_context_length_;
+            bind[user_context_index_].length = &user_context_length_;
+            bind[user_context_index_].is_null = &user_context_null_;
         }
 
     private:
@@ -1013,6 +1052,12 @@ private:
         /// requested.
         bool persistent_;
 
+        /// @brief Buffer holding textual user context of an option.
+        char user_context_[USER_CONTEXT_MAX_LEN];
+
+        /// @brief User context length.
+        unsigned long user_context_length_;
+
         /// @name Boolean values indicating if values of specific columns in
         /// the database are NULL.
         //@{
@@ -1032,6 +1077,8 @@ private:
         /// @brief Boolean flag indicating if the DHCPv4 option space is NULL.
         my_bool space_null_;
 
+        /// @brief Boolean flag indicating if the DHCPv4 option user context is NULL.
+        my_bool user_context_null_;
         //@}
 
         /// @name Indexes of the specific columns
@@ -1054,6 +1101,9 @@ private:
         /// @brief Persistent
         size_t persistent_index_;
         //@}
+
+        /// @brief User context;
+        size_t user_context_index_;
 
         /// @brief Option id for last processed row.
         uint32_t most_recent_option_id_;
@@ -1591,17 +1641,19 @@ class MySqlOptionExchange {
 private:
 
     /// @brief Number of columns in the tables holding options.
-    static const size_t OPTION_COLUMNS = 9;
+    static const size_t OPTION_COLUMNS = 10;
 
 public:
 
     /// @brief Constructor.
     MySqlOptionExchange()
-        : type_(0), value_len_(0), formatted_value_len_(0), space_(), space_len_(0),
-          persistent_(false), client_class_(), client_class_len_(0),
+
+        : type_(0), value_len_(0), formatted_value_len_(0), space_(),
+          space_len_(0), persistent_(false), user_context_(),
+          user_context_len_(0), client_class_(), client_class_len_(0),
           subnet_id_(0), host_id_(0), option_() {
 
-        BOOST_STATIC_ASSERT(8 < OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(9 < OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.
@@ -1681,30 +1733,43 @@ public:
             bind_[5].buffer = reinterpret_cast<char*>(&persistent_);
             bind_[5].is_unsigned = MLM_TRUE;
 
+            // user_context: TEST NULL,
+            ConstElementPtr ctx = opt_desc.getContext();
+            if (ctx) {
+                user_context_ = ctx->str();
+                user_context_len_ = user_context_.size();
+                bind_[6].buffer_type = MYSQL_TYPE_STRING;
+                bind_[6].buffer = const_cast<char*>(user_context_.c_str());
+                bind_[6].buffer_length = user_context_len_;
+                bind_[6].length = &user_context_len_;
+            } else {
+                bind_[6].buffer_type = MYSQL_TYPE_NULL;
+            }
+
             // dhcp_client_class: VARCHAR(128) NULL
             /// @todo Assign actual value to client class string.
             client_class_len_ = client_class_.size();
-            bind_[6].buffer_type = MYSQL_TYPE_STRING;
-            bind_[6].buffer = const_cast<char*>(client_class_.c_str());
-            bind_[6].buffer_length = client_class_len_;
-            bind_[6].length = &client_class_len_;
+            bind_[7].buffer_type = MYSQL_TYPE_STRING;
+            bind_[7].buffer = const_cast<char*>(client_class_.c_str());
+            bind_[7].buffer_length = client_class_len_;
+            bind_[7].length = &client_class_len_;
 
             // dhcp4_subnet_id: INT UNSIGNED NULL
             if (subnet_id.isSpecified()) {
                 subnet_id_ = subnet_id;
-                bind_[7].buffer_type = MYSQL_TYPE_LONG;
-                bind_[7].buffer = reinterpret_cast<char*>(subnet_id_);
-                bind_[7].is_unsigned = MLM_TRUE;
+                bind_[8].buffer_type = MYSQL_TYPE_LONG;
+                bind_[8].buffer = reinterpret_cast<char*>(subnet_id_);
+                bind_[8].is_unsigned = MLM_TRUE;
 
             } else {
-                bind_[7].buffer_type = MYSQL_TYPE_NULL;
+                bind_[8].buffer_type = MYSQL_TYPE_NULL;
             }
 
             // host_id: INT UNSIGNED NOT NULL
             host_id_ = host_id;
-            bind_[8].buffer_type = MYSQL_TYPE_LONG;
-            bind_[8].buffer = reinterpret_cast<char*>(&host_id_);
-            bind_[8].is_unsigned = MLM_TRUE;
+            bind_[9].buffer_type = MYSQL_TYPE_LONG;
+            bind_[9].buffer = reinterpret_cast<char*>(&host_id_);
+            bind_[9].is_unsigned = MLM_TRUE;
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1739,6 +1804,12 @@ private:
     /// @brief Boolean flag indicating if the option is always returned to
     /// a client or only when requested.
     bool persistent_;
+
+    /// @brief User context.
+    std::string user_context_;
+
+    /// @brief User context length.
+    unsigned long user_context_len_;
 
     /// @brief Client classes for the option.
     std::string client_class_;
@@ -1970,9 +2041,9 @@ TaggedStatementArray tagged_statements = { {
                 "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
-                "o4.persistent, "
+                "o4.persistent, o4.user_context, "
                 "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
-                "o6.persistent, "
+                "o6.persistent, o6.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
                 "r.dhcp6_iaid "
             "FROM hosts AS h "
@@ -1994,7 +2065,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent "
+                "o.persistent, o.user_context "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2010,7 +2081,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent "
+                "o.persistent, o.user_context "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2028,7 +2099,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent, "
+                "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
                 "r.dhcp6_iaid "
             "FROM hosts AS h "
@@ -2050,7 +2121,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent "
+                "o.persistent, o.user_context "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2070,7 +2141,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent, "
+                "o.persistent, o.user_context,"
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
                 "r.dhcp6_iaid "
             "FROM hosts AS h "
@@ -2096,7 +2167,7 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
-                "o.persistent, "
+                "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
                 "r.dhcp6_iaid "
             "FROM hosts AS h "
@@ -2129,15 +2200,15 @@ TaggedStatementArray tagged_statements = { {
     // Using fixed scope_id = 3, which associates an option with host.
     {MySqlHostDataSourceImpl::INSERT_V4_OPTION,
          "INSERT INTO dhcp4_options(option_id, code, value, formatted_value, space, "
-            "persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+            "persistent, user_context, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
     {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
          "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
-            "persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+            "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
     {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},

@@ -160,7 +160,7 @@ struct PsqlBindArray {
 
     /// @brief Binds a the given string to the bind array.
     ///
-    /// Prior to added the The given string the vector of exchange values,
+    /// Prior to add the given string the vector of exchange values,
     /// it duplicated as a ConstStringPtr and saved internally.  This guarantees
     /// the string remains in scope until the PsqlBindArray is destroyed,
     /// without the caller maintaining the string values.
