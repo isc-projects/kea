@@ -179,7 +179,7 @@ const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
     : io_service_(new IOService()), port_(port), serverid_(), shutdown_(true),
-      alloc_engine_()
+      alloc_engine_(), name_change_reqs_(), network_state_(NetworkState::DHCPv6)
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -468,7 +468,10 @@ void Dhcpv6Srv::run_one() {
         return;
     }
 
-    processPacket(query, rsp);
+    // If the DHCP service has been globally disabled, drop the packet.
+    if (network_state_.isServiceEnabled()) {
+        processPacket(query, rsp);
+    }
 
     if (!rsp) {
         return;

@@ -19,6 +19,7 @@
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
@@ -871,6 +872,13 @@ protected:
     /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
     /// are waiting for sending to kea-dhcp-ddns module.
     std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
+
+private:
+
+    /// @brief Holds information about disabled DHCP service and/or
+    /// disabled subnet/network scopes.
+    NetworkState network_state_;
+
 };
 
 }; // namespace isc::dhcp

@@ -45,6 +45,12 @@ class NetworkStateImpl;
 class NetworkState {
 public:
 
+    /// @brief DHCP server type.
+    enum ServerType {
+        DHCPv4,
+        DHCPv6
+    };
+
     /// @brief Type of the container holding collection of subnet identifiers.
     typedef std::set<SubnetID> Subnets;
 
@@ -52,7 +58,7 @@ public:
     typedef std::set<std::string> Networks;
 
     /// @brief Constructor.
-    NetworkState();
+    NetworkState(const ServerType& server_type);
 
     /// @brief Globally disables DHCP service.
     ///
@@ -133,6 +139,9 @@ private:
     /// @brief Pointer to the @c NetworkState implementation.
     boost::shared_ptr<NetworkStateImpl> impl_;
 };
+
+/// @brief Pointer to the @c NetworkState object.
+typedef boost::shared_ptr<NetworkState> NetworkStatePtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

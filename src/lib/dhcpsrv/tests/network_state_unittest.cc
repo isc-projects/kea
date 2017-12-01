@@ -65,7 +65,7 @@ public:
 
 // This test verifies that it is possible to disable and then enable service.
 TEST_F(NetworkStateTest, disableEnableService) {
-    NetworkState state;
+    NetworkState state(NetworkState::DHCPv4);
     state.disableService();
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService();
@@ -75,7 +75,7 @@ TEST_F(NetworkStateTest, disableEnableService) {
 // This test verifies that enableAll() enables the service. This test will be extended
 // in the future to verify that it also enables disabled scopes.
 TEST_F(NetworkStateTest, enableAll) {
-    NetworkState state;
+    NetworkState state(NetworkState::DHCPv4);
     state.disableService();
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableAll();
@@ -85,7 +85,7 @@ TEST_F(NetworkStateTest, enableAll) {
 // This test verifies that it is possible to setup delayed execution of enableAll
 // function.
 TEST_F(NetworkStateTest, delayedEnableAll) {
-    NetworkState state;
+    NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
     state.disableService();
     state.delayedEnableAll(1);
@@ -99,7 +99,7 @@ TEST_F(NetworkStateTest, delayedEnableAll) {
 // This test verifies that explicitly enabling the service cancels the timer
 // scheduled for automatically enabling it.
 TEST_F(NetworkStateTest, earlyEnableAll) {
-    NetworkState state;
+    NetworkState state(NetworkState::DHCPv4);
     // Disable the service.
     state.disableService();
     EXPECT_FALSE(state.isServiceEnabled());
@@ -115,7 +115,7 @@ TEST_F(NetworkStateTest, earlyEnableAll) {
 // This test verifies that it is possible to call delayedEnableAll multiple times
 // and that it results in only one timer being scheduled.
 TEST_F(NetworkStateTest, multipleDelayedEnableAll) {
-    NetworkState state;
+    NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
     state.disableService();
     // Schedule the first timer for 5 seconds.
