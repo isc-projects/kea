@@ -753,13 +753,11 @@ sub_hooks_library: LCURLY_BRACKET {
 
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
+            | unknown_map_entry
             ;
 
 hooks_param: library
            | parameters
-           | user_context
-           | comment
-           | unknown_map_entry
            ;
 
 library: LIBRARY {

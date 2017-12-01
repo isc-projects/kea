@@ -582,7 +582,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
@@ -604,7 +603,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-    case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:

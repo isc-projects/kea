@@ -65,12 +65,12 @@ CfgDbAccess::getAccessString(const std::string& access_string) const {
     return (s.str());
 }
 
-ElementPtr
-CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
-    ElementPtr result = Element::createMap();
+void
+CfgDbAccess::toElementDbAccessString(const std::string& dbaccess,
+                                     ElementPtr map) {
     // Code from DatabaseConnection::parse
     if (dbaccess.empty()) {
-        return (result);
+        return;
     }
     std::vector<std::string> tokens;
     boost::split(tokens, dbaccess, boost::is_any_of(std::string("\t ")));
@@ -86,7 +86,7 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                 int64_t int_value;
                 try {
                     int_value = boost::lexical_cast<int64_t>(value);
-                    result->set(keyword, Element::create(int_value));
+                    map->set(keyword, Element::create(int_value));
                 } catch (...) {
                     isc_throw(ToElementError, "invalid DB access "
                               << "integer parameter: "
@@ -95,9 +95,9 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
             } else if ((keyword == "persist") ||
                        (keyword == "readonly")) {
                 if (value == "true") {
-                    result->set(keyword, Element::create(true));
+                    map->set(keyword, Element::create(true));
                 } else if (value == "false") {
-                    result->set(keyword, Element::create(false));
+                    map->set(keyword, Element::create(false));
                 } else {
                     isc_throw(ToElementError, "invalid DB access "
                               << "boolean parameter: "
@@ -110,7 +110,7 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                        (keyword == "name") ||
                        (keyword == "contact_points") ||
                        (keyword == "keyspace")) {
-                result->set(keyword, Element::create(value));
+                map->set(keyword, Element::create(value));
             } else {
                 isc_throw(ToElementError, "unknown DB access parameter: "
                           << keyword << "=" << value);
@@ -120,6 +120,23 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                       << ", expected format is name=value");
         }
     }
+}
+
+ElementPtr
+CfgLeaseDbAccess::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Add user context
+    contextToElement(result);
+    CfgDbAccess::toElementDbAccessString(lease_db_access_, result);
+    return (result);
+}
+
+ElementPtr
+CfgHostDbAccess::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Add user context
+    contextToElement(result);
+    CfgDbAccess::toElementDbAccessString(host_db_access_, result);
     return (result);
 }
 

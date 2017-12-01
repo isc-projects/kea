@@ -19,6 +19,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
@@ -51,6 +52,12 @@ TEST(CfgDbAccessTest, setLeaseDbAccessString) {
     // Additional parameters are not in lease_db_access_
     runToElementTest<CfgLeaseDbAccess>(expected, CfgLeaseDbAccess(cfg));
 
+    // Add and check user context
+    std::string user_context = "{ \"foo\": \"bar\" }";
+    cfg.setContext(Element::fromJSON(user_context));
+    expected = "{ \"user-context\": { \"foo\": \"bar\" }, \"type\": \"mysql\" }";
+    runToElementTest<CfgLeaseDbAccess>(expected, CfgLeaseDbAccess(cfg));
+
     // If access string is empty, no parameters will be appended.
     ASSERT_NO_THROW(cfg.setLeaseDbAccessString(""));
     EXPECT_TRUE(cfg.getLeaseDbAccessString().empty());
@@ -73,6 +80,12 @@ TEST(CfgDbAccessTest, setHostDbAccessString) {
     EXPECT_EQ("type=mysql universe=4", cfg.getHostDbAccessString());
 
     // Additional parameters are not in host_db_access_
+    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
+
+    // Add and check user context
+    std::string user_context = "{ \"foo\": \"bar\" }";
+    cfg.setContext(Element::fromJSON(user_context));
+    expected = "{ \"user-context\": { \"foo\": \"bar\" }, \"type\": \"mysql\" }";
     runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
 
     // If access string is empty, no parameters will be appended.

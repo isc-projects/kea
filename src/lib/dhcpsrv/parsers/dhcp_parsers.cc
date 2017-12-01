@@ -1246,6 +1246,12 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                   << client_config->getPosition() << ")");
     }
 
+    // Add user context
+    ConstElementPtr user_context = client_config->get("user-context");
+    if (user_context) {
+        new_config->setContext(user_context);
+    }
+
     return(new_config);
 }
 

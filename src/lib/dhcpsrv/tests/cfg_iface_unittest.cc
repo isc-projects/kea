@@ -15,6 +15,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
@@ -368,10 +369,13 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg4.use(AF_INET, "*"));
     EXPECT_NO_THROW(cfg4.use(AF_INET, "eth0"));
     EXPECT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+    std::string comment = "{ \"comment\": \"foo\" }";
+    EXPECT_NO_THROW(cfg4.setContext(Element::fromJSON(comment)));
     
     // Check unparse
     std::string expected =
-        "{ \"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
+        "{ \"comment\": \"foo\", "
+        "\"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
         "\"re-detect\": false }";
     runToElementTest<CfgIface>(expected, cfg4);
 
@@ -380,9 +384,12 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "*"));
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    comment = "{ \"comment\": \"bar\" }";
+    EXPECT_NO_THROW(cfg6.setContext(Element::fromJSON(comment)));
 
     expected =
-        "{ \"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
+        "{ \"comment\": \"bar\", "
+        "\"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
         "\"re-detect\": false }";
     runToElementTest<CfgIface>(expected, cfg6);
 }

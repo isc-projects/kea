@@ -211,7 +211,7 @@ EP extractComments1(EP element) {
         if (user_context->size() > 0) {
             result->set("user-context", user_context);
         }
-        result->combine_set("comment", comment);
+        result->combine_set("comment", copy(comment, 0));
     }
 
     return (result);

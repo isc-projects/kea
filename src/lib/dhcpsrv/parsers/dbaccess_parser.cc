@@ -56,6 +56,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     int64_t lfc_interval = 0;
     int64_t timeout = 0;
     int64_t port = 0;
+    ConstElementPtr user_context;
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, database_config->mapValue()) {
         try {
@@ -77,6 +78,9 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                 port = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(port);
+
+            } else if (param.first == "user-context") {
+                user_context = param.second;
 
             } else {
                 values_copy[param.first] = param.second->stringValue();
@@ -158,6 +162,9 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
         cfg_db->setHostDbAccessString(getDbAccessString());
     }
 
+    if (user_context) {
+        cfg_db->setContext(user_context);
+    }
 }
 
 // Create the database access string

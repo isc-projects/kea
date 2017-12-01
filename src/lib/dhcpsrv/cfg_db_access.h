@@ -8,6 +8,7 @@
 #define CFG_DBACCESS_H
 
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
 
@@ -19,7 +20,7 @@ namespace dhcp {
 ///
 /// The database access strings use the same format as the strings
 /// passed to the @ref isc::dhcp::LeaseMgrFactory::create function.
-class CfgDbAccess {
+class CfgDbAccess : public UserContext {
 public:
 
     /// @brief Constructor.
@@ -67,9 +68,10 @@ public:
     /// @brief Unparse an access string
     ///
     /// @param dbaccess the database access string
-    /// @return a pointer to configuration
-    static
-    isc::data::ElementPtr toElementDbAccessString(const std::string& dbaccess);
+    /// @param map the element map where the access string is unparse
+    static void
+    toElementDbAccessString(const std::string& dbaccess,
+                            isc::data::ElementPtr map);
 
 protected:
 
@@ -106,9 +108,7 @@ struct CfgLeaseDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
     /// @ref isc::data::CfgToElement::toElement
     ///
     /// @result a pointer to a configuration
-    virtual isc::data::ElementPtr toElement() const {
-        return (CfgDbAccess::toElementDbAccessString(lease_db_access_));
-    }
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 struct CfgHostDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
@@ -120,12 +120,9 @@ struct CfgHostDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
     /// @ref isc::data::CfgToElement::toElement
     ///
     /// @result a pointer to a configuration
-    virtual isc::data::ElementPtr toElement() const {
-        return (CfgDbAccess::toElementDbAccessString(host_db_access_));
-    }
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 }
 }
-
 #endif // CFG_DBACCESS_H
