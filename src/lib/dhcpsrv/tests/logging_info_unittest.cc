@@ -12,6 +12,7 @@
 
 using namespace isc::dhcp;
 using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
@@ -71,7 +72,8 @@ TEST_F(LoggingInfoTest, defaults) {
     ASSERT_EQ(1, info_non_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_non_verbose.destinations_[0].output_);
 
-    std::string header = "{\n"
+    std::string header = "{\n";
+    std::string begin =
         "\"name\": \"kea\",\n"
         "\"output_options\": [ {\n"
         " \"output\": \"stdout\",\n \"maxsize\": 10240000,\n"
@@ -79,7 +81,17 @@ TEST_F(LoggingInfoTest, defaults) {
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";
     std::string trailer = "\n}\n";
-    std::string expected = header + "INFO" + dbglvl + "0" + trailer;
+    std::string expected = header + begin + "INFO" + dbglvl + "0" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_non_verbose);
+
+    // Add a user context
+    std::string comment = "\"comment\": \"foo\"";
+    std::string user_context = "{ " + comment + " }";
+    EXPECT_FALSE(info_non_verbose.getContext());
+    info_non_verbose.setContext(Element::fromJSON(user_context));
+    ASSERT_TRUE(info_non_verbose.getContext());
+    EXPECT_EQ(user_context, info_non_verbose.getContext()->str());
+    expected = header + comment + ",\n" + begin + "INFO" + dbglvl + "0" + trailer;
     runToElementTest<LoggingInfo>(expected, info_non_verbose);
 
     CfgMgr::instance().setVerbose(true);
@@ -94,7 +106,15 @@ TEST_F(LoggingInfoTest, defaults) {
     EXPECT_EQ(10240000, info_verbose.destinations_[0].maxsize_);
     EXPECT_EQ(1, info_verbose.destinations_[0].maxver_);
 
-    expected = header + "DEBUG" + dbglvl + "99" + trailer;
+    expected = header + begin + "DEBUG" + dbglvl + "99" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_verbose);
+
+    // User comment again
+    EXPECT_FALSE(info_verbose.getContext());
+    info_verbose.setContext(Element::fromJSON(user_context));
+    ASSERT_TRUE(info_verbose.getContext());
+    EXPECT_EQ(user_context, info_verbose.getContext()->str());
+    expected = header + comment + ",\n" + begin + "DEBUG" + dbglvl + "99" + trailer;
     runToElementTest<LoggingInfo>(expected, info_verbose);
 }
 

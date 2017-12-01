@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,6 +51,12 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     LoggingInfo info;
     // Remove default destinations as we are going to replace them.
     info.clearDestinations();
+
+    // Get user context
+    isc::data::ConstElementPtr user_context = entry->get("user-context");
+    if (user_context) {
+        info.setContext(user_context);
+    }
 
     // Get a name
     isc::data::ConstElementPtr name_ptr = entry->get("name");
