@@ -18,9 +18,14 @@ class NetworkStateImpl : public boost::enable_shared_from_this<NetworkStateImpl>
 public:
 
     /// @brief Constructor.
-    NetworkStateImpl()
-        : globally_disabled_(false), disabled_subnets_(), disabled_networks_(),
-          timer_present_(false), timer_mgr_(TimerMgr::instance()) {
+    NetworkStateImpl(const NetworkState::ServerType& server_type)
+        : server_type_(server_type), globally_disabled_(false), disabled_subnets_(),
+          disabled_networks_(), timer_present_(false), timer_mgr_(TimerMgr::instance()) {
+    }
+
+    /// @brief Destructor.
+    ~NetworkStateImpl() {
+        destroyTimer();
     }
 
     /// @brief Globally disables or enables DHCP service.
@@ -66,6 +71,9 @@ public:
         }
     }
 
+    /// @brief Server type.
+    NetworkState::ServerType server_type_;
+
     /// @brief A flag indicating if DHCP service is globally disabled.
     bool globally_disabled_;
 
@@ -86,8 +94,8 @@ public:
     TimerMgrPtr timer_mgr_;
 };
 
-NetworkState::NetworkState()
-    : impl_(new NetworkStateImpl()) {
+NetworkState::NetworkState(const NetworkState::ServerType& server_type)
+    : impl_(new NetworkStateImpl(server_type)) {
 }
 
 void
