@@ -753,7 +753,6 @@ sub_hooks_library: LCURLY_BRACKET {
 
 hooks_params: hooks_param
             | hooks_params COMMA hooks_param
-            | unknown_map_entry
             ;
 
 hooks_param: library
@@ -1947,7 +1946,7 @@ logging_params: logging_param
 logging_param: loggers;
 
 // "loggers", the only parameter currently defined in "Logging" object,
-// is "Loggers": [ ... ].
+// is "loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
