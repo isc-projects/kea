@@ -491,6 +491,9 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | re_detect
+                       | user_context
+                       | comment
+                       | unknown_map_entry
                        ;
 
 interfaces_list: INTERFACES {
@@ -549,8 +552,10 @@ database_map_param: database_type
                   | connect_timeout
                   | contact_points
                   | keyspace
+                  | user_context
+                  | comment
                   | unknown_map_entry
-;
+                  ;
 
 database_type: TYPE {
     ctx.enter(ctx.DATABASE_TYPE);
@@ -753,6 +758,9 @@ hooks_params: hooks_param
 
 hooks_param: library
            | parameters
+           | user_context
+           | comment
+           | unknown_map_entry
            ;
 
 library: LIBRARY {
@@ -1480,6 +1488,8 @@ reservation_param: duid
                  | hostname
                  | flex_id_value
                  | option_data_list
+                 | user_context
+                 | comment
                  | unknown_map_entry
                  ;
 
@@ -1644,6 +1654,8 @@ server_id_param: server_id_type
                | htype
                | enterprise_id
                | persist
+               | user_context
+               | comment
                | unknown_map_entry
                ;
 
@@ -1767,6 +1779,8 @@ dhcp_ddns_param: enable_updates
                | override_client_update
                | replace_client_name
                | generated_prefix
+               | user_context
+               | comment
                | unknown_map_entry
                ;
 
@@ -1967,6 +1981,8 @@ logger_param: name
             | output_options_list
             | debuglevel
             | severity
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 
