@@ -1633,6 +1633,9 @@ control_socket_params: control_socket_param
 
 control_socket_param: control_socket_type
                     | control_socket_name
+                    | user_context
+                    | comment
+                    | unknown_map_entry
                     ;
 
 control_socket_type: SOCKET_TYPE {

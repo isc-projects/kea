@@ -1716,6 +1716,9 @@ control_socket_params: control_socket_param
 
 control_socket_param: socket_type
                     | socket_name
+                    | user_context
+                    | comment
+                    | unknown_map_entry
                     ;
 
 socket_type: SOCKET_TYPE {

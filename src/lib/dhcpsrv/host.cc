@@ -468,6 +468,8 @@ ElementPtr
 Host::toElement6() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
+    // Set the user context
+    contextToElement(map);
     // Set the identifier
     Host::IdentifierType id_type = getIdentifierType();
     if (id_type == Host::IDENT_HWADDR) {
