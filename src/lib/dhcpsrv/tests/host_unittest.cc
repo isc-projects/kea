@@ -18,6 +18,7 @@
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::data;
 
 namespace {
 
@@ -214,6 +215,7 @@ TEST_F(HostTest, createFromHWAddrString) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_FALSE(host->getContext());
 
     // Use invalid identifier name
     EXPECT_THROW(Host("01:02:03:04:05:06", "bogus", SubnetID(1), SubnetID(2),
@@ -248,6 +250,7 @@ TEST_F(HostTest, createFromDUIDString) {
     EXPECT_EQ(20, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_EQ("me.example.org", host->getHostname());
+    EXPECT_FALSE(host->getContext());
 
     // Use invalid DUID.
     EXPECT_THROW(Host("bogus", "duid", SubnetID(1), SubnetID(2),
@@ -294,6 +297,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_FALSE(host->getContext());
 }
 
 // This test verifies that it is possible to create a Host object using
@@ -322,6 +326,7 @@ TEST_F(HostTest, createFromDuidBinary) {
     EXPECT_EQ(20, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_EQ("me.example.org", host->getHostname());
+    EXPECT_FALSE(host->getContext());
 }
 
 // This test verifies that it is possible create Host instance using all
@@ -350,6 +355,7 @@ TEST_F(HostTest, createFromIdentifierBinary) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
     }
 }
 
@@ -395,6 +401,7 @@ TEST_F(HostTest, createFromIdentifierHex) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
     }
 }
 
@@ -439,6 +446,7 @@ TEST_F(HostTest, createFromIdentifierString) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
     }
 }
 
@@ -493,6 +501,7 @@ TEST_F(HostTest, setIdentifierHex) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
 
         // Now use another identifier.
         type = static_cast<Host::IdentifierType>(i);
@@ -525,6 +534,7 @@ TEST_F(HostTest, setIdentifierHex) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
     }
 }
 
@@ -563,6 +573,7 @@ TEST_F(HostTest, setIdentifierBinary) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
 
         type = static_cast<Host::IdentifierType>(i);
         // Create identifier of variable length and fill with random values.
@@ -582,6 +593,7 @@ TEST_F(HostTest, setIdentifierBinary) {
         EXPECT_EQ(20, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
+        EXPECT_FALSE(host->getContext());
     }
 }
 
@@ -656,6 +668,7 @@ TEST_F(HostTest, setValues) {
     ASSERT_EQ(2, host->getIPv6SubnetID());
     ASSERT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     ASSERT_EQ("some-host.example.org", host->getHostname());
+    ASSERT_FALSE(host->getContext());
 
     host->setIPv4SubnetID(SubnetID(123));
     host->setIPv6SubnetID(SubnetID(234));
@@ -664,6 +677,8 @@ TEST_F(HostTest, setValues) {
     host->setNextServer(IOAddress("192.0.2.2"));
     host->setServerHostname("server-hostname.example.org");
     host->setBootFileName("bootfile.efi");
+    std::string user_context = "{ \"foo\": \"bar\" }";
+    host->setContext(Element::fromJSON(user_context));
 
     EXPECT_EQ(123, host->getIPv4SubnetID());
     EXPECT_EQ(234, host->getIPv6SubnetID());
@@ -672,6 +687,8 @@ TEST_F(HostTest, setValues) {
     EXPECT_EQ("192.0.2.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    ASSERT_TRUE(host->getContext());
+    EXPECT_EQ(user_context, host->getContext()->str());
 
     // Remove IPv4 reservation.
     host->removeIPv4Reservation();
@@ -943,6 +960,10 @@ TEST_F(HostTest, toText) {
                                        IOAddress("2001:db8:1::1")));
     );
 
+    // Add invisble user context
+    std::string user_context = "{ \"foo\": \"bar\" }";
+    host->setContext(Element::fromJSON(user_context));
+
     // Make sure that the output is correct,
     EXPECT_EQ("hwaddr=010203040506 ipv4_subnet_id=1 ipv6_subnet_id=2"
               " hostname=myhost.example.com"
@@ -1008,6 +1029,165 @@ TEST_F(HostTest, toText) {
               " dhcp4_class0=modem dhcp4_class1=router"
               " dhcp6_class0=device dhcp6_class1=hub",
               host->toText());
+}
+
+// This test checks that Host object is correctly unparsed,
+TEST_F(HostTest, unparse) {
+    boost::scoped_ptr<Host> host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "myhost.example.com")));
+
+    // Add 4 reservations: 2 for NAs, 2 for PDs.
+    ASSERT_NO_THROW(
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::cafe")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:1::"), 64));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                       IOAddress("2001:db8:1:2::"), 64));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::1")));
+    );
+
+    // Add user context
+    std::string user_context = "{ \"comment\": \"a host reservation\" }";
+    host->setContext(Element::fromJSON(user_context));
+
+    // Make sure that the output is correct,
+    EXPECT_EQ("{ "
+              "\"boot-file-name\": \"\", "
+              "\"client-classes\": [  ], "
+              "\"comment\": \"a host reservation\", "
+              "\"hostname\": \"myhost.example.com\", "
+              "\"hw-address\": \"01:02:03:04:05:06\", "
+              "\"ip-address\": \"192.0.2.3\", "
+              "\"next-server\": \"0.0.0.0\", "
+              "\"option-data\": [  ], "
+              "\"server-hostname\": \"\" "
+              "}",
+              host->toElement4()->str());
+
+    EXPECT_EQ("{ "
+              "\"client-classes\": [  ], "
+              "\"comment\": \"a host reservation\", "
+              "\"hostname\": \"myhost.example.com\", "
+              "\"hw-address\": \"01:02:03:04:05:06\", "
+              "\"ip-addresses\": [ \"2001:db8:1::cafe\", \"2001:db8:1::1\" ], "
+              "\"option-data\": [  ], "
+              "\"prefixes\": [ \"2001:db8:1:1::/64\", \"2001:db8:1:2::/64\" ] "
+              "}",
+              host->toElement6()->str());
+
+    // Reset some of the data and make sure that the output is affected.
+    host->setHostname("");
+    host->removeIPv4Reservation();
+    host->setIPv4SubnetID(0);
+
+    EXPECT_EQ("{ "
+              "\"boot-file-name\": \"\", "
+              "\"client-classes\": [  ], "
+              "\"comment\": \"a host reservation\", "
+              "\"hostname\": \"\", "
+              "\"hw-address\": \"01:02:03:04:05:06\", "
+              "\"ip-address\": \"0.0.0.0\", "
+              "\"next-server\": \"0.0.0.0\", "
+              "\"option-data\": [  ], "
+              "\"server-hostname\": \"\" "
+              "}",
+              host->toElement4()->str());
+
+    EXPECT_EQ("{ "
+              "\"client-classes\": [  ], "
+              "\"comment\": \"a host reservation\", "
+              "\"hostname\": \"\", "
+              "\"hw-address\": \"01:02:03:04:05:06\", "
+              "\"ip-addresses\": [ \"2001:db8:1::cafe\", \"2001:db8:1::1\" ], "
+              "\"option-data\": [  ], "
+              "\"prefixes\": [ \"2001:db8:1:1::/64\", \"2001:db8:1:2::/64\" ] "
+              "}",
+              host->toElement6()->str());
+
+    // Create host identified by DUID, instead of HWADDR, with a very
+    // basic configuration.
+    ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
+                                        SubnetID(0), SubnetID(0),
+                                        IOAddress::IPV4_ZERO_ADDRESS(),
+                                        "myhost")));
+
+    EXPECT_EQ("{ "
+              "\"boot-file-name\": \"\", "
+              "\"client-classes\": [  ], "
+              "\"duid\": \"11:12:13:14:15\", "
+              "\"hostname\": \"myhost\", "
+              "\"ip-address\": \"0.0.0.0\", "
+              "\"next-server\": \"0.0.0.0\", "
+              "\"option-data\": [  ], "
+              "\"server-hostname\": \"\" "
+              "}",
+              host->toElement4()->str());
+
+    EXPECT_EQ("{ "
+              "\"client-classes\": [  ], "
+              "\"duid\": \"11:12:13:14:15\", "
+              "\"hostname\": \"myhost\", "
+              "\"ip-addresses\": [  ], "
+              "\"option-data\": [  ], "
+              "\"prefixes\": [  ] "
+              "}",
+              host->toElement6()->str());
+
+    // Add some classes.
+    host->addClientClass4("modem");
+    host->addClientClass4("router");
+
+    EXPECT_EQ("{ "
+              "\"boot-file-name\": \"\", "
+              "\"client-classes\": [ \"modem\", \"router\" ], "
+              "\"duid\": \"11:12:13:14:15\", "
+              "\"hostname\": \"myhost\", "
+              "\"ip-address\": \"0.0.0.0\", "
+              "\"next-server\": \"0.0.0.0\", "
+              "\"option-data\": [  ], "
+              "\"server-hostname\": \"\" "
+              "}",
+              host->toElement4()->str());
+
+    EXPECT_EQ("{ "
+              "\"client-classes\": [  ], "
+              "\"duid\": \"11:12:13:14:15\", "
+              "\"hostname\": \"myhost\", "
+              "\"ip-addresses\": [  ], "
+              "\"option-data\": [  ], "
+              "\"prefixes\": [  ] "
+              "}",
+              host->toElement6()->str());
+
+    host->addClientClass6("hub");
+    host->addClientClass6("device");
+
+    EXPECT_EQ("{ "
+              "\"boot-file-name\": \"\", "
+              "\"client-classes\": [ \"modem\", \"router\" ], "
+              "\"duid\": \"11:12:13:14:15\", "
+              "\"hostname\": \"myhost\", "
+              "\"ip-address\": \"0.0.0.0\", "
+              "\"next-server\": \"0.0.0.0\", "
+              "\"option-data\": [  ], "
+              "\"server-hostname\": \"\" "
+              "}",
+              host->toElement4()->str());
+
+    EXPECT_EQ("{ "
+              "\"client-classes\": [ \"device\", \"hub\" ], "
+              "\"duid\": \"11:12:13:14:15\", "
+              "\"hostname\": \"myhost\", "
+              "\"ip-addresses\": [  ], "
+              "\"option-data\": [  ], "
+              "\"prefixes\": [  ] "
+              "}",
+              host->toElement6()->str());
 }
 
 // Test verifies if the host can store HostId properly.
