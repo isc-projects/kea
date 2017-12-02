@@ -1633,8 +1633,8 @@ control_socket_params: control_socket_param
 
 control_socket_param: control_socket_type
                     | control_socket_name
-                    | user_context
-                    | comment
+                    | control_socket_user_context
+                    | control_socket_comment
                     | unknown_map_entry
                     ;
 
@@ -1651,6 +1651,15 @@ control_socket_name: SOCKET_NAME {
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("socket-name", name);
+    ctx.leave();
+};
+
+control_socket_user_context: user_context;
+
+control_socket_comment: COMMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON value {
+    ctx.stack_.back()->combine_set("comment", $4);
     ctx.leave();
 };
 
