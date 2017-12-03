@@ -496,10 +496,11 @@ namespace isc { namespace dhcp {
         TOKEN_SUB_OPTION_DATA = 404,
         TOKEN_SUB_HOOKS_LIBRARY = 405,
         TOKEN_SUB_DHCP_DDNS = 406,
-        TOKEN_STRING = 407,
-        TOKEN_INTEGER = 408,
-        TOKEN_FLOAT = 409,
-        TOKEN_BOOLEAN = 410
+        TOKEN_SUB_LOGGING = 407,
+        TOKEN_STRING = 408,
+        TOKEN_INTEGER = 409,
+        TOKEN_FLOAT = 410,
+        TOKEN_BOOLEAN = 411
       };
     };
 
@@ -1216,6 +1217,10 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_SUB_LOGGING (const location_type& l);
+
+    static inline
+    symbol_type
     make_STRING (const std::string& v, const location_type& l);
 
     static inline
@@ -1436,11 +1441,11 @@ namespace isc { namespace dhcp {
     {
       yyeof_ = 0,
       yylast_ = 931,     ///< Last index in yytable_.
-      yynnts_ = 351,  ///< Number of nonterminal symbols.
-      yyfinal_ = 28, ///< Termination state number.
+      yynnts_ = 354,  ///< Number of nonterminal symbols.
+      yyfinal_ = 30, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 156  ///< Number of tokens.
+      yyntokens_ = 157  ///< Number of tokens.
     };
 
 
@@ -1498,9 +1503,9 @@ namespace isc { namespace dhcp {
      125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
      135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
      145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
-     155
+     155,   156
     };
-    const unsigned int user_token_number_max_ = 410;
+    const unsigned int user_token_number_max_ = 411;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1533,29 +1538,29 @@ namespace isc { namespace dhcp {
   {
       switch (other.type_get ())
     {
-      case 171: // value
-      case 175: // map_value
-      case 219: // db_type
-      case 295: // hr_mode
-      case 428: // duid_type
-      case 464: // ncr_protocol_value
-      case 472: // replace_client_name_value
+      case 173: // value
+      case 177: // map_value
+      case 221: // db_type
+      case 297: // hr_mode
+      case 430: // duid_type
+      case 466: // ncr_protocol_value
+      case 474: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 155: // "boolean"
+      case 156: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 154: // "floating point"
+      case 155: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 153: // "integer"
+      case 154: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 152: // "constant string"
+      case 153: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1576,29 +1581,29 @@ namespace isc { namespace dhcp {
     (void) v;
       switch (this->type_get ())
     {
-      case 171: // value
-      case 175: // map_value
-      case 219: // db_type
-      case 295: // hr_mode
-      case 428: // duid_type
-      case 464: // ncr_protocol_value
-      case 472: // replace_client_name_value
+      case 173: // value
+      case 177: // map_value
+      case 221: // db_type
+      case 297: // hr_mode
+      case 430: // duid_type
+      case 466: // ncr_protocol_value
+      case 474: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 155: // "boolean"
+      case 156: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 154: // "floating point"
+      case 155: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 153: // "integer"
+      case 154: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 152: // "constant string"
+      case 153: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1678,29 +1683,29 @@ namespace isc { namespace dhcp {
     // Type destructor.
     switch (yytype)
     {
-      case 171: // value
-      case 175: // map_value
-      case 219: // db_type
-      case 295: // hr_mode
-      case 428: // duid_type
-      case 464: // ncr_protocol_value
-      case 472: // replace_client_name_value
+      case 173: // value
+      case 177: // map_value
+      case 221: // db_type
+      case 297: // hr_mode
+      case 430: // duid_type
+      case 466: // ncr_protocol_value
+      case 474: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 155: // "boolean"
+      case 156: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 154: // "floating point"
+      case 155: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 153: // "integer"
+      case 154: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 152: // "constant string"
+      case 153: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1727,29 +1732,29 @@ namespace isc { namespace dhcp {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 171: // value
-      case 175: // map_value
-      case 219: // db_type
-      case 295: // hr_mode
-      case 428: // duid_type
-      case 464: // ncr_protocol_value
-      case 472: // replace_client_name_value
+      case 173: // value
+      case 177: // map_value
+      case 221: // db_type
+      case 297: // hr_mode
+      case 430: // duid_type
+      case 466: // ncr_protocol_value
+      case 474: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 155: // "boolean"
+      case 156: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 154: // "floating point"
+      case 155: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 153: // "integer"
+      case 154: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 152: // "constant string"
+      case 153: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1823,7 +1828,7 @@ namespace isc { namespace dhcp {
      375,   376,   377,   378,   379,   380,   381,   382,   383,   384,
      385,   386,   387,   388,   389,   390,   391,   392,   393,   394,
      395,   396,   397,   398,   399,   400,   401,   402,   403,   404,
-     405,   406,   407,   408,   409,   410
+     405,   406,   407,   408,   409,   410,   411
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -2729,6 +2734,12 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_SUB_LOGGING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_LOGGING, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_STRING (const std::string& v, const location_type& l)
   {
     return symbol_type (token::TOKEN_STRING, v, l);
@@ -2755,7 +2766,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp6_parser.yy" // lalr1.cc:377
 } } // isc::dhcp
-#line 2759 "dhcp6_parser.h" // lalr1.cc:377
+#line 2770 "dhcp6_parser.h" // lalr1.cc:377
 
 
 
