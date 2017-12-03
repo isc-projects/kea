@@ -16,6 +16,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 
@@ -1661,6 +1662,23 @@ const char* EXTRACTED_CONFIGS[] = {
 "                }\n"
 "            }\n"
 "        ],\n"
+"        \"control-socket\": {\n"
+"            \"comment\": \"REST API\",\n"
+"            \"socket-name\": \"/tmp/kea4-ctrl-socket\",\n"
+"            \"socket-type\": \"unix\",\n"
+"            \"user-context\": {\n"
+"                \"comment\": \"Indirect comment\"\n"
+"            }\n"
+"        },\n"
+"        \"dhcp-ddns\": {\n"
+"            \"comment\": \"No dynamic DNS\",\n"
+"            \"enable-updates\": false\n"
+"        },\n"
+"        \"interfaces-config\": {\n"
+"            \"comment\": \"Use wildcard\",\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
 "        \"option-data\": [\n"
 "            {\n"
 "                \"comment\": \"Set option value\",\n"
@@ -1685,10 +1703,25 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet4\": [\n"
 "                    {\n"
 "                        \"comment\": \"A subnet\",\n"
+"                        \"id\": 100,\n"
 "                        \"pools\": [\n"
 "                            {\n"
 "                                \"comment\": \"A pool\",\n"
 "                                \"pool\": \"192.0.1.1-192.0.1.10\"\n"
+"                            }\n"
+"                        ],\n"
+"                        \"reservations\": [\n"
+"                            {\n"
+"                                \"comment\": \"A host reservation\",\n"
+"                                \"hostname\": \"foo.example.com\",\n"
+"                                \"hw-address\": \"AA:BB:CC:DD:EE:FF\",\n"
+"                                \"option-data\": [\n"
+"                                    {\n"
+"                                        \"comment\": \"An option in a reservation\",\n"
+"                                        \"data\": \"example.com\",\n"
+"                                        \"name\": \"domain-name\"\n"
+"                                    }\n"
+"                                ]\n"
 "                            }\n"
 "                        ],\n"
 "                        \"subnet\": \"192.0.1.0/24\"\n"
@@ -6384,8 +6417,17 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"server-hostname\": \"\"\n"
 "            }\n"
 "        ],\n"
+"        \"control-socket\": {\n"
+"            \"comment\": \"REST API\",\n"
+"            \"socket-name\": \"/tmp/kea4-ctrl-socket\",\n"
+"            \"socket-type\": \"unix\",\n"
+"            \"user-context\": {\n"
+"                \"comment\": \"Indirect comment\"\n"
+"            }\n"
+"        },\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
+"            \"comment\": \"No dynamic DNS\",\n"
 "            \"always-include-fqdn\": false,\n"
 "            \"enable-updates\": false,\n"
 "            \"generated-prefix\": \"myhost\",\n"
@@ -6414,7 +6456,8 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"hooks-libraries\": [ ],\n"
 "        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ ],\n"
+"            \"comment\": \"Use wildcard\",\n"
+"            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
 "        },\n"
 "        \"lease-database\": {\n"
@@ -6462,7 +6505,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"4o6-interface-id\": \"\",\n"
 "                        \"4o6-subnet\": \"\",\n"
 "                        \"boot-file-name\": \"\",\n"
-"                        \"id\": 1,\n"
+"                        \"id\": 100,\n"
 "                        \"match-client-id\": true,\n"
 "                        \"next-server\": \"0.0.0.0\",\n"
 "                        \"option-data\": [ ],\n"
@@ -6584,7 +6627,7 @@ public:
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_.reset(new Dhcpv4Srv(0));
+        srv_.reset(new ControlledDhcpv4Srv(0));
         // Create fresh context.
         resetConfiguration();
     }
@@ -6686,7 +6729,7 @@ public:
         CfgMgr::instance().setFamily(AF_INET);
     }
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv_; ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
     ConstElementPtr comment_;           ///< Reason for parse fail
 };

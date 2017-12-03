@@ -210,6 +210,7 @@ using namespace std;
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
+  SUB_LOGGING
 ;
 
 %token <std::string> STRING "constant string"
@@ -247,6 +248,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
+     | SUB_LOGGING { ctx.ctx_ = ctx.LOGGING; } sub_logging
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -552,8 +554,6 @@ database_map_param: database_type
                   | connect_timeout
                   | contact_points
                   | keyspace
-                  | user_context
-                  | comment
                   | unknown_map_entry
                   ;
 
@@ -1943,6 +1943,14 @@ logging_object: LOGGING {
 } COLON LCURLY_BRACKET logging_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+sub_logging: LCURLY_BRACKET {
+    // Parse the Logging map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} logging_params RCURLY_BRACKET {
+    // parsing completed
 };
 
 // This defines the list of allowed parameters that may appear

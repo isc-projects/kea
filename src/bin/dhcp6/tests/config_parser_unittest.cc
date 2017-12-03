@@ -17,6 +17,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_expiration.h>
@@ -812,8 +813,8 @@ public:
         EXPECT_TRUE(pool);
     }
 
-    int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
-    Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
+    int rcode_; ///< Return code (see @ref isc::config::parseAnswer)
+    ControlledDhcpv6Srv srv_; ///< Instance of the ControlledDhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
     string valid_iface_; ///< Valid network interface name (present in system)
     string bogus_iface_; ///< invalid network interface name (not in system)
@@ -6054,66 +6055,96 @@ TEST_F(Dhcp6ParserTest, comments) {
 
     string config = "{\n"
         "\"comment\": \"A DHCPv6 server\",\n"
+        "\"server-id\": {\n"
+        "    \"comment\": \"DHCPv6 specific\",\n"
+        "    \"type\": \"LL\"\n"
+        "},\n"
+        "\"interfaces-config\": {\n"
+        "    \"comment\": \"Use wildcard\",\n"
+        "    \"interfaces\": [ \"*\" ] },\n"
         "\"option-def\": [ {\n"
+        "    \"comment\": \"An option definition\",\n"
         "    \"name\": \"foo\",\n"
         "    \"code\": 100,\n"
-        "    \"comment\": \"An option definition\",\n"
         "    \"type\": \"ipv6-address\",\n"
         "    \"space\": \"isc\"\n"
         " } ],\n"
         "\"option-data\": [ {\n"
-        "    \"name\": \"subscriber-id\",\n"
         "    \"comment\": \"Set option value\",\n"
+        "    \"name\": \"subscriber-id\",\n"
         "    \"data\": \"ABCDEF0105\",\n"
         "        \"csv-format\": false\n"
         " } ],\n"
         "\"client-classes\": [\n"
         "    {\n"
-        "       \"name\": \"all\",\n"
         "       \"comment\": \"match all\",\n"
+        "       \"name\": \"all\",\n"
         "       \"test\": \"'' == ''\"\n"
         "    },\n"
         "    {\n"
         "       \"name\": \"none\"\n"
         "    },\n"
         "    {\n"
-        "       \"name\": \"two\",\n"
         "       \"comment\": \"first comment\",\n"
-        "       \"comment\": \"second comment\"\n"
+        "       \"comment\": \"second comment\",\n"
+        "       \"name\": \"two\"\n"
         "    },\n"
         "    {\n"
-        "       \"name\": \"both\",\n"
         "       \"comment\": \"a comment\",\n"
+        "       \"name\": \"both\",\n"
         "       \"user-context\": {\n"
         "           \"version\": 1\n"
         "       }\n"
         "    }\n"
         "    ],\n"
+        "\"control-socket\": {\n"
+        "    \"comment\": \"REST API\",\n"
+        "    \"socket-type\": \"unix\",\n"
+        "    \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+        "    \"user-context\": { \"comment\": \"Indirect comment\" }\n"
+        "},\n"
         "\"shared-networks\": [ {\n"
-        "    \"name\": \"foo\"\n,"
         "    \"comment\": \"A shared network\"\n,"
+        "    \"name\": \"foo\"\n,"
         "    \"subnet6\": [\n"
         "    { \n"
-        "        \"subnet\": \"2001:db1::/48\",\n"
         "        \"comment\": \"A subnet\"\n,"
+        "        \"subnet\": \"2001:db1::/48\",\n"
+        "        \"id\": 100,\n"
         "        \"pools\": [\n"
         "        {\n"
-        "             \"pool\": \"2001:db1::/64\",\n"
-        "             \"comment\": \"A pool\"\n"
+        "             \"comment\": \"A pool\",\n"
+        "             \"pool\": \"2001:db1::/64\"\n"
         "        }\n"
         "        ],\n"
         "        \"pd-pools\": [\n"
         "        {\n"
+        "             \"comment\": \"A prefix pool\",\n"
         "             \"prefix\": \"2001:db2::\",\n"
         "             \"prefix-len\": 48,\n"
-        "             \"delegated-len\": 64,\n"
-        "             \"comment\": \"A prefix pool\"\n"
+        "             \"delegated-len\": 64\n"
+        "        }\n"
+        "        ],\n"
+        "        \"reservations\": [\n"
+        "        {\n"
+        "             \"comment\": \"A host reservation\",\n"
+        "             \"hw-address\": \"AA:BB:CC:DD:EE:FF\",\n"
+        "             \"hostname\": \"foo.example.com\",\n"
+        "             \"option-data\": [ {\n"
+        "                 \"comment\": \"An option in a reservation\",\n"
+        "                 \"name\": \"domain-search\",\n"
+        "                 \"data\": \"example.com\"\n"
+        "             } ]\n"
         "        }\n"
         "        ]\n"
         "    }\n"
         "    ]\n"
-        " } ]\n"
-        "} \n";
+        " } ],\n"
+        "\"dhcp-ddns\": {\n"
+        "    \"comment\": \"No dynamic DNS\",\n"
+        "    \"enable-updates\": false\n"
+        "}\n"
+        "}\n";
 
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
@@ -6125,8 +6156,32 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"A DHCPv6 server\"", ctx->get("comment")->str());
 
+    // There is a server id.
+    ConstCfgDUIDPtr duid = CfgMgr::instance().getStagingCfg()->getCfgDUID();
+    ASSERT_TRUE(duid);
+    EXPECT_EQ(DUID::DUID_LL, duid->getType());
+
+    // Check server id user context.
+    ConstElementPtr ctx_duid = duid->getContext();
+    ASSERT_TRUE(ctx_duid);
+    ASSERT_EQ(1, ctx_duid->size());
+    ASSERT_TRUE(ctx_duid->get("comment"));
+    EXPECT_EQ("\"DHCPv6 specific\"", ctx_duid->get("comment")->str());
+
+    // There is a network interface configuration.
+    ConstCfgIfacePtr iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(iface);
+
+    // Check network interface configuration user context.
+    ConstElementPtr ctx_iface = iface->getContext();
+    ASSERT_TRUE(ctx_iface);
+    ASSERT_EQ(1, ctx_iface->size());
+    ASSERT_TRUE(ctx_iface->get("comment"));
+    EXPECT_EQ("\"Use wildcard\"", ctx_iface->get("comment")->str());
+
     // There is a global option definition.
-    OptionDefinitionPtr opt_def = LibDHCP::getRuntimeOptionDef("isc", 100);
+    const OptionDefinitionPtr& opt_def =
+        LibDHCP::getRuntimeOptionDef("isc", 100);
     ASSERT_TRUE(opt_def);
     EXPECT_EQ("foo", opt_def->getName());
     EXPECT_EQ(100, opt_def->getCode());
@@ -6142,7 +6197,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("\"An option definition\"", ctx_opt_def->get("comment")->str());
 
     // There is an option descriptor aka option data.
-    OptionDescriptor opt_desc =
+    const OptionDescriptor& opt_desc =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->
             get(DHCP6_OPTION_SPACE, D6O_SUBSCRIBER_ID);
     ASSERT_TRUE(opt_desc.option_);
@@ -6156,7 +6211,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("\"Set option value\"", ctx_opt_desc->get("comment")->str());
 
     // And there there are some client classes.
-    ClientClassDictionaryPtr dict =
+    const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dict);
     EXPECT_EQ(4, dict->getClasses()->size());
@@ -6202,15 +6257,34 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_TRUE(ctx_class->get("version"));
     EXPECT_EQ("1", ctx_class->get("version")->str());
 
+    // There is a control socket.
+    ConstElementPtr socket =
+        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ASSERT_TRUE(socket->get("socket-type"));
+    EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
+    ASSERT_TRUE(socket->get("socket-name"));
+    EXPECT_EQ("\"/tmp/kea6-ctrl-socket\"", socket->get("socket-name")->str());
+
+    // Check control socket comment and user context.
+    ConstElementPtr ctx_socket = socket->get("comment");
+    ASSERT_TRUE(ctx_socket);
+    EXPECT_EQ("\"REST API\"", ctx_socket->str());
+    ctx_socket = socket->get("user-context");
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
+
     // Now verify that the shared network was indeed configured.
-    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
-        ->getCfgSharedNetworks6();
+    const CfgSharedNetworks6Ptr& cfg_net =
+        CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6();
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
     ASSERT_EQ(1, nets->size());
     SharedNetwork6Ptr net = nets->at(0);
     ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
 
     // Check shared network user context.
     ConstElementPtr ctx_net = net->getContext();
@@ -6220,7 +6294,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("\"A shared network\"", ctx_net->get("comment")->str());
 
     // The shared network has a subnet.
-    const Subnet6Collection * subs = net->getAllSubnets();
+    const Subnet6Collection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     ASSERT_EQ(1, subs->size());
     Subnet6Ptr sub = subs->at(0);
@@ -6232,6 +6306,8 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, ctx_sub->size());
     ASSERT_TRUE(ctx_sub->get("comment"));
     EXPECT_EQ("\"A subnet\"", ctx_sub->get("comment")->str());
+    EXPECT_EQ(100, sub->getID());
+    EXPECT_EQ("2001:db1::/48", sub->toText());
 
     // The subnet has a pool.
     const PoolCollection& pools = sub->getPools(Lease::TYPE_NA);
@@ -6258,6 +6334,66 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, ctx_pdpool->size());
     ASSERT_TRUE(ctx_pdpool->get("comment"));
     EXPECT_EQ("\"A prefix pool\"", ctx_pdpool->get("comment")->str());
+
+    // The subnet has a host reservation.
+    uint8_t hw[] = { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF };
+    HWAddrPtr hwaddr(new HWAddr(hw, sizeof(hw), HTYPE_ETHER));
+    ConstHostPtr host =
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->get6(100, DuidPtr(), hwaddr);
+    ASSERT_TRUE(host);
+    EXPECT_EQ(Host::IDENT_HWADDR, host->getIdentifierType());
+    EXPECT_EQ("aa:bb:cc:dd:ee:ff", host->getHWAddress()->toText(false));
+    EXPECT_FALSE(host->getDuid());
+    EXPECT_EQ(0, host->getIPv4SubnetID());
+    EXPECT_EQ(100, host->getIPv6SubnetID());
+    EXPECT_EQ("foo.example.com", host->getHostname());
+
+    // Check host user context.
+    ConstElementPtr ctx_host = host->getContext();
+    ASSERT_TRUE(ctx_host);
+    ASSERT_EQ(1, ctx_host->size());
+    ASSERT_TRUE(ctx_host->get("comment"));
+    EXPECT_EQ("\"A host reservation\"", ctx_host->get("comment")->str());
+
+    // The host reservation has an option data.
+    ConstCfgOptionPtr opts = host->getCfgOption6();
+    ASSERT_TRUE(opts);
+    EXPECT_FALSE(opts->empty());
+    const OptionDescriptor& host_desc =
+        opts->get(DHCP6_OPTION_SPACE, D6O_DOMAIN_SEARCH);
+    ASSERT_TRUE(host_desc.option_);
+    EXPECT_EQ(D6O_DOMAIN_SEARCH, host_desc.option_->getType());
+
+    // Check embedded option data user context.
+    ConstElementPtr ctx_host_desc = host_desc.getContext();
+    ASSERT_TRUE(ctx_host_desc);
+    ASSERT_EQ(1, ctx_host_desc->size());
+    ASSERT_TRUE(ctx_host_desc->get("comment"));
+    EXPECT_EQ("\"An option in a reservation\"",
+              ctx_host_desc->get("comment")->str());
+
+    // Finally dynamic DNS update configuration.
+    const D2ClientConfigPtr& d2 =
+        CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+    ASSERT_TRUE(d2);
+    EXPECT_FALSE(d2->getEnableUpdates());
+
+    // Check dynamic DNS update configuration user context.
+    ConstElementPtr ctx_d2 = d2->getContext();
+    ASSERT_TRUE(ctx_d2);
+    ASSERT_EQ(1, ctx_d2->size());
+    ASSERT_TRUE(ctx_d2->get("comment"));
+    EXPECT_EQ("\"No dynamic DNS\"", ctx_d2->get("comment")->str());
+
+#if 0
+    // Loggers section supports comments too.
+
+    string logging = "{\n"
+        "\"loggers\": [ {\n"
+        "    \"comment\": \"A logger\",\n"
+        "    \"name\": \"kea-dhcp6\"\n"
+        "} ]\n";
+#endif
 }
 
 };
