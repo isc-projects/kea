@@ -48,6 +48,9 @@ CREATE UNIQUE INDEX hosts_dhcp6_identifier_subnet_id ON hosts
         (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
     WHERE (dhcp6_subnet_id IS NOT NULL AND dhcp6_subnet_id <> 0);
 
+-- Add a column holding hosts for user context.
+ALTER TABLE hosts ADD COLUMN user_context TEXT;
+
 -- Add a column holding DHCP options for user context.
 ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT;
 ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT;
