@@ -17,6 +17,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 
@@ -1531,6 +1532,23 @@ const char* EXTRACTED_CONFIGS[] = {
 "                }\n"
 "            }\n"
 "        ],\n"
+"        \"control-socket\": {\n"
+"            \"comment\": \"REST API\",\n"
+"            \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+"            \"socket-type\": \"unix\",\n"
+"            \"user-context\": {\n"
+"                \"comment\": \"Indirect comment\"\n"
+"            }\n"
+"        },\n"
+"        \"dhcp-ddns\": {\n"
+"            \"comment\": \"No dynamic DNS\",\n"
+"            \"enable-updates\": false\n"
+"        },\n"
+"        \"interfaces-config\": {\n"
+"            \"comment\": \"Use wildcard\",\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
 "        \"option-data\": [\n"
 "            {\n"
 "                \"comment\": \"Set option value\",\n"
@@ -1548,6 +1566,10 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"type\": \"ipv6-address\"\n"
 "            }\n"
 "        ],\n"
+"        \"server-id\": {\n"
+"            \"comment\": \"DHCPv6 specific\",\n"
+"            \"type\": \"LL\"\n"
+"        },\n"
 "        \"shared-networks\": [\n"
 "            {\n"
 "                \"comment\": \"A shared network\",\n"
@@ -1555,6 +1577,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"subnet6\": [\n"
 "                    {\n"
 "                        \"comment\": \"A subnet\",\n"
+"                        \"id\": 100,\n"
 "                        \"pd-pools\": [\n"
 "                            {\n"
 "                                \"comment\": \"A prefix pool\",\n"
@@ -1567,6 +1590,20 @@ const char* EXTRACTED_CONFIGS[] = {
 "                            {\n"
 "                                \"comment\": \"A pool\",\n"
 "                                \"pool\": \"2001:db1::/64\"\n"
+"                            }\n"
+"                        ],\n"
+"                        \"reservations\": [\n"
+"                            {\n"
+"                                \"comment\": \"A host reservation\",\n"
+"                                \"hostname\": \"foo.example.com\",\n"
+"                                \"hw-address\": \"AA:BB:CC:DD:EE:FF\",\n"
+"                                \"option-data\": [\n"
+"                                    {\n"
+"                                        \"comment\": \"An option in a reservation\",\n"
+"                                        \"data\": \"example.com\",\n"
+"                                        \"name\": \"domain-search\"\n"
+"                                    }\n"
+"                                ]\n"
 "                            }\n"
 "                        ],\n"
 "                        \"subnet\": \"2001:db1::/48\"\n"
@@ -5974,8 +6011,17 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"option-data\": [ ]\n"
 "            }\n"
 "        ],\n"
+"        \"control-socket\": {\n"
+"            \"comment\": \"REST API\",\n"
+"            \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+"            \"socket-type\": \"unix\",\n"
+"            \"user-context\": {\n"
+"                \"comment\": \"Indirect comment\"\n"
+"            }\n"
+"        },\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
+"            \"comment\": \"No dynamic DNS\",\n"
 "            \"always-include-fqdn\": false,\n"
 "            \"enable-updates\": false,\n"
 "            \"generated-prefix\": \"myhost\",\n"
@@ -6003,7 +6049,8 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"hooks-libraries\": [ ],\n"
 "        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ ],\n"
+"            \"comment\": \"Use wildcard\",\n"
+"            \"interfaces\": [ \"*\" ],\n"
 "            \"re-detect\": false\n"
 "        },\n"
 "        \"lease-database\": {\n"
@@ -6035,12 +6082,13 @@ const char* UNPARSED_CONFIGS[] = {
 "        ],\n"
 "        \"relay-supplied-options\": [ \"65\" ],\n"
 "        \"server-id\": {\n"
+"            \"comment\": \"DHCPv6 specific\",\n"
 "            \"enterprise-id\": 0,\n"
 "            \"htype\": 0,\n"
 "            \"identifier\": \"\",\n"
 "            \"persist\": true,\n"
 "            \"time\": 0,\n"
-"            \"type\": \"LLT\"\n"
+"            \"type\": \"LL\"\n"
 "        },\n"
 "        \"shared-networks\": [\n"
 "            {\n"
@@ -6058,7 +6106,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"subnet6\": [\n"
 "                    {\n"
 "                        \"comment\": \"A subnet\",\n"
-"                        \"id\": 1,\n"
+"                        \"id\": 100,\n"
 "                        \"option-data\": [ ],\n"
 "                        \"pd-pools\": [\n"
 "                            {\n"
@@ -6293,8 +6341,8 @@ public:
         CfgMgr::instance().setFamily(AF_INET6);
     }
 
-    int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
-    Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
+    int rcode_; ///< Return code (see @ref isc::config::parseAnswer)
+    ControlledDhcpv6Srv srv_; ///< Instance of the ControlledDhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
 };
 

@@ -78,6 +78,9 @@ EP moveComments1(EP element) {
         } else if (it->first == "user-context") {
             // Do not traverse user-context entries
             result->set("user-context", it->second);
+        } else if (it->first == "control-socket") {
+            // Do not traverse control-socke entries
+            result->set("control-socket", it->second);
         } else {
             // Not comment or user-context
             try {
@@ -171,6 +174,9 @@ EP extractComments1(EP element) {
         if (it->first == "comment") {
             // Do not traverse comment entries
             result->set("comment", it->second);
+        } else if (it->first == "control-socket") {
+            // Do not traverse control-socke entries
+            result->set("control-socket", it->second);
         } else if (it->first == "user-context") {
             if (it->second->contains("comment")) {
                 // Note there is a  entry to move
