@@ -242,20 +242,29 @@ SrvConfig::toElement() const {
         const Subnet4Collection* subnets = cfg_subnets4_->getAll();
         for (Subnet4Collection::const_iterator subnet = subnets->cbegin();
              subnet != subnets->cend(); ++subnet) {
-            ElementPtr subnet_cfg = (*subnet)->toElement();
-            sn_list.push_back(subnet_cfg);
-
             // Skip subnets which are in a shared-network
             SharedNetwork4Ptr network;
             (*subnet)->getSharedNetwork(network);
             if (network) {
                 continue;
             }
+            ElementPtr subnet_cfg = (*subnet)->toElement();
+            sn_list.push_back(subnet_cfg);
             plain_subnets->add(subnet_cfg);
         }
         dhcp->set("subnet4", plain_subnets);
 
-        ConstElementPtr shared_networks = cfg_shared_networks4_->toElement();
+        ElementPtr shared_networks = cfg_shared_networks4_->toElement();
+        const std::vector<ElementPtr> networks = shared_networks->listValue();
+        for (auto network = networks.cbegin();
+             network != networks.cend(); ++network) {
+            const std::vector<ElementPtr> sh_list =
+                (*network)->get("subnet4")->listValue();
+            for (auto subnet = sh_list.cbegin();
+                 subnet != sh_list.cend(); ++subnet) {
+                sn_list.push_back(*subnet);
+            }
+        }
         dhcp->set("shared-networks", shared_networks);
 
     } else {
@@ -263,20 +272,29 @@ SrvConfig::toElement() const {
         const Subnet6Collection* subnets = cfg_subnets6_->getAll();
         for (Subnet6Collection::const_iterator subnet = subnets->cbegin();
              subnet != subnets->cend(); ++subnet) {
-            ElementPtr subnet_cfg = (*subnet)->toElement();
-            sn_list.push_back(subnet_cfg);
-
             // Skip subnets which are in a shared-network
             SharedNetwork6Ptr network;
             (*subnet)->getSharedNetwork(network);
             if (network) {
                 continue;
             }
+            ElementPtr subnet_cfg = (*subnet)->toElement();
+            sn_list.push_back(subnet_cfg);
             plain_subnets->add(subnet_cfg);
         }
         dhcp->set("subnet6", plain_subnets);
 
-        ConstElementPtr shared_networks = cfg_shared_networks6_->toElement();
+        ElementPtr shared_networks = cfg_shared_networks6_->toElement();
+        const std::vector<ElementPtr> networks = shared_networks->listValue();
+        for (auto network = networks.cbegin();
+             network != networks.cend(); ++network) {
+            const std::vector<ElementPtr> sh_list =
+                (*network)->get("subnet6")->listValue();
+            for (auto subnet = sh_list.cbegin();
+                 subnet != sh_list.cend(); ++subnet) {
+                sn_list.push_back(*subnet);
+            }
+        }
         dhcp->set("shared-networks", shared_networks);
     }
     // Insert reservations

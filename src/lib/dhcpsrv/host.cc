@@ -436,7 +436,9 @@ Host::toElement4() const {
     }
     // Set the reservation
     const IOAddress& address = getIPv4Reservation();
-    map->set("ip-address", Element::create(address.toText()));
+    if (!address.isV4Zero()) {
+        map->set("ip-address", Element::create(address.toText()));
+    }
     // Set the hostname
     const std::string& hostname = getHostname();
     map->set("hostname", Element::create(hostname));
