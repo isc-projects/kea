@@ -841,6 +841,8 @@ private:
     uint16_t port_;  ///< UDP port number on which server listens.
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
 
+protected:
+
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
     NetworkState network_state_;

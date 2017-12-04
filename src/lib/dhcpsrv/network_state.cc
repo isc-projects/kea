@@ -9,6 +9,14 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <string>
+
+namespace {
+
+/// @brief Name of the timer used by the @c NetworkState class.
+const std::string NETWORK_STATE_TIMER_NAME = "network-state-timer";
+
+} // end of anonymous namespace
 
 namespace isc {
 namespace dhcp {
@@ -20,7 +28,7 @@ public:
     /// @brief Constructor.
     NetworkStateImpl(const NetworkState::ServerType& server_type)
         : server_type_(server_type), globally_disabled_(false), disabled_subnets_(),
-          disabled_networks_(), timer_present_(false), timer_mgr_(TimerMgr::instance()) {
+          disabled_networks_(), timer_mgr_(TimerMgr::instance()) {
     }
 
     /// @brief Destructor.
@@ -54,20 +62,18 @@ public:
     /// called.
     void createTimer(const unsigned int seconds) {
         destroyTimer();
-        timer_mgr_->registerTimer("network-state-timer",
+        timer_mgr_->registerTimer(NETWORK_STATE_TIMER_NAME,
                                   boost::bind(&NetworkStateImpl::enableAll,
                                               shared_from_this()),
                                   seconds * 1000,
                                   asiolink::IntervalTimer::ONE_SHOT);
         timer_mgr_->setup("network-state-timer");
-        timer_present_ = true;
     }
 
     /// @brief Destroys a timer if present.
     void destroyTimer() {
-        if (timer_present_) {
-            timer_mgr_->unregisterTimer("network-state-timer");
-            timer_present_ = false;
+        if (timer_mgr_->isTimerRegistered(NETWORK_STATE_TIMER_NAME)) {
+            timer_mgr_->unregisterTimer(NETWORK_STATE_TIMER_NAME);
         }
     }
 
@@ -82,10 +88,6 @@ public:
 
     /// @brief A list of networks for which the DHCP service has been disabled.
     NetworkState::Networks disabled_networks_;
-
-    /// @brief Boolean flag indicating if the delayed enabling of the DHCP service
-    /// has been scheduled.
-    bool timer_present_;
 
     /// @brief A pointer to the common timer manager.
     ///
@@ -125,7 +127,7 @@ NetworkState::isServiceEnabled() const {
 
 bool
 NetworkState::isDelayedEnableAll() const {
-    return (impl_->timer_present_);
+    return (TimerMgr::instance()->isTimerRegistered(NETWORK_STATE_TIMER_NAME));
 }
 
 void

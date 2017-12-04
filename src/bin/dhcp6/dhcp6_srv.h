@@ -873,8 +873,6 @@ protected:
     /// are waiting for sending to kea-dhcp-ddns module.
     std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 
-private:
-
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
     NetworkState network_state_;
