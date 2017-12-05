@@ -18,7 +18,7 @@ namespace dhcp {
 
 class NetworkStateImpl;
 
-/// @brief Holds information about service enabling for specific networks.
+/// @brief Holds information about DHCP service enabling status.
 ///
 /// When the DHCP server receives a command to disable DHCP service entirely
 /// or for specific networks, this has to be recorded to allow for re-enabling
@@ -26,21 +26,33 @@ class NetworkStateImpl;
 /// the administrator or when the tiemout for re-enabling the service occurs.
 ///
 /// In the future, it will be possible to specify "disabled" parameter for
-/// a subnet or network to indicate that this subnet should be excluded from
-/// the service. When a command is subsequently sent to disable a service for
-/// some other subnets and the timeout value is specified, only those subnets
-/// for which a timeout has been specified should be re-enabled. This class
-/// fulfils this requirement by re-enabling only those subnets which have been
-/// temporarily disabled. The subnets specified as "disabled" in the configuration
-/// file should remain disabled until explcitly enabled with a control command.
+/// a subnet (or network) in the configuration file to indicate that this subnet
+/// should be excluded from the service. When a command is subsequently sent to
+/// temporarily disable a service for some other subnets for a specified amount
+/// ot time, only these subnets should be re-enabled when the time elapses. This
+/// class fulfils this requirement by recording the subnets disabled with a command
+/// and re-enabling them when required. The subnets specified as "disabled" in
+/// the configuration file should remain disabled until explcitly enabled with a
+/// control command.
 ///
-/// Disabling DHCP service with a timeout is useful to guard against cases when
+/// This class also allows for disabling the DHCP service globally. In this case
+/// the server drops all received packets.
+///
+/// The "dhcp-disable" and "dhcp-enable" commands are used for globally disabling
+/// and enabling the DHCP service. The "dhcp-disable-scopes" and "dhcp-enable-scopes"
+/// commands are used to disable and enable DHCP service for subnets and networks.
+/// In case of the "dhcp-disable" and "dhcp-disable-scopes" commands, it is possible
+/// to specify "max-period" parameter which provides a timeout, after which the
+/// settings are reverted (service is re-enabled globally and/or for specific
+/// scopes).
+///
+/// Disabling DHCP service with a timeout is useful to guard against issues when
 /// the controlling client dies after disabling the DHCP service on the server,
 /// e.g. failover peers may instruct each other to disable the DHCP service while
 /// database synchronization takes place. If the peer subsequently dies, the
 /// surviving server must re-enable DHCP on its own.
 ///
-/// @todo This class currently supports only the case of completely disabling
+/// @todo This class currently supports only the case of globally disabling
 /// the DHCP service. Disabling per network/subnet will be added later.
 class NetworkState {
 public:
