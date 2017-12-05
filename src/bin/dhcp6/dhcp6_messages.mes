@@ -409,6 +409,12 @@ server is about to open sockets on the specified port.
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
+% DHCP6_PACKET_DROP_DHCP_DISABLED %1: DHCP service is globally disabled
+This debug message is issued when a packet is dropped because the DHCP service
+has been temporarily disabled. This affects all received DHCP packets. The
+service may be enabled by the "dhcp-enable" control command or automatically
+after a specified amount of time since receiving "dhcp-disable" command.
+
 % DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.

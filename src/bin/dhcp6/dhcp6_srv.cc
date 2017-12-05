@@ -470,6 +470,9 @@ void Dhcpv6Srv::run_one() {
 
     // If the DHCP service has been globally disabled, drop the packet.
     if (network_state_.isServiceEnabled()) {
+        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL_DATA,
+                  DHCP6_PACKET_DROP_DHCP_DISABLED)
+            .arg(query->getLabel());
         processPacket(query, rsp);
     }
 
