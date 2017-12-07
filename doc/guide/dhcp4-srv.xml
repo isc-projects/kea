@@ -2057,16 +2057,13 @@ It is merely echoed by the server
       discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
-      <para>
-      In certain cases it is useful to differentiate between different types of
-      clients and treat them accordingly. It is envisaged that client
-      classification will be used for changing the behavior of almost any part of
-      the DHCP message processing, including the assignment of leases from different
-      pools, the assignment of different options (or different values of the same
-      options) etc. In the current release of the software however, there are
-      only three mechanisms that take advantage of client classification:
-      subnet selection, assignment of different options, and, for cable modems, there
-      are specific options for use with the TFTP server address and the boot file field.
+      <para>In certain cases it is useful to configure the server to differentiate between
+      DHCP clients types and treat them accordingly. It is envisaged that client
+      classification will be used for modifying the behavior of almost any part of
+      the DHCP message processing. In the current release of Kea, there are four
+      mechanisms that take advantage of the client classification in DHCPv4: subnet
+      selection, address pool selection, DHCP options assignment, and, for cable modems,
+      there are specific options for use with the TFTP server address and boot file field.
       </para>
 
       <para>

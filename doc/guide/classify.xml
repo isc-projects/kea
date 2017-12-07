@@ -804,18 +804,18 @@ concatenation of the strings</entry></row>
  <section id="classification-pools">
    <title>Configuring Pools With Class Information</title>
      <para>
-       Similar to subnets in certain cases access to certain address or
-       prefix pools must be restricted to only clients that belong to a
-       given class, using the "client-class" when defining the pool.
+       Similar to the subnets, it is possible to restrict access to the certain address
+       or prefix pools to the clients belonging to a specific class, using
+       the "client-class" parameter when defining the pool.
      </para>
 
      <para>
-       Let's assume that the server is connected to a network segment that uses
+       Let's assume that the server is connected to a network segment using
        the 192.0.2.0/24 prefix. The Administrator of that network has decided
-       that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
-       managed by the DHCP4 server. Only clients belonging to client class
-       Client_foo are allowed to use this pool. Such a
-       configuration can be achieved in the following way:
+       that addresses from the range of 192.0.2.10 to 192.0.2.20 are going to be
+       managed by the DHCP4 server. Only the clients belonging to the client class
+       Client_foo are allowed to use this pool. Such a configuration can be
+       achieved in the following way:
        <screen>
 "Dhcp4": {
     "client-classes": [
@@ -833,19 +833,20 @@ concatenation of the strings</entry></row>
             ]
         },
         ...
-    ],<userinput>
+    ],
     "subnet4": [
         {
             "subnet": "192.0.2.0/24",
+            <userinput>
             "pools": [
                 {
                     "pool": "192.0.2.10 - 192.0.2.20",
                     "client-class": "Client_foo"
                 }
-            ]
+            ]</userinput>
         },
         ...
-    ],</userinput>,
+    ],
     ...
 }</screen>
       </para>

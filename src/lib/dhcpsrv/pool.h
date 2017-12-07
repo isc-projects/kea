@@ -114,11 +114,11 @@ public:
         user_context_ = ctx;
     }
 
-    /// @Checks whether this pool supports client that belongs to
+    /// @brief Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
-    /// @todo: currently doing the same than network which
-    /// is known to be improved.
+    /// @todo: Implements similar logic as @ref Network::clientSupported. It
+    /// is going to be improved.
     ///
     /// @param client_classes list of all classes the client belongs to
     /// @param known_client true if the client is known, i.e. has a

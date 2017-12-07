@@ -56,7 +56,8 @@ public:
 
     /// @brief checks if the specified address is in allowed pools
     ///
-    /// This takes also into account client classes and known client
+    /// This takes also into account client classes and whether the client is
+    /// known, i.e. has a host reservation.
     ///
     /// @param type type of pools to iterate over
     /// @param addr this address will be checked if it belongs to any pools in
@@ -334,12 +335,15 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-    /// @brief returns a sum of possible leases in all pools
+    /// @brief Returns a sum of possible leases in all pools
+    ///
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
 
-    /// @brief returns a sum of possible leases in all pools allowing classes
+    /// @brief Returns a sum of possible leases in all pools allowing specified
+    /// classes.
+    ///
     /// @param pools list of pools
     /// @param client_classes list of classes
     /// @param known_client true if the client is known, i.e. has a reservation
