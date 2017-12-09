@@ -37,6 +37,10 @@ public:
     SecBuf(const std::vector<T>& x) : vec_(x) {}
 
     ~SecBuf() {
+#if defined(__has_feature) && __has_feature(address_sanitizer)
+        // Make the address sanitizer happy assuming this won't reallocate
+        vec_.resize(vec_.capacity());
+#endif
         std::memset(&vec_[0], 0, vec_.capacity() * sizeof(T));
     };
 
@@ -65,6 +69,10 @@ public:
     };
 
     void clear() {
+#if defined(__has_feature) && __has_feature(address_sanitizer)
+        // Make the address sanitizer happy assuming this won't reallocate
+        vec_.resize(vec_.capacity());
+#endif
         std::memset(&vec_[0], 0, vec_.capacity() * sizeof(T));
         vec_.clear();
     }
