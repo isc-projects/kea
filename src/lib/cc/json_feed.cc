@@ -229,7 +229,7 @@ JSONFeed::receiveStartHandler() {
 
             default:
                 feedFailure("invalid first character " + std::string(1, c));
-		break;
+                break;
             }
 
         default:
