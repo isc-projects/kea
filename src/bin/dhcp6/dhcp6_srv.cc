@@ -2004,18 +2004,31 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             .arg(static_cast<int>((*l)->prefixlen_))
             .arg(ia->getIAID());
 
-        // Now remove this address from the hints list.
+        // Now remove this prefix from the hints list.
         AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
 
-    /// @todo: Maybe we should iterate over ctx.old_leases_, i.e. the leases
-    /// that used to be valid, but they are not anymore.
+    /// For the leases that we just retired, send the prefixes with 0 lifetimes.
+    for (Lease6Collection::const_iterator l = ctx.currentIA().old_leases_.begin();
+                                          l != ctx.currentIA().old_leases_.end(); ++l) {
 
-    // For all the leases the client had requested, but we didn't assign, put them with
-    // zero lifetimes
-    // Finally, if there are any addresses requested that we haven't dealt with
+        // Send a prefix with zero lifetimes only when this lease belonged to
+        // this client. Do not send it when we're reusing an old lease that belonged
+        // to someone else.
+        if (equalValues(query->getClientId(), (*l)->duid_)) {
+            Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX, (*l)->addr_,
+                                                          (*l)->prefixlen_, 0, 0));
+            ia_rsp->addOption(prefix);
+        }
+
+        // Now remove this prefix from the hints list.
+        AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
+        hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
+    }
+
+    // Finally, if there are any prefixes requested that we haven't dealt with
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
          prefix != hints.end(); ++prefix) {
