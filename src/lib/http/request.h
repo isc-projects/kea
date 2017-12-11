@@ -8,6 +8,7 @@
 #define HTTP_REQUEST_H
 
 #include <exceptions/exceptions.h>
+#include <http/http_header.h>
 #include <http/http_types.h>
 #include <http/request_context.h>
 #include <boost/shared_ptr.hpp>
@@ -179,20 +180,25 @@ public:
     /// @brief Returns HTTP version number (major and minor).
     HttpVersion getHttpVersion() const;
 
+    /// @brief Returns object encapsulating HTTP header.
+    ///
+    /// @param header_name HTTP header name.
+    HttpHeaderPtr getHeader(const std::string& header_name) const;
+
     /// @brief Returns a value of the specified HTTP header.
     ///
-    /// @param header Name of the HTTP header.
+    /// @param header_name Name of the HTTP header.
     ///
     /// @throw HttpRequestError if the header doesn't exist.
-    std::string getHeaderValue(const std::string& header) const;
+    std::string getHeaderValue(const std::string& header_name) const;
 
     /// @brief Returns a value of the specified HTTP header as number.
     ///
-    /// @param header Name of the HTTP header.
+    /// @param header_name Name of the HTTP header.
     ///
     /// @throw HttpRequestError if the header doesn't exist or if the
     /// header value is not number.
-    uint64_t getHeaderValueAsUint64(const std::string& header) const;
+    uint64_t getHeaderValueAsUint64(const std::string& header_name) const;
 
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
@@ -206,6 +212,17 @@ public:
     bool isFinalized() const {
         return (finalized_);
     }
+
+    /// @brief Checks if the client has requested persistent connection.
+    ///
+    /// For the HTTP/1.0 case, the connection is persistent if the client has
+    /// included Connection: keep-alive header. For the HTTP/1.1 case, the
+    /// connection is assumed to be persistent unless Connection: close header
+    /// has been included.
+    ///
+    /// @return true if the client has requested persistent connection, false
+    /// otherwise.
+    bool isPersistent() const;
 
     //@}
 
@@ -264,14 +281,17 @@ protected:
     /// If the set is empty, all versions are allowed.
     std::set<HttpVersion> required_versions_;
 
+    /// @brief Map of HTTP headers indexed by lower case header names.
+    typedef std::map<std::string, HttpHeaderPtr> HttpHeaderMap;
+
     /// @brief Map holding required HTTP headers.
     ///
-    /// The key of this map specifies the HTTP header name. The value
-    /// specifies the HTTP header value. If the value is empty, the
-    /// header is required but the value of the header is not checked.
-    /// If the value is non-empty, the value in the HTTP request must
-    /// be equal to the value in the map.
-    std::map<std::string, std::string> required_headers_;
+    /// The key of this map specifies the lower case HTTP header name.
+    /// If the value of the HTTP header is empty, the header is required
+    /// but the value of the header is not checked. If the value is
+    /// non-empty, the value in the HTTP request must be equal (case
+    /// insensitive) to the value in the map.
+    HttpHeaderMap required_headers_;
 
     /// @brief Flag indicating whether @ref create was called.
     bool created_;
@@ -283,7 +303,7 @@ protected:
     Method method_;
 
     /// @brief Parsed HTTP headers.
-    std::map<std::string, std::string> headers_;
+    HttpHeaderMap headers_;
 
     /// @brief Pointer to the @ref HttpRequestContext holding parsed
     /// data.
