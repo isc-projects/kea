@@ -23,7 +23,7 @@ class NetworkStateImpl;
 /// When the DHCP server receives a command to disable DHCP service entirely
 /// or for specific networks, this has to be recorded to allow for re-enabling
 /// DHCP service for these networks as a result of receiving a command from
-/// the administrator or when the tiemout for re-enabling the service occurs.
+/// the administrator or when the timeout for re-enabling the service occurs.
 ///
 /// In the future, it will be possible to specify "disabled" parameter for
 /// a subnet (or network) in the configuration file to indicate that this subnet

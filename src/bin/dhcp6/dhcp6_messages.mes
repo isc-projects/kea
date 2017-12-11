@@ -416,7 +416,7 @@ service may be enabled by the "dhcp-enable" control command or automatically
 after a specified amount of time since receiving "dhcp-disable" command.
 
 % DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
-The DHCPv4 server has received a packet that it is unable to
+The DHCPv6 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
 % DHCP6_PACKET_DROP_SERVERID_MISMATCH %1: dropping packet with server identifier: %2, server is using: %3

@@ -49,7 +49,7 @@ public:
 
     /// @brief Runs IO service with a timeout.
     ///
-    /// @param timeout_ms Timeout for runninr IO service in milliseconds.
+    /// @param timeout_ms Timeout for running IO service in milliseconds.
     void runIOService(const long timeout_ms) {
         test_timer_.setup(boost::bind(&NetworkStateTest::testTimerCallback, this), timeout_ms,
                           IntervalTimer::ONE_SHOT);
@@ -63,9 +63,18 @@ public:
     IntervalTimer test_timer_;
 };
 
-// This test verifies that it is possible to disable and then enable service.
-TEST_F(NetworkStateTest, disableEnableService) {
+// This test verifies that it is possible to disable and then enable DHCPv4 service.
+TEST_F(NetworkStateTest, disableEnableService4) {
     NetworkState state(NetworkState::DHCPv4);
+    state.disableService();
+    EXPECT_FALSE(state.isServiceEnabled());
+    state.enableService();
+    EXPECT_TRUE(state.isServiceEnabled());
+}
+
+// This test verifies that it is possible to disable and then enable DHCPv6 service.
+TEST_F(NetworkStateTest, disableEnableService6) {
+    NetworkState state(NetworkState::DHCPv6);
     state.disableService();
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService();

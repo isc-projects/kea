@@ -52,7 +52,7 @@ public:
         destroyTimer();
     }
 
-    /// @brief Creates a timer couting the time when @c enableAll should be
+    /// @brief Creates a timer counting the time when @c enableAll should be
     /// automatically called.
     ///
     /// If the timer has been already scheduled, it is destroyed and replaced
@@ -67,7 +67,7 @@ public:
                                               shared_from_this()),
                                   seconds * 1000,
                                   asiolink::IntervalTimer::ONE_SHOT);
-        timer_mgr_->setup("network-state-timer");
+        timer_mgr_->setup(NETWORK_STATE_TIMER_NAME);
     }
 
     /// @brief Destroys a timer if present.
