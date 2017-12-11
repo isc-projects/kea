@@ -74,18 +74,20 @@ AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performi
 
 # Include premium configuration
 PREMIUM_DIR=
+AC_DEFUN([AX_PREMIUM],[])
 # m4_sinclude includes the file if it exists at autoreconf time
 m4_sinclude(premium/config.m4)
-if test x$PREMIUM_DIR != x]; then
-   AX_PREMIUM
-fi
+m4_sinclude(premium/tier1.m4)
+m4_sinclude(premium/tier2.m4)
+AC_SUBST(PREMIUM_DIR)
+AX_PREMIUM
 
 # Include contrib configuration
 CONTRIB_DIR=
+AC_DEFUN([AX_CONTRIB],[])
 m4_sinclude(contrib/config.m4)
-if test x$CONTRIB_DIR != x]; then
-    AX_CONTRIB
-fi
+AC_SUBST(CONTRIB_DIR)
+AX_CONTRIB
 
 # Libtool configuration
 #
