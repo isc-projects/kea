@@ -2004,7 +2004,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             .arg(static_cast<int>((*l)->prefixlen_))
             .arg(ia->getIAID());
 
-        // Now remove this address from the hints list.
+        // Now remove this prefix from the hints list.
         AllocEngine::ResourceType hint_type((*l)->addr_, (*l)->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
@@ -2028,8 +2028,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
     }
 
-    // For all the leases the client had requested, but we didn't assign, put them with
-    // zero lifetimes
     // Finally, if there are any prefixes requested that we haven't dealt with
     // already, inform the client that he can't have them.
     for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
