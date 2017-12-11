@@ -1,3 +1,9 @@
+1336.	[bug]		marcin
+	DHCPv6 server always sends prefixes with the lifetime of 0 for
+	the prefix leases that should no longer be used, even if those
+	prefixes are not included in the Renew/Rebind.
+	(Trac #5403, git 91bb0855ff7ef86ff72b5a946ae716798d7bebc1)
+
 1335.	[bug]		marcin
 	Fixed a bug which prevented inserting multiple host reservations
 	where IPv4 address was unspecified or when selected subnet
