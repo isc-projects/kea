@@ -418,7 +418,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
     if (message.tellp() == 0) {
         network_state_.disableService();
 
-        message << "DHCPv4 service disabled";
+        message << "DHCPv6 service disabled";
         if (max_period > 0) {
             message << " for " << max_period << " seconds";
         }

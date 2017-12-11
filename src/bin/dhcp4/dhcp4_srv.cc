@@ -805,10 +805,11 @@ Dhcpv4Srv::run_one() {
     }
 
     // If the DHCP service has been globally disabled, drop the packet.
-    if (network_state_.isServiceEnabled()) {
+    if (!network_state_.isServiceEnabled()) {
         LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
                   DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
+    } else {
         processPacket(query, rsp);
     }
 
