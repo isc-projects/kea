@@ -5,6 +5,10 @@
    file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 %{ /* -*- C++ -*- */
+
+/* Generated files do not make clang static analyser so happy */
+#ifndef __clang_analyzer__
+
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -29,6 +33,8 @@ bool start_token_flag = false;
 
 isc::dhcp::Parser6Context::ParserType start_token_value;
 unsigned int comment_start_line = 0;
+
+using namespace isc::dhcp;
 
 };
 
@@ -121,6 +127,10 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp6Parser::make_SUB_PD_POOL(driver.loc_);
         case Parser6Context::PARSER_HOST_RESERVATION:
             return isc::dhcp::Dhcp6Parser::make_SUB_RESERVATION(driver.loc_);
+        case Parser6Context::PARSER_OPTION_DEFS:
+            return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DEFS(driver.loc_);
+        case Parser6Context::PARSER_OPTION_DEF:
+            return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DEF(driver.loc_);
         case Parser6Context::PARSER_OPTION_DATA:
             return isc::dhcp::Dhcp6Parser::make_SUB_OPTION_DATA(driver.loc_);
         case Parser6Context::PARSER_HOOKS_LIBRARY:
@@ -597,6 +607,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_PREFERRED_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("preferred-lifetime", driver.loc_);
@@ -607,6 +618,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_VALID_LIFETIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("valid-lifetime", driver.loc_);
@@ -617,6 +629,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_RENEW_TIMER(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("renew-timer", driver.loc_);
@@ -627,6 +640,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_REBIND_TIMER(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("rebind-timer", driver.loc_);
@@ -645,9 +659,19 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"subnet6\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_SUBNET6(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("subnet6", driver.loc_);
+    }
+}
+
+\"shared-networks\" {
+    switch (driver.ctx_) {
+    case Parser6Context::DHCP6:
+        return Dhcp6Parser::make_SHARED_NETWORKS(driver.loc_);
+    default:
+        return Dhcp6Parser::make_STRING("shared-networks", driver.loc_);
     }
 }
 
@@ -669,6 +693,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_OPTION_DATA(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("option-data", driver.loc_);
@@ -684,6 +709,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::CLIENT_CLASS:
     case isc::dhcp::Parser6Context::LOGGERS:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("name", driver.loc_);
@@ -784,6 +810,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::POOLS:
     case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::SUBNET6:
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user-context", driver.loc_);
@@ -802,6 +829,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"interface\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_INTERFACE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("interface", driver.loc_);
@@ -811,6 +839,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"interface-id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_INTERFACE_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("interface-id", driver.loc_);
@@ -829,6 +858,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"rapid-commit\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_RAPID_COMMIT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("rapid-commit", driver.loc_);
@@ -838,6 +868,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"reservation-mode\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_RESERVATION_MODE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("reservation-mode", driver.loc_);
@@ -1013,6 +1044,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("client-class", driver.loc_);
@@ -1145,6 +1177,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"relay\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
+    case Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_RELAY(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("relay", driver.loc_);
@@ -1688,3 +1721,4 @@ class Dummy {
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
+#endif /* !__clang_analyzer__ */

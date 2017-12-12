@@ -132,13 +132,13 @@ instantiated with the appropriate value and put onto the expression vector.
  isc::eval::Token class and represents a certain expression primitive.
  Currently supported tokens are:
 
- - isc::dhcp::TokenString -- represents a constant string, e.g. "MSFT";
+ - isc::dhcp::TokenString -- represents a constant string, e.g. "MSFT".
  - isc::dhcp::TokenHexString -- represents a constant string, encoded as
-   hex string, e.g. 0x666f6f which is actually "foo";
+   hex string, e.g. 0x666f6f which is actually "foo".
  - isc::dhcp::TokenIpAddress -- represents a constant IP address, encoded as
    a 4 or 16 byte binary string, e.g., 10.0.0.1 is 0x10000001.
  - isc::dhcp::TokenOption -- represents an option in a packet, e.g.
-                    option[123].text;
+                    option[123].text.
  - isc::dhcp::TokenRelay4Option -- represents a sub-option inserted by the
                     DHCPv4 relay, e.g. relay[123].text or relay[123].hex
  - isc::dhcp::TokenRelay6Option -- represents a sub-option inserted by
@@ -149,10 +149,11 @@ instantiated with the appropriate value and put onto the expression vector.
  - isc::dhcp::TokenPkt6 -- represents a DHCPv6 packet field (message type
    or transaction id).
  - isc::dhcp::TokenRelay6Field -- represents a DHCPv6 relay information field.
- - isc::dhcp::TokenEqual -- represents the equal (==) operator;
- - isc::dhcp::TokenSubstring -- represents the substring(text, start, length) operator;
+ - isc::dhcp::TokenEqual -- represents the equal (==) operator.
+ - isc::dhcp::TokenSubstring -- represents the substring(text, start, length) operator.
  - isc::dhcp::TokenConcat -- represents the concat operator which
    concatenate two other tokens.
+ - isc::dhcp::TokenIfElse == represents the ifelse(cond, iftrue, ifelse) operator.
  - isc::dhcp::TokenNot -- the logical not operator.
  - isc::dhcp::TokenAnd -- the logical and (strict) operator.
  - isc::dhcp::TokenOr -- the logical or (strict) operator (strict means

@@ -109,7 +109,7 @@ struct OptionDataTypeTraits<OptionBuffer> {
 template<>
 struct OptionDataTypeTraits<bool> {
     static const bool valid = true;
-    static const int len = sizeof(bool);
+    static const int len = sizeof(uint8_t);
     static const bool integer_type = false;
     static const OptionDataType type = OPT_BOOLEAN_TYPE;
 };

@@ -23,6 +23,7 @@ TESTS += libhttp_unittests
 libhttp_unittests_SOURCES  = connection_pool_unittests.cc
 libhttp_unittests_SOURCES += date_time_unittests.cc
 libhttp_unittests_SOURCES += listener_unittests.cc
+libhttp_unittests_SOURCES += post_request_unittests.cc
 libhttp_unittests_SOURCES += post_request_json_unittests.cc
 libhttp_unittests_SOURCES += request_parser_unittests.cc
 libhttp_unittests_SOURCES += request_test.h
