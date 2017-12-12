@@ -448,11 +448,13 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
 
     std::string defaults4 = "\"echo-client-id\": true,\n";
+    defaults4 += "\"shared-networks\": [ ],\n";
     defaults4 += "\"subnet4\": [ ],\n";
     defaults4 += "\"host-reservation-identifiers\": ";
     defaults4 += "[ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n";
 
     std::string defaults6 = "\"relay-supplied-options\": [ \"65\" ],\n";
+    defaults6 += "\"shared-networks\": [ ],\n";
     defaults6 += "\"subnet6\": [ ],\n";
     defaults6 += "\"server-id\": ";
     defaults6 += conf.getCfgDUID()->toElement()->str() + ",\n";

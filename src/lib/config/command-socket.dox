@@ -158,6 +158,11 @@ or HTTPS connection):
 - @ref isc::config::CommandMgr::closeCommandSocket() - it is used to close the
   socket.
 
+Kea servers use @c CommandMgr to register handlers for various commands they
+support natively. However, it is possible extend a set of supported commands
+using hooks framework. See @ref hooksdgCommandHandlers how to implement support
+for your own control commands in Kea.
+
 @section ctrlSocketConnections Accepting connections
 
 The @ref isc::config::CommandMgr is implemented using boost ASIO and uses

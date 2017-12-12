@@ -1,0 +1,112 @@
+// This is an example configuration file for DHCPv6 server in Kea.
+// It demonstrates an advanced feature called shared network. Typically, for
+// each physical link there is one IPv6 subnet that the server is expected
+// to manage. However, in some cases there is a need to configure more subnets
+// in the same physical location. This may sound odd, as IPv6 is not expected
+// to run out of addresses. However, due to vast address space some deployments
+// experiment with various addressing schemes and later find out that the
+// initial proposal was not best and way to migrate to something else.
+{
+    "Dhcp6": {
+        // Kea is told to listen on ethX interface only.
+        "interfaces-config": {
+            "interfaces": [ "ethX" ]
+        },
+
+        // You also need to tell where to store lease information.
+        // memfile is the backend that is easiest to set up.
+        "lease-database": {
+            "type": "memfile",
+            "lfc-interval": 3600
+        },
+
+        // It is likely that in your network you'll have a mix of regular,
+        // "plain" subnets and shared networks. It is perfectly valid to mix
+        // them in the same config file.
+        //
+        // This is regular subnet. It's not part of any shared-network.
+        "subnet6": [
+            {
+                "pools": [ { "pool": "2001:db8:2::/80" } ],
+                "subnet": "2001:db8:2::/64",
+                "interface": "ethX"
+            }
+        ],
+
+        // Hhe shared networks definition starts here. shared-networks can
+        // contain a list of shared networks. There are many parameters
+        // that can be specified here, so this example may be overwhelming
+        // at first, but the only mandatory parameter for each shared
+        // network is name. It must be unique. Typically, each shared
+        // network also needs to have at least two subnets to be functional,
+        // but if you really want to, you can define a degraded shared
+        // network that has 1 or even 0 subnets. This may come in handy
+        // when migrating between regular subnets and shared networks
+        // or when debugging a problem. It is not recommended to use
+        // 1 subnet per shared network, as there is extra processing
+        // overhead for shared networks.
+        "shared-networks": [
+        {
+            "interface": "eth1",
+
+            // Similar to regular subnets, it is forbidden to define both
+            // interface and interface-id at the same time. That's because
+            // interface parameter expresses physical network interface
+            // for links available locally and interface-id identifies
+            // values inserted by relays, which are only used for
+            // remote traffic. A shared network cannot be both direct
+            // and relayed.
+            //"interface-id": "content of the option",
+
+            // Other parameters defined here will be inherited by the
+            // subnets.
+            "name": "frog",
+            "option-data": [ ],
+            "preferred-lifetime": 200,
+            "rapid-commit": true,
+            "rebind-timer": 150,
+            "relay": {
+                "ip-address": "2001:db8::1"
+            },
+            "renew-timer": 100,
+            "reservation-mode": "all",
+
+            // List of subnets belonging to this particular shared-network
+            // start here.
+            "subnet6": [
+
+                // This is the first subnet.
+                {
+                    "preferred-lifetime": 30,
+                    "rapid-commit": false,
+                    "rebind-timer": 20,
+                    // It is possible to override some values here.
+                    "relay": {
+                        "ip-address": "2001:db8:1::123"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "2001:db8:1::/64",
+                    "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
+                    "valid-lifetime": 40
+                },
+
+                // This is the second subnet.
+                {
+                    "preferred-lifetime": 30,
+                    "pools": [ { "pool": "3000:db8::/64" } ],
+                    "rapid-commit": false,
+                    "rebind-timer": 20,
+                    "relay": {
+                        "ip-address": "3000::1"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "3000::/16",
+                    "valid-lifetime": 40
+                }
+            ],
+            "valid-lifetime": 300
+        } ]
+    }
+}

@@ -385,6 +385,13 @@ memfile_dump() {
 
 mysql_dump() {
 
+    # Check the lease type was given
+    if [ $dump_type -eq 0 ]; then
+        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
+        usage
+        exit 1
+    fi
+
     # get the correct dump query
     version=`mysql_version`
     retcode=$?
@@ -440,6 +447,13 @@ mysql_dump() {
 
 ### Functions used for dump
 pgsql_dump() {
+    # Check the lease type was given
+    if [ $dump_type -eq o ]; then
+        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
+        usage
+        exit 1
+    fi
+
     version=`pgsql_version`
     get_dump_query $version
 

@@ -242,8 +242,8 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs = { "advanced.json" ,
                                "backends.json",
-                               "classify.json",
                                "cassandra.json",
+                               "classify.json",
                                "dhcpv4-over-dhcpv6.json",
                                "hooks.json",
                                "leases-expiration.json",
@@ -252,12 +252,32 @@ TEST(ParserTest, file) {
                                "pgsql-reservations.json",
                                "reservations.json",
                                "several-subnets.json",
+                               "shared-network.json",
                                "single-subnet.json",
                                "with-ddns.json" };
 
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
+}
+
+// Basic test that checks if it's possible to specify outbound-interface.
+TEST(ParserTest, outboundIface) {
+    std::string fname = string(CFG_EXAMPLES) + "/" + "advanced.json";
+    Parser4Context ctx;
+    ConstElementPtr test_json = ctx.parseFile(fname, Parser4Context::PARSER_DHCP4);
+
+    ConstElementPtr tmp;
+    tmp = test_json->get("Dhcp4");
+    ASSERT_TRUE(tmp);
+
+    tmp = tmp->get("interfaces-config");
+    ASSERT_TRUE(tmp);
+
+    tmp = tmp->get("outbound-interface");
+    ASSERT_TRUE(tmp);
+    EXPECT_EQ(Element::string, tmp->getType());
+    EXPECT_EQ("use-routing", tmp->stringValue());
 }
 
 /// @brief Tests error conditions in Dhcp4Parser
@@ -501,6 +521,13 @@ TEST(ParserTest, errors) {
               Parser4Context::PARSER_DHCP4,
               "<string>:2.2-17: got unexpected keyword "
               "\"valid_lifetime\" in Dhcp4 map.");
+
+    // missing parameter
+    testError("{ \"name\": \"foo\",\n"
+              "  \"code\": 123 }\n",
+              Parser4Context::PARSER_OPTION_DEF,
+              "missing parameter 'type' (<string>:1:1) "
+              "[option-def map between <string>:1:1 and <string>:2:15]");
 }
 
 // Check unicode escapes
