@@ -270,7 +270,7 @@ HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
 }
 
 void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
-                                       const SubnetPtr subnet,
+                                       const Subnet4Ptr subnet,
                                        bool t1_present,
                                        bool t2_present) {
 

@@ -942,6 +942,30 @@ TEST_F(HostReservationParserTest, dhcp6NullPrefix2) {
 }
 
 // This test verifies that the configuration parser throws an exception
+// when slash is missing for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix3) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:2000:0101::\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when slash is followed by nothing for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix4) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:2000:0101::/\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when slash is not followed by a number for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix5) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:2000:0101::/foo\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
 // when the same address is reserved twice.
 TEST_F(HostReservationParserTest, dhcp6DuplicatedAddress) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","

@@ -36,92 +36,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-// **************************** DebugParser *************************
-
-DebugParser::DebugParser(const std::string& param_name)
-    :param_name_(param_name) {
-}
-
-void
-DebugParser::build(ConstElementPtr new_config) {
-    value_ = new_config;
-    std::cout << "Build for token: [" << param_name_ << "] = ["
-        << value_->str() << "]" << std::endl;
-}
-
-void
-DebugParser::commit() {
-    // Debug message. The whole DebugParser class is used only for parser
-    // debugging, and is not used in production code. It is very convenient
-    // to keep it around. Please do not turn this cout into logger calls.
-    std::cout << "Commit for token: [" << param_name_ << "] = ["
-                  << value_->str() << "]" << std::endl;
-}
-
-// **************************** BooleanParser  *************************
-
-template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
-    // Invoke common code for all specializations of build().
-    buildCommon(value);
-    // The Config Manager checks if user specified a
-    // valid value for a boolean parameter: true or false.
-    // We should have a boolean Element, use value directly
-    try {
-        value_ = value->boolValue();
-    } catch (const isc::data::TypeError &) {
-        isc_throw(BadValue, " Wrong value type for " << param_name_
-                  << " : build called with a non-boolean element "
-                  << "(" << value->getPosition() << ").");
-    }
-}
-
-// **************************** Uin32Parser  *************************
-
-template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
-    // Invoke common code for all specializations of build().
-    buildCommon(value);
-
-    int64_t check;
-    string x = value->str();
-    try {
-        check = boost::lexical_cast<int64_t>(x);
-    } catch (const boost::bad_lexical_cast &) {
-        isc_throw(BadValue, "Failed to parse value " << value->str()
-                  << " as unsigned 32-bit integer "
-                  "(" << value->getPosition() << ").");
-    }
-    if (check > std::numeric_limits<uint32_t>::max()) {
-        isc_throw(BadValue, "Value " << value->str() << " is too large"
-                  " for unsigned 32-bit integer "
-                  "(" << value->getPosition() << ").");
-    }
-    if (check < 0) {
-        isc_throw(BadValue, "Value " << value->str() << " is negative."
-               << " Only 0 or larger are allowed for unsigned 32-bit integer "
-                  "(" << value->getPosition() << ").");
-    }
-
-    // value is small enough to fit
-    value_ = static_cast<uint32_t>(check);
-}
-
-// **************************** StringParser  *************************
-
-template <> void ValueParser<std::string>::build(ConstElementPtr value) {
-    // Invoke common code for all specializations of build().
-    buildCommon(value);
-
-    // For strings we need to use stringValue() rather than str().
-    // str() returns fully escaped special characters, so
-    // single backslash would be misrepresented as "\\".
-    if (value->getType() == Element::string) {
-        value_ = value->stringValue();
-    } else {
-        value_ = value->str();
-    }
-    boost::erase_all(value_, "\"");
-}
-
 // ******************** MACSourcesListConfigParser *************************
 
 void
@@ -158,10 +72,12 @@ MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr val
 // ******************** ControlSocketParser *************************
 void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value) {
     if (!value) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "Logic error: specified control-socket is null");
     }
 
     if (value->getType() != Element::map) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "Specified control-socket is expected to be a map"
                   ", i.e. a structure defined within { }");
     }
@@ -287,6 +203,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
 void
 OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_list) {
     if (!option_def_list) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
                   << " option definitions is NULL ("
                   << option_def_list->getPosition() << ")");
@@ -317,7 +234,7 @@ RelayInfoParser::RelayInfoParser(const Option::Universe& family)
 };
 
 void
-RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
+RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& cfg,
                        ConstElementPtr relay_info) {
     // There is only one parameter which is mandatory
     IOAddress ip = getAddress(relay_info, "ip-address");
@@ -333,7 +250,7 @@ RelayInfoParser::parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
 
     // Ok, we're done with parsing. Let's store the result in the structure
     // we were given as configuration storage.
-    *cfg = isc::dhcp::Subnet::RelayInfo(ip);
+    *cfg = isc::dhcp::Network::RelayInfo(ip);
 }
 
 //****************************** PoolParser ********************************
@@ -441,11 +358,12 @@ PoolParser::parse(PoolStoragePtr pools,
     // If there's user-context specified, store it.
     ConstElementPtr user_context = pool_structure->get("user-context");
     if (user_context) {
+        // The grammar accepts only maps but still check it.
         if (user_context->getType() != Element::map) {
             isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
                       << user_context->getPosition() << ")");
         }
-        pool->setUserContext(user_context);
+        pool->setContext(user_context);
     }
 
     // Parser pool specific options.
@@ -491,7 +409,7 @@ SubnetConfigParser::SubnetConfigParser(uint16_t family)
       address_family_(family),
       options_(new CfgOption()) {
     string addr = family == AF_INET ? "0.0.0.0" : "::";
-    relay_info_.reset(new isc::dhcp::Subnet::RelayInfo(IOAddress(addr)));
+    relay_info_.reset(new isc::dhcp::Network::RelayInfo(IOAddress(addr)));
 }
 
 SubnetPtr
@@ -521,16 +439,17 @@ SubnetConfigParser::parse(ConstElementPtr subnet) {
     return (subnet_);
 }
 
-Subnet::HRMode
+Network::HRMode
 SubnetConfigParser::hrModeFromText(const std::string& txt) {
     if ( (txt.compare("disabled") == 0) ||
          (txt.compare("off") == 0) )  {
-        return (Subnet::HR_DISABLED);
+        return (Network::HR_DISABLED);
     } else if (txt.compare("out-of-pool") == 0) {
-        return (Subnet::HR_OUT_OF_POOL);
+        return (Network::HR_OUT_OF_POOL);
     } else if (txt.compare("all") == 0) {
-        return (Subnet::HR_ALL);
+        return (Network::HR_ALL);
     } else {
+        // Should never happen...
         isc_throw(BadValue, "Can't convert '" << txt
                   << "' into any valid reservation-mode values");
     }
@@ -585,47 +504,17 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
                       ex.what() << " (" << params->getPosition() << ")");
         }
     }
-
-    // Now configure parameters that are common for v4 and v6:
-
-    // Get interface name. If it is defined, then the subnet is available
-    // directly over specified network interface.
-    std::string iface = getString(params, "interface");
-    if (!iface.empty()) {
-        if (!IfaceMgr::instance().getIface(iface)) {
-            ConstElementPtr error = params->get("interface");
-            isc_throw(DhcpConfigError, "Specified network interface name " << iface
-                      << " for subnet " << subnet_->toText()
-                      << " is not present in the system ("
-                      << error->getPosition() << ")");
+    // If there's user-context specified, store it.
+    ConstElementPtr user_context = params->get("user-context");
+    if (user_context) {
+        // The grammar accepts only maps but still check it.
+        if (user_context->getType() != Element::map) {
+            isc_throw(isc::dhcp::DhcpConfigError, "User context has to be a map ("
+                      << user_context->getPosition() << ")");
         }
-
-        subnet_->setIface(iface);
+        subnet_->setContext(user_context);
     }
 
-    // Let's set host reservation mode. If not specified, the default value of
-    // all will be used.
-    try {
-        std::string hr_mode = getString(params, "reservation-mode");
-        subnet_->setHostReservationMode(hrModeFromText(hr_mode));
-    } catch (const BadValue& ex) { 
-       isc_throw(DhcpConfigError, "Failed to process specified value "
-                  " of reservation-mode parameter: " << ex.what()
-                  << "(" << getPosition("reservation-mode", params) << ")");
-    }
-
-    // Try setting up client class.
-    string client_class = getString(params, "client-class");
-    if (!client_class.empty()) {
-        subnet_->allowClientClass(client_class);
-    }
-
-    // Here globally defined options were merged to the subnet specific
-    // options but this is no longer the case (they have a different
-    // and not consecutive priority).
-
-    // Copy options to the subnet configuration.
-    options_->copyTo(*subnet_->getCfgOption());
 }
 
 //****************************** Subnet4ConfigParser *************************
@@ -646,6 +535,7 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
     SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
     if (!generic) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError,
                   "Failed to create an IPv4 subnet (" <<
                   subnet->getPosition() << ")");
@@ -739,6 +629,64 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                   << next_server << "(" << pos << ")");
     }
 
+    // Set server-hostname.
+    std::string sname = getString(params, "server-hostname");
+    if (!sname.empty()) {
+        if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
+            ConstElementPtr error = params->get("server-hostname");
+            isc_throw(DhcpConfigError, "server-hostname must be at most "
+                      << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
+                      << sname.length() << " ("
+                      << error->getPosition() << ")");
+        }
+        subnet4->setSname(sname);
+    }
+
+    // Set boot-file-name.
+    std::string filename =getString(params, "boot-file-name");
+    if (!filename.empty()) {
+        if (filename.length() > Pkt4::MAX_FILE_LEN) {
+            ConstElementPtr error = params->get("boot-file-name");
+            isc_throw(DhcpConfigError, "boot-file-name must be at most "
+                      << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
+                      << filename.length() << " ("
+                      << error->getPosition() << ")");
+        }
+        subnet4->setFilename(filename);
+    }
+
+    // Get interface name. If it is defined, then the subnet is available
+    // directly over specified network interface.
+    std::string iface = getString(params, "interface");
+    if (!iface.empty()) {
+        if (!IfaceMgr::instance().getIface(iface)) {
+            ConstElementPtr error = params->get("interface");
+            isc_throw(DhcpConfigError, "Specified network interface name " << iface
+                      << " for subnet " << subnet4->toText()
+                      << " is not present in the system ("
+                      << error->getPosition() << ")");
+        }
+
+        subnet4->setIface(iface);
+    }
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    try {
+        std::string hr_mode = getString(params, "reservation-mode");
+        subnet4->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) { 
+       isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << "(" << getPosition("reservation-mode", params) << ")");
+    }
+
+    // Try setting up client class.
+    string client_class = getString(params, "client-class");
+    if (!client_class.empty()) {
+        subnet4->allowClientClass(client_class);
+    }
+
     // 4o6 specific parameter: 4o6-interface. If not explicitly specified,
     // it will have the default value of "".
     string iface4o6 = getString(params, "4o6-interface");
@@ -781,6 +729,13 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
+
+    // Here globally defined options were merged to the subnet specific
+    // options but this is no longer the case (they have a different
+    // and not consecutive priority).
+
+    // Copy options to the subnet configuration.
+    options_->copyTo(*subnet4->getCfgOption());
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -808,6 +763,28 @@ Subnets4ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) 
     }
     return (cnt);
 }
+
+size_t
+Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
+                                data::ConstElementPtr subnets_list) {
+    size_t cnt = 0;
+    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+        Subnet4ConfigParser parser;
+        Subnet4Ptr subnet = parser.parse(subnet_json);
+        if (subnet) {
+            try {
+                subnets.push_back(subnet);
+                ++cnt;
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet_json->getPosition() << ")");
+            }
+        }
+    }
+    return (cnt);
+}
+
 
 //**************************** Pool6Parser *********************************
 
@@ -890,7 +867,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
     }
 
     if (user_context_) {
-        pool_->setUserContext(user_context_);
+        pool_->setContext(user_context_);
     }
 
     // Add the local pool to the external storage ptr.
@@ -931,6 +908,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     SubnetPtr generic = SubnetConfigParser::parse(subnet);
 
     if (!generic) {
+        // Sanity check: not supposed to fail.
         isc_throw(DhcpConfigError,
                   "Failed to create an IPv6 subnet (" <<
                   subnet->getPosition() << ")");
@@ -963,6 +941,7 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     return (sn6ptr);
 }
 
+// Unused?
 void
 Subnet6ConfigParser::duplicate_option_warning(uint32_t code,
                                               asiolink::IOAddress& addr) {
@@ -1034,8 +1013,42 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet6->setInterfaceId(opt);
     }
 
+    // Get interface name. If it is defined, then the subnet is available
+    // directly over specified network interface.
+    if (!iface.empty()) {
+        if (!IfaceMgr::instance().getIface(iface)) {
+            ConstElementPtr error = params->get("interface");
+            isc_throw(DhcpConfigError, "Specified network interface name " << iface
+                      << " for subnet " << subnet6->toText()
+                      << " is not present in the system ("
+                      << error->getPosition() << ")");
+        }
+
+        subnet6->setIface(iface);
+    }
+
+    // Let's set host reservation mode. If not specified, the default value of
+    // all will be used.
+    try {
+        std::string hr_mode = getString(params, "reservation-mode");
+        subnet6->setHostReservationMode(hrModeFromText(hr_mode));
+    } catch (const BadValue& ex) { 
+       isc_throw(DhcpConfigError, "Failed to process specified value "
+                  " of reservation-mode parameter: " << ex.what()
+                  << "(" << getPosition("reservation-mode", params) << ")");
+    }
+
+    // Try setting up client class.
+    string client_class = getString(params, "client-class");
+    if (!client_class.empty()) {
+        subnet6->allowClientClass(client_class);
+    }
+
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
+
+    // Copy options to the subnet configuration.
+    options_->copyTo(*subnet6->getCfgOption());
 }
 
 //**************************** Subnet6ListConfigParser ********************
@@ -1054,6 +1067,25 @@ Subnets6ListConfigParser::parse(SrvConfigPtr cfg, ConstElementPtr subnets_list) 
         try {
             cfg->getCfgSubnets6()->add(subnet);
             cnt++;
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << subnet_json->getPosition() << ")");
+        }
+    }
+    return (cnt);
+}
+
+size_t
+Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
+                                ConstElementPtr subnets_list) {
+    size_t cnt = 0;
+    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+
+        Subnet6ConfigParser parser;
+        Subnet6Ptr subnet = parser.parse(subnet_json);
+        try {
+            subnets.push_back(subnet);
+            ++cnt;
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << subnet_json->getPosition() << ")");

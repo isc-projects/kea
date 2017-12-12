@@ -764,6 +764,25 @@ private:
     /// @param classes a reference to added class names for logging
     void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
 
+    /// @brief Update FQDN based on the reservations in the current subnet.
+    ///
+    /// When shared networks are in use the allocation engine may switch to
+    /// a different subnet than originally selected. If this new subnet has
+    /// hostname reservations there is a need to update the FQDN option
+    /// value.
+    ///
+    /// This method should be called after lease assignments to perform
+    /// such update when required.
+    ///
+    /// @param ctx Client context.
+    /// @param answer Message being sent to a client, which may hold an FQDN
+    /// option to be updated.
+    ///
+    /// @throw isc::Unexpected if specified message is NULL. This is treated
+    /// as a programmatic error.
+    void updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
+                            const Pkt6Ptr& answer);
+
     /// @private
     /// @brief Generate FQDN to be sent to a client if none exists.
     ///

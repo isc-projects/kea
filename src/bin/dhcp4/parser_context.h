@@ -73,6 +73,9 @@ public:
         /// This will parse the input as host-reservation.
         PARSER_HOST_RESERVATION,
 
+        /// This will parse the input option definitions (for tests).
+        PARSER_OPTION_DEFS,
+
         /// This will parse the input as option definition.
         PARSER_OPTION_DEF,
 
@@ -176,6 +179,19 @@ public:
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
 
+    /// @brief Check if a required parameter is present
+    ///
+    /// Check if a required parameter is present in the map at the top
+    /// of the stack and raise an error when it is not.
+    ///
+    /// @param name name of the parameter to check
+    /// @param open_loc location of the opening curly bracket
+    /// @param close_loc ocation of the closing curly bracket
+    /// @throw Dhcp4ParseError
+    void require(const std::string& name,
+                 isc::data::Element::Position open_loc,
+                 isc::data::Element::Position close_loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
@@ -198,6 +214,9 @@ public:
         /// Used while parsing Dhcp4/interfaces/dhcp-socket-type structures.
         DHCP_SOCKET_TYPE,
 
+        /// Used while parsing Dhcp4/interfaces/outbound-interface structures.
+        OUTBOUND_INTERFACE,
+
         /// Used while parsing Dhcp4/lease-database structures.
         LEASE_DATABASE,
 
@@ -215,6 +234,9 @@ public:
 
         /// Used while parsing Dhcp4/Subnet4 structures.
         SUBNET4,
+
+        /// Used while parsing shared-networks structures.
+        SHARED_NETWORK,
 
         /// Used while parsing Dhcp4/Subnet4/reservation-mode.
         RESERVATION_MODE,

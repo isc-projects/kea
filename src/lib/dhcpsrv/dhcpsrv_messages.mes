@@ -55,14 +55,14 @@ This debug message is issued when a subnet is successfully removed from the
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.
 
+% DHCPSRV_CFGMGR_NEW_SUBNET6 a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified subnet.
+
 % DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
 a request for an IPv4 subnet for the specified address, but no such
 subnet exists.
-
-% DHCPSRV_CFGMGR_NEW_SUBNET6 a new subnet has been added to configuration: %1
-This is an informational message reporting that the configuration has
-been extended to include the specified subnet.
 
 % DHCPSRV_CFGMGR_NO_SUBNET6 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
@@ -584,7 +584,6 @@ command.
 This informational message is printed when removal of all leases from
 a specified IPv6 subnet has finished. The number of removed leases is
 printed.
-
 
 % DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated
 A warning message issued when the current configuration indicates that multiple
