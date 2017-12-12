@@ -25,6 +25,8 @@ SrvConfig::SrvConfig()
     : sequence_(0), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
+      cfg_shared_networks4_(new CfgSharedNetworks4()),
+      cfg_shared_networks6_(new CfgSharedNetworks6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       cfg_db_access_(new CfgDbAccess()),
@@ -39,6 +41,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
     : sequence_(sequence), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
+      cfg_shared_networks4_(new CfgSharedNetworks4()),
+      cfg_shared_networks6_(new CfgSharedNetworks6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       cfg_db_access_(new CfgDbAccess()),
@@ -228,14 +232,22 @@ SrvConfig::toElement() const {
     dhcp->set("option-def", cfg_option_def_->toElement());
     // Set option-data
     dhcp->set("option-data", cfg_option_->toElement());
-    // Set subnets
+
+    // Set subnets and shared networks.
     ConstElementPtr subnets;
     if (family == AF_INET) {
         subnets = cfg_subnets4_->toElement();
         dhcp->set("subnet4", subnets);
+
+        ConstElementPtr shared_networks = cfg_shared_networks4_->toElement();
+        dhcp->set("shared-networks", shared_networks);
+
     } else {
         subnets = cfg_subnets6_->toElement();
         dhcp->set("subnet6", subnets);
+
+        ConstElementPtr shared_networks = cfg_shared_networks6_->toElement();
+        dhcp->set("shared-networks", shared_networks);
     }
     // Insert reservations
     CfgHostsList resv_list;

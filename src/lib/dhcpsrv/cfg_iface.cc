@@ -22,7 +22,8 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false),
+      outbound_iface_(SAME_AS_INBOUND) {
 }
 
 void
@@ -226,6 +227,43 @@ CfgIface::textToSocketType(const std::string& socket_type_name) const {
     }
 }
 
+CfgIface::OutboundIface
+CfgIface::getOutboundIface() const {
+    return (outbound_iface_);
+}
+
+std::string
+CfgIface::outboundTypeToText() const {
+    switch (outbound_iface_) {
+    case SAME_AS_INBOUND:
+        return ("same-as-inbound");
+    case USE_ROUTING:
+        return ("use-routing");
+    default:
+        isc_throw(Unexpected, "unsupported outbound-type " << socket_type_);
+    }
+
+}
+
+CfgIface::OutboundIface
+CfgIface::textToOutboundIface(const std::string& txt) {
+    if (txt == "same-as-inbound") {
+        return (SAME_AS_INBOUND);
+
+    } else if (txt == "use-routing") {
+        return (USE_ROUTING);
+
+    } else {
+        isc_throw(BadValue, "unsupported outbound interface type '"
+                  << txt << "'");
+    }
+}
+
+void
+CfgIface::setOutboundIface(const OutboundIface& outbound_iface) {
+    outbound_iface_ = outbound_iface;
+}
+
 void
 CfgIface::use(const uint16_t family, const std::string& iface_name) {
     // The interface name specified may have two formats:
@@ -423,6 +461,10 @@ CfgIface::toElement() const {
     // @todo emit raw if and only if DHCPv4
     if (socket_type_ != SOCKET_RAW) {
         result->set("dhcp-socket-type", Element::create(std::string("udp")));
+    }
+
+    if (outbound_iface_ != SAME_AS_INBOUND) {
+        result->set("outbound-interface", Element::create(outboundTypeToText()));
     }
 
     // Set re-detect

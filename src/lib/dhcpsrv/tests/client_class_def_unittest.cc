@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option_space.h>
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
@@ -43,6 +44,7 @@ TEST(ClientClassDef, construction) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
     EXPECT_EQ(name, cclass->getName());
     ASSERT_FALSE(cclass->getMatchExpr());
+    EXPECT_FALSE(cclass->getCfgOptionDef());
 
     // Verify we get an empty collection of cfg_option
     cfg_option = cclass->getCfgOption();
@@ -164,6 +166,22 @@ TEST(ClientClassDef, copyAndEquality) {
     expr->push_back(token);
     ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_one", expr,
                                                       test_options)));
+    EXPECT_FALSE(cclass->equals(*cclass2));
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
+    // Make a class that with same name, expression and options, but
+    // different option definitions, verify that the equality tools reflect
+    // that the equality tools reflect that the classes are not equal.
+    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef(*cclass)));
+    EXPECT_TRUE(cclass->equals(*cclass2));
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, 43);
+    EXPECT_FALSE(def);
+    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
+    EXPECT_TRUE(def);
+    CfgOptionDefPtr cfg(new CfgOptionDef());
+    ASSERT_NO_THROW(cfg->add(def, DHCP4_OPTION_SPACE));
+    cclass2->setCfgOptionDef(cfg);
     EXPECT_FALSE(cclass->equals(*cclass2));
     EXPECT_FALSE(*cclass == *cclass2);
     EXPECT_TRUE(*cclass != *cclass2);
@@ -320,6 +338,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
     // Let's checks that it doesn't return any nonsense
+    EXPECT_FALSE(cclass->getCfgOptionDef());
     string empty;
     ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
     EXPECT_EQ(empty, cclass->getSname());
