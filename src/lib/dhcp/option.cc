@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <util/io_utilities.h>
 
 #include <iomanip>
+#include <list>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -153,9 +154,11 @@ void Option::unpack(OptionBufferConstIter begin,
 
 void
 Option::unpackOptions(const OptionBuffer& buf) {
+    list<uint16_t> deferred;
     switch (universe_) {
     case V4:
-        LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(), options_);
+        LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(),
+                                options_, deferred);
         return;
     case V6:
         LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_);

@@ -694,6 +694,37 @@ public:
     void evaluate(Pkt& pkt, ValueStack& values);
 };
 
+/// @brief Token that represents an alternative
+///
+/// For example in the sub-expression "ifelse(cond, iftrue, iffalse)"
+/// the boolean "cond" expression is evaluated, if it is true then
+/// the "iftrue" value is returned else the "iffalse" value is returned.
+/// Please note that "iftrue" and "iffalse" must be plain string (vs. boolean)
+/// expressions and they are always evaluated. If you want a similar
+/// operator on boolean expressions it can be built from "and", "or" and
+/// "not" boolean operators.
+class TokenIfElse : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenIfElse() { }
+
+    /// @brief Alternative.
+    ///
+    /// Evaluation does not use packet information, but rather consumes the
+    /// last three results. It does a simple string comparison on the
+    /// condition (third value on the stack) which is required to be
+    /// either "true" or "false", and leaves the second and first
+    /// value if the condition is "true" or "false".
+    ///
+    /// @throw EvalBadStack if there are less than 3 values on stack
+    /// @throw EvalTypeError if the third value (the condition) is not
+    ///        either "true" or "false"
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (two items are removed)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
 /// @brief Token that represents logical negation operator
 ///
 /// For example in the expression "not(option[vendor-class].text == 'MSF')"

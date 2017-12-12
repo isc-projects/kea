@@ -267,6 +267,11 @@ http {
     organization which apply to this setup.</simpara>
   </note>
 
+    <para>When you use an HTTP client without TLS support as <command>
+    kea-shell</command> you can use an HTTP/HTTPS translator such as stunnel
+    in client mode. A sample configuration is provided in the
+    <filename>doc/examples/https/shell/</filename> directory</para>
+
   </section>
 
   <section id="agent-limitations">
@@ -292,7 +297,7 @@ http {
       The CA is started by running its binary and specifying the configuration file
       it should use. For example:
 <screen>
-$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea.conf
+$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 </screen>
     </para>
   </section>

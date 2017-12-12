@@ -1349,7 +1349,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
         while (response.tellp() < long_response_size) {
             std::string partial;
             const unsigned int timeout = 5;
-            ASSERT_TRUE(client->getResponse(partial, 5));
+            ASSERT_TRUE(client->getResponse(partial, timeout));
             response << partial;
         }
 

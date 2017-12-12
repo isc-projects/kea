@@ -279,7 +279,7 @@ TEST_F(PerfPkt6Test, PackTransactionId) {
     ASSERT_LE(offset_transid[0], out_buf.getLength());
 
     // Validate transaction id.
-    EXPECT_EQ(0, memcmp(out_buf_data + offset_transid[0], ref_data, 3));
+    EXPECT_EQ(0, memcmp(ref_data, out_buf_data + offset_transid[0], 3));
 
 
     // Out of bounds transaction id offset.
