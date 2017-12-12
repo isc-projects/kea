@@ -1,8 +1,12 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+// IMPORTANT: the server side of this code MUST NOT be used until
+// it was fixed, cf draft-dupont-dnsop-rfc2845bis-00.txt
+// Note that Kea uses only the client side.
 
 #ifndef TSIG_H
 #define TSIG_H 1
@@ -414,7 +418,7 @@ public:
 protected:
     /// \brief Update internal HMAC state by more data.
     ///
-    /// This is used mostly internaly, when we need to verify a message without
+    /// This is used mostly internally, when we need to verify a message without
     /// TSIG signature in the middle of signed TCP stream. However, it is also
     /// used in tests, so it's protected instead of private, to allow tests
     /// in.

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,7 +98,7 @@ public:
     ///
     /// Returns a callout manager that can be used with this set of loaded
     /// libraries (even if the number of loaded libraries is zero).  This
-    /// method may only be caslled after loadLibraries() has been called.
+    /// method may only be called after loadLibraries() has been called.
     ///
     /// @return Pointer to a callout manager for this set of libraries.
     ///
@@ -139,7 +139,7 @@ public:
     ///
     /// @param libraries List of libraries to validate
     ///
-    /// @return Vector of libraries that faled to validate, or an empty vector
+    /// @return Vector of libraries that failed to validate, or an empty vector
     ///         if all validated.
     static std::vector<std::string>
     validateLibraries(const std::vector<std::string>& libraries);

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,7 +99,53 @@ const char* CONFIGS[] = {
     "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
     "    \"subnet\": \"2001:db8:1::/48\" "
     " } ],"
-    "\"valid-lifetime\": 4000 }"
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2:
+    // - a single subnet
+    // - two global options (one enforced with always-send)
+    "{"
+    "    \"interfaces-config\": { \"interfaces\": [ \"*\" ] }, "
+    "    \"preferred-lifetime\": 3000, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet6\": [ {"
+    "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+    "       \"subnet\": \"2001:db8:1::/48\""
+    "    } ], "
+    "    \"option-data\": ["
+    "    {"
+    "        \"name\": \"dns-servers\", "
+    "        \"data\": \"2001:db8:1234:FFFF::1\""
+    "    }, "
+    "    {"
+    "        \"name\": \"subscriber-id\", "
+    "         \"data\": \"1234\", "
+    "         \"always-send\": true"
+    "    }"
+    "    ]"
+    "}",
+
+    // Configuration 3:
+    // - one subnet with one address pool and one prefix pool
+    // - user-contexts defined in subnet and each pool
+    "{"
+    "    \"subnet6\": [ {"
+    "       \"pools\": [ {"
+    "           \"pool\": \"2001:db8:1::/64\","
+    "           \"user-context\": { \"value\": 42 }"
+    "       } ], "
+    "       \"pd-pools\": [ {"
+    "           \"prefix\": \"2001:db8:abcd::\","
+    "           \"prefix-len\": 48,"
+    "           \"delegated-len\": 64,"
+    "           \"user-context\": { \"type\": \"prefixes\" }"
+    "        } ],"
+    "       \"subnet\": \"2001:db8:1::/48\","
+    "       \"user-context\": { \"secure\": false }"
+    "    } ] "
+    "}"
 };
 
 // This test verifies that incoming SOLICIT can be handled properly when
@@ -276,7 +322,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     case DUID::DUID_LLT: {
         // DUID must contain at least 6 bytes long MAC
         // + 8 bytes of fixed header
-        EXPECT_GE(14, len);
+        EXPECT_GE(len, 14);
 
         uint16_t hw_type = data.readUint16();
         // there's no real way to find out "correct"
@@ -1502,6 +1548,54 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
 }
 
+// Checks effect of persistency (aka always-true) flag on the ORO
+TEST_F(Dhcpv6SrvTest, prlPersistency) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(CONFIGS[2]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Create and add an ORO for another option
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(D6O_SNTP_SERVERS);
+    sol->addOption(oro);
+
+    // Let the server process it and generate a response.
+    Pkt6Ptr response = srv_.processSolicit(sol);
+
+    // The server should add a subscriber-id option
+    ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
+    // But no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding dns-servers
+    sol->delOption(D6O_ORO);
+    oro->addValue(D6O_NAME_SERVERS);
+    sol->addOption(oro);
+
+    // Let the server process it again. This time the name-servers
+    // option should be present.
+    response = srv_.processSolicit(sol);
+
+    // Processing should add a subscriber-id option
+    ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
+    // and now a dns-servers
+    ASSERT_TRUE(response->getOption(D6O_NAME_SERVERS));
+    // and still no sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+}
+
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
 // @todo Uncomment this test as part of #3180 work.
 // Kea code currently fails to handle docsis traffic.
@@ -1647,6 +1741,78 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
 
     // Need to process SOLICIT again after requesting new option.
     adv = srv_.processSolicit(sol);
+    ASSERT_TRUE(adv);
+
+    // Check if there is vendor option response
+    OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis33 = vendor_resp->getOption(33);
+    ASSERT_TRUE(docsis33);
+
+    OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
+    ASSERT_TRUE(config_file);
+    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the persistent options are actually assigned.
+TEST_F(Dhcpv6SrvTest, vendorPersistentOptions) {
+
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-def\": [ {"
+        "        \"name\": \"config-file\","
+        "        \"code\": 33,"
+        "        \"type\": \"string\","
+        "        \"space\": \"vendor-4491\""
+        "     } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"data\": \"normal_erouter_v6.cm\","
+        "          \"always-send\": true"
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+    sol->addOption(vendor);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr adv = srv_.processSolicit(sol);
+
+    // check if we get response at all
     ASSERT_TRUE(adv);
 
     // Check if there is vendor option response
@@ -2030,6 +2196,7 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
         "    } ],"
         "    \"option-data\": [ {"
         "      \"code\": 120,"
+        "      \"csv-format\": false,"
         "      \"data\": \"05\""
         "    } ],"
         "    \"preferred-lifetime\": 3000,"
@@ -2275,6 +2442,44 @@ TEST_F(Dhcpv6SrvTest, tooLongServerId) {
     // responses or not. The goal is to check that the server didn't throw
     // any exceptions.
     EXPECT_NO_THROW(client.doSARR());
+}
+
+// Checks if user-contexts are parsed properly.
+TEST_F(Dhcpv6SrvTest, userContext) {
+
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // This config has one subnet with user-context with one
+    // pool (also with context). Make sure the configuration could be accepted.
+    EXPECT_NO_THROW(configure(CONFIGS[3]));
+
+    // Now make sure the data was not lost.
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet6Collection* subnets = cfg->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Let's get the subnet and check its context.
+    Subnet6Ptr subnet1 = (*subnets)[0];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet1->getContext());
+    EXPECT_EQ("{ \"secure\": false }", subnet1->getContext()->str());
+
+    // Ok, not get the address pool in it and check its context, too.
+    PoolCollection pools = subnet1->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools.size());
+    ASSERT_TRUE(pools[0]);
+    ASSERT_TRUE(pools[0]->getContext());
+    EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
+
+    // Ok, not get the prefix pool in it and check its context, too.
+    pools = subnet1->getPools(Lease::TYPE_PD);
+    ASSERT_EQ(1, pools.size());
+    ASSERT_TRUE(pools[0]);
+    ASSERT_TRUE(pools[0]->getContext());
+    EXPECT_EQ("{ \"type\": \"prefixes\" }", pools[0]->getContext()->str());
 }
 
 

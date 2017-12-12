@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,7 +55,7 @@ TEST(ProtocolUtilTest, checksum) {
     // Let's set it to 2 and see whether it is included in the
     // calculation.
     chksum = ~calcChecksum(hdr, hdr_size, 2);
-    // The checkum value should change.
+    // The checksum value should change.
     EXPECT_EQ(0xb1e4, chksum);
 }
 
@@ -344,7 +344,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     // to the value that we expect to be read from a header since the value
     // read from a header will be IPv4.
     IOAddress src_addr("::1");
-    // Read src address as an array of bytes because it is easely convertible
+    // Read src address as an array of bytes because it is easily convertible
     // to IOAddress object.
     uint8_t src_addr_data[4];
     ASSERT_NO_THROW(

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -390,7 +390,7 @@ TEST_F(MasterLoadTest, loadFromFile) {
     EXPECT_THROW(masterLoad(NULL, origin, zclass, callback), MasterLoadError);
 
     // Non existent file name.  Ditto.
-    EXPECT_THROW(masterLoad(TEST_DATA_BUILDDIR "/notexistent.txt", origin,
+    EXPECT_THROW(masterLoad(TEST_DATA_BUILDDIR "/nonexistent.txt", origin,
                             zclass, callback), MasterLoadError);
 }
 } // end namespace

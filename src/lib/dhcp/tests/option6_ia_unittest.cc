@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ public:
         EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(type, opt->getType());
 
-        EXPECT_EQ(16, outBuf_.getLength()); // lenght(IA_NA) = 16
+        EXPECT_EQ(16, outBuf_.getLength()); // length(IA_NA) = 16
 
         // Check if pack worked properly:
         InputBuffer out(outBuf_.getData(), outBuf_.getLength());

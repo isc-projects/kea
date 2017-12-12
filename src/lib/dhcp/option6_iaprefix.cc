@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -133,7 +133,7 @@ Option6IAPrefix::mask(OptionBuffer::const_iterator begin,
         std::copy(begin, begin + static_cast<uint8_t>(len/8), output_address.begin());
         // The remaining significant bits of the last octet have to be left unchanged,
         // but the remaining bits of this octet must be set to zero. The number of
-        // significant bits is calculated as a reminder from the devision of the
+        // significant bits is calculated as a reminder from the division of the
         // prefix length by 8 (by size of the octet). The number of bits to be set
         // to zero is therefore calculated as: 8 - (len % 8).
         // Next, the mask is created by shifting the 0xFF by the number of bits

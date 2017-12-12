@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,6 +76,9 @@ public:
         /// This will parse the input as host-reservation.
         PARSER_HOST_RESERVATION,
 
+        /// This will parse the input option definitions (for tests).
+        PARSER_OPTION_DEFS,
+
         /// This will parse the input as option definition.
         PARSER_OPTION_DEF,
 
@@ -83,7 +86,10 @@ public:
         PARSER_OPTION_DATA,
 
         /// This will parse the input as hooks-library.
-        PARSER_HOOKS_LIBRARY
+        PARSER_HOOKS_LIBRARY,
+
+        /// This will parse the input as dhcp-ddns. (D2 client config)
+        PARSER_DHCP_DDNS
     } ParserType;
 
     /// @brief Default constructor.
@@ -126,8 +132,8 @@ public:
     /// @param str string to be parsed
     /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
     /// @return Element structure representing parsed text.
-    isc::data::ConstElementPtr parseString(const std::string& str,
-                                           ParserType parser_type);
+    isc::data::ElementPtr parseString(const std::string& str,
+                                      ParserType parser_type);
 
     /// @brief Run the parser on the file specified.
     ///
@@ -139,8 +145,8 @@ public:
     /// @param filename file to be parsed
     /// @param parser_type specifies expected content (usually DHCP6 or generic JSON)
     /// @return Element structure representing parsed text.
-    isc::data::ConstElementPtr parseFile(const std::string& filename,
-                                         ParserType parser_type);
+    isc::data::ElementPtr parseFile(const std::string& filename,
+                                    ParserType parser_type);
 
     /// @brief Error handler
     ///
@@ -176,6 +182,19 @@ public:
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
 
+    /// @brief Check if a required parameter is present
+    ///
+    /// Check if a required parameter is present in the map at the top
+    /// of the stack and raise an error when it is not.
+    ///
+    /// @param name name of the parameter expected to be present
+    /// @param open_loc location of the opening curly bracket
+    /// @param close_loc ocation of the closing curly bracket
+    /// @throw Dhcp6ParseError
+    void require(const std::string& name,
+                 isc::data::Element::Position open_loc,
+                 isc::data::Element::Position close_loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
@@ -187,8 +206,7 @@ public:
         ///< Used while parsing content of Dhcp6.
         DHCP6,
 
-        // not yet DHCP4,
-        // not yet DHCP_DDNS,
+        // not yet Dhcp4, DhcpDdns,
 
         ///< Used while parsing content of Logging
         LOGGING,
@@ -202,6 +220,9 @@ public:
         /// Used while parsing Dhcp6/hosts-database structures.
         HOSTS_DATABASE,
 
+        /// Used while parsing Dhcp6/*-database/type.
+        DATABASE_TYPE,
+
         /// Used while parsing Dhcp6/mac-sources structures.
         MAC_SOURCES,
 
@@ -214,6 +235,12 @@ public:
         /// Used while parsing Dhcp6/Subnet6 structures.
         SUBNET6,
 
+        /// Used while parsing shared-networks structures.
+        SHARED_NETWORK,
+
+        /// Used while parsing Dhcp6/Subnet6/reservation-mode.
+        RESERVATION_MODE,
+
         /// Used while parsing Dhcp6/option-def structures.
         OPTION_DEF,
 
@@ -225,8 +252,14 @@ public:
         /// Used while parsing Dhcp6/client-classes structures.
         CLIENT_CLASSES,
 
+        /// Used while parsing Dhcp6/expired-leases-processing.
+        EXPIRED_LEASES_PROCESSING,
+
         /// Used while parsing Dhcp6/server-id structures.
         SERVER_ID,
+
+        /// Used while parsing Dhcp6/server-id/type structures.
+        DUID_TYPE,
 
         /// Used while parsing Dhcp6/control-socket structures.
         CONTROL_SOCKET,
@@ -250,7 +283,20 @@ public:
         LOGGERS,
 
         /// Used while parsing Logging/loggers/output_options structures.
-        OUTPUT_OPTIONS
+        OUTPUT_OPTIONS,
+
+        /// Used while parsing Dhcp6/dhcp-ddns.
+        DHCP_DDNS,
+
+        /// Used while parsing Dhcp6/dhcp-ddns/ncr-protocol
+        NCR_PROTOCOL,
+
+        /// Used while parsing Dhcp6/dhcp-ddns/ncr-format
+        NCR_FORMAT,
+
+        /// Used while parsing Dhcp6/dhcp-ddns/replace-client-name.
+        REPLACE_CLIENT_NAME
+
     } ParserContext;
 
     /// @brief File name
@@ -303,7 +349,7 @@ public:
     /// @throw isc::Unexpected if unbalanced
     void leave();
 
-    /// @brief Get the syntactix context name
+    /// @brief Get the syntactic context name
     ///
     /// @return printable name of the context.
     const std::string contextName();
@@ -312,7 +358,7 @@ public:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 
-    /// @brief Flag determing parser debugging.
+    /// @brief Flag determining parser debugging.
     bool trace_parsing_;
 
     /// @brief Syntactic context stack
@@ -321,7 +367,7 @@ public:
     /// @brief Common part of parseXXX
     ///
     /// @return Element structure representing parsed text.
-    isc::data::ConstElementPtr parseCommon();
+    isc::data::ElementPtr parseCommon();
 };
 
 }; // end of isc::eval namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,7 +128,7 @@ D2UpdateMessage::fromWire(const void* received_data, size_t bytes_received,
     isc::util::InputBuffer received_data_buffer(received_data, bytes_received);
     message_.fromWire(received_data_buffer);
 
-    // If tsig_contex is not NULL, then we need to verify the message.
+    // If tsig_context is not NULL, then we need to verify the message.
     if (tsig_context) {
         TSIGError error = tsig_context->verify(message_.getTSIGRecord(),
                                                received_data, bytes_received);

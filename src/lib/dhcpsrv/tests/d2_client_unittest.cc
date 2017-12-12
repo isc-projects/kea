@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcpsrv/d2_client_mgr.h>
+#include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -16,6 +17,7 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::test;
 using namespace isc;
 
 namespace {
@@ -120,6 +122,25 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     // Verify that toText called by << operator doesn't bomb.
     ASSERT_NO_THROW(std::cout << "toText test:" << std::endl <<
                     *d2_client_config << std::endl);
+
+    // Verify what toElement returns.
+    std::string expected = "{\n"
+        "\"enable-updates\": true,\n"
+        "\"server-ip\": \"127.0.0.1\",\n"
+        "\"server-port\": 477,\n"
+        "\"sender-ip\": \"127.0.0.1\",\n"
+        "\"sender-port\": 478,\n"
+        "\"max-queue-size\": 2048,\n"
+        "\"ncr-protocol\": \"UDP\",\n"
+        "\"ncr-format\": \"JSON\",\n"
+        "\"always-include-fqdn\": true,\n"
+        "\"override-no-update\": true,\n"
+        "\"override-client-update\": true,\n"
+        "\"replace-client-name\": \"when-present\",\n"
+        "\"generated-prefix\": \"the_prefix\",\n"
+        "\"qualifying-suffix\": \"the.suffix.\"\n"
+        "}\n";
+    runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 
     // Verify that constructor does not allow use of NCR_TCP.
     /// @todo obviously this becomes invalid once TCP is supported.
@@ -349,6 +370,42 @@ TEST(D2ClientMgr, validConfig) {
     EXPECT_NE(*original_config, *updated_config);
 }
 
+/// @brief Checks passing the D2ClientMgr a valid D2 client configuration
+/// using IPv6 service.
+TEST(D2ClientMgr, ipv6Config) {
+    D2ClientMgrPtr d2_client_mgr;
+
+    // Construct the manager and fetch its initial configuration.
+    ASSERT_NO_THROW(d2_client_mgr.reset(new D2ClientMgr()));
+    D2ClientConfigPtr original_config = d2_client_mgr->getD2ClientConfig();
+    ASSERT_TRUE(original_config);
+
+    // Create a new, enabled config.
+    D2ClientConfigPtr new_cfg;
+    ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("::1"), 477,
+                                  isc::asiolink::IOAddress("::1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
+                                  "pre-fix", "suf-fix")));
+
+    // Verify that we can assign a new, non-empty configuration.
+    ASSERT_NO_THROW(d2_client_mgr->setD2ClientConfig(new_cfg));
+
+    // Verify that we can fetch the newly assigned configuration.
+    D2ClientConfigPtr updated_config = d2_client_mgr->getD2ClientConfig();
+    ASSERT_TRUE(updated_config);
+    EXPECT_TRUE(updated_config->getEnableUpdates());
+
+    // Make sure convenience method agrees with the updated configuration.
+    EXPECT_TRUE(d2_client_mgr->ddnsEnabled());
+
+    // Make sure the configuration we fetched is the one we assigned,
+    // and not the original configuration.
+    EXPECT_EQ(*new_cfg, *updated_config);
+    EXPECT_NE(*original_config, *updated_config);
+}
 
 /// @brief Tests that analyzeFqdn detects invalid combination of both the
 /// client S and N flags set to true.
@@ -769,7 +826,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
     // replace-client-name is false, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "", Option4ClientFqdn::PARTIAL));
     response.reset(new Option4ClientFqdn(*request));
@@ -812,7 +869,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
     // replace-client-name is true, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "", Option4ClientFqdn::PARTIAL));
     response.reset(new Option4ClientFqdn(*request));
@@ -822,7 +879,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, response->getDomainNameType());
 
     // replace-client-name is true, client passes in a partial fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "myhost", Option4ClientFqdn::PARTIAL));
     response.reset(new Option4ClientFqdn(*request));
@@ -833,7 +890,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
 
 
     // replace-client-name is true, client passes in a full fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "myhost.example.com.",
                                          Option4ClientFqdn::FULL));
@@ -862,7 +919,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
     // replace-client-name is false, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
 
@@ -902,7 +959,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
     // replace-client-name is true, client passes in empty fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
 
@@ -911,7 +968,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
     EXPECT_EQ(Option6ClientFqdn::PARTIAL, response->getDomainNameType());
 
     // replace-client-name is true, client passes in a partial fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "myhost",
                                         Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
@@ -922,7 +979,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
 
 
     // replace-client-name is true, client passes in a full fqdn
-    // reponse domain should be empty/partial.
+    // response domain should be empty/partial.
     request.reset(new Option6ClientFqdn(0, "myhost.example.com.",
                                         Option6ClientFqdn::FULL));
     response.reset(new Option6ClientFqdn(*request));

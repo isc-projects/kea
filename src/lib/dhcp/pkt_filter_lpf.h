@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ namespace dhcp {
 
 /// @brief Packet handling class using Linux Packet Filtering
 ///
-/// This class provides methods to send and recive DHCPv4 messages using raw
+/// This class provides methods to send and receive DHCPv4 messages using raw
 /// sockets and Linux Packet Filtering. It is used by @c isc::dhcp::IfaceMgr
 /// to send DHCPv4 messages to the hosts which don't have an IPv4 address
 /// assigned yet.

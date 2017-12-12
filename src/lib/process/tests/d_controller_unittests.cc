@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ public:
 };
 
 /// @brief Basic Controller instantiation testing.
-/// Verfies that the controller singleton gets created and that the
+/// Verifies that the controller singleton gets created and that the
 /// basic derivation from the base class is intact.
 TEST_F(DStubControllerTest, basicInstanceTesting) {
     // Verify that the singleton exists and it is the correct type.
@@ -188,8 +188,8 @@ TEST_F(DStubControllerTest, launchNormalShutdown) {
                 elapsed_time.total_milliseconds() <= 2300);
 }
 
-/// @brief Tests launch with an nonexistant configuration file.
-TEST_F(DStubControllerTest, nonexistantConfigFile) {
+/// @brief Tests launch with an non-existing configuration file.
+TEST_F(DStubControllerTest, nonExistingConfigFile) {
     // command line to run standalone
     char* argv[] = { const_cast<char*>("progName"),
                      const_cast<char*>("-c"),
@@ -226,7 +226,7 @@ TEST_F(DStubControllerTest, missingConfigFileArgument) {
 
 /// @brief Tests launch with an operational error during application execution.
 /// This test creates an interval timer to generate a runtime exception during
-/// the process event loop. It launches wih a valid, stand-alone command line
+/// the process event loop. It launches with a valid, stand-alone command line
 /// and no simulated errors.  Launch should throw ProcessRunError.
 TEST_F(DStubControllerTest, launchRuntimeError) {
     // Use an asiolink IntervalTimer and callback to generate the
@@ -272,75 +272,22 @@ TEST_F(DStubControllerTest, configUpdateTests) {
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
 
+    // Verify that a valid config gets a successful check result.
+    answer = checkConfig(config_set);
+    isc::config::parseAnswer(rcode, answer);
+    EXPECT_EQ(0, rcode);
+
     // Verify that an error in process configure method is handled.
     SimFailure::set(SimFailure::ftProcessConfigure);
     answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
-}
 
-/// @brief Command execution tests.
-/// This really tests just the ability of the handler to invoke the necessary
-/// chain of methods and to handle error conditions.
-/// This test verifies that:
-/// 1. That an unrecognized command is detected and returns a status of
-/// process::COMMAND_INVALID.
-/// 2. Shutdown command is recognized and returns a process::COMMAND_SUCCESS
-/// status.
-/// 3. A valid, custom controller command is recognized a
-/// process::COMMAND_SUCCESS
-/// status.
-/// 4. A valid, custom process command is recognized a
-/// process::COMMAND_SUCCESS status.
-/// 5. That a valid controller command that fails returns a
-/// process::COMMAND_ERROR.
-/// 6. That a valid process command that fails returns a process::COMMAND_ERROR.
-TEST_F(DStubControllerTest, executeCommandTests) {
-    int rcode = -1;
-    isc::data::ConstElementPtr answer;
-    isc::data::ElementPtr arg_set;
-
-    // Initialize the application process.
-    ASSERT_NO_THROW(initProcess());
-    EXPECT_TRUE(checkProcess());
-
-    // Verify that an unknown command returns an process::COMMAND_INVALID
-    // response.
-    std::string bogus_command("bogus");
-    answer = executeCommand(bogus_command, arg_set);
+    // Verify that an error is handled too when the config is checked for.
+    SimFailure::set(SimFailure::ftProcessConfigure);
+    answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_INVALID, rcode);
-
-    // Verify that shutdown command returns process::COMMAND_SUCCESS response.
-    answer = executeCommand(SHUT_DOWN_COMMAND, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_SUCCESS, rcode);
-
-    // Verify that a valid custom controller command returns
-    // process::COMMAND_SUCCESS response.
-    answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_SUCCESS, rcode);
-
-    // Verify that a valid custom process command returns
-    // process::COMMAND_SUCCESS response.
-    answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_SUCCESS, rcode);
-
-    // Verify that a valid custom controller command that fails returns
-    // a process::COMMAND_ERROR.
-    SimFailure::set(SimFailure::ftControllerCommand);
-    answer = executeCommand(DStubController::stub_ctl_command_, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_ERROR, rcode);
-
-    // Verify that a valid custom process command that fails returns
-    // a process::COMMAND_ERROR.
-    SimFailure::set(SimFailure::ftProcessCommand);
-    answer = executeCommand(DStubProcess::stub_proc_command_, arg_set);
-    isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(COMMAND_ERROR, rcode);
+    EXPECT_EQ(1, rcode);
 }
 
 // Tests that registered signals are caught and handled.
@@ -396,6 +343,35 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
     EXPECT_EQ(SIGHUP, signals[0]);
 }
 
+// Tests that the original configuration is retained after a SIGHUP triggered
+// reconfiguration fails due to invalid config content.
+TEST_F(DStubControllerTest, alternateParsing) {
+    controller_->useAlternateParser(true);
+
+    // Setup to raise SIGHUP in 200 ms.
+    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+
+    // Write the config and then run launch() for 500 ms
+    // After startup, which will load the initial configuration this enters
+    // the process's runIO() loop. We will first rewrite the config file.
+    // Next we process the SIGHUP signal which should cause us to reconfigure.
+    time_duration elapsed_time;
+    runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
+
+    // Context is still available post launch. Check to see that our
+    // configuration value is still the original value.
+    std::string  actual_value = "";
+    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
+    EXPECT_EQ("alt value", actual_value);
+
+    // Verify that we saw the signal.
+    std::vector<int>& signals = controller_->getProcessedSignals();
+    ASSERT_EQ(1, signals.size());
+    EXPECT_EQ(SIGHUP, signals[0]);
+}
+
+
+
 // Tests that the original configuration is replaced after a SIGHUP triggered
 // reconfiguration succeeds.
 TEST_F(DStubControllerTest, validConfigReload) {
@@ -440,6 +416,17 @@ TEST_F(DStubControllerTest, sigintShutdown) {
 
     // Duration should be significantly less than our max run time.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
+}
+
+// Verifies that version and extended version information is correct
+TEST_F(DStubControllerTest, getVersion) {
+    std::string text = controller_->getVersion(false);
+    EXPECT_EQ(text,VERSION);
+
+    text = controller_->getVersion(true);
+    EXPECT_NE(std::string::npos, text.find(VERSION));
+    EXPECT_NE(std::string::npos, text.find(EXTENDED_VERSION));
+    EXPECT_NE(std::string::npos, text.find(controller_->getVersionAddendum()));
 }
 
 // Tests that the SIGTERM triggers a normal shutdown.

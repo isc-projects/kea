@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,7 +107,7 @@ may be described by a spec file (also JSON).  This mechanism is subject to
 change, but in the meantime, the spec file describe D2's configuration may be
 found here: @c src/bin/d2/dhcp-ddns.spec
 
-@section d2NCRReceipt Request Reception and Queueing
+@section d2NCRReceipt Request Reception and Queuing
 
 D2 is designed to receive requests from Kea's DHCP servers, asynchronously and
 store them in queue to be processed.  The classes responsible for this are

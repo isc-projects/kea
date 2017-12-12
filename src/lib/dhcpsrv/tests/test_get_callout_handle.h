@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@ namespace test {
 /// ensure that the getCalloutHandle() template function is referred to by
 /// two separate compilation units, and so test that data stored in one unit
 /// can be accessed by another. (This should be the case, but some compilers
-/// mabe be odd when it comes to template instantiation.)
+/// maybe be odd when it comes to template instantiation.)
 ///
 /// @param pktptr Pointer to a Pkt6 object.
 ///

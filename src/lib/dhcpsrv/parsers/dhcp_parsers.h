@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +14,12 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/network.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
-#include <hooks/libinfo.h>
+#include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/srv_config.h>
+#include <cc/simple_parser.h>
 #include <exceptions/exceptions.h>
 #include <util/optional_value.h>
 
@@ -57,7 +60,7 @@ public:
     /// otherwise its data value and the position will be updated with the
     /// given values.
     ///
-    /// @param name is the name of the paramater to store.
+    /// @param name is the name of the parameter to store.
     /// @param value is the data value to store.
     /// @param position is the position of the data element within a
     /// configuration string (file).
@@ -73,7 +76,7 @@ public:
     /// @param name is the name of the parameter for which the data
     /// value is desired.
     ///
-    /// @return The paramater's data value of type @c ValueType.
+    /// @return The parameter's data value of type @c ValueType.
     /// @throw DhcpConfigError if the parameter is not found.
     ValueType getParam(const std::string& name) const {
         typename std::map<std::string, ValueType>::const_iterator param
@@ -122,7 +125,7 @@ public:
     /// value is desired.
     /// @param default_value value to use the default
     ///
-    /// @return The paramater's data value of type @c ValueType.
+    /// @return The parameter's data value of type @c ValueType.
     ValueType getOptionalParam(const std::string& name,
                                const ValueType& default_value) const {
         typename std::map<std::string, ValueType>::const_iterator param
@@ -140,7 +143,7 @@ public:
     /// Deletes the entry for the given parameter from the store if it
     /// exists.
     ///
-    /// @param name is the name of the paramater to delete.
+    /// @param name is the name of the parameter to delete.
     void delParam(const std::string& name) {
         values_.erase(name);
         positions_.erase(name);
@@ -166,6 +169,8 @@ private:
 
 };
 
+/// @brief Combination of parameter name and configuration contents
+typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
 
 /// @brief a collection of elements that store uint32 values
 typedef ValueStorage<uint32_t> Uint32Storage;
@@ -179,598 +184,57 @@ typedef boost::shared_ptr<StringStorage> StringStoragePtr;
 typedef ValueStorage<bool> BooleanStorage;
 typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
 
-/// @brief Container for the current parsing context. It provides a
-/// single enclosure for the storage of configuration parameters,
-/// options, option definitions, and other context specific information
-/// that needs to be accessible throughout the parsing and parsing
-/// constructs.
-class ParserContext {
-public:
-    /// @brief Constructor
-    ///
-    /// @param universe is the Option::Universe value of this
-    /// context.
-    ParserContext(Option::Universe universe);
-
-    /// @brief Copy constructor
-    ParserContext(const ParserContext& rhs);
-
-    /// @brief Storage for boolean parameters.
-    BooleanStoragePtr boolean_values_;
-
-    /// @brief Storage for uint32 parameters.
-    Uint32StoragePtr uint32_values_;
-
-    /// @brief Storage for string parameters.
-    StringStoragePtr string_values_;
-
-    /// @brief Hooks libraries pointer.
-    ///
-    /// The hooks libraries information is a vector of strings, each containing
-    /// the name of a library.  Hooks libraries should only be reloaded if the
-    /// list of names has changed, so the list of current DHCP parameters
-    /// (in isc::dhcp::CfgMgr) contains an indication as to whether the list has
-    /// altered.  This indication is implemented by storing a pointer to the
-    /// list of library names which is cleared when the libraries are loaded.
-    /// So either the pointer is null (meaning don't reload the libraries and
-    /// the list of current names can be obtained from the HooksManager) or it
-    /// is non-null (this is the new list of names, reload the libraries when
-    /// possible).
-    isc::hooks::HookLibsCollectionPtr hooks_libraries_;
-
-    /// @brief The parsing universe of this context.
-    Option::Universe universe_;
-
-    /// @brief Assignment operator
-    ParserContext& operator=(const ParserContext& rhs);
-
-    /// @brief Copy the context fields.
-    ///
-    /// This class method initializes the context data by copying the data
-    /// stored in the context instance provided as an argument. Note that
-    /// this function will also handle copying the NULL pointers.
-    ///
-    /// @param ctx context to be copied.
-    void copyContext(const ParserContext& ctx);
-
-    template<typename T>
-    void copyContextPointer(const boost::shared_ptr<T>& source_ptr,
-                            boost::shared_ptr<T>& dest_ptr);
-};
-
-/// @brief Pointer to various parser context.
-typedef boost::shared_ptr<ParserContext> ParserContextPtr;
-
-/// @brief Simple data-type parser template class
-///
-/// This is the template class for simple data-type parsers. It supports
-/// parsing a configuration parameter with specific data-type for its
-/// possible values. It provides a common constructor, commit, and templated
-/// data storage.  The "build" method implementation must be provided by a
-/// declaring type.
-/// @param ValueType is the data type of the configuration paramater value
-/// the parser should handle.
-template<typename ValueType>
-class ValueParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param param_name name of the parameter.
-    /// @param storage is a pointer to the storage container where the parsed
-    /// value be stored upon commit.
-    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
-    /// name is empty.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    ValueParser(const std::string& param_name,
-        boost::shared_ptr<ValueStorage<ValueType> > storage)
-        : storage_(storage), param_name_(param_name), value_(), pos_() {
-        // Empty parameter name is invalid.
-        if (param_name_.empty()) {
-            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-                << "empty parameter name provided");
-        }
-
-        // NUll storage is invalid.
-        if (!storage_) {
-            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-                << "storage may not be NULL");
-        }
-    }
-
-    /// @brief Parse a given element into a value of type @c ValueType
-    ///
-    /// @param value a value to be parsed.
-    ///
-    /// @throw isc::BadValue Typically the implementing type will throw
-    /// a BadValue exception when given an invalid Element to parse.
-    void build(isc::data::ConstElementPtr value);
-
-    /// @brief Put a parsed value to the storage.
-    void commit() {
-        // If a given parameter already exists in the storage we override
-        // its value. If it doesn't we insert a new element.
-        storage_->setParam(param_name_, value_, pos_);
-    }
-
-private:
-
-    /// @brief Performs operations common for all specializations of the
-    /// @c build function.
-    ///
-    /// This method should be called by all specializations of the @c build
-    /// method.
-    ///
-    /// @param value a value being parsed.
-    void buildCommon(isc::data::ConstElementPtr value) {
-        // Remember position of the data element.
-        pos_ = value->getPosition();
-    }
-
-    /// Pointer to the storage where committed value is stored.
-    boost::shared_ptr<ValueStorage<ValueType> > storage_;
-
-    /// Name of the parameter which value is parsed with this parser.
-    std::string param_name_;
-
-    /// Parsed value.
-    ValueType value_;
-
-    data::Element::Position pos_;
-};
-
-/// @brief typedefs for simple data type parsers
-typedef ValueParser<bool> BooleanParser;
-typedef ValueParser<uint32_t> Uint32Parser;
-typedef ValueParser<std::string> StringParser;
-
-/// @brief a dummy configuration parser
-///
-/// It is a debugging parser. It does not configure anything,
-/// will accept any configuration and will just print it out
-/// on commit. Useful for debugging existing configurations and
-/// adding new ones.
-class DebugParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @param param_name name of the parsed parameter
-    DebugParser(const std::string& param_name);
-
-    /// @brief builds parameter value
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @param new_config pointer to the new configuration
-    virtual void build(isc::data::ConstElementPtr new_config);
-
-    /// @brief pretends to apply the configuration
-    ///
-    /// This is a method required by base class. It pretends to apply the
-    /// configuration, but in fact it only prints the parameter out.
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    virtual void commit();
-
-private:
-    /// name of the parsed parameter
-    std::string param_name_;
-
-    /// pointer to the actual value of the parameter
-    isc::data::ConstElementPtr value_;
-
-};
-
-/// @brief parser for MAC/hardware aquisition sources
+/// @brief parser for MAC/hardware acquisition sources
 ///
 /// This parser handles Dhcp6/mac-sources entry.
-/// It contains a list of MAC/hardware aquisition source, i.e. methods how
+/// It contains a list of MAC/hardware acquisition source, i.e. methods how
 /// MAC address can possibly by obtained in DHCPv6. For a currently supported
 /// methods, see @ref isc::dhcp::Pkt::getMAC.
-class MACSourcesListConfigParser : public DhcpConfigParser {
+class MACSourcesListConfigParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "mac-sources" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed
-    /// @param global_context Global parser context.
-    /// @throw BadValue if supplied parameter name is not "mac-sources"
-    MACSourcesListConfigParser(const std::string& param_name,
-                               ParserContextPtr global_context);
-
     /// @brief parses parameters value
     ///
     /// Parses configuration entry (list of sources) and adds each element
     /// to the sources list.
     ///
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-private:
-
-    // Parsed parameter name
-    std::string param_name_;
-
-    /// Global parser context.
-    ParserContextPtr global_context_;
+    /// @param mac_sources parsed sources will be stored here
+    void parse(CfgMACSource& mac_sources, isc::data::ConstElementPtr value);
 };
 
 /// @brief Parser for the control-socket structure
 ///
 /// It does not parse anything, simply stores the element in
 /// the staging config.
-class ControlSocketParser : public DhcpConfigParser {
+class ControlSocketParser : public isc::data::SimpleParser {
 public:
-
-    ControlSocketParser(const std::string& param_name);
-
-    /// @brief Stores contents of the control-socket map in the staging config.
+    /// @brief "Parses" control-socket structure
     ///
+    /// Since the SrvConfig structure takes the socket definition
+    /// as ConstElementPtr, there's really nothing to parse here.
+    /// It only does basic sanity checks and throws DhcpConfigError
+    /// if the value is null or is not a map.
+    ///
+    /// @param srv_cfg parsed values will be stored here
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Does nothing.
-    virtual void commit();
+    void parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value);
 };
 
-/// @brief Parser for hooks library list
-///
-/// This parser handles the list of hooks libraries.  This is an optional list,
-/// which may be empty.
-///
-/// However, the parser does more than just check the list of library names.
-/// It does two other things:
-///
-/// -# The problem faced with the hooks libraries is that we wish to avoid
-/// reloading the libraries if they have not changed.  (This would cause the
-/// "unload" and "load" methods to run.  Although libraries should be written
-/// to cope with this, it is feasible that such an action may be constly in
-/// terms of time and resources, or may cause side effects such as clearning
-/// an internal cache.)  To this end, the parser also checks the list against
-/// the list of libraries current loaded and notes if there are changes.
-/// -# If there are, the parser validates the libraries; it opens them and
-/// checks that the "version" function exists and returns the correct value.
-///
-/// Only if the library list has changed and the libraries are valid will the
-/// change be applied.
-class HooksLibrariesParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "hooks-libraries" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed.
-    ///
-    /// @throw BadValue if supplied parameter name is not "hooks-libraries"
-    HooksLibrariesParser(const std::string& param_name);
-
-    /// @brief Parses parameters value
-    ///
-    /// Parses configuration entry (list of parameters) and adds each element
-    /// to the hooks libraries list.  The  method also checks whether the
-    /// list of libraries is the same as that already loaded.  If not, it
-    /// checks each of the libraries in the list for validity (they exist and
-    /// have a "version" function that returns the correct value).
-    ///
-    /// The syntax for specifying hooks libraries allow for library-specific
-    /// parameters to be specified along with the library, e.g.
-    ///
-    /// @code
-    ///      "hooks-libraries": [
-    ///          {
-    ///              "library": "hook-lib-1.so",
-    ///              "parameters": {
-    ///                  "alpha": "a string",
-    ///                  "beta": 42
-    ///              }
-    ///          },
-    ///          :
-    ///      ]
-    /// @endcode
-    ///
-    /// As Kea has not yet implemented parameters, the parsing code only checks
-    /// that:
-    ///
-    /// -# Each element in the hooks-libraries list is a map
-    /// -# The map contains an element "library" whose value is a string: all
-    ///    other elements in the map are ignored.
-    ///
-    /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value);
-
-    /// @brief Commits hooks libraries data
-    ///
-    /// Providing that the specified libraries are valid and are different
-    /// to those already loaded, this method loads the new set of libraries
-    /// (and unloads the existing set).
-    virtual void commit();
-
-    /// @brief Returns list of parsed libraries
-    ///
-    /// Principally for testing, this returns the list of libraries as well as
-    /// an indication as to whether the list is different from the list of
-    /// libraries already loaded.
-    ///
-    /// @param [out] libraries List of libraries that were specified in the
-    ///        new configuration.
-    /// @param [out] changed true if the list is different from that currently
-    ///        loaded.
-    void getLibraries(isc::hooks::HookLibsCollection& libraries, bool& changed);
-
-private:
-    /// List of hooks libraries with their configuration parameters
-    isc::hooks::HookLibsCollection libraries_;
-
-    /// Indicator flagging that the list of libraries has changed.
-    bool changed_;
-};
-
-/// @brief Parser for option data value.
-///
-/// This parser parses configuration entries that specify value of
-/// a single option. These entries include option name, option code
-/// and data carried by the option. The option data can be specified
-/// in one of the two available formats: binary value represented as
-/// a string of hexadecimal digits or a list of comma separated values.
-/// The format being used is controlled by csv-format configuration
-/// parameter. When setting this value to True, the latter format is
-/// used. The subsequent values in the CSV format apply to relevant
-/// option data fields in the configured option. For example the
-/// configuration: "data" : "192.168.2.0, 56, hello world" can be
-/// used to set values for the option comprising IPv4 address,
-/// integer and string data field. Note that order matters. If the
-/// order of values does not match the order of data fields within
-/// an option the configuration will not be accepted. If parsing
-/// is successful then an instance of an option is created and
-/// added to the storage provided by the calling class.
-class OptionDataParser : public DhcpConfigParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param [out] cfg Pointer to the configuration object where parsed option
-    /// should be stored or NULL if this is a global option.
-    /// @param address_family Address family: @c AF_INET or @c AF_INET6.
-    /// @throw isc::dhcp::DhcpConfigError if options or global_context are null.
-    OptionDataParser(const std::string& dummy, const CfgOptionPtr& cfg,
-                     const uint16_t address_family);
-
-    /// @brief Parses the single option data.
-    ///
-    /// This method parses the data of a single option from the configuration.
-    /// The option data includes option name, option code and data being
-    /// carried by this option. Eventually it creates the instance of the
-    /// option and adds it to the Configuration Manager.
-    ///
-    /// @param option_data_entries collection of entries that define value
-    /// for a particular option.
-    /// @throw DhcpConfigError if invalid parameter specified in
-    /// the configuration.
-    /// @throw isc::InvalidOperation if failed to set storage prior to
-    /// calling build.
-    virtual void build(isc::data::ConstElementPtr option_data_entries);
-
-    /// @brief Does nothing.
-    virtual void commit();
-
-    /// @brief virtual destructor to ensure orderly destruction of derivations.
-    virtual ~OptionDataParser(){};
-private:
-
-    /// @brief Finds an option definition within an option space
-    ///
-    /// Given an option space and an option code, find the correpsonding
-    /// option defintion within the option defintion storage.
-    ///
-    /// @param option_space name of the parameter option space
-    /// @param search_key an option code or name to be used to lookup the
-    /// option definition.
-    /// @tparam A numeric type for searching using an option code or the
-    /// string for searching using the option name.
-    ///
-    /// @return OptionDefintionPtr of the option defintion or an
-    /// empty OptionDefinitionPtr if not found.
-    /// @throw DhcpConfigError if the option space requested is not valid
-    /// for this server.
-    template<typename SearchKey>
-    OptionDefinitionPtr findOptionDefinition(const std::string& option_space,
-                                             const SearchKey& search_key) const;
-
-    /// @brief Create option instance.
-    ///
-    /// Creates an instance of an option and adds it to the provided
-    /// options storage. If the option data parsed by \ref build function
-    /// are invalid or insufficient this function emits an exception.
-    ///
-    /// @warning this function does not check if options_ storage pointer
-    /// is intitialized but this check is not needed here because it is done
-    /// in the \ref build function.
-    ///
-    /// @param option_data An element holding data for a single option being
-    /// created.
-    ///
-    /// @throw DhcpConfigError if parameters provided in the configuration
-    /// are invalid.
-    void createOption(isc::data::ConstElementPtr option_data);
-
-    /// @brief Retrieves parsed option code as an optional value.
-    ///
-    /// @param parent A data element holding full option data configuration.
-    /// It is used here to log a position if the element holding a code
-    /// is not specified and its position is therefore unavailable.
-    ///
-    /// @return Option code, possibly unspecified.
-    /// @throw DhcpConfigError if option code is invalid.
-    util::OptionalValue<uint32_t>
-    extractCode(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves parsed option name as an optional value.
-    ///
-    /// @param parent A data element holding full option data configuration.
-    /// It is used here to log a position if the element holding a name
-    /// is not specified and its position is therefore unavailable.
-    ///
-    /// @return Option name, possibly unspecified.
-    /// @throw DhcpConfigError if option name is invalid.
-    util::OptionalValue<std::string>
-    extractName(data::ConstElementPtr parent) const;
-
-    /// @brief Retrieves csv-format parameter as an optional value.
-    ///
-    /// @return Value of the csv-format parameter, possibly unspecified.
-    util::OptionalValue<bool> extractCSVFormat() const;
-
-    /// @brief Retrieves option data as a string.
-    ///
-    /// @return Option data as a string. It will return empty string if
-    /// option data is unspecified.
-    std::string extractData() const;
-
-    /// @brief Retrieves option space name.
-    ///
-    /// If option space name is not specified in the configuration the
-    /// 'dhcp4' or 'dhcp6' option space name is returned, depending on
-    /// the universe specified in the parser context.
-    ///
-    /// @return Option space name.
-    std::string extractSpace() const;
-
-    /// Storage for boolean values.
-    BooleanStoragePtr boolean_values_;
-
-    /// Storage for string values (e.g. option name or data).
-    StringStoragePtr string_values_;
-
-    /// Storage for uint32 values (e.g. option code).
-    Uint32StoragePtr uint32_values_;
-
-    /// Option descriptor holds newly configured option.
-    OptionDescriptor option_descriptor_;
-
-    /// Option space name where the option belongs to.
-    std::string option_space_;
-
-    /// @brief Configuration holding option being parsed or NULL if the option
-    /// is global.
-    CfgOptionPtr cfg_;
-
-    /// @brief Address family: @c AF_INET or @c AF_INET6.
-    uint16_t address_family_;
-};
-
-///@brief Function pointer for OptionDataParser factory methods
-typedef OptionDataParser *OptionDataParserFactory(const std::string&,
-                     OptionStoragePtr options, ParserContextPtr global_context);
-
-/// @brief Parser for option data values within a subnet.
-///
-/// This parser iterates over all entries that define options
-/// data for a particular subnet and creates a collection of options.
-/// If parsing is successful, all these options are added to the Subnet
-/// object.
-class OptionDataListParser : public DhcpConfigParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy nominally would be param name, this is always ignored.
-    /// @param [out] cfg Pointer to the configuration object where options
-    /// should be stored or NULL if this is global option scope.
-    /// @param address_family Address family: @c AF_INET or AF_INET6
-    OptionDataListParser(const std::string& dummy, const CfgOptionPtr& cfg,
-                         const uint16_t address_family);
-
-    /// @brief Parses entries that define options' data for a subnet.
-    ///
-    /// This method iterates over all entries that define option data
-    /// for options within a single subnet and creates options' instances.
-    ///
-    /// @param option_data_list pointer to a list of options' data sets.
-    /// @throw DhcpConfigError if option parsing failed.
-    void build(isc::data::ConstElementPtr option_data_list);
-
-    /// @brief Commit all option values.
-    ///
-    /// This function invokes commit for all option values
-    /// and append suboptions to the top-level options.
-    void commit();
-
-private:
-
-    /// Collection of parsers;
-    ParserCollection parsers_;
-
-    /// @brief Pointer to a configuration where options are stored.
-    CfgOptionPtr cfg_;
-
-    /// @brief Address family: @c AF_INET or @c AF_INET6
-    uint16_t address_family_;
-
-};
-
-typedef boost::shared_ptr<OptionDataListParser> OptionDataListParserPtr;
-
+typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionTuple;
 
 /// @brief Parser for a single option definition.
 ///
 /// This parser creates an instance of a single option definition.
-class OptionDefParser : public DhcpConfigParser {
+class OptionDefParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    OptionDefParser(const std::string& dummy, ParserContextPtr global_context);
-
     /// @brief Parses an entry that describes single option definition.
     ///
     /// @param option_def a configuration entry to be parsed.
+    /// @return tuple (option definition, option space) of the parsed structure
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
-    void build(isc::data::ConstElementPtr option_def);
-
-    /// @brief Stores the parsed option definition in a storage.
-    void commit();
-
-private:
-
-    /// @brief Create option definition from the parsed parameters.
-    ///
-    /// @param option_def_element A data element holding the configuration
-    /// for an option definition.
-    void createOptionDef(isc::data::ConstElementPtr option_def_element);
-
-    /// Instance of option definition being created by this parser.
-    OptionDefinitionPtr option_definition_;
-
-    /// Name of the space the option definition belongs to.
-    std::string option_space_name_;
-
-    /// Storage for boolean values.
-    BooleanStoragePtr boolean_values_;
-
-    /// Storage for string values.
-    StringStoragePtr string_values_;
-
-    /// Storage for uint32 values.
-    Uint32StoragePtr uint32_values_;
-
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    OptionDefinitionTuple
+    parse(isc::data::ConstElementPtr option_def);
 };
 
 /// @brief Parser for a list of option definitions.
@@ -779,37 +243,17 @@ private:
 /// option definitions and creates instances of these definitions.
 /// If the parsing is successful, the collection of created definitions
 /// is put into the provided storage.
-class OptionDefListParser : public DhcpConfigParser {
+class OptionDefListParser : public isc::data::SimpleParser {
 public:
-    /// @brief Constructor.
+    /// @brief Parses a list of option definitions, create them and store in cfg
     ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param global_context is a pointer to the global context which
-    /// stores global scope parameters, options, option defintions.
-    OptionDefListParser(const std::string& dummy,
-                        ParserContextPtr global_context);
-
-    /// @brief Parse configuration entries.
+    /// This method iterates over def_list, which is a JSON list of option definitions,
+    /// then creates corresponding option definitions and store them in the
+    /// configuration structure.
     ///
-    /// This function parses configuration entries, creates instances
-    /// of option definitions and tries to add them to the Configuration
-    /// Manager.
-    ///
-    /// @param option_def_list pointer to an element that holds entries
-    /// that define option definitions.
-    /// @throw DhcpConfigError if configuration parsing fails.
-    void build(isc::data::ConstElementPtr option_def_list);
-
-    /// @brief Commits option definitions.
-    ///
-    /// Currently this function is no-op, because option definitions are
-    /// added to the Configuration Manager in the @c build method.
-    void commit();
-
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    /// @param def_list JSON list describing option definitions
+    /// @param cfg parsed option definitions will be stored here
+    void parse(CfgOptionDefPtr cfg, isc::data::ConstElementPtr def_list);
 };
 
 /// @brief a collection of pools
@@ -826,32 +270,25 @@ typedef boost::shared_ptr<PoolStorage> PoolStoragePtr;
 /// and stored in chosen PoolStorage container.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[X]/pools[X] structure.
-class PoolParser : public DhcpConfigParser {
+class PoolParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param pools is the storage in which to store the parsed pool
-    /// upon "commit".
-    /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolParser(const std::string& dummy, PoolStoragePtr pools,
-               const uint16_t address_family);
+    /// @brief destructor.
+    virtual ~PoolParser() {
+    }
 
     /// @brief parses the actual structure
     ///
     /// This method parses the actual list of interfaces.
     /// No validation is done at this stage, everything is interpreted as
     /// interface name.
+    /// @param pools is the storage in which to store the parsed pool
     /// @param pool_structure a single entry on a list of pools
+    /// @param address_family AF_INET (for DHCPv4) or AF_INET6 (for DHCPv6).
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    virtual void build(isc::data::ConstElementPtr pool_structure);
-
-    /// @brief Stores the parsed values in a storage provided
-    ///        by an upper level parser.
-    virtual void commit();
+    virtual void parse(PoolStoragePtr pools,
+                       isc::data::ConstElementPtr pool_structure,
+                       const uint16_t address_family);
 
 protected:
     /// @brief Creates a Pool object given a IPv4 prefix and the prefix length.
@@ -861,7 +298,7 @@ protected:
     /// @param ptype is the type of pool to create.
     /// @return returns a PoolPtr to the new Pool object.
     virtual PoolPtr poolMaker(isc::asiolink::IOAddress &addr, uint32_t len,
-                           int32_t ptype=0) = 0;
+                              int32_t ptype = 0) = 0;
 
     /// @brief Creates a Pool object given starting and ending IP addresses.
     ///
@@ -870,23 +307,39 @@ protected:
     /// @param ptype is the type of pool to create (not used by all derivations)
     /// @return returns a PoolPtr to the new Pool object.
     virtual PoolPtr poolMaker(isc::asiolink::IOAddress &min,
-                           isc::asiolink::IOAddress &max, int32_t ptype=0) = 0;
+                              isc::asiolink::IOAddress &max,
+                              int32_t ptype = 0) = 0;
+};
 
-    /// @brief pointer to the actual Pools storage
+/// @brief Parser for IPv4 pool definitions.
+///
+/// This is the IPv4 derivation of the PoolParser class and handles pool
+/// definitions, i.e. a list of entries of one of two syntaxes: min-max and
+/// prefix/len for IPv4 pools. Pool4 objects are created and stored in chosen
+/// PoolStorage container.
+///
+/// It is useful for parsing Dhcp4/subnet4[X]/pool parameters.
+class Pool4Parser : public PoolParser {
+protected:
+    /// @brief Creates a Pool4 object given a IPv4 prefix and the prefix length.
     ///
-    /// That is typically a storage somewhere in Subnet parser
-    /// (an upper level parser).
-    PoolStoragePtr pools_;
+    /// @param addr is the IPv4 prefix of the pool.
+    /// @param len is the prefix length.
+    /// @param ignored dummy parameter to provide symmetry between the
+    /// PoolParser derivations. The V6 derivation requires a third value.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &addr, uint32_t len,
+                       int32_t ignored);
 
-    /// A temporary storage for pools configuration. It is a
-    /// storage where pools are stored by build function.
-    PoolStorage local_pools_;
-
-    /// A storage for pool specific option values.
-    CfgOptionPtr options_;
-
-    /// @brief Address family: AF_INET (for DHCPv4) or AF_INET6 for DHCPv6.
-    uint16_t address_family_;
+    /// @brief Creates a Pool4 object given starting and ending IPv4 addresses.
+    ///
+    /// @param min is the first IPv4 address in the pool.
+    /// @param max is the last IPv4 address in the pool.
+    /// @param ignored dummy parameter to provide symmetry between the
+    /// PoolParser derivations. The V6 derivation requires a third value.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &min, asiolink::IOAddress &max,
+                       int32_t ignored);
 };
 
 /// @brief Parser for a list of pools
@@ -894,104 +347,63 @@ protected:
 /// This parser parses a list pools. Each element on that list gets its own
 /// parser, created with poolParserMaker() method. That method must be specified
 /// for each protocol family (v4 or v6) separately.
-///
-/// This class is not intended to be used directly. Instead, derived classes
-/// should implement poolParserMaker() method.
-class PoolsListParser :  public DhcpConfigParser {
+class PoolsListParser : public isc::data::SimpleParser {
 public:
 
-    /// @brief constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept a string as the first argument.
-    /// @param pools is the storage in which to store the parsed pool
-    /// upon "commit".
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PoolsListParser(const std::string& dummy, PoolStoragePtr pools);
+    /// @brief destructor.
+    virtual ~PoolsListParser() {
+    }
 
     /// @brief parses the actual structure
     ///
-    /// This method parses the actual list of pools. It creates a parser
-    /// for each structure using poolParserMaker().
+    /// This method parses the actual list of pools.
     ///
+    /// @param pools is the storage in which to store the parsed pools.
     /// @param pools_list a list of pool structures
     /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
-    virtual void build(isc::data::ConstElementPtr pools_list);
+    virtual void parse(PoolStoragePtr pools,
+                       isc::data::ConstElementPtr pools_list) = 0;
+};
 
-    /// @brief Stores the parsed values in storage provided
-    ///        by an upper level parser.
-    virtual void commit();
+/// @brief Specialization of the pool list parser for DHCPv4
+class Pools4ListParser : PoolsListParser {
+public:
 
-protected:
-
-    /// @brief Creates a PoolParser object
+    /// @brief parses the actual structure
     ///
-    /// Instantiates appropriate (v4 or v6) PoolParser object.
-    /// @param storage parameter that is passed to ParserMaker() constructor.
-    virtual ParserPtr poolParserMaker(PoolStoragePtr storage) = 0;
-
-    /// @brief pointer to the actual Pools storage
+    /// This method parses the actual list of pools.
     ///
-    /// That is typically a storage somewhere in Subnet parser
-    /// (an upper level parser).
-    PoolStoragePtr pools_;
-
-    /// A temporary storage for pools configuration. It is the
-    /// storage where pools are stored by the build function.
-    PoolStoragePtr local_pools_;
-
-    /// Collection of parsers;
-    ParserCollection parsers_;
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pools_list a list of pool structures
+    /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list);
 };
 
 /// @brief parser for additional relay information
 ///
-/// This concrete parser handles RelayInfo structure defintions.
+/// This concrete parser handles RelayInfo structure definitions.
 /// So far that structure holds only relay IP (v4 or v6) address, but it
 /// is expected that the number of parameters will increase over time.
 ///
 /// It is useful for parsing Dhcp<4/6>/subnet<4/6>[x]/relay parameters.
-class RelayInfoParser : public DhcpConfigParser {
+class RelayInfoParser : public isc::data::SimpleParser {
 public:
 
     /// @brief constructor
-    /// @param unused first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param relay_info is the storage in which to store the parsed
     /// @param family specifies protocol family (IPv4 or IPv6)
-    RelayInfoParser(const std::string& unused,
-                    const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                    const isc::dhcp::Option::Universe& family);
+    explicit RelayInfoParser(const isc::dhcp::Option::Universe& family);
 
     /// @brief parses the actual relay parameters
-    /// @param relay_info JSON structure holding relay parameters to parse
-    virtual void build(isc::data::ConstElementPtr relay_info);
-
-    /// @brief stores parsed info in relay_info
-    virtual void commit();
-
-protected:
-
-    /// @brief Creates a parser for the given "relay" member element id.
     ///
     /// The elements currently supported are:
     /// -# ip-address
     ///
-    /// @param parser is the "item_name" for a specific member element of
-    /// the "relay" specification.
-    ///
-    /// @return returns a pointer to newly created parser.
-    isc::dhcp::ParserPtr
-    createConfigParser(const std::string& parser);
+    /// @param cfg configuration will be stored here
+    /// @param relay_info JSON structure holding relay parameters to parse
+    void parse(const isc::dhcp::Network::RelayInfoPtr& cfg,
+               isc::data::ConstElementPtr relay_info);
 
-    /// Parsed data will be stored there on commit()
-    isc::dhcp::Subnet::RelayInfoPtr storage_;
-
-    /// Local storage information (for temporary values)
-    isc::dhcp::Subnet::RelayInfo local_;
-
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
+private:
 
     /// Protocol family (IPv4 or IPv6)
     Option::Universe family_;
@@ -999,78 +411,56 @@ protected:
 
 /// @brief this class parses a single subnet
 ///
-/// This class parses the whole subnet definition. It creates parsers
-/// for received configuration parameters as needed.
-class SubnetConfigParser : public DhcpConfigParser {
+/// There are dedicated @ref Subnet4ConfigParser and @ref Subnet6ConfigParser
+/// classes. They provide specialized parse() methods that return Subnet4Ptr
+/// or Subnet6Ptr.
+///
+/// This class parses the whole subnet definition. This class attempts to
+/// unify the code between v4 and v6 as much as possible. As a result, the flow
+/// is somewhat complex and it looks as follows:
+///
+///     ------- Base class
+///    /
+///    | /----- Derived class
+/// 1.   * SubnetXConfigParser::parse() is called.
+/// 2. *   SubnetConfigParser::parse() is called.
+/// 3. *   SubnetConfigParser::createSubnet() is called.
+/// 4.   * SubnetXConfigParser::initSubnet() is called (Subnet4 or Subnet6 is
+///        instantiated here and family specific parameters are set)
+/// 5.     Control returns to createSubnet() (step 3) and common parameters
+///        are set.
+
+class SubnetConfigParser : public isc::data::SimpleParser {
 public:
 
     /// @brief constructor
     ///
-    /// @param global_context
-    /// @param default_addr default IP address (0.0.0.0 for IPv4, :: for IPv6)
-    SubnetConfigParser(const std::string&, ParserContextPtr global_context,
-                       const isc::asiolink::IOAddress& default_addr);
+    /// @param family address family: @c AF_INET or @c AF_INET6
+    explicit SubnetConfigParser(uint16_t family);
 
-    /// @brief parses parameter value
-    ///
-    /// @param subnet pointer to the content of subnet definition
-    ///
-    /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
-    virtual void build(isc::data::ConstElementPtr subnet);
-
-    /// @brief Adds the created subnet to a server's configuration.
-    virtual void commit() = 0;
+    /// @brief virtual destructor (does nothing)
+    virtual ~SubnetConfigParser() { }
 
 protected:
-    /// @brief creates parsers for entries in subnet definition
+    /// @brief parses a subnet description and returns Subnet{4,6} structure
     ///
-    /// @param config_id name od the entry
+    /// This method is called from specialized (Subnet4ConfigParser or
+    /// Subnet6ConfigParser) classes.
     ///
-    /// @return parser object for specified entry name
-    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
-    ///        for unknown config element
-    virtual DhcpConfigParser* createSubnetConfigParser(
-                                            const std::string& config_id) = 0;
-
-    /// @brief Issues a server specific warning regarding duplicate subnet
-    /// options.
+    /// @param subnet pointer to the content of subnet definition
+    /// @return a pointer to newly created subnet
     ///
-    /// @param code is the numeric option code of the duplicate option
-    /// @param addr is the subnet address
-    /// @todo a means to know the correct logger and perhaps a common
-    /// message would allow this method to be emitted by the base class.
-    virtual void duplicate_option_warning(uint32_t code,
-        isc::asiolink::IOAddress& addr) = 0;
+    /// @throw isc::DhcpConfigError if subnet configuration parsing failed.
+    SubnetPtr parse(isc::data::ConstElementPtr subnet);
 
     /// @brief Instantiates the subnet based on a given IP prefix and prefix
     /// length.
     ///
+    /// @param params configuration parameters for that subnet
     /// @param addr is the IP prefix of the subnet.
     /// @param len is the prefix length
-    virtual void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) = 0;
-
-    /// @brief Returns value for a given parameter (after using inheritance)
-    ///
-    /// This method implements inheritance. For a given parameter name, it first
-    /// checks if there is a global value for it and overwrites it with specific
-    /// value if such value was defined in subnet.
-    ///
-    /// @param name name of the parameter
-    /// @return triplet with the parameter name
-    /// @throw DhcpConfigError when requested parameter is not present
-    isc::dhcp::Triplet<uint32_t> getParam(const std::string& name);
-
-    /// @brief Returns optional value for a given parameter.
-    ///
-    /// This method checks if an optional parameter has been specified for
-    /// a subnet. If not, it will try to use a global value. If the global
-    /// value is not specified it will return an object representing an
-    /// unspecified value.
-    ///
-    /// @param name name of the configuration parameter.
-    /// @return An optional value or a @c Triplet object representing
-    /// unspecified value.
-    isc::dhcp::Triplet<uint32_t> getOptionalParam(const std::string& name);
+    virtual void initSubnet(isc::data::ConstElementPtr params,
+                            isc::asiolink::IOAddress addr, uint8_t len) = 0;
 
     /// @brief Attempts to convert text representation to HRMode enum.
     ///
@@ -1082,75 +472,292 @@ protected:
     /// @throw BadValue if the text cannot be converted.
     ///
     /// @return one of allowed HRMode values
-    static Subnet::HRMode hrModeFromText(const std::string& txt);
+    static Network::HRMode hrModeFromText(const std::string& txt);
 
 private:
 
     /// @brief Create a new subnet using a data from child parsers.
     ///
+    /// @param data Element map that describes the subnet
     /// @throw isc::dhcp::DhcpConfigError if subnet configuration parsing
     /// failed.
-    void createSubnet();
+    void createSubnet(isc::data::ConstElementPtr data);
 
 protected:
-
-    /// Storage for subnet-specific integer values.
-    Uint32StoragePtr uint32_values_;
-
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
-
-    /// Storage for subnet-specific boolean values.
-    BooleanStoragePtr boolean_values_;
 
     /// Storage for pools belonging to this subnet.
     PoolStoragePtr pools_;
 
-    /// Parsers are stored here.
-    ParserCollection parsers_;
-
     /// Pointer to the created subnet object.
     isc::dhcp::SubnetPtr subnet_;
 
-    /// Parsing context which contains global values, options and option
-    /// definitions.
-    ParserContextPtr global_context_;
+    /// @brief Address family: @c AF_INET or @c AF_INET6
+    uint16_t address_family_;
 
     /// Pointer to relay information
-    isc::dhcp::Subnet::RelayInfoPtr relay_info_;
+    isc::dhcp::Network::RelayInfoPtr relay_info_;
 
     /// Pointer to the options configuration.
     CfgOptionPtr options_;
 };
 
-/// @brief Parser for  D2ClientConfig
+/// @anchor Subnet4ConfigParser
+/// @brief This class parses a single IPv4 subnet.
 ///
-/// This class parses the configuration element "dhcp-ddns" common to the
-/// spec files for both dhcp4 and dhcp6. It creates an instance of a
-/// D2ClientConfig.
-class D2ClientConfigParser : public  isc::dhcp::DhcpConfigParser {
+/// This is the IPv4 derivation of the SubnetConfigParser class and it parses
+/// the whole subnet definition. It creates parsersfor received configuration
+/// parameters as needed.
+class Subnet4ConfigParser : public SubnetConfigParser {
 public:
     /// @brief Constructor
     ///
-    /// @param entry_name is an arbitrary label assigned to this configuration
-    /// definition.
-    D2ClientConfigParser(const std::string& entry_name);
+    /// stores global scope parameters, options, option definitions.
+    Subnet4ConfigParser();
 
-    /// @brief Destructor
-    virtual ~D2ClientConfigParser();
-
-    /// @brief Performs the parsing of the given dhcp-ddns element.
+    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// Configuration Manager.
     ///
-    /// The results of the parsing are retained internally for use during
-    /// commit.
-    /// @todo This parser supplies hard-coded default values for all
-    /// optional parameters.  This should be changed once a new plan
-    /// for configuration is determined.
-    ///
-    /// @param client_config is the "dhcp-ddns" configuration to parse
-    virtual void build(isc::data::ConstElementPtr client_config);
+    /// @param subnet A new subnet being configured.
+    /// @return a pointer to created Subnet4 object
+    Subnet4Ptr parse(data::ConstElementPtr subnet);
 
-    /// @brief Creates a parser for the given "dhcp-ddns" member element id.
+protected:
+
+    /// @brief Instantiates the IPv4 Subnet based on a given IPv4 address
+    /// and prefix length.
+    ///
+    /// @param params Data structure describing a subnet.
+    /// @param addr is IPv4 address of the subnet.
+    /// @param len is the prefix length
+    void initSubnet(data::ConstElementPtr params,
+                    asiolink::IOAddress addr, uint8_t len);
+};
+
+/// @brief this class parses list of DHCP4 subnets
+///
+/// This is a wrapper parser that handles the whole list of Subnet4
+/// definitions. It iterates over all entries and creates Subnet4ConfigParser
+/// for each entry.
+class Subnets4ListConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list, parses its content
+    /// (by instantiating Subnet6ConfigParser) and adds to specified
+    /// configuration.
+    ///
+    /// @param cfg Pointer to server configuration.
+    /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @return number of subnets created
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet4 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet4Collection& subnets,
+                 data::ConstElementPtr subnets_list);
+};
+
+/// @brief Parser for IPv6 pool definitions.
+///
+/// This is the IPv6 derivation of the PoolParser class and handles pool
+/// definitions, i.e. a list of entries of one of two syntaxes: min-max and
+/// prefix/len for IPv6 pools. Pool6 objects are created and stored in chosen
+/// PoolStorage container.
+///
+/// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
+class Pool6Parser : public PoolParser {
+protected:
+    /// @brief Creates a Pool6 object given a IPv6 prefix and the prefix length.
+    ///
+    /// @param addr is the IPv6 prefix of the pool.
+    /// @param len is the prefix length.
+    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
+    /// passed in as an int32_t and cast to PoolType to accommodate a
+    /// polymorphic interface.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &addr, uint32_t len, int32_t ptype);
+
+    /// @brief Creates a Pool6 object given starting and ending IPv6 addresses.
+    ///
+    /// @param min is the first IPv6 address in the pool.
+    /// @param max is the last IPv6 address in the pool.
+    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
+    /// passed in as an int32_t and cast to PoolType to accommodate a
+    /// polymorphic interface.
+    /// @return returns a PoolPtr to the new Pool4 object.
+    PoolPtr poolMaker (asiolink::IOAddress &min, asiolink::IOAddress &max,
+                       int32_t ptype);
+};
+
+/// @brief Specialization of the pool list parser for DHCPv6
+class Pools6ListParser : PoolsListParser {
+public:
+
+    /// @brief parses the actual structure
+    ///
+    /// This method parses the actual list of pools.
+    ///
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pools_list a list of pool structures
+    /// @throw isc::dhcp::DhcpConfigError when pool parsing fails
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pools_list);
+};
+
+/// @brief Parser for IPv6 prefix delegation definitions.
+///
+/// This class handles prefix delegation pool definitions for IPv6 subnets
+/// Pool6 objects are created and stored in the given PoolStorage container.
+///
+/// PdPool definitions currently support three elements: prefix, prefix-len,
+/// and delegated-len, as shown in the example JSON text below:
+///
+/// @code
+///
+/// {
+///     "prefix": "2001:db8:1::",
+///     "prefix-len": 64,
+///     "delegated-len": 128
+/// }
+/// @endcode
+///
+class PdPoolParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief Constructor.
+    ///
+    PdPoolParser();
+
+    /// @brief Builds a prefix delegation pool from the given configuration
+    ///
+    /// This function parses configuration entries and creates an instance
+    /// of a dhcp::Pool6 configured for prefix delegation.
+    ///
+    /// @param pools storage container in which to store the parsed pool.
+    /// @param pd_pool_ pointer to an element that holds configuration entries
+    /// that define a prefix delegation pool.
+    ///
+    /// @throw DhcpConfigError if configuration parsing fails.
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_);
+
+private:
+
+    /// Pointer to the created pool object.
+    isc::dhcp::Pool6Ptr pool_;
+
+    /// A storage for pool specific option values.
+    CfgOptionPtr options_;
+
+    isc::data::ConstElementPtr user_context_;
+};
+
+/// @brief Parser for a list of prefix delegation pools.
+///
+/// This parser iterates over a list of prefix delegation pool entries and
+/// creates pool instances for each one. If the parsing is successful, the
+/// collection of pools is committed to the provided storage.
+class PdPoolsListParser : public PoolsListParser {
+public:
+
+    /// @brief Parse configuration entries.
+    ///
+    /// This function parses configuration entries and creates instances
+    /// of prefix delegation pools .
+    ///
+    /// @param pools is the pool storage in which to store the parsed
+    /// @param pd_pool_list pointer to an element that holds entries
+    /// that define a prefix delegation pool.
+    ///
+    /// @throw DhcpConfigError if configuration parsing fails.
+    void parse(PoolStoragePtr pools, data::ConstElementPtr pd_pool_list);
+};
+
+/// @anchor Subnet6ConfigParser
+/// @brief This class parses a single IPv6 subnet.
+///
+/// This is the IPv6 derivation of the SubnetConfigParser class and it parses
+/// the whole subnet definition. It creates parsersfor received configuration
+/// parameters as needed.
+class Subnet6ConfigParser : public SubnetConfigParser {
+public:
+
+    /// @brief Constructor
+    ///
+    /// stores global scope parameters, options, option definitions.
+    Subnet6ConfigParser();
+
+    /// @brief Parses a single IPv6 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    /// @return a pointer to created Subnet6 object
+    Subnet6Ptr parse(data::ConstElementPtr subnet);
+
+protected:
+    /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
+    /// options.
+    ///
+    /// @param code is the numeric option code of the duplicate option
+    /// @param addr is the subnet address
+    /// @todo A means to know the correct logger and perhaps a common
+    /// message would allow this message to be emitted by the base class.
+    virtual void duplicate_option_warning(uint32_t code,
+                                         asiolink::IOAddress& addr);
+
+    /// @brief Instantiates the IPv6 Subnet based on a given IPv6 address
+    /// and prefix length.
+    ///
+    /// @param params Data structure describing a subnet.
+    /// @param addr is IPv6 prefix of the subnet.
+    /// @param len is the prefix length
+    void initSubnet(isc::data::ConstElementPtr params,
+                    isc::asiolink::IOAddress addr, uint8_t len);
+};
+
+
+/// @brief this class parses a list of DHCP6 subnets
+///
+/// This is a wrapper parser that handles the whole list of Subnet6
+/// definitions. It iterates over all entries and creates Subnet6ConfigParser
+/// for each entry.
+class Subnets6ListConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief parses contents of the list
+    ///
+    /// Iterates over all entries on the list, parses its content
+    /// (by instantiating Subnet6ConfigParser) and adds to specified
+    /// configuration.
+    ///
+    /// @param cfg configuration (parsed subnets will be stored here)
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
+    size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet6 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet6Collection& subnets,
+                 data::ConstElementPtr subnets_list);
+
+};
+
+/// @brief Parser for  D2ClientConfig
+///
+/// This class parses the configuration element "dhcp-ddns" common to the
+/// config files for both dhcp4 and dhcp6. It creates an instance of a
+/// D2ClientConfig.
+class D2ClientConfigParser : public  isc::data::SimpleParser {
+public:
+
+    /// @brief Parses a given dhcp-ddns element into D2ClientConfig.
+    ///
+    /// @param d2_client_cfg is the "dhcp-ddns" configuration to parse
     ///
     /// The elements currently supported are (see isc::dhcp::D2ClientConfig
     /// for details on each):
@@ -1158,49 +765,65 @@ public:
     /// -# qualifying-suffix
     /// -# server-ip
     /// -# server-port
+    /// -# sender-ip
+    /// -# sender-port
+    /// -# max-queue-size
     /// -# ncr-protocol
     /// -# ncr-format
-    /// -# remove-on-renew
     /// -# always-include-fqdn
-    /// -# allow-client-update
     /// -# override-no-update
     /// -# override-client-update
     /// -# replace-client-name
     /// -# generated-prefix
     ///
-    /// @param config_id is the "item_name" for a specific member element of
-    /// the "dns_server" specification.
-    ///
-    /// @return returns a pointer to newly created parser.
-    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
-                                                    config_id);
+    /// @return returns a pointer to newly created D2ClientConfig.
+    D2ClientConfigPtr parse(isc::data::ConstElementPtr d2_client_cfg);
 
-    /// @brief Instantiates a D2ClientConfig from internal data values
-    /// passes to CfgMgr singleton.
-    virtual void commit();
+    /// @brief Defaults for the D2 client configuration.
+    static const isc::data::SimpleDefaults D2_CLIENT_CONFIG_DEFAULTS;
+
+    /// @brief Sets all defaults for D2 client configuration.
+    ///
+    /// This method sets defaults value. It must not be called
+    /// before the short cut disabled updates condition was checked.
+    ///
+    /// @param d2_config d2 client configuration (will be const cast
+    //  to ElementPtr)
+    /// @return number of parameters inserted
+    static size_t setAllDefaults(isc::data::ConstElementPtr d2_config);
 
 private:
-    /// @brief Arbitrary label assigned to this parser instance.
-    /// Primarily used for diagnostics.
-    std::string entry_name_;
 
-    /// Storage for subnet-specific boolean values.
-    BooleanStoragePtr boolean_values_;
+    /// @brief Returns a value converted to NameChangeProtocol
+    ///
+    /// Instantiation of getAndConvert() to NameChangeProtocol
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return a NameChangeProtocol value
+    dhcp_ddns::NameChangeProtocol
+    getProtocol(isc::data::ConstElementPtr scope, const std::string& name);
 
-    /// Storage for subnet-specific integer values.
-    Uint32StoragePtr uint32_values_;
+    /// @brief Returns a value converted to NameChangeFormat
+    ///
+    /// Instantiation of getAndConvert() to NameChangeFormat
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return a NameChangeFormat value
+    dhcp_ddns::NameChangeFormat
+    getFormat(isc::data::ConstElementPtr scope, const std::string& name);
 
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
-
-    /// @brief Pointer to temporary local instance created during build.
-    D2ClientConfigPtr local_client_config_ ;
+    /// @brief Returns a value converted to ReplaceClientNameMode
+    ///
+    /// Instantiation of getAndConvert() to ReplaceClientNameMode
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return a NameChangeFormat value
+    D2ClientConfig::ReplaceClientNameMode
+    getMode(isc::data::ConstElementPtr scope, const std::string& name);
 };
-
-// Pointers to various parser objects.
-typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
-typedef boost::shared_ptr<StringParser> StringParserPtr;
-typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

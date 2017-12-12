@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,10 +25,13 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
 #include <util/encode/hex.h>
+#include <dns/labelsequence.h>
+#include <dns/name.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <sstream>
 
 using namespace std;
 using namespace isc::util;
@@ -205,6 +208,14 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         case OPT_STRING_TYPE:
             return (OptionPtr(new OptionString(u, type, begin, end)));
 
+        case OPT_TUPLE_TYPE:
+            // Handle array type only here (see comments for
+            // OPT_IPV4_ADDRESS_TYPE case).
+            if (array_type_) {
+                return (factoryOpaqueDataTuples(u, type, begin, end));
+            }
+            break;
+
         default:
             // Do nothing. We will return generic option a few lines down.
             ;
@@ -231,11 +242,11 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 isc_throw(InvalidOptionValue, "no option value specified");
             }
         } else {
-            writeToBuffer(util::str::trim(values[0]), type_, buf);
+            writeToBuffer(u, util::str::trim(values[0]), type_, buf);
         }
     } else if (array_type_ && type_ != OPT_RECORD_TYPE) {
         for (size_t i = 0; i < values.size(); ++i) {
-            writeToBuffer(util::str::trim(values[i]), type_, buf);
+            writeToBuffer(u, util::str::trim(values[i]), type_, buf);
         }
     } else if (type_ == OPT_RECORD_TYPE) {
         const RecordFieldsCollection& records = getRecordFields();
@@ -245,8 +256,13 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                       << " of values provided.");
         }
         for (size_t i = 0; i < records.size(); ++i) {
-            writeToBuffer(util::str::trim(values[i]),
-                          records[i], buf);
+            writeToBuffer(u, util::str::trim(values[i]), records[i], buf);
+        }
+        if (array_type_ && (values.size() > records.size())) {
+            for (size_t i = records.size(); i < values.size(); ++i) {
+                writeToBuffer(u, util::str::trim(values[i]),
+                              records.back(), buf);
+            }
         }
     }
     return (optionFactory(u, type, buf.begin(), buf.end()));
@@ -282,22 +298,6 @@ OptionDefinition::validate() const {
         // Option definition must be of a known type.
         err_str << "option type " << type_ << " not supported.";
 
-    } else if (array_type_) {
-        if (type_ == OPT_STRING_TYPE) {
-            // Array of strings is not allowed because there is no way
-            // to determine the size of a particular string and thus there
-            // it no way to tell when other data fields begin.
-            err_str << "array of strings is not a valid option definition.";
-        } else if (type_ == OPT_BINARY_TYPE) {
-            err_str << "array of binary values is not"
-                    << " a valid option definition.";
-
-        } else if (type_ == OPT_EMPTY_TYPE) {
-            err_str << "array of empty value is not"
-                    << " a valid option definition.";
-
-        }
-
     } else if (type_ == OPT_RECORD_TYPE) {
         // At least two data fields should be added to the record. Otherwise
         // non-record option definition could be used.
@@ -325,6 +325,7 @@ OptionDefinition::validate() const {
                     it < fields.end() - 1) {
                     err_str << "binary data field can't be laid before data"
                             << " fields of other types.";
+                    break;
                 }
                 /// Empty type is not allowed within a record.
                 if (*it == OPT_EMPTY_TYPE) {
@@ -333,8 +334,35 @@ OptionDefinition::validate() const {
                     break;
                 }
             }
+            // If the array flag is set the last field is an array.
+            if (err_str.str().empty() && array_type_) {
+                const OptionDataType& last_type = fields.back();
+                if (last_type == OPT_STRING_TYPE) {
+                    err_str << "array of strings is not"
+                            << "a valid option definition.";
+                } else if (last_type == OPT_BINARY_TYPE) {
+                    err_str << "array of binary values is not"
+                            << " a valid option definition.";
+                }
+                // Empty type was already checked.
+            }
         }
 
+    } else if (array_type_) {
+        if (type_ == OPT_STRING_TYPE) {
+            // Array of strings is not allowed because there is no way
+            // to determine the size of a particular string and thus there
+            // it no way to tell when other data fields begin.
+            err_str << "array of strings is not a valid option definition.";
+        } else if (type_ == OPT_BINARY_TYPE) {
+            err_str << "array of binary values is not"
+                    << " a valid option definition.";
+
+        } else if (type_ == OPT_EMPTY_TYPE) {
+            err_str << "array of empty value is not"
+                    << " a valid option definition.";
+
+        }
     }
 
     // Non-empty error string means that we have hit the error. We throw
@@ -347,6 +375,7 @@ OptionDefinition::validate() const {
 bool
 OptionDefinition::haveIAx6Format(OptionDataType first_type) const {
    return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
            record_fields_.size() == 3 &&
            record_fields_[0] == first_type &&
            record_fields_[1] == OPT_UINT32_TYPE &&
@@ -372,6 +401,7 @@ OptionDefinition::haveIAAddr6Format() const {
 bool
 OptionDefinition::haveIAPrefix6Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
             record_fields_.size() == 4 &&
             record_fields_[0] == OPT_UINT32_TYPE &&
             record_fields_[1] == OPT_UINT32_TYPE &&
@@ -382,6 +412,7 @@ OptionDefinition::haveIAPrefix6Format() const {
 bool
 OptionDefinition::haveFqdn4Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
             record_fields_.size() == 4 &&
             record_fields_[0] == OPT_UINT8_TYPE &&
             record_fields_[1] == OPT_UINT8_TYPE &&
@@ -392,6 +423,7 @@ OptionDefinition::haveFqdn4Format() const {
 bool
 OptionDefinition::haveClientFqdnFormat() const {
     return (haveType(OPT_RECORD_TYPE) &&
+           !getArrayType() &&
             (record_fields_.size() == 2) &&
             (record_fields_[0] == OPT_UINT8_TYPE) &&
             (record_fields_[1] == OPT_FQDN_TYPE));
@@ -432,13 +464,26 @@ OptionDefinition::haveStatusCodeFormat() const {
 }
 
 bool
+OptionDefinition::haveServiceScopeFormat() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_BOOLEAN_TYPE) &&
+            (record_fields_[1] == OPT_STRING_TYPE));
+}
+
+bool
 OptionDefinition::haveOpaqueDataTuplesFormat() const {
-    return (getType() == OPT_BINARY_TYPE);
+    return (haveType(OPT_TUPLE_TYPE) && getArrayType());
+}
+
+bool
+OptionDefinition::haveCompressedFqdnListFormat() const {
+    return (haveType(OPT_FQDN_TYPE) && getArrayType());
 }
 
 bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
-    // Case insensitve check that the input is one of: "true" or "false".
+    // Case-insensitive check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
         return (true);
 
@@ -489,8 +534,15 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
         result = boost::lexical_cast<int64_t>(value_str);
 
     } catch (const boost::bad_lexical_cast&) {
-        isc_throw(BadDataTypeCast, "unable to convert the value '"
-                  << value_str << "' to integer data type");
+        // boost::lexical_cast does not handle hexadecimal
+        // but stringstream does so do it the hard way.
+        std::stringstream ss;
+        ss << std::hex << value_str;
+        ss >> result;
+        if (ss.fail() || !ss.eof()) {
+            isc_throw(BadDataTypeCast, "unable to convert the value '"
+                      << value_str << "' to integer data type");
+        }
     }
     // Perform range checks.
     if (OptionDataTypeTraits<T>::integer_type) {
@@ -507,7 +559,8 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
 }
 
 void
-OptionDefinition::writeToBuffer(const std::string& value,
+OptionDefinition::writeToBuffer(Option::Universe u,
+                                const std::string& value,
                                 const OptionDataType type,
                                 OptionBuffer& buf) const {
     // We are going to write value given by value argument to the buffer.
@@ -653,6 +706,13 @@ OptionDefinition::writeToBuffer(const std::string& value,
     case OPT_FQDN_TYPE:
         OptionDataTypeUtil::writeFqdn(value, buf);
         return;
+    case OPT_TUPLE_TYPE:
+    {
+        OpaqueDataTuple::LengthFieldType lft = u == Option::V4 ?
+            OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+        OptionDataTypeUtil::writeTuple(value, lft, buf);
+        return;
+    }
     default:
         // We hit this point because invalid option data type has been specified
         // This may be the case because 'empty' or 'record' data type has been
@@ -740,6 +800,48 @@ OptionDefinition::factoryIAPrefix6(uint16_t type,
 }
 
 OptionPtr
+OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
+                                          uint16_t type,
+                                          OptionBufferConstIter begin,
+                                          OptionBufferConstIter end) {
+    boost::shared_ptr<OptionOpaqueDataTuples>
+        option(new OptionOpaqueDataTuples(u, type, begin, end));
+
+    return (option);
+}
+
+OptionPtr
+OptionDefinition::factoryFqdnList(Option::Universe u,
+                                  OptionBufferConstIter begin,
+                                  OptionBufferConstIter end) const {
+    
+    const std::vector<uint8_t> data(begin, end);
+    if (data.empty()) {
+        isc_throw(InvalidOptionValue, "FQDN list option has invalid length of 0");
+    }
+    InputBuffer in_buf(static_cast<const void*>(&data[0]), data.size());
+    std::vector<uint8_t> out_buf;
+    out_buf.reserve(data.size());
+    while (in_buf.getPosition() < in_buf.getLength()) {
+        // Reuse readFqdn and writeFqdn code but on the whole buffer
+        // so the DNS name code handles compression for us.
+        try {
+            isc::dns::Name name(in_buf);
+            isc::dns::LabelSequence labels(name);
+            if (labels.getDataLength() > 0) {
+                size_t read_len = 0;
+                const uint8_t* label = labels.getData(&read_len);
+                out_buf.insert(out_buf.end(), label, label + read_len);
+            }
+        } catch (const isc::Exception& ex) {
+            isc_throw(InvalidOptionValue, ex.what());
+        }
+    }
+    return OptionPtr(new OptionCustom(*this, u,
+                                      out_buf.begin(), out_buf.end()));
+}
+
+OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end) const {
@@ -757,7 +859,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (factoryIA6(getCode(), begin, end));
 
         } else if (getCode() == D6O_IAADDR && haveIAAddr6Format()) {
-            // Rerurn Option6IAAddr option instance for the IAADDR
+            // Return Option6IAAddr option instance for the IAADDR
             // option only for the same reasons as described in
             // for IA_NA and IA_PD above.
             return (factoryIAAddr6(getCode(), begin, end));
@@ -778,14 +880,18 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option6StatusCode(begin, end)));
         } else if (getCode() == D6O_BOOTFILE_PARAM && haveOpaqueDataTuplesFormat()) {
             // Bootfile params (option code 60)
-            return (OptionPtr(new OptionOpaqueDataTuples(Option::V6, getCode(), begin, end)));
+            return (factoryOpaqueDataTuples(Option::V6, getCode(), begin, end));
         } else if ((getCode() == D6O_PD_EXCLUDE) && haveType(OPT_IPV6_PREFIX_TYPE)) {
             // Prefix Exclude (option code 67)
             return (OptionPtr(new Option6PDExclude(begin, end)));
         }
     } else {
-        if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
+        if ((getCode() == DHO_SERVICE_SCOPE) && haveServiceScopeFormat()) {
+            return (OptionPtr(new Option4SlpServiceScope(begin, end)));
+        } else if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
+        } else if (haveCompressedFqdnListFormat()) {
+            return (factoryFqdnList(Option::V4, begin, end));
         } else if ((getCode() == DHO_VIVCO_SUBOPTIONS) &&
                    haveVendorClass4Format()) {
             // V-I Vendor Class (option code 124).

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,7 @@ const size_t BOOT_FILE_NAME_MAX_LEN = 128;
 ///
 /// This value is used to validate whether the identifier type stored in
 /// a database is within bounds. of supported identifiers.
-const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::IDENT_CIRCUIT_ID);
+const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::LAST_IDENTIFIER_TYPE);
 
 /// @brief This class provides mechanisms for sending and retrieving
 /// information from the 'hosts' table.
@@ -83,6 +83,26 @@ const uint8_t MAX_IDENTIFIER_TYPE = static_cast<uint8_t>(Host::IDENT_CIRCUIT_ID)
 /// options associated with a host to minimize impact on performance. Other
 /// classes derived from @ref MySqlHostExchange should be used to retrieve
 /// information about IPv6 reservations and options.
+///
+/// Database schema contains several unique indexes to guard against adding
+/// multiple hosts for the same client identifier in a single subnet and for
+/// adding multiple hosts with a reservation for the same IPv4 address in a
+/// single subnet. The exceptions that have to be taken into account are
+/// listed below:
+/// - zero or null IPv4 address indicates that there is no reservation for the
+///   IPv4 address for the host,
+/// - zero or null subnet identifier (either IPv4 or IPv6) indicates that
+///   this subnet identifier must be ignored. Specifically, this is the case
+///   when host reservation is for the DHCPv4 server, the IPv6 subnet id should
+///   be ignored. Conversely, when host reservation is created for the DHCPv6 server,
+///   the IPv4 subnet id should be ignored.
+///
+/// To exclude those special case values from the unique indexes, the MySQL
+/// backend relies on the property of the unique indexes in MySQL, i.e. null
+/// values are excluded from unique indexes. That means that there might be
+/// multiple null values in a given column on which unique index is applied.
+/// Therefore, the MySQL backend converts subnet identifiers and IPv4 addresses
+/// of 0 to null before inserting a host to the database.
 class MySqlHostExchange {
 private:
 
@@ -253,7 +273,7 @@ public:
             // host_id : INT UNSIGNED NOT NULL
             // The host_id is auto_incremented by MySQL database,
             // so we need to pass the NULL value
-            host_id_ = static_cast<uint32_t>(NULL);
+            host_id_ = 0;
             bind_[0].buffer_type = MYSQL_TYPE_LONG;
             bind_[0].buffer = reinterpret_cast<char*>(&host_id_);
             bind_[0].is_unsigned = MLM_TRUE;
@@ -279,27 +299,31 @@ public:
             // Can't take an address of intermediate object, so let's store it
             // in dhcp4_subnet_id_
             dhcp4_subnet_id_ = host->getIPv4SubnetID();
+            dhcp4_subnet_id_null_ = host->getIPv4SubnetID() == 0 ? MLM_TRUE : MLM_FALSE;
             bind_[3].buffer_type = MYSQL_TYPE_LONG;
             bind_[3].buffer = reinterpret_cast<char*>(&dhcp4_subnet_id_);
             bind_[3].is_unsigned = MLM_TRUE;
+            bind_[3].is_null = &dhcp4_subnet_id_null_;
 
             // dhcp6_subnet_id : INT UNSIGNED NULL
             // Can't take an address of intermediate object, so let's store it
             // in dhcp6_subnet_id_
             dhcp6_subnet_id_ = host->getIPv6SubnetID();
+            dhcp6_subnet_id_null_ = host->getIPv6SubnetID() == 0 ? MLM_TRUE : MLM_FALSE;
             bind_[4].buffer_type = MYSQL_TYPE_LONG;
             bind_[4].buffer = reinterpret_cast<char*>(&dhcp6_subnet_id_);
             bind_[4].is_unsigned = MLM_TRUE;
+            bind_[4].is_null = &dhcp6_subnet_id_null_;
 
             // ipv4_address : INT UNSIGNED NULL
             // The address in the Host structure is an IOAddress object.  Convert
             // this to an integer for storage.
             ipv4_address_ = host->getIPv4Reservation().toUint32();
+            ipv4_address_null_ = ipv4_address_ == 0 ? MLM_TRUE : MLM_FALSE;
             bind_[5].buffer_type = MYSQL_TYPE_LONG;
             bind_[5].buffer = reinterpret_cast<char*>(&ipv4_address_);
             bind_[5].is_unsigned = MLM_TRUE;
-            // bind_[5].is_null = &MLM_FALSE; // commented out for performance
-                                                      // reasons, see memset() above
+            bind_[5].is_null = &ipv4_address_null_;
 
             // hostname : VARCHAR(255) NULL
             strncpy(hostname_, host->getHostname().c_str(), HOSTNAME_MAX_LEN - 1);
@@ -374,7 +398,7 @@ public:
         // is_null only if it should be true. This gives up minor performance
         // benefit while being safe approach. For improved readability, the
         // code that explicitly sets is_null is there, but is commented out.
-        // This also takes care of seeeting bind_[X].is_null to MLM_FALSE.
+        // This also takes care of setting bind_[X].is_null to MLM_FALSE.
         memset(&bind_[0], 0, sizeof(MYSQL_BIND) * bind_.size());
 
         // host_id : INT UNSIGNED NOT NULL
@@ -575,7 +599,7 @@ public:
     /// adding duplicated hosts to the collection, assuming that processed
     /// rows are primarily ordered by host id column.
     ///
-    /// This method must be overriden in the derived classes to also
+    /// This method must be overridden in the derived classes to also
     /// retrieve IPv6 reservations and DHCP options associated with a host.
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
@@ -1184,7 +1208,7 @@ private:
 /// host information, DHCPv4 options, DHCPv6 options and IPv6 reservations.
 ///
 /// This class extends the @ref MySqlHostWithOptionsExchange class with the
-/// mechanisms to retrieve IPv6 reservations. This class is used in sitations
+/// mechanisms to retrieve IPv6 reservations. This class is used in situations
 /// when it is desired to retrieve DHCPv6 specific information about the host
 /// (DHCPv6 options and reservations), or entire information about the host
 /// (DHCPv4 options, DHCPv6 options and reservations). The following are the
@@ -1747,7 +1771,7 @@ public:
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements.
-    /// It is assumed that the order is such that the indicies of statements
+    /// It is assumed that the order is such that the indices of statements
     /// reading the database are less than those of statements modifying the
     /// database.
     enum StatementIndex {
@@ -1763,6 +1787,9 @@ public:
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_OPTION,       // Insert DHCPv4 option
         INSERT_V6_OPTION,       // Insert DHCPv6 option
+        DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
+        DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
+        DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -1791,6 +1818,15 @@ public:
     /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
     void addStatement(MySqlHostDataSourceImpl::StatementIndex stindex,
                       std::vector<MYSQL_BIND>& bind);
+
+    /// @brief Executes statements that delete records.
+    ///
+    /// @param stindex Index of a statement being executed.
+    /// @param bind Vector of MYSQL_BIND objects to be used when making the
+    /// query.
+    /// @return true if any records were deleted, false otherwise
+    bool
+    delStatement(StatementIndex stindex, MYSQL_BIND* bind);
 
     /// @brief Inserts IPv6 Reservation into ipv6_reservation table.
     ///
@@ -1862,7 +1898,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     /// @param stindex Statement index.
@@ -2101,7 +2137,20 @@ TaggedStatementArray tagged_statements = { {
     {MySqlHostDataSourceImpl::INSERT_V6_OPTION,
          "INSERT INTO dhcp6_options(option_id, code, value, formatted_value, space, "
             "persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
-         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"}}
+         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
+
+    {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
+
+    {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
+     "AND dhcp_identifier = ?"},
+
+    {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
+     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
+     "AND dhcp_identifier = ?"}
+
+    }
 };
 
 MySqlHostDataSourceImpl::
@@ -2184,6 +2233,25 @@ MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
         }
         checkError(status, stindex, "unable to execute");
     }
+}
+
+bool
+MySqlHostDataSourceImpl::delStatement(StatementIndex stindex,
+                                      MYSQL_BIND* bind) {
+    // Bind the parameters to the statement
+    int status = mysql_stmt_bind_param(conn_.statements_[stindex], &bind[0]);
+    checkError(status, stindex, "unable to bind parameters");
+
+    // Execute the statement
+    status = mysql_stmt_execute(conn_.statements_[stindex]);
+
+    if (status != 0) {
+        checkError(status, stindex, "unable to execute");
+    }
+
+    // Let's check how many hosts were deleted.
+    my_ulonglong numrows = mysql_stmt_affected_rows(conn_.statements_[stindex]);
+    return (numrows != 0);
 }
 
 void
@@ -2410,6 +2478,113 @@ MySqlHostDataSource::add(const HostPtr& host) {
 
     // Everything went fine, so explicitly commit the transaction.
     transaction.commit();
+}
+
+bool
+MySqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
+    if (addr.isV4()) {
+        // Set up the WHERE clause value
+        MYSQL_BIND inbind[2];
+
+        uint32_t subnet = subnet_id;
+        memset(inbind, 0, sizeof(inbind));
+        inbind[0].buffer_type = MYSQL_TYPE_LONG;
+        inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+        inbind[0].is_unsigned = MLM_TRUE;
+
+        uint32_t addr4 = addr.toUint32();
+        inbind[1].buffer_type = MYSQL_TYPE_LONG;
+        inbind[1].buffer = reinterpret_cast<char*>(&addr4);
+        inbind[1].is_unsigned = MLM_TRUE;
+
+        ConstHostCollection collection;
+        return (impl_->delStatement(MySqlHostDataSourceImpl::DEL_HOST_ADDR4, inbind));
+    }
+
+    // v6
+    ConstHostPtr host = get6(subnet_id, addr);
+    if (!host) {
+        return (false);
+    }
+
+    // Ok, there is a host. Let's delete it.
+    return del6(subnet_id, host->getIdentifierType(), &host->getIdentifier()[0],
+                host->getIdentifier().size());
+}
+
+bool
+MySqlHostDataSource::del4(const SubnetID& subnet_id,
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin, const size_t identifier_len) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+
+    // subnet-id
+    memset(inbind, 0, sizeof(inbind));
+    uint32_t subnet = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // identifier type
+    char identifier_type_copy = static_cast<char>(identifier_type);
+    inbind[1].buffer_type = MYSQL_TYPE_TINY;
+    inbind[1].buffer = reinterpret_cast<char*>(&identifier_type_copy);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // identifier value
+    std::vector<char> identifier_vec(identifier_begin,
+                                     identifier_begin + identifier_len);
+    unsigned long length = identifier_vec.size();
+    inbind[2].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[2].buffer = &identifier_vec[0];
+    inbind[2].buffer_length = length;
+    inbind[2].length = &length;
+
+    ConstHostCollection collection;
+    return (impl_->delStatement(MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID, inbind));
+}
+
+bool
+MySqlHostDataSource::del6(const SubnetID& subnet_id,
+                          const Host::IdentifierType& identifier_type,
+                          const uint8_t* identifier_begin, const size_t identifier_len) {
+    // If operating in read-only mode, throw exception.
+    impl_->checkReadOnly();
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+
+    // subnet-id
+    memset(inbind, 0, sizeof(inbind));
+    uint32_t subnet = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // identifier type
+    char identifier_type_copy = static_cast<char>(identifier_type);
+    inbind[1].buffer_type = MYSQL_TYPE_TINY;
+    inbind[1].buffer = reinterpret_cast<char*>(&identifier_type_copy);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // identifier value
+    std::vector<char> identifier_vec(identifier_begin,
+                                     identifier_begin + identifier_len);
+    unsigned long length = identifier_vec.size();
+    inbind[2].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[2].buffer = &identifier_vec[0];
+    inbind[2].buffer_length = length;
+    inbind[2].length = &length;
+
+    ConstHostCollection collection;
+    return (impl_->delStatement(MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID, inbind));
 }
 
 ConstHostCollection

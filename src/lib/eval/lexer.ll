@@ -1,10 +1,14 @@
-/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
    file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 %{ /* -*- C++ -*- */
+
+/* Generated files do not make clang static analyser so happy */
+#ifndef __clang_analyzer__
+
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -14,18 +18,25 @@
 #include <asiolink/io_address.h>
 #include <boost/lexical_cast.hpp>
 
-// Work around an incompatibility in flex (at least versions
-// 2.5.31 through 2.5.33): it generates code that does
-// not conform to C89.  See Debian bug 333231
-// <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>.
+/* Please avoid C++ style comments (// ... eol) as they break flex 2.6.2 */
+
+/* Work around an incompatibility in flex (at least versions
+   2.5.31 through 2.5.33): it generates code that does
+   not conform to C89.  See Debian bug 333231
+   <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>. */
 # undef yywrap
 # define yywrap() 1
 
-// The location of the current token. The lexer will keep updating it. This
-// variable will be useful for logging errors.
+/* The location of the current token. The lexer will keep updating it. This
+   variable will be useful for logging errors. */
 static isc::eval::location loc;
 
-// To avoid the call to exit... oops!
+namespace {
+    bool start_token_flag = false;
+    isc::eval::EvalContext::ParserType start_token_value;
+};
+
+/* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
 %}
 
@@ -66,34 +77,46 @@ addr4 [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+
 addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 
 %{
-// This code run each time a pattern is matched. It updates the location
-// by moving it ahead by yyleng bytes. yyleng specifies the length of the
-// currently matched token.
+/* This code run each time a pattern is matched. It updates the location
+   by moving it ahead by yyleng bytes. yyleng specifies the length of the
+   currently matched token. */
 #define YY_USER_ACTION  loc.columns(evalleng);
 %}
 
 %%
 
 %{
-    // Code run each time evallex is called.
+    /* Code run each time evallex is called. */
     loc.step();
+
+    if (start_token_flag) {
+        start_token_flag = false;
+        switch (start_token_value) {
+        case EvalContext::PARSER_BOOL:
+            return isc::eval::EvalParser::make_TOPLEVEL_BOOL(loc);
+        default:
+        case EvalContext::PARSER_STRING:
+            return isc::eval::EvalParser::make_TOPLEVEL_STRING(loc);
+        }
+    }
+
 %}
 
 {blank}+   {
-    // Ok, we found a with space. Let's ignore it and update loc variable.
+    /* Ok, we found a with space. Let's ignore it and update loc variable. */
     loc.step();
 }
 
 [\n]+      {
-    // Newline found. Let's update the location and continue.
+    /* Newline found. Let's update the location and continue. */
     loc.lines(evalleng);
     loc.step();
 }
 
 \'[^\'\n]*\' {
-    // A string has been matched. It contains the actual string and single quotes.
-    // We need to get those quotes out of the way and just use its content, e.g.
-    // for 'foo' we should get foo
+    /* A string has been matched. It contains the actual string and single quotes.
+       We need to get those quotes out of the way and just use its content, e.g.
+       for 'foo' we should get foo */
     std::string tmp(evaltext+1);
     tmp.resize(tmp.size() - 1);
 
@@ -101,41 +124,41 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 }
 
 0[xX]{hex} {
-    // A hex string has been matched. It contains the '0x' or '0X' header
-    // followed by at least one hexadecimal digit.
+    /* A hex string has been matched. It contains the '0x' or '0X' header
+       followed by at least one hexadecimal digit. */
     return isc::eval::EvalParser::make_HEXSTRING(evaltext, loc);
 }
 
 {int} {
-    // An integer was found.
+    /* An integer was found. */
     std::string tmp(evaltext);
 
     try {
-        // In substring we want to use negative values (e.g. -1).
-        // In enterprise-id we need to use values up to 0xffffffff.
-        // To cover both of those use cases, we need at least
-        // int64_t.
+        /* In substring we want to use negative values (e.g. -1).
+           In enterprise-id we need to use values up to 0xffffffff.
+           To cover both of those use cases, we need at least
+           int64_t. */
         static_cast<void>(boost::lexical_cast<int64_t>(tmp));
     } catch (const boost::bad_lexical_cast &) {
         driver.error(loc, "Failed to convert " + tmp + " to an integer.");
     }
 
-    // The parser needs the string form as double conversion is no lossless
+    /* The parser needs the string form as double conversion is no lossless */
     return isc::eval::EvalParser::make_INTEGER(tmp, loc);
 }
 
 [A-Za-z]([-_A-Za-z0-9]*[A-Za-z0-9])?/({blank}|\n)*] {
-    // This string specifies option name starting with a letter
-    // and further containing letters, digits, hyphens and
-    // underscores and finishing by letters or digits.
+    /* This string specifies option name starting with a letter
+       and further containing letters, digits, hyphens and
+       underscores and finishing by letters or digits. */
     return isc::eval::EvalParser::make_OPTION_NAME(evaltext, loc);
 }
 
 {addr4}|{addr6} {
-    // IPv4 or IPv6 address
+    /* IPv4 or IPv6 address */
     std::string tmp(evaltext);
 
-    // Some incorrect addresses can match so we have to check.
+    /* Some incorrect addresses can match so we have to check. */
     try {
         isc::asiolink::IOAddress ip(tmp);
     } catch (...) {
@@ -177,6 +200,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "substring"    return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
+"ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
@@ -194,15 +218,18 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 using namespace isc::eval;
 
 void
-EvalContext::scanStringBegin()
+EvalContext::scanStringBegin(ParserType type)
 {
+    start_token_flag = true;
+    start_token_value = type;
+
     loc.initialize(&file_);
     eval_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;
     buffer = eval_scan_bytes(string_.c_str(), string_.size());
     if (!buffer) {
         fatal("cannot scan string");
-        // fatal() throws an exception so this can't be reached
+        /* fatal() throws an exception so this can't be reached */
     }
 }
 
@@ -213,9 +240,10 @@ EvalContext::scanStringEnd()
 }
 
 namespace {
-/// To avoid unused function error
+/** To avoid unused function error */
 class Dummy {
-    // cppcheck-suppress unusedPrivateFunction
+    /* cppcheck-suppress unusedPrivateFunction */
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
+#endif /* !__clang_analyzer__ */

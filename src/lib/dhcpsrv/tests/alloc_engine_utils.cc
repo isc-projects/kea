@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,20 +39,23 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-bool testStatistics(const std::string& stat_name, const int64_t exp_value) {
+bool testStatistics(const std::string& stat_name, const int64_t exp_value,
+                    const SubnetID subnet_id) {
     try {
-        ObservationPtr observation = StatsMgr::instance().getObservation(stat_name);
+        std::string name = (!subnet_id ? stat_name : 
+                            StatsMgr::generateName("subnet", subnet_id, stat_name));
+        ObservationPtr observation = StatsMgr::instance().getObservation(name);
         if (observation) {
             if (observation->getInteger().first != exp_value) {
                 ADD_FAILURE()
                     << "value of the observed statistics '"
-                    << stat_name << "' " << "("
+                    << name << "' " << "("
                     << observation->getInteger().first << ") "
                     <<  "doesn't match expected value (" << exp_value << ")";
             }
             return (observation->getInteger().first == exp_value);
         } else {
-            ADD_FAILURE() << "Expected statistic " << stat_name
+            ADD_FAILURE() << "Expected statistic " << name
                           << " not found.";
         }
 
@@ -136,7 +139,6 @@ AllocEngine6Test::AllocEngine6Test() {
     // hardcoded anywhere.
     const uint8_t mac[] = { 0, 1, 22, 33, 44, 55};
     hwaddr_ = HWAddrPtr(new HWAddr(mac, sizeof(mac), HTYPE_FDDI));
-
     // Initialize a subnet and short address pool.
     initSubnet(IOAddress("2001:db8:1::"),
                IOAddress("2001:db8:1::10"),
@@ -145,7 +147,6 @@ AllocEngine6Test::AllocEngine6Test() {
                64, 80);
 
     initFqdn("", false, false);
-
 }
 
 void
@@ -170,14 +171,6 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
 
     cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
     cfg_mgr.commit();
-
-    // By default we pretend our subnet has 100 addresses and prefixes allocated.
-    StatsMgr::instance().setValue(
-        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-nas"),
-        static_cast<int64_t>(100));
-    StatsMgr::instance().setValue(
-        StatsMgr::generateName("subnet", subnet_->getID(), "assigned-pds"),
-        static_cast<int64_t>(100));
 }
 
 void
@@ -185,8 +178,8 @@ AllocEngine6Test::findReservation(AllocEngine& engine,
     AllocEngine::ClientContext6& ctx) {
     engine.findReservation(ctx);
     // Let's check whether there's a hostname specified in the reservation
-    if (ctx.host_) {
-        std::string hostname = ctx.host_->getHostname();
+    if (ctx.currentHost()) {
+        std::string hostname = ctx.currentHost()->getHostname();
         // If there is, let's use it
         if (!hostname.empty()) {
             ctx.hostname_ = hostname;
@@ -535,6 +528,8 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 }
 
 AllocEngine4Test::AllocEngine4Test() {
+
+    CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
     factory_.create("type=memfile universe=4 persist=false");

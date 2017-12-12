@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,9 @@
 #include <unistd.h>
 #include <fstream>
 
+#ifdef HAVE_OPTRESET
+extern int optreset;
+#endif
 
 using namespace std;
 using namespace isc;
@@ -230,7 +233,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             // agent. In the future we should extend it to up to 32.
             // See comment in https://github.com/isc-projects/kea/pull/22#issuecomment-243405600
             v6_relay_encapsulation_level_ =
-                static_cast<uint8_t>(positiveInteger("-A<encapusulation-level> must"
+                static_cast<uint8_t>(positiveInteger("-A<encapsulation-level> must"
                                                      " be a positive integer"));
             if (v6_relay_encapsulation_level_ != 1) {
                 isc_throw(isc::InvalidParameter, "-A only supports 1 at the moment.");
@@ -972,7 +975,7 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-hv] [-4|-6] [-A<encapusulation-level>] [-e<lease-type>]"
+        "perfdhcp [-hv] [-4|-6] [-A<encapsulation-level>] [-e<lease-type>]"
         "         [-r<rate>] [-f<renew-rate>]\n"
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
@@ -1086,7 +1089,7 @@ CommandOptions::usage() const {
         "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
         "    this value and the renew-rate (given by -f<rate) must be equal\n"
         "    to or less than the exchange rate.\n"
-        "-A<encapusulation-level>: Specifies that relayed traffic must be\n"
+        "-A<encapsulation-level>: Specifies that relayed traffic must be\n"
         "    generated. The argument specifies the level of encapsulation, i.e.\n"
         "    how many relay agents are simulated. Currently the only supported\n"
         "    <encapsulation-level> value is 1, which means that the generated\n"

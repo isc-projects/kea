@@ -1,0 +1,124 @@
+#!@PYTHON@
+
+# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+"""
+Text client for Control Agent process
+"""
+
+# First, let's import the right kea_connector.
+# We have two versions: one for python 2.x and another for python 3.x.
+# Sadly, there's no unified way to handle http connections. The recommended
+# way is to use Requests (http://docs.python-requests.org/en/master/), but
+# that's a stand alone package that requires separate installation. One of
+# the design requirements was to not require any additional packages, so
+# the code uses standard libraries available in python. Hence two versions.
+import os
+import sys
+import signal
+import argparse
+
+sys.path.append('@PKGPYTHONDIR@')
+
+from kea_conn import CARequest # CAResponse
+
+if sys.version_info[0] == 2:
+    # This is Python 2.x
+    import kea_connector2 as kea_connector
+elif sys.version_info[0] == 3:
+    # This is Python 3.x
+    import kea_connector3 as kea_connector
+else:
+    # This is... have no idea what it is.
+    raise SystemExit("Unknown python version:" + str(sys.version_info[0]))
+
+def timeout_handler(signum, frame):
+    """Connection timeout handler"""
+    del signum, frame
+    print("Connection timeout")
+    sys.exit(1)
+
+VERSION = "@PACKAGE_VERSION@"
+
+def shell_body():
+    """
+    Second step: Need to parse command line parameters. We will use
+    argparse for that purpose. It does great job with having default
+    values, taking care of the help and sanity checking input
+    parameters.
+    """
+    parser = argparse.ArgumentParser(description='kea-shell is a simple text '
+                                     'client that uses REST interface to '
+                                     'connect to Kea Control Agent.')
+    parser.add_argument('--host', type=str, default='127.0.0.1',
+                        help='hostname of the CA to connect to '
+                        '(default:; 127.0.0.1)')
+    parser.add_argument('--port', type=int, default=8000,
+                        help='TCP port of the CA to connect to '
+                        '(default: 8000)')
+    parser.add_argument('--path', type=str, default='',
+                        help='Path of the URL to connect to '
+                        '(default: "")')
+    parser.add_argument('--timeout', type=int, default='10',
+                        help='Timeout (in seconds) when attempting to '
+                        'connect to CA (default: 10)')
+    parser.add_argument('--service', nargs="?", action="append",
+                        help='target spcified service. If not specified,'
+                        'control agent will receive command.')
+    parser.add_argument('command', type=str, nargs="?",
+                        default='list-commands',
+                        help='command to be executed. If not specified, '
+                        '"list-commands" is used')
+    parser.add_argument('-v', action="store_true", help="Prints version")
+    cmd_args = parser.parse_args()
+
+    if cmd_args.v:
+        print(VERSION)
+        exit(0)
+
+    # Ok, now it's time to put the parameters parsed into the structure to be
+    # used by the connection.
+    params = CARequest()
+    params.command = cmd_args.command
+    params.service = cmd_args.service
+    params.http_host = cmd_args.host
+    params.http_port = cmd_args.port
+    params.path += cmd_args.path
+    params.timeout = cmd_args.timeout
+    params.version = VERSION
+
+    # Load command processor
+    # @todo - command specific processing will be added as part of
+    # future work (either #5138 or #5139, whichever is implemented
+    # first)
+
+    # Read arguments from stdin (they're optional for some commands)
+    for line in sys.stdin:
+        params.args += line
+
+    # Now we have the arguments so we can build the request
+    params.generate_body()
+    params.generate_headers()
+
+    # Set the timeout timer. If the connection takes too long,
+    # it will send a signal to us.
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(params.timeout)
+
+    # Ok, everything is ready. Let's send the command and get a response.
+    try:
+        resp = kea_connector.send_to_control_agent(params)
+    except Exception as exc:
+        print("Failed to run: " + str(exc))
+        sys.exit(1)
+
+    resp.print_response()
+
+    sys.exit(0)
+
+if __name__ == "__main__":
+    shell_body()

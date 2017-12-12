@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <list>
@@ -195,6 +196,7 @@ public:
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::classifyPacket;
+    using Dhcpv4Srv::deferredUnpack;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
@@ -325,7 +327,7 @@ public:
     /// present (false)
     /// @param t2_present check that t2 must be present (true) or must not be
     /// present (false)
-    void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
+    void checkAddressParams(const Pkt4Ptr& rsp, const Subnet4Ptr subnet,
                             bool t1_present = false,
                             bool t2_present = false);
 
@@ -417,11 +419,11 @@ public:
     void configure(const std::string& config, NakedDhcpv4Srv& srv,
                    const bool commit = true);
 
-    /// @brief Pretents a packet of specified type was received.
+    /// @brief Pretends a packet of specified type was received.
     ///
     /// Instantiates fake network interfaces, configures passed Dhcpv4Srv,
     /// then creates a message of specified type and sends it to the
-    /// server and then checks whether expected statstics were set
+    /// server and then checks whether expected statistics were set
     /// appropriately.
     ///
     /// @param srv the DHCPv4 server to be used
@@ -477,6 +479,77 @@ public:
     /// @brief Server object under test.
     NakedDhcpv4Srv srv_;
 };
+
+/// @brief Patch the server config to add interface-config/re-detect=false
+/// @param json the server config
+inline void
+disableIfacesReDetect(isc::data::ConstElementPtr json) {
+    isc::data::ConstElementPtr ifaces_cfg = json->get("interfaces-config");
+    if (ifaces_cfg) {
+        isc::data::ElementPtr mutable_cfg =
+            boost::const_pointer_cast<isc::data::Element>(ifaces_cfg);
+        mutable_cfg->set("re-detect", isc::data::Element::create(false));
+    }
+}
+
+/// @brief Runs parser in JSON mode, useful for parser testing
+///
+/// @param in string to be parsed
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ElementPtr
+parseJSON(const std::string& in)
+{
+    isc::dhcp::Parser4Context ctx;
+    return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_JSON));
+}
+
+/// @brief Runs parser in Dhcp4 mode
+///
+/// This is a simplified Dhcp4 mode, so no outer { } and "Dhcp4" is
+/// needed. This format is used by most of the tests.
+///
+/// @param in string to be parsed
+/// @param verbose display the exception message when it fails
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ElementPtr
+parseDHCP4(const std::string& in, bool verbose = false)
+{
+    try {
+        isc::dhcp::Parser4Context ctx;
+        isc::data::ElementPtr json;
+        json = ctx.parseString(in, isc::dhcp::Parser4Context::SUBPARSER_DHCP4);
+        disableIfacesReDetect(json);
+        return (json);
+    }
+    catch (const std::exception& ex) {
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
+        throw;
+    }
+}
+
+/// @brief Runs parser in option definition mode
+///
+/// This function parses specified text as JSON that defines option definitions.
+///
+/// @param in string to be parsed
+/// @param verbose display the exception message when it fails
+/// @return ElementPtr structure representing parsed JSON
+inline isc::data::ElementPtr
+parseOPTION_DEFS(const std::string& in, bool verbose = false)
+{
+    try {
+        isc::dhcp::Parser4Context ctx;
+        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEFS));
+    }
+    catch (const std::exception& ex) {
+        if (verbose) {
+            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+        }
+        throw;
+    }
+}
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

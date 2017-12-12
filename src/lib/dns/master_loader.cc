@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1055,7 +1055,7 @@ MasterLoader::loadIncremental(size_t count_limit) {
 }
 
 bool
-MasterLoader::loadedSucessfully() const {
+MasterLoader::loadedSuccessfully() const {
     return (impl_->complete_ && !impl_->seen_error_);
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,8 +80,12 @@ PktFilterInet6::openSocket(const Iface& iface,
     // in6addr_any (binding to port). Binding to port is required on some
     // operating systems, e.g. NetBSD and OpenBSD so as the socket can
     // join the socket to multicast group.
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
-                   (char *)&flag, sizeof(flag)) < 0) {
+    // RedHat 6.4 defines SO_REUSEPORT but the kernel does not support it
+    // and returns ENOPROTOOPT so ignore this error. Other versions may be
+    // affected, too.
+    if ((setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
+                    (char *)&flag, sizeof(flag)) < 0) &&
+        (errno != ENOPROTOOPT)) {
         close(sock);
         isc_throw(SocketConfigError, "Can't set SO_REUSEPORT option on IPv6"
                   " socket.");

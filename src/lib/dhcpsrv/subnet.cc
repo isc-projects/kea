@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,11 +9,13 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <algorithm>
 #include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace {
@@ -49,27 +51,17 @@ namespace dhcp {
 SubnetID Subnet::static_id_ = 1;
 
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
-               const Triplet<uint32_t>& t1,
-               const Triplet<uint32_t>& t2,
-               const Triplet<uint32_t>& valid_lifetime,
-               const isc::dhcp::Subnet::RelayInfo& relay,
                const SubnetID id)
-    :id_(id == 0 ? generateNextID() : id), prefix_(prefix), prefix_len_(len),
-     t1_(t1), t2_(t2), valid_(valid_lifetime),
-     last_allocated_ia_(lastAddrInPrefix(prefix, len)),
-     last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-     last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay),
-     host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption())
-      {
+    : id_(id == 0 ? generateNextID() : id), prefix_(prefix),
+      prefix_len_(len),
+      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
+      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
+      last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
-}
-
-Subnet::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
-    :addr_(addr) {
 }
 
 bool
@@ -78,33 +70,6 @@ Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
 
     return ((first <= addr) && (addr <= last));
-}
-
-void
-Subnet::setRelayInfo(const isc::dhcp::Subnet::RelayInfo& relay) {
-    relay_ = relay;
-}
-
-bool
-Subnet::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (white_list_.empty()) {
-        return (true); // There is no class defined for this subnet, so we do
-                       // support everyone.
-    }
-
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
-            return (true);
-        }
-    }
-
-    return (false);
-}
-
-void
-Subnet::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    white_list_.insert(class_name);
 }
 
 isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
@@ -198,12 +163,68 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    : Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("0.0.0.0")), id),
-      siaddr_(IOAddress("0.0.0.0")), match_client_id_(true) {
+    : Subnet(prefix, length, id), Network4(),
+      siaddr_(IOAddress("0.0.0.0")) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
+    // Relay info.
+    setRelayInfo(IOAddress::IPV4_ZERO_ADDRESS());
+    // Timers.
+    setT1(t1);
+    setT2(t2);
+    setValid(valid_lifetime);
+}
+
+Subnet4Ptr
+Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet) const {
+    SharedNetwork4Ptr network;
+    getSharedNetwork(network);
+    if (network) {
+        return (network->getNextSubnet(first_subnet, getID()));
+    }
+
+    return (Subnet4Ptr());
+}
+
+Subnet4Ptr
+Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet,
+                       const ClientClasses& client_classes) const {
+    SharedNetwork4Ptr network;
+    getSharedNetwork(network);
+    // We can only get next subnet if shared network has been defined for
+    // the current subnet.
+    if (network) {
+        Subnet4Ptr subnet;
+        do {
+            // Use subnet identifier of this subnet if this is the first
+            // time we're calling getNextSubnet. Otherwise, use the
+            // subnet id of the previously returned subnet.
+            SubnetID subnet_id = subnet ? subnet->getID() : getID();
+            subnet = network->getNextSubnet(first_subnet, subnet_id);
+            // If client classes match the subnet, return it. Otherwise,
+            // try another subnet.
+            if (subnet && subnet->clientSupported(client_classes)) {
+                return (subnet);
+            }
+        } while (subnet);
+    }
+
+    // No subnet found.
+    return (Subnet4Ptr());
+}
+
+
+bool
+Subnet4::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
+    NetworkPtr network;
+    getSharedNetwork(network);
+    if (network && !network->clientSupported(client_classes)) {
+        return (false);
+    }
+
+    return (Network4::clientSupported(client_classes));
 }
 
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
@@ -216,6 +237,21 @@ void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
 
 isc::asiolink::IOAddress Subnet4::getSiaddr() const {
     return (siaddr_);
+}
+
+void Subnet4::setSname(const std::string& sname) {
+    sname_ = sname;
+}
+
+const std::string& Subnet4::getSname() const {
+    return (sname_);
+}
+void Subnet4::setFilename(const std::string& filename) {
+    filename_ = filename;
+}
+
+const std::string& Subnet4::getFilename() const {
+    return (filename_);
 }
 
 const PoolCollection& Subnet::getPools(Lease::Type type) const {
@@ -353,21 +389,11 @@ Subnet::delPools(Lease::Type type) {
     getPoolsWritable(type).clear();
 }
 
-void
-Subnet::setIface(const std::string& iface_name) {
-    iface_ = iface_name;
-}
-
-std::string
-Subnet::getIface() const {
-    return (iface_);
-}
-
 bool
 Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
     // Let's start with checking if it even belongs to that subnet.
-    if (!inRange(addr)) {
+    if ((type != Lease::TYPE_PD) && !inRange(addr)) {
         return (false);
     }
 
@@ -455,12 +481,19 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& preferred_lifetime,
                  const Triplet<uint32_t>& valid_lifetime,
                  const SubnetID id)
-    :Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::")), id),
-     preferred_(preferred_lifetime), rapid_commit_(false) {
+    : Subnet(prefix, length, id), Network6() {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");
     }
+
+    // Relay info.
+    setRelayInfo(RelayInfo(IOAddress::IPV6_ZERO_ADDRESS()));
+    // Timers.
+    setT1(t1);
+    setT2(t2);
+    setPreferred(preferred_lifetime);
+    setValid(valid_lifetime);
 }
 
 void Subnet6::checkType(Lease::Type type) const {
@@ -471,6 +504,207 @@ void Subnet6::checkType(Lease::Type type) const {
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
     }
 }
+
+Subnet6Ptr
+Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet) const {
+    SharedNetwork6Ptr network;
+    getSharedNetwork(network);
+    if (network) {
+        return (network->getNextSubnet(first_subnet, getID()));
+    }
+
+    return (Subnet6Ptr());
+}
+
+Subnet6Ptr
+Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet,
+                       const ClientClasses& client_classes) const {
+    SharedNetwork6Ptr network;
+    getSharedNetwork(network);
+    // We can only get next subnet if shared network has been defined for
+    // the current subnet.
+    if (network) {
+        Subnet6Ptr subnet;
+        do {
+            // Use subnet identifier of this subnet if this is the first
+            // time we're calling getNextSubnet. Otherwise, use the
+            // subnet id of the previously returned subnet.
+            SubnetID subnet_id = subnet ? subnet->getID() : getID();
+            subnet = network->getNextSubnet(first_subnet, subnet_id);
+            // If client classes match the subnet, return it. Otherwise,
+            // try another subnet.
+            if (subnet && subnet->clientSupported(client_classes)) {
+                return (subnet);
+            }
+        } while (subnet);
+    }
+
+    // No subnet found.
+    return (Subnet6Ptr());
+}
+
+bool
+Subnet6::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
+    NetworkPtr network;
+    getSharedNetwork(network);
+    if (network && !network->clientSupported(client_classes)) {
+        return (false);
+    }
+
+    return (Network6::clientSupported(client_classes));
+}
+
+data::ElementPtr
+Subnet::toElement() const {
+    ElementPtr map = Element::createMap();
+
+    // Set subnet id
+    SubnetID id = getID();
+    map->set("id", Element::create(static_cast<long long>(id)));
+
+    // Set subnet
+    map->set("subnet", Element::create(toText()));
+
+    // Add user-context, but only if defined. Omit if it was not.
+    ConstElementPtr ctx = getContext();
+    if (ctx) {
+        map->set("user-context", ctx);
+    }
+
+    return (map);
+}
+
+data::ElementPtr
+Subnet4::toElement() const {
+    // Prepare the map
+    ElementPtr map = Subnet::toElement();
+    ElementPtr network_map = Network4::toElement();
+
+    merge(map, network_map);
+
+    // Set DHCP4o6
+    const Cfg4o6& d4o6 = get4o6();
+    isc::data::merge(map, d4o6.toElement());
+
+    // Set next-server
+    map->set("next-server", Element::create(getSiaddr().toText()));
+
+    // Set server-hostname
+    map->set("server-hostname", Element::create(getSname()));
+
+    // Set boot-file-name
+    map->set("boot-file-name",Element::create(getFilename()));
+
+    // Set pools
+    const PoolCollection& pools = getPools(Lease::TYPE_V4);
+    ElementPtr pool_list = Element::createList();
+    for (PoolCollection::const_iterator pool = pools.cbegin();
+         pool != pools.cend(); ++pool) {
+        // Add the elementized pool to the list
+        pool_list->add((*pool)->toElement());
+    }
+    map->set("pools", pool_list);
+
+    return (map);
+}
+
+data::ElementPtr
+Subnet6::toElement() const {
+    // Prepare the map
+    ElementPtr map = Subnet::toElement();
+    ElementPtr network_map = Network6::toElement();
+
+    merge(map, network_map);
+
+    // Set pools
+    const PoolCollection& pools = getPools(Lease::TYPE_NA);
+    ElementPtr pool_list = Element::createList();
+    for (PoolCollection::const_iterator pool = pools.cbegin();
+         pool != pools.cend(); ++pool) {
+        // Prepare the map for a pool (@todo move this code to pool.cc)
+        ElementPtr pool_map = Element::createMap();
+        // Set pool
+        const IOAddress& first = (*pool)->getFirstAddress();
+        const IOAddress& last = (*pool)->getLastAddress();
+        std::string range = first.toText() + "-" + last.toText();
+        // Try to output a prefix (vs a range)
+        int prefix_len = prefixLengthFromRange(first, last);
+        if (prefix_len >= 0) {
+            std::ostringstream oss;
+            oss << first.toText() << "/" << prefix_len;
+            range = oss.str();
+        }
+        pool_map->set("pool", Element::create(range));
+        // Set user-context
+        ConstElementPtr context = (*pool)->getContext();
+        if (!isNull(context)) {
+            pool_map->set("user-context", context);
+        }
+        // Set pool options
+        ConstCfgOptionPtr opts = (*pool)->getCfgOption();
+        pool_map->set("option-data", opts->toElement());
+        // Push on the pool list
+        pool_list->add(pool_map);
+    }
+    map->set("pools", pool_list);
+    // Set pd-pools
+    const PoolCollection& pdpools = getPools(Lease::TYPE_PD);
+    ElementPtr pdpool_list = Element::createList();
+    for (PoolCollection::const_iterator pool = pdpools.cbegin();
+         pool != pdpools.cend(); ++pool) {
+        // Get it as a Pool6 (@todo move this code to pool.cc)
+        const Pool6* pdpool = dynamic_cast<Pool6*>(pool->get());
+        if (!pdpool) {
+            isc_throw(ToElementError, "invalid pd-pool pointer");
+        }
+        // Prepare the map for a pd-pool
+        ElementPtr pool_map = Element::createMap();
+        // Set prefix
+        const IOAddress& prefix = pdpool->getFirstAddress();
+        pool_map->set("prefix", Element::create(prefix.toText()));
+        // Set prefix-len (get it from min - max)
+        const IOAddress& last = pdpool->getLastAddress();
+        int prefix_len = prefixLengthFromRange(prefix, last);
+        if (prefix_len < 0) {
+            // The pool is bad: give up
+            isc_throw(ToElementError, "invalid prefix range "
+                      << prefix.toText() << "-" << last.toText());
+        }
+        pool_map->set("prefix-len", Element::create(prefix_len));
+        // Set delegated-len
+        uint8_t len = pdpool->getLength();
+        pool_map->set("delegated-len",
+                      Element::create(static_cast<int>(len)));
+
+        // Set excluded prefix
+        const Option6PDExcludePtr& xopt =
+            pdpool->getPrefixExcludeOption();
+        if (xopt) {
+            const IOAddress& xprefix =
+                xopt->getExcludedPrefix(prefix, len);
+            pool_map->set("excluded-prefix",
+                          Element::create(xprefix.toText()));
+            uint8_t xlen = xopt->getExcludedPrefixLength();
+            pool_map->set("excluded-prefix-len",
+                          Element::create(static_cast<int>(xlen)));
+        }
+
+        // Set user-context
+        ConstElementPtr context = pdpool->getContext();
+        if (!isNull(context)) {
+            pool_map->set("user-context", context);
+        }
+        // Set pool options
+        ConstCfgOptionPtr opts = pdpool->getCfgOption();
+        pool_map->set("option-data", opts->toElement());
+        // Push on the pool list
+        pdpool_list->add(pool_map);
+    }
+    map->set("pd-pools", pdpool_list);
+
+    return (map);
+}
+
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

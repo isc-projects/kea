@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@ scripts_dir=${SCRIPTS_DIR_DEFAULT}
 
 # These are the default parameters. They will likely not work in any
 # specific deployment.
+db_host="localhost"
 db_user="keatest"
 db_password="keatest"
 db_name="keatest"
@@ -49,7 +50,7 @@ usage() {
     printf "\n"
     printf "COMMAND: Currently supported operations are:\n"
     printf "\n"
-    printf " - lease-init: Initalizes new lease database. Useful for first time installation.\n"
+    printf " - lease-init: Initializes new lease database. Useful for first time installation.\n"
     printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
     printf " -                for checking lease DB version when preparing for an upgrade.\n"
     printf " - lease-upgrade: Upgrades your lease database scheme\n"
@@ -59,6 +60,7 @@ usage() {
     printf "\n"
     printf "PARAMETERS: Parameters are optional in general, but may be required\n"
     printf "            for specific operation.\n"
+    printf " -h or --host hostname - specifies a hostname of a database to connect to\n"
     printf " -u or --user name - specifies username when connecting to a database\n"
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
@@ -146,14 +148,14 @@ mysql_init() {
 
     COUNT=`echo $RESULT | wc -w`
     if [ $COUNT -gt 0 ]; then
-        # Let't start with a new line. mysql could have printed something out.
+        # Let's start with a new line. mysql could have printed something out.
         printf "\n"
         log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
         exit 1
     fi
 
     printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
-    mysql -B --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
+    mysql -B --host=$db_host --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
     ERRCODE=$?
 
     printf "mysql returned status code $ERRCODE\n"
@@ -260,7 +262,7 @@ mysql_upgrade() {
     for script in ${scripts_dir}/mysql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} --user=${db_user} --password=${db_password} ${db_name}
+        sh ${script} --host=${db_host} --user=${db_user} --password=${db_password} ${db_name}
     done
 
     printf "Lease DB version reported after upgrade: "
@@ -292,7 +294,7 @@ pgsql_upgrade() {
     for script in ${scripts_dir}/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} -U ${db_user} -h localhost -d ${db_name}
+        sh ${script} -U ${db_user} -h ${db_host} -d ${db_name}
     done
 
     version=`pgsql_version`
@@ -383,6 +385,13 @@ memfile_dump() {
 
 mysql_dump() {
 
+    # Check the lease type was given
+    if [ $dump_type -eq 0 ]; then
+        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
+        usage
+        exit 1
+    fi
+
     # get the correct dump query
     version=`mysql_version`
     retcode=$?
@@ -438,6 +447,13 @@ mysql_dump() {
 
 ### Functions used for dump
 pgsql_dump() {
+    # Check the lease type was given
+    if [ $dump_type -eq o ]; then
+        log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
+        usage
+        exit 1
+    fi
+
     version=`pgsql_version`
     get_dump_query $version
 
@@ -457,7 +473,7 @@ pgsql_dump() {
 
     # Call psql and redirect output to the dump file. We don't use psql "to csv"
     # as it can only be run as db superuser.
-    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -h localhost -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
+    echo "$dump_qry" | psql --set ON_ERROR_STOP=1 -t -h $db_host -q --user=$db_user --dbname=$db_name -w --no-align --field-separator=',' >$dump_file
     retcode=$?
 
     # Check for errors.
@@ -547,6 +563,16 @@ while [ ! -z "${1}" ]
 do
     option=${1}
     case ${option} in
+        # Specify database host
+        -h|--host)
+            shift
+            db_host=${1}
+            if [ -z ${db_host} ]; then
+                log_error "-h or --host requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
         # Specify database user
         -u|--user)
             shift

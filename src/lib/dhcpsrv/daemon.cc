@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <boost/bind.hpp>
 
 #include <sstream>
+#include <fstream>
 #include <errno.h>
 
 /// @brief provides default implementation for basic daemon operations
@@ -203,6 +204,32 @@ Daemon::createPIDFile(int pid) {
     }
 
     am_file_author_ = true;
+}
+
+size_t
+Daemon::writeConfigFile(const std::string& config_file,
+                        isc::data::ConstElementPtr cfg) const {
+    if (!cfg) {
+        cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+    }
+
+    if (!cfg) {
+        isc_throw(Unexpected, "Can't write configuration: conversion to JSON failed");
+    }
+
+    std::ofstream out(config_file, std::ios::trunc);
+    if (!out.good()) {
+        isc_throw(Unexpected, "Unable to open file " + config_file + " for writing");
+    }
+
+    // Write the actual content using pretty printing.
+    isc::data::prettyPrint(cfg, out);
+
+    size_t bytes = static_cast<size_t>(out.tellp());
+
+    out.close();
+
+    return (bytes);
 }
 
 };

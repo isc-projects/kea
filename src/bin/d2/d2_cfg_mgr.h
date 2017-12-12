@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,11 +57,23 @@ public:
         return (forward_mgr_);
     }
 
+    /// @brief Sets the forward domain list manager
+    /// @param forward_mgr pointer to the new forward manager
+    void setForwardMgr(DdnsDomainListMgrPtr forward_mgr) {
+        forward_mgr_ = forward_mgr;
+    }
+
     /// @brief Fetches the reverse DNS domain list manager.
     ///
     /// @return returns a pointer to the reverse manager.
     DdnsDomainListMgrPtr getReverseMgr() {
         return (reverse_mgr_);
+    }
+
+    /// @brief Sets the reverse domain list manager
+    /// @param reverse_mgr pointer to the new reverse manager
+    void setReverseMgr(DdnsDomainListMgrPtr reverse_mgr) {
+        reverse_mgr_ = reverse_mgr;
     }
 
     /// @brief Fetches the map of TSIG keys.
@@ -70,6 +82,18 @@ public:
     TSIGKeyInfoMapPtr getKeys() {
         return (keys_);
     }
+
+    /// @brief Sets the map of TSIG keys
+    ///
+    /// @param keys pointer to the new TSIG key map
+    void setKeys(const TSIGKeyInfoMapPtr& keys) {
+        keys_ = keys;
+    }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 protected:
     /// @brief Copy constructor for use by derivations in clone().
@@ -239,6 +263,29 @@ public:
     virtual std::string getConfigSummary(const uint32_t selection);
 
 protected:
+
+    /// @brief Parses an element using alternate parsers
+    ///
+    /// Each element to be parsed is passed first into this method to allow
+    /// it to be processed by SimpleParser derivations if they've been
+    /// implemented. The method should return true if it has processed the
+    /// element or false if the element should be passed onto the original
+    /// DhcpConfigParer mechanisms.  This method is invoked in both
+    /// @c DCfgMgrBase::buildParams() and DCfgMgrBase::buildAndCommit().
+    ///
+    /// @param element_id name of the element as it is expected in the cfg
+    /// @param element value of the element as ElementPtr
+    virtual void parseElement(const std::string& element_id,
+                              isc::data::ConstElementPtr element);
+
+    /// @brief Adds default values to the given config
+    ///
+    /// Adds the D2 default values to the configuration Element map. This
+    /// method is invoked by @c DCfgMgrBase::parseConfig().
+    ///
+    /// @param mutable_config - configuration to which defaults should be added
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
+
     /// @brief Performs the parsing of the given "params" element.
     ///
     /// Iterates over the set of parameters, creating a parser based on the
@@ -258,32 +305,6 @@ protected:
     /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
     /// -# ncr_format is invalid, currently only FMT_JSON is supported
     virtual void buildParams(isc::data::ConstElementPtr params_config);
-
-    /// @brief Given an element_id returns an instance of the appropriate
-    /// parser.
-    ///
-    /// It is responsible for top-level or outermost DHCP-DDNS configuration
-    /// elements (see dhcp-ddns.spec):
-    ///     -# ip_address
-    ///     -# port
-    ///     -# dns_server_timeout
-    ///     -# ncr_protocol
-    ///     -# ncr_format
-    ///     -# tsig_keys
-    ///     -# forward_ddns
-    ///     -# reverse_ddns
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a ParserPtr to the parser instance.
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos =
-                       isc::data::Element::Position());
 
     /// @brief Creates an new, blank D2CfgContext context
     ///

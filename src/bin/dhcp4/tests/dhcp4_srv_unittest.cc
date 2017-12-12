@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,7 +93,47 @@ const char* CONFIGS[] = {
         "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
         " } ],"
-    "\"valid-lifetime\": 4000 }"
+    "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2:
+    // - 1 subnet, 2 global options (one forced with always-send)
+    "{"
+    "    \"interfaces-config\": {"
+    "    \"interfaces\": [ \"*\" ] }, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet4\": [ {"
+    "        \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+    "        \"subnet\": \"192.0.2.0/24\""
+    "    } ], "
+    "    \"option-data\": ["
+    "        {"
+    "            \"name\": \"default-ip-ttl\", "
+    "            \"data\": \"FF\", "
+    "            \"csv-format\": false"
+    "        }, "
+    "        {"
+    "            \"name\": \"ip-forwarding\", "
+    "            \"data\": \"false\", "
+    "            \"always-send\": true"
+    "        }"
+    "    ]"
+    "}",
+
+    // Configuration 3:
+    // - one subnet, with one pool
+    // - user-contexts defined in both subnet and pool
+    "{"
+        "    \"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"10.254.226.0/25\","
+        "                   \"user-context\": { \"value\": 42 } } ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"user-context\": {"
+        "        \"secure\": false"
+        "    }"
+        " } ],"
+    "\"valid-lifetime\": 4000 }",
 };
 
 // This test verifies that the destination address of the response
@@ -162,6 +202,88 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
+}
+
+// This test verifies that it is possible to configure the server to use
+// routing information to determine the right outbound interface to sent
+// responses to a relayed client.
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create configuration for interfaces. It includes the outbound-interface
+    // setting which indicates that the responses aren't neccessarily sent
+    // over the same interface via which a request has been received, but routing
+    // information is used to determine this interface.
+    CfgMgr::instance().clear();
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    cfg_iface->useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    cfg_iface->use(AF_INET, "eth0");
+    cfg_iface->use(AF_INET, "eth1");
+    cfg_iface->setOutboundIface(CfgIface::USE_ROUTING);
+    CfgMgr::instance().commit();;
+
+    // Create the instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
+    req->setGiaddr(IOAddress("192.0.1.1"));
+    req->setHops(2);
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.2.5"));
+    req->setLocalPort(1001);
+    req->setIface("eth1");
+    req->setIndex(1);
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+
+    Pkt4Ptr resp = ex.getResponse();
+    resp->setYiaddr(IOAddress("192.0.1.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
+
+    // This function never throws.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    // Now the destination address should be relay's address.
+    EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
+    // The query has been relayed, so the response must be sent to the port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
+
+    // The local port is always DHCPv4 server port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+
+    // No specific interface is selected as outbound interface and no specific
+    // local address is provided. The IfaceMgr will figure out which interface to use.
+    EXPECT_TRUE(resp->getLocalAddr().isV4Zero());
+    EXPECT_TRUE(resp->getIface().empty());
+    EXPECT_FALSE(resp->indexSet());
+
+    // Another test verifies that setting outbound interface to same as inbound will
+    // cause the server to set interface and local address as expected.
+
+    cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    cfg_iface->useSocketType(AF_INET, CfgIface::SOCKET_UDP);
+    cfg_iface->use(AF_INET, "eth0");
+    cfg_iface->use(AF_INET, "eth1");
+    cfg_iface->setOutboundIface(CfgIface::SAME_AS_INBOUND);
+    CfgMgr::instance().commit();
+
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
+    EXPECT_EQ("eth1", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
 }
 
 // This test verifies that the destination address of the response message
@@ -447,7 +569,7 @@ TEST_F(Dhcpv4SrvTest, appendServerID) {
 
     // Set a local address. It is required by the function under test
     // to create the Server Identifier option.
-    response->setLocalAddr(IOAddress("192.0.3.1"));
+    query->setLocalAddr(IOAddress("192.0.3.1"));
 
     // Append the Server Identifier.
     ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(ex));
@@ -744,7 +866,14 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     checkResponse(offer, DHCPOFFER, 1234);
     checkClientId(offer, clientid);
 
-    CfgMgr::instance().echoClientId(false);
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
+    CfgMgr::instance().commit();
+
     offer = srv.processDiscover(dis);
 
     // Check if we get response at all
@@ -812,7 +941,14 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     checkResponse(ack, DHCPACK, 1234);
     checkClientId(ack, clientid);
 
-    CfgMgr::instance().echoClientId(false);
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnets->at(0));
+    CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
+    CfgMgr::instance().commit();
+
     ack = srv.processRequest(dis);
 
     // Check if we get response at all
@@ -1067,7 +1203,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         "          \"space\": \"vendor-4491\","
         "          \"code\": 2,"
         "          \"data\": \"10.253.175.16\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
@@ -1079,7 +1215,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1200,7 +1337,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 // Checks if the next-server defined as global value is overridden by subnet
 // specific value and returned in server messages. There's also similar test for
 // checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
-// config_parser_unittest.cc.
+// config_parser_unittest.cc. This test was extended to other BOOTP fixed fields.
 TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -1215,13 +1352,18 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"nohost\", "
+        "\"boot-file-name\": \"nofile\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"some-name.example.org\", "
+        "    \"boot-file-name\": \"bootfile.efi\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
@@ -1244,6 +1386,16 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
+    std::string sname("some-name.example.org");
+    uint8_t sname_buf[Pkt4::MAX_SNAME_LEN];
+    std::memset(sname_buf, 0, Pkt4::MAX_SNAME_LEN);
+    std::memcpy(sname_buf, sname.c_str(), sname.size());
+    EXPECT_EQ(0, std::memcmp(sname_buf, &offer->getSname()[0], Pkt4::MAX_SNAME_LEN));
+    std::string filename("bootfile.efi");
+    uint8_t filename_buf[Pkt4::MAX_FILE_LEN];
+    std::memset(filename_buf, 0, Pkt4::MAX_FILE_LEN);
+    std::memcpy(filename_buf, filename.c_str(), filename.size());
+    EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
 
 // Checks if the next-server defined as global value is used in responses
@@ -1264,12 +1416,15 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"some-name.example.org\", "
+        "\"boot-file-name\": \"bootfile.efi\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
 
@@ -1292,6 +1447,16 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
     EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
+    std::string sname("some-name.example.org");
+    uint8_t sname_buf[Pkt4::MAX_SNAME_LEN];
+    std::memset(sname_buf, 0, Pkt4::MAX_SNAME_LEN);
+    std::memcpy(sname_buf, sname.c_str(), sname.size());
+    EXPECT_EQ(0, std::memcmp(sname_buf, &offer->getSname()[0], Pkt4::MAX_SNAME_LEN));
+    std::string filename("bootfile.efi");
+    uint8_t filename_buf[Pkt4::MAX_FILE_LEN];
+    std::memset(filename_buf, 0, Pkt4::MAX_FILE_LEN);
+    std::memcpy(filename_buf, filename.c_str(), filename.size());
+    EXPECT_EQ(0, std::memcmp(filename_buf, &offer->getFile()[0], Pkt4::MAX_FILE_LEN));
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
@@ -1358,7 +1523,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         "          \"space\": \"vendor-4491\","
         "          \"code\": 2,"
         "          \"data\": \"192.0.2.1, 192.0.2.2\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
@@ -1370,7 +1535,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
 
     EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
     ASSERT_TRUE(x);
@@ -1433,6 +1599,89 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     EXPECT_EQ("192.0.2.2", addrs[1].toText());
 }
 
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and persistent options are actually assigned.
+TEST_F(Dhcpv4SrvTest, vendorPersistentOptions) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": true,"
+        "          \"always-send\": true"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr and hops to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    dis->setHops(1);
+
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    // Set interface. It is required by the server to generate server id.
+    dis->setIface("eth0");
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    dis->addOption(vendor);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // Check if there is a vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+}
+
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
 TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
@@ -1448,7 +1697,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
         "          \"code\": ";
     string config_postfix = ","
         "          \"data\": \"192.0.2.1\","
-        "          \"csv-format\": True"
+        "          \"csv-format\": true"
         "        }],"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.50\" } ],"
@@ -1468,8 +1717,10 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     // definition, the config should fail.
     string config_bogus = config_prefix + "99" + config_postfix;
 
-    ElementPtr json_bogus = Element::fromJSON(config_bogus);
-    ElementPtr json_valid = Element::fromJSON(config_valid);
+    ConstElementPtr json_bogus;
+    ASSERT_NO_THROW(json_bogus = parseDHCP4(config_bogus));
+    ConstElementPtr json_valid;
+    ASSERT_NO_THROW(json_valid = parseDHCP4(config_valid));
 
     NakedDhcpv4Srv srv(0);
 
@@ -1543,7 +1794,8 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1629,7 +1881,8 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
         "{   \"name\": \"router\", "
         "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1652,7 +1905,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     // Classify packets
     srv.classifyPacket(query);
 
-    // The queey should be in the router class
+    // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 }
 
@@ -1679,7 +1932,8 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
         "    \"code\": 250, "
         "    \"type\": \"string\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1702,7 +1956,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     // Classify packets
     srv.classifyPacket(query);
 
-    // The queey should be in the router class
+    // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 }
 
@@ -1734,7 +1988,8 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1806,7 +2061,8 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
         "    {    \"name\": \"ip-forwarding\", "
         "         \"data\": \"true\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1877,7 +2133,8 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
         "             \"data\": \"true\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
@@ -1902,6 +2159,85 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ASSERT_TRUE(prl);
     prl->addValue(DHO_IP_FORWARDING);
     query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Classify the packet
+    srv.classifyPacket(query);
+
+    // The packet should be in the router class
+    EXPECT_TRUE(query->inClass("router"));
+
+    // Process the query
+    Pkt4Ptr response = srv.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    // Classification sets the value to true/1, global to false/0
+    // Here class has the priority
+    EXPECT_NE(0, opt->getUint8());
+}
+
+// Checks class options have the priority over global persistent options
+TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // A global ip-forwarding option is set in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 12) and sets an ip-forwarding option in the response.
+    // Note the persistency flag follows a "OR" semantic so to set
+    // it to false (or to leave the default) has no effect.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ], "
+        "\"option-data\": ["
+        "    {    \"name\": \"ip-forwarding\", "
+        "         \"data\": \"false\", "
+        "         \"always-send\": true } ], "
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\","
+        "    \"option-data\": ["
+        "        {    \"name\": \"ip-forwarding\", "
+        "             \"data\": \"true\", "
+        "             \"always-send\": false } ], "
+        "    \"test\": \"option[12].text == 'foo'\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Do not add a PRL
+    OptionPtr prl = query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    EXPECT_FALSE(prl);
 
     // Create and add a host-name option to the query
     OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
@@ -1980,6 +2316,1129 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
 
     // This time it should work
     EXPECT_TRUE(srv_.selectSubnet(dis));
+}
+
+// Verifies last resort option 43 is backward compatible
+TEST_F(Dhcpv4SrvTest, option43LastResort) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // If there is no definition for option 43 a last resort
+    // one is applied. This definition was used by Kea <= 1.2
+    // so should be backward compatible.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"foo\", "
+        "    \"space\": \"vendor-encapsulated-options-space\", "
+        "    \"data\": \"12345678\" }, "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    const OptionCollection& opts = opt->getOptions();
+    ASSERT_EQ(1, opts.size());
+    OptionPtr sopt = opts.begin()->second;
+    ASSERT_TRUE(sopt);
+    EXPECT_EQ(1, sopt->getType());
+}
+
+// Checks effect of raw not compatible option 43 (no failure)
+TEST_F(Dhcpv4SrvTest, option43BadRaw) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // The vendor-encapsulated-options has an incompatible data
+    // so won't have the expected content but processing of truncated
+    // (suboption length > available length) suboptions does not raise
+    // an exception.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x02);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    srv.deferredUnpack(query);
+
+    // Check if the option was (uncorrectly) re-unpacked
+    vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
+    EXPECT_TRUE(custom);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    // But truncated.
+    EXPECT_EQ(0, opt->len() - opt->getHeaderLen());
+}
+
+// Checks effect of raw not compatible option 43 (failure)
+TEST_F(Dhcpv4SrvTest, option43FailRaw) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // The vendor-encapsulated-options has an incompatible data
+    // so won't have the expected content. Here the processing
+    // of suboptions tries to unpack the uitn32 foo suboption and
+    // raises an exception.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    // which will raise an exception
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    EXPECT_THROW(srv.deferredUnpack(query), InvalidOptionValue);
+}
+
+// Verifies raw option 43 can be handled (global)
+TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a global definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 43, "
+        "    \"name\": \"vendor-encapsulated-options\", "
+        "    \"type\": \"binary\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x02);
+    buf.push_back(0x03);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Check if the option was (correctly) re-unpacked
+    vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
+    EXPECT_FALSE(custom);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    // Verifies the content
+    ASSERT_EQ(2, opt->len() - opt->getHeaderLen());
+    EXPECT_EQ(0x01, opt->getData()[0]);
+    EXPECT_EQ(0x02, opt->getData()[1]);
+}
+
+// Verifies raw option 43 can be handled (catch-all class)
+TEST_F(Dhcpv4SrvTest, option43RawClass) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a class definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"vendor\", "
+        "    \"test\": \"option[vendor-encapsulated-options].exists\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"binary\" } ],"
+        "    \"option-data\": [ "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"bar\" }, "
+        "    {   \"name\": \"vendor-encapsulated-options\", "
+        "        \"csv-format\": false, "
+        "        \"data\": \"0102\" } ] } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x02);
+    buf.push_back(0x03);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Check if the option was (correctly) re-unpacked
+    vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
+    EXPECT_FALSE(custom);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    // Verifies the content
+    ASSERT_EQ(2, opt->len() - opt->getHeaderLen());
+    EXPECT_EQ(0x01, opt->getData()[0]);
+    EXPECT_EQ(0x02, opt->getData()[1]);
+}
+
+// Verifies option 43 deferred processing (one class)
+TEST_F(Dhcpv4SrvTest, option43Class) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // A client class defines vendor-encapsulated-options (code 43)
+    // and data for it and its sub-option.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"alpha\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"alpha\", "
+        "    \"test\": \"option[vendor-class-identifier].text == 'alpha'\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"empty\", "
+        "        \"encapsulate\": \"alpha\" } ],"
+        "    \"option-data\": [ "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"alpha\" }, "
+        "    {   \"name\": \"vendor-encapsulated-options\" }, "
+        "    {   \"name\": \"foo\", "
+        "        \"space\": \"alpha\", "
+        "        \"data\": \"12345678\" } ] } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x04);
+    buf.push_back(0x87);
+    buf.push_back(0x65);
+    buf.push_back(0x43);
+    buf.push_back(0x21);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a vendor-class-identifier (code 60)
+    OptionStringPtr iopt(new OptionString(Option::V4,
+                                          DHO_VENDOR_CLASS_IDENTIFIER,
+                                          "alpha"));
+    query->addOption(iopt);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Check if the option was (correctly) re-unpacked
+    vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
+    EXPECT_TRUE(custom);
+    EXPECT_EQ(1, vopt->getOptions().size());
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    // Verifies the content
+    const OptionCollection& opts = opt->getOptions();
+    ASSERT_EQ(1, opts.size());
+    OptionPtr sopt = opts.begin()->second;
+    ASSERT_TRUE(sopt);
+    EXPECT_EQ(1, sopt->getType());
+    OptionUint32Ptr sopt32 = boost::dynamic_pointer_cast<OptionUint32>(sopt);
+    ASSERT_TRUE(sopt32);
+    EXPECT_EQ(12345678, sopt32->getValue());
+}
+
+// Verifies option 43 priority
+TEST_F(Dhcpv4SrvTest, option43ClassPriority) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Both global and client-class scopes get vendor-encapsulated-options
+    // (code 43) definition and data. The client-class has precedence.
+    // Note it does not work without the vendor-encapsulated-options
+    // option-data in the client-class.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"alpha\", "
+        "    \"type\": \"uint32\" },"
+        "{   \"code\": 1, "
+        "    \"name\": \"bar\", "
+        "    \"space\":  \"beta\", "
+        "    \"type\": \"uint8\" }, "
+        "{   \"code\": 43, "
+        "    \"name\": \"vendor-encapsulated-options\", "
+        "    \"type\": \"empty\", "
+        "    \"encapsulate\": \"beta\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-encapsulated-options\" }, "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"beta\" }, "
+        "{   \"name\": \"bar\", "
+        "    \"space\": \"beta\", "
+        "    \"data\": \"33\" } ],"
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"alpha\", "
+        "    \"test\": \"option[vendor-class-identifier].text == 'alpha'\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"empty\", "
+        "        \"encapsulate\": \"alpha\" } ],"
+        "    \"option-data\": [ "
+        "{   \"name\": \"vendor-encapsulated-options\" }, "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"alpha\" }, "
+        "    {   \"name\": \"foo\", "
+        "        \"space\": \"alpha\", "
+        "        \"data\": \"12345678\" } ] } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x04);
+    buf.push_back(0x87);
+    buf.push_back(0x65);
+    buf.push_back(0x43);
+    buf.push_back(0x21);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a vendor-class-identifier (code 60)
+    OptionStringPtr iopt(new OptionString(Option::V4,
+                                          DHO_VENDOR_CLASS_IDENTIFIER,
+                                          "alpha"));
+    query->addOption(iopt);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Check if the option was (correctly) re-unpacked
+    vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
+    EXPECT_TRUE(custom);
+    EXPECT_EQ(1, vopt->getOptions().size());
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+    OptionStringPtr id = boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(id);
+    EXPECT_EQ("alpha", id->getValue());
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    // Verifies the content
+    const OptionCollection& opts = opt->getOptions();
+    ASSERT_EQ(1, opts.size());
+    OptionPtr sopt = opts.begin()->second;
+    ASSERT_TRUE(sopt);
+    EXPECT_EQ(1, sopt->getType());
+    EXPECT_EQ(2 + 4, sopt->len());
+    OptionUint32Ptr sopt32 = boost::dynamic_pointer_cast<OptionUint32>(sopt);
+    ASSERT_TRUE(sopt32);
+    EXPECT_EQ(12345678, sopt32->getValue());
+}
+
+// Verifies option 43 deferred processing (two classes)
+TEST_F(Dhcpv4SrvTest, option43Classes) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Two client-class scopes get vendor-encapsulated-options
+    // (code 43) definition and data. The first matching client-class
+    // (from a set?) applies.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"alpha\", "
+        "    \"type\": \"uint32\" },"
+        "{   \"code\": 1, "
+        "    \"name\": \"bar\", "
+        "    \"space\":  \"beta\", "
+        "    \"type\": \"uint8\" } ],"
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"alpha\", "
+        "    \"test\": \"option[vendor-class-identifier].text == 'alpha'\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"empty\", "
+        "        \"encapsulate\": \"alpha\" } ],"
+        "    \"option-data\": [ "
+        "{   \"name\": \"vendor-encapsulated-options\" }, "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"alpha\" }, "
+        "    {   \"name\": \"foo\", "
+        "        \"space\": \"alpha\", "
+        "        \"data\": \"12345678\" } ] },"
+        "{   \"name\": \"beta\", "
+        "    \"test\": \"option[vendor-class-identifier].text == 'beta'\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"empty\", "
+        "        \"encapsulate\": \"beta\" } ],"
+        "    \"option-data\": [ "
+        "{   \"name\": \"vendor-encapsulated-options\" }, "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"beta\" }, "
+        "    {   \"name\": \"bar\", "
+        "        \"space\": \"beta\", "
+        "        \"data\": \"33\" } ] } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x04);
+    buf.push_back(0x87);
+    buf.push_back(0x65);
+    buf.push_back(0x43);
+    buf.push_back(0x21);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    query->addOption(vopt);
+    query->getDeferredOptions().push_back(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+
+    // Create and add a vendor-class-identifier (code 60)
+    OptionStringPtr iopt(new OptionString(Option::V4,
+                                          DHO_VENDOR_CLASS_IDENTIFIER,
+                                          "alpha"));
+    query->addOption(iopt);
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Check if the option was (correctly) re-unpacked
+    vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
+    EXPECT_TRUE(custom);
+    EXPECT_EQ(1, vopt->getOptions().size());
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add a vendor-class-identifier (code 60)
+    OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
+    EXPECT_TRUE(opt);
+    OptionStringPtr id = boost::dynamic_pointer_cast<OptionString>(opt);
+    ASSERT_TRUE(id);
+    EXPECT_EQ("alpha", id->getValue());
+
+    // And a vendor-encapsulated-options (code 43)
+    opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(opt);
+    // Verifies the content
+    const OptionCollection& opts = opt->getOptions();
+    ASSERT_EQ(1, opts.size());
+    OptionPtr sopt = opts.begin()->second;
+    ASSERT_TRUE(sopt);
+    EXPECT_EQ(1, sopt->getType());
+    EXPECT_EQ(2 + 4, sopt->len());
+    OptionUint32Ptr sopt32 = boost::dynamic_pointer_cast<OptionUint32>(sopt);
+    ASSERT_TRUE(sopt32);
+    EXPECT_EQ(12345678, sopt32->getValue());
+}
+
+// Verifies private option deferred processing
+TEST_F(Dhcpv4SrvTest, privateOption) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Same than option43Class but with private options
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"private\", "
+        "    \"test\": \"option[234].exists\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 245, "
+        "        \"name\": \"privint\", "
+        "        \"type\": \"uint32\" } ],"
+        "    \"option-data\": [ "
+        "    {   \"code\": 234, "
+        "        \"data\": \"01\" }, "
+        "    {   \"name\": \"privint\", "
+        "        \"data\": \"12345678\" } ] } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a private option with code 234
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    OptionPtr opt1(new Option(Option::V4, 234, buf));
+    query->addOption(opt1);
+    query->getDeferredOptions().push_back(234);
+
+    // Create and add a private option with code 245
+    buf.clear();
+    buf.push_back(0x87);
+    buf.push_back(0x65);
+    buf.push_back(0x43);
+    buf.push_back(0x21);
+    OptionPtr opt2(new Option(Option::V4, 245, buf));
+    query->addOption(opt2);
+    query->getDeferredOptions().push_back(245);
+
+
+    // Create and add a PRL option to the query
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(234);
+    prl->addValue(245);
+    query->addOption(prl);
+
+    srv.classifyPacket(query);
+    ASSERT_NO_THROW(srv.deferredUnpack(query));
+
+    // Check if the option 245 was re-unpacked
+    opt2 = query->getOption(245);
+    OptionUint32Ptr opt32 = boost::dynamic_pointer_cast<OptionUint32>(opt2);
+    EXPECT_TRUE(opt32);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(query);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    
+    // Processing should add an option with code 234
+    OptionPtr opt = offer->getOption(234);
+    EXPECT_TRUE(opt);
+
+    // And an option with code 245
+    opt = offer->getOption(245);
+    ASSERT_TRUE(opt);
+    // Verifies the content
+    opt32 = boost::dynamic_pointer_cast<OptionUint32>(opt);
+    ASSERT_TRUE(opt32);
+    EXPECT_EQ(12345678, opt32->getValue());
+}
+
+// Checks effect of raw not compatible option 43 sent by a client (failure)
+TEST_F(Dhcpv4SrvTest, clientOption43FailRaw) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options has an incompatible data
+    // so won't have the expected content. Here the processing
+    // of suboptions tries to unpack the uint32 foo suboption and
+    // raises an exception.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    // which will raise an exception
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is not able to process this packet
+    // and raises an exception so the response is empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_FALSE(client.getContext().response_);
+}
+
+// Verifies raw option 43 sent by a client can be handled (global)
+TEST_F(Dhcpv4SrvTest, clientOption43RawGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a global definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" },"
+        "{   \"code\": 43, "
+        "    \"name\": \"vendor-encapsulated-options\", "
+        "    \"type\": \"binary\" } ],"
+        "\"option-data\": [ "
+        "{   \"name\": \"vendor-class-identifier\", "
+        "    \"data\": \"bar\" }, "
+        "{   \"name\": \"vendor-encapsulated-options\", "
+        "    \"csv-format\": false, "
+        "    \"data\": \"0102\" } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions so the response is not empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_TRUE(client.getContext().response_);
+}
+
+// Verifies raw option 43 sent by a client can be handled (catch-all class)
+TEST_F(Dhcpv4SrvTest, clientOption43RawClass) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The vendor-encapsulated-options is redefined as raw binary
+    // in a class definition.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
+        "    \"subnet\": \"10.0.0.0/24\" } ],"
+        "\"option-def\": [ "
+        "{   \"code\": 1, "
+        "    \"name\": \"foo\", "
+        "    \"space\":  \"vendor-encapsulated-options-space\", "
+        "    \"type\": \"uint32\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"vendor\", "
+        "    \"test\": \"option[vendor-encapsulated-options].exists\", "
+        "    \"option-def\": [ "
+        "    {   \"code\": 43, "
+        "        \"name\": \"vendor-encapsulated-options\", "
+        "        \"type\": \"binary\" } ],"
+        "    \"option-data\": [ "
+        "    {   \"name\": \"vendor-class-identifier\", "
+        "        \"data\": \"bar\" }, "
+        "    {   \"name\": \"vendor-encapsulated-options\", "
+        "        \"csv-format\": false, "
+        "        \"data\": \"0102\" } ] } ] }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Create and add a vendor-encapsulated-options (code 43)
+    // with not compatible (not parsable as suboptions) content
+    OptionBuffer buf;
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    buf.push_back(0x01);
+    OptionPtr vopt(new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS, buf));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is able to process this packet without
+    // throwing any exceptions so the response is not empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    EXPECT_TRUE(client.getContext().response_);
+}
+
+// Checks effect of persistency (aka always-true) flag on the PRL
+TEST_F(Dhcpv4SrvTest, prlPersistency) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(configure(CONFIGS[2]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+
+    // Create and add a PRL option for another option
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_ARP_CACHE_TIMEOUT);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Let the server process it.
+    Pkt4Ptr response = srv_.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
+    // But no default-ip-ttl
+    ASSERT_FALSE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // Nor an arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+
+    // Reset PRL adding default-ip-ttl
+    query->delOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    prl->addValue(DHO_DEFAULT_IP_TTL);
+    query->addOption(prl);
+
+    // Let the server process it again.
+    response = srv_.processDiscover(query);
+
+    // Processing should add an ip-forwarding option
+    ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
+    // and now a default-ip-ttl
+    ASSERT_TRUE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // and still no arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
 }
 
 // Checks if relay IP address specified in the relay-info structure in
@@ -2431,7 +3890,7 @@ TEST_F(Dhcpv4SrvTest, statisticsDecline) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Offer
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2439,7 +3898,7 @@ TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Ack
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2447,7 +3906,7 @@ TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
 }
 
 // Test checks whether statistic is bumped up appropriately when Nak
-// message is received (this should never happen in a sane metwork).
+// message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsNakRcvd) {
     NakedDhcpv4Srv srv(0);
 
@@ -2529,6 +3988,37 @@ TEST_F(Dhcpv4SrvTest, tooLongClientId) {
     EXPECT_NO_THROW(client.doDORA());
 }
 
+// Checks if user-contexts are parsed properly.
+TEST_F(Dhcpv4SrvTest, userContext) {
+
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv4Srv srv(0);
+
+    // This config has one subnet with user-context with one
+    // pool (also with context). Make sure the configuration could be accepted.
+    cout << CONFIGS[3] << endl;
+    EXPECT_NO_THROW(configure(CONFIGS[3]));
+
+    // Now make sure the data was not lost.
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Let's get the subnet and check its context.
+    Subnet4Ptr subnet1 = (*subnets)[0];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet1->getContext());
+    EXPECT_EQ("{ \"secure\": false }", subnet1->getContext()->str());
+
+    // Ok, not get the sole pool in it and check its context, too.
+    PoolCollection pools = subnet1->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools.size());
+    ASSERT_TRUE(pools[0]);
+    ASSERT_TRUE(pools[0]->getContext());
+    EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
+}
 
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.

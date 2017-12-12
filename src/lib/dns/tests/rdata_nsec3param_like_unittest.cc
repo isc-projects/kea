@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -244,7 +244,7 @@ TYPED_TEST(NSEC3PARAMLikeTest, toWire) {
 }
 
 TYPED_TEST(NSEC3PARAMLikeTest, compare) {
-    // test RDATAs, sorted in the ascendent order.
+    // test RDATAs, sorted in the ascending order.
     this->compare_set.push_back(this->fromText("0 0 0 D399EAAB" +
                                                this->getCommonText()));
     this->compare_set.push_back(this->fromText("1 0 0 D399EAAB" +

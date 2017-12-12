@@ -1,17 +1,10 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::dhcp
-
-% DHCPRSV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
-A warning message issued when the server has detected lease files that need
-to be either upgraded or downgraded to match the server's schema, and that
-the server is automatically running the LFC process to perform the conversion.
-This should only occur the first time the server is launched following a Kea
-installation upgrade (or downgrade).
 
 % DHCPSRV_CFGMGR_ADD_IFACE listening on interface %1
 An info message issued when a new interface is being added to the collection of
@@ -51,6 +44,21 @@ there is a good reason for it, to avoid increased number of renewals and
 a need for rebinding (increase of multicast traffic, which may be received
 by multiple servers).
 
+% DHCPSRV_CFGMGR_DEL_SUBNET4 IPv4 subnet %1 removed
+This debug message is issued when a subnet is successfully removed from the
+server configuration. The argument identifies the subnet removed.
+
+% DHCPSRV_CFGMGR_DEL_SUBNET6 IPv6 subnet %1 removed
+This debug message is issued when a subnet is successfully removed from the
+
+% DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified IPv4 subnet.
+
+% DHCPSRV_CFGMGR_NEW_SUBNET6 a new subnet has been added to configuration: %1
+This is an informational message reporting that the configuration has
+been extended to include the specified subnet.
+
 % DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
 This debug message is output when the DHCP configuration manager has received
 a request for an IPv4 subnet for the specified address, but no such
@@ -70,6 +78,11 @@ because it is the only subnet defined.
 This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 because it is the only subnet defined.
+
+% DHCPSRV_CFGMGR_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
+This warning message is issued on an attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv6, but it is not prohibited.
 
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the
@@ -366,6 +379,13 @@ with the specified address to the memory file backend database.
 The code has issued a commit call.  For the memory file database, this is
 a no-op.
 
+% DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
+A warning message issued when the server has detected lease files that need
+to be either upgraded or downgraded to match the server's schema, and that
+the server is automatically running the LFC process to perform the conversion.
+This should only occur the first time the server is launched following a Kea
+installation upgrade (or downgrade).
+
 % DHCPSRV_MEMFILE_DB opening memory file lease database: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a memory file lease database.  The parameters of
@@ -545,6 +565,26 @@ lease from the memory file database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
 
+% DHCPSRV_MEMFILE_WIPE_LEASES4 removing all IPv4 leases from subnet %1
+This informational message is printed when removal of all leases from
+specified IPv4 subnet is commencing. This is a result of receiving administrative
+command.
+
+% DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED removing all IPv4 leases from subnet %1 finished, removed %2 leases
+This informational message is printed when removal of all leases from
+a specified IPv4 subnet has finished. The number of removed leases is
+printed.
+
+% DHCPSRV_MEMFILE_WIPE_LEASES6 removing all IPv6 leases from subnet %1
+This informational message is printed when removal of all leases from
+specified IPv6 subnet is commencing. This is a result of receiving administrative
+command.
+
+% DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED removing all IPv6 leases from subnet %1 finished, removed %2 leases
+This informational message is printed when removal of all leases from
+a specified IPv6 subnet has finished. The number of removed leases is
+printed.
+
 % DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated
 A warning message issued when the current configuration indicates that multiple
 sockets, capable of receiving broadcast traffic, will be opened on some of the
@@ -670,7 +710,7 @@ The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
 
 % DHCPSRV_MYSQL_START_TRANSACTION starting new MySQL transaction
-A debug message issued whena new MySQL transaction is being started.
+A debug message issued when a new MySQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -844,14 +884,14 @@ includes the client identification information. The second argument
 indicates whether the DNS entry is to be added or removed. The third
 argument carries the details of the NameChangeRequest.
 
-% DHCPSRV_QUEUE_NCR_FAILED %1: queueing %2 name change request failed for lease %3: %4
+% DHCPSRV_QUEUE_NCR_FAILED %1: queuing %2 name change request failed for lease %3: %4
 This error message is logged when sending a name change request
 to DHCP DDNS failed. The first argument includes the client identification
 information. The second argument indicates whether the DNS entry is to be
 added or removed. The third argument specifies the leased address. The
 last argument provides the reason for failure.
 
-% DHCPSRV_QUEUE_NCR_SKIP %1: skip queueing name change request for lease: %2
+% DHCPSRV_QUEUE_NCR_SKIP %1: skip queuing name change request for lease: %2
 This debug message is issued when the server decides to not queue the name
 change request because the lease doesn't include the FQDN, the forward and
 reverse update is disabled for this lease or the DNS updates are disabled
@@ -878,44 +918,11 @@ An example of such operation is a periodic cleanup of
 expired leases. The name of the timer is included in the
 message.
 
-% DHCPSRV_TIMERMGR_SOCKET_CLEAR_FAILED clearing watch socket for timer %1 failed: %2
-An error message indicating that the specified timer elapsed,
-the operation associated with the timer was executed but the
-server was unable to signal this to the worker thread responsible
-for dispatching timers. The thread will continue but it will
-not be able to dispatch any operations for this timer. The
-server reconfiguration or restart may solve the problem
-but the situation may repeat.
-
-% DHCPSRV_TIMERMGR_SOCKET_MARK_FAILED marking watch socket for timer %1 failed: %2
-An error message indicating that the specified timer elapsed,
-but the server was unable to flag that the handler function
-should be executed for this timer. The callback will not
-be executed this time and most likely the subsequent attempts
-will not be successful too. This error is highly unlikely.
-The name of the timer and the reason for failure is included
-in the message.
-
-% DHCPSRV_TIMERMGR_START_THREAD starting thread for timers
-A debug message issued when the Timer Manager is starting a
-worker thread to run started timers. The worker thread is
-typically started right after all timers have been registered
-and runs until timers need to be reconfigured, e.g. their
-interval is changed, new timers are registered or existing
-timers are unregistered.
-
 % DHCPSRV_TIMERMGR_START_TIMER starting timer: %1
 A debug message issued when the registered interval timer is
 being started. If this operation is successful the timer will
 periodically execute the operation associated with it. The
 name of the started timer is included in the message.
-
-% DHCPSRV_TIMERMGR_STOP_THREAD stopping thread for timers
-A debug message issued when the Timer Manager is stopping
-the worker thread which executes interval timers. When the
-thread is stopped no timers will be executed. The thread is
-typically stopped at the server reconfiguration or when the
-server shuts down.
 
 % DHCPSRV_TIMERMGR_STOP_TIMER stopping timer: %1
 A debug message issued when the registered interval timer is
