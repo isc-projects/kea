@@ -325,11 +325,7 @@ public:
     ///
     /// The result set is populated by iterating over the IPv4 leases in
     /// storage, in ascending order by address, accumulating the lease state
-    /// counts per subnet. Note that walking the leases by address should
-    /// inherently group them by subnet, and while this does not guarantee
-    /// ascending order of subnet id, it should be sufficient to accumulate
-    /// state counts per subnet.  This avoids introducing an additional
-    /// subnet_id index.
+    /// counts per subnet.
     /// At the completion of all entries for a given subnet, the counts are
     /// used to create LeaseStatsRow instances which are appended to an
     /// internal vector.  The process results in a vector containing one entry
@@ -340,8 +336,8 @@ public:
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
     void start() {
-        const Lease4StorageAddressIndex& idx
-            = storage4_.get<AddressIndexTag>();
+        const Lease4StorageSubnetIdIndex& idx
+            = storage4_.get<SubnetIdIndexTag>();
 
         // Iterate over the leases in order by subnet, accumulating per
         // subnet counts for each state of interest.  As we finish each
@@ -349,7 +345,7 @@ public:
         SubnetID cur_id = 0;
         int64_t assigned = 0;
         int64_t declined = 0;
-        for(Lease4StorageAddressIndex::const_iterator lease = idx.begin();
+        for(Lease4StorageSubnetIdIndex::const_iterator lease = idx.begin();
             lease != idx.end(); ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
@@ -417,16 +413,11 @@ public:
     /// @brief Creates the IPv6 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv6 leases in
-    /// storage, in ascending order by address, accumulating the lease state
-    /// counts per subnet. Note that walking the leases by address should
-    /// inherently group them by subnet, and while this does not guarantee
-    /// ascending order of subnet id, it should be sufficient to accumulate
-    /// state counts per subnet.  This avoids introducing an additional
-    /// subnet_id index.
-    /// At the completion of all entries for a given subnet, the counts
-    /// are used to create LeaseStatsRow instances which are appended to an
-    /// internal vector.  The process results in a vector containing one entry
-    /// per state per lease type per subnet.
+    /// storage, in ascending order by subnet id, accumulating the lease state
+    /// counts per subnet. At the completion of all entries for a given subnet,
+    /// the counts are used to create LeaseStatsRow instances which are appended
+    /// to an internal vector.  The process results in a vector containing one
+    /// entry per state per lease type per subnet.
     ///
     /// Currently the states counted are:
     ///
@@ -434,8 +425,8 @@ public:
     /// - Lease::STATE_DECLINED
     virtual void start() {
         // Get the subnet_id index
-        const Lease6StorageAddressIndex& idx
-            = storage6_.get<AddressIndexTag>();
+        const Lease6StorageSubnetIdIndex& idx
+            = storage6_.get<SubnetIdIndexTag>();
 
         // Iterate over the leases in order by subnet, accumulating per
         // subnet counts for each state of interest.  As we finish each
@@ -445,7 +436,7 @@ public:
         int64_t declined = 0;
         int64_t assigned_pds = 0;
 
-        for(Lease6StorageAddressIndex::const_iterator lease = idx.begin();
+        for(Lease6StorageSubnetIdIndex::const_iterator lease = idx.begin();
             lease != idx.end(); ++lease) {
 
             // If we've hit the next subnet, add rows for the current subnet
@@ -1228,11 +1219,11 @@ Memfile_LeaseMgr::lfcCallback() {
 
 void
 Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
-    std::string lfc_interval_str = "0";
+    std::string lfc_interval_str = "3600";
     try {
         lfc_interval_str = conn_.getParameter("lfc-interval");
     } catch (const std::exception&) {
-        // Ignore and default to 0.
+        // Ignore and default to 3600.
     }
 
     uint32_t lfc_interval = 0;

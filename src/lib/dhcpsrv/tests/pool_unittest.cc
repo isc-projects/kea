@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/pool.h>
 
@@ -21,6 +22,7 @@
 using boost::scoped_ptr;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::data;
 using namespace isc::asiolink;
 
 namespace {
@@ -170,6 +172,22 @@ TEST(Pool4Test, addOptions) {
     options = pool->getCfgOption()->getAll("abcd");
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
+}
+
+// This test checks that handling for user-context is valid.
+TEST(Pool4Test, userContext) {
+    // Create a pool to add options to it.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // Context should be empty until explicitly set.
+    EXPECT_FALSE(pool->getContext());
+
+    // When set, should be returned properly.
+    ElementPtr ctx = Element::create("{ \"comment\": \"foo\" }");
+    EXPECT_NO_THROW(pool->setContext(ctx));
+    ASSERT_TRUE(pool->getContext());
+    EXPECT_EQ(ctx->str(), pool->getContext()->str());
 }
 
 TEST(Pool6Test, constructor_first_last) {
@@ -458,6 +476,22 @@ TEST(Pool6Test, addOptions) {
     options = pool->getCfgOption()->getAll("abcd");
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
+}
+
+// This test checks that handling for user-context is valid.
+TEST(Pool6Test, userContext) {
+    // Create a pool to add options to it.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+
+    // Context should be empty until explicitly set.
+    EXPECT_FALSE(pool.getContext());
+
+    // When set, should be returned properly.
+    ElementPtr ctx = Element::create("{ \"comment\": \"foo\" }");
+    EXPECT_NO_THROW(pool.setContext(ctx));
+    ASSERT_TRUE(pool.getContext());
+    EXPECT_EQ(ctx->str(), pool.getContext()->str());
 }
 
 }; // end of anonymous namespace

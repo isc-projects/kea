@@ -31,7 +31,8 @@ CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += $(builddir)/test_leases.csv.*
 CLEANFILES += *.json *.log
 
-DISTCLEANFILES = dhcp6_process_tests.sh
+DISTCLEANFILES = dhcp6_process_tests.sh marker_file.h
+DISTCLEANFILES += test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -97,6 +98,7 @@ dhcp6_unittests_SOURCES += classify_unittests.cc
 dhcp6_unittests_SOURCES += parser_unittest.cc
 dhcp6_unittests_SOURCES += simple_parser6_unittest.cc
 dhcp6_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
+dhcp6_unittests_SOURCES += shared_network_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 

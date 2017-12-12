@@ -27,7 +27,7 @@ AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/agent\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES = ca_process_tests.sh
+DISTCLEANFILES = ca_process_tests.sh test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

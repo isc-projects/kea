@@ -11,6 +11,7 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+DISTCLEANFILES = data_def_unittests_config.h
 
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
