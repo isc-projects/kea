@@ -158,6 +158,20 @@ HttpRequest::getHttpVersion() const {
 
 HttpHeaderPtr
 HttpRequest::getHeader(const std::string& header_name) const {
+    HttpHeaderPtr http_header = getHeaderSafe(header_name);
+
+    // No such header.
+    if (!http_header) {
+        isc_throw(HttpRequestNonExistingHeader, header_name << " HTTP header"
+                  " not found in the request");
+    }
+
+    // Header found.
+    return (http_header);
+}
+
+HttpHeaderPtr
+HttpRequest::getHeaderSafe(const std::string& header_name) const {
     checkCreated();
 
     HttpHeader hdr(header_name);
@@ -166,9 +180,8 @@ HttpRequest::getHeader(const std::string& header_name) const {
         return (header_it->second);
     }
 
-    // No such header.
-    isc_throw(HttpRequestNonExistingHeader, header_name << " HTTP header"
-              " not found in the request");
+    // Header not found. Return null pointer.
+    return (HttpHeaderPtr());
 }
 
 std::string
@@ -195,7 +208,16 @@ HttpRequest::getBody() const {
 
 bool
 HttpRequest::isPersistent() const {
-    return (false);
+    HttpHeaderPtr conn = getHeaderSafe("connection");
+    std::string conn_value;
+    if (conn) {
+        conn_value = conn->getLowerCaseValue();
+    }
+
+    HttpVersion ver = getHttpVersion();
+
+    return (((ver == HttpVersion::HTTP_10()) && (conn_value == "keep-alive")) ||
+            ((HttpVersion::HTTP_10() < ver) && (conn_value.empty() || (conn_value != "close"))));
 }
 
 void
