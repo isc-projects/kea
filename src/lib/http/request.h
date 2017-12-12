@@ -183,7 +183,25 @@ public:
     /// @brief Returns object encapsulating HTTP header.
     ///
     /// @param header_name HTTP header name.
+    ///
+    /// @return Non-null pointer to the header.
+    /// @throw HttpRequestNonExistingHeader if header with the specified name
+    /// doesn't exist.
+    /// @throw HttpRequestError if the request hasn't been created.
     HttpHeaderPtr getHeader(const std::string& header_name) const;
+
+    /// @brief Returns object encapsulating HTTP header.
+    ///
+    /// This variant doesn't throw an exception if the header doesn't exist.
+    /// It will throw if the request hasn't been created using @c create()
+    /// method.
+    ///
+    /// @param header_name HTTP header name.
+    ///
+    /// @return Pointer to the specified header, or null if such header doesn't
+    /// exist.
+    /// @throw HttpRequestError if the request hasn't been created.
+    HttpHeaderPtr getHeaderSafe(const std::string& header_name) const;
 
     /// @brief Returns a value of the specified HTTP header.
     ///
