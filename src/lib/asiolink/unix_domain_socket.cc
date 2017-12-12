@@ -213,8 +213,10 @@ UnixDomainSocketImpl::sendHandler(const UnixDomainSocket::Handler& remote_handle
     if ((ec.value() == boost::asio::error::would_block) ||
         (ec.value() == boost::asio::error::try_again)) {
         doSend(buffer, remote_handler);
+
+    } else {
+        remote_handler(ec, length);
     }
-    remote_handler(ec, length);
 }
 
 void
@@ -246,8 +248,10 @@ UnixDomainSocketImpl::receiveHandler(const UnixDomainSocket::Handler& remote_han
     if ((ec.value() == boost::asio::error::would_block) ||
         (ec.value() == boost::asio::error::try_again)) {
         doReceive(buffer, remote_handler);
+
+    } else {
+        remote_handler(ec, length);
     }
-    remote_handler(ec, length);
 }
 
 void

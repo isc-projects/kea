@@ -67,6 +67,13 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// This function will use local address specified in the @c pkt as a source
+    /// address for the packet and the interface index to select the index
+    /// through which the packet will be sent. However, if these values
+    /// are not specified for the packet (zero IP address and negative
+    /// interface index), this function will rely on the routing information
+    /// to determine the right outbound interface and source address.
+    ///
     /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent

@@ -1,13 +1,20 @@
 # Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
 
-% LEASE_CMDS_INIT_FAILED loading Lease Commands hooks library failed: %1
-This error message indicates an error during loading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
+% LEASE_CMDS_ADD4 lease4-add command successful (parameters: %1)
+The lease4-add command has been successful. Parameters of the host
+added are logged.
 
-% LEASE_CMDS_INIT_OK loading Lease Commands hooks library successful
-This info message indicates that the Lease Commands hooks library has been
-loaded successfully. Enjoy!
+% LEASE_CMDS_ADD4_FAILED lease4-add command failed (parameters: %1, reason: %2)
+The lease4-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% LEASE_CMDS_ADD6 lease6-add command successful (parameters: %1)
+The lease6-add command has been successful. Parameters of the host
+added are logged.
+
+% LEASE_CMDS_ADD6_FAILED Lease6-add command failed (parameters: %1, reason: %2)
+The lease6-add command has failed. Both the reason as well as the
+parameters passed are logged.
 
 % LEASE_CMDS_DEINIT_FAILED unloading Lease Commands hooks library failed: %1
 This error message indicates an error during unloading the Lease Commands
@@ -18,34 +25,27 @@ the log message.
 This info message indicates that the Lease Commands hooks library has been
 removed successfully.
 
-% LEASE_CMDS_ADD4_FAILED lease4-add command failed (parameters: %1, reason: %2)
-The lease4-add command has failed. Both the reason as well as the
-parameters passed are logged.
-
-% LEASE_CMDS_ADD6_FAILED Lease6-add command failed (parameters: %1, reason: %2)
-The lease6-add command has failed. Both the reason as well as the
-parameters passed are logged.
-
-% LEASE_CMDS_ADD4 lease4-add command successful (parameters: %1)
-The lease4-add command has been successful. Parameters of the host
-added are logged.
-
-% LEASE_CMDS_ADD6 lease6-add command successful (parameters: %1)
-The lease6-add command has been successful. Parameters of the host
-added are logged.
+% LEASE_CMDS_DEL4 lease4-del command successful (parameters: %1)
+The attempt to delete an IPv4 lease (lease4-del command) has been successful.
+Parameters of the host removed are logged.
 
 % LEASE_CMDS_DEL4_FAILED lease4-del command failed (parameters: %1, reason: %2)
 The attempt to delete an IPv4 lease (lease4-del command) has failed. Both the
 reason as well as the parameters passed are logged.
 
+% LEASE_CMDS_DEL6 lease4-del command successful (parameters: %1)
+The attempt to delete an IPv4 lease (lease4-del command) has been successful.
+Parameters of the host removed are logged.
+
 % LEASE_CMDS_DEL6_FAILED lease6-del command failed (parameters: %1, reason: %2)
 The attempt to delete an IPv6 lease (lease4-del command) has failed. Both the
 reason as well as the parameters passed are logged.
 
-% LEASE_CMDS_DEL4 lease4-del command successful (parameters: %1)
-The attempt to delete an IPv4 lease (lease4-del command) has been successful.
-Parameters of the host removed are logged.
+% LEASE_CMDS_INIT_FAILED loading Lease Commands hooks library failed: %1
+This error message indicates an error during loading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
 
-% LEASE_CMDS_DEL6 lease4-del command successful (parameters: %1)
-The attempt to delete an IPv4 lease (lease4-del command) has been successful.
-Parameters of the host removed are logged.
+% LEASE_CMDS_INIT_OK loading Lease Commands hooks library successful
+This info message indicates that the Lease Commands hooks library has been
+loaded successfully. Enjoy!

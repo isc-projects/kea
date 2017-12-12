@@ -45,6 +45,10 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
         *match_expr_ = *(rhs.match_expr_);
     }
 
+    if (rhs.cfg_option_def_) {
+        rhs.cfg_option_def_->copyTo(*cfg_option_def_);
+    }
+
     if (rhs.cfg_option_) {
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
@@ -87,6 +91,16 @@ ClientClassDef::setTest(const std::string& test) {
     test_ = test;
 }
 
+const CfgOptionDefPtr&
+ClientClassDef::getCfgOptionDef() const {
+    return (cfg_option_def_);
+}
+
+void
+ClientClassDef::setCfgOptionDef(const CfgOptionDefPtr& cfg_option_def) {
+    cfg_option_def_ = cfg_option_def;
+}
+
 const CfgOptionPtr&
 ClientClassDef::getCfgOption() const {
     return (cfg_option_);
@@ -106,6 +120,9 @@ ClientClassDef::equals(const ClientClassDef& other) const {
         ((!cfg_option_ && !other.cfg_option_) ||
         (cfg_option_ && other.cfg_option_ &&
          (*cfg_option_ == *other.cfg_option_))) &&
+        ((!cfg_option_def_ && !other.cfg_option_def_) ||
+        (cfg_option_def_ && other.cfg_option_def_ &&
+         (*cfg_option_def_ == *other.cfg_option_def_))) &&
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
             (filename_ == other.filename_));
@@ -120,6 +137,10 @@ ClientClassDef:: toElement() const {
     // Set original match expression (empty string won't parse)
     if (!test_.empty()) {
         result->set("test", Element::create(test_));
+    }
+    // Set option-def (used only by DHCPv4)
+    if (cfg_option_def_ && (family == AF_INET)) {
+        result->set("option-def", cfg_option_def_->toElement());
     }
     // Set option-data
     result->set("option-data", cfg_option_->toElement());
@@ -163,11 +184,13 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const std::string& test,
                                 const CfgOptionPtr& cfg_option,
+                                CfgOptionDefPtr cfg_option_def,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
                                 const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
+    cclass->setCfgOptionDef(cfg_option_def);
     cclass->setNextServer(next_server);
     cclass->setSname(sname);
     cclass->setFilename(filename);
