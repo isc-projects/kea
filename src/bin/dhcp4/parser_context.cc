@@ -74,13 +74,13 @@ Parser4Context::error(const isc::dhcp::location& loc, const std::string& what)
 }
 
 void
-Parser4Context::error (const std::string& what)
+Parser4Context::error(const std::string& what)
 {
     isc_throw(Dhcp4ParseError, what);
 }
 
 void
-Parser4Context::fatal (const std::string& what)
+Parser4Context::fatal(const std::string& what)
 {
     isc_throw(Dhcp4ParseError, what);
 }
@@ -92,6 +92,21 @@ Parser4Context::loc2pos(isc::dhcp::location& loc)
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
     return (isc::data::Element::Position(file, line, pos));
+}
+
+void
+Parser4Context::require(const std::string& name,
+                        isc::data::Element::Position open_loc,
+                        isc::data::Element::Position close_loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (!value) {
+        isc_throw(Dhcp4ParseError,
+                  "missing parameter '" << name << "' ("
+                  << stack_.back()->getPosition() << ") ["
+                  << contextName() << " map between "
+                  << open_loc << " and " << close_loc << "]");
+    }
 }
 
 void
@@ -129,6 +144,8 @@ Parser4Context::contextName()
         return ("interfaces-config");
     case DHCP_SOCKET_TYPE:
         return ("dhcp-socket-type");
+    case OUTBOUND_INTERFACE:
+        return ("outbound-interface");
     case LEASE_DATABASE:
         return ("lease-database");
     case HOSTS_DATABASE:
@@ -175,6 +192,8 @@ Parser4Context::contextName()
         return ("ncr-format");
     case REPLACE_CLIENT_NAME:
         return ("replace-client-name");
+    case SHARED_NETWORK:
+        return ("shared-networks");
     default:
         return ("__unknown__");
     }

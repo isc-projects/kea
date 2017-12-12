@@ -213,6 +213,9 @@ CfgOption::toElement() const {
             if (!def) {
                 def = LibDHCP::getRuntimeOptionDef(*name, code);
             }
+            if (!def) {
+                def = LibDHCP::getLastResortOptionDef(*name, code);
+            }
             if (def) {
                 map->set("name", Element::create(def->getName()));
             }

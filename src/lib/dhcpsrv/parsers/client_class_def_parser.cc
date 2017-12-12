@@ -5,11 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <eval/eval_context.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
@@ -81,11 +84,46 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         test = test_cfg->stringValue();
     }
 
+    // Parse option def
+    CfgOptionDefPtr defs(new CfgOptionDef());
+    ConstElementPtr option_defs = class_def_cfg->get("option-def");
+    if (option_defs) {
+        // Apply defaults
+        SimpleParser::setListDefaults(option_defs,
+            family == AF_INET ?
+                SimpleParser4::OPTION4_DEF_DEFAULTS :
+                SimpleParser6::OPTION6_DEF_DEFAULTS);
+
+        OptionDefParser parser;
+        BOOST_FOREACH(ConstElementPtr option_def, option_defs->listValue()) {
+            OptionDefinitionTuple def;
+                
+            def = parser.parse(option_def);
+            // Verify if the defition is for an option which are
+            // in a deferred processing list.
+            if (!LibDHCP::shouldDeferOptionUnpack(def.second,
+                                                  def.first->getCode())) {
+                isc_throw(DhcpConfigError,
+                          "Not allowed option definition for code '"
+                          << def.first->getCode() << "' in space '"
+                          << def.second << "' at ("
+                          << option_def->getPosition() << ")");
+            }
+            try {
+                defs->add(def.first, def.second);
+            } catch (const std::exception& ex) {
+                // Sanity check: it should never happen
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << option_def->getPosition() << ")");
+            }
+        }
+    }
+
     // Parse option data
     CfgOptionPtr options(new CfgOption());
     ConstElementPtr option_data = class_def_cfg->get("option-data");
     if (option_data) {
-        OptionDataListParser opts_parser(family);
+        OptionDataListParser opts_parser(family, defs);
         opts_parser.parse(options, option_data);
     }
 
@@ -145,7 +183,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     // Add the client class definition
     try {
         class_dictionary->addClass(name, match_expr, test, options,
-                                   next_server, sname, filename);
+                                   defs, next_server, sname, filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");

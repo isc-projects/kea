@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -468,12 +468,24 @@ public:
         ifindex_ = ifindex;
     };
 
+    /// @brief Resets interface index to negative value.
+    void resetIndex() {
+        ifindex_ = -1;
+    }
+
     /// @brief Returns interface index.
     ///
     /// @return interface index
     uint32_t getIndex() const {
         return (ifindex_);
     };
+
+    /// @brief Checks if interface index has been set.
+    ///
+    /// @return true if interface index set, false otherwise.
+    bool indexSet() const {
+        return (ifindex_ >= 0);
+    }
 
     /// @brief Returns interface name.
     ///
@@ -697,7 +709,7 @@ protected:
     /// Each network interface has assigned an unique ifindex.
     /// It is a functional equivalent of a name, but sometimes more useful, e.g.
     /// when using odd systems that allow spaces in interface names.
-    int ifindex_;
+    int64_t ifindex_;
 
     /// @brief Local IP (v4 or v6) address.
     ///

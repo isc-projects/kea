@@ -7,12 +7,19 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_definition.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <limits>
@@ -107,6 +114,34 @@ TEST(Subnet4Test, siaddr) {
     // Check that only v4 addresses are supported
     EXPECT_THROW(subnet.setSiaddr(IOAddress("2001:db8::1")),
         BadValue);
+}
+
+// Checks whether server-hostname field can be set and retrieved correctly.
+TEST(Subnet4Test, serverHostname) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is empty
+    EXPECT_TRUE(subnet.getSname().empty());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setSname("foobar"));
+
+    // Check that we can get it back
+    EXPECT_EQ("foobar", subnet.getSname());
+}
+
+// Checks whether boot-file-name field can be set and retrieved correctly.
+TEST(Subnet4Test, bootFileName) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is empty
+    EXPECT_TRUE(subnet.getFilename().empty());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setFilename("foobar"));
+
+    // Check that we can get it back
+    EXPECT_EQ("foobar", subnet.getFilename());
 }
 
 // Checks if the match-client-id flag can be set and retrieved.
@@ -292,6 +327,13 @@ TEST(Subnet4Test, clientClasses) {
     three_classes.insert("bar");
     three_classes.insert("baz");
 
+    // This client belongs to foo, bar, baz and network classes.
+    isc::dhcp::ClientClasses four_classes;
+    four_classes.insert("foo");
+    four_classes.insert("bar");
+    four_classes.insert("baz");
+    four_classes.insert("network");
+
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
@@ -307,6 +349,20 @@ TEST(Subnet4Test, clientClasses) {
     EXPECT_FALSE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
+
+    // Add shared network which can only be selected when the client
+    // class is "network".
+    SharedNetwork4Ptr network(new SharedNetwork4("network"));
+    network->allowClientClass("network");
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // This time, if the client doesn't support network class,
+    // the subnets from the shared network can't be selected.
+    EXPECT_FALSE(subnet->clientSupported(bar_class));
+    EXPECT_FALSE(subnet->clientSupported(three_classes));
+
+    // If the classes include "network", the subnet is selected.
+    EXPECT_TRUE(subnet->clientSupported(four_classes));
 }
 
 // Tests whether Subnet4 object is able to store and process properly
@@ -473,6 +529,28 @@ TEST(Subnet4Test, PoolType) {
     EXPECT_THROW(subnet->addPool(pool3), BadValue);
     EXPECT_THROW(subnet->addPool(pool4), BadValue);
     EXPECT_THROW(subnet->addPool(pool5), BadValue);
+}
+
+// Tests if correct value of server identifier is returned when getServerId is
+// called.
+TEST(Subnet4Test, getServerId) {
+    // Initially, the subnet has no server identifier.
+    Subnet4 subnet(IOAddress("192.2.0.0"), 16, 1, 2, 3);
+    EXPECT_TRUE(subnet.getServerId().isV4Zero());
+
+    // Add server identifier.
+    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                         DHO_DHCP_SERVER_IDENTIFIER);
+    OptionCustomPtr option_server_id(new OptionCustom(*option_def, Option::V4));
+    option_server_id->writeAddress(IOAddress("1.2.3.4"));
+
+    CfgOptionPtr cfg_option = subnet.getCfgOption();
+    cfg_option->add(option_server_id, false, DHCP4_OPTION_SPACE);
+
+    // Verify that the server identifier returned by the Subnet4 object is
+    // correct.
+    OptionBuffer server_id_buf = { 1, 2, 3, 4 };
+    EXPECT_EQ("1.2.3.4", subnet.getServerId().toText());
 }
 
 // Tests for Subnet6
@@ -743,6 +821,13 @@ TEST(Subnet6Test, clientClasses) {
     three_classes.insert("bar");
     three_classes.insert("baz");
 
+    // This client belongs to foo, bar, baz and network classes.
+    isc::dhcp::ClientClasses four_classes;
+    four_classes.insert("foo");
+    four_classes.insert("bar");
+    four_classes.insert("baz");
+    four_classes.insert("network");
+
     // No class restrictions defined, any client should be supported
     EXPECT_EQ(0, subnet->getClientClasses().size());
     EXPECT_TRUE(subnet->clientSupported(no_class));
@@ -758,6 +843,20 @@ TEST(Subnet6Test, clientClasses) {
     EXPECT_FALSE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
     EXPECT_TRUE(subnet->clientSupported(three_classes));
+
+    // Add shared network which can only be selected when the client
+    // class is "network".
+    SharedNetwork6Ptr network(new SharedNetwork6("network"));
+    network->allowClientClass("network");
+    ASSERT_NO_THROW(network->add(subnet));
+
+    // This time, if the client doesn't support network class,
+    // the subnets from the shared network can't be selected.
+    EXPECT_FALSE(subnet->clientSupported(bar_class));
+    EXPECT_FALSE(subnet->clientSupported(three_classes));
+
+    // If the classes include "network", the subnet is selected.
+    EXPECT_TRUE(subnet->clientSupported(four_classes));
 }
 
 // Tests whether Subnet6 object is able to store and process properly

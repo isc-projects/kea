@@ -406,6 +406,14 @@ public:
         EXPECT_TRUE(conc);
     }
 
+    /// @brief checks if the given token is an ifelse operator
+    void checkTokenIfElse(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenIfElse> alt =
+            boost::dynamic_pointer_cast<TokenIfElse>(token);
+        EXPECT_TRUE(alt);
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -1209,6 +1217,26 @@ TEST_F(EvalContextTest, concat) {
     checkTokenConcat(tmp3);
 }
 
+// Test the parsing of an ifelse expression
+TEST_F(EvalContextTest, ifElse) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("ifelse('foo' == 'bar', 'us', 'them') == 'you'"));
+
+    ASSERT_EQ(8, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(2);
+    TokenPtr tmp2 = eval.expression.at(3);
+    TokenPtr tmp3 = eval.expression.at(4);
+    TokenPtr tmp4 = eval.expression.at(5);
+
+    checkTokenEq(tmp1);
+    checkTokenString(tmp2, "us");
+    checkTokenString(tmp3, "them");
+    checkTokenIfElse(tmp4);
+}
+
 //
 // Test some scanner error cases
 TEST_F(EvalContextTest, scanErrors) {
@@ -1358,6 +1386,10 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.16: syntax error, unexpected ), expecting \",\"");
     checkError("concat('foo','bar','') == 'foobar'",
                "<string>:1.19: syntax error, unexpected \",\", expecting )");
+    checkError("ifelse('foo'=='bar','foo')",
+               "<string>:1.26: syntax error, unexpected ), expecting \",\"");
+    checkError("ifelse('foo'=='bar','foo','bar','')",
+               "<string>:1.32: syntax error, unexpected \",\", expecting )");
 }
 
 // Tests some type error cases
@@ -1388,6 +1420,14 @@ TEST_F(EvalContextTest, typeErrors) {
                "<string>:1.8-10: syntax error, unexpected and, expecting ==");
     checkError("'true' or 'false'",
                "<string>:1.8-9: syntax error, unexpected or, expecting ==");
+    // Ifelse requires a boolean condition and string branches.
+    checkError("ifelse('foobar','foo','bar')",
+               "<string>:1.16: syntax error, unexpected \",\", expecting ==");
+    checkError("ifelse('foo'=='bar','foo'=='foo','bar')",
+               "<string>:1.26-27: syntax error, unexpected ==, "
+               "expecting \",\"");
+    checkError("ifelse('foo'=='bar','foo','bar'=='bar')",
+               "<string>:1.32-33: syntax error, unexpected ==, expecting )");
 }
 
 

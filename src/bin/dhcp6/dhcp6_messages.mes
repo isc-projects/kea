@@ -46,21 +46,6 @@ buffer holding the DHCPv6 message. The arguments specify the source and
 destination addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP6_BUFFER_WAIT waiting for next DHCPv6 packet with timeout %1 ms
-This debug message is issued when the server enters the state when it
-waits for new packets. The argument specifies the timeout for the server
-to wait for the packet. When this time elapses the server will pass
-through its main loop to perform handling of any pending signals
-and timers. After that, it will enter the wait state again.
-
-% DHCP6_BUFFER_WAIT_INTERRUPTED interrupted wait for the next packet due to timeout, signal or external socket callback (timeout value is %1)
-This debug message is issued when the server interrupts waiting
-for reception of the next DHCPv6 message due to timeout, signal
-or reception of the data over socket other than used for DHCPv6
-message transmission. The server will now handle signals
-received and ready timers before waiting for next packets again.
-The argument specifies the timeout value in milliseconds.
-
 % DHCP6_BUFFER_WAIT_SIGNAL signal received while waiting for next packet, next waiting signal is %1
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
@@ -725,6 +710,14 @@ This debug message includes the details of the subnet selected for
 the client. The first argument includes the client and the
 transaction identification information. The second argument
 includes the subnet details.
+
+% DHCP6_SUBNET_DYNAMICALLY_CHANGED %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+This debug message indicates that the server is using another subnet
+than initially selected for client assignments. This newly selected
+subnet belongs to the same shared network as the original subnet.
+Some reasons why the new subnet was selected include: address pool
+exhaustion in the original subnet or the fact that the new subnet
+includes some static reservations for this client.
 
 % DHCP6_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
 This is a debug message noting the selection of a subnet to be used for
