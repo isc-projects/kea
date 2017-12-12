@@ -87,16 +87,27 @@ namespace {
 ///     - boot-file-name = "bootfile.efi"
 ///
 /// - Configuration 7:
-///   - Simple configuration with a single subnet and single pool
-///   - Using MySQL lease database backend to store leases
+///   - Used for testing custom value of dhcp-server-identifier option.
+///   - 3 subnets: 10.0.0.0/24, 192.0.2.0/26 and 192.0.2.64/26
+///   - Custom server identifier specified for 2 subnets subnet.
+///   - Custom server identifier specified at global level.
 ///
 /// - Configuration 8:
 ///   - Simple configuration with a single subnet and single pool
-///   - Using PostgreSQL lease database backend to store leases
+///   - Using MySQL lease database backend to store leases
 ///
 /// - Configuration 9:
 ///   - Simple configuration with a single subnet and single pool
+///   - Using PostgreSQL lease database backend to store leases
+///
+/// - Configuration 10:
+///   - Simple configuration with a single subnet and single pool
 ///   - Using Cassandra lease database backend to store leases
+///
+/// - Configuration 11:
+///   - Simple configuration with a single subnet
+///   - One in-pool reservation for a circuit-id of 'charter950'
+///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
     "{ \"interfaces-config\": {"
@@ -267,6 +278,8 @@ const char* DORA_CONFIGS[] = {
         "},"
         "\"valid-lifetime\": 600,"
         "\"next-server\": \"10.0.0.1\","
+        "\"server-hostname\": \"nohost\","
+        "\"boot-file-name\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
@@ -282,6 +295,50 @@ const char* DORA_CONFIGS[] = {
     "}",
 
 // Configuration 7
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"option-data\": ["
+        "    {"
+        "        \"name\": \"dhcp-server-identifier\","
+        "        \"data\": \"3.4.5.6\""
+        "    }"
+        "],"
+        "\"subnet4\": ["
+        "    {"
+        "        \"subnet\": \"10.0.0.0/24\", "
+        "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "        \"interface\": \"eth0\","
+        "        \"option-data\": ["
+        "            {"
+        "                \"name\": \"dhcp-server-identifier\","
+        "                \"data\": \"1.2.3.4\""
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"subnet\": \"192.0.2.0/26\", "
+        "        \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.63\" } ],"
+        "        \"interface\": \"eth1\","
+        "        \"option-data\": ["
+        "            {"
+        "                \"name\": \"dhcp-server-identifier\","
+        "                \"data\": \"2.3.4.5\""
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"subnet\": \"192.0.2.64/26\", "
+        "        \"pools\": [ { \"pool\": \"192.0.2.65-192.0.2.100\" } ],"
+        "        \"relay\": {"
+        "            \"ip-address\": \"10.2.3.4\""
+        "        }"
+        "    }"
+        "]"
+    "}",
+
+// Configuration 8
     "{ \"interfaces-config\": {"
         "   \"interfaces\": [ \"*\" ]"
         "},"
@@ -299,7 +356,7 @@ const char* DORA_CONFIGS[] = {
         " } ]"
     "}",
 
-// Configuration 8
+// Configuration 9
     "{ \"interfaces-config\": {"
         "   \"interfaces\": [ \"*\" ]"
         "},"
@@ -317,7 +374,7 @@ const char* DORA_CONFIGS[] = {
         " } ]"
     "}",
 
-// Configuration 9
+// Configuration 10
     "{ \"interfaces-config\": {"
         "   \"interfaces\": [ \"*\" ]"
         "},"
@@ -333,7 +390,25 @@ const char* DORA_CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
         " } ]"
-    "}"
+    "}",
+
+// Configuration 11
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"circuit-id\" ],"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"pools\": [ { \"pool\": \"10.0.0.5-10.0.0.100\" } ],"
+        "    \"reservations\": [ "
+        "       {"
+        "         \"circuit-id\": \"'charter950'\","
+        "         \"ip-address\": \"10.0.0.9\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -1568,6 +1643,106 @@ TEST_F(DORATest, multiStageBoot) {
     testMultiStageBoot(0);
 }
 
+// This test verifies that custom server identifier can be specified for
+// a subnet.
+TEST_F(DORATest, customServerIdentifier) {
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    ASSERT_NO_THROW(configure(DORA_CONFIGS[7], *client1.getServer()));
+
+    ASSERT_NO_THROW(client1.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt4Ptr resp = client1.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // The explicitly configured server identifier should take precedence
+    // over generated server identifier.
+    EXPECT_EQ("1.2.3.4", client1.config_.serverid_.toText());
+
+    // Repeat the test for different subnet.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+
+    ASSERT_NO_THROW(client2.doDORA());
+    ASSERT_TRUE(client2.getContext().response_);
+    resp = client2.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_EQ("2.3.4.5", client2.config_.serverid_.toText());
+
+    // Create relayed client which will be assigned a lease from the third
+    // subnet. This subnet inherits server identifier value from the global
+    // scope.
+    Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
+    client3.useRelay(true, IOAddress("10.2.3.4"));
+
+    ASSERT_NO_THROW(client3.doDORA());
+    ASSERT_TRUE(client3.getContext().response_);
+    resp = client3.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_EQ("3.4.5.6", client3.config_.serverid_.toText());
+}
+
+// This test verifies that reserved lease is not assigned to a client which
+// identifier doesn't match the identifier in the reservation.
+TEST_F(DORATest, changingCircuitId) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Use relay agent so as the circuit-id can be inserted.
+    client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[11], *client.getServer());
+
+    // Send DHCPDISCOVER.
+    boost::shared_ptr<IOAddress> requested_address(new IOAddress("10.0.0.9"));
+    ASSERT_NO_THROW(client.doDiscover(requested_address));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPOFFER
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+    // Make sure that the client has been offerred a different address
+    // given that circuit-id is not used.
+    EXPECT_NE("10.0.0.9", resp->getYiaddr().toText());
+
+    // Specify circuit-id matching the one in the configuration.
+    client.setCircuitId("charter950");
+
+    // Send DHCPDISCOVER.
+    ASSERT_NO_THROW(client.doDiscover());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPOFFER
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+    // Make sure that the client has been offerred reserved address given that
+    // matching circuit-id has been specified.
+    EXPECT_EQ("10.0.0.9", resp->getYiaddr().toText());
+
+    // Let's now change the circuit-id.
+    client.setCircuitId("gdansk");
+
+    // The client requests offerred address but should be refused this address
+    // given that the circuit-id is not matching.
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // The client should be refused this address.
+    EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // In this case, the client falls back to the 4-way exchange and should be
+    // allocated an address from the dynamic pool.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // The client should be allocated some address.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    EXPECT_NE("10.0.0.9", client.config_.lease_.addr_.toText());
+}
+
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
 // --with-dhcp-mysql.
@@ -1595,8 +1770,8 @@ public:
 // Test that the client using the same hardware address but multiple
 // client identifiers will obtain multiple leases (MySQL lease database).
 TEST_F(DORAMySQLTest, multiStageBoot) {
-    // DORA_CONFIGS[7] to be used for server configuration.
-    testMultiStageBoot(7);
+    // DORA_CONFIGS[9] to be used for server configuration.
+    testMultiStageBoot(8);
 }
 
 #endif
@@ -1628,8 +1803,8 @@ public:
 // Test that the client using the same hardware address but multiple
 // client identifiers will obtain multiple leases (PostgreSQL lease database).
 TEST_F(DORAPgSQLTest, multiStageBoot) {
-    // DORA_CONFIGS[8] to be used for server configuration.
-    testMultiStageBoot(8);
+    // DORA_CONFIGS[9] to be used for server configuration.
+    testMultiStageBoot(9);
 }
 
 #endif
@@ -1658,8 +1833,8 @@ public:
 // Test that the client using the same hardware address but multiple
 // client identifiers will obtain multiple leases (CQL lease database).
 TEST_F(DORACQLTest, multiStageBoot) {
-    // DORA_CONFIGS[9] to be used for server configuration.
-    testMultiStageBoot(9);
+    // DORA_CONFIGS[10] to be used for server configuration.
+    testMultiStageBoot(10);
 }
 
 #endif

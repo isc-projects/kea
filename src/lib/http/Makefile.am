@@ -45,7 +45,7 @@ nodist_libkea_http_la_SOURCES = http_messages.cc http_messages.h
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_http_la_LDFLAGS += -no-undefined -version-info 0:0:0
+libkea_http_la_LDFLAGS += -no-undefined -version-info 0:1:0
 
 libkea_http_la_LIBADD  =
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -57,6 +57,23 @@ libkea_http_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_http_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
 # Specify the headers for copying into the installation directory tree.
-libkea_process_includedir = $(pkgincludedir)/http
-libkea_process_include_HEADERS = \
-	http_log.h
+libkea_http_includedir = $(pkgincludedir)/http
+libkea_http_include_HEADERS = \
+	connection.h \
+	connection_pool.h \
+	date_time.h \
+	header_context.h \
+	http_acceptor.h \
+	http_log.h \
+	http_types.h \
+	listener.h \
+	post_request.h \
+	post_request_json.h \
+	request.h \
+	request_context.h \
+	request_parser.h \
+	response.h \
+	response_creator.h \
+	response_creator_factory.h \
+	response_json.h
+

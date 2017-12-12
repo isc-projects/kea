@@ -92,6 +92,10 @@ EvalContext::convertOptionName(const std::string& option_name,
     }
 
     if (!option_def) {
+        option_def = LibDHCP::getLastResortOptionDef(global_space, option_name);
+    }
+
+    if (!option_def) {
         error(loc, "option '" + option_name + "' is not defined");
     }
 

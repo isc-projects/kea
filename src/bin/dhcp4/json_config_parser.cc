@@ -12,8 +12,8 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -22,6 +22,7 @@
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
@@ -47,7 +48,12 @@ using namespace isc::hooks;
 
 namespace {
 
-/// @brief Parser that takes care of global DHCPv4 parameters.
+/// @brief Parser that takes care of global DHCPv4 parameters and utility
+///        functions that work on global level.
+///
+/// This class is a collection of utility method that either handle
+/// global parameters (see @ref parse), or conducts operations on
+/// global level (see @ref sanityChecks and @ref copySubnets4).
 ///
 /// See @ref parse method for a list of supported parameters.
 class Dhcp4ConfigParser : public isc::data::SimpleParser {
@@ -66,7 +72,7 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(SrvConfigPtr cfg, ConstElementPtr global) {
+    void parse(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
 
         // Set whether v4 server is supposed to echo back client-id
         // (yes = RFC6842 compatible, no = backward compatibility)
@@ -81,6 +87,132 @@ public:
         // Set the DHCPv4-over-DHCPv6 interserver port.
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         cfg->setDhcp4o6Port(dhcp4o6_port);
+    }
+
+    /// @brief Copies subnets from shared networks to regular subnets container
+    ///
+    /// @param from pointer to shared networks container (copy from here)
+    /// @param dest pointer to cfg subnets4 (copy to here)
+    /// @throw BadValue if any pointer is missing
+    /// @throw DhcpConfigError if there are duplicates (or other subnet defects)
+    void
+    copySubnets4(const CfgSubnets4Ptr& dest, const CfgSharedNetworks4Ptr& from) {
+
+        if (!dest || !from) {
+            isc_throw(BadValue, "Unable to copy subnets: at least one pointer is null");
+        }
+
+        const SharedNetwork4Collection* networks = from->getAll();
+        if (!networks) {
+            // Nothing to copy. Technically, it should return a pointer to empty
+            // container, but let's handle null pointer as well.
+            return;
+        }
+
+        // Let's go through all the networks one by one
+        for (auto net = networks->begin(); net != networks->end(); ++net) {
+
+            // For each network go through all the subnets in it.
+            const Subnet4Collection* subnets = (*net)->getAllSubnets();
+            if (!subnets) {
+                // Shared network without subnets it weird, but we decided to
+                // accept such configurations.
+                continue;
+            }
+
+            // For each subnet, add it to a list of regular subnets.
+            for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
+                dest->add(*subnet);
+            }
+        }
+    }
+
+    /// @brief Conducts global sanity checks
+    ///
+    /// This method is very simple now, but more sanity checks are expected
+    /// in the future.
+    ///
+    /// @param cfg - the parsed structure
+    /// @param global global Dhcp4 scope
+    /// @throw DhcpConfigError in case of issues found
+    void
+    sanityChecks(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
+
+        /// Shared network sanity checks
+        const SharedNetwork4Collection* networks = cfg->getCfgSharedNetworks4()->getAll();
+        if (networks) {
+            sharedNetworksSanityChecks(*networks, global->get("shared-networks"));
+        }
+    }
+
+    /// @brief Sanity checks for shared networks
+    ///
+    /// This method verifies if there are no issues with shared networks.
+    /// @param networks pointer to shared networks being checked
+    /// @param json shared-networks element
+    /// @throw DhcpConfigError if issues are encountered
+    void
+    sharedNetworksSanityChecks(const SharedNetwork4Collection& networks,
+                               ConstElementPtr json) {
+
+        /// @todo: in case of errors, use json to extract line numbers.
+        if (!json) {
+            // No json? That means that the shared-networks was never specified
+            // in the config.
+            return;
+        }
+
+        // Used for names uniqueness checks.
+        std::set<string> names;
+
+        // Let's go through all the networks one by one
+        for (auto net = networks.begin(); net != networks.end(); ++net) {
+            string txt;
+
+            // Let's check if all subnets have either the same interface
+            // or don't have the interface specified at all.
+            string iface = (*net)->getIface();
+
+            const Subnet4Collection* subnets = (*net)->getAllSubnets();
+            if (subnets) {
+                // For each subnet, add it to a list of regular subnets.
+                for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
+                    if (iface.empty()) {
+                        iface = (*subnet)->getIface();
+                        continue;
+                    }
+
+                    if ((*subnet)->getIface().empty()) {
+                        continue;
+                    }
+
+                    if (iface != (*subnet)->getIface()) {
+                        isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
+                                  << " has specified interface " << (*subnet)->getIface()
+                                  << ", but earlier subnet in the same shared-network"
+                                  << " or the shared-network itself used " << iface);
+                    }
+
+                    // Let's collect the subnets in case we later find out the
+                    // subnet doesn't have a mandatory name.
+                    txt += (*subnet)->toText() + " ";
+                }
+            }
+
+            // Next, let's check name of the shared network.
+            if ((*net)->getName().empty()) {
+                isc_throw(DhcpConfigError, "Shared-network with subnets "
+                          << txt << " is missing mandatory 'name' parameter");
+            }
+
+            // Is it unique?
+            if (names.find((*net)->getName()) != names.end()) {
+                isc_throw(DhcpConfigError, "A shared-network with "
+                          "name " << (*net)->getName() << " defined twice.");
+            }
+            names.insert((*net)->getName());
+
+        }
     }
 };
 
@@ -189,6 +321,10 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
             parser.parse(cfg_option_def, option_defs);
         }
 
+        // This parser is used in several places, so it should be available
+        // early.
+        Dhcp4ConfigParser global_parser;
+
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
                                                         mutable_cfg->mapValue();
@@ -290,6 +426,23 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "shared-networks") {
+
+                /// We need to create instance of SharedNetworks4ListParser
+                /// and parse the list of the shared networks into the
+                /// CfgSharedNetworks4 object. One additional step is then to
+                /// add subnets from the CfgSharedNetworks4 into CfgSubnets4
+                /// as well.
+                SharedNetworks4ListParser parser;
+                CfgSharedNetworks4Ptr cfg = srv_cfg->getCfgSharedNetworks4();
+                parser.parse(cfg, config_pair.second);
+
+                // We also need to put the subnets it contains into normal
+                // subnets list.
+                global_parser.copySubnets4(srv_cfg->getCfgSubnets4(), cfg);
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port, echo-client-id are
@@ -302,7 +455,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "echo-client-id") ||
                  (config_pair.first == "match-client-id") ||
-                 (config_pair.first == "next-server")) {
+                 (config_pair.first == "next-server") ||
+                 (config_pair.first == "server-hostname") ||
+                 (config_pair.first == "boot-file-name")) {
                 continue;
             }
 
@@ -313,8 +468,12 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
         }
 
         // Apply global options in the staging config.
-        Dhcp4ConfigParser global_parser;
         global_parser.parse(srv_cfg, mutable_cfg);
+
+        // This method conducts final sanity checks and tweaks. In particular,
+        // it checks that there is no conflict between plain subnets and those
+        // defined as part of shared networks.
+        global_parser.sanityChecks(srv_cfg, mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)

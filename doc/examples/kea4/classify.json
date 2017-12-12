@@ -55,12 +55,18 @@
 // In this particular class, we want to set specific values
 // of certain DHCPv4 fields. If the incoming packet matches the
 // test, those fields will be set in outgoing responses.
+// The option 43 is defined to encapsulate suboption in the aastra space.
   {
       "name": "VoIP",
       "test": "substring(option[60].hex,0,6) == 'Aastra'",
       "next-server": "192.0.2.254",
       "server-hostname": "hal9000",
-      "boot-file-name": "/dev/null"
+      "boot-file-name": "/dev/null",
+      "option-def": [ {
+          "name": "vendor-encapsulated-options",
+          "code": 43,
+          "type": "empty",
+          "encapsulate": "aastra" } ]
   }
 
   ],
