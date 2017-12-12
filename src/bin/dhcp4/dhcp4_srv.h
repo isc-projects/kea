@@ -123,6 +123,9 @@ public:
     /// server's response.
     void setReservedMessageFields();
 
+    /// @brief Assigns classes retrieved from host reservation database.
+    void setReservedClientClasses();
+
 private:
 
     /// @brief Copies default parameters from client's to server's message
@@ -154,9 +157,6 @@ private:
     /// The order of the set is determined by the configuration parameter,
     /// host-reservation-identifiers
     void setHostIdentifiers();
-
-    /// @brief Assigns classes retrieved from host reservation database.
-    void setReservedClientClasses();
 
     /// @brief Pointer to the allocation engine used by the server.
     AllocEnginePtr alloc_engine_;
@@ -525,7 +525,8 @@ protected:
     /// - Subnet Mask,
     /// - Router,
     /// - Name Server,
-    /// - Domain Name.
+    /// - Domain Name,
+    /// - Server Identifier.
     ///
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     void appendBasicOptions(Dhcpv4Exchange& ex);
@@ -681,12 +682,11 @@ protected:
 
     /// @brief Adds server identifier option to the server's response.
     ///
-    /// This method adds a server identifier to the DHCPv4 message. It expects
-    /// that the local (source) address is set for this message. If address is
-    /// not set, it will throw an exception. This method also expects that the
-    /// server identifier option is not present in the specified message.
-    /// Otherwise, it will throw an exception on attempt to add a duplicate
-    /// server identifier option.
+    /// This method adds a server identifier to the DHCPv4 message if it doesn't
+    /// exist yet. This is set to the local address on which the client's query has
+    /// been received with the exception of broadcast traffic and DHCPv4o6 query for
+    /// which a socket on the particular interface is found and its address is used
+    /// as server id.
     ///
     /// @note This method doesn't throw exceptions by itself but the underlying
     /// classes being used my throw. The reason for this method to not sanity
@@ -802,6 +802,17 @@ protected:
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Perform deferred option unpacking.
+    ///
+    /// @note Options 43 and 224-254 are processed after classification.
+    /// If a class configures a definition it is applied, if none
+    /// the global (user) definition is applied. For option 43
+    /// a last resort definition (same definition as used in previous Kea
+    /// versions) is applied when none is found.
+    ///
+    /// @param query Pointer to the client message.
+    void deferredUnpack(Pkt4Ptr& query);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

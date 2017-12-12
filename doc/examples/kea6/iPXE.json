@@ -1,0 +1,67 @@
+// This is an example configuration for iPXE boot in Kea6.
+
+{
+   "Dhcp6": {
+   // Mandatory part of the config that list interfaces on which
+   // Kea will listen for incoming traffic.
+      "interfaces-config": {
+         "interfaces": [ "ethX" ]
+      },
+
+// Two classes are migrated form ISC-DHCP example:
+// if exists dhcp6.client-arch-type and
+//    option dhcp6.client-arch-type = 00:07 {
+//    option dhcp6.bootfile-url "http://[2001:db8::1]/ipxe.efi";
+// } else if exists dhcp6.user-class and
+//          substring(option dhcp6.user-class, 2, 4) = "iPXE" {
+//    option dhcp6.bootfile-url "http://[2001:db8::1]/ubuntu.cfg";
+// }
+//
+// In example shown below incoming packet will receive value
+// http://[2001:db8::1]/ubuntu.cfg if incoming packet will include user
+// class option with "iPXE" in it and value http://[2001:db8::1]/ipxe.efi
+// if option client architecture type will be 7.
+// If incoming packet will include both of those options with matching
+// values it will be assigned to class "a-ipxe" because it was first
+// matching class. If you want to change that order names of the classes
+// have to have different alphabetical order. In Kea 1.3.0 (and previous
+// versions) alphabetical order is used in classification. Note this
+// should change in next versions, for instance to keep the definition
+// order.
+      "client-classes": [
+         {
+            "name": "a-ipxe",
+            // user-class option (code 15) is a tuple array
+            // so we need to skip the length (tuple first element)
+            "test": "substring(option[15].hex, 2, 4) == 'iPXE'",
+            "option-data": [
+               {
+                  "space": "dhcp6",
+                  "name": "bootfile-url",
+                  "code": 59,
+                  "data": "http://[2001:db8::1]/ubuntu.cfg"
+               }
+            ]
+         },
+         {
+            "name": "b-efi",
+            // please consider to add a not a-ipxe here to enforce
+            // the "else"?
+            "test": "option[61].hex == 0x0007",
+            "option-data": [
+               {
+                  "space": "dhcp6",
+                  "name": "bootfile-url",
+                  "code": 59,
+                  "data": "http://[2001:db8::1]/ipxe.efi"
+               }
+            ]
+         }
+      ],
+      "subnet6": [
+         {
+            "subnet": "2001:db8::/64"
+         }
+      ]
+   }
+}

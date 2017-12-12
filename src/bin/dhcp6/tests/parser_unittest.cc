@@ -246,17 +246,21 @@ TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("advanced.json");
     configs.push_back("backends.json");
+    configs.push_back("cassandra.json");
     configs.push_back("classify.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");
     configs.push_back("hooks.json");
+    configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");
     configs.push_back("multiple-options.json");
     configs.push_back("mysql-reservations.json");
     configs.push_back("pgsql-reservations.json");
     configs.push_back("reservations.json");
     configs.push_back("several-subnets.json");
+    configs.push_back("shared-network.json");
     configs.push_back("simple.json");
+    configs.push_back("softwire46.json");
     configs.push_back("stateless.json");
     configs.push_back("with-ddns.json");
 
@@ -506,6 +510,13 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_DHCP6,
               "<string>:2.2-21: got unexpected keyword "
               "\"preferred_lifetime\" in Dhcp6 map.");
+
+    // missing parameter
+    testError("{ \"name\": \"foo\",\n"
+              "  \"code\": 123 }\n",
+              Parser6Context::PARSER_OPTION_DEF,
+              "missing parameter 'type' (<string>:1:1) "
+              "[option-def map between <string>:1:1 and <string>:2:15]");
 }
 
 // Check unicode escapes

@@ -27,6 +27,7 @@ void
 DUIDConfigParser::parse(const CfgDUIDPtr& cfg,
                         isc::data::ConstElementPtr duid_configuration) {
     if (!cfg) {
+        // Sanity check
         isc_throw(DhcpConfigError, "Must provide valid pointer to cfg when parsing duid");
     }
 

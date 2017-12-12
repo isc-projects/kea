@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/host_mgr.h>
@@ -245,6 +244,20 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     EXPECT_TRUE(json_elements);
 
     TestDbAccessParser parser(DbAccessParser::LEASE_DB);
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
+}
+
+// Check that the parser works with a simple configuration for host database.
+TEST_F(DbAccessParserTest, hosts) {
+    const char* config[] = {"type", "memfile",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser(DbAccessParser::HOSTS_DB);
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
