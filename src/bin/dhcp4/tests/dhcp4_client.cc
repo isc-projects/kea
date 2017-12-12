@@ -300,6 +300,9 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
 
 void
 Dhcp4Client::doRelease() {
+    // There is no response for Release message.
+    context_.response_.reset();
+
     if (config_.lease_.addr_.isV4Zero()) {
         isc_throw(Dhcp4ClientError, "failed to send the release"
                   " message because client doesn't have a lease");

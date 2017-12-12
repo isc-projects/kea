@@ -155,19 +155,6 @@ public:
                           end, expected_type, encapsulates);
     }
 
-    /// @brief Create a sample DHCPv4 option 43 with suboptions.
-    static OptionBuffer createVendorOption() {
-        const uint8_t opt_data[] = {
-            0x2B, 0x0D,  // Vendor-Specific Information (CableLabs)
-            // Suboptions start here...
-            0x02, 0x05,  // Device Type Option (length = 5)
-            'D', 'u', 'm', 'm', 'y',
-            0x04, 0x04,   // Serial Number Option (length = 4)
-            0x42, 0x52, 0x32, 0x32 // Serial number
-        };
-        return (OptionBuffer(opt_data, opt_data + sizeof(opt_data)));
-    }
-
     /// @brief Create a sample DHCPv4 option 82 with suboptions.
     static OptionBuffer createAgentInformationOption() {
         const uint8_t opt_data[] = {
@@ -793,9 +780,10 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
     isc::dhcp::OptionCollection options; // list of options
+    list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options);
+        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -861,21 +849,6 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     Option4AddrLst::AddressContainer addresses = tftp->getAddresses();
     ASSERT_EQ(1, addresses.size());
     EXPECT_EQ("10.0.0.10", addresses[0].toText());
-
-    // Vendor Specific Information option
-    x = options.find(43);
-    ASSERT_FALSE(x == options.end());
-    OptionPtr vsi = x->second;
-    ASSERT_TRUE(vsi);
-    EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, vsi->getType());
-    suboptions = vsi->getOptions();
-
-    // There should be one suboption of VSI.
-    ASSERT_EQ(1, suboptions.size());
-    OptionPtr eso = suboptions.begin()->second;
-    ASSERT_TRUE(eso);
-    EXPECT_EQ(0xdc, eso->getType());
-    EXPECT_EQ(2, eso->len());
 
     // Checking DHCP Relay Agent Information Option.
     x = options.find(DHO_DHCP_AGENT_OPTIONS);
@@ -955,8 +928,9 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
 
     // Parse options.
     OptionCollection options;
+    list<uint16_t> deferred;
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
-                                            options));
+                                            options, deferred));
 
     // There should be one option.
     ASSERT_EQ(1, options.size());
@@ -1015,7 +989,9 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
 
     // Parse options.
     OptionCollection options;
-    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar", options));
+    list<uint16_t> deferred;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, "space-foobar",
+                                            options, deferred));
 
     // There should be one top level option.
     ASSERT_EQ(1, options.size());
@@ -1174,15 +1150,6 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_NTP_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
 
-    // The following option requires well formed buffer to be created from.
-    // Not just a dummy one. This buffer includes some suboptions.
-    OptionBuffer vendor_opts_buf = createVendorOption();
-    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS,
-                                    vendor_opts_buf.begin(),
-                                    vendor_opts_buf.end(),
-                                    typeid(OptionCustom),
-                                    "vendor-encapsulated-options-space");
-
     LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NAME_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
 
@@ -1285,6 +1252,22 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_DIRECTORY_AGENT, begin, begin + 5,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DIRECTORY_AGENT, begin, begin + 9,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_DIRECTORY_AGENT, begin, begin + 45,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SERVICE_SCOPE, begin, end,
+                                    typeid(Option4SlpServiceScope));
+
+    // Check also with empty scope list
+    LibDhcpTest::testStdOptionDefs4(DHO_SERVICE_SCOPE, begin, begin + 1,
+                                    typeid(Option4SlpServiceScope));
+
     LibDhcpTest::testStdOptionDefs4(DHO_FQDN, begin, begin + 3,
                                     typeid(Option4ClientFqdn));
 
@@ -1297,27 +1280,14 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionCustom),
                                     "dhcp-agent-options-space");
 
-    LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
-                                    typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_CLIENT_LAST_TRANSACTION_TIME,
-                                    begin, begin + 4,
-                                    typeid(OptionInt<uint32_t>));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_ASSOCIATED_IP, begin, end,
+    LibDhcpTest::testStdOptionDefs4(DHO_NDS_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, begin, end,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs4(DHO_NDS_TREE_NAME, begin, end,
+                                    typeid(OptionString));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_SYSTEM, begin, end,
-                                    typeid(OptionIntArray<uint16_t>));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_NDI, begin, begin + 3,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs4(DHO_UUID_GUID, begin, begin + 17,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs4(DHO_NDS_CONTEXT, begin, end,
+                                    typeid(OptionString));
 
     // Prepare buffer holding an array of FQDNs.
     const char fqdn_data[] = {
@@ -1331,6 +1301,63 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     };
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(fqdn_data, fqdn_data + sizeof(fqdn_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BCMCS_DOMAIN_NAME_LIST,
+                                    fqdn_buf.begin(),
+                                    fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BCMCS_IPV4_ADDR, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CLIENT_LAST_TRANSACTION_TIME,
+                                    begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_ASSOCIATED_IP, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_AUTO_CONFIG, begin, begin + 1,
+                                    typeid(OptionInt<uint8_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NAME_SERVICE_SEARCH, begin, begin + 4,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SUBNET_SELECTION, begin, end,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SYSTEM, begin, end,
+                                    typeid(OptionIntArray<uint16_t>));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NDI, begin, begin + 3,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_UUID_GUID, begin, begin + 17,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_USER_AUTH, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_GEOCONF_CIVIC, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PCODE, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TCODE, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETINFO_ADDR, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_NETINFO_TAG, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_URL, begin, end,
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, fqdn_buf.begin(),
                                     fqdn_buf.end(), typeid(OptionCustom));
@@ -1354,6 +1381,60 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, vivsio_buf.begin(),
                                     vivsio_buf.end(), typeid(OptionVendor));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_PANA_AGENT, begin, end,
+                                    typeid(Option4AddrLst));
+
+    // Prepare buffer holding one FQDN.
+    const char fqdn1_data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    // Initialize a vector with the FQDN data.
+    std::vector<uint8_t> fqdn1_buf(fqdn1_data,
+                                   fqdn1_data + sizeof(fqdn1_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_LOST, fqdn1_buf.begin(),
+                                    fqdn1_buf.end(), typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CAPWAP_AC_V4, begin, end,
+                                    typeid(Option4AddrLst));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_SIP_UA_CONF_SERVICE_DOMAINS,
+                                    fqdn_buf.begin(),
+                                    fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
+    std::vector<uint8_t> rdnss1_buf(begin, begin + 9);
+    rdnss1_buf.insert(rdnss1_buf.end(), fqdn1_buf.begin(), fqdn1_buf.end());
+
+    LibDhcpTest::testStdOptionDefs4(DHO_RDNSS_SELECT, rdnss1_buf.begin(),
+                                    rdnss1_buf.end(),
+                                    typeid(OptionCustom));
+
+    std::vector<uint8_t> rdnss_buf(begin, begin + 9);
+    rdnss_buf.insert(rdnss_buf.end(), fqdn_buf.begin(), fqdn_buf.end());
+
+    LibDhcpTest::testStdOptionDefs4(DHO_RDNSS_SELECT, rdnss_buf.begin(),
+                                    rdnss_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_PORTPARAMS, begin, begin + 4,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_CAPTIVE_PORTAL, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_6RD, begin, begin + 22,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_6RD, begin, begin + 46,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_V4_ACCESS_DOMAIN, fqdn1_buf.begin(),
+                                    fqdn1_buf.end(), typeid(OptionCustom));
 }
 
 // Test that definitions of standard options have been initialized
@@ -1368,6 +1449,16 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     std::vector<uint8_t> buf(48, 1);
     OptionBufferConstIter begin = buf.begin();
     OptionBufferConstIter end = buf.end();
+
+    // Prepare buffer holding one FQDN.
+    const char data1[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0
+    };
+    // Initialize a vector with the FQDN data1.
+    std::vector<uint8_t> fqdn1_buf(data1, data1 + sizeof(data1));
 
     // Prepare buffer holding an array of FQDNs.
     const char data[] = {
@@ -1441,6 +1532,12 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_RELAY_MSG, begin, end,
                                     typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_AUTH, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_UNICAST, begin, begin + 16,
+                                    typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_STATUS_CODE, begin, end,
                                     typeid(Option6StatusCode));
@@ -1559,6 +1656,24 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_LQ_CLIENT_LINK, begin, end,
                                     typeid(Option6AddrLst));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_LOST,
+                                    fqdn1_buf.begin(), fqdn1_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CAPWAP_AC_V6, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_ID, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_ACCESS_DOMAIN,
+                                    fqdn1_buf.begin(), fqdn1_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SIP_UA_CS_LIST,
+                                    fqdn_buf.begin(), fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs6(D6O_BOOTFILE_URL, begin, end,
                                     typeid(OptionString));
 
@@ -1572,6 +1687,13 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_NII, begin, begin + 3,
                                     typeid(OptionCustom));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_AFTR_NAME, fqdn1_buf.begin(),
+                                    fqdn1_buf.end(), typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
+                                    fqdn_buf.begin(), fqdn_buf.end(),
+                                    typeid(OptionCustom));
+
     LibDhcpTest::testStdOptionDefs6(D6O_RSOO, begin, end,
                                     typeid(OptionCustom),
                                     "rsoo-opts");
@@ -1579,14 +1701,42 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_PD_EXCLUDE, begin, end,
                                     typeid(Option6PDExclude));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_ERP_LOCAL_DOMAIN_NAME,
-                                    fqdn_buf.begin(), fqdn_buf.end(),
+    std::vector<uint8_t> rdnss1_buf(begin, begin + 17);
+    rdnss1_buf.insert(rdnss1_buf.end(), fqdn1_buf.begin(), fqdn1_buf.end());
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RDNSS_SELECTION, rdnss1_buf.begin(),
+                                    rdnss1_buf.end(),
                                     typeid(OptionCustom));
+
+    std::vector<uint8_t> rdnss_buf(begin, begin + 17);
+    rdnss_buf.insert(rdnss_buf.end(), fqdn_buf.begin(), fqdn_buf.end());
+
+    LibDhcpTest::testStdOptionDefs6(D6O_RDNSS_SELECTION, rdnss_buf.begin(),
+                                    rdnss_buf.end(),
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_CLIENT_LINKLAYER_ADDR, begin, end,
+                                    typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_LINK_ADDRESS, begin, begin + 16,
+                                    typeid(OptionCustom));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_SOL_MAX_RT, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_INF_MAX_RT, begin, begin + 4,
+                                    typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_MSG, begin, end,
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs6(D6O_DHCPV4_O_DHCPV6_SERVER, begin, end,
+                                    typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_CAPTIVE_PORTAL, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
 
     LibDhcpTest::testStdOptionDefs6(D6O_PUBLIC_KEY, begin, end,
@@ -1600,8 +1750,6 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_TIMESTAMP, begin, begin + 8,
                                     typeid(Option));
-
-
 }
 
 // This test checks if the DHCPv6 option definition can be searched by
@@ -1844,6 +1992,35 @@ TEST_F(LibDhcpTest, setRuntimeOptionDefs) {
 
     // All option definitions should be gone now.
     testRuntimeOptionDefs(5, 100, false);
+}
+
+// This test verifies the processing of option 43
+TEST_F(LibDhcpTest, option43) {
+    // Check shouldDeferOptionUnpack()
+    EXPECT_TRUE(LibDHCP::shouldDeferOptionUnpack(DHCP4_OPTION_SPACE, 43));
+    EXPECT_FALSE(LibDHCP::shouldDeferOptionUnpack(DHCP4_OPTION_SPACE, 44));
+    EXPECT_FALSE(LibDHCP::shouldDeferOptionUnpack(DHCP6_OPTION_SPACE, 43));
+
+    // Check last resort
+    OptionDefinitionPtr def;
+    def = LibDHCP::getLastResortOptionDef(DHCP6_OPTION_SPACE, 43);
+    EXPECT_FALSE(def);
+    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 44);
+    EXPECT_FALSE(def);
+    def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(def);
+    EXPECT_FALSE(def->getArrayType());
+    EXPECT_EQ(43, def->getCode());
+    EXPECT_EQ("vendor-encapsulated-options-space", def->getEncapsulatedSpace());
+    EXPECT_EQ("vendor-encapsulated-options", def->getName());
+    EXPECT_EQ(0, def->getRecordFields().size());
+    EXPECT_EQ(OptionDataType::OPT_EMPTY_TYPE, def->getType());
+
+    OptionDefinitionPtr def_by_name =
+        LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE,
+                                        "vendor-encapsulated-options");
+    EXPECT_TRUE(def_by_name);
+    EXPECT_EQ(def, def_by_name);
 }
 
 } // end of anonymous space

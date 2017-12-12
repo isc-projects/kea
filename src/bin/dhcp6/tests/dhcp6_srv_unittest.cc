@@ -125,6 +125,26 @@ const char* CONFIGS[] = {
     "         \"always-send\": true"
     "    }"
     "    ]"
+    "}",
+
+    // Configuration 3:
+    // - one subnet with one address pool and one prefix pool
+    // - user-contexts defined in subnet and each pool
+    "{"
+    "    \"subnet6\": [ {"
+    "       \"pools\": [ {"
+    "           \"pool\": \"2001:db8:1::/64\","
+    "           \"user-context\": { \"value\": 42 }"
+    "       } ], "
+    "       \"pd-pools\": [ {"
+    "           \"prefix\": \"2001:db8:abcd::\","
+    "           \"prefix-len\": 48,"
+    "           \"delegated-len\": 64,"
+    "           \"user-context\": { \"type\": \"prefixes\" }"
+    "        } ],"
+    "       \"subnet\": \"2001:db8:1::/48\","
+    "       \"user-context\": { \"secure\": false }"
+    "    } ] "
     "}"
 };
 
@@ -2422,6 +2442,44 @@ TEST_F(Dhcpv6SrvTest, tooLongServerId) {
     // responses or not. The goal is to check that the server didn't throw
     // any exceptions.
     EXPECT_NO_THROW(client.doSARR());
+}
+
+// Checks if user-contexts are parsed properly.
+TEST_F(Dhcpv6SrvTest, userContext) {
+
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // This config has one subnet with user-context with one
+    // pool (also with context). Make sure the configuration could be accepted.
+    EXPECT_NO_THROW(configure(CONFIGS[3]));
+
+    // Now make sure the data was not lost.
+    ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
+    const Subnet6Collection* subnets = cfg->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Let's get the subnet and check its context.
+    Subnet6Ptr subnet1 = (*subnets)[0];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet1->getContext());
+    EXPECT_EQ("{ \"secure\": false }", subnet1->getContext()->str());
+
+    // Ok, not get the address pool in it and check its context, too.
+    PoolCollection pools = subnet1->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools.size());
+    ASSERT_TRUE(pools[0]);
+    ASSERT_TRUE(pools[0]->getContext());
+    EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
+
+    // Ok, not get the prefix pool in it and check its context, too.
+    pools = subnet1->getPools(Lease::TYPE_PD);
+    ASSERT_EQ(1, pools.size());
+    ASSERT_TRUE(pools[0]);
+    ASSERT_TRUE(pools[0]->getContext());
+    EXPECT_EQ("{ \"type\": \"prefixes\" }", pools[0]->getContext()->str());
 }
 
 

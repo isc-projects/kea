@@ -590,8 +590,8 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
-    EXPECT_EQ(false, l->fqdn_fwd_);
-    EXPECT_EQ(false, l->fqdn_rev_);
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
 
     // Test execution is fast. The cltt should be set to now. In some rare
@@ -1047,7 +1047,7 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddr) {
     ASSERT_TRUE(lease);
 
     // Let's check if the response makes any sense.
-    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", true);
 }
 
 // Checks that lease4-get can handle a situation when the query is
@@ -1120,6 +1120,73 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr6NotFound) {
     // Note the status expected is empty. The query completed correctly,
     // just didn't found the lease.
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-get can handle a situation when the query is
+// well formed, but the lease is not there.
+TEST_F(LeaseCmdsTest, Lease4GetByClientIdNotFound) {
+
+    // Initialize lease manager (false = v4, false = don't add a lease)
+    initLeaseMgr(false, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Check that lease4-get can find a lease by client identifier.
+TEST_F(LeaseCmdsTest, Lease4GetByClientId) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Let's check if the response makes any sense.
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+}
+
+// Checks that lease6-get rejects queries by client-id.
+TEST_F(LeaseCmdsTest, Lease6GetByClientIdInvalidType) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // client-id query is allowed in v4 only.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Query by client-id is not allowed in v6.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that lease6-get(subnet-id, addr) can handle a situation when
@@ -1784,6 +1851,52 @@ TEST_F(LeaseCmdsTest, Lease4DelByHWAddr) {
         "    \"arguments\": {"
         "        \"identifier-type\": \"hw-address\","
         "        \"identifier\": \"08:08:08:08:08:08\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+// Checks that lease4-del can handle a situation when the query is
+// well formed, but the lease is not there.
+TEST_F(LeaseCmdsTest, Lease4DelByClientIdNotFound) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease not found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Make sure the lease is still there.
+    EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+// Checks that lease4-del can find and delete a lease by client identifier.
+TEST_F(LeaseCmdsTest, Lease4DelByClientId) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Invalid
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
         "        \"subnet-id\": 44"
         "    }\n"
         "}";

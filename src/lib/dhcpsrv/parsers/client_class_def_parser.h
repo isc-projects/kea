@@ -17,8 +17,8 @@
 ///
 /// These parsers are used to parse lists of client class definitions
 /// into a ClientClassDictionary of ClientClassDef instances.  Each
-/// ClientClassDef consists of (at least) a name, an expression, and
-/// option-data.  The latter two are currently optional.
+/// ClientClassDef consists of (at least) a name, an expression, option-def
+/// and option-data.  Currently only a not empty name is required.
 ///
 /// There parsers defined are:
 ///
@@ -35,6 +35,11 @@
 ///
 /// -# "test" - a string containing the logical expression used to determine
 /// membership in the class. This is passed into the eval parser.
+///
+/// -# "option-def" - a list which defines the options which processing
+/// is deferred. This element is optional and parsed using the @ref
+/// isc::dhcp::OptionDefParser. A check is done to verify definitions
+/// are only for deferred processing option (DHCPv4 43 and 224-254).
 ///
 /// -# "option-data" - a list which defines the options that should be
 /// assigned to remembers of the class.  This element is optional and parsed

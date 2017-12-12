@@ -38,7 +38,6 @@
   "subnet4": [
     {
        "subnet": "192.0.2.0/24",
-       "interface": "ethX",
        "option-data": [
             // When specifying options, you typically need to specify
             // one of (name or code) and data. The full option specification
@@ -51,7 +50,7 @@
             // {
             //     "name": "domain-name-servers",
             //     "code": 6,
-            //     "csv-format": "true",
+            //     "csv-format": true,
             //     "space": "dhcp4",
             //     "data": "192.0.2.1, 192.0.2.2"
             // }
@@ -100,6 +99,16 @@
              "name": "domain-search",
              "data": "mydomain.example.com, example.com"
          },
+
+           // Options can also be specified using hexadecimal format.
+           // This should be avoided if possible, because Kea ability to
+           // validate correctness is limited when using hex values.
+         {
+             "name": "broadcast-address",
+             "csv-format": false,
+             "data": "ffff8000"
+         },
+
             // String options that have a comma in their values need to have
             // it escaped (i.e. each comma is preceded by two backslashes).
             // That's because commas are reserved for separating fields in

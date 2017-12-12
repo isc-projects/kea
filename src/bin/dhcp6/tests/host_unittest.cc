@@ -50,6 +50,14 @@ namespace {
 /// - Configuration 5:
 ///   - Used to test that host specific vendor options override globally
 ///     specified vendor options.
+///
+/// - Configuration 6:
+///   - One subnet with very short pool, i.e. two addresses
+///
+/// - Configuration 7:
+///   - Similar to Configuration 6, but one of the addresses reserved to client
+///     with the DUID 04:03:02:01.
+///
 const char* CONFIGS[] = {
     // Configuration 0:
     "{ "
@@ -256,8 +264,64 @@ const char* CONFIGS[] = {
         "        } ]"
         "    } ]"
         " } ]"
-    "}"
+    "}",
 
+    // Configuration 6:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\" ],"
+        "\"valid-lifetime\": 40, "
+        "\"preferred-lifetime\": 30,"
+        "\"rebind-timer\": 20, "
+        "\"renew-timer\": 10, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::2\" } ],"
+        "    \"pd-pools\": ["
+        "        {"
+        "            \"prefix\": \"3000::\","
+        "            \"prefix-len\": 119,"
+        "            \"delegated-len\": 120"
+        "        }"
+        "    ],"
+        "    \"interface\" : \"eth0\""
+        "} ]"
+    "}",
+
+    // Configuration 7:
+    "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"host-reservation-identifiers\": [ \"duid\" ],"
+        "\"valid-lifetime\": 40, "
+        "\"preferred-lifetime\": 30,"
+        "\"rebind-timer\": 20, "
+        "\"renew-timer\": 10, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::2\" } ],"
+        "    \"pd-pools\": ["
+        "        {"
+        "            \"prefix\": \"3000::\","
+        "            \"prefix-len\": 119,"
+        "            \"delegated-len\": 120"
+        "        }"
+        "    ],"
+        "    \"interface\" : \"eth0\","
+        "    \"reservations\": ["
+        "        {"
+        "            \"duid\": \"04:03:02:01\","
+        "            \"ip-addresses\": [ \"2001:db8:1::2\" ],"
+        "            \"prefixes\": [ \"3000::100/120\" ]"
+        "        }"
+        "    ]"
+        "} ]"
+    "}"
 };
 
 /// @brief Base class representing leases and hints conveyed within IAs.
@@ -1785,6 +1849,73 @@ TEST_F(HostTest, multipleIAsConflict) {
                                           IAID(3)));
     EXPECT_TRUE(client_.hasLeaseForPrefix(IOAddress("3001:0:0:10::"), 64,
                                           IAID(4)));
+}
+
+// This test verifies a scenario in which a client trying to renew a
+// lease is refused this lease because it has been reserved to another
+// client. The client is assigned another available lease from a
+// dynamic pool by reusing an expired lease.
+TEST_F(HostTest, conflictResolutionReuseExpired) {
+    Dhcp6Client client1;
+
+    ASSERT_NO_THROW(configure(CONFIGS[6], *client1.getServer()));
+
+    // First client performs 4-way exchange and obtains an address and
+    // prefix indicated in hints.
+    requestIA(client1, Hint(IAID(1), "2001:db8:1::1"));
+    requestIA(client1, Hint(IAID(2), "3000::/120"));
+
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // Make sure the client has obtained requested leases.
+    ASSERT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::1"), IAID(1)));
+    ASSERT_TRUE(client1.hasLeaseForPrefix(IOAddress("3000::"), 120));
+
+    // Create another client which is assigned another lease.
+    Dhcp6Client client2(client1.getServer());
+
+    // Second client performs 4-way exchange and obtains an address and
+    // prefix indicated in hints.
+    requestIA(client2, Hint(IAID(1), "2001:db8:1::2"));
+    requestIA(client2, Hint(IAID(2), "3000::100/120"));
+
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // Make sure the client has obtained requested leases.
+    ASSERT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::2"), IAID(1)));
+    ASSERT_TRUE(client2.hasLeaseForPrefix(IOAddress("3000::100"), 120));
+
+    // Fast forward time to simulate aging of leases. After that, both leases are
+    // expired because their valid lifetime is 40s. The second argument indicates
+    // that the leases should also be updated on the server.
+    client1.fastFwdTime(60, true);
+    client2.fastFwdTime(60, true);
+
+    // Reconfigure the server, so as the address 2001:db8:1::2 and prefix
+    // 3000::10/120 is now reserved for another client.
+    ASSERT_NO_THROW(configure(CONFIGS[7], *client1.getServer()));
+
+    client1.clearRequestedIAs();
+    client2.clearRequestedIAs();
+
+    // Try to renew the address of 2001:db8:1::2 and prefix 3000::100/120.
+    ASSERT_NO_THROW(client2.doRenew());
+
+    // The renewed address and prefix are now reserved for another client so
+    // available leases  should be allocated instead.
+    EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::1")));
+    EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("3000::"), 120));
+    // The previously allocated leases should now be returned with zero lifetimes.
+    EXPECT_TRUE(client2.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1::2")));
+    EXPECT_TRUE(client2.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3000::100"), 120));
+
+    // We've had a bug in DHCPv6 server that reused lease (allocated previously to
+    // a different client) was returned to the client reusing leases. This a big issue
+    // because effectively a client reusing an expired lease would get this lease twice:
+    // with non-zero lifetimes and the second time with zero lifetimes. This is seriously
+    // confusing for the clients. This checks tha the bug has been eliminated.
+    EXPECT_FALSE(client2.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(client2.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3000::"), 120));
 }
 
 

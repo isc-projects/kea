@@ -97,6 +97,7 @@ public:
 
     /// @brief Constructor.
     ///
+    /// Registers hookpoint "command-processed"
     /// Registers "list-commands" command.
     BaseCommandMgr();
 
@@ -107,6 +108,8 @@ public:
     ///
     /// This method processes specified command. The command is specified using
     /// a single Element. See @ref BaseCommandMgr for description of its syntax.
+    /// After the command has been handled, callouts for the hook point,
+    /// "command-processed" will be invoked.
     ///
     /// @param cmd Pointer to the data element representing command in JSON
     /// format.

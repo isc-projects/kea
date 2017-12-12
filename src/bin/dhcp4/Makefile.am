@@ -23,7 +23,7 @@ endif
 CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-messages
 
 man_MANS = kea-dhcp4.8
-DISTCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS) spec_config.h.pre
 EXTRA_DIST = $(man_MANS) kea-dhcp4.xml dhcp4.spec
 EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp4_parser.yy

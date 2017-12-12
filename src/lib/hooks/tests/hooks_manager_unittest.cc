@@ -119,7 +119,7 @@ public:
         handle->setArgument("data_1", d1);
         HooksManager::callCommandHandlers("command-one", *handle);
         handle->getArgument(RESULT, result);
-        EXPECT_EQ(d1, result) << "command-one" << COMMON_TEXT;
+        EXPECT_EQ(r1, result) << "command-one" << COMMON_TEXT;
 
         // Perform the second calculation: it should multiply the data by 10
         // and return in the result.
