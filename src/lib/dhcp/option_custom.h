@@ -102,6 +102,10 @@ public:
     void addArrayDataField(const T value) {
         checkArrayType();
         OptionDataType data_type = definition_.getType();
+        // Handle record last field.
+        if (data_type == OPT_RECORD_TYPE) {
+            data_type = definition_.getRecordFields().back();
+        }
         if (OptionDataTypeTraits<T>::type != data_type) {
             isc_throw(isc::dhcp::InvalidDataType,
                       "specified data type " << data_type << " does not"
@@ -405,8 +409,28 @@ private:
     /// @throw isc::OutOfRange if index is out of range.
     void checkIndex(const uint32_t index) const;
 
+    /// @brief Create a non initialized buffer.
+    ///
+    /// @param buffer buffer to update.
+    /// @param data_type data type of buffer.
+    void createBuffer(OptionBuffer& buffer,
+                      const OptionDataType data_type) const;
+
     /// @brief Create a collection of non initialized buffers.
     void createBuffers();
+
+    /// @brief Return length of a buffer.
+    ///
+    /// @param data_type data type of buffer.
+    /// @param in_array true is called from the array case
+    /// @param begin iterator to first byte of input data.
+    /// @param end iterator to end of input data.
+    ///
+    /// @return size of data to copy to the buffer.
+    /// @throw isc::OutOfRange if option buffer is truncated.
+    size_t bufferLength(const OptionDataType data_type, bool in_array,
+                        OptionBuffer::const_iterator begin,
+                        OptionBuffer::const_iterator end) const;
 
     /// @brief Create collection of buffers representing data field values.
     ///
@@ -453,12 +477,23 @@ OptionCustom::checkDataType(const uint32_t index) const {
     if (data_type == OPT_RECORD_TYPE) {
         const OptionDefinition::RecordFieldsCollection& record_fields =
             definition_.getRecordFields();
-        // When we initialized buffers we have already checked that
-        // the number of these buffers is equal to number of option
-        // fields in the record so the condition below should be met.
-        assert(index < record_fields.size());
-        // Get the data type to be returned.
-        data_type = record_fields[index];
+        if (definition_.getArrayType()) {
+            // If the array flag is set the last record field is an array.
+            if (index < record_fields.size()) {
+                // Get the data type to be returned.
+                data_type = record_fields[index];
+            } else {
+                // Get the data type to be returned from the last record field.
+                data_type = record_fields.back();
+            }
+        } else {
+            // When we initialized buffers we have already checked that
+            // the number of these buffers is equal to number of option
+            // fields in the record so the condition below should be met.
+            assert(index < record_fields.size());
+            // Get the data type to be returned.
+            data_type = record_fields[index];
+        }
     }
 
     if (OptionDataTypeTraits<T>::type != data_type) {
