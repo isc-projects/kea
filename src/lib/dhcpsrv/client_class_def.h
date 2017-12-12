@@ -9,6 +9,7 @@
 
 #include <cc/cfg_to_element.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
@@ -78,6 +79,14 @@ public:
     ///
     /// @param test the original expression to assign the class
     void setTest(const std::string& test);
+
+    /// @brief Fetches the class's option definitions
+    const CfgOptionDefPtr& getCfgOptionDef() const;
+
+    /// @brief Sets the class's option definition collection
+    ///
+    /// @param cfg_option_def the option definitions to assign the class
+    void setCfgOptionDef(const CfgOptionDefPtr& cfg_option_def);
 
     /// @brief Fetches the class's option collection
     const CfgOptionPtr& getCfgOption() const;
@@ -171,6 +180,9 @@ private:
     /// this class.
     std::string test_;
 
+    /// @brief The option definition configuration for this class
+    CfgOptionDefPtr cfg_option_def_;
+
     /// @brief The option data configuration for this class
     CfgOptionPtr cfg_option_;
 
@@ -223,6 +235,7 @@ public:
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
     /// @param options Collection of options members should be given
+    /// @param defs Option definitions (optional)
     /// @param next_server next-server value for this class (optional)
     /// @param sname server-name value for this class (optional)
     /// @param filename boot-file-name value for this class (optional)
@@ -232,6 +245,7 @@ public:
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
                   const std::string& test, const CfgOptionPtr& options,
+                  CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string());

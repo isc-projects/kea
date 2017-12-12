@@ -11,6 +11,10 @@ AM_LDFLAGS += -static
 endif
 
 CLEANFILES = *.gcno *.gcda *.lock
+DISTCLEANFILES = buffer_logger_test.sh
+DISTCLEANFILES += console_test.sh destination_test.sh init_logger_test.sh
+DISTCLEANFILES += local_file_test.sh logger_lock_test.sh severity_test.sh
+DISTCLEANFILES += tempdir.h
 
 EXTRA_DIST = log_test_messages.mes
 BUILT_SOURCES = log_test_messages.h log_test_messages.cc

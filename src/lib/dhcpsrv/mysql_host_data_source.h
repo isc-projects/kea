@@ -235,7 +235,11 @@ public:
     /// This method supports v4 hosts only.
     ///
     /// @param subnet_id subnet identifier.
-    /// @param addr specified address.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
     /// @return true if deletion was successful, false if the host was not there.
     /// @throw various exceptions in case of errors
     virtual bool del4(const SubnetID& subnet_id,
@@ -247,7 +251,11 @@ public:
     /// This method supports v6 hosts only.
     ///
     /// @param subnet_id subnet identifier.
-    /// @param addr specified address.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
     /// @return true if deletion was successful, false if the host was not there.
     /// @throw various exceptions in case of errors
     virtual bool del6(const SubnetID& subnet_id,

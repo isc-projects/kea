@@ -181,6 +181,40 @@ public:
         EXPECT_EQ(expected_code, rcode_);
     }
 
+    /// @brief Convenience method for running configuration
+    ///
+    /// This method does not throw, but signals errors using gtest macros.
+    ///
+    /// @param config text to be parsed as JSON
+    /// @param expected_code expected code (see cc/command_interpreter.h)
+    /// @param exp_error expected text error (check skipped if empty)
+    void configure(std::string config, int expected_code,
+                   std::string exp_error = "") {
+        ConstElementPtr json;
+        ASSERT_NO_THROW(json = parseDHCP4(config, true));
+
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(status);
+
+        int rcode;
+        ConstElementPtr comment = parseAnswer(rcode, status);
+        EXPECT_EQ(expected_code, rcode);
+
+        string text;
+        ASSERT_NO_THROW(text = comment->stringValue());
+
+        if (expected_code != rcode) {
+            std::cout << "Reported status: " << text << std::endl;
+        }
+
+        if ((rcode != 0)) {
+            if (!exp_error.empty()) {
+                EXPECT_EQ(exp_error, text);
+            }
+        }
+    }
+
     ~Dhcp4ParserTest() {
         resetConfiguration();
 
@@ -570,6 +604,31 @@ public:
         return (ReturnType());
     }
 
+    /// @brief Checks if specified subnet is part of the collection
+    ///
+    /// @param col collection of subnets to be inspected
+    /// @param subnet text notation (e.g. 192.0.2.0/24)
+    /// @param t1 expected renew-timer value
+    /// @param t2 expected rebind-timer value
+    /// @param valid expected valid-lifetime value
+    /// @return the subnet that was examined
+    Subnet4Ptr
+    checkSubnet(const Subnet4Collection& col, std::string subnet,
+                uint32_t t1, uint32_t t2, uint32_t valid) {
+        const auto& index = col.get<SubnetPrefixIndexTag>();
+        auto subnet_it = index.find(subnet);
+        if (subnet_it == index.cend()) {
+            ADD_FAILURE() << "Unable to find expected subnet " << subnet;
+            return (Subnet4Ptr());
+        }
+        Subnet4Ptr s = *subnet_it;
+
+        EXPECT_EQ(t1, s->getT1());
+        EXPECT_EQ(t2, s->getT2());
+        EXPECT_EQ(valid, s->getValid());
+
+        return (s);
+    }
 
     /// @brief This utility method attempts to configure using specified
     ///        config and then returns requested pool from requested subnet
@@ -1023,8 +1082,6 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 
     /// CASE 2: Configure 4 subnets, then reconfigure and remove one
     /// from in between (not first, not last)
-
-    /// @todo: Uncomment subnet removal test as part of #3281.
     ASSERT_NO_THROW(json = parseDHCP4(config4));
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -1049,14 +1106,16 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 
 /// @todo: implement subnet removal test as part of #3281.
 
-// Checks if the next-server defined as global parameter is taken into
-// consideration.
+// Checks if the next-server and other fixed BOOTP fields defined as
+// global parameter are taken into consideration.
 TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"1.2.3.4\", "
+        "\"server-hostname\": \"foo\", "
+        "\"boot-file-name\": \"bar\", "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -1078,10 +1137,12 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+    EXPECT_EQ("foo", subnet->getSname());
+    EXPECT_EQ("bar", subnet->getFilename());
 }
 
-// Checks if the next-server defined as subnet parameter is taken into
-// consideration.
+// Checks if the next-server and other fixed BOOTP fields defined as
+// subnet parameter are taken into consideration.
 TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
     string config = "{ " + genIfaceConfig() + "," +
@@ -1090,6 +1151,8 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"foo\", "
+        "    \"boot-file-name\": \"bar\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1109,6 +1172,8 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+    EXPECT_EQ("foo", subnet->getSname());
+    EXPECT_EQ("bar", subnet->getFilename());
 }
 
 // Test checks several negative scenarios for next-server configuration: bogus
@@ -1152,12 +1217,43 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
+    // Config with too large server-hostname
+    string bigsname(Pkt4::MAX_SNAME_LEN + 1, ' ');
+    string config_bogus4 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"server-hostname\": \"" + bigsname + "\", " +
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Config with too large boot-file-hostname
+    string bigfilename(Pkt4::MAX_FILE_LEN + 1, ' ');
+    string config_bogus5 = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"boot-file-name\": \"" + bigfilename + "\", " +
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+
     ConstElementPtr json1;
     ASSERT_NO_THROW(json1 = parseDHCP4(config_bogus1));
     ConstElementPtr json2;
     ASSERT_NO_THROW(json2 = parseDHCP4(config_bogus2));
     ConstElementPtr json3;
     ASSERT_NO_THROW(json3 = parseDHCP4(config_bogus3));
+    ConstElementPtr json4;
+    ASSERT_NO_THROW(json4 = parseDHCP4(config_bogus4));
+    ConstElementPtr json5;
+    ASSERT_NO_THROW(json5 = parseDHCP4(config_bogus5));
 
     // check if returned status is always a failure
     ConstElementPtr status;
@@ -1176,6 +1272,18 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
     checkResult(status, 0);
     EXPECT_FALSE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json4));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json5));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
 // Checks if the next-server defined as global value is overridden by subnet
@@ -1186,9 +1294,13 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
+        "\"server-hostname\": \"nohost\","
+        "\"boot-file-name\": \"nofile\","        
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
+        "    \"server-hostname\": \"some-name.example.org\","
+        "    \"boot-file-name\": \"bootfile.efi\","
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1208,6 +1320,8 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+    EXPECT_EQ("some-name.example.org", subnet->getSname());
+    EXPECT_EQ("bootfile.efi", subnet->getFilename());
 }
 
 // Check whether it is possible to configure echo-client-id
@@ -1604,6 +1718,64 @@ TEST_F(Dhcp4ParserTest, badPools) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+// Goal of this test is to verify no pool definitions is invalid
+// and returns a location in the error message.
+TEST_F(Dhcp4ParserTest, noPools) {
+
+    // Configuration string.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"user-context\": { } } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    EXPECT_THROW(parseDHCP4(config, true), Dhcp4ParseError);
+}
+
+// Goal of this test is to verify that invalid subnet fails to be parsed.
+TEST_F(Dhcp4ParserTest, badSubnet) {
+
+    // Configuration string.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"192.0.2.0\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// Goal of this test is to verify that unknown interface fails
+// to be parsed.
+TEST_F(Dhcp4ParserTest, unknownInterface) {
+
+    // Configuration string.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ ],"
+        "    \"subnet\": \"192.0.2.0/24\","
+        "    \"interface\": \"ethX\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
 // The goal of this test is to check whether an option definition
 // that defines an option carrying an IPv4 address can be created.
 TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
@@ -1618,7 +1790,7 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config, true));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config, true));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -1659,10 +1831,8 @@ TEST_F(Dhcp4ParserTest, optionDefIpv4Address) {
 
     // Let's apply empty configuration. This removes the option definitions
     // configuration and should result in removal of the option 100 from the
-    // libdhcp++.
-    config = "{ }";
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config, true));
-
+    // libdhcp++. Note DHCP4 or OPTION_DEFS parsers do not accept empty maps.
+    json.reset(new MapElement());
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 0);
 
@@ -1685,7 +1855,7 @@ TEST_F(Dhcp4ParserTest, optionDefRecord) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -1740,7 +1910,7 @@ TEST_F(Dhcp4ParserTest, optionDefMultiple) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the option definitions do not exist yet.
@@ -1810,7 +1980,7 @@ TEST_F(Dhcp4ParserTest, optionDefDuplicate) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Make sure that the option definition does not exist yet.
     ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->
@@ -1849,7 +2019,7 @@ TEST_F(Dhcp4ParserTest, optionDefArray) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -1892,7 +2062,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulate) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Make sure that the particular option definition does not exist.
@@ -1933,7 +2103,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidName) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1958,7 +2128,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidType) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -1984,7 +2154,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidRecordType) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2010,7 +2180,7 @@ TEST_F(Dhcp4ParserTest, optionIntegerTypes) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2035,7 +2205,7 @@ TEST_F(Dhcp4ParserTest, optionDefInvalidEncapsulatedSpace) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2064,7 +2234,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulatedSpaceAndArray) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2090,7 +2260,7 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     ConstElementPtr status;
@@ -2119,7 +2289,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "  } ]"
         "}";
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     OptionDefinitionPtr def = CfgMgr::instance().getStagingCfg()->
@@ -2154,7 +2324,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
         "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
 
     // Use the configuration string to create new option definition.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -2163,20 +2333,16 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    /// @todo The option 213 is a standard DHCPv4 option. However, at
-    /// this point there is no definition for this option in
-    /// libdhcp++, so it should be allowed to define it from the
-    /// configuration interface. This test will have to be removed
-    /// once definitions for remaining standard options are created.
+    /// There is no definition for unassigned option 170.
     config =
         "{ \"option-def\": [ {"
-        "      \"name\": \"access-network-domain-name\","
-        "      \"code\": 213,"
+        "      \"name\": \"unassigned-option-170\","
+        "      \"code\": 170,"
         "      \"type\": \"string\","
         "      \"space\": \"dhcp4\""
         "  } ]"
         "}";
-    ASSERT_NO_THROW(json = parseOPTION_DEF(config));
+    ASSERT_NO_THROW(json = parseOPTION_DEFS(config));
     extractConfig(config);
 
     // Use the configuration string to create new option definition.
@@ -2186,12 +2352,12 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     checkResult(status, 0);
 
     def = CfgMgr::instance().getStagingCfg()->
-        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 213);
+        getCfgOptionDef()->get(DHCP4_OPTION_SPACE, 170);
     ASSERT_TRUE(def);
 
     // Check the option data.
-    EXPECT_EQ("access-network-domain-name", def->getName());
-    EXPECT_EQ(213, def->getCode());
+    EXPECT_EQ("unassigned-option-170", def->getName());
+    EXPECT_EQ(170, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
@@ -3124,6 +3290,66 @@ TEST_F(Dhcp4ParserTest, domainSearchOption) {
                                      " domain-search option"));
 }
 
+// The goal of this test is to verify that the slp-directory-agent
+// option can be set using a trailing array of addresses and
+// slp-service-scope without option scope list
+TEST_F(Dhcp4ParserTest, slpOptions) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"slp-directory-agent\","
+        "    \"data\": \"true, 10.0.0.3, 127.0.0.1\""
+        " },"
+        " {"
+        "    \"name\": \"slp-service-scope\","
+        "    \"data\": \"false, \""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // Get options
+    OptionContainerPtr options = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->getAll(DHCP4_OPTION_SPACE);
+    ASSERT_EQ(2, options->size());
+
+    // Get the search index. Index #1 is to search using option code.
+    const OptionContainerTypeIndex& idx = options->get<1>();
+
+    // Get the options for specified index. Expecting one option to be
+    // returned but in theory we may have multiple options with the same
+    // code so we get the range.
+    std::pair<OptionContainerTypeIndex::const_iterator,
+              OptionContainerTypeIndex::const_iterator> range =
+        idx.equal_range(DHO_DIRECTORY_AGENT);
+    // Expect a single option with the code equal to 78.
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    const uint8_t sda_expected[] = {
+        0x01, 0x0a, 0x00, 0x00, 0x03, 0x7f, 0x00, 0x00, 0x01
+    };
+    // Check if option is valid in terms of code and carried data.
+    testOption(*range.first, 78, sda_expected, sizeof(sda_expected));
+
+    range = idx.equal_range(DHO_SERVICE_SCOPE);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    // Do another round of testing with second option.
+    const uint8_t sss_expected[] = {
+        0x00
+    };
+    testOption(*range.first, 79, sss_expected, sizeof(sss_expected));
+}
+
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
 TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
@@ -3374,7 +3600,6 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(5678, 100);
     ASSERT_FALSE(desc2.option_);
 }
-
 
 
 // Tests of the hooks libraries configuration.  All tests have the pre-
@@ -4316,22 +4541,22 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     Subnet4Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_OUT_OF_POOL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 
     // Subnet 3
     subnet = subnets->selectSubnet(IOAddress("192.0.4.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_DISABLED, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_DISABLED, subnet->getHostReservationMode());
 
     // Subnet 4
     subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(Subnet::HR_ALL, subnet->getHostReservationMode());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 }
 
 /// Check that the decline-probation-period has a default value when not
@@ -4879,7 +5104,7 @@ TEST_F(Dhcp4ParserTest, poolUserContextData) {
     bool bool_value;
     ASSERT_EQ(Element::boolean, bool_param->getType());
     EXPECT_NO_THROW(bool_param->getValue(bool_value));
-    EXPECT_EQ(true, bool_value);
+    EXPECT_TRUE(bool_value);
 }
 
 // Test verifies that it's possible to specify parameters in the user context
@@ -4913,7 +5138,7 @@ TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
     bool bool_value;
     ASSERT_EQ(Element::boolean, bool_param->getType());
     EXPECT_NO_THROW(bool_param->getValue(bool_value));
-    EXPECT_EQ(true, bool_value);
+    EXPECT_TRUE(bool_value);
 }
 
 // Test verifies the error message for an incorrect pool range
@@ -4929,21 +5154,10 @@ TEST_F(Dhcp4ParserTest, invalidPoolRange) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
-    int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
-    string text;
-    ASSERT_NO_THROW(text = comment->stringValue());
-
-    EXPECT_EQ(1, rcode);
     string expected = "Failed to create pool defined by: "
         "192.0.2.1-19.2.0.200 (<string>:6:26)";
-    EXPECT_EQ(expected, text);
+
+    configure(config, CONTROL_RESULT_ERROR, expected);
 }
 
 // Test verifies the error message for an outside subnet pool range
@@ -4959,23 +5173,438 @@ TEST_F(Dhcp4ParserTest, outsideSubnetPool) {
         " } ] \n"
         "} \n";
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(status);
-    int rcode;
-    ConstElementPtr comment = parseAnswer(rcode, status);
-    string text;
-    ASSERT_NO_THROW(text = comment->stringValue());
-
-    EXPECT_EQ(1, rcode);
     string expected = "subnet configuration failed: "
         "a pool of type V4, with the following address range: "
         "192.0.2.1-192.0.2.100 does not match the prefix of a subnet: "
         "10.0.2.0/24 to which it is being added (<string>:5:14)";
-    EXPECT_EQ(expected, text);
+
+    configure(config, CONTROL_RESULT_ERROR, expected);
+}
+
+// Test verifies that empty shared networks are accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworksEmpty) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+}
+
+// Test verifies that if a shared network is defined, it at least has to have
+// a name.
+TEST_F(Dhcp4ParserTest, sharedNetworksNoName) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { } ]\n"
+        "} \n";
+
+    EXPECT_THROW(parseDHCP4(config, true), Dhcp4ParseError);
+}
+
+// Test verifies that empty shared networks are accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworksEmptyName) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { \"name\": \"\" } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR,
+              "Shared-network with subnets  is missing mandatory 'name' parameter");
+}
+
+// Test verifies that a degenerated shared-network (no subnets) is
+// accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworksName) {
+    string config = "{\n"
+        "\"subnet4\": [ {  \n"
+        "    \"pools\": [ { \"pool\": \"10.0.2.1 - 10.0.2.100\" } ], \n"
+        "    \"subnet\": \"10.0.2.0/24\"  \n"
+        " } ],\n"
+        "\"shared-networks\": [ { \"name\": \"foo\" } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
+
+    // Verify that there are no subnets in this shared-network
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(0, subs->size());
+}
+
+// Test verifies that a degenerated shared-network (just one subnet) is
+// accepted.
+TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet4\": [ { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ]\n"
+        "    } ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+    ASSERT_TRUE(cfg_net);
+
+    // There should be exactly one shared subnet.
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
+
+    // It should have one subnet.
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+
+    // Now make sure the subnet was added to global list of subnets.
+    CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ASSERT_TRUE(subnets4);
+
+    subs = subnets4->getAll();
+    ASSERT_TRUE(subs);
+    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+}
+
+// Test verifies that a proper shared-network (three subnets) is
+// accepted. It verifies several things:
+// - that more than one subnet can be added to shared subnets
+// - that each subnet being part of the shared subnets is also stored in
+//   global subnets collection
+// - that a subnet can inherit global values
+// - that subnet can override global parameters
+// - that overridden parameters only affect one subnet and not others
+TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
+    string config = "{\n"
+        "\"valid-lifetime\": 4000, \n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
+        "        \"renew-timer\": 2,\n"
+        "        \"rebind-timer\": 22,\n"
+        "        \"valid-lifetime\": 222\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.3.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    // There is expected one shared subnet.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+
+    SharedNetwork4Ptr net = *(nets->begin());
+    ASSERT_TRUE(net);
+
+    EXPECT_EQ("foo", net->getName());
+
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(3, subs->size());
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000);
+
+    // Now make sure the subnet was added to global list of subnets.
+    CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ASSERT_TRUE(subnets4);
+
+    subs = subnets4->getAll();
+    ASSERT_TRUE(subs);
+    checkSubnet(*subs, "192.0.1.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.2.0/24", 2, 22, 222);
+    checkSubnet(*subs, "192.0.3.0/24", 1000, 2000, 4000);
+}
+
+// This test checks if parameters are derived properly:
+// - global to shared network
+// - shared network to subnet
+// Also, it tests that more than one shared network can be defined.
+TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    // This config is structured in a way that the first shared
+    // subnet have many parameters defined. The first subnet
+    // should inherit them. The second subnet overrides all
+    // values and those values should be used, not those from
+    // shared network scope.
+    string config = "{\n"
+        "\"renew-timer\": 1, \n" // global values here
+        "\"rebind-timer\": 2, \n"
+        "\"valid-lifetime\": 4, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n," // shared network values here
+        "    \"interface\": \"eth0\",\n"
+        "    \"match-client-id\": false,\n"
+        "    \"next-server\": \"1.2.3.4\",\n"
+        "    \"server-hostname\": \"foo\",\n"
+        "    \"boot-file-name\": \"bar\",\n"
+        "    \"relay\": {\n"
+        "        \"ip-address\": \"5.6.7.8\"\n"
+        "    },\n"
+        "    \"reservation-mode\": \"out-of-pool\",\n"
+        "    \"renew-timer\": 10,\n"
+        "    \"rebind-timer\": 20,\n"
+        "    \"valid-lifetime\": 40,\n"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
+        "        \"renew-timer\": 100,\n"
+        "        \"rebind-timer\": 200,\n"
+        "        \"valid-lifetime\": 400,\n"
+        "        \"match-client-id\": true,\n"
+        "        \"next-server\": \"11.22.33.44\",\n"
+        "        \"server-hostname\": \"some-name.example.org\",\n"
+        "        \"boot-file-name\": \"bootfile.efi\",\n"
+        "        \"relay\": {\n"
+        "            \"ip-address\": \"55.66.77.88\"\n"
+        "        },\n"
+        "        \"reservation-mode\": \"disabled\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet4\": [\n"
+        "    {\n"
+        "        \"subnet\": \"192.0.3.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
+        "    }\n"
+        "    ]\n"
+
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    // Two shared networks are expected.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    SharedNetwork4Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    // The first shared network has two subnets.
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the renew-timer should be 10, because it was
+    // derived from shared-network level. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet4 level.
+    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 10, 20, 40);
+    ASSERT_TRUE(s);
+
+    // These are values derived from shared network scope:
+    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_FALSE(s->getMatchClientId());
+    EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
+    EXPECT_EQ("foo", s->getSname());
+    EXPECT_EQ("bar", s->getFilename());
+    EXPECT_EQ(IOAddress("5.6.7.8"), s->getRelayInfo().addr_);
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
+
+    // For the second subnet, the renew-timer should be 100, because it
+    // was specified explicitly. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet4 level.
+    s = checkSubnet(*subs, "192.0.2.0/24", 100, 200, 400);
+
+    // These are values derived from shared network scope:
+    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_TRUE(s->getMatchClientId());
+    EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
+    EXPECT_EQ("some-name.example.org", s->getSname());
+    EXPECT_EQ("bootfile.efi", s->getFilename());
+    EXPECT_EQ(IOAddress("55.66.77.88"), s->getRelayInfo().addr_);
+    EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its renew-timer from global scope.
+    // All other parameters should have default values.
+    s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
+    EXPECT_EQ("", s->getIface());
+    EXPECT_TRUE(s->getMatchClientId());
+    EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
+    EXPECT_TRUE(s->getSname().empty());
+    EXPECT_TRUE(s->getFilename().empty());
+    EXPECT_EQ(IOAddress("0.0.0.0"), s->getRelayInfo().addr_);
+    EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
+}
+
+// This test checks if client-class is derived properly.
+TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
+
+    // This config is structured in a way that the first shared network has
+    // client-class defined. This should in general be inherited by subnets, but
+    // it's also possible to override the values on subnet level.
+    string config = "{\n"
+        "\"renew-timer\": 1, \n" // global values here
+        "\"rebind-timer\": 2, \n"
+        "\"valid-lifetime\": 4, \n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n," // shared network values here
+        "    \"client-class\": \"alpha\",\n"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
+        "        \"client-class\": \"beta\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet4\": [\n"
+        "    {\n"
+        "        \"subnet\": \"192.0.3.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
+        "    }\n"
+        "    ]\n"
+
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    // Two shared networks are expected.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    SharedNetwork4Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    auto classes = net->getClientClasses();
+    EXPECT_TRUE(classes.contains("alpha"));
+
+    // The first shared network has two subnets.
+    const Subnet4Collection * subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the client-class should be inherited from
+    // shared-network level.
+    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 1, 2, 4);
+    ASSERT_TRUE(s);
+    classes = s->getClientClasses();
+    EXPECT_TRUE(classes.contains("alpha"));
+
+    // For the second subnet, the values are overridden on subnet level.
+    // The value should not be inherited.
+    s = checkSubnet(*subs, "192.0.2.0/24", 1, 2, 4);
+    classes = s->getClientClasses();
+    EXPECT_TRUE(classes.contains("beta")); // beta defined on subnet level
+    EXPECT_FALSE(classes.contains("alpha")); // alpha defined on shared-network level
+
+    // Ok, now check the second shared network. It doesn't have anything defined
+    // on shared-network or subnet level, so everything should have default
+    // values.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
+    classes = s->getClientClasses();
+    EXPECT_TRUE(classes.empty());
 }
 
 }

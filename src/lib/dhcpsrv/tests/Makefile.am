@@ -15,6 +15,7 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+DISTCLEANFILES = test_libraries.h
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
@@ -74,6 +75,8 @@ libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_rsoo_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_shared_networks4_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_shared_networks6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets4_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
@@ -122,6 +125,9 @@ libdhcpsrv_unittests_SOURCES += cql_connection_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_lease_mgr_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
+libdhcpsrv_unittests_SOURCES += shared_network_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += shared_network_unittest.cc
+libdhcpsrv_unittests_SOURCES += shared_networks_list_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h

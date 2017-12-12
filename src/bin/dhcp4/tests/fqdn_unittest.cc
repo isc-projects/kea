@@ -900,6 +900,17 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
                             "", // empty DHCID forces that it is not checked
                             time(NULL) + subnet_->getValid(),
                             subnet_->getValid(), true);
+
+    req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                              Option4ClientFqdn::FLAG_E,
+                              "", Option4ClientFqdn::PARTIAL, true);
+
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there are no NameChangeRequests generated.
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that server generates client's hostname from the IP address assigned
@@ -1069,6 +1080,88 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
                             "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
                             "AFDCE8C3D0E53F35CC584DD63C89CA",
                             time(NULL), subnet_->getValid(), true);
+}
+
+// Test that client may send two requests, each carrying the same FQDN option.
+// Server should renew  existing lease for the second request without generating
+// any NCRs.
+TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    Pkt4Ptr req1 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                       Option4ClientFqdn::FLAG_E,
+                                       "myhost.example.com.",
+                                       Option4ClientFqdn::FULL, true);
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req1));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            time(NULL), subnet_->getValid(), true);
+
+    // Create another Request message with the same FQDN. Server
+    // should generate no NameChangeRequests.
+    Pkt4Ptr req2 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                       Option4ClientFqdn::FLAG_E,
+                                       "myhost.example.com.",
+                                       Option4ClientFqdn::FULL, true);
+
+    ASSERT_NO_THROW(reply = srv_->processRequest(req2));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // There should be no NameChangeRequests.
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+}
+
+// Test that client may send two requests, each carrying the same hostname
+// option.  Server should renew  existing lease for the second request without
+// generating any NCRs.
+TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+
+    // Set interface for the incoming packet. The server requires it to
+    // generate client id.
+    req1->setIface("eth1");
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req1));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            time(NULL), subnet_->getValid(), true);
+
+    // Create another Request message with the same Hostname. Server
+    // should generate no NameChangeRequests.
+    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+
+    // Set interface for the incoming packet. The server requires it to
+    // generate client id.
+    req2->setIface("eth1");
+
+    ASSERT_NO_THROW(reply = srv_->processRequest(req2));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // There should be no NameChangeRequests.
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that when a release message is sent for a previously acquired lease,
