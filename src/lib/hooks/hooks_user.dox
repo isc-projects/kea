@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1019,6 +1019,94 @@ int load(LibraryHandle& libhandle) {
 It is possible for a library to contain callouts with both standard and
 non-standard names: ones with standard names will be registered automatically,
 ones with non-standard names need to be registered manually.
+
+@subsubsection hooksdgCommandHandlers Using Callouts as Command handlers
+
+Kea servers natively support a set of control commands to retrieve and update
+runtime information, e.g. server configuration, basic statistics etc. In
+many cases, however, DHCP deployments require support for additional commands
+or the natively supported commands don't exactly fulfil one's requirements.
+
+Taking advantage of Kea's modularity and hooks framework, it is now possible
+to easily extend the pool of supported commands by implementing additional
+(non-standard) commands within hook libraries.
+
+A hook library needs to register command handlers for control commands within
+its @c load function as follows:
+
+@code
+int load(LibraryHandle& handle) {
+    handle.registerCommandCallout("diagnostics-enable", diagnostics_enable);
+    handle.registerCommandCallout("diagnostics-dump", diagnostics_dump);
+    return (0);
+}
+@endcode
+
+Internally, the @c LibraryHandle associates command handlers @c diagnostics_enable
+and @c diagnostics_dump with dedicated hook points. These hook points are
+given names after the command names, i.e. "$diagnostics_enable" and
+"$diagnostics_dump". The dollar sign before the hook point name indicates
+that the hook point is dedicated for a command handler, i.e. is not one of
+the standard hook points used by the Kea servers. This is just a naming convention,
+usually invisible to the hook library implementation and is mainly aimed at
+minimizing a risk of collision between names of the hook points registered with
+command handlers and standard hook points.
+
+Once the hook library is loaded and the command handlers supported by the
+library are registered, the Kea servers will be able to recognize that those
+specific commands are supported and will dispatch commands with the corresponding
+names to the hook library (or multiple hook libraries) for processing. See the
+documentation of the @ref isc::config::HookedCommandMgr for more details how
+it uses @c HooksManager::commandHandlersPresent to determine if the received
+command should be dispatched to a hook library for processing.
+
+The @c diagnostics_enable and @c diagnostics_dump command
+handlers must be implemented within the hook library in analogous way to
+regular callouts:
+
+@code
+int diagnostics_enable(CalloutHandle& handle) {
+    ConstElementPtr response;
+
+    try {
+        ConstElementPtr command;
+        handle.getArgument("command", command);
+        ConstElementPtr args;
+        static_cast<void>(isc::config::parseCommand(args, command));
+
+        // ...
+        // handle command here.
+        // ...
+
+        response = createAnswer(CONTROL_RESULT_SUCCESS, "successful");
+
+    } catch (const std::exception& ex) {
+        response = createAnswer(CONTROL_RESULT_ERROR, ex.what());
+    }
+
+    handle.setArgument("response", response);
+
+    return (0);
+}
+@endcode
+
+The sample code above retrieves the "command" argument which is always provided.
+It represents the control command as sent by the controlling client. It includes
+command name and command specific arguments. The generic @ref isc::config::parseCommand
+can be used to retrieve arguments included in the command. The callout then interprets
+these arguments, takes appropriate action and creates a response to the client.
+Care should be taken to catch any non-fatal exceptions that may arise during the callout
+that should be reported as a failure to the controlling client. In such case, the response
+with @c CONTROL_RESULT_ERROR is returned and the callout should return the value of 0.
+The non-zero result should only be returned by the callout in case of fatal errors, i.e.
+errors which result in inability to generate a response to the client. If the response
+is generated, the command handler must set it as "response" argument prior to return.
+
+It is uncommon but valid scenario to have multiple hook libraries providing command
+handlers for the same command. They are invoked sequentially and each of them
+can freely modify a response set by a previous callout. This includes entirely
+replacing the response provided by previous callouts, if necessary.
+
 
 @subsubsection hooksdgMultipleCallouts Multiple Callouts on a Hook
 

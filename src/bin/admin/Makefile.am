@@ -4,7 +4,7 @@ SUBDIRS = . tests
 sbin_SCRIPTS  = kea-admin
 
 man_MANS = kea-admin.8
-DISTCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(sbin_SCRIPTS) $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-admin.xml admin-utils.sh
 
 if GENERATE_DOCS

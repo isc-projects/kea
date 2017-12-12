@@ -23,7 +23,7 @@ endif
 CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 
 man_MANS = kea-dhcp6.8
-DISTCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS) spec_config.h.pre
 EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
 EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp6_parser.yy

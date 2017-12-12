@@ -30,7 +30,8 @@ CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += $(builddir)/test_leases.csv.*
 CLEANFILES += *.json *.log
 
-DISTCLEANFILES = dhcp4_process_tests.sh
+DISTCLEANFILES = dhcp4_process_tests.sh marker_file.h
+DISTCLEANFILES += test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -96,6 +97,7 @@ dhcp4_unittests_SOURCES += kea_controller_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4to6_ipc_unittest.cc
 dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
 dhcp4_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
+dhcp4_unittests_SOURCES += shared_network_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 

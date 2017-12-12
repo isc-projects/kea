@@ -188,7 +188,8 @@ public:
         std::ostringstream s;
         s << "type=memfile " << (u == V4 ? "universe=4 " : "universe=6 ")
           << "name="
-          << getLeaseFilePath(u == V4 ? "leasefile4_0.csv" : "leasefile6_0.csv");
+          << getLeaseFilePath(u == V4 ? "leasefile4_0.csv" : "leasefile6_0.csv")
+          << " lfc-interval=0";
         return (s.str());
     }
 
@@ -426,6 +427,7 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
 
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
     // Specify the names of the lease files. Leases will be written.
     pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
@@ -1633,6 +1635,7 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     pmap["universe"] = "4";
     pmap["name"] = leasefile;
     pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
 
     srand(seed);
 
@@ -1772,6 +1775,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     pmap["universe"] = "6";
     pmap["name"] = leasefile;
     pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
 
     srand(seed);
 

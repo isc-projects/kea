@@ -55,6 +55,9 @@ using namespace std;
   DHCP_SOCKET_TYPE "dhcp-socket-type"
   RAW "raw"
   UDP "udp"
+  OUTBOUND_INTERFACE "outbound-interface"
+  SAME_AS_INBOUND "same-as-inbound"
+  USE_ROUTING "use-routing"
   RE_DETECT "re-detect"
 
   ECHO_CLIENT_ID "echo-client-id"
@@ -100,6 +103,8 @@ using namespace std;
   RECORD_TYPES "record-types"
   ENCAPSULATE "encapsulate"
   ARRAY "array"
+
+  SHARED_NETWORKS "shared-networks"
 
   POOLS "pools"
   POOL "pool"
@@ -195,6 +200,7 @@ using namespace std;
   SUB_SUBNET4
   SUB_POOL4
   SUB_RESERVATION
+  SUB_OPTION_DEFS
   SUB_OPTION_DEF
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
@@ -209,6 +215,7 @@ using namespace std;
 %type <ElementPtr> value
 %type <ElementPtr> map_value
 %type <ElementPtr> socket_type
+%type <ElementPtr> outbound_interface_value
 %type <ElementPtr> db_type
 %type <ElementPtr> hr_mode
 %type <ElementPtr> ncr_protocol_value
@@ -230,6 +237,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_SUBNET4 { ctx.ctx_ = ctx.SUBNET4; } sub_subnet4
      | SUB_POOL4 { ctx.ctx_ = ctx.POOLS; } sub_pool4
      | SUB_RESERVATION { ctx.ctx_ = ctx.RESERVATIONS; } sub_reservation
+     | SUB_OPTION_DEFS { ctx.ctx_ = ctx.DHCP4; } sub_option_def_list
      | SUB_OPTION_DEF { ctx.ctx_ = ctx.OPTION_DEF; } sub_option_def
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
@@ -351,6 +359,9 @@ syntax_map: LCURLY_BRACKET {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
+
+    // Dhcp4 is required
+    ctx.require("Dhcp4", ctx.loc2pos(@1), ctx.loc2pos(@4));
 };
 
 // This represents top-level entries: Control-agent, Dhcp6, Dhcp4,
@@ -376,9 +387,7 @@ dhcp4_object: DHCP4 {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP4);
 } COLON LCURLY_BRACKET global_params RCURLY_BRACKET {
-    // map parsing completed. If we ever want to do any wrap up
-    // (maybe some sanity checking), this would be the best place
-    // for it.
+    // No global parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -390,6 +399,7 @@ sub_dhcp4: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } global_params RCURLY_BRACKET {
+    // No global parameter is required
     // parsing completed
 };
 
@@ -404,6 +414,7 @@ global_param: valid_lifetime
             | rebind_timer
             | decline_probation_period
             | subnet4_list
+            | shared_networks
             | interfaces_config
             | lease_database
             | hosts_database
@@ -419,6 +430,8 @@ global_param: valid_lifetime
             | echo_client_id
             | match_client_id
             | next_server
+            | server_hostname
+            | boot_file_name
             | unknown_map_entry
             ;
 
@@ -459,6 +472,7 @@ interfaces_config: INTERFACES_CONFIG {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
 } COLON LCURLY_BRACKET interfaces_config_params RCURLY_BRACKET {
+    // No interfaces config param is required
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -469,6 +483,7 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | dhcp_socket_type
+                       | outbound_interface
                        | re_detect
                        ;
 
@@ -477,6 +492,7 @@ sub_interfaces4: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } interfaces_config_params RCURLY_BRACKET {
+    // No interfaces config param is required
     // parsing completed
 };
 
@@ -501,6 +517,19 @@ socket_type: RAW { $$ = ElementPtr(new StringElement("raw", ctx.loc2pos(@1))); }
            | UDP { $$ = ElementPtr(new StringElement("udp", ctx.loc2pos(@1))); }
            ;
 
+outbound_interface: OUTBOUND_INTERFACE {
+    ctx.enter(ctx.OUTBOUND_INTERFACE);
+} COLON outbound_interface_value {
+    ctx.stack_.back()->set("outbound-interface", $4);
+    ctx.leave();
+}
+
+outbound_interface_value: SAME_AS_INBOUND {
+    $$ = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(@1)));
+} | USE_ROUTING {
+    $$ = ElementPtr(new StringElement("use-routing", ctx.loc2pos(@1)));
+    } ;
+
 re_detect: RE_DETECT COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("re-detect", b);
@@ -513,6 +542,8 @@ lease_database: LEASE_DATABASE {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.LEASE_DATABASE);
 } COLON LCURLY_BRACKET database_map_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -523,6 +554,8 @@ hosts_database: HOSTS_DATABASE {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.HOSTS_DATABASE);
 } COLON LCURLY_BRACKET database_map_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -702,6 +735,8 @@ hooks_library: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } hooks_params RCURLY_BRACKET {
+    // The library hooks parameter is required
+    ctx.require("library", ctx.loc2pos(@1), ctx.loc2pos(@4));
     ctx.stack_.pop_back();
 };
 
@@ -710,6 +745,8 @@ sub_hooks_library: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } hooks_params RCURLY_BRACKET {
+    // The library hooks parameter is required
+    ctx.require("library", ctx.loc2pos(@1), ctx.loc2pos(@4));
     // parsing completed
 };
 
@@ -744,6 +781,7 @@ expired_leases_processing: EXPIRED_LEASES_PROCESSING {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 } COLON LCURLY_BRACKET expired_leases_params RCURLY_BRACKET {
+    // No expired lease parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -838,6 +876,9 @@ subnet4: LCURLY_BRACKET {
     //         ctx.stack_.back()->set("renew-timer", renew);
     //     }
     // }
+
+    // The subnet subnet4 parameter is required
+    ctx.require("subnet", ctx.loc2pos(@1), ctx.loc2pos(@4));
     ctx.stack_.pop_back();
 };
 
@@ -846,6 +887,8 @@ sub_subnet4: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } subnet4_params RCURLY_BRACKET {
+    // The subnet subnet4 parameter is required
+    ctx.require("subnet", ctx.loc2pos(@1), ctx.loc2pos(@4));
     // parsing completed
 };
 
@@ -871,9 +914,12 @@ subnet4_param: valid_lifetime
              | relay
              | match_client_id
              | next_server
+             | server_hostname
+             | boot_file_name
              | subnet_4o6_interface
              | subnet_4o6_interface_id
              | subnet_4o6_subnet
+             | user_context
              | unknown_map_entry
              ;
 
@@ -955,6 +1001,57 @@ rapid_commit: RAPID_COMMIT COLON BOOLEAN {
     ctx.stack_.back()->set("rapid-commit", rc);
 };
 
+// ---- shared-networks ---------------------
+
+shared_networks: SHARED_NETWORKS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("shared-networks", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.SHARED_NETWORK);
+} COLON LSQUARE_BRACKET shared_networks_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+// This allows 0 or more shared network definitions.
+shared_networks_content: %empty
+                       | shared_networks_list
+                       ;
+
+// This allows 1 or more shared network definitions.
+shared_networks_list: shared_network
+                    | shared_networks_list COMMA shared_network
+                    ;
+
+shared_network: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} shared_network_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+}
+
+shared_network_params: shared_network_param
+                     | shared_network_params COMMA shared_network_param
+                     ;
+
+shared_network_param: name
+                    | subnet4_list
+                    | interface
+                    | renew_timer
+                    | rebind_timer
+                    | option_data_list
+                    | match_client_id
+                    | next_server
+                    | server_hostname
+                    | boot_file_name
+                    | relay
+                    | reservation_mode
+                    | client_class
+                    | valid_lifetime
+                    | unknown_map_entry
+                    ;
+
 // ---- option-def --------------------------
 
 // This defines the "option-def": [ ... ] entry that may appear
@@ -967,6 +1064,16 @@ option_def_list: OPTION_DEF {
 } COLON LSQUARE_BRACKET option_def_list_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+// This defines the top level scope when the parser is told to parse
+// option definitions. It works as a subset limited to option
+// definitions
+sub_option_def_list: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} option_def_list RCURLY_BRACKET {
+    // parsing completed
 };
 
 // This defines the content of option-def. It may be empty,
@@ -986,6 +1093,10 @@ option_def_entry: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } option_def_params RCURLY_BRACKET {
+    // The name, code and type option def parameters are required.
+    ctx.require("name", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.require("code", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.require("type", ctx.loc2pos(@1), ctx.loc2pos(@4));
     ctx.stack_.pop_back();
 };
 
@@ -997,6 +1108,10 @@ sub_option_def: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } option_def_params RCURLY_BRACKET {
+    // The name, code and type option def parameters are required.
+    ctx.require("name", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.require("code", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.require("type", ctx.loc2pos(@1), ctx.loc2pos(@4));
     // parsing completed
 };
 
@@ -1101,6 +1216,7 @@ option_data_entry: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } option_data_params RCURLY_BRACKET {
+    /// @todo: the code or name parameters are required.
     ctx.stack_.pop_back();
 };
 
@@ -1112,6 +1228,7 @@ sub_option_data: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } option_data_params RCURLY_BRACKET {
+    /// @todo: the code or name parameters are required.
     // parsing completed
 };
 
@@ -1191,6 +1308,8 @@ pool_list_entry: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } pool_params RCURLY_BRACKET {
+    // The pool parameter is required.
+    ctx.require("pool", ctx.loc2pos(@1), ctx.loc2pos(@4));
     ctx.stack_.pop_back();
 };
 
@@ -1199,6 +1318,8 @@ sub_pool4: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } pool_params RCURLY_BRACKET {
+    // The pool parameter is required.
+    ctx.require("pool", ctx.loc2pos(@1), ctx.loc2pos(@4));
     // parsing completed
 };
 
@@ -1253,6 +1374,7 @@ reservation: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } reservation_params RCURLY_BRACKET {
+    /// @todo: an identifier parameter is required.
     ctx.stack_.pop_back();
 };
 
@@ -1261,6 +1383,7 @@ sub_reservation: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } reservation_params RCURLY_BRACKET {
+    /// @todo: an identifier parameter is required.
     // parsing completed
 };
 
@@ -1272,7 +1395,7 @@ not_empty_reservation_params: reservation_param
     | not_empty_reservation_params COMMA reservation_param
     ;
 
-// @todo probably need to add mac-address as well here
+/// @todo probably need to add mac-address as well here
 reservation_param: duid
                  | reservation_client_classes
                  | client_id_value
@@ -1421,6 +1544,8 @@ client_class: LCURLY_BRACKET {
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } client_class_params RCURLY_BRACKET {
+    // The name client class parameter is required.
+    ctx.require("name", ctx.loc2pos(@1), ctx.loc2pos(@4));
     ctx.stack_.pop_back();
 };
 
@@ -1434,6 +1559,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
+                  | option_def_list
                   | option_data_list
                   | next_server
                   | server_hostname
@@ -1504,6 +1630,8 @@ dhcp_ddns: DHCP_DDNS {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP_DDNS);
 } COLON LCURLY_BRACKET dhcp_ddns_params RCURLY_BRACKET {
+    // The enable updates DHCP DDNS parameter is required.
+    ctx.require("enable-updates", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
 };
@@ -1513,6 +1641,8 @@ sub_dhcp_ddns: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } dhcp_ddns_params RCURLY_BRACKET {
+    // The enable updates DHCP DDNS parameter is required.
+    ctx.require("enable-updates", ctx.loc2pos(@1), ctx.loc2pos(@4));
     // parsing completed
 };
 
