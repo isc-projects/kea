@@ -72,6 +72,7 @@ using namespace isc::eval;
   ALL "all"
   COMA ","
   CONCAT "concat"
+  IFELSE "ifelse"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -326,6 +327,11 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
+                  }
+            | IFELSE "(" bool_expr "," string_expr "," string_expr ")"
+                  {
+                      TokenPtr cond(new TokenIfElse());
+                      ctx.expression.push_back(cond);
                   }
             | VENDOR "." ENTERPRISE
                 {

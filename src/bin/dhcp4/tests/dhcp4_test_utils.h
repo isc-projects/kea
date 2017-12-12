@@ -196,6 +196,7 @@ public:
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::classifyPacket;
+    using Dhcpv4Srv::deferredUnpack;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
@@ -326,7 +327,7 @@ public:
     /// present (false)
     /// @param t2_present check that t2 must be present (true) or must not be
     /// present (false)
-    void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
+    void checkAddressParams(const Pkt4Ptr& rsp, const Subnet4Ptr subnet,
                             bool t1_present = false,
                             bool t2_present = false);
 
@@ -536,11 +537,11 @@ parseDHCP4(const std::string& in, bool verbose = false)
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseOPTION_DEF(const std::string& in, bool verbose = false)
+parseOPTION_DEFS(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser4Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEF));
+        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEFS));
     }
     catch (const std::exception& ex) {
         if (verbose) {

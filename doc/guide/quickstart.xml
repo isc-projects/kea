@@ -62,11 +62,13 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Edit the configuration file which by default is installed in
-          <filename>[kea-install-dir]/etc/kea/kea.conf</filename> and contains
-          configuration for all Kea services. Configuration choices for DHCPv4
-          and DHCPv6 services are described in <xref linkend="dhcp4-configuration"/> and <xref linkend="dhcp6-configuration"/>:w
- respectively.</para>
+          <para>Edit the Kea configuration files which by default are installed in
+          the <filename>[kea-install-dir]/etc/kea/</filename> directory. These are:
+          <filename>kea-dhcp4.conf</filename>, <filename>kea-dhcp6.conf</filename>,
+          <filename>kea-dhcp-ddns.conf</filename> and
+          <filename>kea-ctrl-agent.conf</filename>, for DHCPv4 server, DHCPv6 server,
+          D2 and Control Agent respectively.
+          </para>
         </listitem>
 
         <listitem>
@@ -75,7 +77,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <screen># <userinput>keactrl start -s dhcp4</userinput></screen>
           Or run the following command to start DHCPv6 server instead:
           <screen># <userinput>keactrl start -s dhcp6</userinput></screen>
-          Note that it is also possible to start both servers simultaneously:
+          Note that it is also possible to start all servers simultaneously:
           <screen>$ <userinput>keactrl start</userinput></screen>
           </para>
         </listitem>
@@ -85,8 +87,10 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <screen># <userinput>keactrl status</userinput></screen>
           A server status of "inactive" may indicate a configuration
           error. Please check the log file (by default named
-          <filename>[kea-install-dir]/var/kea/kea-dhcp4.log</filename> or
-          <filename>[kea-install-dir]/var/kea/kea-dhcp6.log</filename>) 
+          <filename>[kea-install-dir]/var/kea/kea-dhcp4.log</filename>,
+          <filename>[kea-install-dir]/var/kea/kea-dhcp6.log</filename>,
+          <filename>[kea-install-dir]/var/kea/kea-ddns.log</filename> or
+          <filename>[kea-install-dir]/var/kea/kea-ctrl-agent.log</filename>) 
           for the details of the error.
           </para>
         </listitem>

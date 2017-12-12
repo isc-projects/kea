@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_rsoo.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
@@ -199,6 +200,24 @@ public:
     /// @return Pointer to the object holding subnets configuration for DHCPv4.
     CfgSubnets4Ptr getCfgSubnets4() {
         return (cfg_subnets4_);
+    }
+
+    /// @brief Returns pointer to non-const object holding configuration of
+    /// shared networks in DHCPv4;
+    ///
+    /// @return Pointer to the object holding shared networks configuration
+    /// for DHCPv4.
+    CfgSharedNetworks4Ptr getCfgSharedNetworks4() const {
+        return (cfg_shared_networks4_);
+    }
+
+    /// @brief Returns pointer to non-const object holding configuration of
+    /// shared networks in DHCPv6.
+    ///
+    /// @return Pointer to the object holding shared networks configuration
+    /// for DHCPv6.
+    CfgSharedNetworks6Ptr getCfgSharedNetworks6() const {
+        return (cfg_shared_networks6_);
     }
 
     /// @brief Returns pointer to const object holding subnets configuration for
@@ -572,6 +591,12 @@ private:
 
     /// @brief Pointer to subnets configuration for IPv6.
     CfgSubnets6Ptr cfg_subnets6_;
+
+    /// @brief Pointer to IPv4 shared networks configuration.
+    CfgSharedNetworks4Ptr cfg_shared_networks4_;
+
+    /// @brief Pointer to IPv4 shared networks configuration.
+    CfgSharedNetworks6Ptr cfg_shared_networks6_;
 
     /// @brief Pointer to the configuration for hosts reservation.
     ///

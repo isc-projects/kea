@@ -9,7 +9,9 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <util/optional_value.h>
 #include <cstdint>
 #include <string>
@@ -41,7 +43,9 @@ public:
     /// @brief Constructor.
     ///
     /// @param address_family Address family: @c AF_INET or @c AF_INET6.
-    explicit OptionDataParser(const uint16_t address_family);
+    /// @param cfg_option_def Config option definitions (optional)
+    OptionDataParser(const uint16_t address_family,
+                     CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr());
 
     /// @brief Parses ElementPtr containing option definition
     ///
@@ -145,6 +149,9 @@ private:
 
     /// @brief Address family: @c AF_INET or @c AF_INET6.
     uint16_t address_family_;
+
+    /// @brief Config option definitions
+    CfgOptionDefPtr cfg_option_def_;
 };
 
 /// @brief Parser for option data values within a subnet.
@@ -158,7 +165,9 @@ public:
     /// @brief Constructor.
     ///
     /// @param address_family Address family: @c AF_INET or AF_INET6
-    explicit OptionDataListParser(const uint16_t address_family);
+    /// @param cfg_option_def Config option definitions (optional)
+    OptionDataListParser(const uint16_t address_family,
+                         CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr());
 
     /// @brief Parses a list of options, instantiates them and stores in cfg
     ///
@@ -173,6 +182,9 @@ public:
 private:
     /// @brief Address family: @c AF_INET or @c AF_INET6
     uint16_t address_family_;
+
+    /// @brief Config option definitions
+    CfgOptionDefPtr cfg_option_def_;
 };
 
 

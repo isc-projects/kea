@@ -160,13 +160,22 @@ MySqlConnection::openDatabase() {
 
     // Set options for the connection:
     //
-    // Automatic reconnection: after a period of inactivity, the client will
-    // disconnect from the database.  This option causes it to automatically
-    // reconnect when another operation is about to be done.
-    my_bool auto_reconnect = MLM_TRUE;
+    // Set options for the connection:
+    // Make sure auto_reconnect is OFF! Enabling it leaves us with an unusable
+    // connection after a reconnect as among other things, it drops all our
+    // pre-compiled statements.
+    my_bool auto_reconnect = MLM_FALSE;
     int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
+                  mysql_error(mysql_));
+    }
+
+    // Make sure we have a large idle time window ... say 30 days...
+    const char *wait_time = "SET SESSION wait_timeout = 30 * 86400";
+    result = mysql_options(mysql_, MYSQL_INIT_COMMAND, wait_time);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set wait_timeout " <<
                   mysql_error(mysql_));
     }
 

@@ -370,6 +370,42 @@ TEST(D2ClientMgr, validConfig) {
     EXPECT_NE(*original_config, *updated_config);
 }
 
+/// @brief Checks passing the D2ClientMgr a valid D2 client configuration
+/// using IPv6 service.
+TEST(D2ClientMgr, ipv6Config) {
+    D2ClientMgrPtr d2_client_mgr;
+
+    // Construct the manager and fetch its initial configuration.
+    ASSERT_NO_THROW(d2_client_mgr.reset(new D2ClientMgr()));
+    D2ClientConfigPtr original_config = d2_client_mgr->getD2ClientConfig();
+    ASSERT_TRUE(original_config);
+
+    // Create a new, enabled config.
+    D2ClientConfigPtr new_cfg;
+    ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("::1"), 477,
+                                  isc::asiolink::IOAddress("::1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
+                                  "pre-fix", "suf-fix")));
+
+    // Verify that we can assign a new, non-empty configuration.
+    ASSERT_NO_THROW(d2_client_mgr->setD2ClientConfig(new_cfg));
+
+    // Verify that we can fetch the newly assigned configuration.
+    D2ClientConfigPtr updated_config = d2_client_mgr->getD2ClientConfig();
+    ASSERT_TRUE(updated_config);
+    EXPECT_TRUE(updated_config->getEnableUpdates());
+
+    // Make sure convenience method agrees with the updated configuration.
+    EXPECT_TRUE(d2_client_mgr->ddnsEnabled());
+
+    // Make sure the configuration we fetched is the one we assigned,
+    // and not the original configuration.
+    EXPECT_EQ(*new_cfg, *updated_config);
+    EXPECT_NE(*original_config, *updated_config);
+}
 
 /// @brief Tests that analyzeFqdn detects invalid combination of both the
 /// client S and N flags set to true.
