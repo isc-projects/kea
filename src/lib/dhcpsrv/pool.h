@@ -102,7 +102,7 @@ public:
 
     /// @brief Sets user context.
     /// @param ctx user context to be stored.
-    void setUserContext(const data::ConstElementPtr& ctx) {
+    void setContext(const data::ConstElementPtr& ctx) {
         user_context_ = ctx;
     }
 

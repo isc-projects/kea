@@ -37,10 +37,10 @@ typedef std::vector<std::string> ParamsList;
 
 /// @brief A simple parser
 ///
-/// This class is intended to be a simpler replacement for @ref
-/// isc::dhcp::DhcpConfigParser. This class has been initially created to
-/// facilitate DHCPv4 and DHCPv6 servers' configuration parsing. Thus examples
-/// provided herein are related to DHCP configuration. Nevertheless, this is a
+/// This class is intended to be a simpler replacement for DhcpConfigParser.
+/// This class has been initially created to facilitate DHCPv4 and
+/// DHCPv6 servers' configuration parsing. Thus examples provided
+/// herein are related to DHCP configuration. Nevertheless, this is a
 /// generic class to be used in other modules too.
 ///
 /// The simplification comes from several factors:

@@ -137,6 +137,15 @@ public:
         SOCKET_UDP
     };
 
+    /// @brief Indicates how outbound interface is selected for relayed traffic.
+    enum OutboundIface {
+        /// Server sends responses over the same interface on which queries are
+        /// received.
+        SAME_AS_INBOUND,
+        /// Server uses routing to determine the right interface to send response.
+        USE_ROUTING
+    };
+
     /// @brief Keyword used to enable all interfaces.
     ///
     /// This keyword can be used instead of the interface name to specify
@@ -224,8 +233,34 @@ public:
     void useSocketType(const uint16_t family,
                        const std::string& socket_type_name);
 
+    /// @brief Returns DHCP socket type used by the server.
+    SocketType getSocketType() const {
+        return (socket_type_);
+    }
+
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
+
+    /// @brief Sets outbound interface selection mode.
+    ///
+    /// @param outbound_iface New outbound interface selection mode setting.
+    void setOutboundIface(const OutboundIface& outbound_iface);
+
+    /// @brief Returns outbound interface selection mode.
+    ///
+    /// @return Outbound interface selection mode.
+    OutboundIface getOutboundIface() const;
+
+    /// @brief Returns outbound interface selection mode as string.
+    ///
+    /// @return text representation of the outbound interface selection mode.
+    std::string outboundTypeToText() const;
+
+    /// @brief Converts text to outbound interface selection mode.
+    ///
+    /// @param txt either 'same-as-inbound' or 'use-routing'
+    /// @return Outbound interface selection mode.
+    static OutboundIface textToOutboundIface(const std::string& txt);
 
     /// @brief Converts the socket type in the textual format to the type
     /// represented by the @c SocketType.
@@ -340,6 +375,9 @@ private:
 
     /// @brief A boolean value which reflects current re-detect setting
     bool re_detect_;
+
+    /// @brief Indicates how outbound interface is selected for relayed traffic.
+    OutboundIface outbound_iface_;
 };
 
 /// @brief A pointer to the @c CfgIface .

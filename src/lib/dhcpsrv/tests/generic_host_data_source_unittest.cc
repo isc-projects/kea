@@ -814,10 +814,10 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
     ASSERT_TRUE(hdsptr_);
 
     HostPtr host = initializeHost4("192.0.2.1", id);
+    host->setIPv6SubnetID(0);
 
     for (int i = 0; i < subnets; ++i) {
         host->setIPv4SubnetID(i + 1000);
-        host->setIPv6SubnetID(i + 1000);
 
         // Check that the same host can have reservations in multiple subnets.
         EXPECT_NO_THROW(hdsptr_->add(host));
@@ -1786,6 +1786,54 @@ void GenericHostDataSourceTest::testDeleteById6Options() {
 
     // Check the options are indeed gone.
     EXPECT_EQ(0, countDBReservations6());
+}
+
+void
+GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host with zero IPv4 address.
+    HostPtr host1 = initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
+    host1->setIPv4SubnetID(1);
+    host1->setIPv6SubnetID(0);
+    // Add the host to the database.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // An attempt to add this host again should fail due to client identifier
+    // duplication.
+    ASSERT_THROW(hdsptr_->add(host1), DuplicateEntry);
+
+    // Create another host with zero IPv4 address. Adding this host to the
+    // database should be successful because zero addresses are not counted
+    // in the unique index.
+    HostPtr host2 = initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
+    host2->setIPv4SubnetID(1);
+    host2->setIPv6SubnetID(0);
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+}
+
+void
+GenericHostDataSourceTest::testMultipleHosts6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create first host.
+    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    host1->setIPv4SubnetID(0);
+    host1->setIPv6SubnetID(1);
+    // Add the host to the database.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+
+    // An attempt to add this host again should fail due to client identifier
+    // duplication.
+    ASSERT_THROW(hdsptr_->add(host1), DuplicateEntry);
+
+    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    host2->setIPv4SubnetID(0);
+    host2->setIPv6SubnetID(1);
+    // Add the host to the database.
+    ASSERT_NO_THROW(hdsptr_->add(host2));
 }
 
 }  // namespace test

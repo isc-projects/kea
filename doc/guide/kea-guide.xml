@@ -32,7 +32,8 @@
         &__VERSION__;.</releaseinfo>
 
     <copyright>
-      <year>2010-2017</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2010-2017</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
 
     <abstract>
@@ -95,23 +96,32 @@
     <chapter id="acknowledgments">
       <title>Acknowledgments</title>
 
-      <para>Kea is primarily designed, developed, and maintained by
-      Internet Systems Consortium, Inc. It is an open source project
-      and contributions are welcomed.</para>
+      <para>Kea is an open source project designed, developed, and maintained by Internet Systems
+      Consortium, Inc, a 501(c)3 non-profit organization. ISC is primarily funded by revenues from
+      support subscriptions for our open source and we encourage all professional users to consider
+      this option. To learn more, see ​<ulink
+      url="https://www.isc.org/support/">https://www.isc.org/support/</ulink>.</para>
 
-      <para>Support for the development of the DHCPv4, DHCPv6 and
-      DHCP-DDNS  components was provided by
-      <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+      <para>If you would like to contribute to ISC to assist us in continuing to make quality open
+      source software, please visit our donations page at ​<ulink
+      url="http://www.isc.org/donate/">http://www.isc.org/donate/</ulink>.</para>
+      
+
+      <para>We thank all the organizations and individuals who have helped to make Kea
+      possible. Comcast and the Comcast Innovation Fund provided major support for the development
+      of Kea's DHCPv4, DHCPv6 and DDNS modules. Mozilla funded initial work on the REST API via a
+      MOSS award.</para>
+
 
       <para>Kea was initially implemented as a collection of applications
-      within the BIND 10 framework. Hence, Kea development would not be
-      possible without the generous support of past BIND 10 project sponsors.</para>
-
-      <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and
-      <ulink url="http://cira.ca/">CIRA</ulink> were Patron Level
-      BIND 10 sponsors.</para>
-
-      <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>,
+      within the BIND 10 framework. We thank the founding sponsors of the BIND10 project:
+      <ulink url="https://www.afilias.info/">Afilias</ulink>,
+      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
+      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
+      <ulink url="https://www.sidn.nl/">SIDN</ulink>; BIND10 patrons 
+      <ulink url="http://jprs.co.jp/">JPRS</ulink> and
+      <ulink url="http://cira.ca/">CIRA</ulink>; and additional sponsors
+      <ulink url="https://www.afnic.fr/">AFNIC</ulink>,
       <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
       <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
       <ulink url="http://www.denic.de/">DENIC eG</ulink>,
@@ -119,14 +129,7 @@
       <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
       <ulink url="https://registro.br/">Registro.br</ulink>,
       <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
-      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
-      were past BIND 10 sponsors.</para>
-
-      <para><ulink url="https://www.afilias.info/">Afilias</ulink>,
-      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
-      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
-      <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding
-      sponsors of the BIND 10 project.</para>
+      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>.</para>
 
     </chapter>
 

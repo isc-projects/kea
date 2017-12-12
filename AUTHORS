@@ -10,7 +10,7 @@ Primary developers:
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
 		     host reservation, lease file cleanup, lease expiration,
-                     control agent)
+                     control agent, shared networks)
  - Thomas Markwalder (DDNS, user_chk)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
@@ -147,6 +147,9 @@ We have received the following contributions:
  - Walt Steverson (waltsteverson)
    2017-07: Compilation fixed for Alpine Linux
    2017-07: option6_pdexclude.h now installed properly
+
+ - Ebben Aries
+   2017-10: Option length checks improvements for the V-I Vendor Class option
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan

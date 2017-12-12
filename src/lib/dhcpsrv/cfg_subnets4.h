@@ -91,6 +91,14 @@ public:
     /// subnet doesn't exist.
     ConstSubnet4Ptr getByPrefix(const std::string& subnet_prefix) const;
 
+    /// @brief Checks if specified server identifier has been specified for
+    /// any subnet.
+    ///
+    /// @param server_id Server identifier.
+    ///
+    /// @return true if there is a subnet with a specified server identifier.
+    bool hasSubnetWithServerId(const asiolink::IOAddress& server_id) const;
+
     /// @brief Returns a pointer to the selected subnet.
     ///
     /// This method tries to retrieve the subnet for the client using various
