@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,6 +69,8 @@ std::string trim(const std::string& instring);
 /// invisible leading and trailing delimiter characters.  Therefore both cases
 /// reduce to a set of contiguous delimiters, which are considered a single
 /// delimiter (so getting rid of the string).
+/// Optional escape allows to escape delimiter characters (and *only* them
+/// and the escape character itself) using backslash.
 ///
 /// We could use Boost for this, but this (simple) function eliminates one
 /// dependency in the code.
@@ -76,10 +78,12 @@ std::string trim(const std::string& instring);
 /// \param text String to be split.  Passed by value as the internal copy is
 /// altered during the processing.
 /// \param delim Delimiter characters
+/// \param escape Use backslash to escape delimiter characters
 ///
 /// \return Vector of tokens.
 std::vector<std::string> tokens(const std::string& text,
-        const std::string& delim = std::string(" \t\n"));
+        const std::string& delim = std::string(" \t\n"),
+        bool escape = false);
 
 
 /// \brief Uppercase Character

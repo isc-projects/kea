@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 Kea started as a sub-project in BIND10 that used a program (called
 bindctl) to deliver configuration information to its modules. This
 potentially allowed for modules to get their configuration information
-in a variaty of ways using what were known as configuration backends.
+in a variety of ways using what were known as configuration backends.
 After BIND10 was cancelled, the Kea project briefly tried to maintain
 backward compatibility with the BIND10 framework, but the effort
 was discontinued due to lack of interest.

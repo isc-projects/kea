@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -485,7 +485,7 @@ TEST_F(D2UpdateMgrTest, checkFinishedTransaction) {
     // Verify that the list of transactions has decreased by two.
     EXPECT_EQ(canned_count_ - 2, update_mgr_->getTransactionCount());
 
-    // Vefity that the transaction list is correct.
+    // Verify that the transaction list is correct.
     EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]->getDhcid()));
     EXPECT_FALSE(update_mgr_->hasTransaction(canned_ncrs_[1]->getDhcid()));
     EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[2]->getDhcid()));

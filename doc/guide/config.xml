@@ -37,27 +37,23 @@
       <itemizedlist>
         <listitem>
           <simpara>shell comments: any text after the hash (#)
-          character is ignored. Dhcp6 allows # in any column, while
-          Dhcp4 and Ddns require hash to be in the first
-          column.</simpara>
+          character is ignored. Both Dhcp4 and Dhcp6 allow # in any column,
+          while Ddns requires hash to be in the first column.</simpara>
         </listitem>
         <listitem>
           <simpara>C comments: any text after the double slashes (//)
-          character is ignored. We're in a process of
-          migrating the configuation parsers and currently only Dhcp6
-          supports this feature.</simpara>
+          character is ignored. Both Dhcp4 and Dhcp6 supports this
+          feature.</simpara>
         </listitem>
         <listitem>
           <simpara>Multiline comments: any text between /* and */ is
-          ignored. This commenting can span multiple lines. We're in a
-          process of migrating the configuation parsers and currently
-          only Dhcp6 supports this feature.</simpara>
+          ignored. This commenting can span multiple lines. Both Dhcp4 and
+          Dhcp6 supports this feature.</simpara>
         </listitem>
         <listitem>
           <simpara>File inclusion: JSON files can include other JSON
           files. This can be done by using &lt;?include
-          "file.json"?&gt;. We're in a process of migrating the
-          configuation parsers and currently only Dhcp6 supports this
+          "file.json"?&gt;. Both Dhcp4 and Dhcp6 supports this
           feature.</simpara>
         </listitem>
       </itemizedlist>

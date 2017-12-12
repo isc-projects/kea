@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ class LeaseFileIO {
 public:
     /// @brief Constructor
     ///
-    /// @param filename Abolsute path to the file.
+    /// @param filename Absolute path to the file.
     /// @param recreate A boolean flag indicating if the new file should
     /// be created, even if one exists.
     LeaseFileIO(const std::string& filename, const bool recreate = true);

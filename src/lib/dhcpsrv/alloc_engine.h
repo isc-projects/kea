@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -305,6 +305,11 @@ public:
         /// @brief Subnet selected for the client by the server.
         Subnet6Ptr subnet_;
 
+        /// @brief Subnet from which host reservations should be retrieved.
+        ///
+        /// It can be NULL, in which case @c subnet_ value is used.
+        Subnet6Ptr host_subnet_;
+
         /// @brief Client identifier
         DuidPtr duid_;
 
@@ -315,10 +320,12 @@ public:
         /// received by the server.
         IdentifierList host_identifiers_;
 
-        /// @brief A pointer to the object identifying host reservations.
+        /// @brief Holds a map of hosts belonging to the client within different
+        /// subnets.
         ///
-        /// May be NULL if there are no reservations.
-        ConstHostPtr host_;
+        /// Multiple hosts may appear when the client belongs to a shared
+        /// network.
+        std::map<SubnetID, ConstHostPtr> hosts_;
 
         /// @brief A boolean value which indicates that server takes
         ///        responsibility for the forward DNS Update for this lease
@@ -411,7 +418,7 @@ public:
         bool isAllocated(const asiolink::IOAddress& prefix,
                          const uint8_t prefix_len = 128) const;
 
-        /// @brief Conveniece function adding host identifier into
+        /// @brief Convenience function adding host identifier into
         /// @ref host_identifiers_ list.
         ///
         /// @param id_type Identifier type.
@@ -440,6 +447,11 @@ public:
         void createIAContext() {
             ias_.push_back(IAContext());
         };
+
+        /// @brief Returns host from the most preferred subnet.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr currentHost() const;
 
         /// @brief Default constructor.
         ClientContext6();
@@ -475,13 +487,13 @@ public:
 
     /// @brief Allocates IPv6 leases for a given IA container
     ///
-    /// This method uses the currently selected allocator to pick allocatable
+    /// This method uses the currently selected allocator to pick allocable
     /// resources (i.e. addresses or prefixes) from specified subnet, creates
     /// a lease (one or more, if needed) for that resources and then inserts
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
-    /// This method uses host reservation if ctx.host_ is set. The easy way to
+    /// This method uses host reservation if ctx.hosts_ is set. The easy way to
     /// set it is to call @ref findReservationDecl.
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
@@ -550,8 +562,8 @@ public:
     ///        collection as old leases.<br/>
     /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
     ///        not available)<br/>
-    /// @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
-    ///        this field, if appropriate reservation is found.
+    /// @ref ClientContext6::hosts_ Host reservations. allocateLeases6 will set
+    ///        this field, if appropriate reservations are found.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
@@ -590,12 +602,12 @@ public:
     /// - executing "lease_expire6" hook,
     /// - removing DNS record for a lease,
     /// - reclaiming a lease in the database, i.e. setting its state to
-    ///   "expired-reclaimed" or removing it from the lease databse,
+    ///   "expired-reclaimed" or removing it from the lease database,
     /// - updating statistics of assigned and reclaimed leases
     ///
-    /// Note: declined leases fall under the same expiration/reclaimation
+    /// Note: declined leases fall under the same expiration/reclamation
     /// processing as normal leases. In principle, it would be more elegant
-    /// to have a separate processing for declined leases reclaimation. However,
+    /// to have a separate processing for declined leases reclamation. However,
     /// due to performance reasons we decided to use them together. Several
     /// aspects were taken into consideration. First, normal leases are expected
     /// to expire frequently, so in a typical deployment this method will have
@@ -617,7 +629,7 @@ public:
     /// entry, stats dump, hooks).
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in milliseconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -648,12 +660,12 @@ public:
     /// - executing "lease_expire4" hook,
     /// - removing DNS record for a lease,
     /// - reclaiming a lease in the database, i.e. setting its state to
-    ///   "expired-reclaimed" or removing it from the lease databse,
+    ///   "expired-reclaimed" or removing it from the lease database,
     /// - updating statistics of assigned and reclaimed leases
     ///
-    /// Note: declined leases fall under the same expiration/reclaimation
+    /// Note: declined leases fall under the same expiration/reclamation
     /// processing as normal leases. In principle, it would be more elegant
-    /// to have a separate processing for declined leases reclaimation. However,
+    /// to have a separate processing for declined leases reclamation. However,
     /// due to performance reasons we decided to use them together. Several
     /// aspects were taken into consideration. First, normal leases are expected
     /// to expire frequently, so in a typical deployment this method will have
@@ -671,11 +683,11 @@ public:
     /// declined leases. They are always removed.
     ///
     /// Also, for declined leases @ref reclaimDeclinedLease4 is
-    /// called. It conductsseveral declined specific operation (extra log
+    /// called. It conducts several declined specific operation (extra log
     /// entry, stats dump, hooks).
     ///
     /// @param max_leases Maximum number of leases to be reclaimed.
-    /// @param timeout Maximum amount of time that the reclaimation routine
+    /// @param timeout Maximum amount of time that the reclamation routine
     /// may be processing expired leases, expressed in milliseconds.
     /// @param remove_lease A boolean value indicating if the lease should
     /// be removed when it is reclaimed (if true) or it should be left in the
@@ -720,10 +732,13 @@ private:
     /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
     /// @param host_get Pointer to the @ref HostMgr functions to be used
     /// to retrieve reservation by subnet identifier and host identifier.
+    /// @param ipv6_only Boolean value indicating if only IPv6 reservations
+    /// should be retrieved.
     /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
     template<typename ContextType>
     static void findReservationInternal(ContextType& ctx,
-                                        const HostGetFunc& host_get);
+                                        const HostGetFunc& host_get,
+                                        const bool ipv6_only = false);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
@@ -848,8 +863,8 @@ private:
                                 ClientContext6& ctx,
                                 uint8_t prefix_len);
 
-    /// @brief Updates FQDN and Client's Last Tranmission Time for a collection
-    /// of leases.
+    /// @brief Updates FQDN and Client's Last Transmission Time
+    /// for a collection of leases.
     ///
     /// This method is executed when the server finds existing leases for a
     /// client and updates some date for these leases if needed:
@@ -964,7 +979,7 @@ private:
 
     /// @brief Marks lease as reclaimed in the database.
     ///
-    /// This method is called internally by the leases reclaimation routines.
+    /// This method is called internally by the leases reclamation routines.
     /// Depending on the value of the @c remove_lease parameter this method
     /// will delete the reclaimed lease from the database or set its sate
     /// to "expired-reclaimed". In the latter case it will also clear the
@@ -989,7 +1004,7 @@ private:
     /// @anchor reclaimDeclinedLease4
     /// @brief Conducts steps necessary for reclaiming declined IPv4 lease.
     ///
-    /// These are the additional steps required when recoving a declined lease:
+    /// These are the additional steps required when recovering a declined lease:
     /// - bump decline recovered stat
     /// - log lease recovery
     /// - call lease4_recover hook
@@ -1002,7 +1017,7 @@ private:
     /// @anchor reclaimDeclinedLease6
     /// @brief Conducts steps necessary for reclaiming declined IPv6 lease.
     ///
-    /// These are the additional steps required when recoving a declined lease:
+    /// These are the additional steps required when recovering a declined lease:
     /// - bump decline recovered stat
     /// - log lease recovery
     /// - call lease6_recover hook
@@ -1031,7 +1046,7 @@ public:
     /// that the big advantage of using the context structure to pass
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
-    struct ClientContext4 {
+    struct ClientContext4 : public boost::noncopyable {
         /// @brief Subnet selected for the client by the server.
         Subnet4Ptr subnet_;
 
@@ -1072,8 +1087,12 @@ public:
         /// @brief A pointer to an old lease that the client had before update.
         Lease4Ptr old_lease_;
 
-        /// @brief A pointer to the object identifying host reservations.
-        ConstHostPtr host_;
+        /// @brief Holds a map of hosts belonging to the client within different
+        /// subnets.
+        ///
+        /// Multiple hosts may appear when the client belongs to a shared
+        /// network.
+        std::map<SubnetID, ConstHostPtr> hosts_;
 
         /// @brief A pointer to the object representing a lease in conflict.
         ///
@@ -1092,7 +1111,7 @@ public:
         /// received by the server.
         IdentifierList host_identifiers_;
 
-        /// @brief Conveniece function adding host identifier into
+        /// @brief Convenience function adding host identifier into
         /// @ref host_identifiers_ list.
         ///
         /// @param id_type Identifier type.
@@ -1101,6 +1120,11 @@ public:
                                const std::vector<uint8_t>& identifier) {
             host_identifiers_.push_back(IdentifierPair(id_type, identifier));
         }
+
+        /// @brief Returns host for currently selected subnet.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr currentHost() const;
 
         /// @brief Default constructor.
         ClientContext4();
@@ -1228,8 +1252,6 @@ public:
     /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
     ///      or just picking an address for DISCOVER that is not really
     ///      allocated (true)
-    /// - @ref ClientContext4::host_ Pointer to the object representing the
-    //       static reservations (host reservations) for the client.
     /// - @ref ClientContext4::callout_handle_ A callout handle (used in hooks).
     ///      A lease callouts will be executed if this parameter is passed.
     /// - @ref ClientContext4::old_lease_ [out] Holds the pointer to a previous
@@ -1348,7 +1370,7 @@ private:
     ///        or just picking an address for DISCOVER that is not really
     ///        allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
-    ///        becomed unavailable)
+    ///        become unavailable)
     Lease4Ptr createLease4(const ClientContext4& ctx,
                            const isc::asiolink::IOAddress& addr);
 
@@ -1391,7 +1413,7 @@ private:
     /// the new lease.
     ///
     /// @param address Requested address for which the lease should be
-    /// allocted.
+    /// allocated.
     /// @param ctx Client context holding the data extracted from the
     /// client's message.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef DHCPSRV_CONFIG_H
 #define DHCPSRV_CONFIG_H
 
+#include <cc/cfg_to_element.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
@@ -16,11 +17,14 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_rsoo.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
+#include <hooks/hooks_config.h>
 #include <cc/data.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -35,7 +39,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig {
+class SrvConfig : public isc::data::CfgToElement {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
@@ -196,6 +200,24 @@ public:
     /// @return Pointer to the object holding subnets configuration for DHCPv4.
     CfgSubnets4Ptr getCfgSubnets4() {
         return (cfg_subnets4_);
+    }
+
+    /// @brief Returns pointer to non-const object holding configuration of
+    /// shared networks in DHCPv4;
+    ///
+    /// @return Pointer to the object holding shared networks configuration
+    /// for DHCPv4.
+    CfgSharedNetworks4Ptr getCfgSharedNetworks4() const {
+        return (cfg_shared_networks4_);
+    }
+
+    /// @brief Returns pointer to non-const object holding configuration of
+    /// shared networks in DHCPv6.
+    ///
+    /// @return Pointer to the object holding shared networks configuration
+    /// for DHCPv6.
+    CfgSharedNetworks6Ptr getCfgSharedNetworks6() const {
+        return (cfg_shared_networks6_);
     }
 
     /// @brief Returns pointer to const object holding subnets configuration for
@@ -364,7 +386,21 @@ public:
         class_dictionary_ = dictionary;
     }
 
-    /// @brief Copies the currnet configuration to a new configuration.
+    /// @brief Returns non-const reference to configured hooks libraries.
+    ///
+    /// @return non-const reference to configured hooks libraries.
+    isc::hooks::HooksConfig& getHooksConfig() {
+        return (hooks_config_);
+    }
+
+    /// @brief Returns const reference to configured hooks libraries.
+    ///
+    /// @return const reference to configured hooks libraries.
+    const isc::hooks::HooksConfig& getHooksConfig() const {
+        return (hooks_config_);
+    }
+
+    /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
     /// an object passed as parameter. The configuration sequence is not
@@ -376,7 +412,7 @@ public:
     /// the default copy constructors can't be used. Implementing this
     /// requires quite a lot of time so this is left as is for now.
     /// The lack of ability to copy the entire configuration makes
-    /// revert function of the @c CfgMgr unsuable.
+    /// revert function of the @c CfgMgr unusable.
     ///
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
@@ -469,23 +505,60 @@ public:
         return (decline_timer_);
     }
 
+    /// @brief Sets whether server should send back client-id in DHCPv4
+    ///
+    /// This is a compatibility flag. The default (true) is compliant with
+    /// RFC6842. False is for backward compatibility.
+    ///
+    /// @param echo should the client-id be sent or not
+    void setEchoClientId(const bool echo) {
+        echo_v4_client_id_ = echo;
+    }
+
+    /// @brief Returns whether server should send back client-id in DHCPv4.
+    /// @return true if client-id should be returned, false otherwise.
+    bool getEchoClientId() const {
+        return (echo_v4_client_id_);
+    }
+
     /// @brief Sets DHCP4o6 IPC port
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
     ///
     /// @param port port and port + 1 to use
-    void setDhcp4o6Port(uint32_t port) {
+    void setDhcp4o6Port(uint16_t port) {
         dhcp4o6_port_ = port;
     }
 
     /// @brief Returns DHCP4o6 IPC port
     ///
-    /// See @ref setDhcp4o6Port or brief discussion.                         
+    /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
-    uint32_t getDhcp4o6Port() {
+    uint16_t getDhcp4o6Port() {
         return (dhcp4o6_port_);
     }
+
+    /// @brief Returns pointer to the D2 client configuration
+    D2ClientConfigPtr getD2ClientConfig() {
+        return (d2_client_config_);
+    }
+
+    /// @brief Returns pointer to const D2 client configuration
+    const D2ClientConfigPtr getD2ClientConfig() const {
+        return (d2_client_config_);
+    }
+
+    /// @brief Sets the D2 client configuration
+    /// @param d2_client_config pointer to the new D2 client configuration
+    void setD2ClientConfig(const D2ClientConfigPtr& d2_client_config) {
+        d2_client_config_ = d2_client_config;
+    }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 
@@ -518,6 +591,12 @@ private:
 
     /// @brief Pointer to subnets configuration for IPv6.
     CfgSubnets6Ptr cfg_subnets6_;
+
+    /// @brief Pointer to IPv4 shared networks configuration.
+    CfgSharedNetworks4Ptr cfg_shared_networks4_;
+
+    /// @brief Pointer to IPv4 shared networks configuration.
+    CfgSharedNetworks6Ptr cfg_shared_networks6_;
 
     /// @brief Pointer to the configuration for hosts reservation.
     ///
@@ -559,17 +638,25 @@ private:
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
 
+    /// @brief Configured hooks libraries.
+    isc::hooks::HooksConfig hooks_config_;
+
     /// @brief Decline Period time
     ///
     /// This timer specifies decline probation period, the time after a declined
     /// lease is recovered back to available state. Expressed in seconds.
     uint32_t decline_timer_;
 
+    /// @brief Indicates whether v4 server should send back client-id
+    bool echo_v4_client_id_;
+
     /// @brief DHCP4o6 IPC port
     ///
     /// DHCPv4-over-DHCPv6 uses a UDP socket for interserver communication,
     /// this socket is bound and connected to this port and port + 1
-    uint32_t dhcp4o6_port_;
+    uint16_t dhcp4o6_port_;
+
+    D2ClientConfigPtr d2_client_config_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

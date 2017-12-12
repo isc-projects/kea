@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
 
-    // Get the databaase type and open the corresponding database
+    // Get the database type and open the corresponding database
     DatabaseConnection::ParameterMap::iterator it = parameters.find("type");
     if (it == parameters.end()) {
         isc_throw(InvalidParameter, "Host database configuration does not "

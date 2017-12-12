@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,7 +99,7 @@ public:
         LeaseFileLoader::write<LeaseObjectType, LeaseFileType, StorageType>
             (lease_file, storage);
 
-        // Compare to see if we got what we exepcted.
+        // Compare to see if we got what we expected.
         EXPECT_EQ(compare, io_.readFile());
     }
 

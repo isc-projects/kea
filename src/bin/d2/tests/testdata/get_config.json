@@ -1,0 +1,74 @@
+{
+    "DhcpDdns": {
+        "dns-server-timeout": 1000,
+        "forward-ddns": {
+            "ddns-domains": [
+                {
+                    "dns-servers": [
+                        {
+                            "hostname": "",
+                            "ip-address": "172.16.1.1",
+                            "port": 53
+                        }
+                    ],
+                    "key-name": "d2.md5.key",
+                    "name": "four.example.com."
+                },
+                {
+                    "dns-servers": [
+                        {
+                            "hostname": "",
+                            "ip-address": "2001:db8:1::10",
+                            "port": 7802
+                        }
+                    ],
+                    "name": "six.example.com."
+                }
+            ]
+        },
+        "ip-address": "172.16.1.10",
+        "ncr-format": "JSON",
+        "ncr-protocol": "UDP",
+        "port": 53001,
+        "reverse-ddns": {
+            "ddns-domains": [
+                {
+                    "dns-servers": [
+                        {
+                            "hostname": "",
+                            "ip-address": "172.16.1.1",
+                            "port": 53001
+                        },
+                        {
+                            "hostname": "",
+                            "ip-address": "192.168.2.10",
+                            "port": 53
+                        }
+                    ],
+                    "key-name": "d2.sha1.key",
+                    "name": "2.0.192.in-addr.arpa."
+                }
+            ]
+        },
+        "tsig-keys": [
+            {
+                "algorithm": "HMAC-MD5",
+                "digest-bits": 0,
+                "name": "d2.md5.key",
+                "secret": "LSWXnfkKZjdPJI5QxlpnfQ=="
+            },
+            {
+                "algorithm": "HMAC-SHA1",
+                "digest-bits": 0,
+                "name": "d2.sha1.key",
+                "secret": "hRrp29wzUv3uzSNRLlY68w=="
+            },
+            {
+                "algorithm": "HMAC-SHA512",
+                "digest-bits": 256,
+                "name": "d2.sha512.key",
+                "secret": "/4wklkm04jeH4anx2MKGJLcya+ZLHldL5d6mK+4q6UXQP7KJ9mS2QG29hh0SJR4LA0ikxNJTUMvir42gLx6fGQ=="
+            }
+        ]
+    }
+}

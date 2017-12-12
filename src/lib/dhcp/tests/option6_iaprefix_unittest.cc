@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -101,7 +101,7 @@ public:
 
     /// @brief Checks whether content of output buffer is correct
     ///
-    /// Output buffer is expected to be filled with an option matchin
+    /// Output buffer is expected to be filled with an option matching
     /// buf_ content as defined in setExampleBuffer().
     ///
     /// @param expected_type expected option type

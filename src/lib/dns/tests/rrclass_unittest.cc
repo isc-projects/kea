@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ const RRClass RRClassTest::rrclass_0x80(0x80);
 const RRClass RRClassTest::rrclass_0x800(0x800);
 const RRClass RRClassTest::rrclass_0x8000(0x8000);
 const RRClass RRClassTest::rrclass_max(0xffff);
-// This is wire-format data for the above sample RRClasss rendered in the
+// This is wire-format data for the above sample RRClass rendered in the
 // appearing order.
 const uint8_t RRClassTest::wiredata[] = { 0x00, 0x01, 0x00, 0x80, 0x08,
                                           0x00, 0x80, 0x00, 0xff, 0xff };
@@ -124,7 +124,7 @@ TEST_F(RRClassTest, toWireRenderer) {
                   renderer.getData(), renderer.getLength());
 }
 
-TEST_F(RRClassTest, wellKnownClasss) {
+TEST_F(RRClassTest, wellKnownClass) {
     EXPECT_EQ(1, RRClass::IN().getCode());
     EXPECT_EQ("IN", RRClass::IN().toText());
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,12 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
+#include <util/encode/hex.h>
 #include <string>
+#include <sstream>
+#include <vector>
+
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -181,6 +186,97 @@ CfgOption::getAll(const std::string& option_space) const {
 OptionContainerPtr
 CfgOption::getAll(const uint32_t vendor_id) const {
     return (vendor_options_.getItems(vendor_id));
+}
+
+ElementPtr
+CfgOption::toElement() const {
+    // option-data value is a list of maps
+    ElementPtr result = Element::createList();
+    // Iterate first on options using space names
+    const std::list<std::string>& names = options_.getOptionSpaceNames();
+    for (std::list<std::string>::const_iterator name = names.begin();
+         name != names.end(); ++name) {
+        OptionContainerPtr opts = getAll(*name);
+        for (OptionContainer::const_iterator opt = opts->begin();
+             opt != opts->end(); ++opt) {
+            // Get and fill the map for this option
+            ElementPtr map = Element::createMap();
+            // First set space from parent iterator
+            map->set("space", Element::create(*name));
+            // Set the code
+            uint16_t code = opt->option_->getType();
+            map->set("code", Element::create(code));
+            // Set the name (always for standard options else when asked for)
+            OptionDefinitionPtr def = LibDHCP::getOptionDef(*name, code);
+            if (!def) {
+                def = LibDHCP::getRuntimeOptionDef(*name, code);
+            }
+            if (!def) {
+                def = LibDHCP::getLastResortOptionDef(*name, code);
+            }
+            if (def) {
+                map->set("name", Element::create(def->getName()));
+            }
+            // Set the data item
+            if (!opt->formatted_value_.empty()) {
+                map->set("csv-format", Element::create(true));
+                map->set("data", Element::create(opt->formatted_value_));
+            } else {
+                map->set("csv-format", Element::create(false));
+                std::vector<uint8_t> bin = opt->option_->toBinary();
+                std::string repr = util::encode::encodeHex(bin);
+                map->set("data", Element::create(repr));
+            }
+            // Set the persistency flag
+            map->set("always-send", Element::create(opt->persistent_));
+            // Push on the list
+            result->add(map);
+        }
+    }
+    // Iterate first on vendor_options using vendor ids
+    const std::list<uint32_t>& ids = vendor_options_.getOptionSpaceNames();
+    for (std::list<uint32_t>::const_iterator id = ids.begin();
+         id != ids.end(); ++id) {
+        OptionContainerPtr opts = getAll(*id);
+        for (OptionContainer::const_iterator opt = opts->begin();
+             opt != opts->end(); ++opt) {
+            // Get and fill the map for this option
+            ElementPtr map = Element::createMap();
+            // First set space from parent iterator
+            std::ostringstream oss;
+            oss << "vendor-" << *id;
+            map->set("space", Element::create(oss.str()));
+            // Set the code
+            uint16_t code = opt->option_->getType();
+            map->set("code", Element::create(code));
+            // Set the name
+            Option::Universe universe = opt->option_->getUniverse();
+            OptionDefinitionPtr def =
+                LibDHCP::getVendorOptionDef(universe, *id, code);
+            if (!def) {
+                // vendor-XXX space is in oss
+                def = LibDHCP::getRuntimeOptionDef(oss.str(), code);
+            }
+            if (def) {
+                map->set("name", Element::create(def->getName()));
+            }
+            // Set the data item
+            if (!opt->formatted_value_.empty()) {
+                map->set("csv-format", Element::create(true));
+                map->set("data", Element::create(opt->formatted_value_));
+            } else {
+                map->set("csv-format", Element::create(false));
+                std::vector<uint8_t> bin = opt->option_->toBinary();
+                std::string repr = util::encode::encodeHex(bin);
+                map->set("data", Element::create(repr));
+            }
+            // Set the persistency flag
+            map->set("always-send", Element::create(opt->persistent_));
+            // Push on the list
+            result->add(map);
+        }
+    }
+    return (result);
 }
 
 } // end of namespace isc::dhcp

@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -180,7 +180,7 @@ DUIDFactoryTest::removeDefaultFile() const {
 
 std::string
 DUIDFactoryTest::readDefaultFile() const {
-    return (dhcp::test::readFile(absolutePath(DEFAULT_DUID_FILE)));
+    return (isc::test::readFile(absolutePath(DEFAULT_DUID_FILE)));
 }
 
 std::vector<uint8_t>
@@ -347,7 +347,7 @@ TEST_F(DUIDFactoryTest, createLLTExplicitHtype) {
 }
 
 // This test verifies that the factory class creates DUID-LLT from
-// explcitly specified link layer address, when other parameters
+// explicitly specified link layer address, when other parameters
 // are generated.
 TEST_F(DUIDFactoryTest, createLLTExplicitLinkLayerAddress) {
     ASSERT_NO_THROW(factory().createLLT(0, 0, toVector("121212121212")));
@@ -356,7 +356,7 @@ TEST_F(DUIDFactoryTest, createLLTExplicitLinkLayerAddress) {
 
 // This test verifies that the factory function creates DUID-LLT from
 // all values explicitly specified.
-TEST_F(DUIDFactoryTest, createLLTAllExplcitParameters) {
+TEST_F(DUIDFactoryTest, createLLTAllExplicitParameters) {
     ASSERT_NO_THROW(factory().createLLT(HTYPE_FDDI, 0xFAFAFAFA,
                                         toVector("24242424242424242424")));
     testLLT("0008", "FAFAFAFA", true, "24242424242424242424");

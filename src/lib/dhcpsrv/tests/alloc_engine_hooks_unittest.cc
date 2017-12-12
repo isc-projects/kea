@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,7 @@ public:
         callback_addr_updated_ = IOAddress("::");
         callback_qry_pkt6_.reset();
         callback_qry_options_copy_ = false;
+        callback_skip_ = 0;
     }
 
     /// callback that stores received callout name and received values
@@ -91,6 +92,21 @@ public:
         return (0);
     }
 
+    /// callback that return next step skip status
+    static int
+    lease6_select_skip_callout(CalloutHandle& callout_handle) {
+
+        // Let's call the basic callout, so it can record all parameters
+        lease6_select_callout(callout_handle);
+
+        // Count the call
+        callback_skip_++;
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (0);
+    }
+
     // Values to be used in callout to override lease6 content
     static const IOAddress addr_override_;
     static const uint32_t t1_override_;
@@ -110,9 +126,12 @@ public:
     static vector<string> callback_argument_names_;
     static Pkt6Ptr callback_qry_pkt6_;
     static bool callback_qry_options_copy_;
+
+    // Counter for next step skip (should be not retried)
+    static unsigned callback_skip_;
 };
 
-// For some reason intialization within a class makes the linker confused.
+// For some reason initialization within a class makes the linker confused.
 // linker complains about undefined references if they are defined within
 // the class declaration.
 const IOAddress HookAllocEngine6Test::addr_override_("2001:db8::abcd");
@@ -131,6 +150,8 @@ bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
 Pkt6Ptr HookAllocEngine6Test::callback_qry_pkt6_;
 bool HookAllocEngine6Test::callback_qry_options_copy_;
+
+unsigned HookAllocEngine6Test::callback_skip_;
 
 // This test checks if the lease6_select callout is executed and expected
 // parameters as passed.
@@ -153,7 +174,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     HookLibsCollection libraries; // no libraries at this time
     HooksManager::loadLibraries(libraries);
 
-    // Install pkt6_receive_callout
+    // Install lease6_select
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_callout));
 
@@ -192,8 +213,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     EXPECT_FALSE(callback_fake_allocation_);
 
     // Check if all expected parameters are reported.  The order needs to be
-    // alphapbetical to match the order returned by
-    // CallbackHandle::getAgrumentNames()
+    // alphabetical to match the order returned by
+    // CallbackHandle::getArgumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease6");
@@ -263,6 +284,36 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
 }
 
+// This test checks if lease6_select callout can set the status to next
+// step skip without the engine to retry.
+TEST_F(HookAllocEngine6Test, skip_lease6_select) {
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    HookLibsCollection libraries; // no libraries at this time
+    HooksManager::loadLibraries(libraries);
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_select", lease6_select_skip_callout));
+
+    // Call allocateLeases6. Callouts should be triggered here.
+    Lease6Ptr lease;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+    ctx.currentIA().iaid_ = iaid_;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    // Check that we got no lease
+    EXPECT_FALSE(lease);
+
+    // Check no retry was attempted
+    EXPECT_EQ(1, callback_skip_);
+}
 
 /// @brief helper class used in Hooks testing in AllocEngine4
 ///
@@ -294,6 +345,7 @@ public:
         callback_addr_updated_ = IOAddress("::");
         callback_qry_pkt4_.reset();
         callback_qry_options_copy_ = false;
+        callback_skip_ = 0;
     }
 
     /// callback that stores received callout name and received values
@@ -338,6 +390,21 @@ public:
         return (0);
     }
 
+    /// callback that return next step skip status
+    static int
+    lease4_select_skip_callout(CalloutHandle& callout_handle) {
+
+        // Let's call the basic callout, so it can record all parameters
+        lease4_select_callout(callout_handle);
+
+        // Count the call
+        callback_skip_++;
+
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (0);
+    }
+
     // Values to be used in callout to override lease4 content
     static const IOAddress addr_override_;
     static const uint32_t t1_override_;
@@ -356,9 +423,12 @@ public:
     static vector<string> callback_argument_names_;
     static Pkt4Ptr callback_qry_pkt4_;
     static bool callback_qry_options_copy_;
+
+    // Counter for next step skip (should be not retried)
+    static unsigned callback_skip_;
 };
 
-// For some reason intialization within a class makes the linker confused.
+// For some reason initialization within a class makes the linker confused.
 // linker complains about undefined references if they are defined within
 // the class declaration.
 const IOAddress HookAllocEngine4Test::addr_override_("192.0.3.1");
@@ -376,6 +446,8 @@ bool HookAllocEngine4Test::callback_fake_allocation_;
 vector<string> HookAllocEngine4Test::callback_argument_names_;
 Pkt4Ptr HookAllocEngine4Test::callback_qry_pkt4_;
 bool HookAllocEngine4Test::callback_qry_options_copy_;
+
+unsigned HookAllocEngine4Test::callback_skip_;
 
 // This test checks if the lease4_select callout is executed and expected
 // parameters as passed.
@@ -399,7 +471,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     HookLibsCollection libraries; // no libraries at this time
     HooksManager::loadLibraries(libraries);
 
-    // Install pkt4_receive_callout
+    // Install lease4_select
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease4_select", lease4_select_callout));
 
@@ -440,8 +512,8 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     EXPECT_EQ(callback_fake_allocation_, false);
 
     // Check if all expected parameters are reported.  The order needs to be
-    // alphapbetical to match the order returned by
-    // CallbackHandle::getAgrumentNames()
+    // alphabetical to match the order returned by
+    // CallbackHandle::getArgumentNames()
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease4");
@@ -508,6 +580,41 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     EXPECT_EQ(t1_override_, from_mgr->t1_);
     EXPECT_EQ(t2_override_, from_mgr->t2_);
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
+}
+
+// This test checks if lease4_select callout can set the status to next
+// step skip without the engine to retry.
+TEST_F(HookAllocEngine4Test, skip_lease4_select) {
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    HookLibsCollection libraries; // no libraries at this time
+    HooksManager::loadLibraries(libraries);
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_select", lease4_select_skip_callout));
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"),
+                                    false, false, "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.callout_handle_ = callout_handle;
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got no lease
+    EXPECT_FALSE(lease);
+
+    // Check no retry was attempted
+    EXPECT_EQ(1, callback_skip_);
 }
 
 }; // namespace test

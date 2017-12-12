@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,7 @@ using namespace isc::eval;
 }
 
 %define api.token.prefix {TOKEN_}
-// Tokens in an order which makes sense and related to the intented use.
+// Tokens in an order which makes sense and related to the intended use.
 %token
   END  0  "end of file"
   LPAREN  "("
@@ -72,6 +72,7 @@ using namespace isc::eval;
   ALL "all"
   COMA ","
   CONCAT "concat"
+  IFELSE "ifelse"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -80,6 +81,9 @@ using namespace isc::eval;
   ANY "*"
   DATA "data"
   ENTERPRISE "enterprise"
+
+  TOPLEVEL_BOOL "top-level bool"
+  TOPLEVEL_STRING "top-level string"
 ;
 
 %token <std::string> STRING "constant string"
@@ -93,7 +97,7 @@ using namespace isc::eval;
 %type <uint32_t> integer_expr
 %type <TokenOption::RepresentationType> option_repr_type
 %type <TokenRelay6Field::FieldType> relay6_field
-%type <uint8_t> nest_level
+%type <int8_t> nest_level
 %type <TokenPkt::MetadataType> pkt_metadata
 %type <TokenPkt4::FieldType> pkt4_field
 %type <TokenPkt6::FieldType> pkt6_field
@@ -106,8 +110,14 @@ using namespace isc::eval;
 
 %%
 
-// The whole grammar starts with an expression.
-%start expression;
+// The whole grammar starts with a 'start' symbol...
+%start start;
+
+// ... that expects either TOPLEVEL_BOOL or TOPLEVEL_STRING. Depending on which
+// token appears first, it will determine what is allowed and what it not.
+start: TOPLEVEL_BOOL expression
+     | TOPLEVEL_STRING string_expr
+;
 
 // Expression can either be a single token or a (something == something) expression
 
@@ -317,6 +327,11 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
+                  }
+            | IFELSE "(" bool_expr "," string_expr "," string_expr ")"
+                  {
+                      TokenPtr cond(new TokenIfElse());
+                      ctx.expression.push_back(cond);
                   }
             | VENDOR "." ENTERPRISE
                 {

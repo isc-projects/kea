@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,7 +85,7 @@ void UserRegistry::refresh() {
             addUser(user);
         }
     } catch (const std::exception& ex) {
-        // Source was compromsised so restore registry from backup.
+        // Source was compromised so restore registry from backup.
         users_ = backup;
         // Close the source.
         source_->close();

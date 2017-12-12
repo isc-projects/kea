@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,7 @@ namespace dhcp {
 /// In nutshell, the BPF device is created by opening the file /dev/bpf%d
 /// where %d is a number. The BPF device is configured by issuing ioctl
 /// commands listed here: http://www.freebsd.org/cgi/man.cgi?bpf(4).
-/// The specific configuration used by Kea DHCP server is decribed in
+/// The specific configuration used by Kea DHCP server is described in
 /// documentation of @c PktFilterBPF::openSocket.
 ///
 /// Use of BPF requires Kea to encode and decode the datalink and network
@@ -73,7 +73,7 @@ public:
     /// - set filter program to receive DHCP messages encapsulated in UDP
     /// packets
     /// - set immediate mode which causes the read function to return
-    /// immediatelly and do not wait for the whole read buffer to be filled
+    /// immediately and do not wait for the whole read buffer to be filled
     /// by the kernel (to avoid hangs)
     ///
     /// It also obtains the following configuration from the kernel:

@@ -33,23 +33,30 @@
       behavior of almost any part of the DHCP message processing, including the assignment of
       leases from different pools, the assignment of different options (or different values of
       the same options) etc. In the current release of the software however, there are
-      only three mechanisms that take
-      advantage of client classification: subnet selection, assignment of different
+      only four mechanisms that take
+      advantage of client classification: subnet selection, definition of DHCPv4 private (codes 224-254) and code 43 options, assignment of different
       options and, for DHCPv4 cable modems, the setting of specific options for use with
       the TFTP server address and the boot file field.
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps:
+      The process of doing classification is conducted in four steps:
       <orderedlist>
       <listitem><para>
       Assess an incoming packet and assign it to zero or more classes.
+      </para></listitem>
+      <listitem><para>
+      If a private or code 43 DHCPv4 option is received, decoding it
+      following its client class or global (or for option 43 last
+      resort) definition.
       </para></listitem>
       <listitem><para>
       Choose a subnet, possibly based on the class information.
       </para></listitem>
       <listitem><para>
       Assign options, again possibly based on the class information.
+      For DHCPv4 private and code 43 options this includes class local
+      option definitions.
       </para></listitem>
       </orderedlist>
       </para>
@@ -484,9 +491,12 @@
       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
       relays that forwarded the packet.  The "nest" level specifies the relay
       from which to extract the information, with a value of 0 indicating
-      the relay closest to the DHCPv6 server.  If the requested encapsulation
-      doesn't exist an empty string "" is returned.  This expression is
-      allowed in DHCPv6 only.
+      the relay closest to the DHCPv6 server. Negative values allow to
+      specify relays counted from the DHCPv6 client, -1 indicating the
+      relay closest to the client. In general negative "nest" level is
+      the same as the number of relays + "nest" level.
+      If the requested encapsulation doesn't exist an empty string ""
+      is returned.  This expression is allowed in DHCPv6 only.
       </para></listitem>
 
       <listitem><para>
@@ -569,6 +579,7 @@
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
 <row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
 concatenation of the strings</entry></row>
+<row><entry>Ifelse</entry><entry>ifelse('foo' == 'bar','us','them')</entry><entry>Return the branch value according to the condition</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -614,6 +625,15 @@ concatenation of the strings</entry></row>
         concat('foo', 'bar') == 'foobar'
           </screen>
        </section>
+       <section>
+         <title>Ifelse</title>
+         The ifelse function "ifelse(cond, iftrue, ifelse)" returns the
+         "iftrue" or "ifelse" branch value following the boolean
+         condition "cond". For instance:
+           <screen>
+         ifelse(option[230].exists, option[230].hex, 'none')
+           </screen>
+        </section>
     </section>
 
   <note>
@@ -820,7 +840,7 @@ concatenation of the strings</entry></row>
      </para>
 
      <para>
-     To enable the debug statements in the classifciaton system you will
+     To enable the debug statements in the classification system you will
      need to set the severity to "DEBUG" and the debug level to at least 55.
      The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
      </para>

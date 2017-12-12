@@ -1,0 +1,170 @@
+// This is an example configuration file for DHCPv4 server in Kea.
+// It covers some of the more advanced features. This file may not be coherent
+// as its main purpose is to demonstrate the features. They don't necessarily
+// have to make sense used together.
+
+// The new parser supports 3 comment styles:
+
+// This is C++ style.
+
+# This is a bash style.
+
+/* This is a C style comment. */
+
+/* C style comment
+   can span
+   multiple lines */
+
+{ "Dhcp4":
+
+{
+    // Kea is told to listen on ethX interface only.
+    "interfaces-config": {
+        "interfaces": [ "ethX" ],
+
+        // This specifies what type of socket Kea uses. Currently supported
+        // are 'raw' (which is the default) and 'udp'. Raw has the benefit
+        // of receiving all traffic every time and a downside of bypassing
+        // all firewall rules and having marginally bigger performance impact.
+        // 'udp' is generally better if you have only relayed traffic. Kea
+        // than opens up normal UDP socket and the kernel does all the
+        // Ethernet/IP stack processing.
+        "dhcp-socket-type": "udp",
+
+        // Typically the DHCP server will send its response back on the same
+        // interface the query came in. This is the default ("same-as-inbound").
+        // However, sometimes it is useful to have the ability to send the
+        // packet as plain UDP packet and let the kernel and the routing tables
+        // determine the right interface ("use-routing"). This option  only works
+        // for "dhcp-socket-type" set to "udp" and is ignored otherwise.
+        "outbound-interface": "use-routing",
+
+        // This makes interfaces to be re-detected at each (re-)configuration.
+        // By default it is true.
+        "re-detect": true
+    },
+
+    // Option 43 last resort definition can make well-formed messages
+    // to be rejected because they use not compatible "raw" value,
+    // and different vendors may define different sub-options.
+    // The option definition should be applied to avoid these problems,
+    // for instance by defining at the global scope the option as binary.
+    // In client-classes the option may be redefined as carrying vendor
+    // dependent sub-options.
+    "option-def": [ {
+        "name": "vendor-encapsulated-options",
+        "code": 43,
+        "type": "binary"
+    } ],
+
+    // We need to specify the the database used to store leases. As of
+    // September 2016, four database backends are supported: MySQL,
+    // PostgreSQL, Cassandra, and the in-memory database, Memfile.
+    // We'll use memfile  because it doesn't require any prior set up.
+    // For memfile, it's important to always specify lfc-interval, so
+    // the lease file would not grow without bounds and be sanitized
+    // once per hour.
+    "lease-database": {
+        "type": "memfile",
+        "lfc-interval": 3600
+    },
+
+    // This defines a control socket. If defined, Kea will open a UNIX socket
+    // and will listen for incoming commands. See section 15 of the Kea User's
+    // Guide for list of supported commands.
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": "/tmp/kea4-ctrl-socket"
+    },
+
+    // Addresses will be assigned with a lifetime of 4000 seconds.
+    // The client is told to start renewing after 1000 seconds. If the server
+    // does not respond within 2000 seconds of the lease being granted, client
+    // is supposed to start REBIND procedure (emergency renewal that allows
+    // switching to a different server).
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+
+    // RFC6842 says that the server is supposed to echo back client-id option.
+    // However, some older clients do not support this and are getting confused
+    // when they get their own client-id. Kea can disable RFC6842 support.
+    "echo-client-id": false,
+
+    // Some clients don't use stable client identifier, but rather
+    // generate them during each boot. This may cause a client that
+    // reboots frequently to get multiple leases, which may not be
+    // desirable. As such, sometimes admins prefer to tell their DHCPv4
+    // server to ignore client-id value altogether and rely exclusively
+    // on MAC address. This is a parameter that is defined globally, but
+    // can be overridden on a subnet level.
+    "match-client-id": true,
+
+    // The following list defines subnets. Each subnet consists of at
+    // least subnet and pool entries. One extra feature that requires some
+    // explanation is user-context. This is a structure that you can define
+    // in subnets and pools. It is parsed by Kea, but not used directly.
+    // It is intended to keep anything you may want to put there - comments,
+    // extra designations, floor or department names etc. These structures
+    // will be made available to Kea hooks.
+    "subnet4": [
+        {
+            "pools": [ {
+                "pool":  "192.0.2.1 - 192.0.2.200",
+                "user-context": { "info": "what a large pool" }
+            } ],
+            "subnet": "192.0.2.0/24",
+            "user-context": {
+                "comment": "Our first subnet!"
+            }
+        },
+        {
+            // This particular subnet has match-client-id value changed.
+            // This causes Kea to ignore client-id values in this subnet
+            // and rely exclusively on MAC addresses.
+            "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
+            "subnet": "192.0.3.0/24",
+            "match-client-id": false
+        },
+        {
+            "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
+            "subnet": "192.0.4.0/24",
+
+            // Sometimes the relay may use an IPv4 address that does
+            // not match the subnet. This is discouraged, but there are
+            // valid cases when it makes sense. One case is when there
+            // is a shared subnet.
+            "relay": {
+                "ip-address": "192.168.1.1"
+            }
+        }
+    ]
+},
+
+  // The following configures logging. It assumes that messages with
+  // at least informational level (info, warn, error and fatal) should
+  // be logged to stdout.
+  "Logging": {
+      "loggers": [
+          {
+            "name": "kea-dhcp4",
+              "output_options": [
+                  {
+                      "output": "stdout",
+                      // Several additional parameters are possible in addition
+                      // to the typical output. Flush determines whether logger
+                      // flushes output to a file. Maxsize determines maximum
+                      // filesize before the file is being rotated. maxver
+                      // specifies the maximum number of rotated files being
+                      // kept.
+                      "flush": true,
+                      "maxsize": 204800,
+                      "maxver": 4
+                  }
+              ],
+              "severity": "INFO"
+          }
+      ]
+  }
+
+}
