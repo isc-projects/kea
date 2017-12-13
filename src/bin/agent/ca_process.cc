@@ -26,6 +26,8 @@ namespace {
 
 const long REQUEST_TIMEOUT = 10000;
 
+const long IDLE_TIMEOUT = 30000;
+
 }
 
 namespace isc {
@@ -151,10 +153,11 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 
             // Create http listener. It will open up a TCP socket and be
             // prepared to accept incoming connection.
-            HttpListenerPtr http_listener(new HttpListener(*getIoService(),
-                                                           server_address,
-                                                           server_port, rcf,
-                                                           REQUEST_TIMEOUT));
+            HttpListenerPtr
+                http_listener(new HttpListener(*getIoService(), server_address,
+                                               server_port, rcf,
+                                               HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                                               HttpListener::IdleTimeout(IDLE_TIMEOUT)));
 
             // Instruct the http listener to actually open socket, install
             // callback and start listening.
