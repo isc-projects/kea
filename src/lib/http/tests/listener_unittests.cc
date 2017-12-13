@@ -589,8 +589,7 @@ TEST_F(HttpListenerTest, persistentConnectionTimeout) {
     // The HTTP/1.1 requests are by default persistent.
     std::string request = "POST /foo/bar HTTP/1.1\r\n"
         "Content-Type: application/json\r\n"
-        "Content-Length: 3\r\n"
-        "Connection: Keep-Alive\r\n\r\n"
+        "Content-Length: 3\r\n\r\n"
         "{ }";
 
     // Specify the idle timeout of 500ms.
@@ -631,6 +630,58 @@ TEST_F(HttpListenerTest, persistentConnectionTimeout) {
     ASSERT_EQ(1, clients_.size());
     client = *clients_.begin();
     ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+
+    EXPECT_FALSE(client->isConnectionAlive());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that HTTP/1.1 connection remains open even if there is an
+// error in the message body.
+TEST_F(HttpListenerTest, persistentConnectionBadBody) {
+
+    // The HTTP/1.1 requests are by default persistent.
+    std::string request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 12\r\n\r\n"
+        "{ \"a\": abc }";
+
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+
+    // Send the request.
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
+              "Content-Length: 40\r\n"
+              "Content-Type: application/json\r\n"
+              "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
+              "\r\n"
+              "{ \"result\": 400, \"text\": \"Bad Request\" }",
+              client->getResponse());
+
+    // The connection should remain active.
+    ASSERT_TRUE(client->isConnectionAlive());
+
+    // Make sure that we can send another request. This time we specify the
+    // "close" connection-token to force the connection to close.
+    request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n"
+        "Connection: close\r\n\r\n"
+        "{ }";
+
+    // Send request reusing the existing connection.
+    ASSERT_NO_THROW(client->sendRequest(request));
+    ASSERT_NO_THROW(runIOService());
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
     EXPECT_FALSE(client->isConnectionAlive());
