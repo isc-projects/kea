@@ -22,6 +22,10 @@ of the request. The first argument specifies the amount of received data.
 The second argument specifies an address of the remote endpoint which
 produced the data.
 
+% HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED closing persistent connection with %1 as a result of a timeout
+This debug message is issued when the persistent HTTP connection is being
+closed as a result of being idle.
+
 % HTTP_REQUEST_RECEIVED received HTTP request from %1
 This debug message is issued when the server finished receiving a HTTP
 request from the remote endpoint. The address of the remote endpoint is

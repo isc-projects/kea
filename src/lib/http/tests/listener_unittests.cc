@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
+#include <http/http_types.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
 #include <http/response_creator.h>
@@ -18,6 +19,7 @@
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <list>
+#include <sstream>
 #include <string>
 
 using namespace boost::asio::ip;
@@ -35,6 +37,9 @@ const unsigned short SERVER_PORT = 18123;
 
 /// @brief Request Timeout used in most of the tests (ms).
 const long REQUEST_TIMEOUT = 10000;
+
+/// @brief Persistent connection idle timeout used in most of the tests (ms).
+const long IDLE_TIMEOUT = 10000;
 
 /// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
@@ -244,6 +249,36 @@ public:
         });
     }
 
+    /// @brief Checks if the TCP connection is still open.
+    ///
+    /// Tests the TCP connection by trying to read from the socket.
+    ///
+    /// @return true if the TCP connection is open.
+    bool isConnectionAlive() {
+        // Remember the current non blocking setting.
+        const bool non_blocking_orig = socket_.non_blocking();
+        // Set the socket to non blocking mode. We're going to test if the socket
+        // returns would_block status on the attempt to read from it.
+        socket_.non_blocking(true);
+
+        // We need to provide a buffer for a call to read.
+        char data[2];
+        boost::system::error_code ec;
+        boost::asio::read(socket_, boost::asio::buffer(data, sizeof(data)), ec);
+
+        // Revert the original non_blocking flag on the socket.
+        socket_.non_blocking(non_blocking_orig);
+
+        // If the connection is alive we'd typically get would_block status code.
+        // If there are any data that haven't been read we may also get success
+        // status. We're guessing that try_again may also be returned by some
+        // implementations in some situations. Any other error code indicates a
+        // problem with the connection so we assume that the connection has been
+        // closed.
+        return (!ec || (ec.value() == boost::asio::error::try_again) ||
+                (ec.value() == boost::asio::error::would_block));
+    }
+
     /// @brief Close connection.
     void close() {
         socket_.close();
@@ -280,8 +315,8 @@ public:
     /// Starts test timer which detects timeouts.
     HttpListenerTest()
         : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
-          test_timer_(io_service_), clients_() {
-        test_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler, this),
+          test_timer_(io_service_), run_io_service_timer_(io_service_), clients_() {
+        test_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
@@ -299,6 +334,8 @@ public:
     ///
     /// This method creates HttpClient instance and retains it in the clients_
     /// list.
+    ///
+    /// @param request String containing the HTTP request to be sent.
     void startRequest(const std::string& request) {
         HttpClientPtr client(new HttpClient(io_service_));
         clients_.push_back(client);
@@ -308,9 +345,43 @@ public:
     /// @brief Callback function invoke upon test timeout.
     ///
     /// It stops the IO service and reports test timeout.
-    void timeoutHandler() {
-        ADD_FAILURE() << "Timeout occurred while running the test!";
+    ///
+    /// @param fail_on_timeout Specifies if test failure should be reported.
+    void timeoutHandler(const bool fail_on_timeout) {
+        if (fail_on_timeout) {
+            ADD_FAILURE() << "Timeout occurred while running the test!";
+        }
         io_service_.stop();
+    }
+
+    /// @brief Runs IO service with optional timeout.
+    ///
+    /// @param timeout Optional value specifying for how long the io service
+    /// should be ran.
+    void runIOService(long timeout = 0) {
+        if (timeout > 0) {
+            run_io_service_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler,
+                                                    this, false),
+                                        timeout, IntervalTimer::ONE_SHOT);
+        }
+        io_service_.run();
+        io_service_.get_io_service().reset();
+        io_service_.poll();
+    }
+
+    /// @brief Returns HTTP OK response expected by unit tests.
+    ///
+    /// @param http_version HTTP version.
+    ///
+    /// @return HTTP OK response expected by unit tests.
+    std::string httpOk(const HttpVersion& http_version) {
+        std::ostringstream s;
+        s << "HTTP/" << http_version.major_ << "." << http_version.minor_ << " 200 OK\r\n"
+            "Content-Length: 0\r\n"
+            "Content-Type: application/json\r\n"
+            "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
+            "\r\n";
+        return (s.str());
     }
 
     /// @brief IO service used in the tests.
@@ -321,6 +392,10 @@ public:
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;
+
+    /// @brief Asynchronous timer for running IO service for a specified amount
+    /// of time.
+    IntervalTimer run_io_service_timer_;
 
     /// @brief List of client connections.
     std::list<HttpClientPtr> clients_;
@@ -335,21 +410,231 @@ TEST_F(HttpListenerTest, listen) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          factory_, REQUEST_TIMEOUT);
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     ASSERT_NO_THROW(startRequest(request));
-    ASSERT_NO_THROW(io_service_.run());
+    ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
     HttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
-    EXPECT_EQ("HTTP/1.1 200 OK\r\n"
-              "Content-Length: 0\r\n"
-              "Content-Type: application/json\r\n"
-              "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
-              "\r\n",
-              client->getResponse());
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that persistent HTTP connection can be established when
+// "Conection: Keep-Alive" header value is specified.
+TEST_F(HttpListenerTest, keepAlive) {
+
+    // The first request contains the keep-alive header which instructs the server
+    // to maintain the TCP connection after sending a response.
+    std::string request = "POST /foo/bar HTTP/1.0\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n"
+        "Connection: Keep-Alive\r\n\r\n"
+        "{ }";
+
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+
+    // Send the request with the keep-alive header.
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
+
+    // We have sent keep-alive header so we expect that the connection with
+    // the server remains active.
+    ASSERT_TRUE(client->isConnectionAlive());
+
+    // Test that we can send another request via the same connection. This time
+    // it lacks the keep-alive header, so the server should close the connection
+    // after sending the response.
+    request = "POST /foo/bar HTTP/1.0\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n\r\n"
+        "{ }";
+
+    // Send request reusing the existing connection.
+    ASSERT_NO_THROW(client->sendRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
+
+    // Connection should have been closed by the server.
+    EXPECT_FALSE(client->isConnectionAlive());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that persistent HTTP connection is established by default
+// when HTTP/1.1 is in use.
+TEST_F(HttpListenerTest, persistentConnection) {
+
+    // The HTTP/1.1 requests are by default persistent.
+    std::string request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n\r\n"
+        "{ }";
+
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
+
+    ASSERT_NO_THROW(listener.start());
+
+    // Send the first request.
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+
+    // HTTP/1.1 connection is persistent by default.
+    ASSERT_TRUE(client->isConnectionAlive());
+
+    // Test that we can send another request via the same connection. This time
+    // it includes the "Connection: close" header which instructs the server to
+    // close the connection after responding.
+    request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n"
+        "Connection: close\r\n\r\n"
+        "{ }";
+
+    // Send request reusing the existing connection.
+    ASSERT_NO_THROW(client->sendRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+
+    // Connection should have been closed by the server.
+    EXPECT_FALSE(client->isConnectionAlive());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that "keep-alive" connection is closed by the server after
+// an idle time.
+TEST_F(HttpListenerTest, keepAliveTimeout) {
+
+    // The first request contains the keep-alive header which instructs the server
+    // to maintain the TCP connection after sending a response.
+    std::string request = "POST /foo/bar HTTP/1.0\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n"
+        "Connection: Keep-Alive\r\n\r\n"
+        "{ }";
+
+    // Specify the idle timeout of 500ms.
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(500));
+
+    ASSERT_NO_THROW(listener.start());
+
+    // Send the request with the keep-alive header.
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
+
+    // We have sent keep-alive header so we expect that the connection with
+    // the server remains active.
+    ASSERT_TRUE(client->isConnectionAlive());
+
+    // Run IO service for 1000ms. The idle time is set to 500ms, so the connection
+    // should be closed by the server while we wait here.
+    runIOService(1000);
+
+    // Make sure the connection has been closed.
+    EXPECT_FALSE(client->isConnectionAlive());
+
+    // Check if we can re-establish the connection and send another request.
+    clients_.clear();
+    request = "POST /foo/bar HTTP/1.0\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n\r\n"
+        "{ }";
+
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
+
+    EXPECT_FALSE(client->isConnectionAlive());
+
+    listener.stop();
+    io_service_.poll();
+}
+
+// This test verifies that persistent connection is closed by the server after
+// an idle time.
+TEST_F(HttpListenerTest, persistentConnectionTimeout) {
+
+    // The HTTP/1.1 requests are by default persistent.
+    std::string request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n"
+        "Connection: Keep-Alive\r\n\r\n"
+        "{ }";
+
+    // Specify the idle timeout of 500ms.
+    HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(500));
+
+    ASSERT_NO_THROW(listener.start());
+
+    // Send the request.
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    HttpClientPtr client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+
+    // The connection should remain active.
+    ASSERT_TRUE(client->isConnectionAlive());
+
+    // Run IO service for 1000ms. The idle time is set to 500ms, so the connection
+    // should be closed by the server while we wait here.
+    runIOService(1000);
+
+    // Make sure the connection has been closed.
+    EXPECT_FALSE(client->isConnectionAlive());
+
+    // Check if we can re-establish the connection and send another request.
+    clients_.clear();
+    request = "POST /foo/bar HTTP/1.1\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 3\r\n"
+        "Connection: close\r\n\r\n"
+        "{ }";
+
+    ASSERT_NO_THROW(startRequest(request));
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_EQ(1, clients_.size());
+    client = *clients_.begin();
+    ASSERT_TRUE(client);
+    EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+
+    EXPECT_FALSE(client->isConnectionAlive());
+
     listener.stop();
     io_service_.poll();
 }
@@ -357,7 +642,8 @@ TEST_F(HttpListenerTest, listen) {
 // This test verifies that the HTTP listener can't be started twice.
 TEST_F(HttpListenerTest, startTwice) {
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          factory_, REQUEST_TIMEOUT);
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
     EXPECT_THROW(listener.start(), HttpListenerError);
 }
@@ -372,10 +658,11 @@ TEST_F(HttpListenerTest, badRequest) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          factory_, REQUEST_TIMEOUT);
+                          factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
     ASSERT_NO_THROW(startRequest(request));
-    ASSERT_NO_THROW(io_service_.run());
+    ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
     HttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
@@ -393,7 +680,8 @@ TEST_F(HttpListenerTest, badRequest) {
 TEST_F(HttpListenerTest, invalidFactory) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
                               SERVER_PORT, HttpResponseCreatorFactoryPtr(),
-                              REQUEST_TIMEOUT),
+                              HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                              HttpListener::IdleTimeout(IDLE_TIMEOUT)),
                  HttpListenerError);
 }
 
@@ -401,7 +689,18 @@ TEST_F(HttpListenerTest, invalidFactory) {
 // Request Timeout.
 TEST_F(HttpListenerTest, invalidRequestTimeout) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
-                              SERVER_PORT, factory_, 0),
+                              SERVER_PORT, factory_, HttpListener::RequestTimeout(0),
+                              HttpListener::IdleTimeout(IDLE_TIMEOUT)),
+                 HttpListenerError);
+}
+
+// This test verifies that the timeout of 0 can't be specified for the
+// idle persistent connection timeout.
+TEST_F(HttpListenerTest, invalidIdleTimeout) {
+    EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
+                              SERVER_PORT, factory_,
+                              HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                              HttpListener::IdleTimeout(0)),
                  HttpListenerError);
 }
 
@@ -419,7 +718,9 @@ TEST_F(HttpListenerTest, addressInUse) {
     // Listener should report an error when we try to start it because another
     // acceptor is bound to that port and address.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS),
-                          SERVER_PORT + 1, factory_, REQUEST_TIMEOUT);
+                          SERVER_PORT + 1, factory_,
+                          HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
     EXPECT_THROW(listener.start(), HttpListenerError);
 }
 
@@ -435,10 +736,11 @@ TEST_F(HttpListenerTest, requestTimeout) {
     // Open the listener with the Request Timeout of 1 sec and post the
     // partial request.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          factory_, 1000);
+                          factory_, HttpListener::RequestTimeout(1000),
+                          HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
     ASSERT_NO_THROW(startRequest(request));
-    ASSERT_NO_THROW(io_service_.run());
+    ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
     HttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
