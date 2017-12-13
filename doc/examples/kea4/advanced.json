@@ -153,10 +153,12 @@
             ],
             "subnet": "192.0.8.0/23",
             "reservations": [
-                {  "hw-address": "00:00:00:11:22:33" },
-                {  "hw-address": "00:00:00:44:55:66" },
-                {  "hw-address": "00:00:00:77:88:99" },
-                {  "hw-address": "00:00:00:aa:bb:cc" }
+                // Some host reservations without addresses (so addresses
+                // will be from the know-client only pool).
+                {  "hw-address": "00:00:00:11:22:33", "hostname": "h1" },
+                {  "hw-address": "00:00:00:44:55:66", "hostname": "h2" },
+                {  "hw-address": "00:00:00:77:88:99", "hostname": "h3" },
+                {  "hw-address": "00:00:00:aa:bb:cc", "hostname": "h4" }
             ]
         }
     ]

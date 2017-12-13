@@ -150,10 +150,12 @@
         ],
         "subnet": "2001:db8:8::/46",
         "reservations": [
-            {  "hw-address": "00:00:00:11:22:33" },
-            {  "hw-address": "00:00:00:44:55:66" },
-            {  "hw-address": "00:00:00:77:88:99" },
-            {  "hw-address": "00:00:00:aa:bb:cc" }
+            // Some host reservations without addresses (so addresses
+            // will be from the know-client only pool).
+            {  "duid": "00:11:22:33", "hostname": "h1" },
+            {  "duid": "00:44:55:66", "hostname": "h2" },
+            {  "duid": "00:77:88:99", "hostname": "h3" },
+            {  "duid": "00:aa:bb:cc", "hostname": "h4" }
         ]
     }
     ]

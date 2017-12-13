@@ -1949,13 +1949,9 @@ should include options from the isc option space:
       </para>
 
       <para>
-      When subnets belong to a shared network the classification applies
-      to subnet selection but not to pools, e.g., a pool in a subnet
-      limited to a particular class can still be used by clients which do not
-      belong to the class if the pool they are expected to use is exhausted.
-      So the limit access based on class information is also available
-      at the address/prefix pool level, see <xref
-      linkend="classification-pools"/>.
+      Client classification can also be used to restrict access to specific
+      pools within a subnet. This is useful when to segregate clients belonging
+      to the same subnet into different address ranges.
       </para>
 
       <para>
