@@ -813,7 +813,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
     pool2->allowClientClass("bar");
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
+    pool2->setServedClientKind(Pool::SERVE_KNOWN);
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);

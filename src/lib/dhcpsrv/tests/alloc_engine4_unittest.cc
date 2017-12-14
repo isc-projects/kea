@@ -365,10 +365,10 @@ TEST_F(AllocEngine4Test, IterativeAllocator_unknown) {
         alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
 
     // Restrict pool_ to known clients. Add a second pool for unknown clients.
-    pool_->setKnownClients(Pool::SERVE_KNOWN);
+    pool_->setServedClientKind(Pool::SERVE_KNOWN);
     Pool4Ptr pool(new Pool4(IOAddress("192.0.2.200"),
                             IOAddress("192.0.2.209")));
-    pool->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool->setServedClientKind(Pool::SERVE_UNKNOWN);
     subnet_->addPool(pool);
 
     // Clients are unknown
@@ -758,7 +758,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolKnown) {
 
     // Apply restrictions on the pool1. This should be only assigned
     // to clients which have a reservation.
-    pool1_->setKnownClients(Pool::SERVE_KNOWN);
+    pool1_->setServedClientKind(Pool::SERVE_KNOWN);
 
     // The allocation engine should determine that the pool1 is not
     // available for the client without a reservation.
@@ -1054,7 +1054,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolKnown) {
 
     // Apply restrictions on the pool1. This should be only assigned
     // to clients which have a reservation.
-    pool1_->setKnownClients(Pool::SERVE_KNOWN);
+    pool1_->setServedClientKind(Pool::SERVE_KNOWN);
 
     // The allocation engine should determine that the pool1 is not
     // available for the client without a reservation.

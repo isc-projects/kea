@@ -504,7 +504,7 @@ TEST(CfgSubnets6Test, unparsePool) {
                              IOAddress("2001:db8:1::199")));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
     pool2->allowClientClass("bar");
-    pool2->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool2->setServedClientKind(Pool::SERVE_UNKNOWN);
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -552,7 +552,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
     pdpool2->allowClientClass("bar");
-    pdpool2->setKnownClients(Pool::SERVE_KNOWN);
+    pdpool2->setServedClientKind(Pool::SERVE_KNOWN);
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);

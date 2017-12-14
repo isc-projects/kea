@@ -226,10 +226,10 @@ TEST_F(AllocEngine6Test, IterativeAllocator_unknown) {
         alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_NA));
 
     // Restrict pool_ to known clients. Add a second pool for unknown clients.
-    pool_->setKnownClients(Pool::SERVE_KNOWN);
+    pool_->setServedClientKind(Pool::SERVE_KNOWN);
     Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::100"),
                             IOAddress("2001:db8:1::109")));
-    pool->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool->setServedClientKind(Pool::SERVE_UNKNOWN);
     subnet_->addPool(pool);
 
     // Clients are unknown
@@ -427,9 +427,9 @@ TEST_F(AllocEngine6Test, IterativeAllocatorAddrStepKnown) {
                              IOAddress("2001:db8:1::106")));
     // The pool1 serves everybody, pool2 known clients, pool3 unknown clients.
     // Set pool1 and pool3 but not pool2 in foo class
-    pool1->setKnownClients(Pool::SERVE_BOTH);
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool1->setServedClientKind(Pool::SERVE_BOTH);
+    pool2->setServedClientKind(Pool::SERVE_KNOWN);
+    pool3->setServedClientKind(Pool::SERVE_UNKNOWN);
     subnet_->addPool(pool1);
     subnet_->addPool(pool2);
     subnet_->addPool(pool3);
@@ -785,9 +785,9 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixKnown) {
     Pool6Ptr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 48, 48));
     Pool6Ptr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:2::"), 56, 64));
     // Set pool2 in foo
-    pool1->setKnownClients(Pool::SERVE_BOTH);
-    pool2->setKnownClients(Pool::SERVE_UNKNOWN);
-    pool3->setKnownClients(Pool::SERVE_KNOWN);
+    pool1->setServedClientKind(Pool::SERVE_BOTH);
+    pool2->setServedClientKind(Pool::SERVE_UNKNOWN);
+    pool3->setServedClientKind(Pool::SERVE_KNOWN);
     subnet_->addPool(pool1);
     subnet_->addPool(pool2);
     subnet_->addPool(pool3);
@@ -2853,7 +2853,7 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkPoolKnown) {
 
     // Apply restrictions on the pool1. This should be only assigned
     // to clients with have a reservation.
-    pool1_->setKnownClients(Pool::SERVE_KNOWN);
+    pool1_->setServedClientKind(Pool::SERVE_KNOWN);
 
     // The allocation engine should determine that the pool1 is not
     // available for the client without a reservation.

@@ -275,11 +275,11 @@ TEST(Pool4Test, knownClients) {
                             IOAddress("192.0.2.255")));
 
     // This pool serves everybody by default.
-    EXPECT_EQ(Pool::SERVE_BOTH, pool->getKnownClients());
+    EXPECT_EQ(Pool::SERVE_BOTH, pool->getServedClientKind());
 
     // Set it to only known clients.
-    pool->setKnownClients(Pool::SERVE_KNOWN);
-    EXPECT_EQ(Pool::SERVE_KNOWN,pool->getKnownClients());
+    pool->setServedClientKind(Pool::SERVE_KNOWN);
+    EXPECT_EQ(Pool::SERVE_KNOWN,pool->getServedClientKind());
 }
 
 // This test checks that handling for last allocated address/prefix is valid.
@@ -693,11 +693,11 @@ TEST(Pool6Test, knownClients) {
                IOAddress("2001:db8::2"));
 
     // This pool serves everybody by default.
-    EXPECT_EQ(Pool::SERVE_BOTH, pool.getKnownClients());
+    EXPECT_EQ(Pool::SERVE_BOTH, pool.getServedClientKind());
 
     // Set it to only known clients.
-    pool.setKnownClients(Pool::SERVE_KNOWN);
-    EXPECT_EQ(Pool::SERVE_KNOWN,pool.getKnownClients());
+    pool.setServedClientKind(Pool::SERVE_KNOWN);
+    EXPECT_EQ(Pool::SERVE_KNOWN,pool.getServedClientKind());
 }
 
 // This test checks that handling for last allocated address/prefix is valid.

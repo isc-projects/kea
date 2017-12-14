@@ -748,7 +748,7 @@ Subnet6::toElement() const {
             pool_map->set("client-class", Element::create(*cclasses.cbegin()));
         }
         // Set known-clients
-        Pool::KnownClients kc = (*pool)->getKnownClients();
+        Pool::ServedClientKind kc = (*pool)->getServedClientKind();
         if (kc != Pool::SERVE_BOTH) {
             pool_map->set("known-clients",
                           Element::create(kc == Pool::SERVE_KNOWN ?
@@ -817,7 +817,7 @@ Subnet6::toElement() const {
             pool_map->set("client-class", Element::create(*cclasses.cbegin()));
         }
         // Set known-clients
-        Pool::KnownClients kc = pdpool->getKnownClients();
+        Pool::ServedClientKind kc = pdpool->getServedClientKind();
         if (kc != Pool::SERVE_BOTH) {
             pool_map->set("known-clients",
                           Element::create(kc == Pool::SERVE_KNOWN ?

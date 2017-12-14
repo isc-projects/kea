@@ -267,10 +267,10 @@ TEST(Subnet4Test, pool4InSubnet4) {
     EXPECT_EQ(mypool, pool3);
 
     // And now known clients
-    EXPECT_EQ(Pool::SERVE_BOTH, pool1->getKnownClients());
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
-    pool4->setKnownClients(Pool::SERVE_UNKNOWN);
+    EXPECT_EQ(Pool::SERVE_BOTH, pool1->getServedClientKind());
+    pool2->setServedClientKind(Pool::SERVE_KNOWN);
+    pool3->setServedClientKind(Pool::SERVE_UNKNOWN);
+    pool4->setServedClientKind(Pool::SERVE_UNKNOWN);
 
     ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
                                              IOAddress("192.1.2.64")));
@@ -363,9 +363,9 @@ TEST(Subnet4Test, getCapacity) {
     EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, three_classes, false));
 
     // And now known clients
-    EXPECT_EQ(Pool::SERVE_BOTH, pool1->getKnownClients());
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
+    EXPECT_EQ(Pool::SERVE_BOTH, pool1->getServedClientKind());
+    pool2->setServedClientKind(Pool::SERVE_KNOWN);
+    pool3->setServedClientKind(Pool::SERVE_UNKNOWN);
 
     EXPECT_EQ(132, subnet->getPoolCapacity(Lease::TYPE_V4, no_class, false));
     EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, no_class, true));
@@ -609,7 +609,7 @@ TEST(Subnet4Test, inRangeinPool) {
     EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes, false));
 
     // Add known clients
-    pool1->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool1->setServedClientKind(Pool::SERVE_UNKNOWN);
     EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes, false));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes, true));
 }
@@ -843,7 +843,7 @@ TEST(Subnet6Test, Pool6getCapacity) {
               subnet->getPoolCapacity(Lease::TYPE_NA, three_classes, false));
 
     // Add known clients
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
+    pool2->setServedClientKind(Pool::SERVE_KNOWN);
     EXPECT_EQ(uint64_t(65536),
               subnet->getPoolCapacity(Lease::TYPE_NA, no_class, false));
     EXPECT_EQ(uint64_t(4294967296ull + 65536),
@@ -964,7 +964,7 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     EXPECT_EQ(mypool, pool3);
 
     // Add know cients
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
+    pool3->setServedClientKind(Pool::SERVE_UNKNOWN);
     mypool = subnet->getPool(Lease::TYPE_NA, no_class, false,
                              IOAddress("2001:db8:1:3::dead:beef"));    
     EXPECT_FALSE(mypool);
@@ -1502,7 +1502,7 @@ TEST(Subnet6Test, inRangeinPool) {
     EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes, false));
 
     // Add known clients
-    pool1->setKnownClients(Pool::SERVE_KNOWN);
+    pool1->setServedClientKind(Pool::SERVE_KNOWN);
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes, false));
     EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes, true));
 }

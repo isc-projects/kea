@@ -393,9 +393,9 @@ PoolParser::parse(PoolStoragePtr pools,
     if (known_clients) {
         string kc = known_clients->stringValue();
         if (kc == "only") {
-            pool->setKnownClients(Pool::SERVE_KNOWN);
+            pool->setServedClientKind(Pool::SERVE_KNOWN);
         } else if (kc == "never") {
-            pool->setKnownClients(Pool::SERVE_UNKNOWN);
+            pool->setServedClientKind(Pool::SERVE_UNKNOWN);
         } else
             isc_throw(DhcpConfigError, "invalid known-clients value: " << kc
                       << " (" << known_clients->getPosition() << ")");
@@ -912,9 +912,9 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
     if (known_clients_) {
         string kc = known_clients_->stringValue();
         if (kc == "only") {
-            pool_->setKnownClients(Pool::SERVE_KNOWN);
+            pool_->setServedClientKind(Pool::SERVE_KNOWN);
         } else if (kc == "never") {
-            pool_->setKnownClients(Pool::SERVE_UNKNOWN);
+            pool_->setServedClientKind(Pool::SERVE_UNKNOWN);
         } else
             isc_throw(isc::dhcp::DhcpConfigError,
                       "invalid known-clients value: " << kc

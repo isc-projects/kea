@@ -141,7 +141,7 @@ Pool::toElement() const {
     }
 
     // Set known-clients
-    KnownClients kc = getKnownClients();
+    ServedClientKind kc = getServedClientKind();
     if (kc != SERVE_BOTH) {
         map->set("known-clients",
                  Element::create(kc == SERVE_KNOWN ? "only" : "never"));
