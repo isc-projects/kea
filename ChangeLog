@@ -1,3 +1,8 @@
+1338.	[func]		marcin
+	Persistent HTTP/1.1 connections and HTTP/1.0 keep-alive
+	are supported by RESTful API.
+	(Trac #5448, git 05018f7cc0662d6956b9b7648646e0c17da948ba)
+
 1337.	[doc]		marcin
 	Added placeholder section for the libdhcp_ha hooks library.
 	(Trac #5447, git d939b5b8bc4befb24daf863f2408d97493e4bfbf)
