@@ -249,7 +249,7 @@ protected:
     data::ConstElementPtr user_context_;
 
     /// @brief Last allocated address
-    /// See @ref isc::dhcp::subnet::last_allocated_ia_
+    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
     /// Initialized and reset to first
     isc::asiolink::IOAddress last_allocated_;
 
