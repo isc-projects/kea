@@ -1,3 +1,7 @@
+1337.	[doc]		marcin
+	Added placeholder section for the libdhcp_ha hooks library.
+	(Trac #5447, git d939b5b8bc4befb24daf863f2408d97493e4bfbf)
+
 1336.	[bug]		marcin
 	DHCPv6 server always sends prefixes with the lifetime of 0 for
 	the prefix leases that should no longer be used, even if those
