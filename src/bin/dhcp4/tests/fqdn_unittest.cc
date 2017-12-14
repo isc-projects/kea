@@ -396,7 +396,7 @@ public:
 
     // Test that server generates the appropriate FQDN option in response to
     // client's FQDN option.
-    void testProcessFqdn(const Pkt4Ptr& query, const uint8_t exp_flags,
+    void testProcessFqdn(Pkt4Ptr& query, const uint8_t exp_flags,
                          const std::string& exp_domain_name,
                          Option4ClientFqdn::DomainNameType
                          exp_domain_type = Option4ClientFqdn::FULL) {
@@ -524,7 +524,7 @@ public:
     /// packet must contain the hostname option
     ///
     /// @return a pointer to the hostname option constructed by the server
-    OptionStringPtr processHostname(const Pkt4Ptr& query,
+    OptionStringPtr processHostname(Pkt4Ptr& query,
                                     bool must_have_host = true) {
         if (!getHostnameOption(query) && must_have_host) {
             ADD_FAILURE() << "Hostname option not carried in the query";

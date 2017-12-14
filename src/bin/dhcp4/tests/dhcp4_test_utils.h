@@ -434,7 +434,7 @@ public:
                              uint8_t pkt_type, const std::string& stat_name);
 
     /// @brief Create @c Dhcpv4Exchange from client's query.
-    Dhcpv4Exchange createExchange(const Pkt4Ptr& query);
+    Dhcpv4Exchange createExchange(Pkt4Ptr& query);
 
     /// @brief Performs 4-way exchange to obtain new lease.
     ///

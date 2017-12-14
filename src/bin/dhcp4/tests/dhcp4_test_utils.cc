@@ -631,7 +631,7 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
  }
 
 Dhcpv4Exchange
-Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
+Dhcpv4SrvTest::createExchange(Pkt4Ptr& query) {
     return (Dhcpv4Exchange(srv_.alloc_engine_, query, srv_.selectSubnet(query)));
 }
 
