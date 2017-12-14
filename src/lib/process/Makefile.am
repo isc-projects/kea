@@ -22,18 +22,15 @@ s-messages: process_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/process/process_messages.mes
 	touch $@
 
-spec_config.h: spec_config.h.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
-
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
-BUILT_SOURCES = spec_config.h process_messages.h process_messages.cc
+BUILT_SOURCES = process_messages.h process_messages.cc
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = process_messages.mes libprocess.dox
 
 # Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda spec_config.h process_messages.h process_messages.cc s-messages
+CLEANFILES = *.gcno *.gcda process_messages.h process_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-process.la
 libkea_process_la_SOURCES  = d_cfg_mgr.cc d_cfg_mgr.h
