@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <config/module_spec.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_simple_parser.h>
@@ -27,16 +26,6 @@ using namespace isc::d2;
 using namespace isc::process;
 
 namespace {
-
-/// @brief Function to create full path to the spec file
-///
-/// The full path is dependent upon the value of D2_SRC_DIR which
-/// whose value is generated from test_data_files_config.h.in
-///
-/// @param name file name to which the path should be prepended
-std::string specfile(const std::string& name) {
-    return (std::string(D2_SRC_DIR) + "/" + name);
-}
 
 /// @brief Function to create full path to test data file
 ///
@@ -228,14 +217,6 @@ public:
 #define RUN_CONFIG_OK(a) (runConfigOrFail(a, NO_ERROR, ""))
 #define SYNTAX_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,SYNTAX_ERROR,b))
 #define LOGIC_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,LOGIC_ERROR,b))
-
-/// @brief Tests that the spec file is valid.
-/// Verifies that the DHCP-DDNS configuration specification file
-///  is valid.
-TEST(D2SpecTest, basicSpec) {
-    ASSERT_NO_THROW(isc::config::
-                    moduleSpecFromFile(specfile("dhcp-ddns.spec")));
-}
 
 /// @brief Tests a basic valid configuration for D2Param.
 TEST_F(D2CfgMgrTest, validParamsEntry) {

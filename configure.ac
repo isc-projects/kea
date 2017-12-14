@@ -1209,14 +1209,12 @@ AC_CONFIG_FILES([Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
                  src/bin/dhcp4/Makefile
-                 src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/dhcp4_process_tests.sh
                  src/bin/dhcp4/tests/marker_file.h
                  src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
-                 src/bin/dhcp6/spec_config.h.pre
                  src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp6/tests/dhcp6_process_tests.sh
                  src/bin/dhcp6/tests/marker_file.h
@@ -1296,7 +1294,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
                  src/lib/process/Makefile
-                 src/lib/process/spec_config.h.pre
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile
                  src/lib/stats/Makefile
