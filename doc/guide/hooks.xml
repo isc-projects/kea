@@ -256,6 +256,25 @@
               or configuration parameters currently used by the server.
               </entry>
             </row>
+            <row>
+              <entry>High Availability</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>Minimizing a risk of DHCP service unavailability is achieved
+              by setting up multiple instances of the DHCP servers in a network.
+              Each server can serve selected group of clients in this network
+              (load balancing) or all clients, if it detects that its partner has
+              crashed or cannot be providing DHCP service for any other reason.
+              It is also possible to designate one server to serve all DHCP clients,
+              and leave another server as "standby". This server will activate its
+              DHCP function when it detects that its partner is not available.
+              Such cooperation between the DHCP servers requires that these
+              servers constantly communicate with each other to send updates about
+              allocated leases and to periodically test whether their partners are still
+              operational. The "libdhcp_ha" library provides such functionality for
+              Kea DHCP.
+              </entry>
+            </row>
           </tbody>
           </tgroup>
           </table>
@@ -2527,8 +2546,19 @@ both the command and the response.
         </para>
     </section>
 
-    </section>
-  </section> <!-- end of subnet commands -->
+    </section> <!-- end of subnet commands -->
+
+    <section id="high-availability-library">
+      <title>libdhcp_ha: High Availability</title>
+      <para>
+        This section will describe the <command>libdhcp_ha</command> hook library
+        being developed for the Kea 1.4.0 release.
+      </para>
+    </section> <!-- end of high-availability-library -->
+
+  </section>
+
+
 
     <section id="user-context">
       <title>User contexts</title>
