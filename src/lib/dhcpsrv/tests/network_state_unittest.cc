@@ -63,6 +63,14 @@ public:
     IntervalTimer test_timer_;
 };
 
+// This test verifies the default is enable state.
+TEST_F(NetworkStateTest, default) {
+    NetworkState state4(NetworkState::DHCPv4);
+    EXPECT_TRUE(state4.isServiceEnabled());
+    NetworkState state6(NetworkState::DHCPv6);
+    EXPECT_TRUE(state6.isServiceEnabled());
+}
+
 // This test verifies that it is possible to disable and then enable DHCPv4 service.
 TEST_F(NetworkStateTest, disableEnableService4) {
     NetworkState state(NetworkState::DHCPv4);
