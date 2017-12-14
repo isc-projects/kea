@@ -30,9 +30,12 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
                                 HttpConnectionPool& connection_pool,
                                 const HttpResponseCreatorPtr& response_creator,
                                 const HttpAcceptorCallback& callback,
-                                const long request_timeout)
+                                const long request_timeout,
+                                const long idle_timeout)
     : request_timer_(io_service),
+      request_timer_setup_(false),
       request_timeout_(request_timeout),
+      idle_timeout_(idle_timeout),
       socket_(io_service),
       acceptor_(acceptor),
       connection_pool_(connection_pool),
@@ -50,6 +53,7 @@ HttpConnection::~HttpConnection() {
 
 void
 HttpConnection::close() {
+    request_timer_setup_ = false;
     request_timer_.cancel();
     socket_.close();
 }
@@ -117,7 +121,13 @@ HttpConnection::doWrite() {
                               output_buf_.length(),
                               cb);
         } else {
-            stopThisConnection();
+            if (!request_->isPersistent()) {
+                stopThisConnection();
+
+            } else {
+                reinitProcessingState();
+                doRead();
+            }
         }
     } catch (const std::exception& ex) {
         stopThisConnection();
@@ -148,13 +158,8 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                   HTTP_REQUEST_RECEIVE_START)
             .arg(getRemoteEndpointAddressAsText())
             .arg(static_cast<unsigned>(request_timeout_/1000));
-        // Pass raw pointer rather than shared_ptr to this object,
-        // because IntervalTimer already passes shared pointer to the
-        // IntervalTimerImpl to make sure that the callback remains
-        // valid.
-        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
-                                         this),
-                             request_timeout_, IntervalTimer::ONE_SHOT);
+
+        setupRequestTimer();
         doRead();
     }
 }
@@ -241,8 +246,45 @@ HttpConnection::socketWriteCallback(boost::system::error_code ec, size_t length)
 
     } else {
         output_buf_.clear();
-        stopThisConnection();
+
+        if (!request_->isPersistent()) {
+            stopThisConnection();
+
+        } else {
+            reinitProcessingState();
+            doRead();
+        }
     }
+}
+
+void
+HttpConnection::reinitProcessingState() {
+    request_ = response_creator_->createNewHttpRequest();
+    parser_.reset(new HttpRequestParser(*request_));
+    parser_->initModel();
+    setupIdleTimer();
+}
+
+void
+HttpConnection::setupRequestTimer() {
+    // Pass raw pointer rather than shared_ptr to this object,
+    // because IntervalTimer already passes shared pointer to the
+    // IntervalTimerImpl to make sure that the callback remains
+    // valid.
+    if (!request_timer_setup_) {
+        request_timer_setup_ = true;
+        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
+                                         this),
+                             request_timeout_, IntervalTimer::ONE_SHOT);
+    }
+}
+
+void
+HttpConnection::setupIdleTimer() {
+    request_timer_setup_ = false;
+    request_timer_.setup(boost::bind(&HttpConnection::idleTimeoutCallback,
+                                     this),
+                         idle_timeout_, IntervalTimer::ONE_SHOT);
 }
 
 void
@@ -254,6 +296,14 @@ HttpConnection::requestTimeoutCallback() {
         response_creator_->createStockHttpResponse(request_,
                                                    HttpStatusCode::REQUEST_TIMEOUT);
     asyncSendResponse(response);
+}
+
+void
+HttpConnection::idleTimeoutCallback() {
+    LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+              HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED)
+        .arg(getRemoteEndpointAddressAsText());
+    stopThisConnection();
 }
 
 std::string

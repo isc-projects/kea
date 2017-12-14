@@ -30,6 +30,12 @@ typedef TestHttpResponseBase<HttpResponseJson> Response;
 /// @brief Pointer to test HTTP response.
 typedef boost::shared_ptr<Response> ResponsePtr;
 
+/// @brief Request timeout used in tests.
+const long CONN_REQUEST_TIMEOUT = 1000;
+
+/// @brief Idle connecion timeout used in tests.
+const long CONN_IDLE_TIMEOUT = 1000;
+
 /// @brief Implementation of the @ref HttpResponseCreator.
 class TestHttpResponseCreator : public HttpResponseCreator {
 public:
@@ -114,12 +120,14 @@ TEST_F(HttpConnectionPoolTest, startStop) {
                                                connection_pool_,
                                                response_creator_,
                                                HttpAcceptorCallback(),
-                                               1000));
+                                               CONN_REQUEST_TIMEOUT,
+                                               CONN_IDLE_TIMEOUT));
     HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
                                                connection_pool_,
                                                response_creator_,
                                                HttpAcceptorCallback(),
-                                               1000));
+                                               CONN_REQUEST_TIMEOUT,
+                                               CONN_IDLE_TIMEOUT));
     // The pool should be initially empty.
     TestHttpConnectionPool pool;
     ASSERT_TRUE(pool.connections_.empty());
@@ -152,12 +160,14 @@ TEST_F(HttpConnectionPoolTest, stopAll) {
                                                connection_pool_,
                                                response_creator_,
                                                HttpAcceptorCallback(),
-                                               1000));
+                                               CONN_REQUEST_TIMEOUT,
+                                               CONN_IDLE_TIMEOUT));
     HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
                                                connection_pool_,
                                                response_creator_,
                                                HttpAcceptorCallback(),
-                                               1000));
+                                               CONN_REQUEST_TIMEOUT,
+                                               CONN_IDLE_TIMEOUT));
     TestHttpConnectionPool pool;
     ASSERT_NO_THROW(pool.start(conn1));
     ASSERT_NO_THROW(pool.start(conn2));
@@ -176,12 +186,14 @@ TEST_F(HttpConnectionPoolTest, stopInvalid) {
                                                connection_pool_,
                                                response_creator_,
                                                HttpAcceptorCallback(),
-                                               1000));
+                                               CONN_REQUEST_TIMEOUT,
+                                               CONN_IDLE_TIMEOUT));
     HttpConnectionPtr conn2(new HttpConnection(io_service_, acceptor_,
                                                connection_pool_,
                                                response_creator_,
                                                HttpAcceptorCallback(),
-                                               1000));
+                                               CONN_REQUEST_TIMEOUT,
+                                               CONN_IDLE_TIMEOUT));
     TestHttpConnectionPool pool;
     ASSERT_NO_THROW(pool.start(conn1));
     ASSERT_NO_THROW(pool.stop(conn2));
