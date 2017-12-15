@@ -45,9 +45,9 @@ constexpr uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
 constexpr uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
 /// @}
 
-/// Define CQL schema version: 2.0
+/// Define CQL schema version: 1.0
 /// @{
-constexpr uint32_t CQL_SCHEMA_VERSION_MAJOR = 2u;
+constexpr uint32_t CQL_SCHEMA_VERSION_MAJOR = 1u;
 constexpr uint32_t CQL_SCHEMA_VERSION_MINOR = 0u;
 /// @}
 
