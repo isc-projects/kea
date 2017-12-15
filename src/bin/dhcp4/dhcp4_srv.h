@@ -348,7 +348,7 @@ protected:
     ///
     /// @return true if the message should be further processed, or false if
     /// the message should be discarded.
-    bool accept(Pkt4Ptr& query);
+    bool accept(const Pkt4Ptr& query) const;
 
     /// @brief Check if a message sent by directly connected client should be
     /// accepted or discarded.
@@ -377,7 +377,7 @@ protected:
     ///
     /// @return true if message is accepted for further processing, false
     /// otherwise.
-    bool acceptDirectRequest(Pkt4Ptr& query);
+    bool acceptDirectRequest(const Pkt4Ptr& query) const;
 
     /// @brief Check if received message type is valid for the server to
     /// process.
@@ -766,19 +766,19 @@ protected:
 
     /// @brief Selects a subnet for a given client's packet.
     ///
-    /// When the packet has to be dropped the query pointer is cleared
-    ///
     /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(Pkt4Ptr& query);
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
+                                       bool& drop) const;
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
-    /// When the packet has to be dropped the query pointer is cleared
-    ///
     /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet4o6(Pkt4Ptr& query);
+    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
+                                          bool& drop) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.

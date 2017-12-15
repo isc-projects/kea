@@ -483,11 +483,11 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet(Pkt4Ptr& query) {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
 
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
-        return (selectSubnet4o6(query));
+        return (selectSubnet4o6(query, drop));
     }
 
     Subnet4Ptr subnet;
@@ -570,13 +570,12 @@ Dhcpv4Srv::selectSubnet(Pkt4Ptr& query) {
         }
 
         // Callouts decided to drop the packet. It is a superset of the
-        // skip case so no subnet will be selected. For the caller to
-        // know it has to drop the packet the query pointer is cleared.
+        // skip case so no subnet will be selected.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
-            query.reset();
+            drop = true;
             return (Subnet4Ptr());
         }
 
@@ -605,7 +604,7 @@ Dhcpv4Srv::selectSubnet(Pkt4Ptr& query) {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet4o6(Pkt4Ptr& query) {
+Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
 
     Subnet4Ptr subnet;
 
@@ -683,13 +682,12 @@ Dhcpv4Srv::selectSubnet4o6(Pkt4Ptr& query) {
         }
 
         // Callouts decided to drop the packet. It is a superset of the
-        // skip case so no subnet will be selected. For the caller to
-        // know it has to drop the packet the query pointer is cleared.
+        // skip case so no subnet will be selected.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
-            query.reset();
+            drop = true;
             return (Subnet4Ptr());
         }
 
@@ -2341,10 +2339,11 @@ Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     sanityCheck(discover, FORBIDDEN);
 
-    Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover));
+    bool drop = false;
+    Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover, drop));
 
     // Stop here if selectSubnet decided to drop the packet
-    if (!discover) {
+    if (drop) {
         return (Pkt4Ptr());
     }
 
@@ -2398,10 +2397,11 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(request, MANDATORY);
 
-    Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request));
+    bool drop = false;
+    Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request, drop));
 
     // Stop here if selectSubnet decided to drop the packet
-    if (!request) {
+    if (drop) {
         return (Pkt4Ptr());
     }
 
@@ -2704,10 +2704,11 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     // DHCPINFORM MUST not include server identifier.
     sanityCheck(inform, FORBIDDEN);
 
-    Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform));
+    bool drop = false;
+    Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform, drop));
 
     // Stop here if selectSubnet decided to drop the packet
-    if (!inform) {
+    if (drop) {
         return (Pkt4Ptr());
     }
 
@@ -2747,7 +2748,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 }
 
 bool
-Dhcpv4Srv::accept(Pkt4Ptr& query) {
+Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
     // Check that the message type is accepted by the server. We rely on the
     // function called to log a message if needed.
     if (!acceptMessageType(query)) {
@@ -2775,7 +2776,7 @@ Dhcpv4Srv::accept(Pkt4Ptr& query) {
 }
 
 bool
-Dhcpv4Srv::acceptDirectRequest(Pkt4Ptr& pkt) {
+Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
     // Accept all relayed messages.
     if (pkt->isRelayed()) {
         return (true);
@@ -2802,8 +2803,9 @@ Dhcpv4Srv::acceptDirectRequest(Pkt4Ptr& pkt) {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    bool result = (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt));
-    if (!pkt) {
+    bool drop = false;
+    bool result = (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt, drop));
+    if (drop) {
         // The packet must be dropped.
         return (false);
     }
