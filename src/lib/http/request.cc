@@ -214,7 +214,7 @@ HttpRequest::getBody() const {
 }
 
 std::string
-HttpRequest::toText() const {
+HttpRequest::toString() const {
     checkFinalized();
 
     std::ostringstream s;

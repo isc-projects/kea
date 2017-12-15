@@ -12,6 +12,7 @@
 #include <http/tests/request_test.h>
 #include <gtest/gtest.h>
 #include <map>
+#include <sstream>
 
 using namespace isc::data;
 using namespace isc::http;
@@ -43,7 +44,6 @@ public:
 
     /// @brief Default value of the JSON body.
     std::string json_body_;
-
 };
 
 // This test verifies that PostHttpRequestJson class only accepts
@@ -168,6 +168,27 @@ TEST_F(PostHttpRequestJsonTest, getJsonElement) {
 
     // An attempt to retrieve non-existing element should return NULL.
     EXPECT_FALSE(request_.getJsonElement("bar"));
+}
+
+// This test verifies that it is possible to create client side request
+// containing JSON body.
+TEST_F(PostHttpRequestJsonTest, clientRequest) {
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
+    addHeaderToContext("Content-Type", "application/json");
+
+    ElementPtr json = Element::fromJSON(json_body_);
+    request_.setBodyAsJson(json);
+    // Commit and validate the data.
+    ASSERT_NO_THROW(request_.finalize());
+
+    std::ostringstream expected_response;
+    expected_response << "POST /isc/org HTTP/1.0\r\n"
+        "Content-Length: " << json->str().size() << "\r\n"
+        "Content-Type: application/json\r\n"
+        "\r\n"
+        << json->str();
+
+    EXPECT_EQ(expected_response.str(), request_.toString());
 }
 
 }
