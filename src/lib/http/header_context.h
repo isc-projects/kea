@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,9 +12,25 @@
 namespace isc {
 namespace http {
 
+/// @brief HTTP header context.
 struct HttpHeaderContext {
     std::string name_;
     std::string value_;
+
+    /// @brief Constructor.
+    ///
+    /// Sets header name and value to empty strings.
+    HttpHeaderContext()
+        : name_(), value_() {
+    }
+
+    /// @brief Constructor.
+    ///
+    /// @param name Header name.
+    /// @param value Header value.
+    HttpHeaderContext(const std::string& name, const std::string& value)
+        : name_(name), value_(value) {
+    }
 };
 
 } // namespace http

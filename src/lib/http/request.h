@@ -148,7 +148,7 @@ public:
     /// requirements for it.
     virtual void create();
 
-    /// @brief Complete parsing of the HTTP request.
+    /// @brief Complete parsing of the HTTP request or create outbound HTTP request.
     ///
     /// HTTP request parsing is performed in two stages: HTTP headers, then
     /// request body. The @ref create method parses HTTP headers. Once this is
@@ -159,6 +159,12 @@ public:
     /// This method generally performs the body parsing, but if it determines
     /// that the @ref create method hasn't been called, it calls @ref create
     /// before parsing the body.
+    ///
+    /// For the outbound (client) request, this method must be called after
+    /// setting all required values in the request context. The Content-Length
+    /// is generally not explicitly set by the caller in this case. This method
+    /// computes the value of the Content-Length and inserts the suitable header
+    /// when it finds non-empty body.
     ///
     /// The derivations must call @ref create if it hasn't been called prior to
     /// calling this method. It must set @ref finalized_ to true if the call
@@ -220,6 +226,13 @@ public:
 
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
+
+    /// @brief Returns HTTP message as text.
+    ///
+    /// This method is called to generate the outbound HTTP message to be sent
+    /// to a server. Make sure to call @c HttpRequest::finalize prior to
+    /// calling this method.
+    virtual std::string toText() const;
 
     /// @brief Checks if the request has been successfully finalized.
     ///

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <http/request.h>
+#include <http/date_time.h>
 #include <http/http_header.h>
 #include <http/http_types.h>
 #include <http/tests/request_test.h>
@@ -19,6 +20,7 @@ using namespace isc::http::test;
 
 namespace {
 
+/// @brief Test fixture class for @c HttpRequest class.
 class HttpRequestTest : public HttpRequestTestBase<HttpRequest> {
 public:
 
@@ -224,6 +226,49 @@ TEST_F(HttpRequestTest, isPersistentHttp11Close) {
     EXPECT_FALSE(
         isPersistent(HttpVersion(1, 1), HttpHeader("Connection", "close"))
     );
+}
+
+TEST_F(HttpRequestTest, clientRequest) {
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
+
+    // Capture current date and time.
+    HttpDateTime date_time;
+
+    // Add headers.
+    request_.context()->headers_.push_back(HttpHeaderContext("Date", date_time.rfc1123Format()));
+    request_.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    request_.context()->headers_.push_back(HttpHeaderContext("Accept", "text/html"));
+    // Add a body.
+    request_.context()->body_ = "<html></html>";
+    // Commit and validate the data.
+    ASSERT_NO_THROW(request_.finalize());
+
+    // Check that the HTTP request in the textual format is correct. Note that
+    // it should include "Content-Length", even though we haven't explicitly set
+    // this header. It is dynamically computed from the body size.
+    EXPECT_EQ("POST /isc/org HTTP/1.0\r\n"
+              "Accept: text/html\r\n"
+              "Content-Length: 13\r\n"
+              "Content-Type: text/html\r\n"
+              "Date: " + date_time.rfc1123Format() + "\r\n"
+              "\r\n"
+              "<html></html>",
+              request_.toText());
+}
+
+TEST_F(HttpRequestTest, clientRequestNoBody) {
+    setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
+    // Add headers.
+    request_.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    // Commit and validate the data.
+    ASSERT_NO_THROW(request_.finalize());
+
+    // Check that the HTTP request in the textual format is correct. Note that
+    // there should be no Content-Length included, because the body is empty.
+    EXPECT_EQ("GET /isc/org HTTP/1.1\r\n"
+              "Content-Type: text/html\r\n"
+              "\r\n",
+              request_.toText());
 }
 
 }

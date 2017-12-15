@@ -7,6 +7,7 @@
 #include <http/request.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sstream>
 
 namespace isc {
 namespace http {
@@ -85,6 +86,12 @@ HttpRequest::create() {
              ++header) {
             HttpHeaderPtr hdr(new HttpHeader(header->name_, header->value_));
             headers_[hdr->getLowerCaseName()] = hdr;
+        }
+
+        if (!context_->body_.empty() && (headers_.count("content-length") == 0)) {
+            HttpHeaderPtr hdr(new HttpHeader("Content-Length",
+                                             boost::lexical_cast<std::string>(context_->body_.length())));
+            headers_["content-length"] = hdr;
         }
 
         // Iterate over required headers and check that they exist
@@ -204,6 +211,27 @@ std::string
 HttpRequest::getBody() const {
     checkFinalized();
     return (context_->body_);
+}
+
+std::string
+HttpRequest::toText() const {
+    checkFinalized();
+
+    std::ostringstream s;
+    s << methodToString(getMethod()) << " " << getUri() << " HTTP/" <<
+        getHttpVersion().major_ << "." << getHttpVersion().minor_ << "\r\n";
+
+    for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
+         ++header_it) {
+        s << header_it->second->getName() << ": " << header_it->second->getValue()
+          << "\r\n";
+    }
+
+    s << "\r\n";
+
+    s << getBody();
+
+    return (s.str());
 }
 
 bool
