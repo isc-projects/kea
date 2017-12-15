@@ -1,3 +1,8 @@
+1340.	[func]		marcin
+	Added support for "dhcp-enable" and "dhcp-disable" commands in
+	the DHCPv4 and DHCPv6 server.
+	(Trac #5442, git 36dc68ff7aa8b3cfd265c4f982d10248590039bd)
+
 1339.	[doc]		marcin
 	Updated User's Guide describing how to selectively disable
 	legal logging for a subnet.
