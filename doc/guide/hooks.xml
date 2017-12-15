@@ -704,6 +704,59 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
             </para></listitem>
           </itemizedlist>
           </para>
+
+          <para>
+            If it is desired to restrict forensic logging to certain subnets, the
+            "legal-logging" boolean parameter can be specified within a user context of
+            these subnets. For example:
+<screen>
+"Dhcpv4" {
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [
+                {
+                     "pool": "192.0.2.1 - 192.0.2.200"
+                }
+            ],
+            <userinput>"user-context": {
+                "legal-logging": false
+            }</userinput>
+        }
+    ]
+}
+</screen>
+              disables legal logging for the subnet "192.0.2.0/24". If this parameter
+              is not specified, it defaults to 'true', which enables legal logging for
+              the subnet.
+          </para>
+
+          <para>
+            The following example demonstrates how to selectively disable legal logging
+            for an IPv6 subnet.
+<screen>
+"Dhcpv6": {
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            "pools": [
+                 {
+                     "pool": "2001:db8:1::1-2001:db8:1::ffff"
+                 }
+            ],
+            <userinput>"user-context": {
+                "legal-logging": false
+            }</userinput>
+        }
+    ]
+}
+</screen>
+          </para>
+
+          <para>
+            See <xref linkend="dhcp4-user-contexts"/> and <xref linkend="dhcp6-user-contexts"/>
+            to learn more about user contexts in Kea configuration.
+          </para>
         </section>
       </section>
 
