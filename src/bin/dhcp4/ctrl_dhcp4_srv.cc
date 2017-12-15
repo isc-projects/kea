@@ -19,6 +19,7 @@
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
 #include <signal.h>
+#include <sstream>
 
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -375,6 +376,64 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
+                                               ConstElementPtr args) {
+    std::ostringstream message;
+    int64_t max_period = 0;
+
+    // Parse arguments to see if the 'max-period' parameter has been specified.
+    if (args) {
+        // Arguments must be a map.
+        if (args->getType() != Element::map) {
+            message << "arguments for the 'dhcp-disable' command must be a map";
+
+        } else {
+            ConstElementPtr max_period_element = args->get("max-period");
+            // max-period is optional.
+            if (max_period_element) {
+                // It must be an integer, if specified.
+                if (max_period_element->getType() != Element::integer) {
+                    message << "'max-period' argument must be a number";
+
+                } else {
+                    // It must be positive integer.
+                    max_period = max_period_element->intValue();
+                    if (max_period <= 0) {
+                        message << "'max-period' must be positive integer";
+                    }
+
+                    // The user specified that the DHCP service should resume not
+                    // later than in max-period seconds. If the 'dhcp-enable' command
+                    // is not sent, the DHCP service will resume automatically.
+                    network_state_.delayedEnableAll(static_cast<unsigned>(max_period));
+                }
+            }
+        }
+    }
+
+    // No error occurred, so let's disable the service.
+    if (message.tellp() == 0) {
+        network_state_.disableService();
+
+        message << "DHCPv4 service disabled";
+        if (max_period > 0) {
+            message << " for " << max_period << " seconds";
+        }
+        // Success.
+        return (config::createAnswer(CONTROL_RESULT_SUCCESS, message.str()));
+    }
+
+    // Failure.
+    return (config::createAnswer(CONTROL_RESULT_ERROR, message.str()));
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
+    network_state_.enableService();
+    return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
     ElementPtr extended = Element::create(Dhcpv4Srv::getVersion(true));
     ElementPtr arguments = Element::createMap();
@@ -454,6 +513,12 @@ ControlledDhcpv4Srv::processCommand(const string& command,
 
         } else if (command == "config-test") {
             return (srv->commandConfigTestHandler(command, args));
+
+        } else if (command == "dhcp-disable") {
+            return (srv->commandDhcpDisableHandler(command, args));
+
+        } else if (command == "dhcp-enable") {
+            return (srv->commandDhcpEnableHandler(command, args));
 
         } else if (command == "version-get") {
             return (srv->commandVersionGetHandler(command, args));
@@ -619,6 +684,12 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("dhcp-enable",
+        boost::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("dhcp-disable",
+        boost::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
 
@@ -675,6 +746,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("config-set");
+        CommandMgr::instance().deregisterCommand("dhcp-disable");
+        CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
