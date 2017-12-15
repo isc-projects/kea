@@ -1,3 +1,8 @@
+1339.	[doc]		marcin
+	Updated User's Guide describing how to selectively disable
+	legal logging for a subnet.
+	(Trac #5407, git 469080abd711f8e88a5133f76f4ab31a5549a858)
+
 1338.	[func]		marcin
 	Persistent HTTP/1.1 connections and HTTP/1.0 keep-alive
 	are supported by RESTful API.
