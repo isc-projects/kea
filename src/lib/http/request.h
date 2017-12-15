@@ -232,7 +232,7 @@ public:
     /// This method is called to generate the outbound HTTP message to be sent
     /// to a server. Make sure to call @c HttpRequest::finalize prior to
     /// calling this method.
-    virtual std::string toText() const;
+    virtual std::string toString() const;
 
     /// @brief Checks if the request has been successfully finalized.
     ///

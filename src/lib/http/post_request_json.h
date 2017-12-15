@@ -57,6 +57,16 @@ public:
     /// @throw HttpRequestJsonError if an error occurred.
     data::ConstElementPtr getBodyAsJson() const;
 
+    /// @brief Sets JSON body for an outbound message.
+    ///
+    /// Note that this method copies the pointer to the body, rather than
+    /// the entire data structure. Thus, the original object should not be
+    /// modified after this method is called. If the specified pointer is
+    /// null, the empty body is set.
+    ///
+    /// @param body JSON structure to be used as a body.
+    void setBodyAsJson(const data::ConstElementPtr& body);
+
     /// @brief Retrieves a single JSON element.
     ///
     /// The element must be at top level of the JSON structure.

@@ -253,7 +253,7 @@ TEST_F(HttpRequestTest, clientRequest) {
               "Date: " + date_time.rfc1123Format() + "\r\n"
               "\r\n"
               "<html></html>",
-              request_.toText());
+              request_.toString());
 }
 
 TEST_F(HttpRequestTest, clientRequestNoBody) {
@@ -268,7 +268,7 @@ TEST_F(HttpRequestTest, clientRequestNoBody) {
     EXPECT_EQ("GET /isc/org HTTP/1.1\r\n"
               "Content-Type: text/html\r\n"
               "\r\n",
-              request_.toText());
+              request_.toString());
 }
 
 }

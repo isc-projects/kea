@@ -39,6 +39,17 @@ PostHttpRequestJson::getBodyAsJson() const {
     return (json_);
 }
 
+void
+PostHttpRequestJson::setBodyAsJson(const data::ConstElementPtr& body) {
+    if (body) {
+        context()->body_ = body->str();
+        json_ = body;
+
+    } else {
+        context()->body_.clear();
+    }
+}
+
 ConstElementPtr
 PostHttpRequestJson::getJsonElement(const std::string& element_name) const {
     try {
