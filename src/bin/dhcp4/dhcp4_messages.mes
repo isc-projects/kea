@@ -288,7 +288,7 @@ client's request and acted on it (e.g. possibly allocated a lease).
 % DHCP4_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set drop flag
 This debug message is printed when a callout installed on the
 subnet4_select hook point sets the drop flag. For this particular hook
-point, the setting of the flag instructs the server to drop the receive
+point, the setting of the flag instructs the server to drop the received
 packet. The argument specifies the client and transaction identification
 information.
 

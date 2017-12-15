@@ -64,7 +64,9 @@ to the end of this list.
    in their raw form. Unless you need to access to the raw data, it is
    usually better to install your callout on the "pkt6_receive" hook point.
 
- - <b>Next step status</b>: If any callout sets the status to SKIP, the
+ - <b>Next step status</b>: If any callout sets the status to DROP, the server
+   will drop the packet and start processing the next one.
+   If any callout sets the status to SKIP, the
    server will assume that the callout parsed the buffer and added the
    necessary option objects to the @c options_ field; the server will not
    do any parsing. If the callout sets the skip flag but does not parse
@@ -89,7 +91,7 @@ to the end of this list.
    other fields in the Pkt6 object.  For this reason, modification of the
    @c data_ field would have no effect.)
 
- - <b>Next step status</b>: If any callout sets the status to SKIP, the server will
+ - <b>Next step status</b>: If any callout sets the status to SKIP (or DROP), the server will
    drop the packet and start processing the next one.  The reason for the drop
    will be logged if logging is set to the appropriate debug level.
 
@@ -107,7 +109,9 @@ to the end of this list.
    configured being provided as "subnet6collection". The list itself must
    not be modified.
 
- - <b>Next step status</b>: If any callout installed on "subnet6_select"
+ - <b>Next step status</b>: If any callout installed on "subnet6_select" sets
+   the status to DROP, the server will drop the packet and start processing
+   the next one. If any callout installed on "subnet6_select"
    sets the status to SKIP, the server will not select any subnet. Packet processing
    will continue, but will be severely limited.
 
@@ -258,7 +262,7 @@ to the end of this list.
    finish execution.
 
  - <b>Next step status</b>: If any callout installed on "lease6_release"
-   sets the status to SKIP, the server will not delete the lease, which will
+   sets the status to SKIP (or DROP), the server will not delete the lease, which will
    remain in the database until it expires. However, the server will send out
    the response back to the client as if it did.
 
@@ -283,8 +287,8 @@ to the end of this list.
    and option objects into the @c buffer_out_ field and will skip packing part.
    Note that if the callout sets skip flag, but did not prepare the
    output buffer, the server will send a zero sized message that will be
-   ignored by the client. If you want to drop the packet, please see
-   skip flag in the "buffer6_send" hook point.
+   ignored by the client. If any callout sets the status to DROP,
+   the server will drop the prepared response.
 
 @subsection dhcpv6HooksBuffer6Send buffer6_send
 
@@ -302,7 +306,7 @@ to the end of this list.
    to modify that data, it will probably be found easier to modify the
    option objects in a callout attached to the "pkt6_send" hook).
 
- - <b>Next step status</b>: If any callout sets the status to SKIP, the server
+ - <b>Next step status</b>: If any callout sets the status to SKIP (or DROP), the server
    will drop this response packet. However, the original request packet
    from a client has been processed, so server's state has most likely changed
    (e.g. lease was allocated). Setting this flag merely stops the change
