@@ -825,6 +825,7 @@ Dhcpv4Srv::run_one() {
         LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
                   DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
+        return;
     } else {
         processPacket(query, rsp);
     }

@@ -628,19 +628,23 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    EXPECT_FALSE(srv_.selectSubnet(sol));
+    bool drop = false;
+    EXPECT_FALSE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Let's add the packet to bar class and try again.
     sol->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv_.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Let's add it to matching class.
     sol->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(sol));
+    EXPECT_TRUE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 }
 
 // Tests whether a packet with custom vendor-class (not erouter or docsis)
@@ -733,12 +737,15 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     // subnet[0], even though the relay-ip matches. It should be accepted in
     // subnet[1], because the subnet matches and there are no class
     // requirements.
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
+    bool drop = false;
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     sol->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 }
 
 // This test checks that it is possible to specify static reservations for
