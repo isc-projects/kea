@@ -1,5 +1,5 @@
 // This is an example configuration file for the DHCPv4 server in Kea.
-// It uses embedded (i.e., which will be included in configuration objets
+// It uses embedded (i.e., which will be included in configuration objects
 // and not stripped by at lexical analysis) comments.
 
 { "Dhcp4":

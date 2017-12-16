@@ -813,7 +813,7 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
 
     // Create a host reservation.
     HostPtr host = initializeHost4("192.0.2.1", Host::IDENT_DUID);
-    ASSERT_TRUE(host); // Make sure the host is generate properly.
+    ASSERT_TRUE(host); // Make sure the host is generated properly.
     host->setContext(user_context);
     SubnetID subnet = host->getIPv4SubnetID();
 
