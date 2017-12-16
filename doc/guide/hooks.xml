@@ -81,7 +81,7 @@
         a library.  The change was made in Kea 1.0 to facilitate the
         specification of library-specific parameters, a capability
         available in Kea 1.1.0 onwards. Libraries should allow a parameter
-        entry where to put documentation as it is done for many configuration
+        entry where to put comments as it is done for many configuration
         scopes with comment and user context.
       </para></note>
 
@@ -2547,8 +2547,8 @@ both the command and the response.
       </para>
       <para>
         Usually when an entry is defined multiple times in the same scope
-        the last value is used overwriting previous values (silently:
-        this behavior should be fixed soon). With user contexts values
+        the last value is used overwriting previous values (this
+        behavior will be fixed some time in the future). With user contexts values
         are combined at the first level, for instance multiple user context
         with a "comment" entry gives an entry with the list of accumulated
         values.
@@ -2561,16 +2561,15 @@ both the command and the response.
         operations for example.
       </para>
       <para>
-        The parser translates "comment" entries at locations user context
-        are valid into a user context with a "comment" entry. The pretty
-        print of a configuration does the opposite operation and puts
-        "comment" entries at the beginning of maps as it seems to be the
-        common usage.
+        If user context is supported in a given context, the parser translates
+        "comment" entries into user context with a "comment" entry. The pretty
+        print of a configuration does the opposite operation and puts "comment"
+        entries at the beginning of maps as it seems to be the common usage.
       </para>
       <para>
         As of Kea 1.3, the structures that allow user contexts are
         pools of all types (addresses and prefixes) and subnets. Kea
-        1.4 extended to the global scope, interfaces config,
+        1.4 extended user context support to the global scope, interfaces config,
         shared networks, subnets, client classes, option datas and definitions,
         host reservations, control socket, dhcp ddns, loggers and server id.
         These are supported in both DHCPv4 and DHCPv6 at the exception

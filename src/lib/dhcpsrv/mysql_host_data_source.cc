@@ -630,7 +630,7 @@ public:
                 ConstElementPtr ctx = Element::fromJSON(user_context);
                 if (!ctx || (ctx->getType() != Element::map)) {
                     isc_throw(BadValue, "user context '" << user_context
-                              << "' is no a JSON map");
+                              << "' is not a JSON map");
                 }
                 h->setContext(ctx);
             } catch (const isc::data::JSONError& ex) {

@@ -13,7 +13,11 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief base class for user context
+/// @brief Base class for user context
+///
+/// Many configuration structures allow attaching and storing arbitrary
+/// user data that we call user context. Each of those configuration
+/// structures need to derive from this class to handle user context.
 class UserContext {
 
 public:
