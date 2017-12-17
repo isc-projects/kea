@@ -2546,14 +2546,6 @@ both the command and the response.
       and makes it available for the hook libraries.
       </para>
       <para>
-        Usually when an entry is defined multiple times in the same scope
-        the last value is used overwriting previous values (this
-        behavior will be fixed some time in the future). With user contexts values
-        are combined at the first level, for instance multiple user context
-        with a "comment" entry gives an entry with the list of accumulated
-        values.
-      </para>
-      <para>
         Another use case for user contexts may be storing comments and other
         information that will be retained by Kea. Regular comments are discarded
         when configuration is loaded, but user contexts are retained. This is

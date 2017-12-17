@@ -41,13 +41,7 @@
        {
           "name": "none"
        },
-       // Two comments (or user contexts) in the same scope are combined
-       {
-          "comment": "first comment",
-          "comment": "second comment",
-          "name": "two"
-       },
-       // Of course this applies to a comment and a user context too
+       // A comment and a user-context can be specified
        {
           "comment": "a comment",
           "name": "both",
@@ -59,7 +53,6 @@
 
    // In control socket (more for the agent)
    "control-socket": {
-       "comment": "REST API",
        "socket-type": "unix",
        "socket-name": "/tmp/kea4-ctrl-socket",
        "user-context": { "comment": "Indirect comment" }
