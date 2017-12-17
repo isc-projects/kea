@@ -1441,7 +1441,7 @@ namespace isc { namespace dhcp {
     {
       yyeof_ = 0,
       yylast_ = 931,     ///< Last index in yytable_.
-      yynnts_ = 354,  ///< Number of nonterminal symbols.
+      yynnts_ = 351,  ///< Number of nonterminal symbols.
       yyfinal_ = 30, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1543,8 +1543,8 @@ namespace isc { namespace dhcp {
       case 221: // db_type
       case 297: // hr_mode
       case 430: // duid_type
-      case 466: // ncr_protocol_value
-      case 474: // replace_client_name_value
+      case 463: // ncr_protocol_value
+      case 471: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -1586,8 +1586,8 @@ namespace isc { namespace dhcp {
       case 221: // db_type
       case 297: // hr_mode
       case 430: // duid_type
-      case 466: // ncr_protocol_value
-      case 474: // replace_client_name_value
+      case 463: // ncr_protocol_value
+      case 471: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
@@ -1688,8 +1688,8 @@ namespace isc { namespace dhcp {
       case 221: // db_type
       case 297: // hr_mode
       case 430: // duid_type
-      case 466: // ncr_protocol_value
-      case 474: // replace_client_name_value
+      case 463: // ncr_protocol_value
+      case 471: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1737,8 +1737,8 @@ namespace isc { namespace dhcp {
       case 221: // db_type
       case 297: // hr_mode
       case 430: // duid_type
-      case 466: // ncr_protocol_value
-      case 474: // replace_client_name_value
+      case 463: // ncr_protocol_value
+      case 471: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
