@@ -209,99 +209,93 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
-    // Configuration 7: comments everywhere
-    "{\n"
-    "\"comment\": \"A DHCPv6 server\",\n"
-    "\"server-id\": {\n"
-    "    \"comment\": \"DHCPv6 specific\",\n"
-    "    \"type\": \"LL\"\n"
-    "},\n"
-    "\"interfaces-config\": {\n"
-    "    \"comment\": \"Use wildcard\",\n"
-    "    \"interfaces\": [ \"*\" ] },\n"
-    "\"option-def\": [ {\n"
-    "    \"comment\": \"An option definition\",\n"
-    "    \"name\": \"foo\",\n"
-    "    \"code\": 100,\n"
-    "    \"type\": \"ipv6-address\",\n"
-    "    \"space\": \"isc\"\n"
-    " } ],\n"
-    "\"option-data\": [ {\n"
-    "    \"comment\": \"Set option value\",\n"
-    "    \"name\": \"subscriber-id\",\n"
-    "    \"data\": \"ABCDEF0105\",\n"
-    "        \"csv-format\": false\n"
-    " } ],\n"
-    "\"client-classes\": [\n"
-    "    {\n"
-    "       \"comment\": \"match all\",\n"
-    "       \"name\": \"all\",\n"
-    "       \"test\": \"'' == ''\"\n"
-    "    },\n"
-    "    {\n"
-    "       \"name\": \"none\"\n"
-    "    },\n"
-    "    {\n"
-    "       \"comment\": \"first comment\",\n"
-    "       \"comment\": \"second comment\",\n"
-    "       \"name\": \"two\"\n"
-    "    },\n"
-    "    {\n"
-    "       \"comment\": \"a comment\",\n"
-    "       \"name\": \"both\",\n"
-    "       \"user-context\": {\n"
-    "           \"version\": 1\n"
-    "       }\n"
-    "    }\n"
-    "    ],\n"
-    "\"control-socket\": {\n"
-    "    \"comment\": \"REST API\",\n"
-    "    \"socket-type\": \"unix\",\n"
-    "    \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
-    "    \"user-context\": { \"comment\": \"Indirect comment\" }\n"
-    "},\n"
-    "\"shared-networks\": [ {\n"
-    "    \"comment\": \"A shared network\"\n,"
-    "    \"name\": \"foo\"\n,"
-    "    \"subnet6\": [\n"
-    "    { \n"
-    "        \"comment\": \"A subnet\"\n,"
-    "        \"subnet\": \"2001:db1::/48\",\n"
-    "        \"id\": 100,\n"
-    "        \"pools\": [\n"
-    "        {\n"
-    "             \"comment\": \"A pool\",\n"
-    "             \"pool\": \"2001:db1::/64\"\n"
-    "        }\n"
-    "        ],\n"
-    "        \"pd-pools\": [\n"
-    "        {\n"
-    "             \"comment\": \"A prefix pool\",\n"
-    "             \"prefix\": \"2001:db2::\",\n"
-    "             \"prefix-len\": 48,\n"
-    "             \"delegated-len\": 64\n"
-    "        }\n"
-    "        ],\n"
-    "        \"reservations\": [\n"
-    "        {\n"
-    "             \"comment\": \"A host reservation\",\n"
-    "             \"hw-address\": \"AA:BB:CC:DD:EE:FF\",\n"
-    "             \"hostname\": \"foo.example.com\",\n"
-    "             \"option-data\": [ {\n"
-    "                 \"comment\": \"An option in a reservation\",\n"
-    "                 \"name\": \"domain-search\",\n"
-    "                 \"data\": \"example.com\"\n"
-    "             } ]\n"
-    "        }\n"
-    "        ]\n"
-    "    }\n"
-    "    ]\n"
-    " } ],\n"
-    "\"dhcp-ddns\": {\n"
-    "    \"comment\": \"No dynamic DNS\",\n"
-    "    \"enable-updates\": false\n"
-    "}\n"
-    "}\n"
+    // Last configuration for comments
+    "{"
+    "    \"comment\": \"A DHCPv6 server\","
+    "    \"server-id\": {"
+    "        \"comment\": \"DHCPv6 specific\","
+    "        \"type\": \"LL\""
+    "    },"
+    "    \"interfaces-config\": {"
+    "        \"comment\": \"Use wildcard\","
+    "        \"interfaces\": [ \"*\" ] },"
+    "    \"option-def\": [ {"
+    "        \"comment\": \"An option definition\","
+    "        \"name\": \"foo\","
+    "        \"code\": 100,"
+    "        \"type\": \"ipv6-address\","
+    "        \"space\": \"isc\""
+    "     } ],"
+    "    \"option-data\": [ {"
+    "        \"comment\": \"Set option value\","
+    "        \"name\": \"subscriber-id\","
+    "        \"data\": \"ABCDEF0105\","
+    "            \"csv-format\": false"
+    "     } ],"
+    "    \"client-classes\": ["
+    "        {"
+    "           \"comment\": \"match all\","
+    "           \"name\": \"all\","
+    "           \"test\": \"'' == ''\""
+    "        },"
+    "        {"
+    "           \"name\": \"none\""
+    "        },"
+    "        {"
+    "           \"comment\": \"a comment\","
+    "           \"name\": \"both\","
+    "           \"user-context\": {"
+    "               \"version\": 1"
+    "           }"
+    "        }"
+    "        ],"
+    "    \"control-socket\": {"
+    "        \"socket-type\": \"unix\","
+    "        \"socket-name\": \"/tmp/kea6-ctrl-socket\","
+    "        \"user-context\": { \"comment\": \"Indirect comment\" }"
+    "    },"
+    "    \"shared-networks\": [ {"
+    "        \"comment\": \"A shared network\","
+    "        \"name\": \"foo\","
+    "        \"subnet6\": ["
+    "        { "
+    "            \"comment\": \"A subnet\","
+    "            \"subnet\": \"2001:db1::/48\","
+    "            \"id\": 100,"
+    "            \"pools\": ["
+    "            {"
+    "                 \"comment\": \"A pool\","
+    "                 \"pool\": \"2001:db1::/64\""
+    "            }"
+    "            ],"
+    "            \"pd-pools\": ["
+    "            {"
+    "                 \"comment\": \"A prefix pool\","
+    "                 \"prefix\": \"2001:db2::\","
+    "                 \"prefix-len\": 48,"
+    "                 \"delegated-len\": 64"
+    "            }"
+    "            ],"
+    "            \"reservations\": ["
+    "            {"
+    "                 \"comment\": \"A host reservation\","
+    "                 \"hw-address\": \"AA:BB:CC:DD:EE:FF\","
+    "                 \"hostname\": \"foo.example.com\","
+    "                 \"option-data\": [ {"
+    "                     \"comment\": \"An option in a reservation\","
+    "                     \"name\": \"domain-search\","
+    "                     \"data\": \"example.com\""
+    "                 } ]"
+    "            }"
+    "            ]"
+    "        }"
+    "        ]"
+    "     } ],"
+    "    \"dhcp-ddns\": {"
+    "        \"comment\": \"No dynamic DNS\","
+    "        \"enable-updates\": false"
+    "    }"
+    "}"
 };
 
 std::string specfile(const std::string& name) {
@@ -908,7 +902,7 @@ public:
     }
 
     int rcode_; ///< Return code (see @ref isc::config::parseAnswer)
-    Dhcpv6Srv srv_; ///< Instance of the ControlledDhcp6Srv used during tests
+    ControlledDhcpv6Srv srv_; ///< Instance of the ControlledDhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
     string valid_iface_; ///< Valid network interface name (present in system)
     string bogus_iface_; ///< invalid network interface name (not in system)
@@ -6147,8 +6141,9 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp6ParserTest, comments) {
 
-    extractConfig(PARSER_CONFIGS[7]);
-    configure(PARSER_CONFIGS[7], CONTROL_RESULT_SUCCESS, "");
+    string config = PARSER_CONFIGS[7];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
 
     // Check global user context.
     ConstElementPtr ctx = CfgMgr::instance().getStagingCfg()->getContext();
@@ -6215,7 +6210,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dict);
-    EXPECT_EQ(4, dict->getClasses()->size());
+    EXPECT_EQ(3, dict->getClasses()->size());
     ClientClassDefPtr cclass = dict->findClass("all");
     ASSERT_TRUE(cclass);
     EXPECT_EQ("all", cclass->getName());
@@ -6234,17 +6229,6 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("none", cclass->getName());
     EXPECT_EQ("", cclass->getTest());
     EXPECT_FALSE(cclass->getContext());
-
-    // The 'two' class has two comments.
-    cclass = dict->findClass("two");
-    EXPECT_EQ("two", cclass->getName());
-    EXPECT_EQ("", cclass->getTest());
-    ctx_class = cclass->getContext();
-    ASSERT_TRUE(ctx_class);
-    ASSERT_EQ(1, ctx_class->size());
-    ASSERT_TRUE(ctx_class->get("comment"));
-    ASSERT_EQ(Element::list, cclass->getContext()->get("comment")->getType());
-    ASSERT_EQ(2, cclass->getContext()->get("comment")->size());
 
     // The 'both' class has a user context and a comment.
     cclass = dict->findClass("both");
@@ -6268,10 +6252,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("\"/tmp/kea6-ctrl-socket\"", socket->get("socket-name")->str());
 
     // Check control socket comment and user context.
-    ConstElementPtr ctx_socket = socket->get("comment");
-    ASSERT_TRUE(ctx_socket);
-    EXPECT_EQ("\"REST API\"", ctx_socket->str());
-    ctx_socket = socket->get("user-context");
+    ConstElementPtr ctx_socket = socket->get("user-context");
     ASSERT_EQ(1, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
