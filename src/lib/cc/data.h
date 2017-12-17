@@ -321,12 +321,6 @@ public:
     /// @param element The ElementPtr to set at the given key.
     virtual void set(const std::string& name, ConstElementPtr element);
 
-    /// Sets the ElementPtr at the given key, if there was a previous
-    /// value it is combined with it
-    /// @param name The key of the Element to set
-    /// @param element The ElementPtr to set at the given key.
-    virtual void combine_set(const std::string& name, ConstElementPtr element);
-
     /// Remove the ElementPtr at the given key
     /// @param name The key of the Element to remove
     virtual void remove(const std::string& name);
@@ -673,7 +667,6 @@ public:
     }
     using Element::set;
     void set(const std::string& key, ConstElementPtr value);
-    void combine_set(const std::string& key, ConstElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) const {
@@ -738,23 +731,6 @@ ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 /// to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
-
-/// @brief Combines the data from other into element.
-/// (on the first level). Both elements must be
-/// MapElements.
-/// Every string,value pair in other is copied into element
-/// (the ElementPtr of value is copied, this is not a new object)
-/// When there is already a value for a key in element if both are lists
-/// the other list is appended to the element list, if only one is a
-/// list the not list value is added to the list. If none is a list
-/// a list is created, the element value is added and the other value
-/// is added.
-///
-/// @param element target map
-/// @param other the map to combine with element
-/// @throw raises a TypeError if either ElementPtr is not a MapElement
-/// @throw raises a BadValue is a null pointer occurs.
-void combine(ElementPtr element, ConstElementPtr other);
 
 /// @brief Copy the data up to a nesting level.
 ///

@@ -103,7 +103,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     ASSERT_TRUE(d2_client_config);
 
     // Add user context
-    std::string user_context = "{ \"comment\": \"foo\" }";
+    std::string user_context = "{ \"comment\": \"bar\", \"foo\": 1 }";
     EXPECT_FALSE(d2_client_config->getContext());
     d2_client_config->setContext(Element::fromJSON(user_context));
 
@@ -134,7 +134,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
 
     // Verify what toElement returns.
     std::string expected = "{\n"
-        "\"comment\": \"foo\",\n"
+        "\"comment\": \"bar\",\n"
         "\"enable-updates\": true,\n"
         "\"server-ip\": \"127.0.0.1\",\n"
         "\"server-port\": 477,\n"
@@ -148,7 +148,8 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
         "\"override-client-update\": true,\n"
         "\"replace-client-name\": \"when-present\",\n"
         "\"generated-prefix\": \"the_prefix\",\n"
-        "\"qualifying-suffix\": \"the.suffix.\"\n"
+        "\"qualifying-suffix\": \"the.suffix.\",\n"
+        "\"user-context\": { \"foo\": 1 }\n"
         "}\n";
     runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 

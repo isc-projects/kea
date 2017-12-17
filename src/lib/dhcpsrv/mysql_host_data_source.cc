@@ -1803,7 +1803,6 @@ public:
             }
 
             // dhcp_client_class: VARCHAR(128) NULL
-            /// @todo Assign actual value to client class string.
             client_class_len_ = client_class_.size();
             bind_[7].buffer_type = MYSQL_TYPE_STRING;
             bind_[7].buffer = const_cast<char*>(client_class_.c_str());

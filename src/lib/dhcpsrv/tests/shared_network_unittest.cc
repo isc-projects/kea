@@ -195,7 +195,8 @@ TEST(SharedNetwork4Test, unparse) {
     network->setValid(200);
     network->setMatchClientId(false);
 
-    data::ElementPtr ctx = data::Element::fromJSON("{ \"comment\": \"foo\" }");
+    std::string uc = "{ \"comment\": \"bar\", \"foo\": 1}";
+    data::ElementPtr ctx = data::Element::fromJSON(uc);
     network->setContext(ctx);
 
     // Add several subnets.
@@ -207,7 +208,7 @@ TEST(SharedNetwork4Test, unparse) {
     network->add(subnet2);
 
     std::string expected = "{\n"
-        "    \"comment\": \"foo\",\n"
+        "    \"comment\": \"bar\",\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": false,\n"
         "    \"name\": \"frog\",\n"
@@ -260,6 +261,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"valid-lifetime\": 30\n"
         "      }\n"
         "    ],\n"
+        "    \"user-context\": { \"foo\": 1 },\n"
         "    \"valid-lifetime\": 200\n"
         "}\n";
 

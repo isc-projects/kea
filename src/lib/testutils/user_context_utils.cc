@@ -78,9 +78,6 @@ EP moveComments1(EP element) {
         } else if (it->first == "user-context") {
             // Do not traverse user-context entries
             result->set("user-context", it->second);
-        } else if (it->first == "control-socket") {
-            // Do not traverse control-socke entries
-            result->set("control-socket", it->second);
         } else {
             // Not comment or user-context
             try {
@@ -102,7 +99,12 @@ EP moveComments1(EP element) {
         ConstElementPtr comment = element->get("comment");
         ElementPtr moved = Element::createMap();
         moved->set("comment", comment);
-        result->combine_set("user-context", moved);
+        ConstElementPtr previous = element->get("user-context");
+        // If there is already a user context merge it
+        if (previous) {
+                merge(moved, previous);
+        }
+        result->set("user-context", moved);
     }
 
     return (result);
@@ -136,7 +138,7 @@ namespace {
 ///
 /// @tparam EP ElementPtr or ConstElementPtr (compiler will infer which one)
 /// @param element the element to traverse
-/// @return a modified copy where comment entries were moved to user-context
+/// @return a modified copy where comment entries were moved from user-context
 /// @throw UnModified with the unmodified value
 template<typename EP>
 EP extractComments1(EP element) {
@@ -174,9 +176,6 @@ EP extractComments1(EP element) {
         if (it->first == "comment") {
             // Do not traverse comment entries
             result->set("comment", it->second);
-        } else if (it->first == "control-socket") {
-            // Do not traverse control-socke entries
-            result->set("control-socket", it->second);
         } else if (it->first == "user-context") {
             if (it->second->contains("comment")) {
                 // Note there is a  entry to move
@@ -217,7 +216,7 @@ EP extractComments1(EP element) {
         if (user_context->size() > 0) {
             result->set("user-context", user_context);
         }
-        result->combine_set("comment", copy(comment, 0));
+        result->set("comment", comment);
     }
 
     return (result);
