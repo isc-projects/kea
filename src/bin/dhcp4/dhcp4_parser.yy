@@ -1360,16 +1360,34 @@ pool_entry: POOL {
 user_context: USER_CONTEXT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON map_value {
-    ctx.stack_.back()->combine_set("user-context", $4);
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context = $4;
+    ConstElementPtr old = parent->get("user-context");
+    if (old) {
+        if ((old->size() != 1) || !old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        user_context->set("comment", old->get("comment"));
+    }
+    parent->set("user-context", user_context);
     ctx.leave();
 };
 
 comment: COMMENT {
     ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ElementPtr e(new MapElement(ctx.loc2pos(@1)));
-    e->set("comment", $4);
-    ctx.stack_.back()->combine_set("user-context", e);
+} COLON STRING {
+    ElementPtr parent = ctx.stack_.back();
+    ConstElementPtr old = parent->get("user-context");
+    if (old) {
+        old->set("comment", $4);
+    } else {
+        ElementPtr e(new MapElement(ctx.loc2pos(@1)));
+        e->set("comment", $4);
+        top->set("user-context", e);
+    }
     ctx.leave();
 };
 
@@ -1633,8 +1651,8 @@ control_socket_params: control_socket_param
 
 control_socket_param: control_socket_type
                     | control_socket_name
-                    | control_socket_user_context
-                    | control_socket_comment
+                    | user_context
+                    | comment
                     | unknown_map_entry
                     ;
 
@@ -1651,15 +1669,6 @@ control_socket_name: SOCKET_NAME {
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("socket-name", name);
-    ctx.leave();
-};
-
-control_socket_user_context: user_context;
-
-control_socket_comment: COMMENT {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON value {
-    ctx.stack_.back()->combine_set("comment", $4);
     ctx.leave();
 };
 
