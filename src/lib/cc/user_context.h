@@ -17,18 +17,9 @@ namespace dhcp {
 ///
 /// Many configuration structures allow attaching and storing arbitrary
 /// user data that we call user context. Each of those configuration
-/// structures need to derive from this class to handle user context.
-class UserContext {
-
-public:
-    /// @brief constructor
-    UserContext() {
-    }
-
-    /// @brief destructor
-    ~UserContext() {
-    }
-
+/// structures need to derive from this class or include this class
+/// to handle user context.
+struct UserContext {
     /// @brief Returns const pointer to the user context.
     data::ConstElementPtr getContext() const {
         return (user_context_);
