@@ -524,6 +524,12 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
         (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
     WHERE (dhcp6_subnet_id IS NOT NULL AND dhcp6_subnet_id <> 0);
 
+-- Set 3.2 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '2';
+
+-- Set 4.0 schema version.
+
 -- Add a column holding hosts for user context.
 ALTER TABLE hosts ADD COLUMN user_context TEXT;
 
@@ -531,10 +537,9 @@ ALTER TABLE hosts ADD COLUMN user_context TEXT;
 ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT;
 ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT;
 
--- Set 3.2 schema version.
+-- Set 4.0 schema version.
 UPDATE schema_version
-    SET version = '3', minor = '2';
-
+    SET version = '4', minor = '0';
 
 -- Commit the script transaction.
 COMMIT;

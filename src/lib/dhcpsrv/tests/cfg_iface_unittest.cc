@@ -369,14 +369,15 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg4.use(AF_INET, "*"));
     EXPECT_NO_THROW(cfg4.use(AF_INET, "eth0"));
     EXPECT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
-    std::string comment = "{ \"comment\": \"foo\" }";
+    std::string comment = "{ \"comment\": \"foo\", \"bar\": 1 }";
     EXPECT_NO_THROW(cfg4.setContext(Element::fromJSON(comment)));
     
     // Check unparse
     std::string expected =
         "{ \"comment\": \"foo\", "
         "\"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
-        "\"re-detect\": false }";
+        "\"re-detect\": false, "
+        "\"user-context\": { \"bar\": 1 } }";
     runToElementTest<CfgIface>(expected, cfg4);
 
     // Now check IPv6
@@ -384,13 +385,14 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "*"));
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
-    comment = "{ \"comment\": \"bar\" }";
+    comment = "{ \"comment\": \"bar\", \"foo\": 2 }";
     EXPECT_NO_THROW(cfg6.setContext(Element::fromJSON(comment)));
 
     expected =
         "{ \"comment\": \"bar\", "
         "\"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
-        "\"re-detect\": false }";
+        "\"re-detect\": false, "
+        "\"user-context\": { \"foo\": 2 } }";
     runToElementTest<CfgIface>(expected, cfg6);
 }
 

@@ -387,7 +387,8 @@ TEST(ClientClassDef, unparseDef) {
     std::string test = "option[12].text == 'foo'";
     cclass->setTest(test);
     std::string comment = "bar";
-    std::string user_context = "{ \"comment\": \"" + comment + "\" }";
+    std::string user_context = "{ \"comment\": \"" + comment + "\", ";
+    user_context += "\"bar\": 1 }";
     cclass->setContext(isc::data::Element::fromJSON(user_context));
     std::string next_server = "1.2.3.4";
     cclass->setNextServer(IOAddress(next_server));
@@ -404,7 +405,8 @@ TEST(ClientClassDef, unparseDef) {
         "\"next-server\": \"" + next_server + "\",\n"
         "\"server-hostname\": \"" + sname + "\",\n"
         "\"boot-file-name\": \"" + filename + "\",\n"
-        "\"option-data\": [ ] }\n";
+        "\"option-data\": [ ],\n"
+        "\"user-context\": { \"bar\": 1 } }\n";
     runToElementTest<ClientClassDef>(expected, *cclass);
 }
 

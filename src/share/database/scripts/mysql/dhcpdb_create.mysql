@@ -498,6 +498,11 @@ END
 $$
 DELIMITER ;
 
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '1';
+# This line concludes database upgrade to version 5.1.
+
 # Add user context into table holding hosts
 ALTER TABLE hosts ADD COLUMN user_context TEXT NULL;
 
@@ -507,8 +512,8 @@ ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT NULL;
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '5', minor = '1';
-# This line concludes database upgrade to version 5.1.
+SET version = '6', minor = '0';
+# This line concludes database upgrade to version 6.0.
 
 # Notes:
 #

@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "5.1" ]; then
+    printf "This script upgrades 5.1 to 6.0. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Add user context into table holding hosts
+ALTER TABLE hosts ADD COLUMN user_context TEXT NULL;
+
+# Add user contexts into tables holding DHCP options
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT NULL;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT NULL;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '6', minor = '0';
+# This line concludes database upgrade to version 6.0.
+
+EOF
+
+RESULT=$?
+
+exit $?

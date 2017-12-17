@@ -257,7 +257,7 @@ TEST(CfgOptionDefTest, unparse) {
     cfg.add(OptionDefinitionPtr(new
         OptionDefinition("option-baz", 6, "uint16", "dns")), "isc");
     OptionDefinitionPtr rec(new OptionDefinition("option-rec", 6, "record"));
-    std::string json = "{ \"comment\": \"foo\" }";
+    std::string json = "{ \"comment\": \"foo\", \"bar\": 1 }";
     rec->setContext(data::Element::fromJSON(json));
     rec->addRecordField("uint16");
     rec->addRecordField("uint16");
@@ -281,7 +281,8 @@ TEST(CfgOptionDefTest, unparse) {
         "    \"array\": false,\n"
         "    \"record-types\": \"uint16, uint16\",\n"
         "    \"encapsulate\": \"\",\n"
-        "    \"space\": \"dns\"\n"
+        "    \"space\": \"dns\",\n"
+        "    \"user-context\": \"bar\": 1 }\n"
         "},{\n"
         "    \"name\": \"option-foo\",\n"
         "    \"code\": 5,\n"
