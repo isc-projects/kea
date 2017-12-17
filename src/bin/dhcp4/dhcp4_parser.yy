@@ -1363,13 +1363,17 @@ user_context: USER_CONTEXT {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = $4;
     ConstElementPtr old = parent->get("user-context");
+
+    // Handle already existing user context
     if (old) {
+        // Check if it was a comment or a duplicate
         if ((old->size() != 1) || !old->contains("comment")) {
             std::stringstream msg;
             msg << "duplicate user-context entries (previous at "
                 << old->getPosition().str() << ")";
             error(@1, msg.str());
         }
+        // Merge the comment
         user_context->set("comment", old->get("comment"));
     }
     parent->set("user-context", user_context);
@@ -1380,13 +1384,22 @@ comment: COMMENT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr parent = ctx.stack_.back();
+    ElementPtr e(new MapElement(ctx.loc2pos(@1)));
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    e->set("comment", s);
+
+    // Handle already existing user context
     ConstElementPtr old = parent->get("user-context");
     if (old) {
-        old->set("comment", $4);
-    } else {
-        ElementPtr e(new MapElement(ctx.loc2pos(@1)));
-        e->set("comment", $4);
-        top->set("user-context", e);
+        // Check for duplicate comment
+        if (old->contains("comment") {
+            std::stringstream msg;
+            msg << "duplicate user-context/comment entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the user context in the comment
+        merge(e, old);
     }
     ctx.leave();
 };
