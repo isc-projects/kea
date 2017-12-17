@@ -2340,13 +2340,15 @@ namespace isc { namespace dhcp {
 #line 1381 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr parent = ctx.stack_.back();
+    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > ()));
     ConstElementPtr old = parent->get("user-context");
     if (old) {
-        old->set("comment", yystack_[0].value.as< std::string > ());
+      ElementPtr mutable_old = boost::const_pointer_cast<Element>(old);
+      mutable_old->set("comment", s);
     } else {
         ElementPtr e(new MapElement(ctx.loc2pos(yystack_[3].location)));
-        e->set("comment", yystack_[0].value.as< std::string > ());
-        top->set("user-context", e);
+        e->set("comment", s);
+        parent->set("user-context", e);
     }
     ctx.leave();
 }
