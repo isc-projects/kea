@@ -190,7 +190,7 @@ TEST_F(HostTest, getIdentifier) {
 // This test verifies that it is possible to create a Host object
 // using hardware address in the textual format.
 TEST_F(HostTest, createFromHWAddrString) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
@@ -229,7 +229,7 @@ TEST_F(HostTest, createFromHWAddrString) {
 // This test verifies that it is possible to create Host object using
 // a DUID in the textual format.
 TEST_F(HostTest, createFromDUIDString) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("a1:b2:c3:d4:e5:06", "duid",
                                         SubnetID(10), SubnetID(20),
                                         IOAddress("192.0.2.5"),
@@ -263,7 +263,7 @@ TEST_F(HostTest, createFromDUIDString) {
 // This test verifies that it is possible to create Host object using
 // hardware address in the binary format.
 TEST_F(HostTest, createFromHWAddrBinary) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Prepare the hardware address in binary format.
     const uint8_t hwaddr_data[] = {
         0xaa, 0xab, 0xca, 0xda, 0xbb, 0xee
@@ -299,7 +299,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
 // This test verifies that it is possible to create a Host object using
 // DUID in the binary format.
 TEST_F(HostTest, createFromDuidBinary) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Prepare DUID binary.
     const uint8_t duid_data[] = {
         1, 2, 3, 4, 5, 6
@@ -327,7 +327,7 @@ TEST_F(HostTest, createFromDuidBinary) {
 // This test verifies that it is possible create Host instance using all
 // supported identifiers in a binary format.
 TEST_F(HostTest, createFromIdentifierBinary) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Iterate over all supported identifier types.
     for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
@@ -356,7 +356,7 @@ TEST_F(HostTest, createFromIdentifierBinary) {
 // This test verifies that it is possible to create Host instance using
 // all supported identifiers in hexadecimal format.
 TEST_F(HostTest, createFromIdentifierHex) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Iterate over all supported identifiers.
     for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
@@ -401,7 +401,7 @@ TEST_F(HostTest, createFromIdentifierHex) {
 // This test verifies that it is possible to create Host instance using
 // identifiers specified as text in quotes.
 TEST_F(HostTest, createFromIdentifierString) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // It is not allowed to specify HW address or DUID as a string in quotes.
     for (unsigned int i = 2; i < identifierTypeUpperBound(); ++i) {
         const Host::IdentifierType type = static_cast<Host::IdentifierType>(i);
@@ -446,7 +446,7 @@ TEST_F(HostTest, createFromIdentifierString) {
 // using setIdentifier method with an identifier specified in
 // hexadecimal format.
 TEST_F(HostTest, setIdentifierHex) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Iterate over all supported identifiers.
     for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
 
@@ -532,7 +532,7 @@ TEST_F(HostTest, setIdentifierHex) {
 // using setIdentifier method with an identifier specified in binary
 // format.
 TEST_F(HostTest, setIdentifierBinary) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Iterate over all supported identifier types.
     for (unsigned int i = 0; i < identifierTypeUpperBound(); ++i) {
 
@@ -588,7 +588,7 @@ TEST_F(HostTest, setIdentifierBinary) {
 // This test verifies that the IPv6 reservations of a different type can
 // be added for the host.
 TEST_F(HostTest, addReservations) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"))));
@@ -646,7 +646,7 @@ TEST_F(HostTest, addReservations) {
 // This test checks that various modifiers may be used to replace the current
 // values of the Host class.
 TEST_F(HostTest, setValues) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
@@ -697,7 +697,7 @@ TEST_F(HostTest, setValues) {
 
 // Test that Host constructors initialize client classes from string.
 TEST_F(HostTest, clientClassesFromConstructor) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     // Prepare the hardware address in binary format.
     const uint8_t hwaddr_data[] = {
         0xaa, 0xab, 0xca, 0xda, 0xbb, 0xee
@@ -738,7 +738,7 @@ TEST_F(HostTest, clientClassesFromConstructor) {
 
 // Test that new client classes can be added for the Host.
 TEST_F(HostTest, addClientClasses) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"))));
@@ -925,7 +925,7 @@ TEST_F(HostTest, getIdentifierName) {
 // This test checks that Host object is correctly described in the
 // textual format using the toText method.
 TEST_F(HostTest, toText) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
@@ -1012,7 +1012,7 @@ TEST_F(HostTest, toText) {
 
 // Test verifies if the host can store HostId properly.
 TEST_F(HostTest, hostId) {
-    boost::scoped_ptr<Host> host;
+    HostPtr host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
