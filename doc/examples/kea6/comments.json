@@ -41,7 +41,7 @@
        {
           "name": "none"
        },
-       // A comment and	a user-context can be specified
+       // A comment and a user-context can be specified
        {
           "comment": "a comment",
           "name": "both",

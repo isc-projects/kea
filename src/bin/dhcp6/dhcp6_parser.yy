@@ -1339,6 +1339,8 @@ user_context: USER_CONTEXT {
         // Merge the comment
         user_context->set("comment", old->get("comment"));
     }
+
+    // Set the user context
     parent->set("user-context", user_context);
     ctx.leave();
 };
@@ -1347,23 +1349,26 @@ comment: COMMENT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr parent = ctx.stack_.back();
-    ElementPtr e(new MapElement(ctx.loc2pos(@1)));
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    e->set("comment", s);
+    ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
+    ElementPtr comment(new StringElement($4, ctx.loc2pos(@4)));
+    user_context->set("comment", comment);
 
     // Handle already existing user context
     ConstElementPtr old = parent->get("user-context");
     if (old) {
         // Check for duplicate comment
-        if (old->contains("comment") {
+        if (old->contains("comment")) {
             std::stringstream msg;
             msg << "duplicate user-context/comment entries (previous at "
                 << old->getPosition().str() << ")";
             error(@1, msg.str());
         }
         // Merge the user context in the comment
-        merge(e, old);
+        merge(user_context, old);
     }
+
+    // Set the user context
+    parent->set("user-context", user_context);
     ctx.leave();
 };
 

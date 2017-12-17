@@ -106,7 +106,7 @@
         // Here's the user-context for the whole subnet.
         "user-context": { "comment": "Floor one, west wing" },
         // Equivalent using smart parser
-        "comment": "Floor one, west wing",
+        // "comment": "Floor one, west wing",
 
         // This defines PD (prefix delegation) pools. In this case
         // we have only one pool. That consists of /64 prefixes

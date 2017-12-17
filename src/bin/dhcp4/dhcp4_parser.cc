@@ -2352,7 +2352,7 @@ namespace isc { namespace dhcp {
     ConstElementPtr old = parent->get("user-context");
     if (old) {
         // Check for duplicate comment
-        if (old->contains("comment") {
+      if (old->contains("comment")) {
             std::stringstream msg;
             msg << "duplicate user-context/comment entries (previous at "
                 << old->getPosition().str() << ")";
@@ -2361,6 +2361,7 @@ namespace isc { namespace dhcp {
         // Merge the user context in the comment
         merge(e, old);
     }
+    parent->set("user-context", e);
     ctx.leave();
 }
 #line 2367 "dhcp4_parser.cc" // lalr1.cc:859
