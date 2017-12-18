@@ -3790,6 +3790,7 @@ YY_RULE_SETUP
         case '"':
             /* impossible condition */
             driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
+            break;
         case '\\':
             ++pos;
             if (pos >= len) {
@@ -3900,36 +3901,43 @@ YY_RULE_SETUP
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
+
 #line 1527 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
+
 #line 1528 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
+
 #line 1529 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
+
 #line 1530 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
+
 #line 1531 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
+
 #line 1532 "dhcp4_lexer.ll"
 { return isc::dhcp::Dhcp4Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
+
 #line 1534 "dhcp4_lexer.ll"
 {
     /* An integer was found. */
@@ -3951,6 +3959,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
+
 #line 1552 "dhcp4_lexer.ll"
 {
     /* A floating point was found. */
@@ -3967,6 +3976,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
+
 #line 1565 "dhcp4_lexer.ll"
 {
     string tmp(yytext);
@@ -3975,6 +3985,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
+
 #line 1570 "dhcp4_lexer.ll"
 {
    return isc::dhcp::Dhcp4Parser::make_NULL_TYPE(driver.loc_);
@@ -3982,21 +3993,25 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
+
 #line 1574 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
+
 #line 1576 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
+
 #line 1578 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
+
 #line 1580 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
@@ -4027,6 +4042,7 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
+
 #line 1605 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
@@ -5134,6 +5150,7 @@ void yyfree (void * ptr )
 /* %endif */
 
 /* %ok-for-header */
+
 
 #line 1605 "dhcp4_lexer.ll"
 

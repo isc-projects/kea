@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <process/spec_config.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -51,9 +50,6 @@ TEST_F(DStubControllerTest, basicInstanceTesting) {
 
     // Verify that controller's bin name is correct.
     EXPECT_TRUE(checkBinName(DStubController::stub_bin_name_));
-
-    // Verify that controller's spec file name is correct.
-    EXPECT_TRUE(checkSpecFileName(D2_SPECFILE_LOCATION));
 
     // Verify that controller's IOService exists.
     EXPECT_TRUE(checkIOService());
