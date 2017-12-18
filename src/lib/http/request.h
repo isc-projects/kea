@@ -7,25 +7,19 @@
 #ifndef HTTP_REQUEST_H
 #define HTTP_REQUEST_H
 
-#include <exceptions/exceptions.h>
-#include <http/http_header.h>
-#include <http/http_types.h>
+#include <http/http_message.h>
 #include <http/request_context.h>
 #include <boost/shared_ptr.hpp>
-#include <map>
-#include <set>
 #include <stdint.h>
-#include <string>
-#include <utility>
 
 namespace isc {
 namespace http {
 
 /// @brief Generic exception thrown by @ref HttpRequest class.
-class HttpRequestError : public Exception {
+class HttpRequestError : public HttpMessageError {
 public:
     HttpRequestError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        HttpMessageError(file, line, what) { };
 };
 
 /// @brief Exception thrown when attempt is made to retrieve a
@@ -59,7 +53,7 @@ typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
 /// @ref PostHttpRequestJson, which derives from @ref PostHttpRequest requires
 /// that the POST message includes body holding a JSON structure and provides
 /// methods to parse the JSON body.
-class HttpRequest {
+class HttpRequest : public HttpMessage {
 public:
 
     /// @brief HTTP methods.
@@ -79,13 +73,11 @@ public:
     /// Creates new context (@ref HttpRequestContext).
     HttpRequest();
 
-    /// @brief Destructor.
-    virtual ~HttpRequest();
-
     /// @brief Returns reference to the @ref HttpRequestContext.
     ///
-    /// This method is called by the @ref HttpRequestParser to retrieve the
-    /// context in which parsed data is stored.
+    /// The context holds intermediate data for creating a request. The request
+    /// parser stores parsed raw data in the context. When parsing is finished,
+    /// the data are validated and committed into the @ref HttpRequest.
     ///
     /// @return Pointer to the underlying @ref HttpRequestContext.
     const HttpRequestContextPtr& context() const {
@@ -99,42 +91,6 @@ public:
     ///
     /// @param method HTTP method allowed for the request.
     void requireHttpMethod(const HttpRequest::Method& method);
-
-    /// @brief Specifies HTTP version allowed.
-    ///
-    /// Allowed HTTP versions must be specified prior to calling @ref create
-    /// method. If no version is specified, all versions are allowed.
-    ///
-    /// @param version Version number allowed for the request.
-    void requireHttpVersion(const HttpVersion& version);
-
-    /// @brief Specifies a required HTTP header for the request.
-    ///
-    /// Required headers must be specified prior to calling @ref create method.
-    /// The specified header must exist in the received HTTP request. This puts
-    /// no requirement on the header value.
-    ///
-    /// @param header_name Required header name.
-    void requireHeader(const std::string& header_name);
-
-    /// @brief Specifies a required value of a header in the request.
-    ///
-    /// Required header values must be specified prior to calling @ref create
-    /// method. The specified header must exist and its value must be equal to
-    /// the value specified as second parameter.
-    ///
-    /// @param header_name HTTP header name.
-    /// @param header_value HTTP header valuae.
-    void requireHeaderValue(const std::string& header_name,
-                            const std::string& header_value);
-
-    /// @brief Checks if the body is required for the HTTP request.
-    ///
-    /// Current implementation simply checks if the "Content-Length" header
-    /// is required for the request.
-    ///
-    /// @return true if the body is required for this request.
-    bool requiresBody() const;
 
     /// @brief Reads parsed request from the @ref HttpRequestContext, validates
     /// the request and stores parsed information.
@@ -174,75 +130,22 @@ public:
     /// @brief Reset the state of the object.
     virtual void reset();
 
-    /// @name HTTP data accessors.
-    ///
-    //@{
     /// @brief Returns HTTP method of the request.
     Method getMethod() const;
 
     /// @brief Returns HTTP request URI.
     std::string getUri() const;
 
-    /// @brief Returns HTTP version number (major and minor).
-    HttpVersion getHttpVersion() const;
-
-    /// @brief Returns object encapsulating HTTP header.
-    ///
-    /// @param header_name HTTP header name.
-    ///
-    /// @return Non-null pointer to the header.
-    /// @throw HttpRequestNonExistingHeader if header with the specified name
-    /// doesn't exist.
-    /// @throw HttpRequestError if the request hasn't been created.
-    HttpHeaderPtr getHeader(const std::string& header_name) const;
-
-    /// @brief Returns object encapsulating HTTP header.
-    ///
-    /// This variant doesn't throw an exception if the header doesn't exist.
-    /// It will throw if the request hasn't been created using @c create()
-    /// method.
-    ///
-    /// @param header_name HTTP header name.
-    ///
-    /// @return Pointer to the specified header, or null if such header doesn't
-    /// exist.
-    /// @throw HttpRequestError if the request hasn't been created.
-    HttpHeaderPtr getHeaderSafe(const std::string& header_name) const;
-
-    /// @brief Returns a value of the specified HTTP header.
-    ///
-    /// @param header_name Name of the HTTP header.
-    ///
-    /// @throw HttpRequestError if the header doesn't exist.
-    std::string getHeaderValue(const std::string& header_name) const;
-
-    /// @brief Returns a value of the specified HTTP header as number.
-    ///
-    /// @param header_name Name of the HTTP header.
-    ///
-    /// @throw HttpRequestError if the header doesn't exist or if the
-    /// header value is not number.
-    uint64_t getHeaderValueAsUint64(const std::string& header_name) const;
 
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
 
     /// @brief Returns HTTP message as text.
     ///
-    /// This method is called to generate the outbound HTTP message to be sent
-    /// to a server. Make sure to call @c HttpRequest::finalize prior to
-    /// calling this method.
+    /// This method is called to generate the outbound HTTP message. Make
+    /// sure to call @c finalize prior to calling this method.
     virtual std::string toString() const;
 
-    /// @brief Checks if the request has been successfully finalized.
-    ///
-    /// The request is gets finalized on successful call to
-    /// @ref HttpRequest::finalize.
-    ///
-    /// @return true if the request has been finalized, false otherwise.
-    bool isFinalized() const {
-        return (finalized_);
-    }
 
     /// @brief Checks if the client has requested persistent connection.
     ///
@@ -255,36 +158,7 @@ public:
     /// otherwise.
     bool isPersistent() const;
 
-    //@}
-
 protected:
-
-    /// @brief Checks if the @ref create was called.
-    ///
-    /// @throw HttpRequestError if @ref create wasn't called.
-    void checkCreated() const;
-
-    /// @brief Checks if the @ref finalize was called.
-    ///
-    /// @throw HttpRequestError if @ref finalize wasn't called.
-    void checkFinalized() const;
-
-    /// @brief Checks if the set is empty or the specified element belongs
-    /// to this set.
-    ///
-    /// This is a convenience method used by the class to verify that the
-    /// given HTTP method belongs to "required methods", HTTP version belongs
-    /// to "required versions" etc.
-    ///
-    /// @param element Reference to the element.
-    /// @param element_set Reference to the set of elements.
-    /// @tparam Element type, e.g. @ref Method, @ref HttpVersion etc.
-    ///
-    /// @return true if the element set is empty or if the element belongs
-    /// to the set.
-    template<typename T>
-    bool inRequiredSet(const T& element,
-                       const std::set<T>& element_set) const;
 
     /// @brief Converts HTTP method specified in textual format to @ref Method.
     ///
@@ -307,34 +181,8 @@ protected:
     /// If the set is empty, all methods are allowed.
     std::set<Method> required_methods_;
 
-    /// @brief Set of required HTTP versions.
-    ///
-    /// If the set is empty, all versions are allowed.
-    std::set<HttpVersion> required_versions_;
-
-    /// @brief Map of HTTP headers indexed by lower case header names.
-    typedef std::map<std::string, HttpHeaderPtr> HttpHeaderMap;
-
-    /// @brief Map holding required HTTP headers.
-    ///
-    /// The key of this map specifies the lower case HTTP header name.
-    /// If the value of the HTTP header is empty, the header is required
-    /// but the value of the header is not checked. If the value is
-    /// non-empty, the value in the HTTP request must be equal (case
-    /// insensitive) to the value in the map.
-    HttpHeaderMap required_headers_;
-
-    /// @brief Flag indicating whether @ref create was called.
-    bool created_;
-
-    /// @brief Flag indicating whether @ref finalize was called.
-    bool finalized_;
-
     /// @brief HTTP method of the request.
     Method method_;
-
-    /// @brief Parsed HTTP headers.
-    HttpHeaderMap headers_;
 
     /// @brief Pointer to the @ref HttpRequestContext holding parsed
     /// data.

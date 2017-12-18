@@ -178,6 +178,7 @@ TEST_F(PostHttpRequestJsonTest, clientRequest) {
 
     ElementPtr json = Element::fromJSON(json_body_);
     request_.setBodyAsJson(json);
+
     // Commit and validate the data.
     ASSERT_NO_THROW(request_.finalize());
 

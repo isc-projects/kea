@@ -42,11 +42,11 @@ PostHttpRequestJson::getBodyAsJson() const {
 void
 PostHttpRequestJson::setBodyAsJson(const data::ConstElementPtr& body) {
     if (body) {
-        context()->body_ = body->str();
+        context_->body_ = body->str();
         json_ = body;
 
     } else {
-        context()->body_.clear();
+        context_->body_.clear();
     }
 }
 

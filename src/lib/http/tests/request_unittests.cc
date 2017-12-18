@@ -77,7 +77,7 @@ TEST_F(HttpRequestTest, minimal) {
     EXPECT_EQ(1, request_.getHttpVersion().minor_);
 
     EXPECT_THROW(request_.getHeaderValue("Content-Length"),
-                 HttpRequestNonExistingHeader);
+                 HttpMessageNonExistingHeader);
 }
 
 TEST_F(HttpRequestTest, includeHeaders) {
@@ -161,15 +161,15 @@ TEST_F(HttpRequestTest, notCreated) {
     addHeaderToContext("Content-Type", "text/html");
     addHeaderToContext("Content-Length", "1024");
 
-    EXPECT_THROW(static_cast<void>(request_.getMethod()), HttpRequestError);
+    EXPECT_THROW(static_cast<void>(request_.getMethod()), HttpMessageError);
     EXPECT_THROW(static_cast<void>(request_.getHttpVersion()),
-                 HttpRequestError);
-    EXPECT_THROW(static_cast<void>(request_.getUri()), HttpRequestError);
+                 HttpMessageError);
+    EXPECT_THROW(static_cast<void>(request_.getUri()), HttpMessageError);
     EXPECT_THROW(static_cast<void>(request_.getHeaderValue("Content-Type")),
-                 HttpRequestError);
+                 HttpMessageError);
     EXPECT_THROW(static_cast<void>(request_.getHeaderValueAsUint64("Content-Length")),
-                 HttpRequestError);
-    EXPECT_THROW(static_cast<void>(request_.getBody()), HttpRequestError);
+                 HttpMessageError);
+    EXPECT_THROW(static_cast<void>(request_.getBody()), HttpMessageError);
 
     ASSERT_NO_THROW(request_.finalize());
 
