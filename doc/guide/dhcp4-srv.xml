@@ -449,16 +449,28 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
+  For Cassandra:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"keyspace": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
+</screen>
   If the database is located on a different system to the DHCPv4 server, the
   database host name must also be specified. (It should be noted that this
   configuration may have a severe impact on server performance.):
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
+"Dhcp4": { "lease-database": { <userinput>"host": "<replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
+</screen>
+  For Cassandra, multiple contact points can be provided:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"contact-points": "<replaceable>remote-host-name[, ...] </replaceable>"</userinput>, ... }, ... }
 </screen>
   The usual state of affairs will be to have the database on the same machine as
   the DHCPv4 server.  In this case, set the value to the empty string:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
+</screen>
+  For Cassandra:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"contact-points": ""</userinput>, ... }, ... }
 </screen>
   Should the database use a port different than default, it may be
   specified as well:
@@ -3396,7 +3408,6 @@ It is merely echoed by the server
       Cassandra (CQL).</para>
     </section>
 
-
     <section id="reservations4-tuning">
       <title>Fine Tuning DHCPv4 Host Reservation</title>
 
@@ -3505,9 +3516,6 @@ If not specified, the default value is:
 src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 </para>
-
-
-
    </section>
 
   </section>

@@ -1,6 +1,7 @@
-// Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+// Copyright (C) 2015-2017 Deutsche Telekom AG.
 //
-// Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
+// Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
+//          Andrei Pavel <andrei.pavel@qualitance.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,40 +19,108 @@
 #define CQL_CONNECTION_H
 
 #include <dhcpsrv/database_connection.h>
-#include <dhcpsrv/dhcpsrv_log.h>
-#include <inttypes.h>
+
 #include <cassandra.h>
+
+#include <cstring>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief  Defines a single query
+/// @brief Pair containing major and minor versions
+typedef std::pair<uint32_t, uint32_t> VersionPair;
+
+/// @brief Statement index representing the statement name
+typedef char const* const StatementTag;
+
+/// @brief Define CQL backend version: 2.3
+/// @{
+constexpr uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
+constexpr uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
+/// @}
+
+/// Define CQL schema version: 1.0
+/// @{
+constexpr uint32_t CQL_SCHEMA_VERSION_MAJOR = 1u;
+constexpr uint32_t CQL_SCHEMA_VERSION_MINOR = 0u;
+/// @}
+
+/// @brief Defines a single statement or query
 ///
-/// @param params_ Bind parameter names
-/// @param name_ Short name of the query.
-/// @param text_ Text representation of the actual query.
+/// @param name_ short description of the query
+/// @param text_ text representation of the actual query
+/// @param prepared_statement_ internal Cassandra object representing the
+///     prepared statement
+/// @param is_raw_statement_ shows if statement should be executed rawly or with
+///     binds
 struct CqlTaggedStatement {
-    const char** params_;
-    const char* name_;
-    const char* text_;
+    StatementTag name_;
+    char const* const text_;
+    const CassPrepared* prepared_statement_;
+    bool is_raw_statement_;
+
+    /// @brief Constructor
+    CqlTaggedStatement(StatementTag name, char const* const text)
+        : name_(name), text_(text), prepared_statement_(NULL),
+          is_raw_statement_(false) {
+    }
+
+    /// @brief Constructor
+    CqlTaggedStatement(StatementTag name,
+                       char const* const text,
+                       bool const& is_raw_statement)
+        : name_(name), text_(text), prepared_statement_(NULL),
+          is_raw_statement_(is_raw_statement) {
+    }
 };
 
-// Defines CQL backend version: 2.3
-const uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
-const uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
+/// @brief Hash function for StatementMap keys
+///
+/// Delegates to std::hash<std::string>.
+struct StatementTagHash {
+    size_t operator()(StatementTag const& key) const {
+        return std::hash<std::string>{}(std::string(key));
+    }
+};
 
-/// Defines CQL schema version: 1.0
-const uint32_t CQL_SCHEMA_VERSION_MAJOR = 1;
-const uint32_t CQL_SCHEMA_VERSION_MINOR = 0;
+/// @brief Equality function for StatementMap keys
+struct StatementTagEqual {
+    bool operator()(StatementTag const& lhs, StatementTag const& rhs) const {
+        return std::strcmp(lhs, rhs) == 0;
+    }
+};
 
+/// @brief Contains all statements.
+typedef std::unordered_map<StatementTag,
+                           CqlTaggedStatement,
+                           StatementTagHash,
+                           StatementTagEqual>
+    StatementMap;
+
+typedef std::pair<StatementTag, CqlTaggedStatement> StatementMapEntry;
+
+/// @brief Common CQL connector pool
+///
+/// Provides common operations for the Cassandra database connection used by
+/// CqlLeaseMgr, CqlHostDataSource and CqlSrvConfigMgr. Manages the
+/// connection
+/// to the Cassandra database and preparing of compiled statements. Its
+/// fields
+/// are public because they are used (both set and retrieved) in classes
+/// that
+/// use instances of CqlConnection.
 class CqlConnection : public DatabaseConnection {
 public:
-
     /// @brief Constructor
     ///
     /// Initialize CqlConnection object with parameters needed for connection.
-    CqlConnection(const ParameterMap& parameters);
+    explicit CqlConnection(const ParameterMap& parameters);
 
     /// @brief Destructor
     virtual ~CqlConnection();
@@ -61,42 +130,44 @@ public:
     /// Creates the prepared statements for all of the CQL statements used
     /// by the CQL backend.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::InvalidParameter 'index' is not valid for the vector. This
-    ///        represents an internal error within the code.
-    void prepareStatements(CqlTaggedStatement *statements);
+    /// @throw isc::dhcp::DbOperationError if an operation on the open database
+    ///     has failed
+    /// @throw isc::InvalidParameter if there is an invalid access in the
+    ///     vector. This represents an internal error within the code.
+    void prepareStatements(StatementMap& statements);
 
-    /// @brief Open Database
+    /// @brief Open database
     ///
     /// Opens the database using the information supplied in the parameters
     /// passed to the constructor. If no parameters are supplied, the default
-    /// values will be used (keyspace keatest).
+    /// values will be used (e.g. keyspace 'keatest', port 9042).
     ///
-    /// @throw DbOpenError Error opening the database
+    /// @throw DbOpenError error opening the database
     void openDatabase();
 
+    /// @brief Set consistency
+    void setConsistency(bool force, CassConsistency consistency);
+
+    /// @brief Start transaction
+    void startTransaction();
+
     /// @brief Commit Transactions
-    ///
-    /// This is a no-op for Cassandra.
     virtual void commit();
 
     /// @brief Rollback Transactions
-    ///
-    /// This is a no-op for Cassandra.
     virtual void rollback();
 
-    /// @brief Check Error
+    /// @brief Check for errors
     ///
-    /// Chech error for current database operation.
-    void checkStatementError(std::string& error, CassFuture* future,
-        uint32_t stindex, const char* what) const;
+    /// Check for errors on the current database operation.
+    static const std::string
+    checkFutureError(const std::string& what,
+                     CassFuture* future,
+                     StatementTag statement_tag = NULL);
 
-    /// @brief Check Error
-    ///
-    /// Chech error for current database operation.
-    void checkStatementError(std::string& error, CassFuture* future,
-        const char* what) const;
+    /// @brief Pointer to external array of tagged statements containing
+    ///     statement name, array of names of bind parameters and text query
+    StatementMap statements_;
 
     /// @brief CQL connection handle
     CassCluster* cluster_;
@@ -104,16 +175,22 @@ public:
     /// @brief CQL session handle
     CassSession* session_;
 
-    /// @brief CQL prepared statements - used for faster statement execution using
-    /// bind functionality
-    std::vector<const CassPrepared*> statements_;
+    /// @brief CQL consistency
+    CassConsistency consistency_;
 
-    /// @brief Pointer to external array of tagged statements containing statement
-    /// name, array of names of bind parameters and text query
-    CqlTaggedStatement* tagged_statements_;
+    // @brief Schema meta information, used for UDTs
+    const CassSchemaMeta* schema_meta_;
+
+    /// @brief Keyspace meta information, used for UDTs
+    const CassKeyspaceMeta* keyspace_meta_;
+
+    /// @brief CQL consistency enabled
+    bool force_consistency_;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+typedef std::shared_ptr<CqlConnection> CqlConnectionPtr;
 
-#endif // CQL_CONNECTION_H
+}  // namespace dhcp
+}  // namespace isc
+
+#endif  // CQL_CONNECTION_H
