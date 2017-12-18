@@ -18,7 +18,7 @@
 mysql_execute() {
     QUERY=$1
     shift
-    if [ $# -gt 1 ]; then
+    if [ $# -ge 1 ]; then
         mysql -N -B  $* -e "${QUERY}"
         retcode=$?
     else
@@ -47,7 +47,7 @@ mysql_version() {
 pgsql_execute() {
     QUERY=$1
     shift
-    if [ $# -gt 0 ]; then
+    if [ $# -ge 1 ]; then
         echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q $*
         retcode=$?
     else
@@ -71,7 +71,7 @@ pgsql_execute() {
 pgsql_execute_script() {
     file=$1
     shift
-    if [ $# -gt 0 ]; then
+    if [ $# -ge 1 ]; then
         psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f $file $*
         retcode=$?
     else
@@ -90,8 +90,8 @@ pgsql_version() {
 cql_execute() {
     query=$1
     shift
-    if [ $# -gt 1 ]; then
-        cqlsh $* -e "$query"
+    if [ $# -ge 1 ]; then
+        cqlsh "$@" -e "$query"
         retcode=$?
     else
         cqlsh -u $db_user -p $db_password -k $db_name -e "$query"
@@ -109,8 +109,8 @@ cql_execute() {
 cql_execute_script() {
     file=$1
     shift
-    if [ $# -gt 1 ]; then
-        cqlsh $* -e "$file"
+    if [ $# -ge 1 ]; then
+        cqlsh "$@" -f "$file"
         retcode=$?
     else
         cqlsh -u $db_user -p $db_password -k $db_name -f "$file"
@@ -126,8 +126,9 @@ cql_execute_script() {
 }
 
 cql_version() {
-    version=`cql_execute "SELECT version, minor FROM schema_version" "$@"`
-    version=`echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter="."`
-    echo $version
-    return $?
+  version=$(cql_execute "SELECT version, minor FROM schema_version" "$@")
+  error=$?
+  version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter=".")
+  echo "$version"
+  return $error
 }
