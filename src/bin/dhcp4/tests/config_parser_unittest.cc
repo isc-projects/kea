@@ -10,7 +10,6 @@
 #include <gtest/gtest.h>
 
 #include <cc/command_interpreter.h>
-#include <config/module_spec.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp/option4_addrlst.h>
@@ -131,22 +130,6 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}"
 };
-
-/// @brief Prepends the given name with the DHCP4 source directory
-///
-/// @param name file name of the desired file
-/// @return string containing the absolute path of the file in the DHCP source
-/// directory.
-std::string specfile(const std::string& name) {
-    return (std::string(DHCP4_SRC_DIR) + "/" + name);
-}
-
-/// @brief Tests that the spec file is valid.
-/// Verifies that the Kea DHCPv4 configuration specification file is valid.
-TEST(Dhcp4SpecTest, basicSpec) {
-    (isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
-    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
-}
 
 class Dhcp4ParserTest : public ::testing::Test {
 protected:

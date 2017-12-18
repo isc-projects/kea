@@ -19,9 +19,8 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES = module_spec_unittests.cc
-run_unittests_SOURCES += client_connection_unittests.cc
-run_unittests_SOURCES += config_data_unittests.cc run_unittests.cc
+run_unittests_SOURCES = client_connection_unittests.cc
+run_unittests_SOURCES += run_unittests.cc
 run_unittests_SOURCES += command_mgr_unittests.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

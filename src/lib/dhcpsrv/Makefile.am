@@ -233,9 +233,6 @@ EXTRA_DIST += hosts_messages.mes
 # Database schema creation script moved to src/bin/admin
 EXTRA_DIST += database_backends.dox libdhcpsrv.dox
 
-# Specification file
-EXTRA_DIST += logging.spec
-
 # Specify the headers for copying into the installation directory tree.
 libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
 libkea_dhcpsrv_include_HEADERS = \

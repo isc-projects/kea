@@ -427,8 +427,8 @@ public:
     ///                should be performed
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
-    static ElementPtr fromJSON(std::istream& in, bool preproc = false)
-        throw(JSONError);
+    /// @throw JSONError
+    static ElementPtr fromJSON(std::istream& in, bool preproc = false);
 
     /// Creates an Element from the given input stream containing JSON
     /// formatted data.
@@ -439,9 +439,9 @@ public:
     ///                should be performed
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
+    /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file_name,
-                               bool preproc = false)
-        throw(JSONError);
+                               bool preproc = false);
 
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
@@ -455,9 +455,9 @@ public:
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
+    /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
-                               int& line, int &pos)
-        throw(JSONError);
+                               int& line, int &pos);
 
     /// Reads contents of specified file and interprets it as JSON.
     ///
@@ -741,7 +741,7 @@ void merge(ElementPtr element, ConstElementPtr other);
 /// @param level nesting level (default is 100, 0 means shallow copy,
 /// negative means outbound and perhaps looping forever).
 /// @return a pointer to a fresh copy
-/// \throw raises a BadValue is a null pointer occurs.
+/// @throw raises a BadValue is a null pointer occurs.
 ElementPtr copy(ConstElementPtr from, int level = 100); 
 
 /// @brief Compares the data with other using unordered lists
