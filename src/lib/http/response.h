@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <http/http_types.h>
+#include <http/response_context.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
@@ -115,6 +116,17 @@ public:
     /// A class having virtual methods must have a virtual destructor.
     virtual ~HttpResponse() { }
 
+    /// @brief Returns pointer to the @ref HttpResponseContext.
+    ///
+    /// The context holds intermediate data for creating a response. The response
+    /// parser stores parsed raw data in the context. When parsing is finished,
+    /// the data are validated and committed into the @ref HttpResponse.
+    ///
+    /// @return Pointer to the underlying @ref HttpResponseContext.
+    const HttpResponseContextPtr& context() const {
+        return (context_);
+    }
+
     /// @brief Adds HTTP header to the response.
     ///
     /// The "Content-Length" and "Date" headers should not be added using this
@@ -128,6 +140,12 @@ public:
     void addHeader(const std::string& name, const ValueType& value) {
         addHeaderInternal(name, value, headers_);
     }
+
+    /// @brief Reads parsed response from the @ref HttpResponseContext, validates
+    /// the response and stores parsed information.
+    ///
+    /// This method doesn't prse the HTTP response body.
+    virtual void create();
 
     /// @brief Assigns body/content to the message.
     ///
@@ -234,6 +252,9 @@ private:
     /// @brief Holds the body/content.
     std::string body_;
 
+    /// @brief Pointer to the @ref HttpResponseContext holding parsed
+    /// data.
+    HttpResponseContextPtr context_;
 };
 
 } // namespace http

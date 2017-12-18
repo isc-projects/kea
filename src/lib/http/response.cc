@@ -48,12 +48,16 @@ HttpResponse::HttpResponse(const HttpVersion& version,
                            const HttpStatusCode& status_code,
                            const CallSetGenericBody& generic_body)
     : http_version_(version), status_code_(status_code), headers_(),
-      body_() {
+      body_(), context_(new HttpResponseContext()) {
     if (generic_body.set_) {
         // This currently does nothing, but it is useful to have it here as
         // an example how to implement it in the derived classes.
         setGenericBody(status_code);
     }
+}
+
+void
+HttpResponse::create() {
 }
 
 void
