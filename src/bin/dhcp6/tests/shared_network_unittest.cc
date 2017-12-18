@@ -2021,7 +2021,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_EQ(4, client.getLeaseNum());
     // The client should have got one reserved address and one reserved prefix.
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
-    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("5000::8:00000"), 112, IAID(0x1111)));
+    ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("5000::8:0000"), 112, IAID(0x1111)));
 
     // The client should have got dynamically allocated address too and it must be
     // different than the reserved address.
