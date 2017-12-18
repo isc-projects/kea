@@ -108,7 +108,7 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                        (keyword == "password") ||
                        (keyword == "host") ||
                        (keyword == "name") ||
-                       (keyword == "contact_points") ||
+                       (keyword == "contact-points") ||
                        (keyword == "keyspace")) {
                 result->set(keyword, Element::create(value));
             } else {
