@@ -141,6 +141,7 @@ endif
 
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 libkea_dhcpsrv_la_SOURCES += network.cc network.h
+libkea_dhcpsrv_la_SOURCES += network_state.cc network_state.h
 
 if HAVE_PGSQL
 libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
@@ -236,9 +237,6 @@ EXTRA_DIST += hosts_messages.mes
 # Distribute backend documentation
 # Database schema creation script moved to src/bin/admin
 EXTRA_DIST += database_backends.dox libdhcpsrv.dox
-
-# Specification file
-EXTRA_DIST += logging.spec
 
 # Specify the headers for copying into the installation directory tree.
 libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv

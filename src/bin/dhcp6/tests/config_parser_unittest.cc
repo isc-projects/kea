@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <config/module_spec.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/iface_mgr.h>
@@ -208,17 +207,6 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}"
 };
-
-std::string specfile(const std::string& name) {
-    return (std::string(DHCP6_SRC_DIR) + "/" + name);
-}
-
-/// @brief Tests that the spec file is valid.
-/// Verifies that the DHCP6 configuration specification file is valid.
-TEST(Dhcp6SpecTest, basicSpec) {
-    ASSERT_NO_THROW(isc::config::
-                    moduleSpecFromFile(specfile("dhcp6.spec")));
-}
 
 class Dhcp6ParserTest : public ::testing::Test {
 protected:

@@ -1580,8 +1580,8 @@ static const flex_int16_t yy_rule_linenum[161] =
      1142, 1151, 1160, 1169, 1178, 1188, 1197, 1207, 1216, 1225,
      1234, 1243, 1252, 1261, 1270, 1279, 1288, 1297, 1306, 1315,
      1324, 1333, 1342, 1351, 1360, 1369, 1378, 1387, 1396, 1405,
-     1414, 1423, 1433, 1531, 1536, 1541, 1546, 1547, 1548, 1549,
-     1550, 1551, 1553, 1571, 1584, 1589, 1593, 1595, 1597, 1599
+     1414, 1423, 1433, 1532, 1537, 1542, 1547, 1548, 1549, 1550,
+     1551, 1552, 1554, 1572, 1585, 1590, 1594, 1596, 1598, 1600
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -3806,6 +3806,7 @@ YY_RULE_SETUP
         case '"':
             /* impossible condition */
             driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
+            break;
         case '\\':
             ++pos;
             if (pos >= len) {
@@ -3891,7 +3892,7 @@ YY_RULE_SETUP
 case 144:
 /* rule 144 can match eol */
 YY_RULE_SETUP
-#line 1531 "dhcp6_lexer.ll"
+#line 1532 "dhcp6_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
@@ -3900,7 +3901,7 @@ YY_RULE_SETUP
 case 145:
 /* rule 145 can match eol */
 YY_RULE_SETUP
-#line 1536 "dhcp6_lexer.ll"
+#line 1537 "dhcp6_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
@@ -3908,7 +3909,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 1541 "dhcp6_lexer.ll"
+#line 1542 "dhcp6_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
@@ -3916,37 +3917,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 1546 "dhcp6_lexer.ll"
+#line 1547 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 1547 "dhcp6_lexer.ll"
+#line 1548 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 1548 "dhcp6_lexer.ll"
+#line 1549 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 1549 "dhcp6_lexer.ll"
+#line 1550 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 1550 "dhcp6_lexer.ll"
+#line 1551 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 1551 "dhcp6_lexer.ll"
+#line 1552 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 1553 "dhcp6_lexer.ll"
+#line 1554 "dhcp6_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -3967,7 +3968,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 1571 "dhcp6_lexer.ll"
+#line 1572 "dhcp6_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -3983,7 +3984,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 1584 "dhcp6_lexer.ll"
+#line 1585 "dhcp6_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -3991,33 +3992,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 1589 "dhcp6_lexer.ll"
+#line 1590 "dhcp6_lexer.ll"
 {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 1593 "dhcp6_lexer.ll"
+#line 1594 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 1595 "dhcp6_lexer.ll"
+#line 1596 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 1597 "dhcp6_lexer.ll"
+#line 1598 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 1599 "dhcp6_lexer.ll"
+#line 1600 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1601 "dhcp6_lexer.ll"
+#line 1602 "dhcp6_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(driver.loc_);
@@ -4043,10 +4044,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 1624 "dhcp6_lexer.ll"
+#line 1625 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 4049 "dhcp6_lexer.cc"
+#line 4050 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -5151,7 +5152,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 1624 "dhcp6_lexer.ll"
+#line 1625 "dhcp6_lexer.ll"
 
 
 using namespace isc::dhcp;

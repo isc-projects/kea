@@ -423,6 +423,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         case '"':
             /* impossible condition */
             driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
+            break;
         case '\\':
             ++pos;
             if (pos >= len) {
