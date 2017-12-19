@@ -9,10 +9,10 @@
 namespace isc {
 namespace http {
 
-HttpMessage::HttpMessage()
-    : required_versions_(),  http_version_(HttpVersion::HTTP_10()),
-      required_headers_(), created_(false), finalized_(false), headers_(),
-      body_() {
+HttpMessage::HttpMessage(const HttpMessage::Direction& direction)
+    : direction_(direction), required_versions_(),
+      http_version_(HttpVersion::HTTP_10()), required_headers_(),
+      created_(false), finalized_(false), headers_() {
 }
 
 HttpMessage::~HttpMessage() {

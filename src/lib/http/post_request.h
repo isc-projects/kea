@@ -29,7 +29,7 @@ typedef boost::shared_ptr<const PostHttpRequest> ConstPostHttpRequestPtr;
 class PostHttpRequest : public HttpRequest {
 public:
 
-    /// @brief Constructor.
+    /// @brief Constructor for inbound HTTP request.
     PostHttpRequest();
 };
 

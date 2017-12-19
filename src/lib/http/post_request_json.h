@@ -39,8 +39,8 @@ typedef boost::shared_ptr<const PostHttpRequestJson> ConstPostHttpRequestJsonPtr
 class PostHttpRequestJson : public PostHttpRequest {
 public:
 
-    /// @brief Constructor.
-    PostHttpRequestJson();
+    /// @brief Constructor for inbound HTTP request.
+    explicit PostHttpRequestJson();
 
     /// @brief Complete parsing of the HTTP request.
     ///

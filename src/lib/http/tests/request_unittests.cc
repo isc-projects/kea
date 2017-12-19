@@ -229,6 +229,7 @@ TEST_F(HttpRequestTest, isPersistentHttp11Close) {
 }
 
 TEST_F(HttpRequestTest, clientRequest) {
+    request_.setDirection(HttpMessage::OUTBOUND);
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
 
     // Capture current date and time.

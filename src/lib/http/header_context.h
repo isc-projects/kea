@@ -7,6 +7,8 @@
 #ifndef HTTP_HEADER_CONTEXT_H
 #define HTTP_HEADER_CONTEXT_H
 
+#include <boost/lexical_cast.hpp>
+#include <cstdint>
 #include <string>
 
 namespace isc {
@@ -30,6 +32,14 @@ struct HttpHeaderContext {
     /// @param value Header value.
     HttpHeaderContext(const std::string& name, const std::string& value)
         : name_(name), value_(value) {
+    }
+
+    /// @brief Constructor.
+    ///
+    /// @param name Header name.
+    /// @param value Numeric value for the header.
+    HttpHeaderContext(const std::string& name, const int64_t value)
+        : name_(name), value_(boost::lexical_cast<std::string>(value)) {
     }
 };
 

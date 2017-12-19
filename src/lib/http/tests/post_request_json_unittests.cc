@@ -173,6 +173,8 @@ TEST_F(PostHttpRequestJsonTest, getJsonElement) {
 // This test verifies that it is possible to create client side request
 // containing JSON body.
 TEST_F(PostHttpRequestJsonTest, clientRequest) {
+    request_.setDirection(HttpMessage::OUTBOUND);
+
     setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
     addHeaderToContext("Content-Type", "application/json");
 

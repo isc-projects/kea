@@ -40,6 +40,7 @@ createStockHttpResponse(const ConstHttpRequestPtr& request,
     }
     // This will generate the response holding JSON content.
     HttpResponsePtr response(new HttpResponseJson(http_version, status_code));
+    response->finalize();
     return (response);
 }
 
@@ -75,6 +76,7 @@ createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
     HttpResponseJsonPtr http_response = boost::dynamic_pointer_cast<
         HttpResponseJson>(createStockHttpResponse(request, HttpStatusCode::OK));
     http_response->setBodyAsJson(response);
+    http_response->finalize();
 
     return (http_response);
 }

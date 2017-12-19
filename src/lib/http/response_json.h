@@ -26,7 +26,10 @@ typedef boost::shared_ptr<HttpResponseJson> HttpResponseJsonPtr;
 class HttpResponseJson : public HttpResponse {
 public:
 
-    /// @brief Constructor.
+    /// @brief Constructor for the inbound HTTP response.
+    explicit HttpResponseJson();
+
+    /// @brief Constructor for the outbound HTTP response.
     ///
     /// @param version HTTP version.
     /// @param status_code HTTP status code.
@@ -58,9 +61,14 @@ private:
     /// @param status_code Status code for which the body should be
     /// generated.
     void setGenericBody(const HttpStatusCode& status_code);
+
+protected:
+
+    /// @brief Pointer to the parsed JSON body.
+    data::ConstElementPtr json_;
 };
 
-}
-}
+} // end of namespace isc::http
+} // end of namespace isc
 
 #endif

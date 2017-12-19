@@ -10,7 +10,7 @@
 #include <http/http_message.h>
 #include <http/request_context.h>
 #include <boost/shared_ptr.hpp>
-#include <stdint.h>
+#include <cstdint>
 
 namespace isc {
 namespace http {
@@ -20,15 +20,6 @@ class HttpRequestError : public HttpMessageError {
 public:
     HttpRequestError(const char* file, size_t line, const char* what) :
         HttpMessageError(file, line, what) { };
-};
-
-/// @brief Exception thrown when attempt is made to retrieve a
-/// non-existing header.
-class HttpRequestNonExistingHeader : public HttpRequestError {
-public:
-    HttpRequestNonExistingHeader(const char* file, size_t line,
-                                 const char* what) :
-        HttpRequestError(file, line, what) { };
 };
 
 class HttpRequest;
@@ -41,18 +32,19 @@ typedef boost::shared_ptr<const HttpRequest> ConstHttpRequestPtr;
 
 /// @brief Represents HTTP request message.
 ///
-/// This object represents parsed HTTP message. The @ref HttpRequestContext
-/// contains raw data used as input for this object. This class interprets the
-/// data. In particular, it verifies that the appropriate method, HTTP version,
-/// and headers were used. The derivations of this class provide specializations
-/// and specify the HTTP methods, versions and headers supported/required in
-/// the specific use cases.
+/// This derivation of the @c HttpMessage class is specialized to represent
+/// HTTP requests. This class provides two constructors for creating an inbound
+/// and outbound request instance respectively. This class is associated with
+/// an instance of the @c HttpRequestContext, which is used to provide request
+/// specific values, such as: HTTP method, version, URI and headers.
 ///
-/// For example, the @ref PostHttpRequest class derives from @ref HttpRequest
-/// and it requires that parsed messages use POST method. The
-/// @ref PostHttpRequestJson, which derives from @ref PostHttpRequest requires
-/// that the POST message includes body holding a JSON structure and provides
-/// methods to parse the JSON body.
+/// The derivations of this class provide specializations and specify the
+/// HTTP methods, versions and headers supported/required in the specific use
+/// cases. For example, the @c PostHttpRequest class derives from @c HttpRequest
+/// and it requires that request uses POST method. The @c PostHttpRequestJson,
+/// which derives from @c PostHttpRequest requires that the POST message
+/// includes body holding a JSON structure and provides methods to parse the
+/// JSON body.
 class HttpRequest : public HttpMessage {
 public:
 
@@ -68,16 +60,21 @@ public:
         HTTP_METHOD_UNKNOWN
     };
 
-    /// @brief Constructor.
-    ///
-    /// Creates new context (@ref HttpRequestContext).
+    /// @brief Constructor for inbound HTTP request.
     HttpRequest();
 
-    /// @brief Returns reference to the @ref HttpRequestContext.
+    /// @brief Constructor for oubtound HTTP request.
+    ///
+    /// @param method HTTP method, e.g. POST.
+    /// @param uri URI.
+    /// @param version HTTP version.
+    HttpRequest(const Method& method, const std::string& uri, const HttpVersion& version);
+
+    /// @brief Returns pointer to the @ref HttpRequestContext.
     ///
     /// The context holds intermediate data for creating a request. The request
     /// parser stores parsed raw data in the context. When parsing is finished,
-    /// the data are validated and committed into the @ref HttpRequest.
+    /// the data are validated and committed into the @c HttpRequest.
     ///
     /// @return Pointer to the underlying @ref HttpRequestContext.
     const HttpRequestContextPtr& context() const {
@@ -92,39 +89,22 @@ public:
     /// @param method HTTP method allowed for the request.
     void requireHttpMethod(const HttpRequest::Method& method);
 
-    /// @brief Reads parsed request from the @ref HttpRequestContext, validates
-    /// the request and stores parsed information.
+    /// @brief Commits information held in the context into the request.
     ///
-    /// This method must be called before retrieving parsed data using accessors
-    /// such as @ref getMethod, @ref getUri etc.
-    ///
-    /// This method doesn't parse the HTTP request body.
+    /// This function reads HTTP method, version and headers from the context
+    /// and validates their values. For the outbound messages, it automatically
+    /// appends Content-Length header to the request, based on the length of the
+    /// request body.
     ///
     /// @throw HttpRequestError if the parsed request doesn't meet the specified
     /// requirements for it.
     virtual void create();
 
-    /// @brief Complete parsing of the HTTP request or create outbound HTTP request.
+    /// @brief Completes creation of the HTTP request.
     ///
-    /// HTTP request parsing is performed in two stages: HTTP headers, then
-    /// request body. The @ref create method parses HTTP headers. Once this is
-    /// done, the caller can check if the "Content-Length" was specified and use
-    /// it's value to determine the size of the body which is parsed in the
-    /// second stage.
-    ///
-    /// This method generally performs the body parsing, but if it determines
-    /// that the @ref create method hasn't been called, it calls @ref create
-    /// before parsing the body.
-    ///
-    /// For the outbound (client) request, this method must be called after
-    /// setting all required values in the request context. The Content-Length
-    /// is generally not explicitly set by the caller in this case. This method
-    /// computes the value of the Content-Length and inserts the suitable header
-    /// when it finds non-empty body.
-    ///
-    /// The derivations must call @ref create if it hasn't been called prior to
-    /// calling this method. It must set @ref finalized_ to true if the call
-    /// to @ref finalize was successful.
+    /// This method marks the message as finalized. The outbound request may now be
+    /// sent over the TCP socket. The information from the inbound message may be
+    /// read, including the request body.
     virtual void finalize();
 
     /// @brief Reset the state of the object.
@@ -140,12 +120,11 @@ public:
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
 
-    /// @brief Returns HTTP message as text.
+    /// @brief Returns HTTP message as string.
     ///
     /// This method is called to generate the outbound HTTP message. Make
     /// sure to call @c finalize prior to calling this method.
     virtual std::string toString() const;
-
 
     /// @brief Checks if the client has requested persistent connection.
     ///
@@ -156,6 +135,7 @@ public:
     ///
     /// @return true if the client has requested persistent connection, false
     /// otherwise.
+    /// @throw InvalidOperation if the method is called for the outbound message.
     bool isPersistent() const;
 
 protected:
