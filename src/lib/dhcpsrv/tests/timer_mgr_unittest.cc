@@ -176,6 +176,8 @@ TEST_F(TimerMgrTest, registerTimer) {
     // Add a timer with a correct name.
     ASSERT_NO_THROW(timer_mgr_->registerTimer("timer2", makeCallback("timer2"), 1,
                                               IntervalTimer::ONE_SHOT));
+    EXPECT_TRUE(timer_mgr_->isTimerRegistered("timer2"));
+
     // Adding the timer with the same name as the existing timer is not
     // allowed.
     ASSERT_THROW(timer_mgr_->registerTimer("timer2", makeCallback("timer2"), 1,
@@ -207,6 +209,7 @@ TEST_F(TimerMgrTest, unregisterTimer) {
     // Now unregister the correct one.
     ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
     ASSERT_EQ(0, timer_mgr_->timersCount());
+    EXPECT_FALSE(timer_mgr_->isTimerRegistered("timer1"));
 
     doWait(100);
 

@@ -1,3 +1,22 @@
+1340.	[func]		marcin
+	Added support for "dhcp-enable" and "dhcp-disable" commands in
+	the DHCPv4 and DHCPv6 server.
+	(Trac #5442, git 36dc68ff7aa8b3cfd265c4f982d10248590039bd)
+
+1339.	[doc]		marcin
+	Updated User's Guide describing how to selectively disable
+	legal logging for a subnet.
+	(Trac #5407, git 469080abd711f8e88a5133f76f4ab31a5549a858)
+
+1338.	[func]		marcin
+	Persistent HTTP/1.1 connections and HTTP/1.0 keep-alive
+	are supported by RESTful API.
+	(Trac #5448, git 05018f7cc0662d6956b9b7648646e0c17da948ba)
+
+1337.	[doc]		marcin
+	Added placeholder section for the libdhcp_ha hooks library.
+	(Trac #5447, git d939b5b8bc4befb24daf863f2408d97493e4bfbf)
+
 1336.	[bug]		marcin
 	DHCPv6 server always sends prefixes with the lifetime of 0 for
 	the prefix leases that should no longer be used, even if those

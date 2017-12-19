@@ -23,7 +23,7 @@ CLEANFILES  = *.gcno *.gcda d2_messages.h d2_messages.cc s-messages
 
 man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec d2.dox
+EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml d2.dox
 EXTRA_DIST += d2_parser.yy
 
 EXTRA_DIST += images/abstract_app_classes.svg images/add_state_model.svg
@@ -119,7 +119,6 @@ kea_dhcp_ddns_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
-kea_dhcp_ddns_DATA = dhcp-ddns.spec
 
 if GENERATE_PARSER
 

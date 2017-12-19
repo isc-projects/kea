@@ -9,7 +9,6 @@
 #include <cc/command_interpreter.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
-#include <process/spec_config.h>
 #include <d2/tests/nc_test_utils.h>
 #include <process/testutils/d_test_stubs.h>
 
@@ -94,9 +93,6 @@ TEST_F(D2ControllerTest, basicInstanceTesting) {
 
     // Verify that controller's bin name is correct.
     EXPECT_TRUE(checkBinName(D2Controller::d2_bin_name_));
-
-    // Verify that controller's spec file name is correct.
-    EXPECT_TRUE(checkSpecFileName(D2_SPECFILE_LOCATION));
 
     // Verify that controller's IOService exists.
     EXPECT_TRUE(checkIOService());

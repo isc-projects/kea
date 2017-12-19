@@ -404,6 +404,12 @@ will not send a response but will instead ignore the packet. The first
 argument contains the client and transaction identification information.
 The second argument includes the details of the error.
 
+% DHCP4_PACKET_DROP_0008 %1: DHCP service is globally disabled
+This debug message is issued when a packet is dropped because the DHCP service
+has been temporarily disabled. This affects all received DHCP packets. The
+service may be enabled by the "dhcp-enable" control command or automatically
+after a specified amount of time since receiving "dhcp-disable" command.
+
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable

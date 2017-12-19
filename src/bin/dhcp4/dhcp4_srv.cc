@@ -416,7 +416,7 @@ const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
                      const bool direct_response_desired)
     : io_service_(new IOService()), shutdown_(true), alloc_engine_(), port_(port),
-      use_bcast_(use_bcast) {
+      use_bcast_(use_bcast), network_state_(NetworkState::DHCPv4) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
@@ -804,7 +804,14 @@ Dhcpv4Srv::run_one() {
         return;
     }
 
-    processPacket(query, rsp);
+    // If the DHCP service has been globally disabled, drop the packet.
+    if (!network_state_.isServiceEnabled()) {
+        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
+                  DHCP4_PACKET_DROP_0008)
+            .arg(query->getLabel());
+    } else {
+        processPacket(query, rsp);
+    }
 
     if (!rsp) {
         return;

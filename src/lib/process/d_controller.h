@@ -413,21 +413,6 @@ protected:
         return (io_service_);
     }
 
-    /// @brief Getter for fetching the name of the controller's config spec
-    /// file.
-    ///
-    /// @return returns the file name string.
-    const std::string getSpecFileName() const {
-        return (spec_file_name_);
-    }
-
-    /// @brief Setter for setting the name of the controller's config spec file.
-    ///
-    /// @param spec_file_name the file name string.
-    void setSpecFileName(const std::string& spec_file_name) {
-        spec_file_name_ = spec_file_name;
-    }
-
     /// @brief Static getter which returns the singleton instance.
     ///
     /// @return returns a pointer reference to the private singleton instance
@@ -613,9 +598,6 @@ private:
     /// @brief Indicates if the check only mode for the configuration
     /// is enabled (usually specified by the command line -t argument).
     bool check_only_;
-
-    /// @brief The absolute file name of the JSON spec file.
-    std::string spec_file_name_;
 
     /// @brief Pointer to the instance of the process.
     ///
