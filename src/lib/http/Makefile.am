@@ -30,6 +30,7 @@ libkea_http_la_SOURCES += header_context.h
 libkea_http_la_SOURCES += http_acceptor.h
 libkea_http_la_SOURCES += http_header.cc http_header.h
 libkea_http_la_SOURCES += http_message.cc http_message.h
+libkea_http_la_SOURCES += http_message_parser_base.cc http_message_parser_base.h
 libkea_http_la_SOURCES += http_types.h
 libkea_http_la_SOURCES += listener.cc listener.h
 libkea_http_la_SOURCES += post_request.cc post_request.h
