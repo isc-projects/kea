@@ -272,6 +272,7 @@ static const uint16_t RAI_OPTION_ACCESS_POINT_NAME = 15; // RFC7839
 static const uint16_t RAI_OPTION_ACCESS_POINT_BSSID = 16; // RFC7839
 static const uint16_t RAI_OPTION_OPERATOR_ID = 17; // RFC7839
 static const uint16_t RAI_OPTION_OPERATOR_REALM = 18; // RFC7839
+static const uint16_t RAI_OPTION_RELAY_PORT = 19; // I-D, to be assigned
 static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT = 151; //RFC6607
 static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL = 152; //RFC6607
 

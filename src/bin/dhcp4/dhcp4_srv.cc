@@ -2035,6 +2035,19 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     }
 }
 
+uint16_t
+Dhcpv4Srv::checkRelayPort(const Dhcpv4Exchange& ex) {
+
+    // Look for a relay-port RAI sub-option in the query.
+    const Pkt4Ptr& query = ex.getQuery();
+    const OptionPtr& rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai && rai->getOption(RAI_OPTION_RELAY_PORT)) {
+        // Got the sub-option so use the remote port set by the relay.
+        return (query->getRemotePort());
+    }
+    return (0);
+}
+
 void
 Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     adjustRemoteAddr(ex);
@@ -2061,7 +2074,9 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         response->setRemotePort(DHCP4_CLIENT_PORT);
 
     } else {
-        response->setRemotePort(DHCP4_SERVER_PORT);
+        // draft-ietf-dhc-relay-port-10.txt section 5.1
+        uint16_t relay_port = checkRelayPort(ex);
+        response->setRemotePort(relay_port ? relay_port : DHCP4_SERVER_PORT);
     }
 
     CfgIfacePtr cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
