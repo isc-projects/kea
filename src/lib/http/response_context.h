@@ -17,9 +17,9 @@ namespace http {
 
 /// @brief HTTP response context.
 ///
-/// This context is used by the @ref HttpResponseParser to store parsed
+/// This context is used by the @c HttpResponseParser to store parsed
 /// data. This data is later used to create an instance of the
-/// @ref HttpResponse or its derivation.
+/// @c HttpResponse or its derivation.
 struct HttpResponseContext {
     /// @brief HTTP major version number.
     unsigned int http_version_major_;

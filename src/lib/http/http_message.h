@@ -12,7 +12,7 @@
 #include <http/http_types.h>
 #include <map>
 #include <set>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 namespace isc {
@@ -36,14 +36,59 @@ public:
 
 
 /// @brief Base class for @ref HttpRequest and @ref HttpResponse.
+///
+/// This abstract class provides a common functionality for the HTTP
+/// requests and responses. Each such message can be marked as outbound
+/// or inbound. An HTTP inbound request is the one received by the server
+/// and HTTP inbound response is the response received by the client.
+/// Conversely, an HTTP outbound request is the request created by the
+/// client and HTTP outbound response is the response created by the
+/// server. There are differences in how the inbound and outbound
+/// messages are created. The inbound messages are received over the
+/// TCP sockets and parsed by the parsers. The parsed information is
+/// stored in a context, i.e. structure holding raw information and
+/// associated with the given @c HttpMessage instance. Once the message
+/// is parsed and all required information is stored in the context,
+/// the @c create method is called to validate and fetch information
+/// from the context into the message. The @c finalize method is called
+/// to commit the HTTP message body into the message.
+///
+/// The outbound message is created locally from the known data, e.g.
+/// HTTP version number, URI, method etc. The headers can be then
+/// appended to the message via the context. In order to use this message
+/// the @c finalize method must be called to commit this information.
+/// Them, @c toString method can be called to generate the message in
+/// the textual form, which can be transferred via TCP socket.
 class HttpMessage {
 public:
 
+    /// @brief Specifies the direction of the HTTP message.
+    enum Direction {
+        INBOUND,
+        OUTBOUND
+    };
+
     /// @brief Constructor.
-    HttpMessage();
+    ///
+    /// @param direction Direction of the message (inbound or outbound).
+    explicit HttpMessage(const Direction& direction);
 
     /// @brief Destructor.
     virtual ~HttpMessage();
+
+    /// @brief Returns HTTP message direction.
+    Direction getDirection() const {
+        return (direction_);
+    }
+
+    /// @brief Sets direction for the HTTP message.
+    ///
+    /// This is mostly useful in unit testing.
+    ///
+    /// @param direction New direction of the HTTP message.
+    void setDirection(const Direction& direction) {
+        direction_ = direction;
+    }
 
     /// @brief Specifies HTTP version allowed.
     ///
@@ -163,12 +208,6 @@ public:
         return (finalized_);
     }
 
-    /// @brief Checks if the message indicates persistent connection.
-    ///
-    /// @return true if the message indicates persistent connection, false
-    /// otherwise.
-    virtual bool isPersistent() const = 0;
-
 protected:
 
     /// @brief Checks if the @ref create was called.
@@ -190,7 +229,7 @@ protected:
     ///
     /// @param element Reference to the element.
     /// @param element_set Reference to the set of elements.
-    /// @tparam Element type, e.g. @ref Method, @ref HttpVersion etc.
+    /// @tparam T Element type, @ref HttpVersion etc.
     ///
     /// @return true if the element set is empty or if the element belongs
     /// to the set.
@@ -199,6 +238,9 @@ protected:
                        const std::set<T>& element_set) const {
         return (element_set.empty() || element_set.count(element) > 0);
     }
+
+    /// @brief Message direction (inbound or outbound).
+    Direction direction_;
 
     /// @brief Set of required HTTP versions.
     ///
@@ -228,10 +270,6 @@ protected:
 
     /// @brief Parsed HTTP headers.
     HttpHeaderMap headers_;
-
-    /// @brief HTTP body as string.
-    std::string body_;
-
 };
 
 } // end of namespace isc::http

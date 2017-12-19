@@ -9,13 +9,31 @@
 #include <boost/lexical_cast.hpp>
 #include <sstream>
 
+namespace {
+
+/// @brief New line (CRLF).
+const std::string crlf = "\r\n";
+
+}
+
 namespace isc {
 namespace http {
 
 HttpRequest::HttpRequest()
-    : HttpMessage(), required_methods_(),
+    : HttpMessage(INBOUND), required_methods_(),
       method_(Method::HTTP_METHOD_UNKNOWN),
       context_(new HttpRequestContext()) {
+}
+
+HttpRequest::HttpRequest(const Method& method, const std::string& uri,
+                         const HttpVersion& version)
+    : HttpMessage(OUTBOUND), required_methods_(),
+      method_(Method::HTTP_METHOD_UNKNOWN),
+      context_(new HttpRequestContext()) {
+    context()->method_ = methodToString(method);
+    context()->uri_ = uri;
+    context()->http_version_major_ = version.major_;
+    context()->http_version_minor_ = version.minor_;
 }
 
 void
@@ -56,7 +74,7 @@ HttpRequest::create() {
             headers_[hdr->getLowerCaseName()] = hdr;
         }
 
-        if (!context_->body_.empty() && (headers_.count("content-length") == 0)) {
+        if (getDirection() == HttpMessage::OUTBOUND) {
             HttpHeaderPtr hdr(new HttpHeader("Content-Length",
                                              boost::lexical_cast<std::string>(context_->body_.length())));
             headers_["content-length"] = hdr;
@@ -99,7 +117,6 @@ HttpRequest::finalize() {
 
     // Copy the body from the context. Derive classes may further
     // interpret the body contents, e.g. against the Content-Type.
-    body_ = context_->body_;
     finalized_ = true;
 }
 
@@ -109,7 +126,6 @@ HttpRequest::reset() {
     finalized_ = false;
     method_ = HttpRequest::Method::HTTP_METHOD_UNKNOWN;
     headers_.clear();
-    body_.clear();
 }
 
 HttpRequest::Method
@@ -136,15 +152,15 @@ HttpRequest::toString() const {
 
     std::ostringstream s;
     s << methodToString(getMethod()) << " " << getUri() << " HTTP/" <<
-        getHttpVersion().major_ << "." << getHttpVersion().minor_ << "\r\n";
+        getHttpVersion().major_ << "." << getHttpVersion().minor_ << crlf;
 
     for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
          ++header_it) {
         s << header_it->second->getName() << ": " << header_it->second->getValue()
-          << "\r\n";
+          << crlf;
     }
 
-    s << "\r\n";
+    s << crlf;
 
     s << getBody();
 
@@ -153,6 +169,10 @@ HttpRequest::toString() const {
 
 bool
 HttpRequest::isPersistent() const {
+    if (getDirection() == OUTBOUND) {
+        isc_throw(InvalidOperation, "can't call isPersistent for the outbound request");
+    }
+
     HttpHeaderPtr conn = getHeaderSafe("connection");
     std::string conn_value;
     if (conn) {

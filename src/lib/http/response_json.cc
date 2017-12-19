@@ -11,11 +11,17 @@ using namespace isc::data;
 namespace isc {
 namespace http {
 
+HttpResponseJson::HttpResponseJson()
+    : HttpResponse() {
+    context()->headers_.push_back(HttpHeaderContext("Content-Type", "application/json"));
+}
+
+
 HttpResponseJson::HttpResponseJson(const HttpVersion& version,
                                    const HttpStatusCode& status_code,
                                    const CallSetGenericBody& generic_body)
     : HttpResponse(version, status_code, CallSetGenericBody::no()) {
-    addHeader("Content-Type", "application/json");
+    context()->headers_.push_back(HttpHeaderContext("Content-Type", "application/json"));
     // This class provides its own implementation of the setGenericBody.
     // We call it here unless the derived class calls this constructor
     // from its own constructor and indicates that we shouldn't set the
@@ -44,7 +50,14 @@ HttpResponseJson::setGenericBody(const HttpStatusCode& status_code) {
 
 void
 HttpResponseJson::setBodyAsJson(const ConstElementPtr& json_body) {
-    setBody(json_body->str());
+    if (json_body) {
+        context()->body_ = json_body->str();
+
+    } else {
+        context()->body_.clear();
+    }
+
+    json_ = json_body;
 }
 
 

@@ -36,7 +36,8 @@ public:
         // it returns the fixed value of the Date header, which is
         // very useful in unit tests.
         TestHttpResponse response(HttpVersion(1, 0), status_code);
-        response.addHeader("Content-Type", "text/html");
+        response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+        ASSERT_NO_THROW(response.finalize());
         std::ostringstream response_string;
         response_string << "HTTP/1.0 " << static_cast<uint16_t>(status_code)
             << " " << status_message << "\r\n";
@@ -61,9 +62,10 @@ TEST_F(HttpResponseTest, responseOK) {
 
     // Create the message and add some headers.
     TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
-    response.addHeader("Content-Type", "text/html");
-    response.addHeader("Host", "kea.example.org");
-    response.setBody(sample_body);
+    response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    response.context()->headers_.push_back(HttpHeaderContext("Host", "kea.example.org"));
+    response.context()->body_ = sample_body;
+    ASSERT_NO_THROW(response.finalize());
 
     // Create a string holding expected response. Note that the Date
     // is a fixed value returned by the customized TestHttpResponse
