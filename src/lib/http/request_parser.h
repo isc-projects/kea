@@ -142,7 +142,7 @@ public:
     /// @param request Reference to the @ref HttpRequest object or its
     /// derivation that should be used to validate the parsed request and
     /// to be used as a container for the parsed request.
-    HttpRequestParser(HttpRequest& request);
+    explicit HttpRequestParser(HttpRequest& request);
 
     /// @brief Initialize the state model for parsing.
     ///
@@ -239,6 +239,8 @@ private:
 
     /// @brief Handler for HTTP_BODY_ST.
     void bodyHandler();
+
+    //@}
 
     /// @brief Reference to the request object specified in the constructor.
     HttpRequest& request_;

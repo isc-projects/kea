@@ -26,7 +26,9 @@ struct HttpResponseContext {
     /// @brief HTTP minor version number.
     unsigned int http_version_minor_;
     /// @brief HTTP status code.
-    uint16_t status_code_;
+    unsigned int status_code_;
+    /// @brief HTTP status phrase.
+    std::string phrase_;
     /// @brief Collection of HTTP headers.
     std::vector<HttpHeaderContext> headers_;
     /// @brief HTTP request body.

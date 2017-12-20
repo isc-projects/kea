@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <http/response_json.h>
+#include <map>
 
 using namespace isc::data;
 
@@ -49,6 +50,29 @@ HttpResponseJson::setGenericBody(const HttpStatusCode& status_code) {
 }
 
 void
+HttpResponseJson::finalize() {
+    if (!created_) {
+        create();
+    }
+
+    // Parse JSON body and store.
+    parseBodyAsJson();
+    finalized_ = true;
+}
+
+void
+HttpResponseJson::reset() {
+    HttpResponse::reset();
+    json_.reset();
+}
+
+ConstElementPtr
+HttpResponseJson::getBodyAsJson() const {
+    checkFinalized();
+    return (json_);
+}
+
+void
 HttpResponseJson::setBodyAsJson(const ConstElementPtr& json_body) {
     if (json_body) {
         context()->body_ = json_body->str();
@@ -60,6 +84,37 @@ HttpResponseJson::setBodyAsJson(const ConstElementPtr& json_body) {
     json_ = json_body;
 }
 
+ConstElementPtr
+HttpResponseJson::getJsonElement(const std::string& element_name) const {
+    try {
+        ConstElementPtr body = getBodyAsJson();
+        if (body) {
+            const std::map<std::string, ConstElementPtr>& map_value = body->mapValue();
+            auto map_element = map_value.find(element_name);
+            if (map_element != map_value.end()) {
+                return (map_element->second);
+            }
+        }
+
+    } catch (const std::exception& ex) {
+        isc_throw(HttpResponseJsonError, "unable to get JSON element "
+                  << element_name << ": " << ex.what());
+    }
+    return (ConstElementPtr());
+}
+
+void
+HttpResponseJson::parseBodyAsJson() {
+   try {
+       // Only parse the body if it hasn't been parsed yet.
+       if (!json_ && !context_->body_.empty()) {
+           json_ = Element::fromJSON(context_->body_);
+       }
+    } catch (const std::exception& ex) {
+        isc_throw(HttpResponseJsonError, "unable to parse the body of the HTTP"
+                  " response: " << ex.what());
+    }
+}
 
 } // namespace http
 } // namespace isc

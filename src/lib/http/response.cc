@@ -54,7 +54,7 @@ HttpResponse::HttpResponse(const HttpVersion& version,
     : HttpMessage(OUTBOUND), context_(new HttpResponseContext()) {
     context_->http_version_major_ = version.major_;
     context_->http_version_minor_ = version.minor_;
-    context_->status_code_ = static_cast<uint16_t>(status_code);
+    context_->status_code_ = static_cast<unsigned int>(status_code);
 
     if (generic_body.set_) {
         // This currently does nothing, but it is useful to have it here as
@@ -143,6 +143,12 @@ HttpStatusCode
 HttpResponse::getStatusCode() const {
     checkCreated();
     return (static_cast<HttpStatusCode>(context_->status_code_));
+}
+
+std::string
+HttpResponse::getStatusPhrase() const {
+    checkCreated();
+    return (context_->phrase_);
 }
 
 std::string
