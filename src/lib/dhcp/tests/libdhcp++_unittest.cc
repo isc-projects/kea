@@ -1736,6 +1736,9 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_V6_CAPTIVE_PORTAL, begin, end,
                                     typeid(OptionString));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_RELAY_SOURCE_PORT, begin, begin + 2,
+                                    typeid(OptionInt<uint16_t>));
+
     LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
 

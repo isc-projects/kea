@@ -764,7 +764,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         rsp->setRemotePort(DHCP6_CLIENT_PORT);
     } else {
         // Relayed traffic, send back to the relay agent
-        rsp->setRemotePort(DHCP6_SERVER_PORT);
+        uint16_t relay_port = testRelaySourcePort(query);
+        rsp->setRemotePort(relay_port ? relay_port : DHCP6_SERVER_PORT);
     }
 
     rsp->setLocalPort(DHCP6_SERVER_PORT);
@@ -3371,6 +3372,22 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
             }
         }
     }
+}
+
+uint16_t Dhcpv6Srv::testRelaySourcePort(const Pkt6Ptr& query) {
+
+    if (query->relay_info_.empty()) {
+        // No relay agent
+        return (0);
+    }
+
+    // Did the last relay agent add a relay-source-port?
+    if (query->getRelayOption(D6O_RELAY_SOURCE_PORT, 0)) {
+        // draft-ietf-dhc-relay-port-10.txt section 5.2
+        return (query->getRemotePort());
+    }
+
+    return (0);
 }
 
 void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
