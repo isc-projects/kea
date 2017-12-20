@@ -7,11 +7,13 @@
 #ifndef HTTP_RESPONSE_H
 #define HTTP_RESPONSE_H
 
+#include <cc/data.h>
 #include <http/header_context.h>
 #include <http/http_message.h>
 #include <http/response_context.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <string>
 #include <vector>
 
 namespace isc {
@@ -150,8 +152,28 @@ public:
     /// @brief Returns HTTP status code.
     HttpStatusCode getStatusCode() const;
 
+    /// @brief Returns HTTP status phrase.
+    std::string getStatusPhrase() const;
+
     /// @brief Returns HTTP response body as string.
     virtual std::string getBody() const;
+
+    /// @brief Retrieves JSON body.
+    ///
+    /// @return Pointer to the root element of the JSON structure.
+    /// @throw HttpResponseJsonError if an error occurred.
+    data::ConstElementPtr getBodyAsJson() const;
+
+    /// @brief Retrieves a single JSON element.
+    ///
+    /// The element must be at top level of the JSON structure.
+    ///
+    /// @param element_name Element name.
+    ///
+    /// @return Pointer to the specified element or NULL if such element
+    /// doesn't exist.
+    /// @throw HttpResponseJsonError if an error occurred.
+    data::ConstElementPtr getJsonElement(const std::string& element_name) const;
 
     /// @brief Checks if the status code indicates client error.
     ///
@@ -219,6 +241,8 @@ private:
     /// @param status_code Status code for which the body should be
     /// generated.
     void setGenericBody(const HttpStatusCode& /*status_code*/) { };
+
+protected:
 
     /// @brief Pointer to the @ref HttpResponseContext holding parsed
     /// data.

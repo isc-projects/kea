@@ -80,6 +80,8 @@ public:
 
 protected:
 
+    /// @brief Interprets body as JSON, which can be later retrieved using
+    /// data element objects.
     void parseBodyAsJson();
 
     /// @brief Pointer to the parsed JSON body.

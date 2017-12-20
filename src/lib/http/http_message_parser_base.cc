@@ -186,7 +186,7 @@ HttpMessageParserBase::parseEndedHandler() {
         transition(END_ST, END_EVT);
         break;
     case HTTP_PARSE_FAILED_EVT:
-        abortModel("HTTP request parsing failed");
+        abortModel("HTTP message parsing failed");
         break;
 
     default:
