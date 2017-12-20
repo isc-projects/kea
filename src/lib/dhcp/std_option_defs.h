@@ -444,6 +444,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       NO_RECORD_DEF, "" },
     { "v6-captive-portal", D6O_V6_CAPTIVE_PORTAL, OPT_STRING_TYPE, false,
       NO_RECORD_DEF, "" },
+    { "relay-source-port", D6O_RELAY_SOURCE_PORT, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
     { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,

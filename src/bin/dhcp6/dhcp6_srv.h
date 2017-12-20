@@ -754,6 +754,12 @@ protected:
     void setStatusCode(boost::shared_ptr<Option6IA>& container,
                        const OptionPtr& status);
 
+    /// @brief Check if the last relay added a relay-source-port option.
+    ///
+    /// @param query DHCPv6 message to be checked.
+    /// @return the port to use to join the relay or 0 for the default.
+    static uint16_t testRelaySourcePort(const Pkt6Ptr& query);
+
 private:
 
     /// @public
