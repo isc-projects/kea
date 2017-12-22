@@ -198,9 +198,6 @@ the Cassandra database. The connection is closed as part of normal server
 shutdown. This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
 
-% DHCPSRV_CQL_BEGIN_TRANSACTION begin transaction.
-The server has issued a begin transaction call.
-
 % DHCPSRV_CQL_CONNECTION_BEGIN_TRANSACTION begin transaction on current connection.
 The server has issued a begin transaction call.
 

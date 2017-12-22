@@ -53,5 +53,10 @@ lease_cmds_unittests_LDADD += $(LOG4CPLUS_LIBS)
 lease_cmds_unittests_LDADD += $(CRYPTO_LIBS)
 lease_cmds_unittests_LDADD += $(BOOST_LIBS)
 lease_cmds_unittests_LDADD += $(GTEST_LDADD)
+
+if HAVE_CQL
+lease_cmds_unittests_LDFLAGS += $(CQL_LIBS)
+endif
+
 endif
 noinst_PROGRAMS = $(TESTS)

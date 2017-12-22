@@ -17,20 +17,6 @@
 #ifndef SQL_COMMON_H
 #define SQL_COMMON_H
 
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/sequenced_index.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <string>
-#include <utility>
-#include <vector>
-
 namespace isc {
 namespace dhcp {
 
@@ -47,8 +33,8 @@ enum ExchangeDataType {
     EXCHANGE_DATA_TYPE_STRING,
     EXCHANGE_DATA_TYPE_BYTES,
     EXCHANGE_DATA_TYPE_UUID,
-    EXCHANGE_DATA_TYPE_UDT,
-    EXCHANGE_DATA_TYPE_COLLECTION
+    EXCHANGE_DATA_TYPE_UDT,       ///< User-Defined Type (used in Cassandra)
+    EXCHANGE_DATA_TYPE_COLLECTION ///< Collection (used in Cassandra)
 };
 
 /// @brief Base class for backend exchanges.

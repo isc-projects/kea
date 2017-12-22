@@ -22,6 +22,20 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/sql_common.h>
 
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace isc {
 namespace dhcp {
 
