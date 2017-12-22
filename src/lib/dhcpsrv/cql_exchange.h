@@ -48,7 +48,7 @@ class CqlExchange;
 /// behaviour.
 class AnyArray : public std::vector<boost::any> {
 public:
-    /// @brief Add a at the end of the vector.
+    /// @brief Add a value at the end of the vector.
     void add(const boost::any& value);
 
     /// @brief Remove the void pointer to the data value from a specified

@@ -728,7 +728,7 @@ if test "$CQL_CONFIG" != "" ; then
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
     CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
-    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra_static -luv"
+    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra -luv"
     CQL_VERSION=`$CQL_CONFIG --version`
 
     AC_SUBST(CQL_CPPFLAGS)
