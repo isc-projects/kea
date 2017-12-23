@@ -116,7 +116,7 @@ TEST_F(CfgDUIDTest, setValues) {
     ASSERT_NO_THROW(cfg_duid.setTime(32100));
     ASSERT_NO_THROW(cfg_duid.setEnterpriseId(10));
     ASSERT_NO_THROW(cfg_duid.setPersist(false));
-    std::string user_context = "{ \"comment\": \"foo\", \"bar\": 1 }";
+    std::string user_context = "{ \"comment\": \"bar\", \"foo\": 1 }";
     ASSERT_NO_THROW(cfg_duid.setContext(Element::fromJSON(user_context)));
 
     // Check that values have been set correctly.
@@ -130,14 +130,14 @@ TEST_F(CfgDUIDTest, setValues) {
     EXPECT_EQ(user_context, cfg_duid.getContext()->str());
 
     std::string expected = "{\n"
-        " \"comment\": \"foo\",\n"
+        " \"comment\": \"bar\",\n"
         " \"type\": \"EN\",\n"
         " \"identifier\": \"ABCDEF\",\n"
         " \"htype\": 100,\n"
         " \"time\": 32100,\n"
         " \"enterprise-id\": 10,\n"
         " \"persist\": false,\n"
-        " \"user-context\": { \"bar\": 1 }\n"
+        " \"user-context\": { \"foo\": 1 }\n"
         "}";
     runToElementTest<CfgDUID>(expected, cfg_duid);
 }
