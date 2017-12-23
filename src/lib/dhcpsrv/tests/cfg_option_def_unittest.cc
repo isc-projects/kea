@@ -282,7 +282,7 @@ TEST(CfgOptionDefTest, unparse) {
         "    \"record-types\": \"uint16, uint16\",\n"
         "    \"encapsulate\": \"\",\n"
         "    \"space\": \"dns\",\n"
-        "    \"user-context\": \"bar\": 1 }\n"
+        "    \"user-context\": { \"bar\": 1 }\n"
         "},{\n"
         "    \"name\": \"option-foo\",\n"
         "    \"code\": 5,\n"
