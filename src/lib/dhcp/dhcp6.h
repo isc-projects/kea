@@ -280,6 +280,7 @@ static const uint32_t ENTERPRISE_ID_ISC = 2495;
    codes for the ISC vendor specific options used in 4o6 */
 static const uint16_t ISC_V6_4O6_INTERFACE = 60000;
 static const uint16_t ISC_V6_4O6_SRC_ADDRESS = 60001;
+static const uint16_t ISC_V6_4O6_SRC_PORT = 60002;
 
 /* Offsets into IA_*'s where Option spaces commence.  */
 static const uint16_t IA_NA_OFFSET = 12; /* IAID, T1, T2, all 4 octets each */

@@ -476,7 +476,9 @@ const OptionDefParams ISC_V6_OPTION_DEFINITIONS[] = {
     { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false,
         NO_RECORD_DEF, "" },
     { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE,
-        false, NO_RECORD_DEF, "" }
+        false, NO_RECORD_DEF, "" },
+    { "4o6-source-port", ISC_V6_4O6_SRC_PORT, OPT_UINT16_TYPE, false,
+        NO_RECORD_DEF, "" }
 };
 
 const int ISC_V6_OPTION_DEFINITIONS_SIZE =

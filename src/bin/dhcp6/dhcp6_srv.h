@@ -754,6 +754,10 @@ protected:
     void setStatusCode(boost::shared_ptr<Option6IA>& container,
                        const OptionPtr& status);
 
+public:
+
+    /// Used for DHCPv4-over-DHCPv6 too.
+
     /// @brief Check if the last relay added a relay-source-port option.
     ///
     /// @param query DHCPv6 message to be checked.
