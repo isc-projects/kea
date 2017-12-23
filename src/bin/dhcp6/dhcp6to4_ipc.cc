@@ -89,7 +89,8 @@ void Dhcp6to4Ipc::handler() {
     // getType() always returns the type of internal message.
     uint8_t msg_type = buf[0];
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
-        pkt->setRemotePort(DHCP6_SERVER_PORT);
+        uint16_t relay_port = Dhcpv6Srv::testRelaySourcePort(pkt);
+        pkt->setRemotePort(relay_port ? relay_port : DHCP6_SERVER_PORT);
     } else {
         pkt->setRemotePort(DHCP6_CLIENT_PORT);
     }
