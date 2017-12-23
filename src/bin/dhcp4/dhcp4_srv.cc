@@ -205,10 +205,11 @@ Dhcpv4Exchange::initResponse4o6() {
     if (!query6->relay_info_.empty()) {
         resp6->copyRelayInfo(query6);
     }
-    // Copy interface and remote address
+    // Copy interface, and remote address and port
     resp6->setIface(query6->getIface());
     resp6->setIndex(query6->getIndex());
     resp6->setRemoteAddr(query6->getRemoteAddr());
+    resp6->setRemotePort(query6->getRemotePort());
     resp_.reset(new Pkt4o6(resp_, resp6));
 }
 

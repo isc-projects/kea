@@ -193,21 +193,19 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
     }
 
     // Get the option holding source port.
-    OptionPtr sport = option_vendor->getOption(ISC_V6_4O6_SRC_PORT);
-    if (!sport || (sport->len() - sport->getHeaderLen() != 2)) {
+    OptionUint16Ptr sport = boost::dynamic_pointer_cast<
+        OptionUint16>(option_vendor->getOption(ISC_V6_4O6_SRC_PORT));
+    if (!sport) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
             .arg("no source port suboption");
         isc_throw(Dhcp4o6IpcError,
                   "malformed packet (source port suboption missing "
-                  "or has incorrect length)");
+                  "or has incorrect type)");
     }
-    const OptionBuffer& sport_buf = sport->getData();
-    uint16_t sport_value = static_cast<uint16_t>(sport_buf[0]) << 8;
-    sport_value |= static_cast<uint16_t>(sport_buf[1]);
 
     // Update the packet.
     pkt->setRemoteAddr(srcs->readAddress());
-    pkt->setRemotePort(sport_value);
+    pkt->setRemotePort(sport->getValue());
     pkt->setIface(iface->getName());
     pkt->setIndex(iface->getIndex());
 

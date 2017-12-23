@@ -66,6 +66,7 @@ void Dhcp4to6Ipc::handler() {
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP6_DHCP4O6_PACKET_RECEIVED)
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getRemoteAddr().toText())
+                .arg(pkt->getRemotePort())
                 .arg(pkt->getIface());
         }
     } catch (const std::exception& e) {
@@ -156,6 +157,7 @@ void Dhcp4to6Ipc::handler() {
             .arg(rsp6->getName())
             .arg(static_cast<int>(rsp6->getType()))
             .arg(rsp6->getRemoteAddr())
+            .arg(rsp6->getRemotePort())
             .arg(rsp6->getIface())
             .arg(rsp->getLabel())
             .arg(rsp->getName())
