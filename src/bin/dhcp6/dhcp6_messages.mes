@@ -205,7 +205,7 @@ received in Decline message. It's expected that the option will contain an
 address that is being declined. Specific information will be printed in a
 separate message.
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 port %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
