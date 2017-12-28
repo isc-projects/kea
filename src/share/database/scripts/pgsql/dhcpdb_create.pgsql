@@ -140,16 +140,14 @@ ALTER TABLE lease6
 
 --
 --  FUNCTION that returns a result set containing the column names for lease4 dumps.
-DROP FUNCTION IF EXISTS lease4DumpHeader();
-CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease4DumpHeader() RETURNS text AS  $$
     select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
 $$ LANGUAGE SQL;
 --
 
 --
 --  FUNCTION that returns a result set containing the data for lease4 dumps.
-DROP FUNCTION IF EXISTS lease4DumpData();
-CREATE FUNCTION lease4DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease4DumpData() RETURNS
     table (address inet,
            hwaddr text,
            client_id text,
@@ -178,16 +176,14 @@ $$ LANGUAGE SQL;
 
 --
 --  FUNCTION that returns a result set containing the column names for lease6 dumps.
-DROP FUNCTION IF EXISTS lease6DumpHeader();
-CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+CREATE OR REPLACE FUNCTION lease6DumpHeader() RETURNS text AS  $$
     select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state' as text) as result;
 $$ LANGUAGE SQL;
 --
 
 --
 --  FUNCTION that returns a result set containing the data for lease6 dumps.
-DROP FUNCTION IF EXISTS lease6DumpData();
-CREATE FUNCTION lease6DumpData() RETURNS
+CREATE OR REPLACE FUNCTION lease6DumpData() RETURNS
     TABLE (
            address text,
            duid text,
