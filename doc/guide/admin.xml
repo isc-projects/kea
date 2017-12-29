@@ -160,19 +160,19 @@
     <para>
       <table frame="all" id="backends">
         <title>List of available backends</title>
-        <tgroup cols='2'>
+        <tgroup cols='5'>
           <colspec colname='feature'/>
           <colspec colname='memfile'/>
           <colspec colname='mysql'/>
           <colspec colname='pgsql'/>
-          <colspec colname='cql'/>
+          <colspec colname='cql' colwidth='1.5*'/>
           <thead>
             <row>
               <entry>Feature</entry>
               <entry>Memfile</entry>
               <entry>MySQL</entry>
               <entry>PostgreSQL</entry>
-              <entry>CQL(Cassandra)</entry>
+              <entry>CQL (Cassandra)</entry>
             </row>
           </thead>
           <tbody>
@@ -206,7 +206,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
             </row>
 
             <row>
@@ -214,7 +214,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
             </row>
 
           </tbody>
@@ -409,6 +409,8 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       <title>PostgreSQL</title>
 
       <para>
+        PostgreSQL is able to store leases, host reservations and options
+        defined on a per host basis.
         A PostgreSQL database must be set up if you want Kea to store
         lease and other information in PostgreSQL. This step can be
         safely ignored if you are using other database backends.
@@ -590,10 +592,9 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       <para>
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
         added to Kea. Since it was added recently and has not undergone as much
-        testing as other backends, it is considered experimental: please use
-        with caution. The CQL backend is currently able to store leases only. The
-        ability to store host reservations will likely be added some time in the
-        future.
+        testing as other backends, it is considered experimental. Please use
+        with caution. The Casandra backend is currently able to store leases,
+        host reservations and options defined on a per host basis.
       </para>
 
       <para>

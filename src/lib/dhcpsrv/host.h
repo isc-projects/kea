@@ -23,7 +23,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief HostID (used only when storing in MySQL or Postgres)
+/// @brief HostID (used only when storing in MySQL, PostgreSQL or Cassandra)
 typedef uint64_t HostID;
 
 /// @brief IPv6 reservation for a host.
@@ -533,13 +533,13 @@ public:
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
-    /// @brief Sets Host ID (primary key in MySQL and Postgres backends)
+    /// @brief Sets Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
     /// @param id HostId value
     void setHostId(HostID id) {
         host_id_ = id;
     }
 
-    /// @brief Returns Host ID (primary key in MySQL and Postgres backends)
+    /// @brief Returns Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
     /// @return id HostId value (or 0 if not set)
     HostID getHostId() const {
         return (host_id_);
@@ -596,7 +596,7 @@ private:
     std::string boot_file_name_;
 
     /// @brief HostID (a unique identifier assigned when the host is stored in
-    ///                MySQL or Pgsql)
+    ///     MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
     /// @brief Pointer to the DHCPv4 option data configuration for this host.
