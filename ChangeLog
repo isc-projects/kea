@@ -1,3 +1,8 @@
+1341.	[func]		razvan, andrei
+	Significant update of Cassandra support. A lot of code for
+	Cassandr Lease Manager has been updated and partially rewritten.
+	(github #35, git 41795494720cd9886c1e98d21eaeefd94d674e37)
+
 1340.	[func]		marcin
 	Added support for "dhcp-enable" and "dhcp-disable" commands in
 	the DHCPv4 and DHCPv6 server.
