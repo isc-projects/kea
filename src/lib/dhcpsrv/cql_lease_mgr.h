@@ -39,7 +39,7 @@ class CqlLease6Exchange;
 
 /// @brief Cassandra Lease Manager
 ///
-/// This class provides the \ref isc::dhcp::LeaseMgr interface to the Cassandra
+/// This class provides the @ref isc::dhcp::LeaseMgr interface to the Cassandra
 /// database. Use of this backend implies that a CQL database is available
 /// and that the Kea schema has been created within it.
 class CqlLeaseMgr : public LeaseMgr {
@@ -47,15 +47,18 @@ public:
     /// @brief Constructor
     ///
     /// Uses the following keywords in the parameters passed to it to
-    /// connect to the database:
-    /// - name - Name of the database to which to connect (mandatory)
-    /// - host - Host to which to connect (optional, defaults to "localhost")
-    /// - user - Username under which to connect (optional)
-    /// - password - Password for "user" on the database (optional)
-    ///
-    /// If the database is successfully opened, the version number in the
-    /// schema_version table will be checked against hard-coded value in
-    /// the implementation file.
+    /// connect to the Cassandra cluster (if omitted, defaults specified in
+    /// parentheses):
+    /// - name - Name of the keyspace to to connect to ("keatest")
+    /// - contact-points - IP addresses to connect ("127.0.0.1")
+    /// - user - Username under which to connect (empty)
+    /// - password - Password for "user" on the database (empty)
+    /// - port - TCP port (9042)
+    /// - reconnect-wait-time (2000)
+    /// - connect-timeout (5000)
+    /// - request-timeout (12000)
+    /// - tcp-keepalive (no)
+    /// - tcp-nodelay (no)
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
@@ -138,7 +141,7 @@ public:
     ///        and a subnet
     ///
     /// There can be at most one lease for a given HW address in a single
-    /// pool, so this method with either return a single lease or NULL.
+    /// subnet, so this method with either return a single lease or NULL.
     ///
     /// @param hwaddr hardware address of the client
     /// @param subnet_id identifier of the subnet that lease must belong to
