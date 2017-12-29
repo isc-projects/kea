@@ -517,8 +517,7 @@ If a timeout is given though, it should be an integer greater than zero.
     purpose, be it lease or hosts information. This arrangement gives the most
     flexibility. Kea can be used to keep leases and host reservations
     separately, but can also point to the same database. Currently the
-    supported hosts database types are MySQL and PostgreSQL. The Cassandra
-    backend does not support host reservations yet.</para>
+    supported hosts database types are MySQL, PostgreSQL and Cassandra.</para>
 
     <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file. That is the recommended way
@@ -3387,25 +3386,19 @@ It is merely echoed by the server
     with classification using expressions.</para>
     </section>
 
-    <section id="reservations4-mysql-pgsql">
-      <title>Storing Host Reservations in MySQL or PostgreSQL</title>
+    <section id="reservations4-mysql-pgsql-cql">
+      <title>Storing Host Reservations in MySQL, PostgreSQL or Cassandra</title>
 
       <para>
-        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
-        linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL or PostgreSQL. Kea provides dedicated hook for
+        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
+        <xref linkend="hosts6-storage" /> for information on how to configure Kea to use
+        reservations stored in MySQL, PostgreSQL or Cassandra. Kea provides dedicated hook for
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information.
       </para>
 
       <note><simpara>In Kea maximum length of an option specified per host is
       arbitrarily set to 4096 bytes.</simpara></note>
-    </section>
-
-    <section id="reservations4-cql">
-      <title>Storing host reservations in CQL (Cassandra)</title>
-      <para>Kea currently does not support storing reservations in
-      Cassandra (CQL).</para>
     </section>
 
     <section id="reservations4-tuning">
