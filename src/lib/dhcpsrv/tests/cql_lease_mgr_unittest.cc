@@ -702,14 +702,14 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
 // Verifies that IPv4 lease statistics can be recalculated.
 /// @todo: uncomment this once stats recalculation is implemented
 /// for Cassandra (see #5487)
-TEST_F(CqlLeaseMgrTest, DISABLE_recountLeaseStats4) {
+TEST_F(CqlLeaseMgrTest, DISABLED_recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
 // Verifies that IPv6 lease statistics can be recalculated.
 /// @todo: uncomment this once stats recalculation is implemented
 /// for Cassandra (see #5487)
-TEST_F(CqlLeaseMgrTest, DISABLE_recountLeaseStats6) {
+TEST_F(CqlLeaseMgrTest, DISABLED_recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
