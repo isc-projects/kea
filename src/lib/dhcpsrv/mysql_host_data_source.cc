@@ -2694,7 +2694,11 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
 ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const asiolink::IOAddress& address) const {
-    /// @todo: check that address is really v4, not v6.
+    // Check that address is IPv4, not IPv6.
+    if (!address.isV4()) {
+        isc_throw(BadValue, "MySqlHostDataSource::get4(2): wrong address type, "
+                            "address supplied is not an IPv4 address");
+    }
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
