@@ -1,8 +1,14 @@
 #!/bin/bash
-DIR=$(readlink -f $0 | xargs dirname)
+
+if test `uname -s` = "Darwin"; then
+	DIR=$(stat -f %N $0 | xargs dirname)
+else
+	DIR=$(readlink -f $0 | xargs dirname)
+fi
+
 if ! [ -f ${DIR}/cql_config_defines.sh ] || ! [ -x ${DIR}/cql_config_defines.sh ]
 then
-	echo "missing path configuration file for DataStax Cassandra (cql_config_defines.h)"
+	echo "missing path configuration file for DataStax Cassandra (cql_config_defines.sh)"
 	exit 0
 fi
 source ${DIR}/cql_config_defines.sh

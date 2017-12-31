@@ -518,11 +518,11 @@ cql_dump() {
     fi
 
     # Parse and display header.
-    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/\s*//g' | sed -e 's/|/,/g' > $dump_file
+    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' > $dump_file
 
     # Parse and display contents - done separately from header to allow sorting
-    # by address.
-    echo "$result" | tail -n +4 | head -n -2 | sed -e 's/\s*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
+    # by address. awk script replaces head -n -2 which is not portable.
+    echo "$result" | tail -n +4 | awk 'n>=2 { print a[n%2] } { a[n%2]=$0; n=n+1 }' | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
 
     echo lease$dump_type successfully dumped to $dump_file
     exit 0
