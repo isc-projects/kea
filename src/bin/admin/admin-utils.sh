@@ -128,7 +128,7 @@ cql_execute_script() {
 cql_version() {
   version=$(cql_execute "SELECT version, minor FROM schema_version" "$@")
   error=$?
-  version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter=".")
+  version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 | tr "|" ".")
   echo "$version"
   return $error
 }
