@@ -15,7 +15,7 @@ namespace dhcp {
 /// @brief Database statement not applied
 ///
 /// Cassandra have a concept of mutation (any statement that does change the
-/// data, like INSERT, UPDATE or DELETE. Under certain conditions it may be
+/// data, like INSERT, UPDATE or DELETE). Under certain conditions it may be
 /// possible that those statesments may fail to apply.
 class StatementNotApplied : public Exception {
 public:
