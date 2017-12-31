@@ -3,12 +3,12 @@
 	global, shared-network, subnet, pool, host reservation, option,
 	option definition, client-class, control-socket, dhcp-ddns,
 	interfaces, loggers, and for DHCPv6 pd-pool and server-id.
-	(Trac #5351, git xxx)
+	(Trac #5351, git 3405a8fa5d391d96cd15874fd3de3ac63ceb33b6)
 
 1342.	[bug]		fdupont
 	Fixed subnets and host reservations returned by config-get and
 	config-write.
-	(Trac #5452, git xxx)
+	(Trac #5452, git c24d057bed2692eaf3cdb6af889122eb582ffede)
 
 1341.	[func]		razvan, andrei
 	Significant update of Cassandra support. A lot of code for
