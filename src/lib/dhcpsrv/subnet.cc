@@ -558,18 +558,15 @@ data::ElementPtr
 Subnet::toElement() const {
     ElementPtr map = Element::createMap();
 
+    // Add user-context
+    contextToElement(map);
+
     // Set subnet id
     SubnetID id = getID();
     map->set("id", Element::create(static_cast<long long>(id)));
 
     // Set subnet
     map->set("subnet", Element::create(toText()));
-
-    // Add user-context, but only if defined. Omit if it was not.
-    ConstElementPtr ctx = getContext();
-    if (ctx) {
-        map->set("user-context", ctx);
-    }
 
     return (map);
 }
@@ -623,6 +620,8 @@ Subnet6::toElement() const {
          pool != pools.cend(); ++pool) {
         // Prepare the map for a pool (@todo move this code to pool.cc)
         ElementPtr pool_map = Element::createMap();
+        // Set user-context
+        (*pool)->contextToElement(pool_map);
         // Set pool
         const IOAddress& first = (*pool)->getFirstAddress();
         const IOAddress& last = (*pool)->getLastAddress();
@@ -635,11 +634,6 @@ Subnet6::toElement() const {
             range = oss.str();
         }
         pool_map->set("pool", Element::create(range));
-        // Set user-context
-        ConstElementPtr context = (*pool)->getContext();
-        if (!isNull(context)) {
-            pool_map->set("user-context", context);
-        }
         // Set pool options
         ConstCfgOptionPtr opts = (*pool)->getCfgOption();
         pool_map->set("option-data", opts->toElement());
@@ -659,6 +653,8 @@ Subnet6::toElement() const {
         }
         // Prepare the map for a pd-pool
         ElementPtr pool_map = Element::createMap();
+        // Set user-context
+        pdpool->contextToElement(pool_map);
         // Set prefix
         const IOAddress& prefix = pdpool->getFirstAddress();
         pool_map->set("prefix", Element::create(prefix.toText()));
@@ -689,11 +685,6 @@ Subnet6::toElement() const {
                           Element::create(static_cast<int>(xlen)));
         }
 
-        // Set user-context
-        ConstElementPtr context = pdpool->getContext();
-        if (!isNull(context)) {
-            pool_map->set("user-context", context);
-        }
         // Set pool options
         ConstCfgOptionPtr opts = pdpool->getCfgOption();
         pool_map->set("option-data", opts->toElement());

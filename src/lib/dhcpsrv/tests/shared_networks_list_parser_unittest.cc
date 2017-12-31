@@ -29,7 +29,8 @@ TEST(SharedNetworkListParserTest, parse) {
         "    },"
         "    {"
         "        \"name\": \"monkey\","
-        "        \"interface\": \"eth1\""
+        "        \"interface\": \"eth1\","
+        "        \"user-context\": { \"comment\": \"example\" }"
         "    }"
         "]";
 
@@ -43,11 +44,15 @@ TEST(SharedNetworkListParserTest, parse) {
     ASSERT_TRUE(network1);
     EXPECT_EQ("bird", network1->getName());
     EXPECT_EQ("eth0", network1->getIface());
+    EXPECT_FALSE(network1->getContext());
 
     SharedNetwork4Ptr network2 = cfg->getByName("monkey");
     ASSERT_TRUE(network2);
     EXPECT_EQ("monkey", network2->getName());
     EXPECT_EQ("eth1", network2->getIface());
+    ASSERT_TRUE(network2->getContext());
+    EXPECT_EQ(1, network2->getContext()->size());
+    EXPECT_TRUE(network2->getContext()->get("comment"));
 }
 
 // This test verifies that specifying two networks with the same name

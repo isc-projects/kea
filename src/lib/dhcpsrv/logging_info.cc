@@ -159,6 +159,8 @@ LoggingInfo::toSpec() const {
 ElementPtr
 LoggingInfo::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user context
+    contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
     // Set output_options if not empty

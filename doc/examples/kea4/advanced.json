@@ -101,12 +101,15 @@
     "match-client-id": true,
 
     // The following list defines subnets. Each subnet consists of at
-    // least subnet and pool entries. One extra feature that requires some
-    // explanation is user-context. This is a structure that you can define
-    // in subnets and pools. It is parsed by Kea, but not used directly.
-    // It is intended to keep anything you may want to put there - comments,
-    // extra designations, floor or department names etc. These structures
-    // will be made available to Kea hooks.
+    // least subnet and pool entries. One extra feature that requires
+    // some explanation is user-context. This is a structure that you can
+    // define in subnets, pools and others. It is parsed by Kea, but not
+    // used directly.  It is intended to keep anything you may want to
+    // put there - comments, extra designations, floor or department
+    // names etc. These structures will be made available to Kea hooks.
+    // A comment entry is translated into a user-context with a
+    // "comment" property so you can include comments inside the
+    // configuration itself.
     "subnet4": [
         {
             "pools": [ {
@@ -117,6 +120,8 @@
             "user-context": {
                 "comment": "Our first subnet!"
             }
+            // Equivalent using smart parser
+            // "comment": "Our first subnet!"
         },
         {
             // This particular subnet has match-client-id value changed.

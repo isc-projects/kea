@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_space_container.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/key_from_key.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -30,7 +31,8 @@ namespace dhcp {
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
 /// (persistent = true).
-struct OptionDescriptor {
+class OptionDescriptor : public UserContext {
+public:
     /// @brief Option instance.
     OptionPtr option_;
 
