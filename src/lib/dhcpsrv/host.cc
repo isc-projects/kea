@@ -434,7 +434,7 @@ Host::toElement4() const {
     } else {
         isc_throw(ToElementError, "invalid identifier type: " << id_type);
     }
-    // Set the reservation
+    // Set the reservation (if not 0.0.0.0 which may not be re-read)
     const IOAddress& address = getIPv4Reservation();
     if (!address.isV4Zero()) {
         map->set("ip-address", Element::create(address.toText()));

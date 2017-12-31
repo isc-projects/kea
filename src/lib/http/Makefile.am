@@ -28,6 +28,7 @@ libkea_http_la_SOURCES += date_time.cc date_time.h
 libkea_http_la_SOURCES += http_log.cc http_log.h
 libkea_http_la_SOURCES += header_context.h
 libkea_http_la_SOURCES += http_acceptor.h
+libkea_http_la_SOURCES += http_header.cc http_header.h
 libkea_http_la_SOURCES += http_types.h
 libkea_http_la_SOURCES += listener.cc listener.h
 libkea_http_la_SOURCES += post_request.cc post_request.h

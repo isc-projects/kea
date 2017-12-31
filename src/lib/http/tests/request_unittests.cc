@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <http/request.h>
+#include <http/http_header.h>
 #include <http/http_types.h>
 #include <http/tests/request_test.h>
 #include <boost/lexical_cast.hpp>
@@ -18,7 +19,51 @@ using namespace isc::http::test;
 
 namespace {
 
-typedef HttpRequestTestBase<HttpRequest> HttpRequestTest;
+class HttpRequestTest : public HttpRequestTestBase<HttpRequest> {
+public:
+
+    /// @brief Tests connection persistence for the given HTTP version
+    /// and header value.
+    ///
+    /// This method creates a dummy HTTP request and sets the specified
+    /// version and header. Next, it returns the value if @c isPersistent
+    /// method for this request. The unit test verifies this value for
+    /// correctness.
+    ///
+    /// @param http_version HTTP version.
+    /// @param http_header HTTP header to be included in the request. If
+    /// the header has an empty value, it is not included.
+    ///
+    /// @return true if request indicates that connection is to be
+    /// persistent.
+    bool isPersistent(const HttpVersion& http_version,
+                      const HttpHeader& http_header = HttpHeader("Connection")) {
+        try {
+            // We need to add some JSON body.
+            std::string json_body = "{ \"param1\": \"foo\" }";
+
+            // Set method, path, version and content length.
+            setContextBasics("POST", "/isc/org", http_version);
+            addHeaderToContext("Content-Length", json_body.length());
+
+            // If additional header has been specified (typically "Connection"),
+            // include it.
+            if (!http_header.getValue().empty()) {
+                addHeaderToContext(http_header.getName(), http_header.getValue());
+            }
+            // Attach JSON body.
+            request_.context()->body_ = json_body;
+            request_.create();
+
+        } catch (...) {
+            ADD_FAILURE() << "failed to create HTTP request while testing"
+                " connection persistence";
+        }
+
+        return (request_.isPersistent());
+    }
+
+};
 
 TEST_F(HttpRequestTest, minimal) {
     setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
@@ -153,6 +198,32 @@ TEST_F(HttpRequestTest, requiresBody) {
     ASSERT_FALSE(request_.requiresBody());
     request_.requireHeader("Content-Length");
     EXPECT_TRUE(request_.requiresBody());
+}
+
+TEST_F(HttpRequestTest, isPersistentHttp10) {
+    // In HTTP 1.0 the connection is by default non-persistent.
+    EXPECT_FALSE(isPersistent(HttpVersion(1, 0)));
+}
+
+TEST_F(HttpRequestTest, isPersistentHttp11) {
+    // In HTTP 1.1 the connection is by default persistent.
+    EXPECT_TRUE(isPersistent(HttpVersion(1, 1)));
+}
+
+TEST_F(HttpRequestTest, isPersistentHttp10KeepAlive) {
+    // In HTTP 1.0 the client indicates that the connection is desired to be
+    // persistent by including "Connection: keep-alive" header.
+    EXPECT_TRUE(
+        isPersistent(HttpVersion(1, 0), HttpHeader("Connection", "Keep-alive"))
+    );
+}
+
+TEST_F(HttpRequestTest, isPersistentHttp11Close) {
+    // In HTTP 1.1 the client would include "Connection: close" header if it
+    // desires to close the connection.
+    EXPECT_FALSE(
+        isPersistent(HttpVersion(1, 1), HttpHeader("Connection", "close"))
+    );
 }
 
 }

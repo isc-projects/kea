@@ -140,6 +140,7 @@ endif
 
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 libkea_dhcpsrv_la_SOURCES += network.cc network.h
+libkea_dhcpsrv_la_SOURCES += network_state.cc network_state.h
 
 if HAVE_PGSQL
 libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h

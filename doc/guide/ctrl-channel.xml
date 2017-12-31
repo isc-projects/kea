@@ -557,6 +557,42 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
     </section> <!-- end of command-shutdown -->
 
+    <section id="command-dhcp-disable">
+      <title>dhcp-disable</title>
+      <para>
+        The <emphasis>dhcp-disable</emphasis> command globally disables the DHCP
+        service. The server continues to operate, but it drops all received DHCP
+        messages. This command is useful when the server's maintenance requires that
+        the server temporarily stops allocating new leases and renew existing leases.
+        It is also useful in failover like configurations during a synchronization of
+        the lease databases at startup or recovery after a failure. The optional parameter
+        <emphasis>max-period</emphasis> specifies the time in seconds after which the
+        DHCP service should be automatically re-enabled if the
+        <emphasis>dhcp-enable</emphasis> command is not sent before this time elapses.
+      </para>
+<screen>
+{
+    "command": "dhcp-disable",
+    "arguments": {
+        "max-period": 20
+    }
+}
+</screen>
+    </section> <!-- end of command-dhcp-disable -->
+
+    <section id="command-dhcp-enable">
+      <title>dhcp-enable</title>
+      <para>
+        The <emphasis>dhcp-enable</emphasis> command globally enables the DHCP
+        service.
+      </para>
+<screen>
+{
+    "command": "dhcp-enable"
+}
+</screen>
+    </section> <!-- end of command-dhcp-disable -->
+
       <section id="command-version-get">
         <title>version-get</title>
         <para>
