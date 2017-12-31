@@ -363,7 +363,23 @@ SrvConfig::toElement() const {
     }
     // Set control-socket (skip if null as empty is not legal)
     if (!isNull(control_socket_)) {
-        dhcp->set("control-socket", control_socket_);
+        ElementPtr csocket = isc::data::copy(control_socket_);
+        ConstElementPtr ctx = csocket->get("user-context");
+        // Protect against not map
+        if (ctx && (ctx->getType() != Element::map)) {
+            ctx.reset();
+        }
+        // Extract comment
+        if (ctx && ctx->contains("comment")) {
+            ElementPtr ctx_copy = isc::data::copy(ctx);
+            csocket->set("comment", ctx_copy->get("comment"));
+            ctx_copy->remove("comment");
+            csocket->remove("user-context");
+            if (ctx_copy->size() > 0) {
+                csocket->set("user-context", ctx_copy);
+            }
+        }
+        dhcp->set("control-socket", csocket);
     }
     // Set client-classes
     ConstElementPtr client_classes = class_dictionary_->toElement();
