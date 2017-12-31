@@ -236,8 +236,20 @@ SrvConfig::toElement() const {
     dhcp->set("option-data", cfg_option_->toElement());
 
     // Set subnets and shared networks.
+
+    // We have two problems to solve:
+    //   - a subnet is unparsed once:
+    //       * if it is a plain subnet in the global subnet list
+    //       * if it is a member of a shared network in the shared network
+    //         subnet list
+    //   - unparsed subnets must be kept to add host reservations in them.
+    //     Of course this can be done only when subnets are unparsed.
+
+    // The list of all unparsed subnets
     std::vector<ElementPtr> sn_list;
+
     if (family == AF_INET) {
+        // Get plain subnets
         ElementPtr plain_subnets = Element::createList();
         const Subnet4Collection* subnets = cfg_subnets4_->getAll();
         for (Subnet4Collection::const_iterator subnet = subnets->cbegin();
@@ -254,7 +266,11 @@ SrvConfig::toElement() const {
         }
         dhcp->set("subnet4", plain_subnets);
 
+        // Get shared networks
         ElementPtr shared_networks = cfg_shared_networks4_->toElement();
+        dhcp->set("shared-networks", shared_networks);
+
+        // Get subnets in shared network subnet lists
         const std::vector<ElementPtr> networks = shared_networks->listValue();
         for (auto network = networks.cbegin();
              network != networks.cend(); ++network) {
@@ -265,9 +281,9 @@ SrvConfig::toElement() const {
                 sn_list.push_back(*subnet);
             }
         }
-        dhcp->set("shared-networks", shared_networks);
 
     } else {
+        // Get plain subnets
         ElementPtr plain_subnets = Element::createList();
         const Subnet6Collection* subnets = cfg_subnets6_->getAll();
         for (Subnet6Collection::const_iterator subnet = subnets->cbegin();
@@ -284,7 +300,11 @@ SrvConfig::toElement() const {
         }
         dhcp->set("subnet6", plain_subnets);
 
+        // Get shared networks
         ElementPtr shared_networks = cfg_shared_networks6_->toElement();
+        dhcp->set("shared-networks", shared_networks);
+
+        // Get subnets in shared network subnet lists
         const std::vector<ElementPtr> networks = shared_networks->listValue();
         for (auto network = networks.cbegin();
              network != networks.cend(); ++network) {
@@ -295,7 +315,6 @@ SrvConfig::toElement() const {
                 sn_list.push_back(*subnet);
             }
         }
-        dhcp->set("shared-networks", shared_networks);
     }
     // Insert reservations
     CfgHostsList resv_list;

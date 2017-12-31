@@ -51,6 +51,28 @@ class HttpListenerImpl;
 class HttpListener {
 public:
 
+    /// @brief HTTP request timeout value.
+    struct RequestTimeout {
+        /// @brief Constructor.
+        ///
+        /// @param value Request timeout value in milliseconds.
+        explicit RequestTimeout(long value)
+            : value_(value) {
+        }
+        long value_; ///< Request timeout value specified.
+    };
+
+    /// @brief Idle connection timeout.
+    struct IdleTimeout {
+        /// @brief Constructor.
+        ///
+        /// @param value Connection idle timeout value in milliseconds.
+        explicit IdleTimeout(long value)
+            : value_(value) {
+        }
+        long value_; ///< Connection idle timeout value specified.
+    };
+
     /// @brief Constructor.
     ///
     /// This constructor creates new server endpoint using the specified IP
@@ -67,6 +89,8 @@ public:
     /// create @ref HttpResponseCreator instances.
     /// @param request_timeout Timeout after which the HTTP Request Timeout
     /// is generated.
+    /// @param idle_timeout Timeout after which an idle persistent HTTP
+    /// connection is closed by the server.
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
@@ -74,7 +98,8 @@ public:
                  const asiolink::IOAddress& server_address,
                  const unsigned short server_port,
                  const HttpResponseCreatorFactoryPtr& creator_factory,
-                 const long request_timeout);
+                 const RequestTimeout& request_timeout,
+                 const IdleTimeout& idle_timeout);
 
     /// @brief Destructor.
     ///

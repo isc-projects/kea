@@ -100,6 +100,13 @@ public:
     /// @brief Unregisters all timers.
     void unregisterTimers();
 
+    /// @brief Checks if the timer with a specified name has been registered.
+    ///
+    /// @param timer_name Name of the timer.
+    /// @return true if the timer with the specified name has been registered,
+    /// false otherwise.
+    bool isTimerRegistered(const std::string& timer_name);
+
     /// @brief Returns the number of registered timers.
     size_t timersCount() const;
 

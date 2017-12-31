@@ -1397,7 +1397,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         // It is for advertise only. We should not insert the lease into LeaseMgr,
         // but rather check that we could have inserted it.
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(
-                             Lease::TYPE_NA, addr);
+                             ctx.currentIA().type_, addr);
         if (!existing) {
             return (lease);
         } else {

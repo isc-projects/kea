@@ -34,13 +34,15 @@ void
 HttpRequest::requireHeader(const std::string& header_name) {
     // Empty value denotes that the header is required but no specific
     // value is expected.
-    required_headers_[header_name] = "";
+    HttpHeaderPtr hdr(new HttpHeader(header_name));
+    required_headers_[hdr->getLowerCaseName()] = hdr;
 }
 
 void
 HttpRequest::requireHeaderValue(const std::string& header_name,
                                 const std::string& header_value) {
-    required_headers_[header_name] = header_value;
+    HttpHeaderPtr hdr(new HttpHeader(header_name, header_value));
+    required_headers_[hdr->getLowerCaseName()] = hdr;
 }
 
 bool
@@ -48,7 +50,9 @@ HttpRequest::requiresBody() const {
     // If Content-Length is required the body must exist too. There may
     // be probably some cases when Content-Length is not provided but
     // the body is provided. But, probably not in our use cases.
-    return (required_headers_.find("Content-Length") != required_headers_.end());
+    // Use lower case header name because this is how it is indexed in
+    // the storage.
+    return (required_headers_.find("content-length") != required_headers_.end());
 }
 
 void
@@ -79,7 +83,8 @@ HttpRequest::create() {
         for (auto header = context_->headers_.begin();
              header != context_->headers_.end();
              ++header) {
-            headers_[header->name_] = header->value_;
+            HttpHeaderPtr hdr(new HttpHeader(header->name_, header->value_));
+            headers_[hdr->getLowerCaseName()] = hdr;
         }
 
         // Iterate over required headers and check that they exist
@@ -91,13 +96,13 @@ HttpRequest::create() {
             if (header == headers_.end()) {
                 isc_throw(BadValue, "required header " << req_header->first
                           << " not found in the HTTP request");
-            } else if (!req_header->second.empty() &&
-                       header->second != req_header->second) {
+            } else if (!req_header->second->getValue().empty() &&
+                       !header->second->isValueEqual(req_header->second->getValue())) {
                 // If specific value is required for the header, check
                 // that the value in the HTTP request matches it.
                 isc_throw(BadValue, "required header's " << header->first
-                          << " value is " << req_header->second
-                          << ", but " << header->second << " was found");
+                          << " value is " << req_header->second->getValue()
+                          << ", but " << header->second->getValue() << " was found");
             }
         }
 
@@ -151,31 +156,47 @@ HttpRequest::getHttpVersion() const {
                         context_->http_version_minor_));
 }
 
-std::string
-HttpRequest::getHeaderValue(const std::string& header) const {
+HttpHeaderPtr
+HttpRequest::getHeader(const std::string& header_name) const {
+    HttpHeaderPtr http_header = getHeaderSafe(header_name);
+
+    // No such header.
+    if (!http_header) {
+        isc_throw(HttpRequestNonExistingHeader, header_name << " HTTP header"
+                  " not found in the request");
+    }
+
+    // Header found.
+    return (http_header);
+}
+
+HttpHeaderPtr
+HttpRequest::getHeaderSafe(const std::string& header_name) const {
     checkCreated();
 
-    auto header_it = headers_.find(header);
+    HttpHeader hdr(header_name);
+    auto header_it = headers_.find(hdr.getLowerCaseName());
     if (header_it != headers_.end()) {
         return (header_it->second);
     }
-    // No such header.
-    isc_throw(HttpRequestNonExistingHeader, header << " HTTP header"
-              " not found in the request");
+
+    // Header not found. Return null pointer.
+    return (HttpHeaderPtr());
+}
+
+std::string
+HttpRequest::getHeaderValue(const std::string& header_name) const {
+    return (getHeader(header_name)->getValue());
 }
 
 uint64_t
-HttpRequest::getHeaderValueAsUint64(const std::string& header) const {
-    // This will throw an exception if the header doesn't exist.
-    std::string header_value = getHeaderValue(header);
-
+HttpRequest::getHeaderValueAsUint64(const std::string& header_name) const {
     try {
-        return (boost::lexical_cast<uint64_t>(header_value));
+        return (getHeader(header_name)->getUint64Value());
 
-    } catch (const boost::bad_lexical_cast& ex) {
+    } catch (const std::exception& ex) {
         // The specified header does exist, but the value is not a number.
-        isc_throw(HttpRequestError, header << " HTTP header value "
-                  << header_value << " is not a valid number");
+        isc_throw(HttpRequestError, ex.what());
     }
 }
 
@@ -183,6 +204,20 @@ std::string
 HttpRequest::getBody() const {
     checkFinalized();
     return (context_->body_);
+}
+
+bool
+HttpRequest::isPersistent() const {
+    HttpHeaderPtr conn = getHeaderSafe("connection");
+    std::string conn_value;
+    if (conn) {
+        conn_value = conn->getLowerCaseValue();
+    }
+
+    HttpVersion ver = getHttpVersion();
+
+    return (((ver == HttpVersion::HTTP_10()) && (conn_value == "keep-alive")) ||
+            ((HttpVersion::HTTP_10() < ver) && (conn_value.empty() || (conn_value != "close"))));
 }
 
 void
