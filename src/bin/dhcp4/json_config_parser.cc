@@ -69,6 +69,7 @@ public:
     /// - echo-client-id
     /// - decline-probation-period
     /// - dhcp4o6-port
+    /// - user-context
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
@@ -87,6 +88,12 @@ public:
         // Set the DHCPv4-over-DHCPv6 interserver port.
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         cfg->setDhcp4o6Port(dhcp4o6_port);
+
+        // Set the global user context.
+        ConstElementPtr user_context = global->get("user-context");
+        if (user_context) {
+            cfg->setContext(user_context);
+        }
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -246,7 +253,7 @@ void configureCommandChannel() {
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
     // close the existing socket and open a new socket as appropriate.
-    // Note that closing an existing socket means the clien will not
+    // Note that closing an existing socket means the client will not
     // receive the configuration result.
     if (!sock_cfg || !current_sock_cfg || sock_changed) {
         // Close the existing socket (if any).
@@ -445,8 +452,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
 
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
-            // decline-probation-period, dhcp4o6-port, echo-client-id are
-            // handled in global_parser.parse() which sets global parameters.
+            // decline-probation-period, dhcp4o6-port, echo-client-id,
+            // user-context are handled in global_parser.parse() which
+            // sets global parameters.
             // match-client-id is derived to subnet scope level.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
@@ -454,6 +462,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "echo-client-id") ||
+                 (config_pair.first == "user-context") ||
                  (config_pair.first == "match-client-id") ||
                  (config_pair.first == "next-server") ||
                  (config_pair.first == "server-hostname") ||

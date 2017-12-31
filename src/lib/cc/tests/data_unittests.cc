@@ -1116,6 +1116,7 @@ TEST(Element, prettyPrint) {
 
     // default step is 2, order is alphabetic, no \n at the end
     string text = "{\n"
+        "  \"comment\": \"this is an exception\",\n"
         "  \"boolean\": true,\n"
         "  \"empty-list\": [ ],\n"
         "  \"empty-map\": { },\n"

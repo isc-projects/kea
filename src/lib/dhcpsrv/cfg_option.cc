@@ -201,7 +201,9 @@ CfgOption::toElement() const {
              opt != opts->end(); ++opt) {
             // Get and fill the map for this option
             ElementPtr map = Element::createMap();
-            // First set space from parent iterator
+            // Set user context
+            opt->contextToElement(map);
+            // Set space from parent iterator
             map->set("space", Element::create(*name));
             // Set the code
             uint16_t code = opt->option_->getType();
@@ -242,7 +244,9 @@ CfgOption::toElement() const {
              opt != opts->end(); ++opt) {
             // Get and fill the map for this option
             ElementPtr map = Element::createMap();
-            // First set space from parent iterator
+            // Set user context
+            opt->contextToElement(map);
+            // Set space from parent iterator
             std::ostringstream oss;
             oss << "vendor-" << *id;
             map->set("space", Element::create(oss.str()));

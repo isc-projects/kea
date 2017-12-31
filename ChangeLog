@@ -1,3 +1,15 @@
+1343.	[func]		fdupont
+	User-context and comments are now supported in many new scopes:
+	global, shared-network, subnet, pool, host reservation, option,
+	option definition, client-class, control-socket, dhcp-ddns,
+	interfaces, loggers, and for DHCPv6 pd-pool and server-id.
+	(Trac #5351, git xxx)
+
+1342.	[bug]		fdupont
+	Fixed subnets and host reservations returned by config-get and
+	config-write.
+	(Trac #5452, git xxx)
+
 1341.	[func]		razvan, andrei
 	Significant update of Cassandra support. A lot of code for
 	Cassandr Lease Manager has been updated and partially rewritten.

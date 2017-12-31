@@ -77,6 +77,8 @@ CfgDUID::create(const std::string& duid_file_path) const {
 ElementPtr
 CfgDUID::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user context
+    contextToElement(result);
     // The type item is required
     std::string duid_type = "LLT";
     switch (type_) {

@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
@@ -41,7 +42,7 @@ namespace dhcp {
 /// class provides an abstract interface that must be implemented by derived
 /// classes and, where appropriate, implements common methods used by the
 /// derived classes.
-class Network : public data::CfgToElement {
+class Network : public virtual UserContext, public data::CfgToElement {
 public:
 
     /// @brief Holds optional information about relay.
