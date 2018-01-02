@@ -105,6 +105,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> map_value
 %type <ElementPtr> ncr_protocol_value
 
 %printer { yyoutput << $$; } <*>;
