@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -200,6 +200,26 @@ TEST(ParserTest, multilineComments) {
                 "    \"subnet\": \"2001:db8:1::/48\", "
                 "    \"interface\": \"eth0\""
                 " } ],"
+                "\"valid-lifetime\": 4000 } }";
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
+}
+
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"comment\": \"a comment\",\n"
+                "\"preferred-lifetime\": 3000,\n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"subnet6\": [ { "
+                "    \"user-context\": { \"comment\": \"indirect\" },"
+                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                "    \"subnet\": \"2001:db8:1::/48\", "
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"user-context\": { \"compatible\": true },"
                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
@@ -521,6 +541,45 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_OPTION_DEF,
               "missing parameter 'type' (<string>:1:1) "
               "[option-def map between <string>:1:1 and <string>:2:15]");
+
+    // user context and embedded comments
+    testError("{ \"Dhcp6\":{\n"
+              "  \"comment\": true,\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes
