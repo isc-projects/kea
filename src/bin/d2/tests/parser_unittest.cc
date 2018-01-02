@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,10 @@
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <testutils/io_utils.h>
+#include <testutils/user_context_utils.h>
 
 using namespace isc::data;
+using namespace isc::test;
 using namespace std;
 
 namespace isc {
@@ -265,11 +267,16 @@ TEST(ParserTest, multilineComments) {
 ///
 /// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
+    ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
-    string decommented = isc::test::decommentJSONfile(fname);
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+    string decommented = decommentJSONfile(fname);
+
+    cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
+
+    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    reference_json = moveComments(json);
 
     // remove the temporary file
     EXPECT_NO_THROW(::remove(decommented.c_str()));
@@ -294,6 +301,7 @@ void testFile(const std::string& fname) {
 // the second time with D2Parser. Both JSON trees are then compared.
 TEST(ParserTest, file) {
     vector<string> configs;
+    configs.push_back("comments.json");
     configs.push_back("sample1.json");
     configs.push_back("template.json");
 
