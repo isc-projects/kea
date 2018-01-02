@@ -188,73 +188,89 @@ TEST(ParserTest, Logging) {
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000,\n"
-                "# this is a comment\n"
-                "\"rebind-timer\": 2000, \n"
-                "# lots of comments here\n"
-                "# and here\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt =
+        "{ \"DhcpDdns\" : \n"
+           "{ \n"
+            " \"ip-address\": \"192.168.77.1\", \n"
+            "# this is a comment\n"
+            " \"port\": 777, \n "
+            " \"ncr-protocol\": \"UDP\", \n"
+            "# lots of comments here\n"
+            "# and here\n"
+            "\"tsig-keys\": [], \n"
+            "\"forward-ddns\" : {}, \n"
+            "\"reverse-ddns\" : {} \n"
+            "} \n"
+         "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
 }
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, // this is a comment \n"
-                "\"rebind-timer\": 2000, // everything after // is ignored\n"
-                "\"renew-timer\": 1000, // this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt =
+        "{ \"DhcpDdns\" : \n"
+           "{ \n"
+            " \"ip-address\": \"192.168.77.1\", \n"
+            " \"port\": 777, // this is a comment \n"
+            " \"ncr-protocol\": \"UDP\", // everything after // is ignored\n"
+            "\"tsig-keys\": [], // this will be ignored, too\n"
+            "\"forward-ddns\" : {}, \n"
+            "\"reverse-ddns\" : {} \n"
+            "} \n"
+         "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, # this is a comment \n"
-                "\"rebind-timer\": 2000, # everything after # is ignored\n"
-                "\"renew-timer\": 1000, # this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt =
+        "{ \"DhcpDdns\" : \n"
+           "{ \n"
+            " \"ip-address\": \"192.168.77.1\", \n"
+            " \"port\": 777, # this is a comment \n"
+            " \"ncr-protocol\": \"UDP\", # everything after # is ignored\n"
+            "\"tsig-keys\": [], # this will be ignored, too\n"
+            "\"forward-ddns\" : {}, \n"
+            "\"reverse-ddns\" : {} \n"
+            "} \n"
+         "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
-                "that\n can \n span \n multiple \n lines */ \n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt =
+        "{ \"DhcpDdns\" : \n"
+           "{ \n"
+            " \"ip-address\": \"192.168.77.1\", \n"
+            " \"port\": 777, /* this is a C style comment\n"
+            "that\n can \n span \n multiple \n lines */ \n"
+            " \"ncr-protocol\": \"UDP\", \n"
+            "\"tsig-keys\": [], \n"
+            "\"forward-ddns\" : {}, \n"
+            "\"reverse-ddns\" : {} \n"
+            "} \n"
+         "} \n";
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+}
+
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt =
+        "{ \"DhcpDdns\" : \n"
+           "{ \n"
+            "\"comment\": \"a comment\",\n"
+            " \"ip-address\": \"192.168.77.1\", \n"
+            " \"port\": 777, \n "
+            " \"ncr-protocol\": \"UDP\", \n"
+            "\"tsig-keys\" : [ { \n"
+            "    \"name\" : \"d2.md5.key\", \n"
+            "    \"user-context\" : { \"comment\" : \"indirect\" } } ], \n"
+            "\"forward-ddns\" : {}, \n"
+            "\"reverse-ddns\" : {}, \n"
+            "\"user-context\": { \"compatible\": true }"
+            "} \n"
+         "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
@@ -551,6 +567,45 @@ TEST(ParserTest, errors) {
               D2ParserContext::PARSER_DHCPDDNS,
               "<string>:2.2-16: got unexpected keyword "
               "\"totally-bogus\" in DhcpDdns map.");
+
+    // user context and embedded comments
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"comment\": true,\n"
+              "  \"dns-server-timeout\": 1000 }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"dns-server-timeout\": 1000 }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"dns-server-timeout\": 1000 }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"dns-server-timeout\": 1000 }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"DhcpDdns\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"dns-server-timeout\": 1000 }}\n",
+              D2ParserContext::PARSER_DHCPDDNS,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes

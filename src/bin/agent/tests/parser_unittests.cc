@@ -303,6 +303,22 @@ TEST(ParserTest, multilineComments) {
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt= "{ \"Control-agent\": {"
+                "  \"comment\": \"a comment\","
+                "  \"http-host\": \"localhost\","
+                "  \"http-port\": 9000,\n"
+                "  \"control-sockets\": {\n"
+                "    \"dhcp4\": {\n"
+                "        \"user-context\": { \"comment\": \"indirect\" },\n"
+                "        \"socket-type\": \"unix\"\n"
+                "    } },\n"
+                "  \"user-context\": { \"compatible\": true }\n"
+                "} }";
+    testParser(txt, ParserContext::PARSER_AGENT, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy
@@ -596,6 +612,45 @@ TEST(ParserTest, errors) {
               ParserContext::PARSER_AGENT,
               "<string>:2.2-10: got unexpected keyword "
               "\"topping\" in Control-agent map.");
+
+    // user context and embedded comments
+    testError("{ \"Control-agent\":{\n"
+              "  \"comment\": true,\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes
