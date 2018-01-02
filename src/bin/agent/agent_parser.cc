@@ -889,7 +889,7 @@ namespace isc { namespace agent {
   case 56:
 #line 294 "agent_parser.yy" // lalr1.cc:859
     {
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 895 "agent_parser.cc" // lalr1.cc:859
     break;
@@ -924,7 +924,7 @@ namespace isc { namespace agent {
   case 58:
 #line 319 "agent_parser.yy" // lalr1.cc:859
     {
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 930 "agent_parser.cc" // lalr1.cc:859
     break;

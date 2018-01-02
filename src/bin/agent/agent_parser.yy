@@ -292,7 +292,7 @@ http_port: HTTP_PORT COLON INTEGER {
 };
 
 user_context: USER_CONTEXT {
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.NO_KEYWORDS);
 } COLON map_value {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = $4;
@@ -317,7 +317,7 @@ user_context: USER_CONTEXT {
 };
 
 comment: COMMENT {
-    ctx.enter(ctx.NO_KEYWORD);
+    ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
