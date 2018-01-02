@@ -16,11 +16,21 @@
         // servers. At this time the only supported socket type is "unix".
         // Make sure that the Agent and respective servers configuration
         // matches exactly, otherwise they won't be able to communicate.
+        // One extra feature that requires some explanation is
+        // user-context. This is a structure that you can define at
+        // global scope, in control sockets and others. It is parsed by
+        // Kea, but not used directly.  It is intended to keep anything
+        // you may want to put there - comments, extra designations,
+        // floor or department names etc. These structures will be made
+        // available to Kea hooks. A comment entry is translated into a
+        // user-context with a "comment" property so you can include
+        // comments inside the configuration itself.
         "control-sockets":
         {
             // This is how the Agent can communicate with the DHCPv4 server.
             "dhcp4":
             {
+                "comment": "socket to DHCP4 server",
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             },
@@ -38,7 +48,8 @@
             "d2":
             {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-d2"
+                "socket-name": "/path/to/the/unix/socket-d2",
+                "user-context": { "in-use": false }
             }
         },
 
