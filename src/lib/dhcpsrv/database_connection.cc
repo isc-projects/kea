@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/db_exceptions.h>
-#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/db_log.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/algorithm/string.hpp>
@@ -48,7 +48,7 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 string value = token.substr(pos + 1);
                 mapped_tokens.insert(make_pair(name, value));
             } else {
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_INVALID_ACCESS).arg(dbaccess);
+                DB_LOG_ERROR(DB_INVALID_ACCESS).arg(dbaccess);
                 isc_throw(InvalidParameter, "Cannot parse " << token
                           << ", expected format is name=value");
             }
