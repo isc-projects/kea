@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/db_log.h>
 #include <dhcpsrv/pgsql_connection.h>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
@@ -114,8 +114,7 @@ PgSqlConnection::~PgSqlConnection() {
         PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
         if(PQresultStatus(r) != PGRES_COMMAND_OK) {
             // Highly unlikely but we'll log it and go on.
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DEALLOC_ERROR)
-                      .arg(PQerrorMessage(conn_));
+            DB_LOG_ERROR(PGSQL_DEALLOC_ERROR).arg(PQerrorMessage(conn_));
         }
     }
 }
@@ -295,10 +294,10 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
              (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
              (memcmp(sqlstate, "57", 2) == 0) ||  // Operator intervention
              (memcmp(sqlstate, "58", 2) == 0))) { // System error
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_FATAL_ERROR)
-                         .arg(statement.name)
-                         .arg(PQerrorMessage(conn_))
-                         .arg(sqlstate);
+            DB_LOG_ERROR(PGSQL_FATAL_ERROR)
+                .arg(statement.name)
+                .arg(PQerrorMessage(conn_))
+                .arg(sqlstate);
             exit (-1);
         }
 
@@ -311,8 +310,7 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
 
 void
 PgSqlConnection::startTransaction() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_START_TRANSACTION);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_START_TRANSACTION);
     PgSqlResult r(PQexec(conn_, "START TRANSACTION"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);
@@ -323,7 +321,7 @@ PgSqlConnection::startTransaction() {
 
 void
 PgSqlConnection::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_COMMIT);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_COMMIT);
     PgSqlResult r(PQexec(conn_, "COMMIT"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);
@@ -333,7 +331,7 @@ PgSqlConnection::commit() {
 
 void
 PgSqlConnection::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, PGSQL_ROLLBACK);
     PgSqlResult r(PQexec(conn_, "ROLLBACK"));
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         const char* error_message = PQerrorMessage(conn_);
