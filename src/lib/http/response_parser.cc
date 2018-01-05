@@ -142,7 +142,7 @@ HttpResponseParser::defineStates() {
     defineState(EXPECTING_NEW_LINE2_ST, "EXPECTING_NEW_LINE2",
                 boost::bind(&HttpResponseParser::expectingNewLineHandler, this,
                             HEADER_LINE_START_ST));
-                            
+
     defineState(EXPECTING_NEW_LINE3_ST, "EXPECTING_NEW_LINE3_ST",
                 boost::bind(&HttpResponseParser::expectingNewLineHandler, this,
                             HTTP_PARSE_OK_ST));
