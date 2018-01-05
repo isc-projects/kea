@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,6 @@
 
 #include <http/response_parser.h>
 #include <boost/bind.hpp>
-#include <iostream>
 
 using namespace isc::util;
 
@@ -336,7 +335,7 @@ HttpResponseParser::headerLineStartHandler() {
                          " in header name");
 
         } else {
-            // Update header name with the parse letter.
+            // Update header name with the parsed letter.
             context_->headers_.push_back(HttpHeaderContext());
             context_->headers_.back().name_.push_back(c);
             transition(HEADER_NAME_ST, DATA_READ_OK_EVT);

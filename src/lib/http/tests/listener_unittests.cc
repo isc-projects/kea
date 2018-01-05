@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
+#include <cc/data.h>
+#include <http/client.h>
 #include <http/http_types.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
@@ -14,16 +16,20 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
+#include <http/url.h>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/bind.hpp>
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+#include <functional>
 #include <list>
 #include <sstream>
 #include <string>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 
@@ -41,6 +47,10 @@ const long REQUEST_TIMEOUT = 10000;
 /// @brief Persistent connection idle timeout used in most of the tests (ms).
 const long IDLE_TIMEOUT = 10000;
 
+/// @brief Persistent connection idle timeout used in tests where idle connections
+/// are tested (ms).
+const long SHORT_IDLE_TIMEOUT = 200;
+
 /// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
 
@@ -49,6 +59,12 @@ typedef TestHttpResponseBase<HttpResponseJson> Response;
 
 /// @brief Pointer to test HTTP response.
 typedef boost::shared_ptr<Response> ResponsePtr;
+
+/// @brief Generic test HTTP response.
+typedef TestHttpResponseBase<HttpResponse> GenericResponse;
+
+/// @brief Pointer to generic test HTTP response.
+typedef boost::shared_ptr<GenericResponse> GenericResponsePtr;
 
 /// @brief Implementation of the @ref HttpResponseCreator.
 class TestHttpResponseCreator : public HttpResponseCreator {
@@ -85,14 +101,74 @@ private:
 
     /// @brief Creates HTTP response.
     ///
+    /// This method generates 3 types of responses:
+    /// - response with a requested content type,
+    /// - partial response with incomplete JSON body,
+    /// - response with JSON body copied from the request.
+    ///
+    /// The first one is useful to test situations when received response can't
+    /// be parsed because of the content type mismatch. The second one is useful
+    /// to test request timeouts. The third type is used by most of the unit tests
+    /// to test successful transactions.
+    ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP OK response with no content.
     virtual HttpResponsePtr
     createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
-        // The simplest thing is to create a response with no content.
-        // We don't need content to test our class.
+        // Request must always be JSON.
+        ConstPostHttpRequestJsonPtr request_json =
+            boost::dynamic_pointer_cast<const PostHttpRequestJson>(request);
+        ConstElementPtr body;
+        if (request_json) {
+            body = request_json->getBodyAsJson();
+            if (body) {
+                // Check if the client requested one of the two first response
+                // types.
+                GenericResponsePtr response;
+                ConstElementPtr content_type = body->get("requested-content-type");
+                ConstElementPtr partial_response = body->get("partial-response");
+                if (content_type || partial_response) {
+                    // The first two response types can only be generated using the
+                    // generic response as we have to explicitly modify some of the
+                    // values.
+                    response.reset(new GenericResponse(request->getHttpVersion(),
+                                                       HttpStatusCode::OK));
+                    HttpResponseContextPtr ctx = response->context();
+
+                    if (content_type) {
+                        // Provide requested content type.
+                        ctx->headers_.push_back(HttpHeaderContext("Content-Type",
+                                                                  content_type->stringValue()));
+                        // It doesn't matter what body is there.
+                        ctx->body_ = "abcd";
+                        response->finalize();
+
+                    } else {
+                        // Generate JSON response.
+                        ctx->headers_.push_back(HttpHeaderContext("Content-Type",
+                                                                  "application/json"));
+                        // The body lacks '}' so the client will be waiting for it and
+                        // eventually should time out.
+                        ctx->body_ = "{";
+                        response->finalize();
+                        // The auto generated Content-Length header would be based on the
+                        // body size (so set to 1 byte). We have to override it to
+                        // account for the missing '}' character.
+                        response->setContentLength(2);
+                    }
+                    return (response);
+                }
+            }
+        }
+
+        // Third type of response is requested.
         ResponsePtr response(new Response(request->getHttpVersion(),
                                           HttpStatusCode::OK));
+        // If body was included in the request. Let's copy it.
+        if (body) {
+            response->setBodyAsJson(body);
+        }
+
         response->finalize();
         return (response);
     }
@@ -112,7 +188,7 @@ public:
 };
 
 /// @brief Entity which can connect to the HTTP server endpoint.
-class HttpClient : public boost::noncopyable {
+class TestHttpClient : public boost::noncopyable {
 public:
 
     /// @brief Constructor.
@@ -121,7 +197,7 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error.
-    explicit HttpClient(IOService& io_service)
+    explicit TestHttpClient(IOService& io_service)
         : io_service_(io_service.get_io_service()), socket_(io_service_),
           buf_(), response_() {
     }
@@ -129,7 +205,7 @@ public:
     /// @brief Destructor.
     ///
     /// Closes the underlying socket if it is open.
-    ~HttpClient() {
+    ~TestHttpClient() {
         close();
     }
 
@@ -305,8 +381,8 @@ private:
     std::string response_;
 };
 
-/// @brief Pointer to the HttpClient.
-typedef boost::shared_ptr<HttpClient> HttpClientPtr;
+/// @brief Pointer to the TestHttpClient.
+typedef boost::shared_ptr<TestHttpClient> TestHttpClientPtr;
 
 /// @brief Test fixture class for @ref HttpListener.
 class HttpListenerTest : public ::testing::Test {
@@ -334,12 +410,12 @@ public:
 
     /// @brief Connect to the endpoint.
     ///
-    /// This method creates HttpClient instance and retains it in the clients_
+    /// This method creates TestHttpClient instance and retains it in the clients_
     /// list.
     ///
     /// @param request String containing the HTTP request to be sent.
     void startRequest(const std::string& request) {
-        HttpClientPtr client(new HttpClient(io_service_));
+        TestHttpClientPtr client(new TestHttpClient(io_service_));
         clients_.push_back(client);
         clients_.back()->startRequest(request);
     }
@@ -361,6 +437,8 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
+        io_service_.get_io_service().reset();
+
         if (timeout > 0) {
             run_io_service_timer_.setup(boost::bind(&HttpListenerTest::timeoutHandler,
                                                     this, false),
@@ -379,10 +457,11 @@ public:
     std::string httpOk(const HttpVersion& http_version) {
         std::ostringstream s;
         s << "HTTP/" << http_version.major_ << "." << http_version.minor_ << " 200 OK\r\n"
-            "Content-Length: 0\r\n"
+            "Content-Length: 4\r\n"
             "Content-Type: application/json\r\n"
             "Date: Tue, 19 Dec 2016 18:53:35 GMT\r\n"
-            "\r\n";
+            "\r\n"
+            "{  }";
         return (s.str());
     }
 
@@ -400,7 +479,7 @@ public:
     IntervalTimer run_io_service_timer_;
 
     /// @brief List of client connections.
-    std::list<HttpClientPtr> clients_;
+    std::list<TestHttpClientPtr> clients_;
 };
 
 // This test verifies that HTTP connection can be established and used to
@@ -420,7 +499,7 @@ TEST_F(HttpListenerTest, listen) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -450,7 +529,7 @@ TEST_F(HttpListenerTest, keepAlive) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
@@ -498,7 +577,7 @@ TEST_F(HttpListenerTest, persistentConnection) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -549,7 +628,7 @@ TEST_F(HttpListenerTest, keepAliveTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
@@ -605,7 +684,7 @@ TEST_F(HttpListenerTest, persistentConnectionTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -660,7 +739,7 @@ TEST_F(HttpListenerTest, persistentConnectionBadBody) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
               "Content-Length: 40\r\n"
@@ -717,7 +796,7 @@ TEST_F(HttpListenerTest, badRequest) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
               "Content-Length: 40\r\n"
@@ -795,7 +874,7 @@ TEST_F(HttpListenerTest, requestTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    HttpClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
 
     // The server should wait for the missing part of the request for 1 second.
@@ -809,5 +888,364 @@ TEST_F(HttpListenerTest, requestTimeout) {
               "{ \"result\": 408, \"text\": \"Request Timeout\" }",
               client->getResponse());
 }
+
+/// @brief Test fixture class for testing HTTP client.
+class HttpClientTest : public HttpListenerTest {
+public:
+
+    /// @brief Constructor.
+    HttpClientTest()
+        : HttpListenerTest(),
+          listener_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                    factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                    HttpListener::IdleTimeout(IDLE_TIMEOUT)),
+          listener2_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT + 1,
+                     factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                     HttpListener::IdleTimeout(IDLE_TIMEOUT)),
+          listener3_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT + 2,
+                     factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                     HttpListener::IdleTimeout(SHORT_IDLE_TIMEOUT)) {
+    }
+
+    /// @brief Destructor.
+    ~HttpClientTest() {
+        listener_.stop();
+        listener2_.stop();
+        listener3_.stop();
+        io_service_.poll();
+    }
+
+    /// @brief Creates HTTP request with JSON body.
+    ///
+    /// It includes a JSON parameter with a specified value.
+    ///
+    /// @param parameter_name JSON parameter to be included.
+    /// @param value JSON parameter value.
+    /// @param version HTTP version to be used. Default is HTTP/1.1.
+    template<typename ValueType>
+    PostHttpRequestJsonPtr createRequest(const std::string& parameter_name,
+                                         const ValueType& value,
+                                         const HttpVersion& version = HttpVersion(1, 1)) {
+        // Create POST request with JSON body.
+        PostHttpRequestJsonPtr request(new PostHttpRequestJson(HttpRequest::Method::HTTP_POST,
+                                                               "/", version));
+        // Body is a map with a specified parameter included.
+        ElementPtr body = Element::createMap();
+        body->set(parameter_name, Element::create(value));
+        request->setBodyAsJson(body);
+        try {
+            request->finalize();
+
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "failed to create request: " << ex.what();
+        }
+
+        return (request);
+    }
+
+    /// @brief Test that two consecutive requests can be sent over the same connection.
+    ///
+    /// @param version HTTP version to be used.
+    void testConsecutiveRequests(const HttpVersion& version) {
+        // Start the server.
+        ASSERT_NO_THROW(listener_.start());
+
+        // Create a client and specify the URL on which the server can be reached.
+        HttpClient client(io_service_);
+        Url url("http://127.0.0.1:18123");
+
+        // Initiate request to the server.
+        PostHttpRequestJsonPtr request1 = createRequest("sequence", 1, version);
+        HttpResponseJsonPtr response1(new HttpResponseJson());
+        unsigned resp_num = 0;
+        ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
+            [this, &resp_num](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num > 1) {
+                io_service_.stop();
+            }
+            EXPECT_FALSE(ec);
+        }));
+
+        // Initiate another request to the destination.
+        PostHttpRequestJsonPtr request2 = createRequest("sequence", 2, version);
+        HttpResponseJsonPtr response2(new HttpResponseJson());
+        ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
+            [this, &resp_num](const boost::system::error_code& ec,
+                              const HttpResponsePtr&,
+                              const std::string&) {
+            if (++resp_num > 1) {
+                io_service_.stop();
+            }
+            EXPECT_FALSE(ec);
+        }));
+
+        // Actually trigger the requests. The requests should be handlded by the
+        // server one after another. While the first request is being processed
+        // the server should queue another one.
+        ASSERT_NO_THROW(runIOService());
+
+        // Make sure that the received responses are different. We check that by
+        // comparing value of the sequence parameters.
+        ASSERT_TRUE(response1);
+        ConstElementPtr sequence1 = response1->getJsonElement("sequence");
+        ASSERT_TRUE(sequence1);
+
+        ASSERT_TRUE(response2);
+        ConstElementPtr sequence2 = response2->getJsonElement("sequence");
+        ASSERT_TRUE(sequence2);
+
+        EXPECT_NE(sequence1->intValue(), sequence2->intValue());
+    }
+
+    /// @brief Instance of the listener used in the tests.
+    HttpListener listener_;
+
+    /// @brief Instance of the second listener used in the tests.
+    HttpListener listener2_;
+
+    /// @brief Instance of the third listener used in the tests (with short idle
+    /// timeout).
+    HttpListener listener3_;
+};
+
+// Test that two conscutive requests can be sent over the same (persistent)
+// connection.
+TEST_F(HttpClientTest, consecutiveRequests) {
+    ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 1)));
+}
+
+// Test that two consecutive requests can be sent over non-persistent connection.
+// This is achieved by sending HTTP/1.0 requests, which are non-persistent by
+// default. The client should close the connection right after receiving a response
+// from the server.
+TEST_F(HttpClientTest, closeBetweenRequests) {
+    ASSERT_NO_FATAL_FAILURE(testConsecutiveRequests(HttpVersion(1, 0)));
+}
+
+// Test that the client can communicate with two different destinations
+// simultaneously.
+TEST_F(HttpClientTest, multipleDestinations) {
+    // Start two servers running on different ports.
+    ASSERT_NO_THROW(listener_.start());
+    ASSERT_NO_THROW(listener2_.start());
+
+    // Create the client. It will be communicating with the two servers.
+    HttpClient client(io_service_);
+
+    // Specify the URLs on which the servers are available.
+    Url url1("http://127.0.0.1:18123");
+    Url url2("http://127.0.0.1:18124");
+
+    // Create a request to the first server.
+    PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
+    HttpResponseJsonPtr response1(new HttpResponseJson());
+    unsigned resp_num = 0;
+    ASSERT_NO_THROW(client.asyncSendRequest(url1, request1, response1,
+        [this, &resp_num](const boost::system::error_code& ec,
+                          const HttpResponsePtr&,
+                          const std::string&) {
+        if (++resp_num > 1) {
+            io_service_.stop();
+        }
+        EXPECT_FALSE(ec);
+    }));
+
+    // Create a request to the second server.
+    PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
+    HttpResponseJsonPtr response2(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url2, request2, response2,
+        [this, &resp_num](const boost::system::error_code& ec,
+                          const HttpResponsePtr&,
+                          const std::string&) {
+        if (++resp_num > 1) {
+            io_service_.stop();
+        }
+        EXPECT_FALSE(ec);
+    }));
+
+    // Actually trigger the requests.
+    ASSERT_NO_THROW(runIOService());
+
+    // Make sure we have received two different responses.
+    ASSERT_TRUE(response1);
+    ConstElementPtr sequence1 = response1->getJsonElement("sequence");
+    ASSERT_TRUE(sequence1);
+
+    ASSERT_TRUE(response2);
+    ConstElementPtr sequence2 = response2->getJsonElement("sequence");
+    ASSERT_TRUE(sequence2);
+
+    EXPECT_NE(sequence1->intValue(), sequence2->intValue());
+}
+
+// Test that idle connection can be resumed for second request.
+TEST_F(HttpClientTest, idleConnection) {
+    // Start the server that has short idle timeout. It closes the idle connection
+    // after 200ms.
+    ASSERT_NO_THROW(listener3_.start());
+
+    // Create the client that will communicate with this server.
+    HttpClient client(io_service_);
+
+    // Specify the URL of this server.
+    Url url("http://127.0.0.1:18125");
+
+    // Create the first request.
+    PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
+    HttpResponseJsonPtr response1(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
+        [this](const boost::system::error_code& ec, const HttpResponsePtr&,
+               const std::string&) {
+        io_service_.stop();
+        EXPECT_FALSE(ec);
+    }));
+
+    // Run the IO service until the response is received.
+    ASSERT_NO_THROW(runIOService());
+
+    // Make sure the response has been received.
+    ASSERT_TRUE(response1);
+    ConstElementPtr sequence1 = response1->getJsonElement("sequence");
+    ASSERT_TRUE(sequence1);
+
+    // Delay the generation of the second request by 2x server idle timeout.
+    // This should be enough to cause the server to close the connection.
+    ASSERT_NO_THROW(runIOService(SHORT_IDLE_TIMEOUT * 2));
+
+    // Create another request.
+    PostHttpRequestJsonPtr request2 = createRequest("sequence", 2);
+    HttpResponseJsonPtr response2(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
+        [this](const boost::system::error_code& ec, const HttpResponsePtr&,
+               const std::string&) {
+        io_service_.stop();
+        EXPECT_FALSE(ec);
+    }));
+
+    // Actually trigger the second request.
+    ASSERT_NO_THROW(runIOService());
+
+    // Make sire that the server has responded.
+    ASSERT_TRUE(response2);
+    ConstElementPtr sequence2 = response2->getJsonElement("sequence");
+    ASSERT_TRUE(sequence2);
+
+    // Make sure that two different responses have been received.
+    EXPECT_NE(sequence1->intValue(), sequence2->intValue());
+}
+
+// This test verifies that the client returns IO error code when the
+// server is unreachable.
+TEST_F(HttpClientTest, unreachable) {
+    // Create the client.
+    HttpClient client(io_service_);
+
+    // Specify the URL of the server. This server is down.
+    Url url("http://127.0.0.1:18123");
+
+    // Create the request.
+    PostHttpRequestJsonPtr request = createRequest("sequence", 1);
+    HttpResponseJsonPtr response(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
+        [this](const boost::system::error_code& ec,
+               const HttpResponsePtr&,
+               const std::string&) {
+        io_service_.stop();
+        // The server should have returned an IO error.
+        EXPECT_TRUE(ec);
+    }));
+
+    // Actually trigger the request.
+    ASSERT_NO_THROW(runIOService());
+}
+
+// Test that an error is returned by the client if the server response is
+// malformed.
+TEST_F(HttpClientTest, malformedResponse) {
+    // Start the server.
+    ASSERT_NO_THROW(listener_.start());
+
+    // Create the client.
+    HttpClient client(io_service_);
+
+    // Specify the URL of the server.
+    Url url("http://127.0.0.1:18123");
+
+    // The response is going to be malformed in such a way that it holds
+    // an invalid content type. We affect the content type by creating
+    // a request that holds a JSON parameter requesting a specific
+    // content type.
+    PostHttpRequestJsonPtr request = createRequest("requested-content-type", "text/html");
+    HttpResponseJsonPtr response(new HttpResponseJson());
+    unsigned resp_num = 0;
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
+        [this, &resp_num](const boost::system::error_code& ec,
+                          const HttpResponsePtr& response,
+                          const std::string& parsing_error) {
+        io_service_.stop();
+        // There should be no IO error (answer from the server is received).
+        EXPECT_FALSE(ec);
+        // The response object is NULL because it couldn't be finalized.
+        EXPECT_FALSE(response);
+        // The message parsing error should be returned.
+        EXPECT_FALSE(parsing_error.empty());
+    }));
+
+    // Actually trigger the request.
+    ASSERT_NO_THROW(runIOService());
+}
+
+// Test that client times out when it doesn't receive the entire response
+// from the server within a desired time.
+TEST_F(HttpClientTest, clientRequestTimeout) {
+    // Start the server.
+    ASSERT_NO_THROW(listener_.start());
+
+    // Create the client.
+    HttpClient client(io_service_);
+
+    // Specify the URL of the server.
+    Url url("http://127.0.0.1:18123");
+
+    unsigned cb_num = 0;
+
+    // Create the request which asks the server to generate a partial
+    // (although well formed) response. The client will be waiting for the
+    // rest of the response to be provided and will eventually time out.
+    PostHttpRequestJsonPtr request1 = createRequest("partial-response", true);
+    HttpResponseJsonPtr response1(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
+                                            HttpClient::RequestTimeout(100),
+        [this, &cb_num](const boost::system::error_code& ec,
+                        const HttpResponsePtr& response,
+                        const std::string&) {
+        if (++cb_num > 1) {
+            io_service_.stop();
+        }
+        // In this particular case we know exactly the type of the
+        // IO error returned, because the client explicitly sets this
+        // error code.
+        EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
+        // There should be no response returned.
+        EXPECT_FALSE(response);
+    }));
+
+    // Create another request after the timeout. It should be handled ok.
+    PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);
+    HttpResponseJsonPtr response2(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
+        [this, &cb_num](const boost::system::error_code& ec, const HttpResponsePtr&,
+               const std::string&) {
+        if (++cb_num > 1) {
+            io_service_.stop();
+        }
+    }));
+
+    // Actually trigger the requests.
+    ASSERT_NO_THROW(runIOService());
+}
+
 
 }
