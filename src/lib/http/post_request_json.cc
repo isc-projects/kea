@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,14 @@ PostHttpRequestJson::PostHttpRequestJson()
     : PostHttpRequest(), json_() {
     requireHeaderValue("Content-Type", "application/json");
 }
+
+PostHttpRequestJson::PostHttpRequestJson(const Method& method, const std::string& uri,
+                                         const HttpVersion& version)
+    : PostHttpRequest(method, uri, version) {
+    requireHeaderValue("Content-Type", "application/json");
+    context()->headers_.push_back(HttpHeaderContext("Content-Type", "application/json"));
+}
+
 
 void
 PostHttpRequestJson::finalize() {

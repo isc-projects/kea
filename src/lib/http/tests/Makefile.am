@@ -35,6 +35,7 @@ libhttp_unittests_SOURCES += request_unittests.cc
 libhttp_unittests_SOURCES += response_unittests.cc
 libhttp_unittests_SOURCES += response_json_unittests.cc
 libhttp_unittests_SOURCES += run_unittests.cc
+libhttp_unittests_SOURCES += url_unittests.cc
 
 libhttp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)

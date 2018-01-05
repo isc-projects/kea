@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,17 @@ public:
 
     /// @brief Constructor for inbound HTTP request.
     explicit PostHttpRequestJson();
+
+    /// @brief Constructor for outbound HTTP request.
+    ///
+    /// This constructor adds "Content-Type" header with the value of
+    /// "application/json" to the context.
+    ///
+    /// @param method HTTP method, e.g. POST.
+    /// @param uri URI.
+    /// @param version HTTP version.
+    explicit PostHttpRequestJson(const Method& method, const std::string& uri,
+                                 const HttpVersion& version);
 
     /// @brief Complete parsing of the HTTP request.
     ///
