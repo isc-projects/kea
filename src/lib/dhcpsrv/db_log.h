@@ -64,6 +64,7 @@ public:
     /// @brief Constructor
     ///
     /// @param logger logger which will be called
+    /// @param map message id translation map
     DbLogger(isc::log::Logger& logger, const MessageMap& map)
         : logger_(logger), map_(map) {
     }
