@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
+<!ENTITY mdash  "&#x2018;" >
 ]>
 
 <chapter id="admin">
@@ -264,7 +264,7 @@
       <!-- @todo: document lease file upgrades once they are implemented in kea-admin -->
     </section>
 
-    <section>
+    <section id="mysql-database">
       <title>MySQL</title>
 
       <para>
@@ -405,7 +405,7 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       </section>
     </section> <!-- end of MySQL sections -->
 
-    <section>
+    <section id="pgsql-database">
       <title>PostgreSQL</title>
 
       <para>
@@ -584,7 +584,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       </section>
     </section> <!-- end of PostgreSQL sections -->
 
-    <section>
+    <section id="cql-database">
       <title>CQL (Cassandra)</title>
 
       <para>
