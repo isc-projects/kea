@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1498,6 +1498,67 @@ TEST_F(LeaseCmdsTest, Lease4Update) {
     EXPECT_EQ("newhostname.example.org", l->hostname_);
 }
 
+// Check that a lease4 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command.
+TEST_F(LeaseCmdsTest, Lease4UpdateForceCreate) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease created.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it contains expected values..
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+}
+
+// Check that lease4-update correctly handles case when the 'force-create'
+// parameter is explicitly set to false.
+TEST_F(LeaseCmdsTest, Lease4UpdateDoNotForceCreate) {
+
+    // Initialize lease manager (false = v4, false = don't add any lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": false"
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 192.0.2.1 - no such lease";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Test checks if lease6-update handler refuses calls with missing parameters.
 TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
     // Initialize lease manager (true = v6, true = add a lease)
@@ -1660,6 +1721,71 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoLease) {
         "        \"iaid\": 7654321,\n"
         "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
         "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8::1 - no such lease";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Check that a lease6 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command.
+TEST_F(LeaseCmdsTest, Lease6UpdateForceCreate) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease created.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+}
+
+// Check that lease6-update correctly handles case when the 'force-create'
+// parameter is explicitly set to false.
+TEST_F(LeaseCmdsTest, Lease6UpdateDoNotForceCreate) {
+
+    // Initialize lease manager (true = v6, false = don't add any lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": false"
         "    }\n"
         "}";
     string exp_rsp = "failed to update the lease with address 2001:db8::1 - no such lease";
