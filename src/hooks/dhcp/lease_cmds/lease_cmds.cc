@@ -608,7 +608,7 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         lease4 = parser.parse(config, cmd_args_, force_create);
         if (force_create && !LeaseMgrFactory::instance().getLease4(lease4->addr_)) {
             LeaseMgrFactory::instance().addLease(lease4);
-            setSuccessResponse(handle, "IPv4 lease created.");
+            setSuccessResponse(handle, "IPv4 lease added.");
 
         } else {
             LeaseMgrFactory::instance().updateLease4(lease4);
@@ -644,7 +644,7 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         if (force_create && !LeaseMgrFactory::instance().getLease6(lease6->type_,
                                                                    lease6->addr_)) {
             LeaseMgrFactory::instance().addLease(lease6);
-            setSuccessResponse(handle, "IPv6 lease created.");
+            setSuccessResponse(handle, "IPv6 lease added.");
         } else {
             LeaseMgrFactory::instance().updateLease6(lease6);
             setSuccessResponse(handle, "IPv6 lease updated.");
