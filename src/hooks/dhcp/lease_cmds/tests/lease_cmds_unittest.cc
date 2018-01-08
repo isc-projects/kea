@@ -1520,7 +1520,7 @@ TEST_F(LeaseCmdsTest, Lease4UpdateForceCreate) {
         "        \"force-create\": true"
         "    }\n"
         "}";
-    string exp_rsp = "IPv4 lease created.";
+    string exp_rsp = "IPv4 lease added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is still there.
@@ -1751,7 +1751,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateForceCreate) {
         "        \"force-create\": true"
         "    }\n"
         "}";
-    string exp_rsp = "IPv6 lease created.";
+    string exp_rsp = "IPv6 lease added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
