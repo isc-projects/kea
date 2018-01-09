@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -731,6 +731,36 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
     }
     // Lease was found. Return it to the caller.
     return (Lease4Ptr(new Lease4(**lease)));
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID4)
+        .arg(subnet_id);
+
+    Lease4Collection collection;
+    const Lease4StorageSubnetIdIndex& idx = storage4_.get<SubnetIdIndexTag>();
+    std::pair<Lease4StorageSubnetIdIndex::const_iterator,
+              Lease4StorageSubnetIdIndex::const_iterator> l =
+        idx.equal_range(subnet_id);
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+
+    return (collection);
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4() const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET4);
+
+    Lease4Collection collection;
+   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
+       collection.push_back(Lease4Ptr(new Lease4(**lease)));
+   }
+
+   return (collection);
 }
 
 Lease6Ptr
