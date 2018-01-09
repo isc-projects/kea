@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,6 +96,12 @@ tagged_statements = { {
     {MySqlLeaseMgr::DELETE_LEASE6_STATE_EXPIRED,
                     "DELETE FROM lease6 "
                         "WHERE state = ? AND expire < ?"},
+    {MySqlLeaseMgr::GET_LEASE4,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state "
+                            "FROM lease4"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -131,6 +137,13 @@ tagged_statements = { {
                         "state "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_SUBID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state "
+                            "FROM lease4 "
+                            "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_EXPIRE,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -1492,9 +1505,13 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        LeaseCollection& result,
                                        bool single) const {
 
-    // Bind the selection parameters to the statement
-    int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
-    checkError(status, stindex, "unable to bind WHERE clause parameter");
+    int status;
+
+    if (bind) {
+        // Bind the selection parameters to the statement
+        int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
+        checkError(status, stindex, "unable to bind WHERE clause parameter");
+    }
 
     // Set up the MYSQL_BIND array for the data being returned and bind it to
     // the statement.
@@ -1735,6 +1752,36 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     return (result);
 }
 
+Lease4Collection
+MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID4)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Subnet ID
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_SUBID, inbind, result);
+
+    return (result);
+}
+
+Lease4Collection
+MySqlLeaseMgr::getLeases4() const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET4);
+
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4, 0, result);
+
+    return (result);
+}
 
 Lease6Ptr
 MySqlLeaseMgr::getLease6(Lease::Type lease_type,
