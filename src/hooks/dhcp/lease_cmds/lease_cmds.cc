@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,6 +25,7 @@
 
 #include <boost/bind.hpp>
 #include <string>
+#include <sstream>
 
 using namespace isc::dhcp;
 using namespace isc::data;
@@ -128,6 +129,18 @@ public:
     /// @return 0 upon success, non-zero otherwise
     int
     leaseGetHandler(CalloutHandle& handle);
+
+    /// @brief lease4-get-all command handler
+    ///
+    /// This command attempts to retrieve all IPv4 leases or all IPv4 leases
+    /// belonging to the particular subnets. If no subnet identifiers are
+    /// provided, it returns all IPv4 leases from the database.
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// return 0 upon success, non-zero otherwise.
+    int
+    lease4GetAllHandler(CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///
@@ -456,6 +469,65 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
 }
 
 int
+LeaseCmdsImpl::lease4GetAllHandler(CalloutHandle& handle) {
+    try {
+        extractCommand(handle);
+
+        ElementPtr leases_json = Element::createList();
+
+        // The argument may contain a list of subnets for which leases should
+        // be returned.
+        if (cmd_args_) {
+            ConstElementPtr subnets = cmd_args_->get("subnets");
+            if (subnets) {
+                if (subnets->getType() != Element::list) {
+                    isc_throw(BadValue, "'subnets' parameter must be a list");
+                }
+
+                const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
+                for (auto subnet_id = subnet_ids.begin(); subnet_id != subnet_ids.end();
+                     ++subnet_id) {
+                    if ((*subnet_id)->getType() != Element::integer) {
+                        isc_throw(BadValue, "listed subnet identifiers must be numbers");
+                    }
+
+                    Lease4Collection leases =
+                        LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
+                    for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
+                        ElementPtr lease_json = (*lease)->toElement();
+                        leases_json->add(lease_json);
+                    }
+                }
+
+            } else {
+                isc_throw(BadValue, "'subnets' parameter not specified");
+            }
+
+        } else {
+            // There is no 'subnets' argument so let's return all leases.
+            Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
+            for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
+                ElementPtr lease_json = (*lease)->toElement();
+                leases_json->add(lease_json);
+            }
+        }
+
+        std::ostringstream s;
+        s << leases_json->size() << " IPv4 lease(s) found.";
+        ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS,
+                                                s.str(), leases_json);
+        setResponse(handle, response);
+
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
 LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
@@ -705,6 +777,11 @@ LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
 int
 LeaseCmds::leaseGetHandler(CalloutHandle& handle) {
     return(impl_->leaseGetHandler(handle));
+}
+
+int
+LeaseCmds::lease4GetAllHandler(hooks::CalloutHandle& handle) {
+    return (impl_->lease4GetAllHandler(handle));
 }
 
 int

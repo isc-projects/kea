@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -260,9 +260,11 @@ public:
             subnets->add(subnet6);
             cfg_mgr.commit();
         } else {
-            Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 44));
+            Subnet4Ptr subnet44(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 44));
+            Subnet4Ptr subnet88(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 88));
             CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
-            subnets->add(subnet4);
+            subnets->add(subnet44);
+            subnets->add(subnet88);
             cfg_mgr.commit();
         }
 
@@ -270,34 +272,43 @@ public:
             if (v6) {
                 lmptr_->addLease(createLease6());
             } else {
-                lmptr_->addLease(createLease4());
+                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56));
+                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42));
+                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56));
             }
         }
     }
 
     /// @brief Creates an IPv4 lease
     ///
-    /// Lease parameters: ip-address = 192.0.2.1, hwaddr = 08:08:08:08:08:08,
-    /// client-id = 42:42:42:42:42:42:42:42, valid lifetime = 3600,
-    /// cltt = 12345678, subnet-id = 44, fqdn-fwd = false, fqdn-rev = true
-    /// hostname = myhost.example.com
+    /// Lease parameters: valid lifetime = 3600, cltt = 12345678, fqdn-fwd = false,
+    /// fqdn-rev = true, hostname = myhost.example.com
     ///
+    /// @param ip_address IP address for the lease.
+    /// @param subnet_id subnet identifier
+    /// @param hw_address_pattern value to be used for generating HW address by repating
+    /// it 6 times.
+    /// @param client_id_pattern value to be used for generating client identifier by
+    /// repeating it 8 times.
     /// @return Returns the lease created
-    Lease4Ptr createLease4() {
+    Lease4Ptr createLease4(const std::string& ip_address, const SubnetID& subnet_id,
+                           const uint8_t hw_address_pattern,
+                           const uint8_t client_id_pattern) {
         Lease4Ptr lease(new Lease4());
 
-        lease->addr_ = IOAddress("192.0.2.1");
+        lease->addr_ = IOAddress(ip_address);
 
         // Initialize unused fields.
         lease->t1_ = 0;                             // Not saved
         lease->t2_ = 0;                             // Not saved
 
         // Set other parameters.  For historical reasons, address 0 is not used.
-        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
-        lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, hw_address_pattern), HTYPE_ETHER));
+        lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, client_id_pattern)));
         lease->valid_lft_ = 3600;
         lease->cltt_ = 12345678;
-        lease->subnet_id_ = 44;
+        lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
@@ -343,6 +354,20 @@ public:
                      uint32_t subnet_id, std::string hwaddr,
                      bool client_id_required) {
         ASSERT_TRUE(l);
+
+        // If the element is a list we need to retrieve the lease that
+        // we're interested in.
+        if (l->getType() == Element::list) {
+            std::vector<ElementPtr> e = l->listValue();
+            for (auto it = e.begin(); it != e.end(); ++it) {
+                ConstElementPtr ip_address = (*it)->get("ip-address");
+                if (ip_address && ip_address->stringValue() == ip) {
+                    l = (*it);
+                    break;
+                }
+            }
+        }
+
         ASSERT_TRUE(l->get("ip-address"));
         EXPECT_EQ(ip, l->get("ip-address")->stringValue());
 
@@ -1097,6 +1122,132 @@ TEST_F(LeaseCmdsTest, Lease4GetByHWAddr) {
 
     // Let's check if the response makes any sense.
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+}
+
+// Checks that lease4-get-all returns all leases.
+TEST_F(LeaseCmdsTest, Lease4GetAll) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for all leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\"\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr leases = rsp->get("arguments");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.3.1", 88, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all returns all leases for a subnet.
+TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for leases from subnet 44. Subnet 127 will be ignored because
+    // it doesn't contain any leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 44, 127 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr leases = rsp->get("arguments");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all returns leases from multiple subnets.
+TEST_F(LeaseCmdsTest, Lease4GetAllByMultipleSubnetIds) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for leases from subnet 44 and 88.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 44, 88 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr leases = rsp->get("arguments");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.3.1", 88, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all checks its input arguments.
+TEST_F(LeaseCmdsTest, Lease4GetBySubnetIdInvalidArguments) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Subnets not specified in arguments.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"foo\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "'subnets' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets are not a list.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": 1\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnets' parameter must be a list";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets list must contain numbers.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": [ \"x\", \"y\" ]\n"
+        "    }\n"
+        "}";
+    exp_rsp = "listed subnet identifiers must be numbers";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that lease6-get(addr) can handle a situation when
@@ -2098,7 +2249,7 @@ TEST_F(LeaseCmdsTest, Lease4Wipe) {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 1 IPv4 lease(s).";
+    string exp_rsp = "Deleted 2 IPv4 lease(s).";
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Make sure the lease is really gone.
