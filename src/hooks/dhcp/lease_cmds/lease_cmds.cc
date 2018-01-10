@@ -514,8 +514,10 @@ LeaseCmdsImpl::lease4GetAllHandler(CalloutHandle& handle) {
 
         std::ostringstream s;
         s << leases_json->size() << " IPv4 lease(s) found.";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
         ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS,
-                                                s.str(), leases_json);
+                                                s.str(), args);
         setResponse(handle, response);
 
 

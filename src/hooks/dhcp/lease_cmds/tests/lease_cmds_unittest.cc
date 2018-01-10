@@ -1140,7 +1140,12 @@ TEST_F(LeaseCmdsTest, Lease4GetAll) {
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
-    ConstElementPtr leases = rsp->get("arguments");
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
@@ -1171,7 +1176,12 @@ TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
-    ConstElementPtr leases = rsp->get("arguments");
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
@@ -1199,7 +1209,12 @@ TEST_F(LeaseCmdsTest, Lease4GetAllByMultipleSubnetIds) {
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
-    ConstElementPtr leases = rsp->get("arguments");
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
