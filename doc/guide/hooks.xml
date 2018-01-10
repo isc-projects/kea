@@ -1341,6 +1341,10 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
               the specified parameters exists and returns it if it does;</para>
             </listitem>
             <listitem>
+              <para><command>lease4-get-all</command> - returns all IPv4 leases
+              or IPv4 leases for specified subnets;</para>
+            </listitem>
+            <listitem>
               <para><command>lease6-get</command> - checks if an IPv6 lease with
               the specified parameters exists and returns it if it does;</para>
             </listitem>
@@ -1656,6 +1660,70 @@ An example result returned when the host was found:
 }</screen>
 </para>
 
+        </section>
+
+        <section>
+          <title>lease4-get-all command</title>
+          <para><command>lease4-get-all</command> is used to retrieve all IPv4
+          leases or all leases for the specified set of subnets. All leases are
+          returned when there are no arguments specified with the command as
+          in the following example:
+<screen>
+{
+    "command": "lease4-get-all"
+}
+</screen>
+          </para>
+
+          <para>If the arguments are provided, it is expected that they contain
+          "subnets" parameter, being a list of subnet identifiers for which the
+          leases should be returned, e.g.:
+<screen>
+{
+    "command": "lease4-get-all",
+    "arguments": {
+        "subnets": [ 1, 2, 3, 4 ]
+    }
+}
+</screen>
+          </para>
+
+          <para>
+            The returned response contains a detailed list of leases in the
+            following format:
+<screen>{
+    "arguments": {
+        "leases": [
+            {
+                "client-id": "42:42:42:42:42:42:42:42",
+                "cltt": 12345678,
+                "fqdn-fwd": false,
+                "fqdn-rev": true,
+                "hostname": "myhost.example.com.",
+                "hw-address": "08:08:08:08:08:08",
+                "ip-address": "192.0.2.1",
+                "state": 0,
+                "subnet-id": 44,
+                "valid-lft": 3600
+            },
+            {
+                "client-id": "21:21:21:21:21:21:21:21",
+                "cltt": 12345678,
+                "fqdn-fwd": false,
+                "fqdn-rev": true,
+                "hostname": "",
+                "hw-address": "10:10:10:10:10:10",
+                "ip-address": "192.0.2.2",
+                "state": 0,
+                "subnet-id": 44,
+                "valid-lft": 3600
+            }
+        ]
+    },
+    "result": 0,
+    "text": "2 IPv4 lease(s) found."
+}</screen>
+          </para>
         </section>
 
         <section>
