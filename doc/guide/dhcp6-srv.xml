@@ -2905,25 +2905,19 @@ should include options from the isc option space:
     with classification using expressions.</para>
     </section>
 
-    <section id="reservations6-mysql-pgsql">
-      <title>Storing Host Reservations in MySQL or PostgreSQL</title>
+    <section id="reservations6-mysql-pgsql-cql">
+      <title>Storing Host Reservations in MySQL, PostgreSQL or Cassandra</title>
 
       <para>
-        It is possible to store host reservations in MySQL or PostgreSQL. See <xref
-        linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL or PostgreSQL. Kea provides dedicated hook for
+        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
+        <xref linkend="hosts6-storage" /> for information on how to configure Kea to use
+        reservations stored in MySQL, PostgreSQL or Cassandra. Kea provides dedicated hook for
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information.
       </para>
 
       <note><simpara>In Kea maximum length of an option specified per host is
       arbitrarily set to 4096 bytes.</simpara></note>
-    </section>
-
-    <section id="reservations6-cql">
-      <title>Storing Host Reservations in CQL (Cassandra)</title>
-      <para>Kea currently does not support storing reservations in
-      Cassandra (CQL).</para>
     </section>
 
     <section id="reservations6-tuning">
