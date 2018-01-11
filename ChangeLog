@@ -1,3 +1,10 @@
+1342.	[func]		andrei, razvan
+	Support for host reservations stored in Cassandra added. The core
+	functionality was added. There are some limitations (delete,
+	client classes, fixed DHCPv4 fields, statistics recount, etc.)
+	These will be addressed in upcoming tickets.
+	(github #37, git e37606fd2d0c02234a55f7445c52a12b2e7a82ec)
+
 1343.	[func]		fdupont
 	User-context and comments are now supported in many new scopes:
 	global, shared-network, subnet, pool, host reservation, option,
