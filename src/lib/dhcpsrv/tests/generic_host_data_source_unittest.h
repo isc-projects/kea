@@ -103,9 +103,8 @@ public:
     /// @param host2 second host to be compared
     /// @param expect_match true = HW addresses expected to be the same,
     ///                     false = HW addresses expected to be different
-    void
-    compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
-                   bool expect_match);
+    void compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                        bool expect_match);
 
     /// @brief Compares DUIDs of the two hosts.
     ///
@@ -117,9 +116,8 @@ public:
     /// @param host2 second host to be compared
     /// @param expect_match true = DUIDs expected to be the same,
     ///                     false = DUIDs expected to be different
-    void
-    compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
-                 bool expect_match);
+    void compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                      bool expect_match);
 
     /// @brief Compares two hosts
     ///
@@ -130,10 +128,14 @@ public:
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
 
     /// @brief Used to sort a host collection by IPv4 subnet id.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
     static bool compareHostsForSort4(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
     /// @brief Used to sort a host collection by IPv6 subnet id.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
     static bool compareHostsForSort6(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
