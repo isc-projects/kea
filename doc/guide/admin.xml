@@ -593,7 +593,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
         added to Kea. Since it was added recently and has not undergone as much
         testing as other backends, it is considered experimental. Please use
-        with caution. The Casandra backend is currently able to store leases,
+        with caution. The Cassandra backend is able to store leases,
         host reservations and options defined on a per host basis.
       </para>
 
