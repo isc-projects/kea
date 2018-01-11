@@ -185,3 +185,49 @@ CREATE TABLE IF NOT EXISTS schema_version (
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
 
 -- This line concludes database initialization to version 1.0.
+
+-- This line starts database upgrade to version 2.0
+
+-- -----------------------------------------------------
+-- Table `host_reservations`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS host_reservations (
+    host_identifier blob,
+    host_identifier_type int,
+    host_ipv4_subnet_id int,
+    host_ipv6_subnet_id int,
+    host_ipv4_address int,
+    hostname text,
+    host_ipv4_client_classes text,
+    host_ipv6_client_classes text,
+    -- reservation
+    reserved_ipv6_prefix_address text,
+    reserved_ipv6_prefix_length int,
+    reserved_ipv6_prefix_address_type int,
+    iaid int,
+    -- option
+    option_universe int,
+    option_code int,
+    option_value blob,
+    option_formatted_value text,
+    option_space text,
+    option_is_persistent boolean,
+    option_client_class text,
+    option_subnet_id int,
+    id bigint,
+    PRIMARY KEY ((id))
+);
+
+CREATE INDEX IF NOT EXISTS host_reservationsindex1 ON host_reservations (host_identifier);
+CREATE INDEX IF NOT EXISTS host_reservationsindex2 ON host_reservations (host_identifier_type);
+CREATE INDEX IF NOT EXISTS host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex4 ON host_reservations (host_ipv6_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ipv4_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
+
+TRUNCATE SCHEMA_VERSION;
+INSERT INTO schema_version (version, minor) VALUES(2, 0);
+
+-- This line concludes database upgrade to version 2.0
+

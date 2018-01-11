@@ -48,9 +48,9 @@ constexpr uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
 constexpr uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
 /// @}
 
-/// Define CQL schema version: 1.0
+/// Define CQL schema version: 2.0
 /// @{
-constexpr uint32_t CQL_SCHEMA_VERSION_MAJOR = 1u;
+constexpr uint32_t CQL_SCHEMA_VERSION_MAJOR = 2u;
 constexpr uint32_t CQL_SCHEMA_VERSION_MINOR = 0u;
 /// @}
 
@@ -142,11 +142,13 @@ public:
     ///
     /// Opens the database using the information supplied in the parameters
     /// passed to the constructor. If no parameters are supplied, the default
-    /// values will be used. The defaults are:
-    /// - contact points: 127.0.0.1
-    /// - port 9042
-    /// - no user, no password
-    /// - keyspace keatest
+    /// values will be used. The parameters supported as as follows (default
+    /// values specified in parentheses):
+    /// - keyspace: name of the database to which to connect (keatest)
+    /// - contact-points: IP addresses of the nodes to connect to (127.0.0.1)
+    /// - port: The TCP port to use (9042)
+    /// - user - credentials to use when connecting (no username)
+    /// - password - credentails to use when connecting (no password)
     /// - reconnect-wait-time 2000
     /// - connect-timeout 5000
     /// - request-timeout 12000

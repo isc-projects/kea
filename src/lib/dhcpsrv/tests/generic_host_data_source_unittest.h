@@ -86,6 +86,13 @@ public:
     /// @return Identifier in textual form acceptable by Host constructor
     std::vector<uint8_t> generateIdentifier(const bool new_identifier = true);
 
+    /// @brief Checks if the reservation is in the range of reservations.
+    ///
+    /// @param resrv Reservation to be searched for.
+    /// @param range Range of reservations returned by the @c Host object
+    /// in which the reservation will be searched
+    bool reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range);
+
     /// @brief Compares hardware addresses of the two hosts.
     ///
     /// This method compares two hardware address and uses gtest
@@ -96,9 +103,8 @@ public:
     /// @param host2 second host to be compared
     /// @param expect_match true = HW addresses expected to be the same,
     ///                     false = HW addresses expected to be different
-    void
-    compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
-                   bool expect_match);
+    void compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                        bool expect_match);
 
     /// @brief Compares DUIDs of the two hosts.
     ///
@@ -110,9 +116,8 @@ public:
     /// @param host2 second host to be compared
     /// @param expect_match true = DUIDs expected to be the same,
     ///                     false = DUIDs expected to be different
-    void
-    compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
-                 bool expect_match);
+    void compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                      bool expect_match);
 
     /// @brief Compares two hosts
     ///
@@ -121,6 +126,18 @@ public:
     /// @param host1 first host to compare
     /// @param host2 second host to compare
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
+
+    /// @brief Used to sort a host collection by IPv4 subnet id.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
+    static bool compareHostsForSort4(const ConstHostPtr& host1,
+                                     const ConstHostPtr& host2);
+
+    /// @brief Used to sort a host collection by IPv6 subnet id.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
+    static bool compareHostsForSort6(const ConstHostPtr& host1,
+                                     const ConstHostPtr& host2);
 
     /// @brief Compares two IPv6 reservation lists.
     ///
@@ -429,7 +446,7 @@ public:
     void testClientIdNotHWAddr();
 
     /// @brief Test adds specified number of hosts with unique hostnames, then
-    /// retrieves them and checks that the hostnames are set properly.
+    /// retrives them and checks that the hostnames are set properly.
     ///
     /// Uses gtest macros to report failures.
     ///
@@ -628,8 +645,8 @@ public:
 
 };
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

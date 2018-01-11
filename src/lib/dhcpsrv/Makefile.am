@@ -153,6 +153,7 @@ endif
 if HAVE_CQL
 libkea_dhcpsrv_la_SOURCES += cql_connection.cc cql_connection.h
 libkea_dhcpsrv_la_SOURCES += cql_exchange.cc cql_exchange.h
+libkea_dhcpsrv_la_SOURCES += cql_host_data_source.cc cql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
 endif
 
