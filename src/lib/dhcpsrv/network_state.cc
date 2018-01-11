@@ -131,22 +131,22 @@ NetworkState::isDelayedEnableAll() const {
 }
 
 void
-NetworkState::selectiveDisable(const NetworkState::Subnets& subnets) {
+NetworkState::selectiveDisable(const NetworkState::Subnets&) {
     isc_throw(NotImplemented, "selectiveDisableService is not implemented");
 }
 
 void
-NetworkState::selectiveDisable(const NetworkState::Networks& networks) {
+NetworkState::selectiveDisable(const NetworkState::Networks&) {
     isc_throw(NotImplemented, "selectiveDisableService is not implemented");
 }
 
 void
-NetworkState::selectiveEnable(const NetworkState::Subnets& subnets) {
+NetworkState::selectiveEnable(const NetworkState::Subnets&) {
     isc_throw(NotImplemented, "selectiveEnableService is not implemented");
 }
 
 void
-NetworkState::selectiveEnable(const NetworkState::Networks& networks) {
+NetworkState::selectiveEnable(const NetworkState::Networks&) {
     isc_throw(NotImplemented, "selectiveEnableService is not implemented");
 }
 
