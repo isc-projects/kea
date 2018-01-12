@@ -12,6 +12,17 @@
 #include <map>
 #include <list>
 
+/// @file db_log.h
+///
+/// We want to reuse the database backend connection and exchange code
+/// for other uses, in particular for hook libraries. But this code
+/// includes some calls to the system logger for debug and uncommon
+/// cases and of course we do not want to get log messages from
+/// a hook library to seem to come from DHCP server core.
+///
+/// The solution is to use a database logger which calls the right
+/// logger with mapped messages.
+
 namespace isc {
 namespace dhcp {
 
