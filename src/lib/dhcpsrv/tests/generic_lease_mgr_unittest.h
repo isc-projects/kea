@@ -206,6 +206,12 @@ public:
     /// @brief Test method which returns all IPv4 leases.
     void testGetLeases4();
 
+    /// @brief Test method which returns all IPv6 leases for Subnet ID.
+    void testGetLeases6SubnetId();
+
+    /// @brief Test method which returns all IPv6 leases.
+    void testGetLeases6();
+
     /// @brief Basic Lease4 Checks
     ///
     /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),

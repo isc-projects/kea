@@ -1247,6 +1247,33 @@ GenericLeaseMgrTest::testGetLeases4() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases6SubnetId() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // There should be exactly two leases for the subnet id that the second
+    // lease belongs to.
+    Lease6Collection returned = lmptr_->getLeases6(leases[1]->subnet_id_);
+    ASSERT_EQ(2, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases6() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // All leases should be returned.
+    Lease6Collection returned = lmptr_->getLeases6();
+    ASSERT_EQ(leases.size(), returned.size());
+}
+
+void
 GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();

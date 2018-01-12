@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,13 +131,14 @@ public:
     int
     leaseGetHandler(hooks::CalloutHandle& handle);
 
-    /// @brief lease4-get-all command handler
+    /// @brief lease4-get-all, lease6-get-all command handler
     ///
-    /// This command attempts to retrieve all IPv4 leases or all IPv4 leases
-    /// belonging to the particular subnets. If no subnet identifiers are
-    /// provided, it returns all IPv4 leases from the database.
+    /// This command attempts to retrieve all IPv4 or IPv6 leases,
+    /// or all IPv4 or all IPv6 leases belonging to the particular
+    /// subnets. If no subnet identifiers are provided, it returns all
+    /// IPv4 or IPv6 leases from the database.
     ///
-    /// Example command for query by (subnet-ids):
+    /// Example command for IPv4 query by (subnet-ids):
     /// {
     ///     "command": "lease4-get-all",
     ///     "arguments": {
@@ -145,16 +146,16 @@ public:
     ///     }
     /// }
     ///
-    /// Example command for retrieving all leases:
+    /// Example command for retrieving all IPv6 leases:
     /// {
-    ///     "command": "lease4-get-all",
+    ///     "command": "lease6-get-all",
     /// }
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
     /// @return result of the operation.
     int
-    lease4GetAllHandler(hooks::CalloutHandle& handle);
+    leaseGetAllHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///

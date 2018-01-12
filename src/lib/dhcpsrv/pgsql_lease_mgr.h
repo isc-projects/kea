@@ -161,18 +161,6 @@ public:
     virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
-    /// @brief Returns all IPv4 leases for the particular subnet identifier.
-    ///
-    /// @param subnet_id subnet identifier.
-    ///
-    /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
-
-    /// @brief Returns all IPv4 leases.
-    ///
-    /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4() const;
-
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single
@@ -187,6 +175,18 @@ public:
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -241,6 +241,18 @@ public:
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const;
 
     /// @brief Returns a collection of expired DHCPv6 leases.
     ///
@@ -427,9 +439,11 @@ public:
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
         GET_LEASE4_SUBID,           // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,          // Get expired lease4
+        GET_LEASE6,                 // Get all IPv6 leases
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
+        GET_LEASE6_SUBID,           // Get IPv6 leases by subnet ID
         GET_LEASE6_EXPIRE,          // Get expired lease6
         GET_VERSION,                // Obtain version number
         INSERT_LEASE4,              // Add entry to lease4 table

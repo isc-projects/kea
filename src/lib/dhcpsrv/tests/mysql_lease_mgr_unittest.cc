@@ -331,6 +331,16 @@ TEST_F(MySqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases6SubnetId) {
+    testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases6) {
+    testGetLeases6();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
