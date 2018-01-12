@@ -1716,12 +1716,14 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           <command>leaseX-del</command> followed by
           <command>leaseX-add</command> commands.</para>
 
-          <para>To use <command>leaseX-update</command> the lease must
-          be present in the lease database. If the lease is not there,
-          an error will be returned. Please use
-          <command>leaseX-add</command> to add new leases. You may
-          check if a lease is present using
-          <command>leaseX-get</command>, if needed.</para>
+          <para>The optional boolean parameter "force-create" specifies
+          if the lease should be created if it doesn't exist in the database.
+          It defaults to false, which indicates that the lease is not created
+          if it doesn't exist. In such case, an error is returned as a result
+          of trying to update a non-existing lease. If the "force-create" parameter
+          is set to true and the updated lease doesn't exist, the new lease is
+          created as a result of receiving the <command>leaseX-update</command>.
+          </para>
 
           <para>
             An example command updating IPv4 lease looks as follows:
@@ -1731,7 +1733,8 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
     "ip-address": "192.0.2.1",
     "hostname": "newhostname.example.org",
     "hw-address": "1a:1b:1c:1d:1e:1f",
-    "subnet-id": 44
+    "subnet-id": 44,
+    "force-create": true
   }
 }</screen>
           </para>
@@ -1745,7 +1748,8 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
     "duid": "88:88:88:88:88:88:88:88",
     "iaid": 7654321,
     "hostname": "newhostname.example.org",
-    "subnet-id": 66
+    "subnet-id": 66,
+    "force-create": false
   }
 }</screen>
           </para>

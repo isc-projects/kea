@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -227,6 +227,10 @@ public:
     ///     }
     /// };
     ///
+    /// The optional 'force-create' boolean parameter may be specified to force
+    /// the lease to be created if it doesn't exist. By default, this parameter
+    /// is set to false, which means that the lease is not created.
+    ///
     /// @param handle Callout context - which is expected to contain the
     /// update command JSON text in the "command" argument
     /// @return result of the operation
@@ -254,6 +258,10 @@ public:
     ///         "hostname": "newhostname.example.org"
     ///     }
     /// }";
+    ///
+    /// The optional 'force-create' boolean parameter may be specified to force
+    /// the lease to be created if it doesn't exist. By default, this parameter
+    /// is set to false, which means that the lease is not created.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// update command JSON text in the "command" argument

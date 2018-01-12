@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -222,9 +222,11 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
         Lease4Ptr lease4;
         Lease6Ptr lease6;
+        // This parameter is ignored for the commands adding the lease.
+        bool force_create = false;
         if (v4) {
             Lease4Parser parser;
-            lease4 = parser.parse(config, cmd_args_);
+            lease4 = parser.parse(config, cmd_args_, force_create);
 
             // checkLeaseIntegrity(config, lease4);
 
@@ -234,7 +236,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
         } else {
             Lease6Parser parser;
-            lease6 = parser.parse(config, cmd_args_);
+            lease6 = parser.parse(config, cmd_args_, force_create);
 
             // checkLeaseIntegrity(config, lease6);
 
@@ -599,12 +601,19 @@ LeaseCmdsImpl::lease4UpdateHandler(CalloutHandle& handle) {
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
         Lease4Ptr lease4;
         Lease4Parser parser;
+        bool force_create = false;
+
         // The parser does sanity checks (if the address is in scope, if
         // subnet-id is valid, etc)
-        lease4 = parser.parse(config, cmd_args_);
+        lease4 = parser.parse(config, cmd_args_, force_create);
+        if (force_create && !LeaseMgrFactory::instance().getLease4(lease4->addr_)) {
+            LeaseMgrFactory::instance().addLease(lease4);
+            setSuccessResponse(handle, "IPv4 lease added.");
 
-        LeaseMgrFactory::instance().updateLease4(lease4);
-        setSuccessResponse(handle, "IPv4 lease updated.");
+        } else {
+            LeaseMgrFactory::instance().updateLease4(lease4);
+            setSuccessResponse(handle, "IPv4 lease updated.");
+        }
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
         return (1);
@@ -627,12 +636,19 @@ LeaseCmdsImpl::lease6UpdateHandler(CalloutHandle& handle) {
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
         Lease6Ptr lease6;
         Lease6Parser parser;
+        bool force_create = false;
+
         // The parser does sanity checks (if the address is in scope, if
         // subnet-id is valid, etc)
-        lease6 = parser.parse(config, cmd_args_);
-
-        LeaseMgrFactory::instance().updateLease6(lease6);
-        setSuccessResponse(handle, "IPv6 lease updated.");
+        lease6 = parser.parse(config, cmd_args_, force_create);
+        if (force_create && !LeaseMgrFactory::instance().getLease6(lease6->type_,
+                                                                   lease6->addr_)) {
+            LeaseMgrFactory::instance().addLease(lease6);
+            setSuccessResponse(handle, "IPv6 lease added.");
+        } else {
+            LeaseMgrFactory::instance().updateLease6(lease6);
+            setSuccessResponse(handle, "IPv6 lease updated.");
+        }
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
         return (1);
