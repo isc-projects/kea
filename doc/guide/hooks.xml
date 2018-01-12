@@ -1341,12 +1341,16 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
               the specified parameters exists and returns it if it does;</para>
             </listitem>
             <listitem>
+              <para><command>lease6-get</command> - checks if an IPv6 lease with
+              the specified parameters exists and returns it if it does;</para>
+            </listitem>
+            <listitem>
               <para><command>lease4-get-all</command> - returns all IPv4 leases
               or IPv4 leases for specified subnets;</para>
             </listitem>
             <listitem>
-              <para><command>lease6-get</command> - checks if an IPv6 lease with
-              the specified parameters exists and returns it if it does;</para>
+              <para><command>lease6-get-all</command> - returns all IPv6 leases
+              or IPv6 leases for specified subnets;</para>
             </listitem>
             <listitem>
               <para><command>lease4-del</command> - attempts to delete an IPv4
@@ -1663,11 +1667,12 @@ An example result returned when the host was found:
         </section>
 
         <section>
-          <title>lease4-get-all command</title>
-          <para><command>lease4-get-all</command> is used to retrieve all IPv4
-          leases or all leases for the specified set of subnets. All leases are
-          returned when there are no arguments specified with the command as
-          in the following example:
+          <title>lease4-get-all, lease6-get-all commands</title>
+          <para><command>lease4-get-all</command> or
+          <command>lease6-get-all</command> is used to retrieve all
+          IPv4 or IPv6 leases or all leases for the specified set of
+          subnets. All leases are returned when there are no arguments
+          specified with the command as in the following example:
 <screen>
 {
     "command": "lease4-get-all"
@@ -1680,7 +1685,7 @@ An example result returned when the host was found:
           leases should be returned, e.g.:
 <screen>
 {
-    "command": "lease4-get-all",
+    "command": "lease6-get-all",
     "arguments": {
         "subnets": [ 1, 2, 3, 4 ]
     }
@@ -1695,38 +1700,45 @@ An example result returned when the host was found:
     "arguments": {
         "leases": [
             {
-                "client-id": "42:42:42:42:42:42:42:42",
                 "cltt": 12345678,
+                "duid": "42:42:42:42:42:42:42:42",
                 "fqdn-fwd": false,
                 "fqdn-rev": true,
                 "hostname": "myhost.example.com.",
                 "hw-address": "08:08:08:08:08:08",
-                "ip-address": "192.0.2.1",
+                "iaid": 1,
+                "ip-address": "2001:db8:2::1",
+                "preferred-lft": 500,
                 "state": 0,
                 "subnet-id": 44,
+                "type": "IA_NA",
                 "valid-lft": 3600
             },
             {
-                "client-id": "21:21:21:21:21:21:21:21",
                 "cltt": 12345678,
+                "duid": "21:21:21:21:21:21:21:21",
                 "fqdn-fwd": false,
                 "fqdn-rev": true,
                 "hostname": "",
-                "hw-address": "10:10:10:10:10:10",
-                "ip-address": "192.0.2.2",
+                "iaid": 1,
+                "ip-address": "2001:db8:0:0:2::",
+                "preferred-lft": 500,
+                "prefix-len": 80,
                 "state": 0,
                 "subnet-id": 44,
+                "type": "IA_PD",
                 "valid-lft": 3600
             }
         ]
     },
     "result": 0,
-    "text": "2 IPv4 lease(s) found."
+    "text": "2 IPv6 lease(s) found."
 }</screen>
           </para>
 
           <warning>
-            <para>The <command>lease4-get-command</command> may result in very
+            <para>The <command>lease4-get-command</command> or
+            <command>lease6-get-command</command> may result in very
             large responses. This may have negative impact on the DHCP server
             responsiveness while the response is generated and transmitted
             over the control channel, as the server imposes no restriction

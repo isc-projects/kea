@@ -268,6 +268,18 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const;
+
     /// @brief Returns a collection of expired DHCPv6 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -436,9 +448,11 @@ public:
         GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
+        GET_LEASE6,                  // Get all IPv6 leases
         GET_LEASE6_ADDR,             // Get lease6 by address
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
+        GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
         GET_VERSION,                 // Obtain version number
         INSERT_LEASE4,               // Add entry to lease4 table

@@ -831,6 +831,36 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
     return (collection);
 }
 
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID6)
+        .arg(subnet_id);
+
+    Lease6Collection collection;
+    const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
+    std::pair<Lease6StorageSubnetIdIndex::const_iterator,
+              Lease6StorageSubnetIdIndex::const_iterator> l =
+        idx.equal_range(subnet_id);
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+
+    return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6() const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6);
+
+   Lease6Collection collection;
+   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
+       collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   }
+
+   return (collection);
+}
+
 void
 Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                     const size_t max_leases) const {

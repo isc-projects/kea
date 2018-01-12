@@ -463,6 +463,10 @@ in the message.
 A debug message issued when the server is attempting to obtain all IPv4
 leases from the memory file database.
 
+% DHCPSRV_MEMFILE_GET6 obtaining all IPv6 leases
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the memory file database.
+
 % DHCPSRV_MEMFILE_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.
@@ -508,6 +512,10 @@ lease from the memory file database for a client with the specified IAID
 
 % DHCPSRV_MEMFILE_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the memory file database.
+
+% DHCPSRV_MEMFILE_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the memory file database.
 
 % DHCPSRV_MEMFILE_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
@@ -697,6 +705,10 @@ exit code.  This is most likely due to a network issue.
 A debug message issued when the server is attempting to obtain all IPv4
 leases from the MySQL database.
 
+% DHCPSRV_MYSQL_GET6 obtaining all IPv6 leases
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the MySQL database.
+
 % DHCPSRV_MYSQL_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for the specified address.
@@ -737,6 +749,10 @@ lease from the MySQL database for a client with the specified IAID
 
 % DHCPSRV_MYSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the MySQL database.
+
+% DHCPSRV_MYSQL_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the MySQL database.
 
 % DHCPSRV_MYSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
@@ -859,6 +875,10 @@ exit code.  This is most likely due to a network issue.
 A debug message issued when the server is attempting to obtain all IPv4
 leases from the PostgreSQL database.
 
+% DHCPSRV_PGSQL_GET6 obtaining all IPv6 leases
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the PostgreSQL database.
+
 % DHCPSRV_PGSQL_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the PostgreSQL database for the specified address.
@@ -899,6 +919,10 @@ lease from the PostgreSQL database for a client with the specified IAID
 
 % DHCPSRV_PGSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the PostgreSQL database.
+
+% DHCPSRV_PGSQL_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the PostgreSQL database.
 
 % DHCPSRV_PGSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
