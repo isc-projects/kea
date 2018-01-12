@@ -755,7 +755,7 @@ Lease4Collection
 Memfile_LeaseMgr::getLeases4() const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET4);
 
-    Lease4Collection collection;
+   Lease4Collection collection;
    for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease ) {
        collection.push_back(Lease4Ptr(new Lease4(**lease)));
    }

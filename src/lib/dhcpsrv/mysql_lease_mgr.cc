@@ -1509,7 +1509,7 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
 
     if (bind) {
         // Bind the selection parameters to the statement
-        int status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
+        status = mysql_stmt_bind_param(conn_.statements_[stindex], bind);
         checkError(status, stindex, "unable to bind WHERE clause parameter");
     }
 
