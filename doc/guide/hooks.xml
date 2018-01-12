@@ -796,7 +796,7 @@ $
           Configuration parameters are extended by standard lease database
           parameters as defined in <xref linkend="database-configuration4"/>.
           The "type" parameter should be "mysql", "postgresql",  "cql" or
-          be "memfile". When it is absent or set to "memfile" files are
+          be "logfile". When it is absent or set to "logfile" files are
           used.
           </para>
           <para>
