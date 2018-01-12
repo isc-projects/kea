@@ -1156,10 +1156,39 @@ TEST_F(LeaseCmdsTest, Lease4GetAll) {
     checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
 }
 
+// Checks that lease4-get-all returns empty set if no leases are found.
+TEST_F(LeaseCmdsTest, Lease4GetAllNoLeases) {
+
+    // Initialize lease manager (false = v4, false = do not add leasesxs)
+    initLeaseMgr(false, false);
+
+    // Query for all leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\"\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    EXPECT_EQ(0, leases->size());
+}
+
+
 // Checks that lease4-get-all returns all leases for a subnet.
 TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
 
-    // Initialize lease manager (false = v4, true = add a lease)
+    // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
     // Query for leases from subnet 44. Subnet 127 will be ignored because
@@ -1188,6 +1217,38 @@ TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
     // Let's check if the response contains desired leases.
     checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
     checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all returns empty set when no leases are found.
+TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetIdNoLeases) {
+
+    // Initialize lease manager (false = v4, true = do not add leases)
+    initLeaseMgr(false, false);
+
+    // Query for leases from subnet 44. Subnet 127 will be ignored because
+    // it doesn't contain any leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 44, 127 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    EXPECT_EQ(0, leases->size());
 }
 
 // Checks that lease4-get-all returns leases from multiple subnets.
