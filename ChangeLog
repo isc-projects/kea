@@ -1,3 +1,8 @@
+1343.	[func]		marcin
+	Implemented "force-create" parameter for lease4-update and
+	lease6-update commands.
+	(Trac #5472, git 369245e4c5308a701fd483123f2cb2fd7d3d0966)
+
 1342.	[func]		andrei, razvan
 	Support for host reservations stored in Cassandra added. The core
 	functionality was added. There are some limitations (delete,
