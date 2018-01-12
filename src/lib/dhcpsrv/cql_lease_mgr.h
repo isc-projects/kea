@@ -183,18 +183,6 @@ public:
                                 const HWAddr& hwaddr,
                                 SubnetID subnet_id) const override;
 
-    /// @brief Returns all IPv4 leases for the particular subnet identifier.
-    ///
-    /// @param subnet_id subnet identifier.
-    ///
-    /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
-
-    /// @brief Returns all IPv4 leases.
-    ///
-    /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4() const;
-
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single
