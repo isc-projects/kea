@@ -366,6 +366,8 @@ public:
                     break;
                 }
             }
+
+            ASSERT_TRUE(l);
         }
 
         ASSERT_TRUE(l->get("ip-address"));
