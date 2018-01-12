@@ -1724,6 +1724,16 @@ An example result returned when the host was found:
     "text": "2 IPv4 lease(s) found."
 }</screen>
           </para>
+
+          <warning>
+            <para>The <command>lease4-get-command</command> may result in very
+            large responses. This may have negative impact on the DHCP server
+            responsiveness while the response is generated and transmitted
+            over the control channel, as the server imposes no restriction
+            on the number of leases returned as a result of this command.
+            </para>
+          </warning>
+
         </section>
 
         <section>
