@@ -138,7 +138,7 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
-    /// return 0 upon success, non-zero otherwise.
+    /// @return 0 upon success, non-zero otherwise.
     int
     lease4GetAllHandler(CalloutHandle& handle);
 
