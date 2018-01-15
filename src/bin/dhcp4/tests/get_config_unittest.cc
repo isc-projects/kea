@@ -13,12 +13,12 @@
 #include <testutils/user_context_utils.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/tests/dhcp4_test_utils.h>
-#include <dhcp4/tests/get_config_unittest.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
-#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/get_config_unittest.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
