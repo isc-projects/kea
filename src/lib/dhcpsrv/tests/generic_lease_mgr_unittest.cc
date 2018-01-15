@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1217,6 +1217,33 @@ GenericLeaseMgrTest::testGetLease4ClientIdSubnetId() {
     // subnet ID.
     returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_ + 1);
     EXPECT_FALSE(returned);
+}
+
+void
+GenericLeaseMgrTest::testGetLeases4SubnetId() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // There should be exactly two leases for the subnet id that the second
+    // lease belongs to.
+    Lease4Collection returned = lmptr_->getLeases4(leases[1]->subnet_id_);
+    ASSERT_EQ(2, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases4() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // All leases should be returned.
+    Lease4Collection returned = lmptr_->getLeases4();
+    ASSERT_EQ(leases.size(), returned.size());
 }
 
 void

@@ -131,6 +131,31 @@ public:
     int
     leaseGetHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4-get-all command handler
+    ///
+    /// This command attempts to retrieve all IPv4 leases or all IPv4 leases
+    /// belonging to the particular subnets. If no subnet identifiers are
+    /// provided, it returns all IPv4 leases from the database.
+    ///
+    /// Example command for query by (subnet-ids):
+    /// {
+    ///     "command": "lease4-get-all",
+    ///     "arguments": {
+    ///         "subnets": [ 1, 2, 3, 4 ]
+    ///     }
+    /// }
+    ///
+    /// Example command for retrieving all leases:
+    /// {
+    ///     "command": "lease4-get-all",
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return result of the operation.
+    int
+    lease4GetAllHandler(hooks::CalloutHandle& handle);
+
     /// @brief lease4-del command handler
     ///
     /// This command attempts to delete an IPv4 lease that match selected
