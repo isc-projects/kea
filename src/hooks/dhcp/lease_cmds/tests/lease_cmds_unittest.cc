@@ -1170,7 +1170,7 @@ TEST_F(LeaseCmdsTest, Lease4GetAllNoLeases) {
         "    \"command\": \"lease4-get-all\"\n"
         "}";
     string exp_rsp = "0 IPv4 lease(s) found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
@@ -1237,7 +1237,7 @@ TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetIdNoLeases) {
         "    }\n"
         "}";
     string exp_rsp = "0 IPv4 lease(s) found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
