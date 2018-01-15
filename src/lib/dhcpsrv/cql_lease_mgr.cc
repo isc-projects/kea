@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Deutsche Telekom AG.
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -1618,6 +1618,16 @@ CqlLeaseMgr::getLease4(const ClientId &clientid, SubnetID subnet_id) const {
     exchange4->getLease(CqlLease4Exchange::GET_LEASE4_CLIENTID_SUBID, data, result);
 
     return (result);
+}
+
+Lease4Collection
+CqlLeaseMgr::getLeases4(SubnetID) const {
+    isc_throw(NotImplemented, "getLeases4(subnet_id) is not implemented");
+}
+
+Lease4Collection
+CqlLeaseMgr::getLeases4() const {
+    isc_throw(NotImplemented, "getLeases4() is not implemented");
 }
 
 Lease6Ptr
