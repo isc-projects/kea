@@ -1,3 +1,7 @@
+1344.	[func]		marcin
+	Implemented lease4-get-all command in lease_cmds hooks library.
+	(Trac #5468, git a378ec28489e98df64830d1f26c3bebd20e256b2)
+
 1343.	[func]		marcin
 	Implemented "force-create" parameter for lease4-update and
 	lease6-update commands.
