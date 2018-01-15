@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -161,6 +161,17 @@ public:
     virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
@@ -408,11 +419,13 @@ public:
         DELETE_LEASE4_STATE_EXPIRED,// Delete expired lease4s in certain state.
         DELETE_LEASE6,              // Delete from lease6 by address
         DELETE_LEASE6_STATE_EXPIRED,// Delete expired lease6s in certain state.
+        GET_LEASE4,                 // Get all IPv4 leases
         GET_LEASE4_ADDR,            // Get lease4 by address
         GET_LEASE4_CLIENTID,        // Get lease4 by client ID
         GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
         GET_LEASE4_HWADDR,          // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
+        GET_LEASE4_SUBID,           // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,          // Get expired lease4
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID

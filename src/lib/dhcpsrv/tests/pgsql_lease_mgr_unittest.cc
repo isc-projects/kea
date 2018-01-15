@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -278,6 +278,16 @@ TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSize) {
 /// a combination of client and subnet IDs.
 TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
+}
+
+// This test checks that all IPv4 leases for a specified subnet id are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases4SubnetId) {
+    testGetLeases4SubnetId();
+}
+
+// This test checks that all IPv4 leases are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases4) {
+    testGetLeases4();
 }
 
 /// @brief Basic Lease4 Checks
