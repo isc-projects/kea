@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Deutsche Telekom AG.
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -197,6 +197,18 @@ public:
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const override;
+
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
