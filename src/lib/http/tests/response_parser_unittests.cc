@@ -68,6 +68,58 @@ public:
         EXPECT_FALSE(parser.getErrorMessage().empty());
     }
 
+    /// @brief Tests that the response specified with (header, body) can
+    ///        be parsed properly.
+    ///
+    /// @param header specifies the header of the response to be parsed
+    /// @param json specifies the body of the response (JSON in text format) to be parsed
+    /// @param expect_success whether the parsing is expected to be successful
+    ///
+    /// @return a parser that parsed the response for further inspection
+    HttpResponseJson testResponseWithJson(const std::string& header,
+                                          const std::string& json,
+                                          bool expect_success = true) {
+        std::string http_resp = createResponseString(header, json);
+
+        // Create HTTP response which accepts JSON as a body.
+        HttpResponseJson response;
+
+        // Create a parser and make it use the response we created.
+        HttpResponseParser parser(response);
+        EXPECT_NO_THROW(parser.initModel());
+
+        // Simulate receiving HTTP response in chunks.
+        const unsigned chunk_size = 10;
+        while (!http_resp.empty()) {
+            size_t chunk = http_resp.size() % chunk_size;
+            if (chunk == 0) {
+                chunk = chunk_size;
+            }
+
+            parser.postBuffer(&http_resp[0], chunk);
+            http_resp.erase(0, chunk);
+            parser.poll();
+            if (chunk < chunk_size) {
+                EXPECT_TRUE(parser.needData());
+                if (!parser.needData()) {
+                    ADD_FAILURE() << "Parser completed prematurely";
+                    return (response);
+                }
+            }
+        }
+
+        if (expect_success) {
+            // Parser should have parsed the response and should expect no more data.
+            EXPECT_FALSE(parser.needData());
+            // Parsing should be successful.
+            EXPECT_TRUE(parser.httpParseOk()) << parser.getErrorMessage();
+            // There should be no error message.
+            EXPECT_TRUE(parser.getErrorMessage().empty());
+        }
+
+        return (response);
+    }
+
     /// @brief Instance of the HttpResponse used by the unit tests.
     HttpResponse response_;
 };
@@ -79,37 +131,7 @@ TEST_F(HttpResponseParserTest, responseWithJson) {
         "Content-Type: application/json\r\n";
     std::string json = "{ \"result\": 0, \"text\": \"All ok\" }";
 
-    http_resp = createResponseString(http_resp, json);
-
-    // Create HTTP response which accepts JSON as a body.
-    HttpResponseJson response;
-
-    // Create a parser and make it use the response we created.
-    HttpResponseParser parser(response);
-    ASSERT_NO_THROW(parser.initModel());
-
-    // Simulate receiving HTTP response in chunks.
-    const unsigned chunk_size = 10;
-    while (!http_resp.empty()) {
-        size_t chunk = http_resp.size() % chunk_size;
-        if (chunk == 0) {
-            chunk = chunk_size;
-        }
-
-        parser.postBuffer(&http_resp[0], chunk);
-        http_resp.erase(0, chunk);
-        parser.poll();
-        if (chunk < chunk_size) {
-            ASSERT_TRUE(parser.needData());
-        }
-    }
-
-    // Parser should have parsed the response and should expect no more data.
-    ASSERT_FALSE(parser.needData());
-    // Parsing should be successful.
-    ASSERT_TRUE(parser.httpParseOk()) << parser.getErrorMessage();
-    // There should be no error message.
-    EXPECT_TRUE(parser.getErrorMessage().empty());
+    HttpResponseJson response = testResponseWithJson(http_resp, json);
 
     // Verify HTTP version, status code and phrase.
     EXPECT_EQ(1, response.getHttpVersion().major_);
@@ -166,8 +188,8 @@ TEST_F(HttpResponseParserTest, extraneousDataInResponse) {
     EXPECT_TRUE(parser.getErrorMessage().empty());
 }
 
-// This test verifies that LWS is parsed correctly. The LWS marks line breaks
-// in the HTTP header values.
+// This test verifies that LWS is parsed correctly. The LWS (linear white
+// space) marks line breaks in the HTTP header values.
 TEST_F(HttpResponseParserTest, getLWS) {
     // "User-Agent" header contains line breaks with whitespaces in the new
     // lines to mark continuation of the header value.
