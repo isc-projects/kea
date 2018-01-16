@@ -1,3 +1,7 @@
+1345.	[build]		fdupont
+	Added support of boost 1.66.0 ASIO.
+	(Github #60, Trac #5496, git xxxx)
+
 1344.	[func]		marcin
 	Implemented lease4-get-all command in lease_cmds hooks library.
 	(Trac #5468, git a378ec28489e98df64830d1f26c3bebd20e256b2)
