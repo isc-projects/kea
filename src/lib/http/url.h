@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 namespace isc {
 namespace http {
 
-/// @brief Represents URL.
+/// @brief Represents an URL.
 ///
 /// It parses the provided URL and allows for retrieving the parts
 /// of it after parsing.
@@ -33,6 +33,12 @@ public:
     /// @param url URL.
     explicit Url(const std::string& url);
 
+    /// @brief compares URLs lexically.
+    ///
+    /// Both URLs are compared as text.
+    ///
+    /// @param url URL to be compared with
+    /// @return true if the other operator is larger (in lexical sense)
     bool operator<(const Url& url) const;
 
     /// @brief Checks if the URL is valid.

@@ -269,7 +269,7 @@ public:
                         HttpResponsePtr& response,
                         long& request_timeout,
                         HttpClient::RequestHandler& callback) {
-        // Check if the is a queue for this URL. If there is no queue, there
+        // Check if there is a queue for this URL. If there is no queue, there
         // is no request queued either.
         auto it = queue_.find(url);
         if (it != queue_.end()) {
@@ -580,7 +580,7 @@ Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
     }
 
     // If there is no more data to be sent, start receiving a response. Otherwise,
-    // continue receiving.
+    // continue sending.
     if (buf_.empty()) {
         doReceive();
 

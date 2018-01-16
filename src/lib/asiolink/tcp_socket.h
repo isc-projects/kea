@@ -92,7 +92,8 @@ public:
 
     /// \brief Checks if the connection is usable.
     ///
-    /// The connection is usable if the peer has closed it.
+    /// The connection is usable if the socket is open and the peer has not
+    /// closed its connection.
     ///
     /// \return true if the connection is usable.
     bool isUsable() const {

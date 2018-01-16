@@ -1236,7 +1236,7 @@ TEST_F(HttpClientTest, clientRequestTimeout) {
     PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);
     HttpResponseJsonPtr response2(new HttpResponseJson());
     ASSERT_NO_THROW(client.asyncSendRequest(url, request2, response2,
-        [this, &cb_num](const boost::system::error_code& ec, const HttpResponsePtr&,
+                    [this, &cb_num](const boost::system::error_code& /*ec*/, const HttpResponsePtr&,
                const std::string&) {
         if (++cb_num > 1) {
             io_service_.stop();
