@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.59])
+AC_PREREQ([2.69])
 
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
@@ -72,13 +72,23 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
+# Include premium configuration
 PREMIUM_DIR=
-if test -d "${srcdir}/premium"; then
-   PREMIUM_DIR=premium
-   AC_CONFIG_SUBDIRS([premium])
-fi
-
+AC_DEFUN([AX_PREMIUM],[])
+# m4_sinclude includes the file if it exists at autoreconf time
+m4_sinclude(premium/config.m4)
+m4_sinclude(premium/tier1.m4)
+m4_sinclude(premium/tier2.m4)
 AC_SUBST(PREMIUM_DIR)
+AX_PREMIUM
+
+# Include contrib configuration
+# (currently only a provision copied from premium support)
+CONTRIB_DIR=
+AC_DEFUN([AX_CONTRIB],[])
+m4_sinclude(contrib/config.m4)
+AC_SUBST(CONTRIB_DIR)
+AX_CONTRIB
 
 # Libtool configuration
 #
@@ -1354,21 +1364,6 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x tools/path_replacer.sh
 ])
 
-AM_CONDITIONAL(PREMIUM, test -d "$srcdir/premium/src")
-
-AC_MSG_CHECKING([if premium package is available])
-if test -d "$srcdir/premium/src"; then
-
-    # Define it in the config.h, so C++ code could use it.
-    AC_DEFINE([PREMIUM], [1], [Kea-premium package found])
-
-    # Export it here, so code in configure could use it.
-    PREMIUM=1
-    AC_MSG_RESULT(yes)
-else
-    AC_MSG_RESULT(no)
-fi
-
 AC_OUTPUT
 
 dnl Print the results
@@ -1385,19 +1380,22 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:            ${PACKAGE_NAME}
-  Version:         ${PACKAGE_VERSION}
-  Extended version:${EXTENDED_VERSION}
-  OS Family:       ${OS_TYPE}
-  Using GNU sed:   ${GNU_SED}
+  Name:              ${PACKAGE_NAME}
+  Version:           ${PACKAGE_VERSION}
+  Extended version:  ${EXTENDED_VERSION}
+  OS Family:         ${OS_TYPE}
+  Using GNU sed:     ${GNU_SED}
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium package: yes
+  Premium package:   yes
+  Tier1 Packages:    ${TIER1_PACKAGES}
+  Tier2 Packages:    ${TIER2_PACKAGES}
+  Included Packages: ${INCLUDED_PACKAGES}
 END
 else
 cat >> config.report << END
-  Premium package: no
+  Premium package:   no
 END
 fi
 cat >> config.report << END
@@ -1458,9 +1456,9 @@ ${CRYPTO_NAME}:
 ${DISABLED_CRYPTO}: no
 
 Log4cplus:
-  LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
+  LOG4CPLUS_VERSION:  ${LOG4CPLUS_VERSION}
   LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
-  LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
+  LOG4CPLUS_LIBS:     ${LOG4CPLUS_LIBS}
 
 Flex/bison:
   FLEX:  ${LEX}
@@ -1532,14 +1530,14 @@ fi
 cat >> config.report << END
 
 Developer:
-  Enable Debugging: $debug_enabled
-  Google Tests: $enable_gtest
-  Valgrind: $found_valgrind
-  C++ Code Coverage: $USE_LCOV
-  Logger checks: $enable_logger_checks
+  Enable Debugging:       $debug_enabled
+  Google Tests:           $enable_gtest
+  Valgrind:               $found_valgrind
+  C++ Code Coverage:      $USE_LCOV
+  Logger checks:          $enable_logger_checks
   Generate Documentation: $enable_generate_docs
-  Parser Generation: $enable_generate_parser
-  Kea-shell: $enable_shell
+  Parser Generation:      $enable_generate_parser
+  Kea-shell:              $enable_shell
 
 END
 
