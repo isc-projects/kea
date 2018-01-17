@@ -503,11 +503,26 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
                         }
                     } else {
                         Lease6Collection leases =
-                            LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
+                            LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue(),
+                                                                   Lease::TYPE_NA);
                         for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
                             ElementPtr lease_json = (*lease)->toElement();
                             leases_json->add(lease_json);
                         }
+
+                        leases = LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue(),
+                                                                   Lease::TYPE_TA);
+                        for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
+                            ElementPtr lease_json = (*lease)->toElement();
+                            leases_json->add(lease_json);
+                        }
+
+                        leases = LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue(),
+                                                                   Lease::TYPE_PD);
+                        for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
+                            ElementPtr lease_json = (*lease)->toElement();
+                            leases_json->add(lease_json);
+                        }                           
                     }
                 }
 

@@ -168,15 +168,15 @@ PgSqlTaggedStatement tagged_statements[] = {
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
 
-    // GET_LEASE6_SUBID
-    { 1, { OID_INT8 },
+    // GET_LEASE6_SUBID_TYPE
+    { 2, { OID_INT8, OID_INT2 },
       "get_lease6_subid",
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "state "
       "FROM lease6 "
-      "WHERE subnet_id = $1"},
+      "WHERE subnet_id = $1 AND lease_type = $2"},
 
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -1225,9 +1225,10 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID6)
-        .arg(subnet_id);
+PgSqlLeaseMgr::getLeases6(SubnetID subnet_id, Lease::Type type) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID_TYPE6)
+        .arg(subnet_id)
+        .arg(Lease::typeToText(type));
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -1236,9 +1237,13 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
     std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
     bind_array.add(subnet_id_str);
 
+    // LEASE_TYPE
+    std::string lease_type_str = boost::lexical_cast<std::string>(type);
+    bind_array.add(lease_type_str);
+
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_SUBID, bind_array, result);
+    getLeaseCollection(GET_LEASE6_SUBID_TYPE, bind_array, result);
 
     return (result);
 }
