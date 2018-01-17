@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -134,7 +134,9 @@ void Iface::setMac(const uint8_t* mac, size_t len) {
                   << MAX_MAC_LEN);
     }
     mac_len_ = len;
-    memcpy(mac_, mac, len);
+    if (len > 0) {
+        memcpy(mac_, mac, len);
+    }
 }
 
 bool Iface::delAddress(const isc::asiolink::IOAddress& addr) {
