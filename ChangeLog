@@ -2,7 +2,7 @@
 	Modified configure.ac to include premium module m4 macros, if the
 	module is present. Prior to this it relied on premium having it's
 	own configure.ac script.
-	(Trac #5400, git xxx)
+	(Trac #5400, git 38c4f2fb8fc8c8874a0e4671cc295a049acf675f)
 
 1345.	[build]		fdupont
 	Added support of boost 1.66.0 ASIO.
