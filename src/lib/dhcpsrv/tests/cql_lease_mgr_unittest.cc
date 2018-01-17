@@ -407,6 +407,31 @@ TEST(CqlOpenTest, OpenDatabase) {
     EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
         CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
+    // Check that invalid login data does not cause an exception, CQL should use
+    // default values.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
+
+    // Check that invalid timeouts throw DbOperationError.
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_1)),
+                 DbOperationError);
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_2)),
+                 DbOperationError);
+
+    // Check that CQL allows the hostname to not be specified.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+
     // Tidy up after the test
     destroyCqlSchema(false, true);
 }

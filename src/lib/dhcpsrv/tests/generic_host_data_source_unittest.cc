@@ -1579,6 +1579,76 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
 }
 
+void
+GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Make sure the variable part of the generated address fits in a 16-bit
+    // field.
+    ASSERT_LE(nOfHosts, 0xfffdU);
+
+    // Create hosts.
+    std::vector<HostPtr> hosts;
+    hosts.reserve(nOfHosts);
+    for (unsigned int i = 0x0001U; i < 0x0001U + nOfHosts; ++i) {
+        /// @todo: Check if this is written in hexadecimal format.
+        std::stringstream ss;
+        std::string n_host;
+        ss << std::hex << i;
+        ss >> n_host;
+
+        const std::string prefix = std::string("2001:db8::") + n_host;
+        hosts.push_back(initializeHost6(prefix, Host::IDENT_HWADDR, false));
+        IPv6ResrvRange range = hosts.back()->getIPv6Reservations();
+        ASSERT_EQ(1, std::distance(range.first, range.second));
+        EXPECT_TRUE(reservationExists(
+            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress(prefix)), range));
+    }
+    const size_t hosts_size = hosts.size();
+
+    std::cout << "Starting to add hosts..." << std::endl;
+    struct timespec start, end;
+    start = (struct timespec){0, 0};
+    end = (struct timespec){0, 0};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
+    for (std::vector<HostPtr>::const_iterator it = hosts.begin();
+         it != hosts.end(); it++) {
+        ASSERT_NO_THROW(hdsptr_->add(*it));
+    }
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
+    double s = static_cast<double>(end.tv_sec - start.tv_sec) +
+               static_cast<double>(end.tv_nsec - start.tv_nsec) / 1e9;
+    std::cout << "Adding " << hosts_size
+              << (hosts_size == 1 ? " host" : " hosts") << " took "
+              << std::fixed << std::setprecision(2) << s << " seconds."
+              << std::endl;
+
+    // And then try to retrieve them back.
+    std::cout << "Starting to retrieve hosts..." << std::endl;
+    start = (struct timespec){0, 0};
+    end = (struct timespec){0, 0};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
+    for (std::vector<HostPtr>::const_iterator it = hosts.begin();
+         it != hosts.end(); it++) {
+        IPv6ResrvRange range = (*it)->getIPv6Reservations();
+        // This get6() call is particularly useful to test because it involves a
+        // subquery for MySQL and PostgreSQL and two separate queries for
+        // Cassandra.
+        ConstHostPtr from_hds =
+            hdsptr_->get6(range.first->second.getPrefix(), 128);
+        ASSERT_TRUE(from_hds);
+        compareHosts(*it, from_hds);
+    }
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
+    s = static_cast<double>(end.tv_sec - start.tv_sec) +
+        static_cast<double>(end.tv_nsec - start.tv_nsec) / 1e9;
+    std::cout << "Retrieving " << hosts_size
+              << (hosts_size == 1 ? " host" : " hosts") << " took "
+              << std::fixed << std::setprecision(2) << s << " seconds."
+              << std::endl;
+}
+
 void GenericHostDataSourceTest::testDeleteByAddr4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
