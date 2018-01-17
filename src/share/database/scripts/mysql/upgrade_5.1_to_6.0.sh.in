@@ -28,9 +28,7 @@ ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT NULL;
 CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
 
 # Create for searching leases by subnet identifier and lease type.
-#CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
-# Create for searching leases by subnet identifier.
-CREATE INDEX lease6_by_subnet_id ON lease6 (subnet_id);
+CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
 
 # Update the schema version number
 UPDATE schema_version
