@@ -33,12 +33,6 @@ lease_cmds_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INC
 lease_cmds_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 lease_cmds_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h and unused parameters from some of the
-# Boost headers.
-lease_cmds_unittests_CXXFLAGS += -Wno-unused-parameter
-endif
 
 lease_cmds_unittests_LDADD = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
