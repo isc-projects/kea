@@ -83,6 +83,7 @@ AC_SUBST(PREMIUM_DIR)
 AX_PREMIUM
 
 # Include contrib configuration
+# (currently only a provision copied from premium support)
 CONTRIB_DIR=
 AC_DEFUN([AX_CONTRIB],[])
 m4_sinclude(contrib/config.m4)
