@@ -181,9 +181,10 @@ public:
     /// @brief Returns all IPv6 leases for the particular subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
+    /// @param type lease type.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(SubnetID) const {
+    virtual Lease6Collection getLeases6(SubnetID,  Lease::Type) const {
         return (Lease6Collection());
     }
 

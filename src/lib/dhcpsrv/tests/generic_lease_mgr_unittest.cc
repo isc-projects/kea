@@ -1255,9 +1255,14 @@ GenericLeaseMgrTest::testGetLeases6SubnetId() {
     }
 
     // There should be exactly two leases for the subnet id that the second
-    // lease belongs to.
-    Lease6Collection returned = lmptr_->getLeases6(leases[1]->subnet_id_);
-    ASSERT_EQ(2, returned.size());
+    // lease belongs to, one TA and one PD.
+    Lease6Collection returned =
+      lmptr_->getLeases6(leases[1]->subnet_id_, Lease::TYPE_NA);
+    EXPECT_EQ(0, returned.size());
+    returned = lmptr_->getLeases6(leases[1]->subnet_id_,Lease::TYPE_TA);
+    EXPECT_EQ(1, returned.size());
+    returned = lmptr_->getLeases6(leases[1]->subnet_id_,Lease::TYPE_PD);
+    EXPECT_EQ(1, returned.size());
 }
 
 void
