@@ -1416,8 +1416,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 892,     ///< Last index in yytable_.
-      yynnts_ = 337,  ///< Number of nonterminal symbols.
+      yylast_ = 886,     ///< Last index in yytable_.
+      yynnts_ = 338,  ///< Number of nonterminal symbols.
       yyfinal_ = 28, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
@@ -1519,8 +1519,8 @@ namespace isc { namespace dhcp {
       case 212: // outbound_interface_value
       case 222: // db_type
       case 299: // hr_mode
-      case 444: // ncr_protocol_value
-      case 452: // replace_client_name_value
+      case 445: // ncr_protocol_value
+      case 453: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
@@ -1563,8 +1563,8 @@ namespace isc { namespace dhcp {
       case 212: // outbound_interface_value
       case 222: // db_type
       case 299: // hr_mode
-      case 444: // ncr_protocol_value
-      case 452: // replace_client_name_value
+      case 445: // ncr_protocol_value
+      case 453: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
@@ -1666,8 +1666,8 @@ namespace isc { namespace dhcp {
       case 212: // outbound_interface_value
       case 222: // db_type
       case 299: // hr_mode
-      case 444: // ncr_protocol_value
-      case 452: // replace_client_name_value
+      case 445: // ncr_protocol_value
+      case 453: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
@@ -1716,8 +1716,8 @@ namespace isc { namespace dhcp {
       case 212: // outbound_interface_value
       case 222: // db_type
       case 299: // hr_mode
-      case 444: // ncr_protocol_value
-      case 452: // replace_client_name_value
+      case 445: // ncr_protocol_value
+      case 453: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
