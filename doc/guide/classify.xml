@@ -801,6 +801,56 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
+ <section id="classification-pools">
+   <title>Configuring Pools With Class Information</title>
+     <para>
+       Similar to subnets in certain cases access to certain address or
+       prefix pools must be restricted to only clients that belong to a
+       given class, using the "client-class" when defining the pool.
+     </para>
+
+     <para>
+       Let's assume that the server is connected to a network segment that uses
+       the 192.0.2.0/24 prefix. The Administrator of that network has decided
+       that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+       managed by the DHCP4 server. Only clients belonging to client class
+       Client_foo are allowed to use this pool. Such a
+       configuration can be achieved in the following way:
+       <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        },
+        ...
+    ],<userinput>
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.2.10 - 192.0.2.20",
+                    "client-class": "Client_foo"
+                }
+            ]
+        },
+        ...
+    ],</userinput>,
+    ...
+}</screen>
+      </para>
+  </section>
+
   <section>
     <title>Using Classes</title>
       <para>
