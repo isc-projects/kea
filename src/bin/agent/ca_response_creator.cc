@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <http/post_request_json.h>
 #include <http/response_json.h>
 #include <boost/pointer_cast.hpp>
+#include <iostream>
 
 using namespace isc::data;
 using namespace isc::http;
@@ -26,6 +27,15 @@ HttpResponsePtr
 CtrlAgentResponseCreator::
 createStockHttpResponse(const ConstHttpRequestPtr& request,
                         const HttpStatusCode& status_code) const {
+    HttpResponsePtr response = createStockHttpResponseInternal(request, status_code);
+    response->finalize();
+    return (response);
+}
+
+HttpResponsePtr
+CtrlAgentResponseCreator::
+createStockHttpResponseInternal(const ConstHttpRequestPtr& request,
+                                const HttpStatusCode& status_code) const {
     // The request hasn't been finalized so the request object
     // doesn't contain any information about the HTTP version number
     // used. But, the context should have this data (assuming the
@@ -73,8 +83,9 @@ createDynamicHttpResponse(const ConstHttpRequestPtr& request) {
     }
     // The response is ok, so let's create new HTTP response with the status OK.
     HttpResponseJsonPtr http_response = boost::dynamic_pointer_cast<
-        HttpResponseJson>(createStockHttpResponse(request, HttpStatusCode::OK));
+        HttpResponseJson>(createStockHttpResponseInternal(request, HttpStatusCode::OK));
     http_response->setBodyAsJson(response);
+    http_response->finalize();
 
     return (http_response);
 }
