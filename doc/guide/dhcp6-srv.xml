@@ -654,6 +654,21 @@ temporarily override a list of interface names and listen on all interfaces.
 }
   </screen>
 
+  <para>Usually loopback interfaces (e.g. the "lo" or "lo0" interface)
+  may not configured but if only one interface is configured a loopback
+  interface is accepted. Note Kea requires link-local address which does
+  not exist on all systems, or a specified unicast address as in:
+  </para>
+
+  <screen>
+"Dhcp6": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"lo/::1"</userinput> ]
+    },
+    ...
+}
+  </screen>
+
 </section>
 
     <section id="ipv6-subnet-id">
