@@ -772,6 +772,24 @@ temporarily override a list of interface names and listen on all interfaces.
   Note interfaces are not re-detected during <command>config-test</command>.
   </para>
 
+  <para>Usually loopback interfaces (e.g. the "lo" or "lo0" interface)
+  may not configured but if only one interface is configured and
+  IP/UDP sockets are specified a loopback interface is accepted.
+  </para>
+
+  <para>It can be used for instance to run Kea in a FreeBSD jail having
+  only a loopback interface, servicing relayed DHCP request:
+
+  <screen>
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ <userinput>"lo0"</userinput> ],
+        "dhcp-socket-type": "udp"
+    },
+    ...
+}</screen>
+  </para>
+
 </section>
 
 <section id="dhcpinform-unicast-issues">

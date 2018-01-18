@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,15 +56,55 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // Close any open sockets because we're going to modify some properties
     // of the IfaceMgr. Those modifications require that sockets are closed.
     closeSockets();
+    // The loopback interface can be used only when:
+    //  - wildcard is not used
+    //  - UDP socket will be used, i.e. not IPv4 and RAW socket
+    //  - there is one interface name only in the interface set
+    //    and this interface is a loopback interface.
+    //  - or the interface set is empty and all interfaces in the address
+    //    map are the same and a loopback interface.
+    bool loopback_used_ = false;
+    if (!wildcard_used_ &&
+        ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) &&
+        (iface_set_.size() == 1) &&
+        (address_map_.empty())) {
+        // Get the first and only interface.
+        IfacePtr iface = IfaceMgr::instance().getIface(*iface_set_.begin());
+        if (iface && iface->flag_loopback_) {
+            loopback_used_ = true;
+        }
+    } else if (!wildcard_used_ &&
+               ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) &&
+               iface_set_.empty() &&
+               !address_map_.empty()) {
+        // Get the first interface
+        const std::string& name = address_map_.begin()->first;
+        bool same = true;
+        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
+             unicast != address_map_.end(); ++unicast) {
+            if (unicast->first != name) {
+                same = false;
+                break;
+            }
+        }
+        if (same) {
+            IfacePtr iface = IfaceMgr::instance().getIface(name);
+            if (iface && iface->flag_loopback_) {
+                loopback_used_ = true;
+            }
+        }
+    }
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
-    // specified, mark all interfaces active. In all cases, mark loopback
-    // inactive.
-    setState(family, !wildcard_used_, true);
+    // specified, mark all interfaces active. Mark loopback inactive when
+    // not explicitely allowed.
+    setState(family, !wildcard_used_, loopback_used_);
     IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.
     iface_mgr.clearUnicasts();
+    // Allow the loopback interface when required.
+    iface_mgr.setAllowLoopBack(loopback_used_);
     // For the DHCPv4 server, if the user has selected that raw sockets
     // should be used, we will try to configure the Interface Manager to
     // support the direct responses to the clients that don't have the
