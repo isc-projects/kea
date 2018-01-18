@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,6 @@
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcpsrv/addr_utilities.h>
-#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -81,25 +80,27 @@ using namespace std;
 
 /// Structure that holds registered hook indexes
 struct Dhcp4Hooks {
-    int hook_index_buffer4_receive_; ///< index for "buffer4_receive" hook point
-    int hook_index_pkt4_receive_;    ///< index for "pkt4_receive" hook point
-    int hook_index_subnet4_select_;  ///< index for "subnet4_select" hook point
-    int hook_index_lease4_release_;  ///< index for "lease4_release" hook point
-    int hook_index_pkt4_send_;       ///< index for "pkt4_send" hook point
-    int hook_index_buffer4_send_;    ///< index for "buffer4_send" hook point
-    int hook_index_lease4_decline_;  ///< index for "lease4_decline" hook point
-    int hook_index_host4_identifier_;///< index for "host4_identifier" hook point
+    int hook_index_buffer4_receive_;   ///< index for "buffer4_receive" hook point
+    int hook_index_pkt4_receive_;      ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_;    ///< index for "subnet4_select" hook point
+    int hook_index_leases4_committed_; ///< index for "leases4_committed" hook point
+    int hook_index_lease4_release_;    ///< index for "lease4_release" hook point
+    int hook_index_pkt4_send_;         ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;      ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_;    ///< index for "lease4_decline" hook point
+    int hook_index_host4_identifier_;  ///< index for "host4_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
-        hook_index_buffer4_receive_  = HooksManager::registerHook("buffer4_receive");
-        hook_index_pkt4_receive_     = HooksManager::registerHook("pkt4_receive");
-        hook_index_subnet4_select_   = HooksManager::registerHook("subnet4_select");
-        hook_index_pkt4_send_        = HooksManager::registerHook("pkt4_send");
-        hook_index_lease4_release_   = HooksManager::registerHook("lease4_release");
-        hook_index_buffer4_send_     = HooksManager::registerHook("buffer4_send");
-        hook_index_lease4_decline_   = HooksManager::registerHook("lease4_decline");
-        hook_index_host4_identifier_ = HooksManager::registerHook("host4_identifier");
+        hook_index_buffer4_receive_   = HooksManager::registerHook("buffer4_receive");
+        hook_index_pkt4_receive_      = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_    = HooksManager::registerHook("subnet4_select");
+        hook_index_leases4_committed_ = HooksManager::registerHook("leases4_committed");
+        hook_index_pkt4_send_         = HooksManager::registerHook("pkt4_send");
+        hook_index_lease4_release_    = HooksManager::registerHook("lease4_release");
+        hook_index_buffer4_send_      = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
+        hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
     }
 };
 
@@ -1047,6 +1048,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         callout_handle->getArgument("query4", query);
     }
 
+    AllocEngine::ClientContext4Ptr ctx;
+
     try {
         switch (query->getType()) {
         case DHCPDISCOVER:
@@ -1057,15 +1060,15 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
             // Note that REQUEST is used for many things in DHCPv4: for
             // requesting new leases, renewing existing ones and even
             // for rebinding.
-            rsp = processRequest(query);
+            rsp = processRequest(query, ctx);
             break;
 
         case DHCPRELEASE:
-            processRelease(query);
+            processRelease(query, ctx);
             break;
 
         case DHCPDECLINE:
-            processDecline(query);
+            processDecline(query, ctx);
             break;
 
         case DHCPINFORM:
@@ -1097,16 +1100,54 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
                                                   static_cast<int64_t>(1));
     }
 
+    if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Clear skip flag if it was set in previous callouts
+        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+
+        // Also pass the corresponding query packet as argument
+        callout_handle->setArgument("query4", query);
+
+        Lease4CollectionPtr new_leases(new Lease4Collection());
+        if (ctx->new_lease_) {
+            new_leases->push_back(ctx->new_lease_);
+        }
+        callout_handle->setArgument("leases4", new_leases);
+
+        Lease4CollectionPtr deleted_leases(new Lease4Collection);
+        if (ctx->old_lease_) {
+            if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
+                deleted_leases->push_back(ctx->old_lease_);
+            }
+        }
+        callout_handle->setArgument("deleted_leases4", deleted_leases);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
+                                   *callout_handle);
+    }
+
     if (!rsp) {
         return;
     }
 
+    leases4CommittedContinue(getCalloutHandle(query), query, rsp);
+}
+
+void
+Dhcpv4Srv::leases4CommittedContinue(const CalloutHandlePtr& callout_handle,
+                                    Pkt4Ptr& query, Pkt4Ptr& rsp) {
     // Specifies if server should do the packing
     bool skip_pack = false;
 
     // Execute all callouts registered for pkt4_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_send_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
@@ -2394,7 +2435,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 }
 
 Pkt4Ptr
-Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(request, MANDATORY);
 
@@ -2446,11 +2487,15 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     appendServerID(ex);
 
+    // Return the pointer to the context, which will be required by the
+    // leases4_comitted callouts.
+    context = ex.getContext();
+
     return (ex.getResponse());
 }
 
 void
-Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& context) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(release, MANDATORY);
 
@@ -2529,6 +2574,10 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
             if (success) {
+
+                context.reset(new AllocEngine::ClientContext4());
+                context->old_lease_ = lease;
+
                 // Release successful
                 LOG_INFO(lease4_logger, DHCP4_RELEASE)
                     .arg(release->getLabel())
@@ -2558,7 +2607,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& context) {
 
     // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
     /// @todo Uncomment this (see ticket #3116)
@@ -2628,11 +2677,12 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
 
     // Ok, all is good. The client is reporting its own address. Let's
     // process it.
-    declineLease(lease, decline);
+    declineLease(lease, decline, context);
 }
 
 void
-Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
+Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
+                        AllocEngine::ClientContext4Ptr& context) {
 
     // Let's check if there are hooks installed for decline4 hook point.
     // If they are, let's pass the lease and client's packet. If the hook
@@ -2695,6 +2745,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
     LeaseMgrFactory::instance().updateLease4(lease);
+
+    context.reset(new AllocEngine::ClientContext4());
+    context->new_lease_ = lease;
 
     LOG_INFO(lease4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
         .arg(decline->getLabel()).arg(lease->valid_lft_);

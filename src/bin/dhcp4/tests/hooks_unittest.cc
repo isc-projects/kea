@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <asiolink/io_address.h>
+#include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/marker_file.h>
 #include <dhcp4/tests/test_libraries.h>
 
@@ -36,13 +37,14 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     NakedDhcpv4Srv srv(0);
 
     // check if appropriate hooks are registered
-    int hook_index_buffer4_receive  = -1;
-    int hook_index_pkt4_receive     = -1;
-    int hook_index_select_subnet    = -1;
-    int hook_index_lease4_release   = -1;
-    int hook_index_pkt4_send        = -1;
-    int hook_index_buffer4_send     = -1;
-    int hook_index_host4_identifier = -1;
+    int hook_index_buffer4_receive   = -1;
+    int hook_index_pkt4_receive      = -1;
+    int hook_index_select_subnet     = -1;
+    int hook_index_leases4_committed = -1;
+    int hook_index_lease4_release    = -1;
+    int hook_index_pkt4_send         = -1;
+    int hook_index_buffer4_send      = -1;
+    int hook_index_host4_identifier  = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer4_receive = ServerHooks::getServerHooks()
@@ -51,6 +53,8 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
                     .getIndex("pkt4_receive"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
                     .getIndex("subnet4_select"));
+    EXPECT_NO_THROW(hook_index_leases4_committed = ServerHooks::getServerHooks()
+                    .getIndex("leases4_committed"));
     EXPECT_NO_THROW(hook_index_lease4_release = ServerHooks::getServerHooks()
                     .getIndex("lease4_release"));
     EXPECT_NO_THROW(hook_index_pkt4_send = ServerHooks::getServerHooks()
@@ -63,6 +67,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_buffer4_receive > 0);
     EXPECT_TRUE(hook_index_pkt4_receive > 0);
     EXPECT_TRUE(hook_index_select_subnet > 0);
+    EXPECT_TRUE(hook_index_leases4_committed > 0);
     EXPECT_TRUE(hook_index_lease4_release > 0);
     EXPECT_TRUE(hook_index_pkt4_send > 0);
     EXPECT_TRUE(hook_index_buffer4_send > 0);
@@ -621,6 +626,35 @@ public:
         return (lease4_decline_callout(callout_handle));
     }
 
+    /// Test callback that stores values passed to leases4_committed.
+    static int
+    leases4_committed_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("leases4_committed");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        Lease4CollectionPtr leases4;
+        callout_handle.getArgument("leases4", leases4);
+        if (leases4->size() > 0) {
+            callback_lease4_ = leases4->at(0);
+        }
+
+        Lease4CollectionPtr deleted_leases4;
+        callout_handle.getArgument("deleted_leases4", deleted_leases4);
+        if (deleted_leases4->size() > 0) {
+            callback_deleted_lease4_ = deleted_leases4->at(0);
+        }
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
     /// @brief Test host4_identifier callout by setting identifier to "foo"
     ///
     /// @param callout_handle handle passed by the hooks framework
@@ -683,6 +717,7 @@ public:
         callback_qry_pkt4_.reset();
         callback_qry_pkt4_.reset();
         callback_lease4_.reset();
+        callback_deleted_lease4_.reset();
         callback_hwaddr_.reset();
         callback_clientid_.reset();
         callback_subnet4_.reset();
@@ -706,8 +741,11 @@ public:
     /// Server/response Pkt4 structure returned in the callout
     static Pkt4Ptr callback_resp_pkt4_;
 
-    /// Lease4 structure returned in the callout
+    /// Lease4 structure returned in the leases4_committed callout
     static Lease4Ptr callback_lease4_;
+
+    /// Lease4 structure returned in the leases4_committed callout
+    static Lease4Ptr callback_deleted_lease4_;
 
     /// Hardware address returned in the callout
     static HWAddrPtr callback_hwaddr_;
@@ -743,6 +781,7 @@ Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
 HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
 ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
+Lease4Ptr HooksDhcpv4SrvTest::callback_deleted_lease4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 bool HooksDhcpv4SrvTest::callback_qry_options_copy_;
@@ -1526,29 +1565,46 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_V4, addr));
 }
 
-// Checks that subnet4_select is able to drop the packet.
-TEST_F(HooksDhcpv4SrvTest, subnet4SelectDrop) {
+// This test verifies that the leases4_committed hook point is not triggered
+// for the DHCPDISCOVER.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedDiscover) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    // Install subnet4_select_drop callout
-    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
-                        "subnet4_select", subnet4_select_drop_callout));
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
 
-    // Let's create a simple DISCOVER
-    Pkt4Ptr discover = generateSimpleDiscover();
 
-    // Simulate that we have received that traffic
-    srv_->fakeReceive(discover);
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    ASSERT_NO_THROW(client.doDiscover());
 
-    // Server will now process to run its normal loop, but instead of calling
-    // IfaceMgr::receive4(), it will read all packets from the list set by
-    // fakeReceive()
-    // In particular, it should call registered subnet4_select callback.
-    srv_->run();
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
 
-    // Check that there is no packet sent
-    EXPECT_EQ(0, srv_->fake_sent_.size());
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+}
+
+// This test verifies that the leases4_committed hook point is not triggered
+// for the DHCPINFORM.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedInform) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
+
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.useRelay();
+    ASSERT_NO_THROW(client.doInform());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
 }
 
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled
@@ -1719,6 +1775,111 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
 }
 
+// This test verifies that the callout installed on the leases4_committed hook
+// point is executed as a result of DHCPREQUEST message sent to allocate new
+// lease or renew an existing lease.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
+
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Renew the lease and make sure that the callout has been executed.
+    client.setState(Dhcp4Client::RENEWING);
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Renewed lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to renew again but force the client to request a different
+    // address.
+    client.ciaddr_ = IOAddress("192.0.2.101");
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.101", callback_lease4_->addr_.toText());
+
+    // The old lease should have been deleted.
+    ASSERT_TRUE(callback_deleted_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_deleted_lease4_->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Now request an address that can't be allocated. The client should receive
+    // the DHCPNAK.
+    client.ciaddr_ = IOAddress("10.0.0.1");
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    EXPECT_FALSE(callback_lease4_);
+    EXPECT_FALSE(callback_deleted_lease4_);
+}
+
 // This test verifies that valid RELEASE triggers lease4_release callouts
 TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     IfaceMgrTestConfig test_config(true);
@@ -1871,6 +2032,50 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     // Try by client-id, should be successful as well.
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
     EXPECT_EQ(leases.size(), 1);
+}
+
+// This test verifies that the leases4_committed callout is executed
+// with deleted leases as argument when DHCPRELEASE is processed.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
+
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    resetCalloutBuffers();
+
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    EXPECT_FALSE(callback_lease4_);
+
+    // Released lease should be returned.
+    ASSERT_TRUE(callback_deleted_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_deleted_lease4_->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
 }
 
 // This test verifies that drop flag returned by a callout installed on the
@@ -2083,6 +2288,50 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     EXPECT_EQ(addr, callback_lease4_->addr_);
 }
 
+// This test verifies that the leases4_committed callout is executed
+// with declined leases as argument when DHCPDECLINE is processed.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_callout));
+
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.useRelay();
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    resetCalloutBuffers();
+
+    ASSERT_NO_THROW(client.doDecline());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+    EXPECT_EQ(Lease::STATE_DECLINED, callback_lease4_->state_);
+
+    // Released lease should be returned.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
 
 // Checks if callout installed on host4_identifier can generate an
 // identifier and whether that identifier is actually used.
