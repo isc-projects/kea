@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,52 +7,38 @@
 #include <http/request.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <sstream>
+
+namespace {
+
+/// @brief New line (CRLF).
+const std::string crlf = "\r\n";
+
+}
 
 namespace isc {
 namespace http {
 
 HttpRequest::HttpRequest()
-    : required_methods_(),required_versions_(), required_headers_(),
-      created_(false), finalized_(false), method_(Method::HTTP_METHOD_UNKNOWN),
-      headers_(), context_(new HttpRequestContext()) {
+    : HttpMessage(INBOUND), required_methods_(),
+      method_(Method::HTTP_METHOD_UNKNOWN),
+      context_(new HttpRequestContext()) {
 }
 
-HttpRequest::~HttpRequest() {
+HttpRequest::HttpRequest(const Method& method, const std::string& uri,
+                         const HttpVersion& version)
+    : HttpMessage(OUTBOUND), required_methods_(),
+      method_(Method::HTTP_METHOD_UNKNOWN),
+      context_(new HttpRequestContext()) {
+    context()->method_ = methodToString(method);
+    context()->uri_ = uri;
+    context()->http_version_major_ = version.major_;
+    context()->http_version_minor_ = version.minor_;
 }
 
 void
 HttpRequest::requireHttpMethod(const HttpRequest::Method& method) {
     required_methods_.insert(method);
-}
-
-void
-HttpRequest::requireHttpVersion(const HttpVersion& version) {
-    required_versions_.insert(version);
-}
-
-void
-HttpRequest::requireHeader(const std::string& header_name) {
-    // Empty value denotes that the header is required but no specific
-    // value is expected.
-    HttpHeaderPtr hdr(new HttpHeader(header_name));
-    required_headers_[hdr->getLowerCaseName()] = hdr;
-}
-
-void
-HttpRequest::requireHeaderValue(const std::string& header_name,
-                                const std::string& header_value) {
-    HttpHeaderPtr hdr(new HttpHeader(header_name, header_value));
-    required_headers_[hdr->getLowerCaseName()] = hdr;
-}
-
-bool
-HttpRequest::requiresBody() const {
-    // If Content-Length is required the body must exist too. There may
-    // be probably some cases when Content-Length is not provided but
-    // the body is provided. But, probably not in our use cases.
-    // Use lower case header name because this is how it is indexed in
-    // the storage.
-    return (required_headers_.find("content-length") != required_headers_.end());
 }
 
 void
@@ -69,13 +55,14 @@ HttpRequest::create() {
                       << " not allowed");
         }
 
+        http_version_.major_ = context_->http_version_major_;
+        http_version_.minor_ = context_->http_version_minor_;
+
         // Check if the HTTP version is allowed for this request.
-        if (!inRequiredSet(HttpVersion(context_->http_version_major_,
-                                       context_->http_version_minor_),
-                           required_versions_)) {
+        if (!inRequiredSet(http_version_, required_versions_)) {
             isc_throw(BadValue, "use of HTTP version "
-                      << context_->http_version_major_ << "."
-                      << context_->http_version_minor_
+                      << http_version_.major_ << "."
+                      << http_version_.minor_
                       << " not allowed");
         }
 
@@ -85,6 +72,12 @@ HttpRequest::create() {
              ++header) {
             HttpHeaderPtr hdr(new HttpHeader(header->name_, header->value_));
             headers_[hdr->getLowerCaseName()] = hdr;
+        }
+
+        if (getDirection() == HttpMessage::OUTBOUND) {
+            HttpHeaderPtr hdr(new HttpHeader("Content-Length",
+                                             boost::lexical_cast<std::string>(context_->body_.length())));
+            headers_["content-length"] = hdr;
         }
 
         // Iterate over required headers and check that they exist
@@ -122,10 +115,8 @@ HttpRequest::finalize() {
         create();
     }
 
-    // In this specific case, we don't need to do anything because the
-    // body is retrieved from the context object directly. We also don't
-    // know what type of body we have received. Derived classes should
-    // override this method and handle various types of bodies.
+    // Copy the body from the context. Derive classes may further
+    // interpret the body contents, e.g. against the Content-Type.
     finalized_ = true;
 }
 
@@ -149,66 +140,44 @@ HttpRequest::getUri() const {
     return (context_->uri_);
 }
 
-HttpVersion
-HttpRequest::getHttpVersion() const {
-    checkCreated();
-    return (HttpVersion(context_->http_version_major_,
-                        context_->http_version_minor_));
-}
-
-HttpHeaderPtr
-HttpRequest::getHeader(const std::string& header_name) const {
-    HttpHeaderPtr http_header = getHeaderSafe(header_name);
-
-    // No such header.
-    if (!http_header) {
-        isc_throw(HttpRequestNonExistingHeader, header_name << " HTTP header"
-                  " not found in the request");
-    }
-
-    // Header found.
-    return (http_header);
-}
-
-HttpHeaderPtr
-HttpRequest::getHeaderSafe(const std::string& header_name) const {
-    checkCreated();
-
-    HttpHeader hdr(header_name);
-    auto header_it = headers_.find(hdr.getLowerCaseName());
-    if (header_it != headers_.end()) {
-        return (header_it->second);
-    }
-
-    // Header not found. Return null pointer.
-    return (HttpHeaderPtr());
-}
-
-std::string
-HttpRequest::getHeaderValue(const std::string& header_name) const {
-    return (getHeader(header_name)->getValue());
-}
-
-uint64_t
-HttpRequest::getHeaderValueAsUint64(const std::string& header_name) const {
-    try {
-        return (getHeader(header_name)->getUint64Value());
-
-    } catch (const std::exception& ex) {
-        // The specified header does exist, but the value is not a number.
-        isc_throw(HttpRequestError, ex.what());
-    }
-}
-
 std::string
 HttpRequest::getBody() const {
     checkFinalized();
     return (context_->body_);
 }
 
+std::string
+HttpRequest::toString() const {
+    checkFinalized();
+
+    std::ostringstream s;
+    s << methodToString(getMethod()) << " " << getUri() << " HTTP/" <<
+        getHttpVersion().major_ << "." << getHttpVersion().minor_ << crlf;
+
+    for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
+         ++header_it) {
+        s << header_it->second->getName() << ": " << header_it->second->getValue()
+          << crlf;
+    }
+
+    s << crlf;
+
+    s << getBody();
+
+    return (s.str());
+}
+
 bool
 HttpRequest::isPersistent() const {
-    HttpHeaderPtr conn = getHeaderSafe("connection");
+    HttpHeaderPtr conn;
+
+    try {
+        conn = getHeader("connection");
+
+    } catch (...) {
+        // If there is an exception, it means that the header was not found.
+    }
+
     std::string conn_value;
     if (conn) {
         conn_value = conn->getLowerCaseValue();
@@ -219,32 +188,6 @@ HttpRequest::isPersistent() const {
     return (((ver == HttpVersion::HTTP_10()) && (conn_value == "keep-alive")) ||
             ((HttpVersion::HTTP_10() < ver) && (conn_value.empty() || (conn_value != "close"))));
 }
-
-void
-HttpRequest::checkCreated() const {
-    if (!created_) {
-        isc_throw(HttpRequestError, "unable to retrieve values of HTTP"
-                  " request because the HttpRequest::create() must be"
-                  " called first. This is a programmatic error");
-    }
-}
-
-void
-HttpRequest::checkFinalized() const {
-    if (!finalized_) {
-        isc_throw(HttpRequestError, "unable to retrieve body of HTTP"
-                  " request because the HttpRequest::finalize() must be"
-                  " called first. This is a programmatic error");
-    }
-}
-
-template<typename T>
-bool
-HttpRequest::inRequiredSet(const T& element,
-                           const std::set<T>& element_set) const {
-    return (element_set.empty() || element_set.count(element) > 0);
-}
-
 
 HttpRequest::Method
 HttpRequest::methodFromString(std::string method) const {
