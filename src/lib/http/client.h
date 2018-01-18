@@ -142,6 +142,7 @@ public:
     /// @param request Pointer to the object holding a request.
     /// @param response Pointer to the object where response should be stored.
     /// @param callback Pointer to the user callback function.
+    /// @param request_timeout Timeout for the transaction in milliseconds.
     ///
     /// @throw HttpClientError If invalid arguments were provided.
     void asyncSendRequest(const Url& url,

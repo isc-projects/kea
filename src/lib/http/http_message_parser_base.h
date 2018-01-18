@@ -211,11 +211,10 @@ protected:
     /// @brief This method is called when invalid event occurred in a particular
     /// parser state.
     ///
-    /// This method simply throws @ref HttpMessageParserBaseError informing about
-    /// invalid event occurring for the particular parser state. The error
-    /// message includes the name of the handler in which the exception
-    /// has been thrown. It also includes the event which caused the
-    /// exception.
+    /// This method simply throws @ref HttpParseError informing about invalid
+    /// event occurring for the particular parser state. The error message
+    /// includes the name of the handler in which the exception has been
+    /// thrown. It also includes the event which caused the exception.
     ///
     /// @param handler_name Name of the handler in which the exception is
     /// thrown.
