@@ -73,7 +73,19 @@
             "client-classes": [ "cable-modems" ]
         } ],
         "interface": "ethX"
+    },
+// The following subnet contains a pool with a class constraint: only
+// clients which belong to the class are allowed to use this pool.
+    {
+        "pools": [
+           {
+               "pool": "2001:db8:3::/80",
+               "client-class": "cable-modems"
+           } ],
+         "subnet": "2001:db8:4::/64",
+         "interface": "ethY"
     }
+
   ]
 },
 

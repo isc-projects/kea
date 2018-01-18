@@ -97,7 +97,27 @@
             "client-classes": [ "VoIP" ]
         } ],
         "interface": "ethX"
-    }
+    },
+
+// The following list defines a subnet with pools. For some pools
+// we defined a class that is allowed in that pool. If not specified
+// everyone is allowed. When a class is specified, only packets belonging
+// to that class are allowed for that pool.
+     {
+        "pools": [
+           {
+// This one is for VoIP devices only.
+              "pool":  "192.0.4.1 - 192.0.4.200",
+              "client-class": "VoIP"
+           },
+// This one doesn't have any client-class specified, so everyone
+// is allowed in.
+           {
+               "pool":  "192.0.5.1 - 192.0.5.200"
+           } ],
+           "subnet": "192.0.4.0/23",
+           "interface": "ethY"
+     }
   ]
 },
 
