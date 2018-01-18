@@ -199,6 +199,9 @@ Url::parse() {
     // If there is anything left in the URL, we consider it a path.
     if (offset2 != std::string::npos) {
         path_ = url_.substr(offset2);
+        if (path_.empty()) {
+            path_ = "/";
+        }
     }
 
     valid_ = true;

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,9 +21,9 @@ namespace http {
 /// has occurred.
 ///
 /// The most common errors are due to receiving malformed requests.
-class HttpMessageParserBaseError : public Exception {
+class HttpParseError : public Exception {
 public:
-    HttpMessageParserBaseError(const char* file, size_t line, const char* what) :
+    HttpParseError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 

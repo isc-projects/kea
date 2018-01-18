@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -184,14 +184,14 @@ TEST_F(PostHttpRequestJsonTest, clientRequest) {
     // Commit and validate the data.
     ASSERT_NO_THROW(request_.finalize());
 
-    std::ostringstream expected_response;
-    expected_response << "POST /isc/org HTTP/1.0\r\n"
+    std::ostringstream expected_request_text;
+    expected_request_text << "POST /isc/org HTTP/1.0\r\n"
         "Content-Length: " << json->str().size() << "\r\n"
         "Content-Type: application/json\r\n"
         "\r\n"
         << json->str();
 
-    EXPECT_EQ(expected_response.str(), request_.toString());
+    EXPECT_EQ(expected_request_text.str(), request_.toString());
 }
 
 }

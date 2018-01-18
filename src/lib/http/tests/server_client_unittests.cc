@@ -1217,7 +1217,6 @@ TEST_F(HttpClientTest, clientRequestTimeout) {
     PostHttpRequestJsonPtr request1 = createRequest("partial-response", true);
     HttpResponseJsonPtr response1(new HttpResponseJson());
     ASSERT_NO_THROW(client.asyncSendRequest(url, request1, response1,
-                                            HttpClient::RequestTimeout(100),
         [this, &cb_num](const boost::system::error_code& ec,
                         const HttpResponsePtr& response,
                         const std::string&) {
@@ -1230,7 +1229,7 @@ TEST_F(HttpClientTest, clientRequestTimeout) {
         EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
         // There should be no response returned.
         EXPECT_FALSE(response);
-    }));
+    }, HttpClient::RequestTimeout(100)));
 
     // Create another request after the timeout. It should be handled ok.
     PostHttpRequestJsonPtr request2 = createRequest("sequence", 1);

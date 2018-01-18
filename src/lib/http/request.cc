@@ -169,7 +169,15 @@ HttpRequest::toString() const {
 
 bool
 HttpRequest::isPersistent() const {
-    HttpHeaderPtr conn = getHeaderSafe("connection");
+    HttpHeaderPtr conn;
+
+    try {
+        conn = getHeader("connection");
+
+    } catch (...) {
+        // If there is an exception, it means that the header was not found.
+    }
+
     std::string conn_value;
     if (conn) {
         conn_value = conn->getLowerCaseValue();

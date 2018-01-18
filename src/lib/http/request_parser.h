@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,16 +13,6 @@
 
 namespace isc {
 namespace http {
-
-/// @brief Exception thrown when an error during parsing HTTP request
-/// has occurred.
-///
-/// The most common errors are due to receiving malformed requests.
-class HttpRequestParserError : public HttpMessageParserBaseError {
-public:
-    HttpRequestParserError(const char* file, size_t line, const char* what) :
-        HttpMessageParserBaseError(file, line, what) { };
-};
 
 class HttpRequestParser;
 

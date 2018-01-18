@@ -25,9 +25,6 @@ using namespace http;
 
 namespace {
 
-/// @brief Default request timeout of 10s.
-const long REQUEST_TIMEOUT = 10000;
-
 /// @brief TCP socket callback function type.
 typedef boost::function<void(boost::system::error_code ec, size_t length)>
 SocketCallbackFunction;
@@ -118,9 +115,6 @@ public:
     /// transaction completes.
     void doTransaction(const HttpRequestPtr& request, const HttpResponsePtr& response,
                        const long request_timeout, const HttpClient::RequestHandler& callback);
-
-    /// @brief Closes connection and removes it from the connection pool.
-    void stop();
 
     /// @brief Closes the socket and cancels the request timer.
     void close();
@@ -465,12 +459,6 @@ Connection::doTransaction(const HttpRequestPtr& request,
 }
 
 void
-Connection::stop() {
-    ConnectionPoolPtr conn_pool = conn_pool_.lock();
-    conn_pool->closeConnection(url_);
-}
-
-void
 Connection::close() {
     timer_.cancel();
     socket_.close();
@@ -668,17 +656,8 @@ HttpClient::HttpClient(IOService& io_service)
 void
 HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
                              const HttpResponsePtr& response,
-                             const HttpClient::RequestHandler& callback) {
-    asyncSendRequest(url, request, response,
-                     HttpClient::RequestTimeout(REQUEST_TIMEOUT),
-                     callback);
-}
-
-void
-HttpClient::asyncSendRequest(const Url& url, const HttpRequestPtr& request,
-                             const HttpResponsePtr& response,
-                             const HttpClient::RequestTimeout& request_timeout,
-                             const HttpClient::RequestHandler& callback) {
+                             const HttpClient::RequestHandler& callback,
+                             const HttpClient::RequestTimeout& request_timeout) {
     if (!url.isValid()) {
         isc_throw(HttpClientError, "invalid URL specified for the HTTP client");
     }
