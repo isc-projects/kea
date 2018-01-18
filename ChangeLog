@@ -1,3 +1,7 @@
+1347.	[func]		marcin
+	Implemented HTTP client classes in libkea-http.
+	(Trac #5451, git 94267e252b372650e4235389251b49d6f5501322)
+
 1346.	[build]		fdupont
 	Modified configure.ac to include premium module m4 macros, if the
 	module is present. Prior to this it relied on premium having it's
