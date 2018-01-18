@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1086,6 +1086,9 @@ public:
 
         /// @brief A pointer to an old lease that the client had before update.
         Lease4Ptr old_lease_;
+
+        /// @brief A pointer to a newly allocated lease.
+        Lease4Ptr new_lease_;
 
         /// @brief Holds a map of hosts belonging to the client within different
         /// subnets.
