@@ -18,11 +18,33 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
-     capacity_(0), cfg_option_(new CfgOption()) {
+     capacity_(0), cfg_option_(new CfgOption()), white_list_(),
+     last_allocated_(first), last_allocated_valid_(false) {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
+}
+
+bool Pool::clientSupported(const ClientClasses& classes) const {
+    if (white_list_.empty()) {
+        // There is no class defined for this pool, so we do
+        // support everyone.
+        return (true);
+    }
+
+    for (ClientClasses::const_iterator it = white_list_.begin();
+         it != white_list_.end(); ++it) {
+        if (classes.contains(*it)) {
+            return (true);
+        }
+    }
+
+    return (false);
+}
+
+void Pool::allowClientClass(const ClientClass& class_name) {
+    white_list_.insert(class_name);
 }
 
 std::string
@@ -86,6 +108,16 @@ Pool::toElement() const {
     // Set pool options
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
+
+    // Set client-class
+    const ClientClasses& cclasses = getClientClasses();
+    if (cclasses.size() > 1) {
+        isc_throw(ToElementError, "client-class has too many items: "
+                  << cclasses.size());
+    } else if (!cclasses.empty()) {
+        map->set("client-class", Element::create(*cclasses.cbegin()));
+    }
+
     return (map);
 }
 

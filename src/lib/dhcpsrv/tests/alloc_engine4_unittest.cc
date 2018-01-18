@@ -326,12 +326,35 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
         alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
 
     for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, clientid_,
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
                                                  IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
     }
 }
 
+// This test verifies that the allocator picks addresses that belong to the
+// pool using classification
+TEST_F(AllocEngine4Test, IterativeAllocator_class) {
+    boost::scoped_ptr<NakedAllocEngine::Allocator>
+        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
+
+    // Restrict pool_ to the foo class. Add a second pool with bar class.
+    pool_->allowClientClass("foo");
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.200"),
+                            IOAddress("192.0.2.209")));
+    pool->allowClientClass("bar");
+    subnet_->addPool(pool);
+
+    // Clients are in bar
+    cc_.insert("bar");
+
+    for (int i = 0; i < 1000; ++i) {
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
+                                                 IOAddress("0.0.0.0"));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
+    }
+}
 
 // This test verifies that the iterative allocator really walks over all addresses
 // in all pools in specified subnet. It also must not pick the same address twice
@@ -359,7 +382,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
     std::set<IOAddress> generated_addrs;
     int cnt = 0;
     while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(subnet_, clientid_, IOAddress("0.0.0.0"));
+        IOAddress candidate = alloc.pickAddress(subnet_, cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
 
         // One way to easily verify that the iterative allocator really works is
@@ -690,6 +713,44 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkClassification) {
     EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 }
 
+// This test verifies that the server can offer an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet requires another class.
+TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolClassification) {
+
+    // Try to offer address from subnet1. There is one address available
+    // so it should be offerred.
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Apply restrictions on the pool1. This should be only assigned
+    // to clients belonging to cable-modem class.
+    pool1_->allowClientClass("cable-modem");
+
+    // The allocation engine should determine that the pool1 is not
+    // available for the client not belonging to the cable-modem class.
+    // Instead, it should offer an address from subnet2 that belongs
+    // to the same shared network.
+    ctx.subnet_ = subnet1_;
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Assign cable-modem class and try again. This time, we should
+    // offer an address from the pool1.
+    ctx.query_->addClass(ClientClass("cable-modem"));
+
+    ctx.subnet_ = subnet1_;
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.17", lease->addr_.toText());
+}
+
 // Test that reservations within shared network take precedence over the
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong.
@@ -881,6 +942,59 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkClassification) {
     // to renew the address. The engine should determine that the
     // client doesn't have access to the subnet1 pools anymore and
     // assign an address from unrestricted subnet.
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.subnet_ = subnet1_;
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
+}
+
+// This test verifies that the server can assign an address from a
+// different subnet than orginally selected, when the address pool in
+// the first subnet requires another class.
+TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
+    // Try to offer address from subnet1. There is one address available
+    // so it should be offerred.
+    AllocEngine::ClientContext4
+        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
+            false, false, "host.example.com.", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Remove the lease so as we can start over.
+    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+    // Apply restrictions on the pool1. This should be only assigned
+    // to clients belonging to cable-modem class.
+    pool1_->allowClientClass("cable-modem");
+
+    // The allocation engine should determine that the pool1 is not
+    // available for the client not belonging to the cable-modem class.
+    // Instead, it should assign an address from subnet2 that belongs
+    // to the same shared network.
+    ctx.subnet_ = subnet1_;
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Remove the lease so as we can start over.
+    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+
+    // Assign cable-modem class and try again. This time, we should
+    // offer an address from the pool1.
+    ctx.query_->addClass(ClientClass("cable-modem"));
+
+    ctx.subnet_ = subnet1_;
+    lease = engine_.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
+
+    // Let's now remove the client from the cable-modem class and try
+    // to renew the address. The engine should determine that the
+    // client doesn't have access to the pool1 anymore and
+    // assign an address from unrestricted pool.
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);

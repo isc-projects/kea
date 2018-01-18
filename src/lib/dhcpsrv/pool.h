@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/classify.h>
 #include <dhcp/option6_pdexclude.h>
 #include <boost/shared_ptr.hpp>
 #include <cc/data.h>
@@ -96,6 +97,58 @@ public:
         return (cfg_option_);
     }
 
+    /// @Checks whether this pool supports client that belongs to
+    /// specified classes.
+    ///
+    /// @todo: currently doing the same than network which
+    /// is known to be improved.
+    ///
+    /// @param client_classes list of all classes the client belongs to
+    /// @return true if client can be supported, false otherwise
+    bool clientSupported(const ClientClasses& client_classes) const;
+
+    /// @brief Adds class class_name to the list of supported classes
+    ///
+    /// @param class_name client class to be supported by this pool
+    void allowClientClass(const ClientClass& class_name);
+
+    /// @brief returns the client class white list
+    ///
+    /// @note Currently white list is empty or has one element
+    /// @note The returned reference is only valid as long as the object
+    /// returned is valid.
+    ///
+    /// @return client classes @ref white_list_
+    const ClientClasses& getClientClasses() const {
+        return (white_list_);
+    }
+
+    /// @brief returns the last address that was tried from this pool
+    ///
+    /// @return address/prefix that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated() const {
+        return last_allocated_;
+    }
+
+    /// @brief checks if the last address is valid
+    /// @return true if the last address is valid
+    bool isLastAllocatedValid() const {
+        return last_allocated_valid_;
+    }
+
+    /// @brief sets the last address that was tried from this pool
+    ///
+    /// @param addr address/prefix to that was tried last
+    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
+        last_allocated_ = addr;
+        last_allocated_valid_ = true;
+    }
+
+    /// @brief resets the last address to invalid
+    void resetLastAllocated() {
+        last_allocated_valid_ = false;
+    }
+
     /// @brief Unparse a pool object.
     ///
     /// @return A pointer to unparsed pool configuration.
@@ -148,6 +201,19 @@ protected:
 
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
+
+    /// @brief Optional definition of a client class
+    ///
+    /// @ref Network::white_list_
+    ClientClasses white_list_;
+
+    /// @brief Last allocated address
+    /// See @ref isc::dhcp::subnet::last_allocated_ia_
+    /// Initialized and reset to first
+    isc::asiolink::IOAddress last_allocated_;
+
+    /// @brief Status of last allocated address
+    bool last_allocated_valid_;
 };
 
 /// @brief Pool information for IPv4 addresses

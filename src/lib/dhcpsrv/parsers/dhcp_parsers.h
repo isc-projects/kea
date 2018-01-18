@@ -652,6 +652,9 @@ private:
     CfgOptionPtr options_;
 
     isc::data::ConstElementPtr user_context_;
+
+    isc::data::ConstElementPtr client_class_;
+
 };
 
 /// @brief Parser for a list of prefix delegation pools.
