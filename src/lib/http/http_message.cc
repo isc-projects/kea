@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,20 +56,6 @@ HttpMessage::getHttpVersion() const {
 
 HttpHeaderPtr
 HttpMessage::getHeader(const std::string& header_name) const {
-    HttpHeaderPtr http_header = getHeaderSafe(header_name);
-
-    // No such header.
-    if (!http_header) {
-        isc_throw(HttpMessageNonExistingHeader, header_name << " HTTP header"
-                  " not found in the request");
-    }
-
-    // Header found.
-    return (http_header);
-}
-
-HttpHeaderPtr
-HttpMessage::getHeaderSafe(const std::string& header_name) const {
     checkCreated();
 
     HttpHeader hdr(header_name);
@@ -78,8 +64,8 @@ HttpMessage::getHeaderSafe(const std::string& header_name) const {
         return (header_it->second);
     }
 
-    // Header not found. Return null pointer.
-    return (HttpHeaderPtr());
+    isc_throw(HttpMessageNonExistingHeader, header_name << " HTTP header"
+              " not found in the request");
 }
 
 std::string

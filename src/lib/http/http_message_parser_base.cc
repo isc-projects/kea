@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,7 +143,7 @@ HttpMessageParserBase::getNextFromBuffer() {
     // NEED_MORE_DATA_EVT it indicates that the caller hasn't provided
     // the data.
     if (ev == NEED_MORE_DATA_EVT) {
-        isc_throw(HttpMessageParserBaseError,
+        isc_throw(HttpParseError,
                   "HTTP request parser requires new data to progress, but no data"
                   " have been provided. The transaction is aborted to avoid"
                   " a deadlock. This is a Kea HTTP server logic error!");
@@ -155,7 +155,7 @@ HttpMessageParserBase::getNextFromBuffer() {
             // There is no more data so it is really not possible that we're
             // at MORE_DATA_PROVIDED_EVT.
             if (ev == MORE_DATA_PROVIDED_EVT) {
-                isc_throw(HttpMessageParserBaseError,
+                isc_throw(HttpParseError,
                           "HTTP server state indicates that new data have been"
                           " provided to be parsed, but the transaction buffer"
                           " contains no new data. This is a Kea HTTP server logic"
@@ -174,7 +174,7 @@ HttpMessageParserBase::getNextFromBuffer() {
 void
 HttpMessageParserBase::invalidEventError(const std::string& handler_name,
                                      const unsigned int event) {
-    isc_throw(HttpMessageParserBaseError, handler_name << ": "
+    isc_throw(HttpParseError, handler_name << ": "
               << " invalid event " << getEventLabel(static_cast<int>(event)));
 }
 

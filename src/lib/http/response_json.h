@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,7 +54,9 @@ public:
     /// @brief Completes creation of the HTTP response.
     ///
     /// This method marks the response as finalized. The JSON structure is
-    /// created and can be used to retrieve the parsed data.
+    /// created and can be used to retrieve the parsed data. If this is the
+    /// outbound message, it can be transmitted over the wire as the body
+    /// for the message is now committed.
     virtual void finalize();
 
     /// @brief Reset the state of the object.

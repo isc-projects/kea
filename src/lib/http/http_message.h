@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -161,19 +161,6 @@ public:
     /// doesn't exist.
     /// @throw HttpMessageError if the request hasn't been created.
     HttpHeaderPtr getHeader(const std::string& header_name) const;
-
-    /// @brief Returns object encapsulating HTTP header.
-    ///
-    /// This variant doesn't throw an exception if the header doesn't exist.
-    /// It will throw if the request hasn't been created using @c create()
-    /// method.
-    ///
-    /// @param header_name HTTP header name.
-    ///
-    /// @return Pointer to the specified header, or null if such header doesn't
-    /// exist.
-    /// @throw HttpMessageError if the request hasn't been created.
-    HttpHeaderPtr getHeaderSafe(const std::string& header_name) const;
 
     /// @brief Returns a value of the specified HTTP header.
     ///
