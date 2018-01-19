@@ -72,6 +72,11 @@ CalloutHandle::getArgumentNames() const {
     return (names);
 }
 
+ParkingLotHandlePtr
+CalloutHandle::getParkingLotHandlePtr() const {
+    return (boost::make_shared<ParkingLotHandle>(server_hooks_.getParkingLotPtr(manager_->getHookIndex())));
+}
+
 // Return the library handle allowing the callout to access the CalloutManager
 // registration/deregistration functions.
 

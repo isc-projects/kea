@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -751,6 +751,160 @@ TEST_F(HooksManagerTest, LibraryParameters) {
 
     // Try unloading the libraries.
     EXPECT_NO_THROW(HooksManager::unloadLibraries());
+}
+
+// This test verifies that an object can be parked in two different
+// callouts and that it is unparked when the last callout calls
+// unpark function.
+TEST_F(HooksManagerTest, Parking) {
+    // Load the same library twice. Both installed callouts will trigger
+    // asynchronous operation.
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+
+    // Load the libraries.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+
+    // We could be parked any object. Typically it will be a pointer to the
+    // packet. In this case, however, it is simpler to just use a string.
+    std::string parked_object = "foo";
+    handle->setArgument("parked_object", parked_object);
+
+    // Call both installed callouts.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
+
+    // This boolean value will be set to true when the packet gets unparked.
+    bool unparked = false;
+
+    // The callouts instruct us to park the object. We associated the callback
+    // function with the parked object, which sets "unparked" flag to true. We
+    // can later test the value of this flag to verify when exactly the packet
+    // got unparked.
+    ASSERT_NO_THROW(
+        HooksManager::park<std::string>("hookpt_one", "foo",
+        [this, &unparked] {
+            unparked = true;
+        })
+    );
+
+    // We have two callouts which should have returned pointers to the
+    // functions which we can call to siumulate completion of asynchronous
+    // tasks.
+    std::function<void()> unpark_trigger_func1;
+    handle->getArgument("unpark_trigger1", unpark_trigger_func1);
+    // Call the first function. It should cause the hook library to call the
+    // "unpark" function. However, the object should not be unparked yet,
+    // because the other callout hasn't completed its scheduled asynchronous
+    // operation (keeps a reference on the parked object).
+    unpark_trigger_func1();
+    EXPECT_FALSE(unparked);
+
+    // Call the second function. This should decrease the reference count to
+    // 0 and the packet should be unparked.
+    std::function<void()> unpark_trigger_func2;
+    handle->getArgument("unpark_trigger2", unpark_trigger_func2);
+    unpark_trigger_func2();
+    EXPECT_TRUE(unparked);
+
+    // Try unloading the libraries.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
+}
+
+// This test verifies that the server can also unpark the packet.
+TEST_F(HooksManagerTest, ServerUnpark) {
+    // Load the same library twice. Both installed callouts will trigger
+    // asynchronous operation.
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    // Load libraries.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+
+    // We could be parked any object. Typically it will be a pointer to the
+    // packet. In this case, however, it is simpler to just use a string.
+    std::string parked_object = "foo";
+    handle->setArgument("parked_object", parked_object);
+
+    // Call installed callout.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
+
+    // This boolean value will be set to true when the packet gets unparked.
+    bool unparked = false;
+
+    // It should be possible for the server to increase reference counter.
+    ASSERT_NO_THROW(HooksManager::reference<std::string>("hookpt_one", "foo"));
+
+    // The callouts instruct us to park the object. We associated the callback
+    // function with the parked object, which sets "unparked" flag to true. We
+    // can later test the value of this flag to verify when exactly the packet
+    // got unparked.
+    HooksManager::park<std::string>("hookpt_one", "foo",
+    [this, &unparked] {
+        unparked = true;
+    });
+
+    // Server can force unparking the object.
+    EXPECT_TRUE(HooksManager::unpark<std::string>("hookpt_one", "foo"));
+
+    EXPECT_TRUE(unparked);
+
+    // Try unloading the libraries.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
+}
+
+// This test verifies that parked objects are removed when libraries are
+// unloaded.
+TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
+    // Load the same library twice. Both installed callouts will trigger
+    // asynchronous operation.
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    // Load libraries.
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+
+    // We could be parked any object. Typically it will be a pointer to the
+    // packet. In this case, however, it is simpler to just use a string.
+    std::string parked_object = "foo";
+    handle->setArgument("parked_object", parked_object);
+
+    // Call installed callout.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
+
+    // This boolean value will be set to true when the packet gets unparked.
+    bool unparked = false;
+
+    // The callouts instruct us to park the object. We associated the callback
+    // function with the parked object, which sets "unparked" flag to true. We
+    // can later test the value of this flag to verify when exactly the packet
+    // got unparked.
+    HooksManager::park<std::string>("hookpt_one", "foo",
+    [this, &unparked] {
+        unparked = true;
+    });
+
+    // Try reloading the libraries.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    // Parked object should have been removed.
+    EXPECT_FALSE(HooksManager::unpark<std::string>("hookpt_one", "foo"));
+
+    // Callback should not be called.
+    EXPECT_FALSE(unparked);
 }
 
 
