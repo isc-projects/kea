@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -234,6 +234,71 @@ public:
     /// @return A reference to the shared callout manager
     static boost::shared_ptr<CalloutManager>& getSharedCalloutManager();
 
+    /// @brief Park an object (packet).
+    ///
+    /// The typical use case for parking an object is when the server needs to
+    /// suspend processing of a packet to perform an asynchronous operation,
+    /// before the response is sent to a client. In this case, the object type
+    /// is a pointer to the processed packet. Therefore, further in this
+    /// description we're going to refer to the parked objects as "parked
+    /// packets". However, any other object can be parked if neccessary.
+    ///
+    /// The following is the typical flow when packets are parked. The callouts
+    /// responsible for performing an asynchronous operation signal this need
+    /// to the server by returning the status @c NEXT_STEP_PARK, which instructs
+    /// the server to call this function. This function stops processing the
+    /// packet and puts it in, so called, parking lot. In order to be able to
+    /// resume the packet processing when instructed by the hooks library, the
+    /// parked packet is associated with the callback which, when called, will
+    /// resume packet processing.
+    ///
+    /// The hook library must increase a reference count on the parked object
+    /// by calling @c ParkingLotHandle::reference prior to returning the
+    /// @c NEXT_STEP_PARK status. This is important when multiple callouts
+    /// are installed on the same hook point and each of them schedules an
+    /// asynchronous operation. In this case, the packet must not be unparked
+    /// until all hook libraries call @c ParkingLotHandle::unpark to mark
+    /// that respective asynchronous operations are completed.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object packet to be parked.
+    /// @param unpark_callback callback invoked when the packet is unparked.
+    /// @tparam Type of the parked object.
+    template<typename T>
+    static void park(const std::string& hook_name, T parked_object,
+                     std::function<void()> unpark_callback) {
+        getHooksManager().parkInternal(hook_name, parked_object, unpark_callback);
+    }
+
+    /// @brief Forces unparking the object (packet).
+    ///
+    /// This method unparks the object regardless of the reference counting
+    /// value. This is used in the situations when the callouts fail to unpark
+    /// the packet for some reason.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object parked object to be unparked.
+    /// @tparam Type of the parked object.
+    /// @return true if the specified object has been found, false otherwise.
+    template<typename T>
+    static bool unpark(const std::string& hook_name, T parked_object) {
+        return (getHooksManager().unparkInternal(hook_name, parked_object));
+    }
+
+    /// @brief Increases reference counter for the parked object.
+    ///
+    /// Reference counter must be increased at least to 1 before the @c park()
+    /// method can be called.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object parked object for which reference counter should
+    /// be increased.
+    /// @tparam Type of the parked object.
+    template<typename T>
+    static void reference(const std::string& hook_name, T parked_object) {
+        getHooksManager().referenceInternal(hook_name, parked_object);
+    }
+
 private:
 
     /// @brief Constructor
@@ -241,6 +306,43 @@ private:
     /// This is private as the object is a singleton and can only be addressed
     /// through the getHooksManager() static method.
     HooksManager();
+
+    /// @brief Park an object (packet).
+    ///
+    /// @param hook_name Name of the hook point for which the packet is parked.
+    /// @param parked_object packet to be parked.
+    /// @param unpark_callback callback invoked when the packet is unparked.
+    /// @tparam Type of the parked object.
+    template<typename T>
+    void parkInternal(const std::string& hook_name, T parked_object,
+                      std::function<void()> unpark_callback) {
+        ServerHooks::getServerHooks().
+            getParkingLotPtr(hook_name)->park(parked_object, unpark_callback);
+    }
+
+    /// @brief Signals that the object (packet) should be unparked.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object parked object to be unparked.
+    /// @tparam Type of the parked object.
+    /// @return true if the specified object has been found, false otherwise.
+    template<typename T>
+    bool unparkInternal(const std::string& hook_name, T parked_object) {
+        return (ServerHooks::getServerHooks().
+                getParkingLotPtr(hook_name)->unpark(parked_object, true));
+    }
+
+    /// @brief Increases reference counter for the parked object.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object parked object for which reference counter should
+    /// be increased.
+    /// @tparam Type of the parked object.
+    template<typename T>
+    void referenceInternal(const std::string& hook_name, T parked_object) {
+        ServerHooks::getServerHooks().
+            getParkingLotPtr(hook_name)->reference(parked_object);
+    }
 
     //@{
     /// The following methods correspond to similarly-named static methods,

@@ -1100,6 +1100,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
                                                   static_cast<int64_t>(1));
     }
 
+    bool packet_park = false;
+
     if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -1131,13 +1133,37 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
                                    *callout_handle);
+
+
+        switch (callout_handle->getStatus()) {
+        // If next step is set to "skip" we simply terminate here, because the
+        // next step would be to send the packet.
+        case CalloutHandle::NEXT_STEP_SKIP:
+            return;
+
+        case CalloutHandle::NEXT_STEP_PARK:
+            packet_park = true;
+            break;
+        default:
+            ;
+        }
     }
 
     if (!rsp) {
         return;
     }
 
-    leases4CommittedContinue(getCalloutHandle(query), query, rsp);
+    if (packet_park) {
+        // Park the packet. The function we bind here will be executed when the hook
+        // library unparks the packet.
+        HooksManager::park("leases4_committed", query,
+            std::bind(&Dhcpv4Srv::leases4CommittedContinue, this,
+                      getCalloutHandle(query), query, rsp));
+
+    } else {
+        // Packet is not to be parked, so let's continue processing.
+        leases4CommittedContinue(getCalloutHandle(query), query, rsp);
+    }
 }
 
 void

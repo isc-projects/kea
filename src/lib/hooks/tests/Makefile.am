@@ -40,7 +40,7 @@ if HAVE_GTEST
 # ignored for unit tests built here.
 
 noinst_LTLIBRARIES = libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
-                     liblecl.la libucl.la libfcl.la libpcl.la
+                     liblecl.la libucl.la libfcl.la libpcl.la libacl.la
 
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
@@ -102,6 +102,12 @@ libpcl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libpcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 libpcl_la_LDFLAGS += $(top_builddir)/src/lib/util/libkea-util.la
 
+# The async callout library - parks object for asynchronous task
+libacl_la_SOURCES  = async_callout_library.cc
+libacl_la_CXXFLAGS = $(AM_CXXFLAGS)
+libacl_la_CPPFLAGS = $(AM_CPPFLAGS)
+libacl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
+
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += callout_handle_unittest.cc
@@ -111,6 +117,7 @@ run_unittests_SOURCES += handles_unittest.cc
 run_unittests_SOURCES += hooks_manager_unittest.cc
 run_unittests_SOURCES += library_manager_collection_unittest.cc
 run_unittests_SOURCES += library_manager_unittest.cc
+run_unittests_SOURCES += parking_lots_unittest.cc
 run_unittests_SOURCES += server_hooks_unittest.cc
 
 nodist_run_unittests_SOURCES  = marker_file.h

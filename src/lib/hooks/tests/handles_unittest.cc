@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -748,6 +748,7 @@ calloutPrintSkip(CalloutHandle& handle) {
     static const std::string YES("Y");
     static const std::string NO("N");
     static const std::string DROP("D");
+    static const std::string PARK("P");
 
     switch (handle.getStatus()) {
     case CalloutHandle::NEXT_STEP_CONTINUE:
@@ -758,6 +759,9 @@ calloutPrintSkip(CalloutHandle& handle) {
         break;
     case CalloutHandle::NEXT_STEP_DROP:
         HandlesTest::common_string_ += DROP; // drop
+        break;
+    case CalloutHandle::NEXT_STEP_PARK:
+        HandlesTest::common_string_ += PARK; // park
         break;
     }
     return (0);
@@ -891,6 +895,11 @@ calloutSetArgumentDrop(CalloutHandle& handle) {
     return (calloutSetArgumentCommon(handle, "D"));
 }
 
+int
+calloutSetArgumentPark(CalloutHandle& handle) {
+    return (calloutSetArgumentCommon(handle, "P"));
+}
+
 // ... and a callout to just copy the argument to the "common_string_" variable
 // but otherwise not alter it.
 
@@ -918,7 +927,9 @@ TEST_F(HandlesTest, CheckModifiedArgument) {
     getCalloutManager()->setLibraryIndex(2);
     getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
     getCalloutManager()->registerCallout("alpha", calloutSetArgumentContinue);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentPark);
     getCalloutManager()->registerCallout("alpha", calloutSetArgumentSkip);
+    getCalloutManager()->registerCallout("alpha", calloutSetArgumentPark);
 
     // Create the argument with an initial empty string value.  Then call the
     // sequence of callouts above.
@@ -933,7 +944,7 @@ TEST_F(HandlesTest, CheckModifiedArgument) {
     EXPECT_EQ(std::string("SCC" "SD"), common_string_);
 
     callout_handle.getArgument(MODIFIED_ARG, modified_arg);
-    EXPECT_EQ(std::string("SCC" "SDDC" "SCS"), modified_arg);
+    EXPECT_EQ(std::string("SCC" "SDDC" "SCPSP"), modified_arg);
 }
 
 // Test that the CalloutHandle provides the name of the hook to which the

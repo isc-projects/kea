@@ -82,6 +82,7 @@ ServerHooks::initialize() {
     // Clear out the name->index and index->name maps.
     hooks_.clear();
     inverse_hooks_.clear();
+    parking_lots_.reset(new ParkingLots());
 
     // Register the pre-defined hooks.
     int create = registerHook("context_create");
@@ -171,6 +172,21 @@ ServerHooksPtr
 ServerHooks::getServerHooksPtr() {
     static ServerHooksPtr hooks(new ServerHooks());
     return (hooks);
+}
+
+ParkingLotsPtr
+ServerHooks::getParkingLotsPtr() const {
+    return (parking_lots_);
+}
+
+ParkingLotPtr
+ServerHooks::getParkingLotPtr(const int hook_index) {
+    return (parking_lots_->getParkingLotPtr(hook_index));
+}
+
+ParkingLotPtr
+ServerHooks::getParkingLotPtr(const std::string& hook_name) {
+    return (parking_lots_->getParkingLotPtr(getServerHooks().getIndex(hook_name)));
 }
 
 std::string

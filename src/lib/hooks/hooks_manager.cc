@@ -128,6 +128,7 @@ HooksManager::unloadLibrariesInternal() {
     // ease debugging.
     lm_collection_.reset();
     callout_manager_.reset();
+    ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
 }
 
 void HooksManager::unloadLibraries() {
