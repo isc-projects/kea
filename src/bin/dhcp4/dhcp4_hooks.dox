@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -87,7 +87,7 @@ to the end of this list.
    field has been already parsed and stored in other fields. Therefore,
    the modification in the data_ field has no effect.
 
- - <b>Next step status</b>: If any callout sets the status to SKIP (or DROP), the server will
+ - <b>Next step status</b>: If any callout sets the status to SKIP or DROP, the server will
    drop the packet and start processing the next one.  The reason for the drop
    will be logged if logging is set to the appropriate debug level.
 
@@ -188,7 +188,7 @@ to the end of this list.
    be released. It doesn't make sense to modify it at this time.
 
  - <b>Next step status</b>: If any callout installed on the "lease4_release" hook
-   sets the next step action to SKIP (or DROP), the server will not delete the lease.
+   sets the next step action to SKIP or DROP, the server will not delete the lease.
    It will be kept in the database and will go through the regular expiration/reuse
    process.
 
@@ -209,7 +209,7 @@ to the end of this list.
    before it is updated in the database.
 
  - <b>Next step status</b>: If any callout installed on the "lease4_decline" hook
-   sets the next step action to SKIP (or DROP), the server will not decline the lease.
+   sets the next step action to SKIP or DROP, the server will not decline the lease.
    Care should be taken when setting this status.  The lease will be kept in
    the database as it is and the client will incorrectly assume that the server
    marked this lease as unavailable. If the client restarts its configuration,
@@ -235,7 +235,7 @@ to the end of this list.
    cannot be modified.
 
  - <b>Next step action</b>: if any callout installed on the "pkt4_send" hook
-   sets the next step action to SKIP (or DROP), the server will not construct the raw
+   sets the next step action to SKIP or DROP, the server will not construct the raw
    buffer. The expectation is that if the callout set skip flag, it is
    responsible for constructing raw form on its own. Otherwise the output
    packet will be sent with zero length.
@@ -256,7 +256,7 @@ to the end of this list.
    time, because they were already used to construct on-wire buffer. Their
    modification would have no effect.
 
- - <b>Next step status</b>: if any callout sets the next step action to SKIP (or DROP),
+ - <b>Next step status</b>: if any callout sets the next step action to SKIP or DROP,
    the server will drop this response packet. However, the original request
    packet from a client was processed, so server's state most likely has changed
    (e.g. lease was allocated). Setting this flag merely stops the change
