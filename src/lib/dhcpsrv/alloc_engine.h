@@ -213,6 +213,7 @@ protected:
         /// @todo: Implement this method
         ///
         /// @param subnet an address will be picked from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID (ignored)
         /// @param hint the last address that was picked (ignored)
         /// @return a random address from the pool

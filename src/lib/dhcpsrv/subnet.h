@@ -315,12 +315,12 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-    /// @brief returns a sum of possible leases in all pools
+    /// @brief Returns a sum of possible leases in all pools
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
 
-    /// @brief returns a sum of possible leases in all pools allowing classes
+    /// @brief Returns a sum of possible leases in all pools allowing classes
     /// @param pools list of pools
     /// @param client_classes list of classes
     /// @return sum of possible/allowed leases

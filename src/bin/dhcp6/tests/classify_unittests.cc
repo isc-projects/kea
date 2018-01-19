@@ -176,6 +176,17 @@ public:
         }
     }
 
+    /// @brief Create a solicit
+    Pkt6Ptr createSolicit(std::string remote_addr = "fe80::abcd") {
+            OptionPtr clientid = generateClientId();
+            Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+            query->setRemoteAddr(IOAddress(remote_addr));
+            query->addOption(clientid);
+            query->setIface("eth1");
+            query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+            return (query);
+    }
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
@@ -244,22 +255,9 @@ TEST_F(ClassifyTest, matchClassification) {
     ASSERT_NO_THROW(configure(config));
 
     // Create packets with enough to select the subnet
-    OptionPtr clientid = generateClientId();
-    Pkt6Ptr query1(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query1->setRemoteAddr(IOAddress("fe80::abcd"));
-    query1->addOption(clientid);
-    query1->setIface("eth1");
-    query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
-    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query2->setRemoteAddr(IOAddress("fe80::abcd"));
-    query2->addOption(clientid);
-    query2->setIface("eth1");
-    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query3->setRemoteAddr(IOAddress("fe80::abcd"));
-    query3->addOption(clientid);
-    query3->setIface("eth1");
-    query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
+    Pkt6Ptr query1 = createSolicit();
+    Pkt6Ptr query2 = createSolicit();
+    Pkt6Ptr query3 = createSolicit();
 
     // Create and add an ORO option to the first 2 queries
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
@@ -341,12 +339,7 @@ TEST_F(ClassifyTest, subnetClassPriority) {
 
     // Create a packet with enough to select the subnet and go through
     // the SOLICIT processing
-    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query->setRemoteAddr(IOAddress("fe80::abcd"));
-    OptionPtr clientid = generateClientId();
-    query->addOption(clientid);
-    query->setIface("eth1");
-    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query = createSolicit();
 
     // Create and add an ORO option to the query
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
@@ -413,12 +406,7 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
 
     // Create a packet with enough to select the subnet and go through
     // the SOLICIT processing
-    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query->setRemoteAddr(IOAddress("fe80::abcd"));
-    OptionPtr clientid = generateClientId();
-    query->addOption(clientid);
-    query->setIface("eth1");
-    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query = createSolicit();
 
     // Create and add an ORO option to the query
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
@@ -482,12 +470,7 @@ TEST_F(ClassifyTest, classGlobalPriority) {
 
     // Create a packet with enough to select the subnet and go through
     // the SOLICIT processing
-    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query->setRemoteAddr(IOAddress("fe80::abcd"));
-    OptionPtr clientid = generateClientId();
-    query->addOption(clientid);
-    query->setIface("eth1");
-    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query = createSolicit();
 
     // Create and add an ORO option to the query
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
@@ -558,12 +541,7 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
 
     // Create a packet with enough to select the subnet and go through
     // the SOLICIT processing
-    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query->setRemoteAddr(IOAddress("fe80::abcd"));
-    OptionPtr clientid = generateClientId();
-    query->addOption(clientid);
-    query->setIface("eth1");
-    query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query = createSolicit();
 
     // Do not add an ORO.
     OptionPtr oro = query->getOption(D6O_ORO);
@@ -620,11 +598,7 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
 
     ASSERT_NO_THROW(configure(config));
 
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
-    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
+    Pkt6Ptr sol = createSolicit("2001:db8:1::3");
 
     // This discover does not belong to foo class, so it will not
     // be serviced
@@ -685,22 +659,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
 
     ASSERT_NO_THROW(configure(config));
 
-    OptionPtr clientid = generateClientId();
-    Pkt6Ptr query1 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query1->setRemoteAddr(IOAddress("2001:db8:1::3"));
-    query1->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    query1->addOption(clientid);
-    query1->setIface("eth1");
-    Pkt6Ptr query2 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query2->setRemoteAddr(IOAddress("2001:db8:1::3"));
-    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    query2->addOption(clientid);
-    query2->setIface("eth1");
-    Pkt6Ptr query3 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    query3->setRemoteAddr(IOAddress("2001:db8:1::3"));
-    query3->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    query3->addOption(clientid);
-    query3->setIface("eth1");
+    Pkt6Ptr query1 = createSolicit("2001:db8:1::3");
+    Pkt6Ptr query2 = createSolicit("2001:db8:1::3");
+    Pkt6Ptr query3 = createSolicit("2001:db8:1::3");
 
     // This discover does not belong to foo class, so it will not
     // be serviced
@@ -741,11 +702,7 @@ TEST_F(ClassifyTest, vendorClientClassification2) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a SOLICIT.
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
-    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
+    Pkt6Ptr sol = createSolicit("2001:db8:1::3");
 
     // Now let's add a vendor-class with id=1234 and content "foo"
     OptionVendorClassPtr vendor_class(new OptionVendorClass(Option::V6, 1234));
@@ -808,11 +765,7 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     ASSERT_TRUE(subnet1);
     ASSERT_TRUE(subnet2);
 
-    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
-    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
-    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    OptionPtr clientid = generateClientId();
-    sol->addOption(clientid);
+    Pkt6Ptr sol = createSolicit("2001:db8:1::3");
 
     // Now pretend the packet came via one relay.
     Pkt6::RelayInfo relay;

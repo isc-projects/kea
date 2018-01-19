@@ -97,7 +97,7 @@ public:
         return (cfg_option_);
     }
 
-    /// @Checks whether this pool supports client that belongs to
+    /// @brief Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
     /// @todo: currently doing the same than network which
@@ -208,7 +208,7 @@ protected:
     ClientClasses white_list_;
 
     /// @brief Last allocated address
-    /// See @ref isc::dhcp::subnet::last_allocated_ia_
+    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
     /// Initialized and reset to first
     isc::asiolink::IOAddress last_allocated_;
 

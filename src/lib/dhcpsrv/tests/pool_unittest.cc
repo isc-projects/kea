@@ -638,7 +638,7 @@ TEST(Pool6Test, clientClass) {
 TEST(Pool6Test, clientClasses) {    
     // Create a pool.
     Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
-                IOAddress("2001:db8::2"));
+               IOAddress("2001:db8::2"));
 
     // This client does not belong to any class.
     isc::dhcp::ClientClasses no_class;
