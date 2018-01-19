@@ -1927,6 +1927,14 @@ should include options from the isc option space:
       discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
+      <para>In certain cases it is useful to configure the server to differentiate between
+      DHCP clients types and treat them accordingly. It is envisaged that client
+      classification will be used for modifying the behavior of almost any part of
+      the DHCP message processing. In the current release of Kea, there are three
+      mechanisms that take advantage of the client classification in DHCPv6: subnet
+      selection, address pool selection and DHCP options assignment.
+      </para>
+
       <para>
       In certain cases it is useful to differentiate between different types
       of clients and treat them accordingly. It is envisaged that client
@@ -1951,13 +1959,9 @@ should include options from the isc option space:
       </para>
 
       <para>
-      When subnets belong to a shared network the classification applies
-      to subnet selection but not to pools, e.g., a pool in a subnet
-      limited to a particular class can still be used by clients which do not
-      belong to the class if the pool they are expected to use is exhausted.
-      So the limit access based on class information is also available
-      at the address/prefix pool level, see <xref
-      linkend="classification-pools"/>.
+      Client classification can also be used to restrict access to specific
+      pools within a subnet. This is useful when to segregate clients belonging
+      to the same subnet into different address ranges.
       </para>
 
       <para>
