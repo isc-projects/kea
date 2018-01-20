@@ -1282,7 +1282,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
             return (Lease6Ptr());
         }
 
-        /// @todo: Add support for DROP status
+        /// DROP status does not make sense here:
+	/// In general as the lease cannot be dropped the DROP action
+	/// has no object so SKIP is the right "cancel" status and
+	/// DROP should not be a synonym as it introduces ambiguity.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -1613,7 +1616,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 .arg(ctx.query_->getName());
         }
 
-        /// @todo: Add support for DROP status
+        /// DROP status does not make sense here.
     }
 
     if (!skip) {
@@ -2009,7 +2012,7 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
         skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
     }
 
-    /// @todo: Maybe add support for DROP status?
+    /// DROP status does not make sense here.
     /// Not sure if we need to support every possible status everywhere.
 
     if (!skipped) {
@@ -2099,7 +2102,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
     }
 
-    /// @todo: Maybe add support for DROP status?
+    /// DROP status does not make sense here.
     /// Not sure if we need to support every possible status everywhere.
 
     if (!skipped) {
@@ -2896,7 +2899,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
 
     time_t now = time(NULL);
 
-    // @todo: remove this kludge after ticket #2590 is implemented
+    // @todo: remove this kludge?
     std::vector<uint8_t> local_copy;
     if (ctx.clientid_ && ctx.subnet_->getMatchClientId()) {
         local_copy = ctx.clientid_->getDuid();
@@ -2998,7 +3001,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     // Let's keep the old data. This is essential if we are using memfile
     // (the lease returned points directly to the lease4 object in the database)
     // We'll need it if we want to skip update (i.e. roll back renewal)
-    /// @todo: remove this once #3083 is implemented
+    /// @todo: remove this?
     Lease4 old_values = *lease;
     ctx.old_lease_.reset(new Lease4(old_values));
 
@@ -3061,7 +3064,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
                       DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
         }
 
-        /// @todo: Add support for DROP status
+        /// DROP status does not make sense here.
     }
 
     if (!ctx.fake_allocation_ && !skip) {
@@ -3077,7 +3080,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     }
     if (skip) {
         // Rollback changes (really useful only for memfile)
-        /// @todo: remove this once #3083 is implemented
+        /// @todo: remove this?
         *lease = old_values;
     }
 
@@ -3150,7 +3153,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
             return (Lease4Ptr());
         }
 
-        /// @todo: add support for DROP
+        /// DROP status does not make sense here.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
