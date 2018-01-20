@@ -483,11 +483,11 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
 
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
-        return (selectSubnet4o6(query));
+        return (selectSubnet4o6(query, drop));
     }
 
     Subnet4Ptr subnet;
@@ -569,7 +569,15 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
             return (Subnet4Ptr());
         }
 
-        /// @todo: Add support for DROP status
+        // Callouts decided to drop the packet. It is a superset of the
+        // skip case so no subnet will be selected.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_DROP)
+                .arg(query->getLabel());
+            drop = true;
+            return (Subnet4Ptr());
+        }
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet4", subnet);
@@ -596,7 +604,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query) const {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
+Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
 
     Subnet4Ptr subnet;
 
@@ -673,7 +681,15 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query) const {
             return (Subnet4Ptr());
         }
 
-        /// @todo: Add support for DROP status
+        // Callouts decided to drop the packet. It is a superset of the
+        // skip case so no subnet will be selected.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_DROP)
+                .arg(query->getLabel());
+            drop = true;
+            return (Subnet4Ptr());
+        }
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet4", subnet);
@@ -809,6 +825,7 @@ Dhcpv4Srv::run_one() {
         LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
                   DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
+        return;
     } else {
         processPacket(query, rsp);
     }
@@ -841,14 +858,13 @@ Dhcpv4Srv::run_one() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_BUFFER_SEND_SKIP)
                     .arg(rsp->getLabel());
                 return;
             }
-
-            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("response4", rsp);
         }
@@ -911,6 +927,18 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_,
                                    *callout_handle);
 
+        // Callouts decided to drop the received packet.
+        // The response (rsp) is null so the caller (run_one) will
+        // immediately return too.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_HOOK_BUFFER_RCVD_DROP)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface());
+            return;
+        }
+
         // Callouts decided to skip the next processing step. The next
         // processing step would to parse the packet, so skip at this
         // stage means that callouts did the parsing already, so server
@@ -925,8 +953,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         }
 
         callout_handle->getArgument("query4", query);
-
-        /// @todo: add support for DROP status
     }
 
     // Unpack the packet information unless the buffer4_receive callouts
@@ -1010,14 +1036,13 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         // Callouts decided to skip the next processing step. The next
         // processing step would to process the packet, so skip at this
         // stage means drop.
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
             return;
         }
-
-        /// @todo: Add support for DROP status
 
         callout_handle->getArgument("query4", query);
     }
@@ -1106,14 +1131,13 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         // Callouts decided to skip the next processing step. The next
         // processing step would to send the packet, so skip at this
         // stage means "drop response".
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_PACKET_SEND_SKIP)
                 .arg(query->getLabel());
             skip_pack = true;
         }
-
-        /// @todo: Add support for DROP status
     }
 
     if (!skip_pack) {
@@ -2316,7 +2340,13 @@ Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     sanityCheck(discover, FORBIDDEN);
 
-    Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover));
+    bool drop = false;
+    Dhcpv4Exchange ex(alloc_engine_, discover, selectSubnet(discover, drop));
+
+    // Stop here if selectSubnet decided to drop the packet
+    if (drop) {
+        return (Pkt4Ptr());
+    }
 
     // If DHCPDISCOVER message contains the FQDN or Hostname option, server
     // may respond to the client with the appropriate FQDN or Hostname
@@ -2368,7 +2398,13 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(request, MANDATORY);
 
-    Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request));
+    bool drop = false;
+    Dhcpv4Exchange ex(alloc_engine_, request, selectSubnet(request, drop));
+
+    // Stop here if selectSubnet decided to drop the packet
+    if (drop) {
+        return (Pkt4Ptr());
+    }
 
     // If DHCPREQUEST message contains the FQDN or Hostname option, server
     // should respond to the client with the appropriate FQDN or Hostname
@@ -2478,14 +2514,13 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             // Callouts decided to skip the next processing step. The next
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 skip = true;
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_LEASE4_RELEASE_SKIP)
                     .arg(release->getLabel());
             }
-
-            /// @todo add support for DROP status
         }
 
         // Callout didn't indicate to skip the release process. Let's release
@@ -2619,9 +2654,10 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
         HooksManager::callCallouts(Hooks.hook_index_lease4_decline_,
                                    *callout_handle);
 
-        // Check if callouts decided to drop the packet. If any of them did,
-        // we will drop the packet.
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+        // Check if callouts decided to skip the next processing step.
+        // If any of them did, we will drop the packet.
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_DECLINE_SKIP)
                 .arg(decline->getLabel()).arg(lease->addr_.toText());
             return;
@@ -2669,7 +2705,13 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     // DHCPINFORM MUST not include server identifier.
     sanityCheck(inform, FORBIDDEN);
 
-    Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform));
+    bool drop = false;
+    Dhcpv4Exchange ex(alloc_engine_, inform, selectSubnet(inform, drop));
+
+    // Stop here if selectSubnet decided to drop the packet
+    if (drop) {
+        return (Pkt4Ptr());
+    }
 
     Pkt4Ptr ack = ex.getResponse();
 
@@ -2762,7 +2804,13 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    return (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt));
+    bool drop = false;
+    bool result = (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt, drop));
+    if (drop) {
+        // The packet must be dropped.
+        return (false);
+    }
+    return (result);
 }
 
 bool

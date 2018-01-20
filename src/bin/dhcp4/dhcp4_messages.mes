@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -238,17 +238,25 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
-% DHCP4_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 was dropped because a callout set the skip flag
+% DHCP4_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 This debug message is printed when a callout installed on buffer4_receive
-hook point set the skip flag. For this particular hook point, the
+hook point set the drop flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 The arguments specify the source and destination IPv4 address as well as
 the name of the interface over which the buffer has been received.
 
-% DHCP4_HOOK_BUFFER_SEND_SKIP %1: prepared response is dropped because a callout set the skip flag.
+% DHCP4_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.
+This debug message is printed when a callout installed on
+buffer4_receive hook point set the next step to SKIP. For this particular hook
+point, this value set by a callout instructs the server to
+not parse the buffer because it was already parsed by the hook. The
+arguments specify the source and destination IPv4 address as well as
+the name of the interface over which the buffer has been received.
+
+% DHCP4_HOOK_BUFFER_SEND_SKIP %1: prepared response is dropped because a callout set the next step to SKIP.
 This debug message is printed when a callout installed on buffer4_send
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to drop the packet.
+hook point set the next step to SKIP. For this particular hook point, the
+SKIP value set by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 
@@ -259,27 +267,33 @@ for decline4 hook point and one of the callouts set next step status to DROP.
 The server will now abort processing of the packet as if it was never
 received. The lease will continue to be assigned to this client.
 
-% DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the skip flag.
+% DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the next step to SKIP
 This debug message is printed when a callout installed on lease4_release
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to not release
-a lease.
+hook point set the next step status to SKIP. For this particular hook point, the
+value set by a callout instructs the server to not release a lease.
 
-% DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the skip flag.
+% DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the pkt4_receive
-hook point sets the skip flag. For this particular hook point, the
-setting of the flag instructs the server to drop the packet.
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting of the flag instructs the server to drop the packet.
 
-% DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set skip flag.
+% DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set the next stp to SKIP
 This debug message is printed when a callout installed on the pkt4_send
-hook point sets the skip flag. For this particular hook point, the setting
-of the flag instructs the server to drop the packet. This means that
+hook point sets the next step to SKIP. For this particular hook point, this
+setting instructs the server to drop the packet. This means that
 the client will not get any response, even though the server processed
 client's request and acted on it (e.g. possibly allocated a lease).
 
-% DHCP4_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set skip flag.
+% DHCP4_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
 This debug message is printed when a callout installed on the
-subnet4_select hook point sets the skip flag. For this particular hook
+subnet4_select hook point sets the next step to 'drop' value. For this particular hook
+point, the setting to that value instructs the server to drop the received
+packet. The argument specifies the client and transaction identification
+information.
+
+% DHCP4_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to SKIP value. For this particular hook
 point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.

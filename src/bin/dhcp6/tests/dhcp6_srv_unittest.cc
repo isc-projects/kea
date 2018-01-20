@@ -1233,7 +1233,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
 
     // The clause for assuming local subnet if there is only one subnet is was
     // removed.
-    EXPECT_FALSE(srv.selectSubnet(pkt));
+    bool drop = false;
+    EXPECT_FALSE(srv.selectSubnet(pkt, drop));
+    EXPECT_FALSE(drop);
 
     // CASE 2: We have only one subnet defined and we received relayed traffic.
     // We should NOT select it.
@@ -1243,8 +1245,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
     CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
-    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
+    EXPECT_FALSE(drop);
 
     // CASE 3: We have three subnets defined and we received local traffic.
     // Nothing should be selected.
@@ -1254,8 +1257,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("fe80::abcd"));
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
+    EXPECT_FALSE(drop);
 
     // CASE 4: We have three subnets defined and we received relayed traffic
     // that came out of subnet 2. We should select subnet2 then
@@ -1265,8 +1269,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:2::baca"));
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet2);
+    EXPECT_FALSE(drop);
 
     // CASE 5: We have three subnets defined and we received relayed traffic
     // that came out of undefined subnet. We should select nothing
@@ -1276,7 +1281,8 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
-    EXPECT_FALSE(srv.selectSubnet(pkt));
+    EXPECT_FALSE(srv.selectSubnet(pkt, drop));
+    EXPECT_FALSE(drop);
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -1300,8 +1306,10 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->setIface("eth0");
 
-    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    bool drop = false;
+    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet1);
+    EXPECT_FALSE(drop);
 
     // CASE 2: We have only one subnet defined and it is available via eth0.
     // Packet came from eth1. We should not select it
@@ -1311,8 +1319,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 
     pkt->setIface("eth1");
 
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
+    EXPECT_FALSE(drop);
 
     // CASE 3: We have only 3 subnets defined, one over eth0, one remote and
     // one over wifi1.
@@ -1324,13 +1333,16 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     CfgMgr::instance().commit();
 
     pkt->setIface("eth0");
-    EXPECT_EQ(subnet1, srv.selectSubnet(pkt));
+    EXPECT_EQ(subnet1, srv.selectSubnet(pkt, drop));
+    EXPECT_FALSE(drop);
 
     pkt->setIface("eth3"); // no such interface
-    EXPECT_EQ(Subnet6Ptr(), srv.selectSubnet(pkt)); // nothing selected
+    EXPECT_EQ(Subnet6Ptr(), srv.selectSubnet(pkt, drop)); // nothing selected
+    EXPECT_FALSE(drop);
 
     pkt->setIface("wifi1");
-    EXPECT_EQ(subnet3, srv.selectSubnet(pkt));
+    EXPECT_EQ(subnet3, srv.selectSubnet(pkt, drop));
+    EXPECT_FALSE(drop);
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -1355,8 +1367,10 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->relay_info_.push_back(relay);
 
-    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    bool drop = false;
+    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
+    EXPECT_FALSE(drop);
 
     // CASE 2: We have three subnets defined and we received relayed traffic
     // that came out of subnet 2. We should select subnet2 then
@@ -1365,22 +1379,25 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2);
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet2);
+    EXPECT_FALSE(drop);
 
     // Source of the packet should have no meaning. Selection is based
     // on linkaddr field in the relay
     pkt->setRemoteAddr(IOAddress("2001:db8:1::baca"));
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet2);
+    EXPECT_FALSE(drop);
 
     // But not when this linkaddr field is not usable.
     Pkt6::RelayInfo relay2;
     relay2.peeraddr_ = IOAddress("fe80::1");
     pkt->relay_info_.clear();
     pkt->relay_info_.push_back(relay2);
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet1);
+    EXPECT_FALSE(drop);
 
     // CASE 3: We have three subnets defined and we received relayed traffic
     // that came out a layer 2 relay on subnet 2. We should select subnet2 then
@@ -1393,8 +1410,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     pkt->relay_info_.push_back(relay);
     relay2.hop_count_ = 1;
     pkt->relay_info_.push_back(relay2);
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet2);
+    EXPECT_FALSE(drop);
 
     // The number of level 2 relay doesn't matter
     pkt->relay_info_.clear();
@@ -1415,8 +1433,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     relay23.peeraddr_ = IOAddress("fe80::1");
     relay23.hop_count_ = 4;
     pkt->relay_info_.push_back(relay23);
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet2);
+    EXPECT_FALSE(drop);
 
     // Only the inner/last relay with a usable address matters
     pkt->relay_info_.clear();
@@ -1429,8 +1448,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     relay3.peeraddr_ = IOAddress("fe80::1");
     relay3.hop_count_ = 4;
     pkt->relay_info_.push_back(relay3);
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet3);
+    EXPECT_FALSE(drop);
 
     // CASE 4: We have three subnets defined and we received relayed traffic
     // that came out of undefined subnet. We should select nothing
@@ -1443,9 +1463,9 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     relay.hop_count_ = 0;
     relay.linkaddr_ = IOAddress("2001:db8:4::1234");
     pkt->relay_info_.push_back(relay);
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
-
+    EXPECT_FALSE(drop);
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -1475,16 +1495,19 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
     pkt->relay_info_.push_back(relay);
 
     // There is only one subnet configured and we are outside of that subnet
-    Subnet6Ptr selected = srv.selectSubnet(pkt);
+    bool drop = false;
+    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
+    EXPECT_FALSE(drop);
 
     // CASE 2: We have only one subnet defined and it is for interface-id "relay2"
     // Packet came with interface-id "relay2". We should select it
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet2); // just a single subnet
     CfgMgr::instance().commit();
-    selected = srv.selectSubnet(pkt);
+    selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet2);
+    EXPECT_FALSE(drop);
 
     // CASE 3: We have only 3 subnets defined: one remote for interface-id "relay1",
     // one remote for interface-id "relay2" and third local
@@ -1495,7 +1518,8 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet3);
     CfgMgr::instance().commit();
 
-    EXPECT_EQ(subnet2, srv.selectSubnet(pkt));
+    EXPECT_EQ(subnet2, srv.selectSubnet(pkt, drop));
+    EXPECT_FALSE(drop);
 }
 
 // Checks if server responses are sent to the proper port.
@@ -1974,24 +1998,30 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
 
     // This is just a sanity check, we're using regular method: the relay
     // belongs to the first (2001:db8:1::/64) subnet, so it's an easy decision.
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+    bool drop = false;
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Relay belongs to the second subnet, so it should be selected.
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:2::1");
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Now let's check if the relay override for the first subnets works
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::1");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Now repeat that for relay matching the second subnet.
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::2");
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 
     // Finally, let's check that completely mismatched relay will not get us
     // anything
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:1234::1");
-    EXPECT_FALSE(srv_.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(drop);
 }
 
 /// @brief Creates RSOO option with suboptions
