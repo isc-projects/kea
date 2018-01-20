@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -448,7 +448,7 @@ mysql_dump() {
 ### Functions used for dump
 pgsql_dump() {
     # Check the lease type was given
-    if [ $dump_type -eq 0 ]; then
+    if [ $dump_type -eq o ]; then
         log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
         usage
         exit 1
