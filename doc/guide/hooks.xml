@@ -80,7 +80,9 @@
         hooks-libraries was a list of strings, each string being the name of
         a library.  The change was made in Kea 1.0 to facilitate the
         specification of library-specific parameters, a capability
-        available in Kea 1.1.0 onwards.
+        available in Kea 1.1.0 onwards. Libraries should allow a parameter
+        entry where to put comments as it is done for many configuration
+        scopes with comment and user context.
       </para></note>
 
         <note>
@@ -1339,6 +1341,10 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
               the specified parameters exists and returns it if it does;</para>
             </listitem>
             <listitem>
+              <para><command>lease4-get-all</command> - returns all IPv4 leases
+              or IPv4 leases for specified subnets;</para>
+            </listitem>
+            <listitem>
               <para><command>lease6-get</command> - checks if an IPv6 lease with
               the specified parameters exists and returns it if it does;</para>
             </listitem>
@@ -1657,6 +1663,80 @@ An example result returned when the host was found:
         </section>
 
         <section>
+          <title>lease4-get-all command</title>
+          <para><command>lease4-get-all</command> is used to retrieve all IPv4
+          leases or all leases for the specified set of subnets. All leases are
+          returned when there are no arguments specified with the command as
+          in the following example:
+<screen>
+{
+    "command": "lease4-get-all"
+}
+</screen>
+          </para>
+
+          <para>If the arguments are provided, it is expected that they contain
+          "subnets" parameter, being a list of subnet identifiers for which the
+          leases should be returned, e.g.:
+<screen>
+{
+    "command": "lease4-get-all",
+    "arguments": {
+        "subnets": [ 1, 2, 3, 4 ]
+    }
+}
+</screen>
+          </para>
+
+          <para>
+            The returned response contains a detailed list of leases in the
+            following format:
+<screen>{
+    "arguments": {
+        "leases": [
+            {
+                "client-id": "42:42:42:42:42:42:42:42",
+                "cltt": 12345678,
+                "fqdn-fwd": false,
+                "fqdn-rev": true,
+                "hostname": "myhost.example.com.",
+                "hw-address": "08:08:08:08:08:08",
+                "ip-address": "192.0.2.1",
+                "state": 0,
+                "subnet-id": 44,
+                "valid-lft": 3600
+            },
+            {
+                "client-id": "21:21:21:21:21:21:21:21",
+                "cltt": 12345678,
+                "fqdn-fwd": false,
+                "fqdn-rev": true,
+                "hostname": "",
+                "hw-address": "10:10:10:10:10:10",
+                "ip-address": "192.0.2.2",
+                "state": 0,
+                "subnet-id": 44,
+                "valid-lft": 3600
+            }
+        ]
+    },
+    "result": 0,
+    "text": "2 IPv4 lease(s) found."
+}</screen>
+          </para>
+
+          <warning>
+            <para>The <command>lease4-get-command</command> may result in very
+            large responses. This may have negative impact on the DHCP server
+            responsiveness while the response is generated and transmitted
+            over the control channel, as the server imposes no restriction
+            on the number of leases returned as a result of this command.
+            </para>
+          </warning>
+
+        </section>
+
+        <section>
           <title>lease4-del, lease6-del commands</title>
           <para><command>leaseX-del</command> can be used to delete a lease from
           the lease database. There are two types of parameters this command
@@ -1714,12 +1794,14 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           <command>leaseX-del</command> followed by
           <command>leaseX-add</command> commands.</para>
 
-          <para>To use <command>leaseX-update</command> the lease must
-          be present in the lease database. If the lease is not there,
-          an error will be returned. Please use
-          <command>leaseX-add</command> to add new leases. You may
-          check if a lease is present using
-          <command>leaseX-get</command>, if needed.</para>
+          <para>The optional boolean parameter "force-create" specifies
+          if the lease should be created if it doesn't exist in the database.
+          It defaults to false, which indicates that the lease is not created
+          if it doesn't exist. In such case, an error is returned as a result
+          of trying to update a non-existing lease. If the "force-create" parameter
+          is set to true and the updated lease doesn't exist, the new lease is
+          created as a result of receiving the <command>leaseX-update</command>.
+          </para>
 
           <para>
             An example command updating IPv4 lease looks as follows:
@@ -1729,7 +1811,8 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
     "ip-address": "192.0.2.1",
     "hostname": "newhostname.example.org",
     "hw-address": "1a:1b:1c:1d:1e:1f",
-    "subnet-id": 44
+    "subnet-id": 44,
+    "force-create": true
   }
 }</screen>
           </para>
@@ -1743,7 +1826,8 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
     "duid": "88:88:88:88:88:88:88:88",
     "iaid": 7654321,
     "hostname": "newhostname.example.org",
-    "subnet-id": 66
+    "subnet-id": 66,
+    "force-create": false
   }
 }</screen>
           </para>
@@ -2634,10 +2718,19 @@ both the command and the response.
         operations for example.
       </para>
       <para>
-        As of Kea 1.3, the structures that allow user contexts are pools of all
-        types (addresses and prefixes) and subnets. These are supported in both
-        DHCPv4 and DHCPv6. It is expected that other structures will be extended
-        in the future to provide the user context capability.
+        If user context is supported in a given context, the parser translates
+        "comment" entries into user context with a "comment" entry. The pretty
+        print of a configuration does the opposite operation and puts "comment"
+        entries at the beginning of maps as it seems to be the common usage.
+      </para>
+      <para>
+        As of Kea 1.3, the structures that allow user contexts are
+        pools of all types (addresses and prefixes) and subnets. Kea
+        1.4 extended user context support to the global scope, interfaces config,
+        shared networks, subnets, client classes, option datas and definitions,
+        host reservations, control socket, dhcp ddns, loggers and server id.
+        These are supported in both DHCPv4 and DHCPv6 at the exception
+        of server id which is DHCPv6 only.
       </para>
     </section>
 

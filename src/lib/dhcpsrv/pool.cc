@@ -81,10 +81,7 @@ Pool::toElement() const {
     ElementPtr map = Element::createMap();
 
     // Set user-context
-    ConstElementPtr context = getContext();
-    if (!isNull(context)) {
-        map->set("user-context", context);
-    }
+    contextToElement(map);
 
     // Set pool options
     ConstCfgOptionPtr opts = getCfgOption();

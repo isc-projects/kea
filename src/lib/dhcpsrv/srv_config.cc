@@ -214,6 +214,8 @@ SrvConfig::toElement() const {
     ElementPtr result = Element::createMap();
     // DhcpX global map
     ElementPtr dhcp = Element::createMap();
+    // Set user-context
+    contextToElement(dhcp);
     // Set decline-probation-period
     dhcp->set("decline-probation-period",
               Element::create(static_cast<long long>(decline_timer_)));
@@ -234,27 +236,91 @@ SrvConfig::toElement() const {
     dhcp->set("option-data", cfg_option_->toElement());
 
     // Set subnets and shared networks.
-    ConstElementPtr subnets;
-    if (family == AF_INET) {
-        subnets = cfg_subnets4_->toElement();
-        dhcp->set("subnet4", subnets);
 
-        ConstElementPtr shared_networks = cfg_shared_networks4_->toElement();
+    // We have two problems to solve:
+    //   - a subnet is unparsed once:
+    //       * if it is a plain subnet in the global subnet list
+    //       * if it is a member of a shared network in the shared network
+    //         subnet list
+    //   - unparsed subnets must be kept to add host reservations in them.
+    //     Of course this can be done only when subnets are unparsed.
+
+    // The list of all unparsed subnets
+    std::vector<ElementPtr> sn_list;
+
+    if (family == AF_INET) {
+        // Get plain subnets
+        ElementPtr plain_subnets = Element::createList();
+        const Subnet4Collection* subnets = cfg_subnets4_->getAll();
+        for (Subnet4Collection::const_iterator subnet = subnets->cbegin();
+             subnet != subnets->cend(); ++subnet) {
+            // Skip subnets which are in a shared-network
+            SharedNetwork4Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network) {
+                continue;
+            }
+            ElementPtr subnet_cfg = (*subnet)->toElement();
+            sn_list.push_back(subnet_cfg);
+            plain_subnets->add(subnet_cfg);
+        }
+        dhcp->set("subnet4", plain_subnets);
+
+        // Get shared networks
+        ElementPtr shared_networks = cfg_shared_networks4_->toElement();
         dhcp->set("shared-networks", shared_networks);
+
+        // Get subnets in shared network subnet lists
+        const std::vector<ElementPtr> networks = shared_networks->listValue();
+        for (auto network = networks.cbegin();
+             network != networks.cend(); ++network) {
+            const std::vector<ElementPtr> sh_list =
+                (*network)->get("subnet4")->listValue();
+            for (auto subnet = sh_list.cbegin();
+                 subnet != sh_list.cend(); ++subnet) {
+                sn_list.push_back(*subnet);
+            }
+        }
 
     } else {
-        subnets = cfg_subnets6_->toElement();
-        dhcp->set("subnet6", subnets);
+        // Get plain subnets
+        ElementPtr plain_subnets = Element::createList();
+        const Subnet6Collection* subnets = cfg_subnets6_->getAll();
+        for (Subnet6Collection::const_iterator subnet = subnets->cbegin();
+             subnet != subnets->cend(); ++subnet) {
+            // Skip subnets which are in a shared-network
+            SharedNetwork6Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network) {
+                continue;
+            }
+            ElementPtr subnet_cfg = (*subnet)->toElement();
+            sn_list.push_back(subnet_cfg);
+            plain_subnets->add(subnet_cfg);
+        }
+        dhcp->set("subnet6", plain_subnets);
 
-        ConstElementPtr shared_networks = cfg_shared_networks6_->toElement();
+        // Get shared networks
+        ElementPtr shared_networks = cfg_shared_networks6_->toElement();
         dhcp->set("shared-networks", shared_networks);
+
+        // Get subnets in shared network subnet lists
+        const std::vector<ElementPtr> networks = shared_networks->listValue();
+        for (auto network = networks.cbegin();
+             network != networks.cend(); ++network) {
+            const std::vector<ElementPtr> sh_list =
+                (*network)->get("subnet6")->listValue();
+            for (auto subnet = sh_list.cbegin();
+                 subnet != sh_list.cend(); ++subnet) {
+                sn_list.push_back(*subnet);
+            }
+        }
     }
     // Insert reservations
     CfgHostsList resv_list;
     resv_list.internalize(cfg_hosts_->toElement());
-    const std::vector<ElementPtr>& sn_list = subnets->listValue();
-    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.begin();
-         subnet != sn_list.end(); ++subnet) {
+    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.cbegin();
+         subnet != sn_list.cend(); ++subnet) {
         ConstElementPtr id = (*subnet)->get("id");
         if (isNull(id)) {
             isc_throw(ToElementError, "subnet has no id");
@@ -297,7 +363,23 @@ SrvConfig::toElement() const {
     }
     // Set control-socket (skip if null as empty is not legal)
     if (!isNull(control_socket_)) {
-        dhcp->set("control-socket", control_socket_);
+        ElementPtr csocket = isc::data::copy(control_socket_);
+        ConstElementPtr ctx = csocket->get("user-context");
+        // Protect against not map
+        if (ctx && (ctx->getType() != Element::map)) {
+            ctx.reset();
+        }
+        // Extract comment
+        if (ctx && ctx->contains("comment")) {
+            ElementPtr ctx_copy = isc::data::copy(ctx);
+            csocket->set("comment", ctx_copy->get("comment"));
+            ctx_copy->remove("comment");
+            csocket->remove("user-context");
+            if (ctx_copy->size() > 0) {
+                csocket->set("user-context", ctx_copy);
+            }
+        }
+        dhcp->set("control-socket", csocket);
     }
     // Set client-classes
     ConstElementPtr client_classes = class_dictionary_->toElement();

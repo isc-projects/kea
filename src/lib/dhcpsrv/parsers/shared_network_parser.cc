@@ -70,9 +70,14 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        ConstElementPtr user_context = shared_network_data->get("user-context");
+        if (user_context) {
+            shared_network->setContext(user_context);
+        }
+
     } catch (const DhcpConfigError&) {
-	// Position was already added
-	throw;
+        // Position was already added
+        throw;
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");
@@ -109,6 +114,11 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             if (!client_class.empty()) {
                 shared_network->allowClientClass(client_class);
             }
+        }
+
+        ConstElementPtr user_context = shared_network_data->get("user-context");
+        if (user_context) {
+            shared_network->setContext(user_context);
         }
 
         if (shared_network_data->contains("subnet6")) {

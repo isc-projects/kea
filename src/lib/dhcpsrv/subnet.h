@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/lease.h>
@@ -27,7 +28,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public data::CfgToElement {
+class Subnet : public virtual UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.
@@ -219,19 +220,6 @@ private:
         shared_network_ = shared_network;
     }
 
-public:
-
-    /// @brief Sets user context.
-    /// @param ctx user context to be stored.
-    void setContext(const data::ConstElementPtr& ctx) {
-        user_context_ = ctx;
-    }
-
-    /// @brief Returns const pointer to the user context.
-    data::ConstElementPtr getContext() const {
-        return (user_context_);
-    }
-
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -362,9 +350,6 @@ protected:
 
     /// @brief Pointer to a shared network that subnet belongs to.
     WeakNetworkPtr shared_network_;
-
-    /// @brief Pointer to the user context (may be NULL)
-    data::ConstElementPtr user_context_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
@@ -382,6 +367,8 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
 class Subnet4 : public Subnet, public Network4 {
 public:
 
@@ -538,6 +525,8 @@ typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
 class Subnet6 : public Subnet, public Network6 {
 public:
 

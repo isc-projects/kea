@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -23,7 +24,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief HostID (used only when storing in MySQL or Postgres)
+/// @brief HostID (used only when storing in MySQL, PostgreSQL or Cassandra)
 typedef uint64_t HostID;
 
 /// @brief IPv6 reservation for a host.
@@ -171,7 +172,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
 /// Note that the last three operations are mainly required for managing
 /// host reservations which will be implemented later.
-class Host {
+class Host : public UserContext {
 public:
 
     /// @brief Type of the host identifier.
@@ -533,13 +534,13 @@ public:
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
-    /// @brief Sets Host ID (primary key in MySQL and Postgres backends)
+    /// @brief Sets Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
     /// @param id HostId value
     void setHostId(HostID id) {
         host_id_ = id;
     }
 
-    /// @brief Returns Host ID (primary key in MySQL and Postgres backends)
+    /// @brief Returns Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
     /// @return id HostId value (or 0 if not set)
     HostID getHostId() const {
         return (host_id_);
@@ -596,7 +597,7 @@ private:
     std::string boot_file_name_;
 
     /// @brief HostID (a unique identifier assigned when the host is stored in
-    ///                MySQL or Pgsql)
+    ///     MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
     /// @brief Pointer to the DHCPv4 option data configuration for this host.

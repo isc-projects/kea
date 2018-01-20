@@ -756,6 +756,7 @@ bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
 /// This operator converts the @c ConstElementPtr into a string and
 /// inserts it into the output stream @c out with an initial
 /// indentation @c indent and add at each level @c step spaces.
+/// For maps if there is a comment property it is printed first.
 ///
 /// @param element A @c ConstElementPtr to pretty print
 /// @param out A @c std::ostream on which the print operation is performed
@@ -768,6 +769,7 @@ void prettyPrint(ConstElementPtr element, std::ostream& out,
 ///
 /// This operator converts the @c ConstElementPtr into a string with
 /// an initial indentation @c indent and add at each level @c step spaces.
+/// For maps if there is a comment property it is printed first.
 ///
 /// @param element A @c ConstElementPtr to pretty print
 /// @param indent An initial number of spaces to add each new line

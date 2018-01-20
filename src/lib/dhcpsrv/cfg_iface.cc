@@ -441,6 +441,9 @@ ElementPtr
 CfgIface::toElement() const {
     ElementPtr result = Element::createMap();
 
+    // Set user context
+    contextToElement(result);
+
     // Set interfaces
     ElementPtr ifaces = Element::createList();
     if (wildcard_used_) {

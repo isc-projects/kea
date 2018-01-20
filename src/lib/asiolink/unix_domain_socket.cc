@@ -287,7 +287,11 @@ UnixDomainSocket::UnixDomainSocket(IOService& io_service)
 
 int
 UnixDomainSocket::getNative() const {
+#if BOOST_VERSION < 106600
     return (impl_->socket_.native());
+#else
+    return (impl_->socket_.native_handle());
+#endif
 }
 
 int

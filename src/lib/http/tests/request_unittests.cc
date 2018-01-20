@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <http/request.h>
+#include <http/date_time.h>
 #include <http/http_header.h>
 #include <http/http_types.h>
 #include <http/tests/request_test.h>
@@ -19,6 +20,7 @@ using namespace isc::http::test;
 
 namespace {
 
+/// @brief Test fixture class for @c HttpRequest class.
 class HttpRequestTest : public HttpRequestTestBase<HttpRequest> {
 public:
 
@@ -75,7 +77,7 @@ TEST_F(HttpRequestTest, minimal) {
     EXPECT_EQ(1, request_.getHttpVersion().minor_);
 
     EXPECT_THROW(request_.getHeaderValue("Content-Length"),
-                 HttpRequestNonExistingHeader);
+                 HttpMessageNonExistingHeader);
 }
 
 TEST_F(HttpRequestTest, includeHeaders) {
@@ -159,15 +161,15 @@ TEST_F(HttpRequestTest, notCreated) {
     addHeaderToContext("Content-Type", "text/html");
     addHeaderToContext("Content-Length", "1024");
 
-    EXPECT_THROW(static_cast<void>(request_.getMethod()), HttpRequestError);
+    EXPECT_THROW(static_cast<void>(request_.getMethod()), HttpMessageError);
     EXPECT_THROW(static_cast<void>(request_.getHttpVersion()),
-                 HttpRequestError);
-    EXPECT_THROW(static_cast<void>(request_.getUri()), HttpRequestError);
+                 HttpMessageError);
+    EXPECT_THROW(static_cast<void>(request_.getUri()), HttpMessageError);
     EXPECT_THROW(static_cast<void>(request_.getHeaderValue("Content-Type")),
-                 HttpRequestError);
+                 HttpMessageError);
     EXPECT_THROW(static_cast<void>(request_.getHeaderValueAsUint64("Content-Length")),
-                 HttpRequestError);
-    EXPECT_THROW(static_cast<void>(request_.getBody()), HttpRequestError);
+                 HttpMessageError);
+    EXPECT_THROW(static_cast<void>(request_.getBody()), HttpMessageError);
 
     ASSERT_NO_THROW(request_.finalize());
 
@@ -224,6 +226,50 @@ TEST_F(HttpRequestTest, isPersistentHttp11Close) {
     EXPECT_FALSE(
         isPersistent(HttpVersion(1, 1), HttpHeader("Connection", "close"))
     );
+}
+
+TEST_F(HttpRequestTest, clientRequest) {
+    request_.setDirection(HttpMessage::OUTBOUND);
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
+
+    // Capture current date and time.
+    HttpDateTime date_time;
+
+    // Add headers.
+    request_.context()->headers_.push_back(HttpHeaderContext("Date", date_time.rfc1123Format()));
+    request_.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    request_.context()->headers_.push_back(HttpHeaderContext("Accept", "text/html"));
+    // Add a body.
+    request_.context()->body_ = "<html></html>";
+    // Commit and validate the data.
+    ASSERT_NO_THROW(request_.finalize());
+
+    // Check that the HTTP request in the textual format is correct. Note that
+    // it should include "Content-Length", even though we haven't explicitly set
+    // this header. It is dynamically computed from the body size.
+    EXPECT_EQ("POST /isc/org HTTP/1.0\r\n"
+              "Accept: text/html\r\n"
+              "Content-Length: 13\r\n"
+              "Content-Type: text/html\r\n"
+              "Date: " + date_time.rfc1123Format() + "\r\n"
+              "\r\n"
+              "<html></html>",
+              request_.toString());
+}
+
+TEST_F(HttpRequestTest, clientRequestNoBody) {
+    setContextBasics("GET", "/isc/org", HttpVersion(1, 1));
+    // Add headers.
+    request_.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    // Commit and validate the data.
+    ASSERT_NO_THROW(request_.finalize());
+
+    // Check that the HTTP request in the textual format is correct. Note that
+    // there should be no Content-Length included, because the body is empty.
+    EXPECT_EQ("GET /isc/org HTTP/1.1\r\n"
+              "Content-Type: text/html\r\n"
+              "\r\n",
+              request_.toString());
 }
 
 }

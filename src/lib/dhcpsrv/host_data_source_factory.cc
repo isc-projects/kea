@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "config.h"
+#include <config.h>
 
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
@@ -16,6 +16,10 @@
 
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_host_data_source.h>
+#endif
+
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_host_data_source.h>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -33,7 +37,6 @@ using namespace std;
 
 namespace isc {
 namespace dhcp {
-
 
 HostDataSourcePtr&
 HostDataSourceFactory::getHostDataSourcePtr() {
@@ -76,8 +79,10 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 
 #ifdef HAVE_CQL
     if (db_type == "cql") {
-        isc_throw(NotImplemented, "Sorry, CQL backend for host reservations "
-                  "is not implemented yet.");
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        getHostDataSourcePtr().reset(new CqlHostDataSource(parameters));
+        return;
     }
 #endif
 
@@ -109,5 +114,5 @@ HostDataSourceFactory::instance() {
 }
 #endif
 
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc

@@ -74,6 +74,12 @@ DUIDConfigParser::parse(const CfgDUIDPtr& cfg,
         if (duid_configuration->contains(param)) {
             cfg->setPersist(getBoolean(duid_configuration, param));
         }
+
+        param = "user-context";
+        ConstElementPtr user_context = duid_configuration->get("user-context");
+        if (user_context) {
+            cfg->setContext(user_context);
+        }
     } catch (const DhcpConfigError&) {
         throw;
     } catch (const std::exception& ex) {

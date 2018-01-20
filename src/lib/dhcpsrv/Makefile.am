@@ -131,6 +131,7 @@ libkea_dhcpsrv_la_SOURCES += logging.cc logging.h
 libkea_dhcpsrv_la_SOURCES += logging_info.cc logging_info.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_storage.h
+libkea_dhcpsrv_la_SOURCES += sql_common.h
 
 if HAVE_MYSQL
 libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
@@ -148,10 +149,14 @@ libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
 libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
+
 if HAVE_CQL
-libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += cql_connection.cc cql_connection.h
+libkea_dhcpsrv_la_SOURCES += cql_exchange.cc cql_exchange.h
+libkea_dhcpsrv_la_SOURCES += cql_host_data_source.cc cql_host_data_source.h
+libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
 endif
+
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += shared_network.cc shared_network.h
 libkea_dhcpsrv_la_SOURCES += srv_config.cc srv_config.h
@@ -287,6 +292,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	network.h \
 	pool.h \
 	shared_network.h \
+	sql_common.h \
 	srv_config.h \
 	subnet.h \
 	subnet_id.h \
@@ -337,5 +343,3 @@ libkea_dhcpsrv_parsers_include_HEADERS = \
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)
-
-

@@ -1,4 +1,4 @@
--- Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+-- Copyright (C) 2015-2017 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -43,7 +43,10 @@
 -- This line starts database initialization to 1.0.
 
 -- Holds the IPv4 leases.
-CREATE TABLE lease4 (
+-- -----------------------------------------------------
+-- Table `lease4`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS lease4 (
     address int,
     hwaddr blob,
     client_id blob,
@@ -54,27 +57,31 @@ CREATE TABLE lease4 (
     fqdn_rev boolean,
     hostname varchar,
     state int,
-    PRIMARY KEY (address)
+    PRIMARY KEY ((address))
 );
 
 -- Create search indexes for lease4 table
-CREATE INDEX lease4index1 ON lease4 (client_id);
-CREATE INDEX lease4index2 ON lease4 (subnet_id);
-CREATE INDEX lease4index3 ON lease4 (hwaddr);
-CREATE INDEX lease4index4 ON lease4 (state);
+CREATE INDEX IF NOT EXISTS lease4index1 ON lease4 (client_id);
+CREATE INDEX IF NOT EXISTS lease4index2 ON lease4 (subnet_id);
+CREATE INDEX IF NOT EXISTS lease4index3 ON lease4 (hwaddr);
+CREATE INDEX IF NOT EXISTS lease4index4 ON lease4 (expire);
+CREATE INDEX IF NOT EXISTS lease4index5 ON lease4 (state);
 
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
 -- it will eventually be replaced by BINARY(16).
-CREATE TABLE lease6 (
+-- -----------------------------------------------------
+-- Table `lease6`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS lease6 (
     address varchar,
-    duid blob,
     valid_lifetime bigint,
     expire bigint,
     subnet_id int,
     pref_lifetime bigint,
-    lease_type int,
+    duid blob,
     iaid int,
+    lease_type int,
     prefix_len int,
     fqdn_fwd boolean,
     fqdn_rev boolean,
@@ -83,30 +90,33 @@ CREATE TABLE lease6 (
     hwtype int,
     hwaddr_source int,
     state int,
-    PRIMARY KEY (address)
+    PRIMARY KEY ((address))
 );
 
 -- Create search indexes for lease6 table
-CREATE INDEX lease6index1 ON lease6 (lease_type);
-CREATE INDEX lease6index2 ON lease6 (duid);
-CREATE INDEX lease6index3 ON lease6 (iaid);
-CREATE INDEX lease6index4 ON lease6 (subnet_id);
-CREATE INDEX lease6index5 ON lease6 (state);
+CREATE INDEX IF NOT EXISTS lease6index1 ON lease6 (duid);
+CREATE INDEX IF NOT EXISTS lease6index2 ON lease6 (iaid);
+CREATE INDEX IF NOT EXISTS lease6index3 ON lease6 (lease_type);
+CREATE INDEX IF NOT EXISTS lease6index4 ON lease6 (subnet_id);
+CREATE INDEX IF NOT EXISTS lease6index5 ON lease6 (expire);
+CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
 
 -- ... and a definition of lease6 types.  This table is a convenience for
 -- users of the database - if they want to view the lease table and use the
 -- type names, they can join this table with the lease6 table.
 -- Make sure those values match Lease6::LeaseType enum (see src/bin/dhcpsrv/
 -- lease_mgr.h)
-CREATE TABLE lease6_types (
+-- -----------------------------------------------------
+-- Table `lease6_types`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS lease6_types (
     lease_type int,                             -- Lease type code.
     name varchar,                               -- Name of the lease type
-    PRIMARY KEY (lease_type)
+    PRIMARY KEY ((lease_type))
 );
 INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (1, 'IA_TA');   -- Temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix delegations
-
 
 -- Kea keeps track of the hardware/MAC address source, i.e. how the address
 -- was obtained. Depending on the technique and your network topology, it may
@@ -114,10 +124,13 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 -- users of the database - if they want to view the lease table and use the
 -- type names, they can join this table with the lease6 table. For details,
 -- see constants defined in src/lib/dhcp/dhcp/pkt.h for detailed explanation.
-CREATE TABLE lease_hwaddr_source (
+-- -----------------------------------------------------
+-- Table `lease_hwaddr_source`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
     hwaddr_source int,
     name varchar,
-    PRIMARY KEY (hwaddr_source)
+    PRIMARY KEY ((hwaddr_source))
 );
 
 -- Hardware address obtained from raw sockets
@@ -141,51 +154,16 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
--- -----------------------------------------------------
--- Table `dhcp4_options`
--- -----------------------------------------------------
-CREATE TABLE dhcp4_options (
-    option_id int,
-    code int,
-    value blob,
-    formatted_value varchar,
-    space varchar,
-    persistent int,
-    dhcp_client_class varchar,
-    dhcp4_subnet_id int,
-    host_id int,
-    PRIMARY KEY (option_id)
-);
-
--- Create search indexes for dhcp4_options table
-CREATE INDEX dhcp4_optionsindex1 ON dhcp4_options (host_id);
-
--- -----------------------------------------------------
--- Table `dhcp6_options`
--- -----------------------------------------------------
-CREATE TABLE dhcp6_options (
-    option_id int,
-    code int,
-    value blob,
-    formatted_value varchar,
-    space varchar,
-    persistent int,
-    dhcp_client_class varchar,
-    dhcp6_subnet_id int,
-    host_id int,
-    PRIMARY KEY (option_id)
-);
-
--- Create search indexes for dhcp6_options table
-CREATE INDEX dhcp6_optionsindex1 ON dhcp6_options (host_id);
-
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
 -- direct queries from the lease database management tools.
-CREATE TABLE lease_state (
+-- -----------------------------------------------------
+-- Table `lease_state`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS lease_state (
     state int,
     name varchar,
-    PRIMARY KEY (state)
+    PRIMARY KEY ((state))
 );
 
 -- Insert currently defined state names.
@@ -199,9 +177,16 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- first column is called "version" and not "major".
 -- Note: This MUST be kept in step with src/share/database/scripts/cassandra/dhcpdb_create.cql,
 -- which defines the schema for the unit tests.
-CREATE TABLE schema_version (
+-- -----------------------------------------------------
+-- Table `schema_version`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS schema_version (
     version int,
     minor int,
-    PRIMARY KEY (version)
+    PRIMARY KEY ((version))
 );
+
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
+
+-- This line concludes database initialization to version 1.0.
+

@@ -205,8 +205,8 @@ pgsql_init() {
 cql_init() {
     printf "Checking if there is a database initialized already... Please ignore errors.\n"
 
-    result=`cql_execute "USE $db_name; DESCRIBE tables;"`
-    if [ "$result"="<empty>" ]; then
+    result=$(cql_execute "DESCRIBE tables;")
+    if [ $(echo "$result" | grep "<empty>" | wc -w) -gt 0 ]; then
         printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
         cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
     else
@@ -214,8 +214,8 @@ cql_init() {
         exit 2
     fi
 
-    version=`cql_version`
-    printf "Lease DB version reported after initialization: $version\n"
+    version=$(cql_version)
+    printf "Lease DB version reported after initialization: %s\n" "$version"
 
     exit 0
 }

@@ -107,7 +107,8 @@ TEST_F(IfacesConfigParserTest, toElement) {
 
     // Configuration with one interface.
     std::string config =
-        "{ \"interfaces\": [ \"eth0\" ], "
+        "{ \"user-context\": { \"foo\": \"bar\" }, "
+        "  \"interfaces\": [ \"eth0\" ], "
         "  \"dhcp-socket-type\": \"udp\","
         "  \"outbound-interface\": \"use-routing\", "
         "  \"re-detect\": false }";
