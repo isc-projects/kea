@@ -1,7 +1,7 @@
 1348.	[func]		fdupont
 	Several hook points now support next step status DROP. This allows
 	more flexibility with dropping packets from within hooks.
-	(Trac #5443, git xxx)
+	(Trac #5443, git ff22a906915a34df327174f550f69a396a05bb2c)
 
 1347.	[func]		marcin
 	Implemented HTTP client classes in libkea-http.
