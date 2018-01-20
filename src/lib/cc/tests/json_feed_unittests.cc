@@ -181,9 +181,9 @@ TEST_F(JSONFeedTest, string) {
 
 // This test verifies that a string with escapes is correctly handled
 TEST_F(JSONFeedTest, escape) {
-    std::string json = "{ \"escapes\": \"\\n\\t\\\"\\\" }";
+    std::string json = "{ \"escapes\": \"\\n\\t\\\"\\\\\" }";
     ElementPtr expected = Element::createMap();
-    expected->set("escapes", Element::create("\\n\\t\\\"\\"));
+    expected->set("escapes", Element::create("\n\t\"\\"));
     testRead(json, expected);
 }
 
