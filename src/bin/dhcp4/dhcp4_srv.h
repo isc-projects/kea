@@ -767,14 +767,18 @@ protected:
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query) const;
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
+                                       bool& drop) const;
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
     /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query) const;
+    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
+                                          bool& drop) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.

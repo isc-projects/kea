@@ -296,8 +296,10 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
 }
 
 void
-Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
-    ctx.subnet_ = selectSubnet(pkt);
+Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
+                       AllocEngine::ClientContext6& ctx,
+                       bool& drop) {
+    ctx.subnet_ = selectSubnet(pkt, drop);
     ctx.duid_ = pkt->getClientId(),
     ctx.fwd_dns_update_ = false;
     ctx.rev_dns_update_ = false;
@@ -305,6 +307,11 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     ctx.query_ = pkt;
     ctx.callout_handle_ = getCalloutHandle(pkt);
     ctx.hwaddr_ = getMAC(pkt);
+
+    if (drop) {
+        // Caller will immediately drop the packet so simply return now.
+        return;
+    }
 
     // Collect host identifiers if host reservations enabled. The identifiers
     // are stored in order of preference. The server will use them in that
@@ -473,6 +480,7 @@ void Dhcpv6Srv::run_one() {
         LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL_DATA,
                   DHCP6_PACKET_DROP_DHCP_DISABLED)
             .arg(query->getLabel());
+        return;
     } else {
         processPacket(query, rsp);
     }
@@ -505,13 +513,12 @@ void Dhcpv6Srv::run_one() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
                     .arg(rsp->getLabel());
                 return;
             }
-
-            /// @todo: Add support for DROP status
 
             callout_handle->getArgument("response6", rsp);
         }
@@ -562,7 +569,20 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             skip_unpack = true;
         }
 
-        /// @todo: Add support for DROP status.
+        // Callouts decided to drop the received packet
+        // The response (rsp) is null so the caller (run_one) will
+        // immediately return too.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_DETAIL, DHCP6_HOOK_BUFFER_RCVD_DROP)
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getLocalAddr().toText())
+                .arg(query->getIface());
+
+            // Increase the statistic of dropped packets.
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
+            return;
+        }
 
         callout_handle->getArgument("query6", query);
     }
@@ -648,13 +668,15 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // Callouts decided to skip the next processing step. The next
         // processing step would to process the packet, so skip at this
         // stage means drop.
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
+            // Increase the statistic of dropped packets.
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
             return;
         }
-
-        /// @todo: Add support for DROP status.
 
         callout_handle->getArgument("query6", query);
     }
@@ -807,7 +829,13 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             skip_pack = true;
         }
 
-        /// @todo: Add support for DROP status
+        /// Callouts decided to drop the packet.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_DROP)
+                .arg(rsp->getLabel());
+            rsp.reset();
+            return;
+        }
     }
 
     if (!skip_pack) {
@@ -1114,7 +1142,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
 }
 
 Subnet6Ptr
-Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
+Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
     // Initialize subnet selector with the values used to select the subnet.
     SubnetSelector selector;
     selector.iface_name_ = question->getIface();
@@ -1174,7 +1202,14 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
             return (Subnet6Ptr());
         }
 
-        /// @todo: Add support for DROP status.
+        // Callouts decided to drop the packet. It is a superset of the
+        // skip case so no subnet will be selected.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_DROP)
+                .arg(question->getLabel());
+            drop = true;
+            return (Subnet6Ptr());
+        }
 
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet6", subnet);
@@ -2270,13 +2305,12 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // Callouts decided to skip the next processing step. The next
         // processing step would to send the packet, so skip at this
         // stage means "drop response".
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
             skip = true;
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP)
                 .arg(query->getLabel());
         }
-
-        /// @todo: Add support for DROP status
     }
 
     // Ok, we've passed all checks. Let's release this address.
@@ -2486,7 +2520,13 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(solicit, ctx);
+    bool drop = false;
+    initContext(solicit, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
@@ -2535,7 +2575,13 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(request, ctx);
+    bool drop = false;
+    initContext(request, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
@@ -2565,7 +2611,13 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(renew, ctx);
+    bool drop = false;
+    initContext(renew, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
@@ -2595,7 +2647,13 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(rebind, ctx);
+    bool drop = false;
+    initContext(rebind, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
@@ -2625,7 +2683,14 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(confirm, ctx);
+    bool drop = false;
+    initContext(confirm, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
+
     setReservedClientClasses(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
@@ -2718,7 +2783,14 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(release, ctx);
+    bool drop = false;
+    initContext(release, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
+
     setReservedClientClasses(release, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
@@ -2747,7 +2819,14 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(decline, ctx);
+    bool drop = false;
+    initContext(decline, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
+
     setReservedClientClasses(decline, ctx);
 
     // Copy client options (client-id, also relay information if present)
@@ -3028,7 +3107,14 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    initContext(inf_request, ctx);
+    bool drop = false;
+    initContext(inf_request, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
+
     setReservedClientClasses(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
