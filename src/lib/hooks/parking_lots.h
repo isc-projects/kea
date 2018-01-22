@@ -136,6 +136,22 @@ public:
         return (false);
     }
 
+    /// @brief Removes parked object without calling a callback.
+    ///
+    /// @param parked_object parked object to be removed.
+    template<typename T>
+    bool drop(T parked_object) {
+        auto it = find(parked_object);
+        if (it != parking_.end()) {
+            // Parked object found.
+            parking_.erase(it);
+            return (true);
+        }
+
+        // No such object.
+        return (false);
+    }
+
 private:
 
     /// @brief Holds information about parked object.
@@ -235,6 +251,16 @@ public:
     template<typename T>
     bool unpark(T parked_object) {
         return (parking_lot_->unpark(parked_object));
+    }
+
+    /// @brief Removes parked object without calling a callback.
+    ///
+    /// It ignores any reference counts on the parked object.
+    ///
+    /// @param parked_object parked object to be removed.
+    template<typename T>
+    bool drop(T parked_object) {
+        return (parking_lot_->drop(parked_object));
     }
 
 private:

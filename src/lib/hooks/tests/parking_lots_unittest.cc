@@ -81,4 +81,32 @@ TEST(ParkingLotTest, unpark) {
     EXPECT_FALSE(parking_lot_handle->unpark(parked_object));
 }
 
+// Test that parked object can be dropped.
+TEST(ParkingLotTest, drop) {
+    ParkingLotPtr parking_lot = boost::make_shared<ParkingLot>();
+    ParkingLotHandlePtr parking_lot_handle =
+        boost::make_shared<ParkingLotHandle>(parking_lot);
+
+    std::string parked_object = "foo";
+
+    // Reference object twice to test that dropping the packet ignores
+    // reference counting.
+    ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
+    ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
+
+    // This flag will indicate if the callback has been called.
+    bool unparked = false;
+    ASSERT_NO_THROW(parking_lot->park(parked_object, [this, &unparked] {
+        unparked = true;
+    }));
+
+    // Drop parked object. The callback should not be invoked.
+    EXPECT_TRUE(parking_lot_handle->drop(parked_object));
+    EXPECT_FALSE(unparked);
+
+    // Expect that an attempt to unpark return false, as the object
+    // has been dropped.
+    EXPECT_FALSE(parking_lot_handle->unpark(parked_object));
+}
+
 }
