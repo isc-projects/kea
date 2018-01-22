@@ -658,8 +658,7 @@ public:
 
     static void
     leases4_committed_unpark(ParkingLotHandlePtr parking_lot, Pkt4Ptr query) {
-        std::cout << "unparking" << std::endl;
-        std::cout << parking_lot->unpark(query) << std::endl;
+        parking_lot->unpark(query);
     }
 
     /// Test callback which asks the server to park the packet.
@@ -1926,19 +1925,26 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     EXPECT_FALSE(callback_deleted_lease4_);
 }
 
-TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequest) {
+// This test verifies that it is possible to park a packet as a result of
+// the leases4_committed callouts.
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
+    // This callout uses provided IO service object to post a function
+    // that unparks the packet. The packet is pared and can be unparked
+    // by simply calling IOService::poll.
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_park_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+    // Create first client and perform DORA.
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+    ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
-    // Make sure that we received a response
-    ASSERT_FALSE(client.getContext().response_);
+    // We should be offerred an address but the DHCPACK should not arrive
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client1.getContext().response_);
 
     // Check that the callback called is indeed the one we installed
     EXPECT_EQ("leases4_committed", callback_name_);
@@ -1953,7 +1959,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequest) {
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
-    // Newly allocated lease should be returned.
+    // Newly allocated lease should be passed to the callout.
     ASSERT_TRUE(callback_lease4_);
     EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
 
@@ -1963,7 +1969,39 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequest) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 
-//    client.getServer()->getIOService()->run_one();
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Create the second client to test that it may communicate with the
+    // server while the previous packet is parked.
+    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    client2.setIfaceName("eth1");
+    ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
+
+    // The DHCPOFFER should have been returned but not DHCPACK, as this
+    // packet got parked too.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed.
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // There should be now two actions schedulede on our IO service
+    // by the invoked callouts. They unpark both DHCPACK messages.
+    ASSERT_NO_THROW(client1.getServer()->getIOService()->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client1.receiveResponse());
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt4Ptr rsp = client1.getContext().response_;
+    EXPECT_EQ(DHCPACK, rsp->getType());
+    EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
+
+    // Receive and check the second response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_TRUE(client2.getContext().response_);
+    rsp = client2.getContext().response_;
+    EXPECT_EQ(DHCPACK, rsp->getType());
+    EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 }
 
 // This test verifies that valid RELEASE triggers lease4_release callouts
