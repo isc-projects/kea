@@ -26,6 +26,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <functional>
 #include <iostream>
 #include <queue>
 
@@ -260,17 +261,10 @@ public:
     ///
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response
-    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp);
+    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp,
+                       bool allow_packet_park = true);
 
-
-    /// @brief Continues DHCPv4 packet processing after leases4_committed hook
-    /// point.
-    ///
-    /// @param callout_handle Callout handle to be used.
-    /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response
-    void leases4CommittedContinue(const hooks::CalloutHandlePtr& callout_handle,
-                                  Pkt4Ptr& query, Pkt4Ptr& rsp);
 
     /// @brief Instructs the server to shut down.
     void shutdown();
@@ -836,6 +830,21 @@ protected:
     ///
     /// @param query Pointer to the client message.
     void deferredUnpack(Pkt4Ptr& query);
+
+    /// @brief Executes pkt4_send callout.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param query Pointer to a query.
+    /// @param rsp Pointer to a response.
+    void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                              Pkt4Ptr& query, Pkt4Ptr& rsp);
+
+    /// @brief Executes buffer4_send callout and sends the response.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param pkt Pointer to a response.
+    void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
+                                 Pkt4Ptr& rsp);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

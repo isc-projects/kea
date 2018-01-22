@@ -835,72 +835,12 @@ Dhcpv4Srv::run_one() {
         return;
     }
 
-    try {
-        // Now all fields and options are constructed into output wire buffer.
-        // Option objects modification does not make sense anymore. Hooks
-        // can only manipulate wire buffer at this stage.
-        // Let's execute all callouts registered for buffer4_send
-        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Enable copying options from the packet within hook library.
-            ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("response4", rsp);
-
-            // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
-                                       *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
-            // stage means drop.
-            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
-                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                          DHCP4_HOOK_BUFFER_SEND_SKIP)
-                    .arg(rsp->getLabel());
-                return;
-            }
-
-            callout_handle->getArgument("response4", rsp);
-        }
-
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
-            .arg(rsp->getLabel())
-            .arg(rsp->getName())
-            .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->getLocalAddr().isV4Zero() ? "*" : rsp->getLocalAddr().toText())
-            .arg(rsp->getLocalPort())
-            .arg(rsp->getRemoteAddr())
-            .arg(rsp->getRemotePort())
-            .arg(rsp->getIface().empty() ? "to be determined from routing" :
-                 rsp->getIface());
-
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
-                  DHCP4_RESPONSE_DATA)
-            .arg(rsp->getLabel())
-            .arg(rsp->getName())
-            .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->toText());
-        sendPacket(rsp);
-
-        // Update statistics accordingly for sent packet.
-        processStatsSent(rsp);
-
-    } catch (const std::exception& e) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
-            .arg(rsp->getLabel())
-            .arg(e.what());
-    }
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+    processPacketBufferSend(callout_handle, rsp);
 }
 
 void
-Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     // Log reception of the packet. We need to increase it early, as any
     // failures in unpacking will cause the packet to be dropped. We
     // will increase type specific statistic further down the road.
@@ -1129,25 +1069,21 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
             }
         }
         callout_handle->setArgument("deleted_leases4", deleted_leases);
-
         callout_handle->setArgument("io_service", getIOService());
 
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
                                    *callout_handle);
 
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_LEASES4_COMMITTED_DROP)
+                .arg(query->getLabel());
+            rsp.reset();
 
-        switch (callout_handle->getStatus()) {
-        // If next step is set to "skip" we simply terminate here, because the
-        // next step would be to send the packet.
-        case CalloutHandle::NEXT_STEP_SKIP:
-            return;
-
-        case CalloutHandle::NEXT_STEP_PARK:
+        } else if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
+                   && allow_packet_park) {
             packet_park = true;
-            break;
-        default:
-            ;
         }
     }
 
@@ -1155,22 +1091,34 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         return;
     }
 
+    // PARKING SPOT after leases4_committed hook point.
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
     if (packet_park) {
         // Park the packet. The function we bind here will be executed when the hook
         // library unparks the packet.
         HooksManager::park("leases4_committed", query,
-            std::bind(&Dhcpv4Srv::leases4CommittedContinue, this,
-                      getCalloutHandle(query), query, rsp));
+        [this, callout_handle, query, rsp]() mutable {
+            processPacketPktSend(callout_handle, query, rsp);
+            processPacketBufferSend(callout_handle, rsp);
+        });
+
+        // If we have parked the packet, let's reset the pointer to the
+        // response to indicate to the caller that it should return, as
+        // the packet processing will continue via the callback.
+        rsp.reset();
 
     } else {
-        // Packet is not to be parked, so let's continue processing.
-        leases4CommittedContinue(getCalloutHandle(query), query, rsp);
+        processPacketPktSend(callout_handle, query, rsp);
     }
 }
 
 void
-Dhcpv4Srv::leases4CommittedContinue(const CalloutHandlePtr& callout_handle,
-                                    Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                                Pkt4Ptr& query, Pkt4Ptr& rsp) {
+    if (!rsp) {
+        return;
+    }
+
     // Specifies if server should do the packing
     bool skip_pack = false;
 
@@ -1219,6 +1167,76 @@ Dhcpv4Srv::leases4CommittedContinue(const CalloutHandlePtr& callout_handle,
                 .arg(rsp->getLabel())
                 .arg(e.what());
         }
+    }
+}
+
+void
+Dhcpv4Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
+                                   Pkt4Ptr& rsp) {
+    if (!rsp) {
+        return;
+    }
+
+    try {
+        // Now all fields and options are constructed into output wire buffer.
+        // Option objects modification does not make sense anymore. Hooks
+        // can only manipulate wire buffer at this stage.
+        // Let's execute all callouts registered for buffer4_send
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response4", rsp);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                          DHCP4_HOOK_BUFFER_SEND_SKIP)
+                    .arg(rsp->getLabel());
+                return;
+            }
+
+            callout_handle->getArgument("response4", rsp);
+        }
+
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->getLocalAddr().isV4Zero() ? "*" : rsp->getLocalAddr().toText())
+            .arg(rsp->getLocalPort())
+            .arg(rsp->getRemoteAddr())
+            .arg(rsp->getRemotePort())
+            .arg(rsp->getIface().empty() ? "to be determined from routing" :
+                 rsp->getIface());
+
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
+                  DHCP4_RESPONSE_DATA)
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->toText());
+        sendPacket(rsp);
+
+        // Update statistics accordingly for sent packet.
+        processStatsSent(rsp);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
+            .arg(rsp->getLabel())
+            .arg(e.what());
     }
 }
 
