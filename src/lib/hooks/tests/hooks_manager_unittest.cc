@@ -861,6 +861,52 @@ TEST_F(HooksManagerTest, ServerUnpark) {
     EXPECT_NO_THROW(HooksManager::unloadLibraries());
 }
 
+// This test verifies that the server can drop parked packet.
+TEST_F(HooksManagerTest, ServerDropParked) {
+    // Load library.
+    HookLibsCollection library_names;
+    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
+                                      data::ConstElementPtr()));
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+
+    // We could be parked any object. Typically it will be a pointer to the
+    // packet. In this case, however, it is simpler to just use a string.
+    std::string parked_object = "foo";
+    handle->setArgument("parked_object", parked_object);
+
+    // Call installed callout.
+    HooksManager::callCallouts(hookpt_one_index_, *handle);
+
+    // This boolean value will be set to true when the packet gets unparked.
+    bool unparked = false;
+
+    // It should be possible for the server to increase reference counter.
+    ASSERT_NO_THROW(HooksManager::reference<std::string>("hookpt_one", "foo"));
+
+    // The callouts instruct us to park the object. We associated the callback
+    // function with the parked object, which sets "unparked" flag to true. We
+    // can later test the value of this flag to verify when exactly the packet
+    // got unparked.
+    HooksManager::park<std::string>("hookpt_one", "foo",
+    [this, &unparked] {
+        unparked = true;
+    });
+
+    // Drop the parked packet. The callback should not be called.
+    EXPECT_TRUE(HooksManager::drop<std::string>("hookpt_one", "foo"));
+
+    EXPECT_FALSE(unparked);
+
+    // An attempt to unpark the packet should return false, as this packet
+    // is not parked anymore.
+    EXPECT_FALSE(HooksManager::unpark<std::string>("hookpt_one", "foo"));
+
+    // Try unloading the libraries.
+    EXPECT_NO_THROW(HooksManager::unloadLibraries());
+}
+
 // This test verifies that parked objects are removed when libraries are
 // unloaded.
 TEST_F(HooksManagerTest, UnloadBeforeUnpark) {

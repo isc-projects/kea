@@ -278,11 +278,22 @@ public:
     ///
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object to be unparked.
-    /// @tparam Type of the parked object.
+    /// @tparam T type of the parked object.
     /// @return true if the specified object has been found, false otherwise.
     template<typename T>
     static bool unpark(const std::string& hook_name, T parked_object) {
         return (getHooksManager().unparkInternal(hook_name, parked_object));
+    }
+
+    /// @brief Removes parked object without calling a callback.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object parked object to be removed.
+    /// @tparam T type of the parked object.
+    /// @return true if the specified object has been found false otherwise.
+    template<typename T>
+    static bool drop(const std::string& hook_name, T parked_object) {
+        return (getHooksManager().dropInternal(hook_name, parked_object));
     }
 
     /// @brief Increases reference counter for the parked object.
@@ -330,6 +341,18 @@ private:
     bool unparkInternal(const std::string& hook_name, T parked_object) {
         return (ServerHooks::getServerHooks().
                 getParkingLotPtr(hook_name)->unpark(parked_object, true));
+    }
+
+    /// @brief Removes parked object without calling a callback.
+    ///
+    /// @param hook_name name of the hook point for which the packet is parked.
+    /// @param parked_object parked object to be removed.
+    /// @tparam T type of the parked object.
+    /// @return true if the specified object has been found false otherwise.
+    template<typename T>
+    static bool dropInternal(const std::string& hook_name, T parked_object) {
+        return (ServerHooks::getServerHooks().
+                getParkingLotPtr(hook_name)->drop(parked_object));
     }
 
     /// @brief Increases reference counter for the parked object.
