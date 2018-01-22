@@ -9,6 +9,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/json_config_parser.h>
+#include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <hooks/server_hooks.h>
@@ -632,6 +633,50 @@ public:
         callback_name_ = string("leases4_committed");
 
         callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        Lease4CollectionPtr leases4;
+        callout_handle.getArgument("leases4", leases4);
+        if (leases4->size() > 0) {
+            callback_lease4_ = leases4->at(0);
+        }
+
+        Lease4CollectionPtr deleted_leases4;
+        callout_handle.getArgument("deleted_leases4", deleted_leases4);
+        if (deleted_leases4->size() > 0) {
+            callback_deleted_lease4_ = deleted_leases4->at(0);
+        }
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    static void
+    leases4_committed_unpark(ParkingLotHandlePtr parking_lot, Pkt4Ptr query) {
+        std::cout << "unparking" << std::endl;
+        std::cout << parking_lot->unpark(query) << std::endl;
+    }
+
+    /// Test callback which asks the server to park the packet.
+    static int
+    leases4_committed_park_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("leases4_committed");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        IOServicePtr io_service;
+        callout_handle.getArgument("io_service", io_service);
+        io_service->post(boost::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark,
+                                     callout_handle.getParkingLotHandlePtr(),
+                                     callback_qry_pkt4_));
+
+        callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt4_);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
 
         Lease4CollectionPtr leases4;
         callout_handle.getArgument("leases4", leases4);
@@ -1801,6 +1846,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -1878,6 +1924,46 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     EXPECT_FALSE(callback_lease4_);
     EXPECT_FALSE(callback_deleted_lease4_);
+}
+
+TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases4_committed", leases4_committed_park_callout));
+
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases4_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("deleted_leases4");
+    expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("io_service");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ("192.0.2.100", callback_lease4_->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+//    client.getServer()->getIOService()->run_one();
 }
 
 // This test verifies that valid RELEASE triggers lease4_release callouts
@@ -2063,6 +2149,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -2317,6 +2404,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
