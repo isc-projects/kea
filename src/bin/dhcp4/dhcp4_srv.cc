@@ -1130,6 +1130,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         }
         callout_handle->setArgument("deleted_leases4", deleted_leases);
 
+        callout_handle->setArgument("io_service", getIOService());
+
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
                                    *callout_handle);
