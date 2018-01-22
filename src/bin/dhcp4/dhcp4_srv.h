@@ -661,6 +661,7 @@ private:
     ///
     /// @param lease lease to be declined
     /// @param decline client's message
+    /// @param context reference to a client context
     void declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
                       AllocEngine::ClientContext4Ptr& context);
 
@@ -842,7 +843,7 @@ protected:
     /// @brief Executes buffer4_send callout and sends the response.
     ///
     /// @param callout_handle pointer to the callout handle.
-    /// @param pkt Pointer to a response.
+    /// @param rsp pointer to a response.
     void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
                                  Pkt4Ptr& rsp);
 
