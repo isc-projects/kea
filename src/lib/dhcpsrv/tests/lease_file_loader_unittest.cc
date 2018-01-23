@@ -10,7 +10,7 @@
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_file_loader.h>
-#include <dhcpsrv/tests/lease_file_io.h>
+#include <dhcpsrv/testutils/lease_file_io.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
