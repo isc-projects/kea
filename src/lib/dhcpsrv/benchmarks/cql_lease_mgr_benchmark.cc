@@ -62,7 +62,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, insertLeases4)(benchmark::State& state)
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUp4(state, lease_count);
-        insertLeases4();
+        benchInsertLeases4();
     }
 }
 
@@ -70,7 +70,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, updateLeases4)(benchmark::State& state)
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        updateLeases4();
+        benchUpdateLeases4();
     }
 }
 
@@ -78,7 +78,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_address)(benchmark::State& st
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        getLease4_address();
+        benchGetLease4_address();
     }
 }
 
@@ -86,7 +86,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_hwaddr)(benchmark::State& sta
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        getLease4_hwaddr();
+        benchGetLease4_hwaddr();
     }
 }
 
@@ -94,7 +94,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_hwaddr_subnetid)(benchmark::S
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        getLease4_hwaddr_subnetid();
+        benchGetLease4_hwaddr_subnetid();
     }
 }
 
@@ -102,7 +102,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_clientid)(benchmark::State& s
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        getLease4_clientid();
+        benchGetLease4_clientid();
     }
 }
 
@@ -110,7 +110,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_clientid_subnetid)(benchmark:
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        getLease4_clientid_subnetid();
+        benchGetLease4_clientid_subnetid();
     }
 }
 
@@ -118,7 +118,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getExpiredLeases4)(benchmark::State& st
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts4(state, lease_count);
-        getExpiredLeases4();
+        benchGetExpiredLeases4();
     }
 }
 
@@ -126,7 +126,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, insertLeases6)(benchmark::State& state)
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUp6(state, lease_count);
-        insertLeases6();
+        benchInsertLeases6();
     }
 }
 
@@ -134,7 +134,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, updateLeases6)(benchmark::State& state)
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts6(state, lease_count);
-        updateLeases6();
+        benchUpdateLeases6();
     }
 }
 
@@ -142,7 +142,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_address)(benchmark::Stat
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts6(state, lease_count);
-        getLease6_type_address();
+        benchGetLease6_type_address();
     }
 }
 
@@ -150,7 +150,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark::St
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts6(state, lease_count);
-        getLease6_type_duid_iaid();
+        benchGetLease6_type_duid_iaid();
     }
 }
 
@@ -158,7 +158,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_type_duid_iaid_subnetid)
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts6(state, lease_count);
-        getLease6_type_type_duid_iaid_subnetid();
+        benchGetLease6_type_duid_iaid_subnetid();
     }
 }
 
@@ -166,7 +166,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State& st
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         ReentrantSetUpWithInserts6(state, lease_count);
-        getExpiredLeases6();
+        benchGetExpiredLeases6();
     }
 }
 

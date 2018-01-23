@@ -40,22 +40,22 @@ public:
                                     size_t const& lease_count);
     void prepareLeases4(size_t const& lease_count);
 
-    void insertLeases4();
-    void updateLeases4();
-    void getLease4_address();
-    void getLease4_hwaddr();
-    void getLease4_hwaddr_subnetid();
-    void getLease4_clientid();
-    void getLease4_clientid_subnetid();
-    void getExpiredLeases4();
+    void benchInsertLeases4();
+    void benchUpdateLeases4();
+    void benchGetLease4_address();
+    void benchGetLease4_hwaddr();
+    void benchGetLease4_hwaddr_subnetid();
+    void benchGetLease4_clientid();
+    void benchGetLease4_clientid_subnetid();
+    void benchGetExpiredLeases4();
 
     void prepareLeases6(size_t const& lease_count);
-    void insertLeases6();
-    void updateLeases6();
-    void getLease6_type_address();
-    void getLease6_type_duid_iaid();
-    void getLease6_type_type_duid_iaid_subnetid();
-    void getExpiredLeases6();
+    void benchInsertLeases6();
+    void benchUpdateLeases6();
+    void benchGetLease6_type_address();
+    void benchGetLease6_type_duid_iaid();
+    void benchGetLease6_type_duid_iaid_subnetid();
+    void benchGetExpiredLeases6();
 
     LeaseMgr* lmptr_;
     Lease4Collection leases4_;

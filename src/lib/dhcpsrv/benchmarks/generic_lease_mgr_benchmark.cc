@@ -68,7 +68,7 @@ GenericLeaseMgrBenchmark::ReentrantSetUpWithInserts4(
     state.PauseTiming();
     SetUp(state);
     prepareLeases4(lease_count);
-    insertLeases4();
+    benchInsertLeases4();
     state.ResumeTiming();
 }
 
@@ -87,7 +87,7 @@ GenericLeaseMgrBenchmark::ReentrantSetUpWithInserts6(
     state.PauseTiming();
     SetUp(state);
     prepareLeases6(lease_count);
-    insertLeases6();
+    benchInsertLeases6();
     state.ResumeTiming();
 }
 
@@ -111,56 +111,56 @@ GenericLeaseMgrBenchmark::prepareLeases4(size_t const& lease_count) {
 }
 
 void
-GenericLeaseMgrBenchmark::insertLeases4() {
+GenericLeaseMgrBenchmark::benchInsertLeases4() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->addLease(lease);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::updateLeases4() {
+GenericLeaseMgrBenchmark::benchUpdateLeases4() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->updateLease4(lease);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease4_address() {
+GenericLeaseMgrBenchmark::benchGetLease4_address() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(lease->addr_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease4_hwaddr() {
+GenericLeaseMgrBenchmark::benchGetLease4_hwaddr() {
     for (Lease4Ptr const& lease : leases4_) {
         const Lease4Collection collection = lmptr_->getLease4(*lease->hwaddr_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease4_hwaddr_subnetid() {
+GenericLeaseMgrBenchmark::benchGetLease4_hwaddr_subnetid() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(*lease->hwaddr_, lease->subnet_id_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease4_clientid() {
+GenericLeaseMgrBenchmark::benchGetLease4_clientid() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(*lease->client_id_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease4_clientid_subnetid() {
+GenericLeaseMgrBenchmark::benchGetLease4_clientid_subnetid() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(*lease->client_id_, lease->subnet_id_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getExpiredLeases4() {
+GenericLeaseMgrBenchmark::benchGetExpiredLeases4() {
     Lease4Collection expired_leases;
     lmptr_->getExpiredLeases4(expired_leases, leases4_.size());
 }
@@ -206,35 +206,35 @@ GenericLeaseMgrBenchmark::prepareLeases6(size_t const& lease_count) {
 }
 
 void
-GenericLeaseMgrBenchmark::insertLeases6() {
+GenericLeaseMgrBenchmark::benchInsertLeases6() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->addLease(lease);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::updateLeases6() {
+GenericLeaseMgrBenchmark::benchUpdateLeases6() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->updateLease6(lease);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease6_type_address() {
+GenericLeaseMgrBenchmark::benchGetLease6_type_address() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->getLease6(lease->type_, lease->addr_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease6_type_duid_iaid() {
+GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->getLeases6(lease->type_, *lease->duid_, lease->iaid_);
     }
 }
 
 void
-GenericLeaseMgrBenchmark::getLease6_type_type_duid_iaid_subnetid() {
+GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid_subnetid() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->getLease6(lease->type_, *lease->duid_, lease->iaid_,
                           lease->subnet_id_);
@@ -242,7 +242,7 @@ GenericLeaseMgrBenchmark::getLease6_type_type_duid_iaid_subnetid() {
 }
 
 void
-GenericLeaseMgrBenchmark::getExpiredLeases6() {
+GenericLeaseMgrBenchmark::benchGetExpiredLeases6() {
     Lease6Collection expired_leases;
     lmptr_->getExpiredLeases6(expired_leases, leases6_.size());
 }
