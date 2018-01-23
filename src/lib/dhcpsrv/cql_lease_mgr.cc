@@ -1438,12 +1438,190 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
     }
 }
 
+/// @brief Base CQL derivation of the statistical lease data query
+///
+/// This class provides the functionality such as results storage and row
+/// fetching common to fulfilling the statistical lease data query.
+///
+class CqlLeaseStatsQuery : public LeaseStatsQuery, CqlExchange {
+public:
+    /// @brief Constructor
+    ///
+    /// @param conn A open connection to the database housing the lease data
+    /// @param statement The lease data SQL prepared statement tag to execute
+    /// @param fetch_type Indicates whether or not lease_type should be
+    /// fetched from the result set
+    CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
+                         const bool fetch_type)
+        : conn_(conn), statement_(statement), fetch_type_(fetch_type),
+          cummulative_rows_(), next_row_(cummulative_rows_.begin()),
+          subnet_id_(0), type_(0), state_(0) {
+    }
+
+    /// @brief Destructor
+    virtual ~CqlLeaseStatsQuery() {};
+
+    /// @brief Creates the lease statistical data result set
+    ///
+    /// The result set is populated by executing a  prepared SQL query
+    /// against the database which sums the leases per lease state per
+    /// subnet id.
+    void start() {
+        AnyArray data; // there are no where clause parameters
+
+        // This gets a collection of data for ALL leases, ugh
+        AnyArray collection = executeSelect(conn_, data, statement_);
+
+        // Now we need to coaelesce the raw rows
+        for (boost::any &element : collection) {
+            LeaseStatsRowPtr raw_row = boost::any_cast<LeaseStatsRowPtr>(element);
+            auto cum_row = cummulative_rows_.find(*raw_row);
+            if (cum_row != cummulative_rows_.end()) {
+                cummulative_rows_[*raw_row] = cum_row->second + 1;
+            } else {
+                cummulative_rows_.emplace(std::make_pair(*raw_row, 1));
+            }
+        }
+
+        next_row_ = cummulative_rows_.begin();
+    }
+
+
+    /// @brief Fetches the next row in the result set
+    ///
+    /// Once the internal result set has been populated by invoking the
+    /// the start() method, this method is used to iterate over the
+    /// result set rows. Once the last row has been fetched, subsequent
+    /// calls will return false.
+    ///
+    /// @param row Storage for the fetched row
+    ///
+    /// @return True if the fetch succeeded, false if there are no more
+    /// rows to fetch.
+    bool getNextRow(LeaseStatsRow& row) {
+        // If we're past the end, punt.
+        if (next_row_ == cummulative_rows_.end()) {
+            return (false);
+        }
+
+        row = next_row_->first;
+        row.state_count_ = next_row_->second;
+
+
+        // Point to the next row.
+        ++next_row_;
+        return (true);
+    }
+
+    /// @brief Create BIND array to receive C++ data.
+    ///
+    /// Used in executeSelect() to retrieve from database
+    ///
+    /// @param data array of bound objects representing data to be retrieved
+    /// @param statement_tag prepared statement being executed; defaults to an
+    ///     invalid index
+    virtual void
+    createBindForSelect(AnyArray& data, StatementTag statement_tag = NULL) override;
+
+    /// @brief Copy received data into the <version,minor> pair.
+    ///
+    /// Copies information about the version to be retrieved into a pair. Called
+    /// in executeSelect().
+    ///
+    /// @return a pointer to the object retrieved.
+    virtual boost::any retrieve() override;
+    
+    /// @brief Statement tags definitions
+    /// @{
+    // Return recalculated lease4 lease statistics
+    static constexpr StatementTag RECOUNT_LEASE4_STATS = "RECOUNT_LEASE4_STATS";
+    // Return recalculated lease6 lease statistics
+    static constexpr StatementTag RECOUNT_LEASE6_STATS = "RECOUNT_LEASE6_STATS";
+    /// @}
+   
+    /// @brief Cassandra statements
+    static StatementMap tagged_statements_;
+
+private:
+    /// @brief Database connection to use to execute the query
+    CqlConnection& conn_;
+
+    /// @brief The query's prepared statement tag
+    StatementTag statement_;
+
+    /// @brief Indicates if query supplies lease type
+    bool fetch_type_;
+
+    std::map<LeaseStatsRow, int> cummulative_rows_;
+
+    std::map<LeaseStatsRow, int>::iterator next_row_;
+
+    int subnet_id_;
+    int type_;
+    int state_;
+};
+
+constexpr StatementTag CqlLeaseStatsQuery::RECOUNT_LEASE4_STATS;
+constexpr StatementTag CqlLeaseStatsQuery::RECOUNT_LEASE6_STATS;
+
+StatementMap CqlLeaseStatsQuery::tagged_statements_{
+    // Return recalculated lease4 lease statistics
+    {RECOUNT_LEASE4_STATS, 
+        {RECOUNT_LEASE4_STATS, 
+        "SELECT "
+        "subnet_id, state "
+        "FROM lease4 "
+#if 0
+        "GROUP BY subnet_id, state "
+        "ORDER BY subnet_id"
+#endif
+    }},
+
+    // Return recalculated lease6 lease statistics
+    {RECOUNT_LEASE6_STATS, 
+        {RECOUNT_LEASE6_STATS, 
+        "SELECT "
+        "subnet_id, lease_type, state "
+        "FROM lease6 "
+#if 0
+        "GROUP BY subnet_id, lease_type, state "
+        "ORDER BY subnet_id"
+#endif
+    }},
+};
+
+void
+CqlLeaseStatsQuery::createBindForSelect(AnyArray& data, StatementTag) {
+    data.clear();
+    data.add(&subnet_id_);
+    if (fetch_type_) {
+        data.add(&type_);
+    }
+
+    data.add(&state_);
+}
+
+boost::any
+CqlLeaseStatsQuery::retrieve() {
+    LeaseStatsRowPtr raw_row(new LeaseStatsRow());
+    raw_row->subnet_id_ = subnet_id_;
+    if (fetch_type_) {
+        raw_row->lease_type_ = static_cast<Lease::Type>(type_);
+    } else {
+        raw_row->lease_type_ = Lease::TYPE_NA; 
+    }
+
+    raw_row->lease_state_ = state_;
+    return raw_row;
+}
+
 CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
     : LeaseMgr(), dbconn_(parameters) {
     dbconn_.openDatabase();
     dbconn_.prepareStatements(CqlLease4Exchange::tagged_statements_);
     dbconn_.prepareStatements(CqlLease6Exchange::tagged_statements_);
     dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
+    dbconn_.prepareStatements(CqlLeaseStatsQuery::tagged_statements_);
 }
 
 CqlLeaseMgr::~CqlLeaseMgr() {
@@ -1860,6 +2038,24 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
         }
     }
     return n_of_deleted_leases;
+}
+
+LeaseStatsQueryPtr
+CqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(
+        new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::RECOUNT_LEASE4_STATS,
+                               false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+CqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(
+        new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::RECOUNT_LEASE6_STATS,
+                               true));
+    query->start();
+    return(query);
 }
 
 size_t

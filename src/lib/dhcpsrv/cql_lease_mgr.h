@@ -352,6 +352,26 @@ public:
     virtual uint64_t
     deleteExpiredReclaimedLeases6(const uint32_t secs) override;
 
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Creates and runs the IPv6 lease stats query
+    ///
+    /// It creates an instance of a CqllLeaseStatsQuery and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS6 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
     /// @brief Removes specified IPv4 leases.
     ///
     /// This rather dangerous method is able to remove all leases from specified

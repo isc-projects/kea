@@ -366,6 +366,7 @@ TEST(CqlOpenTest, OpenDatabase) {
                << "*** before the CQL tests will run correctly.\n";
     }
 
+
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
@@ -699,17 +700,13 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     testDeleteExpiredReclaimedLeases4();
 }
 
-// Verifies that IPv4 lease statistics can be recalculated.
-/// @todo: uncomment this once stats recalculation is implemented
-/// for Cassandra (see #5487)
-TEST_F(CqlLeaseMgrTest, DISABLED_recountLeaseStats4) {
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
+TEST_F(CqlLeaseMgrTest, recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
-/// @todo: uncomment this once stats recalculation is implemented
-/// for Cassandra (see #5487)
-TEST_F(CqlLeaseMgrTest, DISABLED_recountLeaseStats6) {
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
+TEST_F(CqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
@@ -728,4 +725,3 @@ TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
 }
 
 }  // namespace
-

@@ -101,6 +101,25 @@ struct LeaseStatsRow {
           lease_state_(lease_state), state_count_(state_count) {
     }
 
+    bool operator< (const LeaseStatsRow &rhs) const {
+        if (subnet_id_ < rhs.subnet_id_) {
+            return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            lease_type_ < rhs.lease_type_) {
+                return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            lease_type_ == rhs.lease_type_ &&
+            lease_state_ < rhs.lease_state_) {      
+                return (true);
+        }
+
+        return (false);
+    }
+
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
     /// @brief The lease_type to which the count applies
@@ -140,8 +159,11 @@ public:
     virtual bool getNextRow(LeaseStatsRow& row);
 };
 
-/// @brief Defines a pointer to an LeaseStatsQuery.
+/// @brief Defines a pointer to a LeaseStatsQuery.
 typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
+
+/// @brief Defines a pointer to a LeaseStatsRow.
+typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
 
 /// @brief Abstract Lease Manager
 ///
