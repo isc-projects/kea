@@ -108,6 +108,8 @@ public:
 
         // clear static buffers
         resetCalloutBuffers();
+
+        io_service_ = boost::make_shared<IOService>();
     }
 
     /// @brief destructor (deletes Dhcpv4Srv)
@@ -668,11 +670,9 @@ public:
 
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
-        IOServicePtr io_service;
-        callout_handle.getArgument("io_service", io_service);
-        io_service->post(boost::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark,
-                                     callout_handle.getParkingLotHandlePtr(),
-                                     callback_qry_pkt4_));
+        io_service_->post(boost::bind(&HooksDhcpv4SrvTest::leases4_committed_unpark,
+                                      callout_handle.getParkingLotHandlePtr(),
+                                      callback_qry_pkt4_));
 
         callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt4_);
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
@@ -774,6 +774,9 @@ public:
     /// pointer to Dhcpv4Srv that is used in tests
     NakedDhcpv4Srv* srv_;
 
+    /// Pointer to the IO service used in the tests.
+    static IOServicePtr io_service_;
+
     // The following fields are used in testing pkt4_receive_callout
 
     /// String name of the received callout
@@ -818,6 +821,7 @@ public:
 
 // The following fields are used in testing pkt4_receive_callout.
 // See fields description in the class for details
+IOServicePtr HooksDhcpv4SrvTest::io_service_;
 string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_qry_pkt4_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_resp_pkt4_;
@@ -1845,7 +1849,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
-    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -1932,7 +1935,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     IfaceMgr::instance().openSockets4();
 
     // This callout uses provided IO service object to post a function
-    // that unparks the packet. The packet is pared and can be unparked
+    // that unparks the packet. The packet is parked and can be unparked
     // by simply calling IOService::poll.
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_park_callout));
@@ -1954,7 +1957,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
-    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -1987,7 +1989,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
 
     // There should be now two actions schedulede on our IO service
     // by the invoked callouts. They unpark both DHCPACK messages.
-    ASSERT_NO_THROW(client1.getServer()->getIOService()->poll());
+    ASSERT_NO_THROW(io_service_->poll());
 
     // Receive and check the first response.
     ASSERT_NO_THROW(client1.receiveResponse());
@@ -2187,7 +2189,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
-    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -2442,7 +2443,6 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
-    expected_argument_names.push_back("io_service");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
