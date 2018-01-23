@@ -595,8 +595,8 @@ public:
     /// performance results.
     ///
     /// @param n_of_hosts number of hosts to insert into and retrieve from the
-    ///     database; defaults to the maximum number of allowed hosts.
-    void stressTest(uint32_t n_of_hosts /* = 0xfffdU */);
+    ///     database
+    void stressTest(uint32_t n_of_hosts);
     /// @brief Tests that delete(subnet-id, addr4) call works.
     ///
     /// Uses gtest macros to report failures.
