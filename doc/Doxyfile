@@ -790,6 +790,7 @@ INPUT                  = ../src/bin/agent \
                          ../src/lib/dhcp_ddns \
                          ../src/lib/dhcpsrv \
                          ../src/lib/dhcpsrv/parsers \
+                         ../src/lib/dhcpsrv/benchmarks \
                          ../src/lib/dns \
                          ../src/lib/eval \
                          ../src/lib/exceptions \
