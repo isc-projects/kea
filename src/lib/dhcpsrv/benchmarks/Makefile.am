@@ -2,6 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -11,6 +12,8 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+EXTRA_DIST = benchmarks.dox
+
 BENCHMARKS=
 if HAVE_BENCHMARK
 
@@ -19,6 +22,7 @@ BENCHMARKS += run-benchmarks
 run_benchmarks_SOURCES  = run_benchmarks.cc
 run_benchmarks_SOURCES += generic_lease_mgr_benchmark.cc generic_lease_mgr_benchmark.h
 run_benchmarks_SOURCES += generic_host_data_source_benchmark.cc generic_host_data_source_benchmark.h
+run_benchmarks_SOURCES += memfile_lease_mgr_benchmark.cc
 
 if HAVE_MYSQL
 run_benchmarks_SOURCES += mysql_lease_mgr_benchmark.cc
