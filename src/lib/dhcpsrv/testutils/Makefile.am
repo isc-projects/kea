@@ -17,6 +17,9 @@ libdhcpsrvtest_la_SOURCES += dhcp4o6_test_ipc.cc dhcp4o6_test_ipc.h
 
 libdhcpsrvtest_la_SOURCES += schema.cc schema.h
 
+libdhcpsrvtest_la_SOURCES += lease_file_io.cc lease_file_io.h
+
+
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_schema.cc mysql_schema.h
 endif
