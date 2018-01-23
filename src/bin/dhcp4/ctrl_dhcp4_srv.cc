@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
@@ -29,6 +30,22 @@ using namespace isc::stats;
 using namespace std;
 
 namespace {
+
+/// Structure that holds registered hook indexes.
+struct Dhcp4Hooks {
+    int hooks_index_dhcp4_srv_configured_;
+
+    /// Constructor that registers hook points for the DHCPv4 server.
+    Dhcp4Hooks() {
+        hooks_index_dhcp4_srv_configured_ = HooksManager::registerHook("dhcp4_srv_configured");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+Dhcp4Hooks Hooks;
 
 /// @brief Signals handler for DHCPv4 server.
 ///
@@ -626,6 +643,19 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             " reclamation of the expired leases: "
             << ex.what() << ".";
         return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // This hook point notifies hooks libraries that the configuration of the
+    // DHCPv4 server has completed. Currently it only provides hooks libraries
+    // with the pointer to the common IO service. In the future, additional
+    // information can be provided.
+    if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp4_srv_configured_)) {
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+        callout_handle->setArgument("io_service", srv->getIOService());
+
+        HooksManager::callCallouts(Hooks.hooks_index_dhcp4_srv_configured_,
+                                   *callout_handle);
     }
 
     return (answer);
