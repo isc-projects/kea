@@ -101,6 +101,7 @@ struct LeaseStatsRow {
           lease_state_(lease_state), state_count_(state_count) {
     }
 
+    /// @brief Less-than operator
     bool operator< (const LeaseStatsRow &rhs) const {
         if (subnet_id_ < rhs.subnet_id_) {
             return (true);
