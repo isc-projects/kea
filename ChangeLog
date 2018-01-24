@@ -1,3 +1,8 @@
+1349.	[build]		andreipavelQ
+	Compilation parameters unified (every file now includes config.h,
+	several makefile tweaks).
+	(Github #38, git 7206aa79c57be7466c4ab3dd558663c6c4f858b7)
+
 1348.	[func]		fdupont
 	Several hook points now support next step status DROP. This allows
 	more flexibility with dropping packets from within hooks.
