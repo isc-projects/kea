@@ -18,6 +18,7 @@
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/schema.h>
+#include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 #include <util/buffer.h>
 

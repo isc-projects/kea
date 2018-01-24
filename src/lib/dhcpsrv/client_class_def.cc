@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include "client_class_def.h"
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
