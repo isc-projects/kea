@@ -79,8 +79,7 @@ public:
     /// @return Configuration string for @c LeaseMgrFactory.
     static std::string getConfigString(Universe u) {
         std::ostringstream s;
-        s << "type=memfile " << (u == V4 ? "universe=4 " : "universe=6 ")
-          << "name="
+        s << "type=memfile " << (u == V4 ? "universe=4 " : "universe=6 ") << "name="
           << getLeaseFilePath(u == V4 ? "leasefile4_0.csv" : "leasefile6_0.csv")
           << " lfc-interval=0";
         return (s.str());
@@ -108,10 +107,8 @@ public:
         // resulting file names are the ones that may exist as a
         // result of LFC.
         for (int i = static_cast<int>(Memfile_LeaseMgr::FILE_CURRENT);
-             i <= static_cast<int>(Memfile_LeaseMgr::FILE_FINISH);
-             ++i) {
-            Memfile_LeaseMgr::LFCFileType type = static_cast<
-                Memfile_LeaseMgr::LFCFileType>(i);
+             i <= static_cast<int>(Memfile_LeaseMgr::FILE_FINISH); ++i) {
+            Memfile_LeaseMgr::LFCFileType type = static_cast<Memfile_LeaseMgr::LFCFileType>(i);
             LeaseFileIO io(Memfile_LeaseMgr::appendSuffix(base_name, type));
             io.removeFile();
         }

@@ -37,7 +37,8 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
-GenericHostDataSourceBenchmark::GenericHostDataSourceBenchmark() : hdsptr_() {
+GenericHostDataSourceBenchmark::GenericHostDataSourceBenchmark()
+    : hdsptr_() {
     LibDHCP::clearRuntimeOptionDefs();
 }
 
@@ -48,7 +49,7 @@ GenericHostDataSourceBenchmark::~GenericHostDataSourceBenchmark() {
 
 void
 GenericHostDataSourceBenchmark::ReentrantSetUp(::benchmark::State& state,
-                                              size_t const& host_count) {
+                                               size_t const& host_count) {
     state.PauseTiming();
     SetUp(state);
     prepareHosts(host_count);
@@ -56,8 +57,8 @@ GenericHostDataSourceBenchmark::ReentrantSetUp(::benchmark::State& state,
 }
 
 void
-GenericHostDataSourceBenchmark::ReentrantSetUpWithInserts(
-    ::benchmark::State& state, size_t const& host_count) {
+GenericHostDataSourceBenchmark::ReentrantSetUpWithInserts(::benchmark::State& state,
+                                                          size_t const& host_count) {
     state.PauseTiming();
     SetUp(state);
     prepareHosts(host_count);
@@ -104,8 +105,8 @@ GenericHostDataSourceBenchmark::generateIdentifier(const bool new_identifier) {
 }
 
 HostPtr
-GenericHostDataSourceBenchmark::initializeHost4(
-    const std::string& address, const Host::IdentifierType& id) {
+GenericHostDataSourceBenchmark::initializeHost4(const std::string& address,
+                                                const Host::IdentifierType& id) {
     std::vector<uint8_t> ident;
     if (id == Host::IDENT_HWADDR) {
         ident = generateHWAddr();
@@ -130,8 +131,7 @@ GenericHostDataSourceBenchmark::initializeHost4(
 HostPtr
 GenericHostDataSourceBenchmark::initializeHost6(std::string address,
                                                 Host::IdentifierType identifier,
-                                                bool prefix,
-                                                bool new_identifier) {
+                                                bool prefix, bool new_identifier) {
     std::vector<uint8_t> ident;
     switch (identifier) {
     case Host::IDENT_HWADDR:
@@ -168,21 +168,19 @@ GenericHostDataSourceBenchmark::initializeHost6(std::string address,
 }
 
 OptionDescriptor
-GenericHostDataSourceBenchmark::createEmptyOption(
-    const Option::Universe& universe,
-    const uint16_t option_type,
-    const bool persist) const {
+GenericHostDataSourceBenchmark::createEmptyOption(const Option::Universe& universe,
+                                                  const uint16_t option_type,
+                                                  const bool persist) const {
     OptionPtr option(new Option(universe, option_type));
     OptionDescriptor desc(option, persist);
     return desc;
 }
 
 OptionDescriptor
-GenericHostDataSourceBenchmark::createVendorOption(
-    const Option::Universe& universe,
-    const bool persist,
-    const bool formatted,
-    const uint32_t vendor_id) const {
+GenericHostDataSourceBenchmark::createVendorOption(const Option::Universe& universe,
+                                                   const bool persist,
+                                                   const bool formatted,
+                                                   const uint32_t vendor_id) const {
     OptionVendorPtr option(new OptionVendor(universe, vendor_id));
 
     std::ostringstream s;
@@ -197,10 +195,8 @@ GenericHostDataSourceBenchmark::createVendorOption(
 }
 
 void
-GenericHostDataSourceBenchmark::addTestOptions(
-    const HostPtr& host,
-    const bool formatted,
-    const AddedOptions& added_options) const {
+GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host, const bool formatted,
+                                               const AddedOptions& added_options) const {
     OptionDefSpaceContainer defs;
 
     if ((added_options == DHCP4_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
