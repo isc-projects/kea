@@ -724,20 +724,4 @@ TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
-struct Tom {
-    Tom() : id_(0)  {
-        std::cout << "new:" << this << std::endl;
-    }
-
-    ~Tom() {
-        std::cout << "del:" << this << std::endl;
-    }
-
-    bool operator< (const Tom &rhs) const {
-        return (rhs.id_ < this->id_);
-    }
-
-    int id_;
-};
-
 }  // namespace
