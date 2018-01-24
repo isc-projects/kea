@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
-#include <boost/foreach.hpp>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
