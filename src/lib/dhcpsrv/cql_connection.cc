@@ -22,6 +22,8 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
+#include <string>
+
 namespace isc {
 namespace dhcp {
 

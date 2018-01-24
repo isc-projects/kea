@@ -6,6 +6,8 @@
 
 /// Defines the logger used by the Eval (classification) code
 
+#include <config.h>
+
 #include <eval/eval_log.h>
 
 namespace isc {

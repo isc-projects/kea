@@ -12,6 +12,8 @@
 ///
 /// See the usage() method for details of use.
 
+#include <config.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
