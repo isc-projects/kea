@@ -134,7 +134,7 @@ struct LeaseStatsRow {
 /// @brief Base class for fulfilling a statistical lease data query
 ///
 /// LeaseMgr derivations implement this class such that it provides
-/// upto date statistical lease data organized as rows of LeaseStatsRow
+/// up to date statistical lease data organized as rows of LeaseStatsRow
 /// instances. The rows must be accessible in ascending order by subnet id.
 class LeaseStatsQuery {
 public:
@@ -457,7 +457,7 @@ public:
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with upto date IPv4 lease statistical data.  Each row of the
+    /// populated with up to date IPv4 lease statistical data.  Each row of the
     /// result set is an LeaseStatRow which ordered ascending by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
@@ -488,7 +488,7 @@ public:
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with upto date IPv6 lease statistical data.  Each row of the
+    /// populated with up to date IPv6 lease statistical data.  Each row of the
     /// result set is an LeaseStatRow which ordered ascending by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery

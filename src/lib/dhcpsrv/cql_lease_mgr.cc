@@ -1447,7 +1447,7 @@ class CqlLeaseStatsQuery : public LeaseStatsQuery {
 public:
     /// @brief Constructor
     ///
-    /// @param conn A open connection to the database housing the lease data
+    /// @param conn An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute
     /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set (should be true for v6)
