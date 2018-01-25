@@ -272,9 +272,13 @@ This debug message is printed when a callout installed on lease4_release
 hook point set the next step status to SKIP. For this particular hook point, the
 value set by a callout instructs the server to not release a lease.
 
-% DHCP4_HOOK_LEASES4_COMMITTED_DROP %1: packet is dropped, because a callout set the next step tp DROP
+% DHCP4_HOOK_LEASES4_COMMITTED_DROP %1: packet is dropped, because a callout set the next step to DROP
 This debug message is printed when a callout installed on the leases4_committed
 hook point sets the next step to DROP.
+
+% DHCP4_HOOK_LEASES4_COMMITTED_PARK %1: packet is parked, because a callout set the next step to PARK
+This debug message is printed when a callout installed on the lease4_committed
+hook point sets the next step to PARK.
 
 % DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the pkt4_receive
