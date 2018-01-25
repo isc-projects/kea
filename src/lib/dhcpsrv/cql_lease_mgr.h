@@ -203,12 +203,12 @@ public:
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4() const;
+    virtual Lease4Collection getLeases4() const override;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -330,7 +330,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease(const isc::asiolink::IOAddress& addr) override;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
     ///
@@ -360,7 +360,7 @@ public:
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
 
     /// @brief Creates and runs the IPv6 lease stats query
     ///
@@ -370,7 +370,7 @@ public:
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
 
     /// @brief Removes specified IPv4 leases.
     ///
@@ -381,7 +381,7 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+    virtual size_t wipeLeases4(const SubnetID& subnet_id) override;
 
     /// @brief Removed specified IPv6 leases.
     ///
@@ -392,7 +392,7 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+    virtual size_t wipeLeases6(const SubnetID& subnet_id) override;
 
     /// @brief Return backend type
     ///
