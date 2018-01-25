@@ -32,11 +32,11 @@ using namespace std;
 namespace {
 
 /// Structure that holds registered hook indexes.
-struct Dhcp4Hooks {
+struct CtrlDhcp4Hooks {
     int hooks_index_dhcp4_srv_configured_;
 
     /// Constructor that registers hook points for the DHCPv4 server.
-    Dhcp4Hooks() {
+    CtrlDhcp4Hooks() {
         hooks_index_dhcp4_srv_configured_ = HooksManager::registerHook("dhcp4_srv_configured");
     }
 };
@@ -45,7 +45,7 @@ struct Dhcp4Hooks {
 // will be instantiated (and the constructor run) when the module is loaded.
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
-Dhcp4Hooks Hooks;
+CtrlDhcp4Hooks Hooks;
 
 /// @brief Signals handler for DHCPv4 server.
 ///
@@ -646,16 +646,22 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     }
 
     // This hook point notifies hooks libraries that the configuration of the
-    // DHCPv4 server has completed. Currently it only provides hooks libraries
-    // with the pointer to the common IO service. In the future, additional
-    // information can be provided.
+    // DHCPv4 server has completed. It provides the hook library with the pointer
+    // to the common IO service object, new server configuration in the JSON
+    // format and with the pointer to the configuration storage where the
+    // parsed configuration is stored.
     if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp4_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         callout_handle->setArgument("io_service", srv->getIOService());
+        callout_handle->setArgument("json_config", config);
+        callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
 
         HooksManager::callCallouts(Hooks.hooks_index_dhcp4_srv_configured_,
                                    *callout_handle);
+
+        // Ignore status code as none of them would have an effect on further
+        // operation.
     }
 
     return (answer);

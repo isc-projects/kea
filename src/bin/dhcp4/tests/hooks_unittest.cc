@@ -8,6 +8,7 @@
 
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
@@ -115,6 +116,7 @@ public:
     /// @brief destructor (deletes Dhcpv4Srv)
     virtual ~HooksDhcpv4SrvTest() {
 
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("dhcp4_srv_configured");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_receive");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_send");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
@@ -862,9 +864,11 @@ public:
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
+        static_cast<void>(remove(SRV_CONFIG_MARKER_FILE));
         CfgMgr::instance().clear();
     }
 };
+
 
 // Checks if callouts installed on pkt4_receive are indeed called and the
 // all necessary parameters are passed.
@@ -2632,4 +2636,67 @@ TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
     // this should be reflected in the unload file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+}
+
+// Checks if callouts installed on the dhcp4_srv_configured ared indeed called
+// and all the necessary parameters are pased.
+TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
+    boost::shared_ptr<ControlledDhcpv4Srv> srv(new ControlledDhcpv4Srv(0));
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(SRV_CONFIG_MARKER_FILE));
+
+    // Minimal valid configuration for the server. It includes the
+    // section which loads the callout library #3, which implements
+    // dhcp4_srv_configured callout.
+    std::string config_str =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"rebind-timer\": 2000,"
+        "    \"renew-timer\": 1000,"
+        "    \"subnet4\": [ ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "         \"type\": \"memfile\","
+        "         \"persist\": false"
+        "    },"
+        "    \"hooks-libraries\": ["
+        "        {"
+        "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
+        "        }"
+        "    ]"
+        "}";
+
+    ConstElementPtr config = Element::fromJSON(config_str);
+
+    // Configure the server.
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = srv->processConfig(config));
+
+    // Make sure there were no errors.
+    int status_code;
+    parseAnswer(status_code, answer);
+    ASSERT_EQ(0, status_code);
+
+    // The hook library should have been loaded.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    // The dhcp4_srv_configured should have been invoked and the provided
+    // parameters should be recorded.
+    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                "3io_servicejson_configserver_config"));
+
+    // Destroy the server, instance which should unload the libraries.
+    srv.reset();
+
+    // The server was destroyed, so the unload() function should now
+    // include the library number in its marker file.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
+    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                "3io_servicejson_configserver_config"));
 }
