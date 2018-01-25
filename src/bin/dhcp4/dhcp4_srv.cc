@@ -1093,6 +1093,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     // PARKING SPOT after leases4_committed hook point.
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
     if (packet_park) {
+        LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                  DHCP4_HOOK_LEASES4_COMMITTED_PARK)
+            .arg(query->getLabel());
+
         // Park the packet. The function we bind here will be executed when the hook
         // library unparks the packet.
         HooksManager::park("leases4_committed", query,
