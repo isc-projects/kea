@@ -2273,9 +2273,11 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         (cfg_iface->getSocketType() == CfgIface::SOCKET_UDP) &&
         (cfg_iface->getOutboundIface() == CfgIface::USE_ROUTING)) {
 
+        // Mark the response to follow routing
         response->setLocalAddr(IOAddress::IPV4_ZERO_ADDRESS());
-        response->setIface("");
         response->resetIndex();
+        // But keep the interface name
+        response->setIface(query->getIface());
 
     } else {
 
@@ -2309,8 +2311,8 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         // may throw if for some reason the socket is closed.
         /// @todo Consider an optimization that we use local address from
         /// the query if this address is not broadcast.
-        response->setIface(query->getIface());
         response->setIndex(query->getIndex());
+        response->setIface(query->getIface());
     }
 
     response->setLocalPort(DHCP4_SERVER_PORT);
