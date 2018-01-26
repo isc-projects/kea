@@ -1068,6 +1068,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"client-classes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::RESERVATIONS:
         return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(driver.loc_);
     default:
@@ -1078,8 +1080,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
-    case isc::dhcp::Parser6Context::POOLS:
-    case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASS(driver.loc_);

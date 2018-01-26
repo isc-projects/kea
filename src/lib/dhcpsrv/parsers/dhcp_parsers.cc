@@ -379,11 +379,13 @@ PoolParser::parse(PoolStoragePtr pools,
     }
 
     // Client-class.
-    ConstElementPtr client_class = pool_structure->get("client-class");
-    if (client_class) {
-        string cclass = client_class->stringValue();
-        if (!cclass.empty()) {
-            pool->allowClientClass(cclass);
+    ConstElementPtr class_list = pool_structure->get("client-classes");
+    if (class_list) {
+        BOOST_FOREACH(ConstElementPtr c, class_list->listValue()) {
+            string cclass = c->stringValue();
+            if (!cclass.empty()) {
+                pool->allowClientClass(cclass);
+            }
         }
     }
 }
@@ -855,7 +857,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         user_context_ = user_context;
     }
 
-    ConstElementPtr client_class = pd_pool_->get("client-class");
+    ConstElementPtr client_class = pd_pool_->get("client-classes");
     if (client_class) {
         client_class_ = client_class;
     }
@@ -884,10 +886,13 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
     }
 
 
+    // If present, this is a list of class names
     if (client_class_) {
-        string cclass = client_class_->stringValue();
-        if (!cclass.empty()) {
-            pool_->allowClientClass(cclass);
+        BOOST_FOREACH(ConstElementPtr c, client_class_->listValue()) {
+            string cclass = c->stringValue();
+            if (!cclass.empty()) {
+                pool_->allowClientClass(cclass);
+            }
         }
     }
         

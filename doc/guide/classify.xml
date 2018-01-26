@@ -805,8 +805,12 @@ concatenation of the strings</entry></row>
    <title>Configuring Pools With Class Information</title>
      <para>
        Similar to the subnets, it is possible to restrict access to the certain address
-       or prefix pools to the clients belonging to a specific class, using
-       the "client-class" parameter when defining the pool.
+       or prefix pools to the clients belonging to a specific class or
+       classes, using the "client-classes" parameter when defining the
+       pool. As opposed to subnets, the pools scope allows to define
+       more than one class that is allowed. The incoming packet has to
+       belong to only one of the classes listed to be able to get an
+       address from that pool.
      </para>
 
      <para>
@@ -841,7 +845,7 @@ concatenation of the strings</entry></row>
             "pools": [
                 {
                     "pool": "192.0.2.10 - 192.0.2.20",
-                    "client-class": "Client_foo"
+                    "client-classes": [ "Client_foo" ]
                 }
             ]</userinput>
         },
@@ -880,7 +884,7 @@ concatenation of the strings</entry></row>
             "pools": [
                 {
                     "pool": "2001:db8:1::-2001:db8:1::ffff",
-                    "client-class": "Client_foo"
+                    "client-classes": [ "Client_foo" ]
                 }
             ]</userinput>
         },

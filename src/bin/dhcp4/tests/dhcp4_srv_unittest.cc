@@ -2337,9 +2337,9 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { "
         "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "      \"client-class\": \"foo\" }, "
+        "      \"client-classes\": [ \"foo\" ] }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
-        "      \"client-class\": \"xyzzy\" } ], "
+        "      \"client-classes\": [ \"xyzzy\" ] } ], "
         "    \"subnet\": \"192.0.0.0/16\" } "
         "],"
         "\"valid-lifetime\": 4000 }";

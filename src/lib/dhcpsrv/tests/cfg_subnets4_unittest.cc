@@ -858,7 +858,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "        },{\n"
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\"\n,"
-        "            \"client-class\": \"bar\",\n"
+        "            \"client-classes\": [ \"bar\" ],\n"
         "            \"user-context\": { \"foo\": \"bar\" }\n"
         "        }\n"
         "    ]\n"
