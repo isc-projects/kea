@@ -109,7 +109,7 @@
            // This one is for VoIP devices only.
            {
               "pool":  "192.0.4.1 - 192.0.4.200",
-              "client-class": "VoIP"
+              "client-classes": [ "VoIP" ]
            },
 
            // This one doesn't have any client-class specified,

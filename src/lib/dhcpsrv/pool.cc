@@ -111,11 +111,12 @@ Pool::toElement() const {
 
     // Set client-class
     const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
+    if (!cclasses.empty()) {
+        ElementPtr list = Element::createList();
+        for (auto c : cclasses) {
+            list->add(Element::create(c));
+        }
+        map->set("client-classes", list);
     }
 
     return (map);
@@ -340,6 +341,7 @@ Pool6::toElement() const {
                 isc_throw(ToElementError, "invalid prefix range "
                           << prefix.toText() << "-" << last.toText());
             }
+            map->set("prefix-len", Element::create(prefix_len));
 
             // Set delegated-len
             uint8_t len = getLength();
@@ -354,10 +356,13 @@ Pool6::toElement() const {
                 uint8_t xlen = xopt->getExcludedPrefixLength();
                 map->set("excluded-prefix-len",
                          Element::create(static_cast<int>(xlen)));
-            } else {
-                map->set("excluded-prefix", Element::create(std::string("::")));
-                map->set("excluded-prefix-len", Element::create(0));
             }
+            // Let's not insert empty excluded-prefix values. If we ever
+            // decide to insert it after all, here's the code to do it:
+            // else {
+            //   map->set("excluded-prefix", Element::create(std::string("::")));
+            //   map->set("excluded-prefix-len", Element::create(0));
+            // }
 
             break;
         }

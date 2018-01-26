@@ -4168,15 +4168,15 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { "
         "        \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "        \"client-class\": \"alpha\" "
+        "        \"client-classes\": [ \"alpha\" ] "
         "     },"
         "     {"
         "        \"pool\": \"192.0.3.101 - 192.0.3.150\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-classes\": [ \"beta\" ] "
         "     },"
         "     {"
         "        \"pool\": \"192.0.4.101 - 192.0.4.150\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-classes\": [ \"gamma\", \"alpha\" ] "
         "     },"
         "     {"
         "        \"pool\": \"192.0.5.101 - 192.0.5.150\" "
@@ -4200,13 +4200,13 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     ASSERT_EQ(4, pools.size()); // We expect 4 pools
 
     // Let's check if client belonging to alpha class is supported in pool[0]
-    // and not supported in any other pool (except pool[3], which allows
-    // everyone).
+    // and pool[2] (which allows 2 classes)  and not supported in any other
+    // pool (except pool[3], which allows everyone).
     ClientClasses classes;
     classes.insert("alpha");
     EXPECT_TRUE(pools.at(0)->clientSupported(classes));
     EXPECT_FALSE(pools.at(1)->clientSupported(classes));
-    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(2)->clientSupported(classes));
     EXPECT_TRUE(pools.at(3)->clientSupported(classes));
 
     // Let's check if client belonging to beta class is supported in pool[1]

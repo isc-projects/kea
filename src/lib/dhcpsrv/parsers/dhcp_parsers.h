@@ -651,8 +651,14 @@ private:
     /// A storage for pool specific option values.
     CfgOptionPtr options_;
 
+    /// @brief User context (optional, may be null)
+    ///
+    /// User context is arbitrary user data, to be used by hooks.
     isc::data::ConstElementPtr user_context_;
 
+    /// @brief List of client classes a client has to be belong to to use this pd-pool
+    ///
+    /// If empty, everyone is allowed. This is a white-list
     isc::data::ConstElementPtr client_class_;
 
 };

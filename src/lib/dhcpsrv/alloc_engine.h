@@ -83,7 +83,6 @@ protected:
         ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param client_classes list of classes client belongs to
-
         /// @param duid Client's DUID
         /// @param hint client's hint
         ///
