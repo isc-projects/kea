@@ -344,7 +344,9 @@ public:
     /// @return Name of the current hook or the empty string if none.
     std::string getHookName() const;
 
-    /// @brief Returns pointer to the parking lot for this hook point.
+    /// @brief Returns pointer to the parking lot handle for this hook point.
+    ///
+    /// @return pointer to the parking lot handle
     ParkingLotHandlePtr getParkingLotHandlePtr() const;
 
 private:

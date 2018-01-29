@@ -154,6 +154,8 @@ public:
     static ServerHooksPtr getServerHooksPtr();
 
     /// @brief Returns pointer to all parking lots.
+    ///
+    /// @return pointer to all parking lots.
     ParkingLotsPtr getParkingLotsPtr() const;
 
     /// @brief Returns pointer to the ParkingLot for the specified hook index.

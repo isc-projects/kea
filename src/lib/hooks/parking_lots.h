@@ -57,10 +57,10 @@ public:
 
     /// @brief Parks an object.
     ///
+    /// @tparam Type of the parked object.
     /// @param parked_object object to be parked, e.g. pointer to a packet.
     /// @param unpark_callback callback function to be invoked when the object
     /// is unparked.
-    /// @tparam Type of the parked object.
     /// @throw InvalidOperation if the @c reference() wasn't called prior to
     /// parking the object.
     template<typename T>
@@ -81,8 +81,8 @@ public:
     /// on the object to be parked. It must be called before the object is
     /// actually parked.
     ///
-    /// @param parked_object object which will be parked.
     /// @tparam Type of the parked object.
+    /// @param parked_object object which will be parked.
     template<typename T>
     void reference(T parked_object) {
         auto it = find(parked_object);
@@ -102,6 +102,7 @@ public:
     /// is 0, the object is unparked and the callback is invoked. Typically, the
     /// callback points to a function which resumes processing of a packet.
     ///
+    /// @tparam Type of the parked object.
     /// @param parked_object parked object to be unparked.
     /// @param force boolean value indicating if the reference counting should
     /// be ignored and the object should be unparked immediately.
@@ -138,7 +139,10 @@ public:
 
     /// @brief Removes parked object without calling a callback.
     ///
+    /// @tparam Type of the parked object.
     /// @param parked_object parked object to be removed.
+    /// @return false if the object couldn't be removed because there is
+    /// no such object, true otherwise.
     template<typename T>
     bool drop(T parked_object) {
         auto it = find(parked_object);
@@ -191,8 +195,8 @@ private:
 
     /// @brief Search for the information about the parked object.
     ///
-    /// @param parked_object object for which the information should be found.
     /// @tparam T parked object type.
+    /// @param parked_object object for which the information should be found.
     /// @return Iterator pointing to the parked object, or @c parking_.end() if
     /// no such object found.
     template<typename T>
@@ -231,8 +235,8 @@ public:
     /// on the object to be parked. It must be called before the object is
     /// actually parked.
     ///
-    /// @param parked_object object which will be parked.
     /// @tparam Type of the parked object.
+    /// @param parked_object object which will be parked.
     template<typename T>
     void reference(T parked_object) {
         parking_lot_->reference(parked_object);
@@ -245,6 +249,7 @@ public:
     /// is 0, the object is unparked and the callback is invoked. Typically, the
     /// callback points to a function which resumes processing of a packet.
     ///
+    /// @tparam Type of the parked object.
     /// @param parked_object parked object to be unparked.
     /// @return false if the object couldn't be unparked because there is
     /// no such object, true otherwise.
@@ -257,7 +262,10 @@ public:
     ///
     /// It ignores any reference counts on the parked object.
     ///
+    /// @tparam Type of the parked object.
     /// @param parked_object parked object to be removed.
+    /// @return false if the object couldn't be removed because there is
+    /// no such object, true otherwise.
     template<typename T>
     bool drop(T parked_object) {
         return (parking_lot_->drop(parked_object));
