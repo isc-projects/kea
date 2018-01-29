@@ -260,10 +260,10 @@ public:
     /// until all hook libraries call @c ParkingLotHandle::unpark to mark
     /// that respective asynchronous operations are completed.
     ///
+    /// @tparam Type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object packet to be parked.
     /// @param unpark_callback callback invoked when the packet is unparked.
-    /// @tparam Type of the parked object.
     template<typename T>
     static void park(const std::string& hook_name, T parked_object,
                      std::function<void()> unpark_callback) {
@@ -276,9 +276,9 @@ public:
     /// value. This is used in the situations when the callouts fail to unpark
     /// the packet for some reason.
     ///
+    /// @tparam T type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object to be unparked.
-    /// @tparam T type of the parked object.
     /// @return true if the specified object has been found, false otherwise.
     template<typename T>
     static bool unpark(const std::string& hook_name, T parked_object) {
@@ -287,9 +287,9 @@ public:
 
     /// @brief Removes parked object without calling a callback.
     ///
+    /// @tparam T type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object to be removed.
-    /// @tparam T type of the parked object.
     /// @return true if the specified object has been found false otherwise.
     template<typename T>
     static bool drop(const std::string& hook_name, T parked_object) {
@@ -301,10 +301,10 @@ public:
     /// Reference counter must be increased at least to 1 before the @c park()
     /// method can be called.
     ///
+    /// @tparam Type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object for which reference counter should
     /// be increased.
-    /// @tparam Type of the parked object.
     template<typename T>
     static void reference(const std::string& hook_name, T parked_object) {
         getHooksManager().referenceInternal(hook_name, parked_object);
@@ -320,10 +320,10 @@ private:
 
     /// @brief Park an object (packet).
     ///
+    /// @tparam Type of the parked object.
     /// @param hook_name Name of the hook point for which the packet is parked.
     /// @param parked_object packet to be parked.
     /// @param unpark_callback callback invoked when the packet is unparked.
-    /// @tparam Type of the parked object.
     template<typename T>
     void parkInternal(const std::string& hook_name, T parked_object,
                       std::function<void()> unpark_callback) {
@@ -333,9 +333,9 @@ private:
 
     /// @brief Signals that the object (packet) should be unparked.
     ///
+    /// @tparam Type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object to be unparked.
-    /// @tparam Type of the parked object.
     /// @return true if the specified object has been found, false otherwise.
     template<typename T>
     bool unparkInternal(const std::string& hook_name, T parked_object) {
@@ -345,9 +345,9 @@ private:
 
     /// @brief Removes parked object without calling a callback.
     ///
+    /// @tparam T type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object to be removed.
-    /// @tparam T type of the parked object.
     /// @return true if the specified object has been found false otherwise.
     template<typename T>
     static bool dropInternal(const std::string& hook_name, T parked_object) {
@@ -357,10 +357,10 @@ private:
 
     /// @brief Increases reference counter for the parked object.
     ///
+    /// @tparam Type of the parked object.
     /// @param hook_name name of the hook point for which the packet is parked.
     /// @param parked_object parked object for which reference counter should
     /// be increased.
-    /// @tparam Type of the parked object.
     template<typename T>
     void referenceInternal(const std::string& hook_name, T parked_object) {
         ServerHooks::getServerHooks().
