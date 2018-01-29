@@ -33,7 +33,7 @@ TEST(ParkingLotsTest, createGetParkingLot) {
     ASSERT_NO_THROW(parking_lots.clear());
 
     ParkingLotPtr parking_lot3 = parking_lots.getParkingLotPtr(1);
-    ASSERT_TRUE(parking_lot0);
+    ASSERT_TRUE(parking_lot3);
 
     EXPECT_FALSE(parking_lot3 == parking_lot0);
 }
