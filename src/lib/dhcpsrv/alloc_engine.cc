@@ -1283,9 +1283,9 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         }
 
         /// DROP status does not make sense here:
-	/// In general as the lease cannot be dropped the DROP action
-	/// has no object so SKIP is the right "cancel" status and
-	/// DROP should not be a synonym as it introduces ambiguity.
+        /// In general as the lease cannot be dropped the DROP action
+        /// has no object so SKIP is the right "cancel" status and
+        /// DROP should not be a synonym as it introduces ambiguity.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
