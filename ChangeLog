@@ -1,3 +1,10 @@
+1350.	[func]		fdupont
+	It is now possible to specify client classification restrictions
+	on per pool basis. This capability will be useful for grouping
+	certain types of devices into specific address and/or prefix
+	pools.
+	(Trac #5425, git xxx)
+
 1349.	[build]		andreipavelQ
 	Compilation parameters unified (every file now includes config.h,
 	several makefile tweaks).
