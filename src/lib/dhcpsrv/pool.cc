@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -340,6 +340,7 @@ Pool6::toElement() const {
                 isc_throw(ToElementError, "invalid prefix range "
                           << prefix.toText() << "-" << last.toText());
             }
+            map->set("prefix-len", Element::create(prefix_len));
 
             // Set delegated-len
             uint8_t len = getLength();
@@ -354,10 +355,14 @@ Pool6::toElement() const {
                 uint8_t xlen = xopt->getExcludedPrefixLength();
                 map->set("excluded-prefix-len",
                          Element::create(static_cast<int>(xlen)));
-            } else {
-                map->set("excluded-prefix", Element::create(std::string("::")));
-                map->set("excluded-prefix-len", Element::create(0));
             }
+            // Let's not insert empty excluded-prefix values. If we ever
+            // decide to insert it after all, here's the code to do it:
+            // else {
+            //    map->set("excluded-prefix",
+            //             Element::create(std::string("::")));
+            //    map->set("excluded-prefix-len", Element::create(0));
+            /// }
 
             break;
         }
