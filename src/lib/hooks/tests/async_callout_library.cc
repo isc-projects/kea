@@ -62,7 +62,7 @@ extern "C" {
 /// This callout is crafted to test the following scenario. The callout returns
 /// status "park" to indicate that the packet should be parked. The callout
 /// performs asynchronous operation and indicates that the packet should be
-/// unparked when this operation completes. Unparing the packet triggers a
+/// unparked when this operation completes. Unparking the packet triggers a
 /// function associated with the parked packet, e.g. a function which continues
 /// processing of this packet.
 ///
