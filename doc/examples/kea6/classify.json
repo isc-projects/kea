@@ -82,7 +82,7 @@
         "pools": [
            {
                "pool": "2001:db8:3::/80",
-               "client-classes": [ "cable-modems" ]
+               "client-class": "cable-modems"
            } ],
          "subnet": "2001:db8:4::/64",
          "interface": "ethY"
