@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,7 +83,6 @@ protected:
         ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param client_classes list of classes client belongs to
-
         /// @param duid Client's DUID
         /// @param hint client's hint
         ///
