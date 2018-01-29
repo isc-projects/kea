@@ -754,7 +754,7 @@ TEST_F(HooksManagerTest, LibraryParameters) {
 }
 
 // This test verifies that an object can be parked in two different
-// callouts and that it is unparked when the last callout calls
+// callouts and that it is unparked when the last callout calls the
 // unpark function.
 TEST_F(HooksManagerTest, Parking) {
     // Load the same library twice. Both installed callouts will trigger
