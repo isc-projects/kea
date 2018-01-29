@@ -58,7 +58,7 @@ to the end of this list.
    object which is used by the server to run asynchronous operations. The hooks
    libraries can use this IO service object to schedule asynchronous tasks which
    are triggered by the DHCP server's main loop. The hook library should hold the
-   pointer provided pointer until the library is unloaded.
+   provided pointer until the library is unloaded.
 
  - <b>Next step status</b>: Status codes retured by the callouts installed on
    this hook point are ignored.
@@ -251,7 +251,7 @@ to the end of this list.
    lease for the client. The "deleted_leases4" object will hold a previous
    lease instance and the "leases4" object will hold the new lease for this
    client. The callouts should be prepared to handle such situation. When
-   the callout is executed as a result DHCPRELESE, the callout will typically
+   the callout is executed as a result DHCPRELEASE, the callout will typically
    receive only one lease (being released) in the "deleted_leases4" object.
    Both leases collections are always provided to the callouts,
    even though they may sometimes be empty.
