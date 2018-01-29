@@ -1344,7 +1344,7 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
-          | client_class_names_list
+          | client_class
           | user_context
           | comment
           | unknown_map_entry
@@ -1459,7 +1459,7 @@ not_empty_reservation_params: reservation_param
 
 /// @todo probably need to add mac-address as well here
 reservation_param: duid
-                 | client_class_names_list
+                 | reservation_client_classes
                  | client_id_value
                  | circuit_id_value
                  | flex_id_value
@@ -1555,7 +1555,7 @@ hostname: HOSTNAME {
     ctx.leave();
 };
 
-client_class_names_list: CLIENT_CLASSES {
+reservation_client_classes: CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);

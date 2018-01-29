@@ -100,7 +100,8 @@ public:
     /// @brief Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
-    /// @todo: currently doing the same as network which needs improving.
+    /// @todo: currently doing the same than network which
+    /// is known to be improved.
     ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
@@ -202,9 +203,6 @@ protected:
     CfgOptionPtr cfg_option_;
 
     /// @brief Optional definition of a client class
-    ///
-    /// If empty, all classes are allowed. If non-empty, only those listed
-    /// here are allowed.
     ///
     /// @ref Network::white_list_
     ClientClasses white_list_;

@@ -813,7 +813,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"client-classes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::RESERVATIONS:
         return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASSES(driver.loc_);
     default:
@@ -824,6 +823,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASS(driver.loc_);

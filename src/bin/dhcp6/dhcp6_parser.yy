@@ -1307,7 +1307,7 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
-          | client_class_names_list
+          | client_class
           | user_context
           | comment
           | unknown_map_entry
@@ -1428,7 +1428,7 @@ pd_pool_param: pd_prefix
              | pd_prefix_len
              | pd_delegated_len
              | option_data_list
-             | client_class_names_list
+             | client_class
              | excluded_prefix
              | excluded_prefix_len
              | user_context
@@ -1516,7 +1516,7 @@ not_empty_reservation_params: reservation_param
 
 /// @todo probably need to add mac-address as well here
 reservation_param: duid
-                 | client_class_names_list
+                 | reservation_client_classes
                  | ip_addresses
                  | prefixes
                  | hw_address
@@ -1580,7 +1580,7 @@ flex_id_value: FLEX_ID {
     ctx.leave();
 };
 
-client_class_names_list: CLIENT_CLASSES {
+reservation_client_classes: CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
@@ -1663,7 +1663,6 @@ client_class_test: TEST {
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 };
-
 
 // --- end of client classes ---------------------------------
 
