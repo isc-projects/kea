@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -510,6 +510,7 @@ TEST(CfgSubnets6Test, unparsePool) {
                              IOAddress("2001:db8:1::100"),
                              IOAddress("2001:db8:1::199")));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+    pool2->allowClientClass("bar");
 
     std::string json1 = "{ \"comment\": \"foo\", \"version\": 1 }";
     data::ElementPtr ctx1 = data::Element::fromJSON(json1);
@@ -541,6 +542,7 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
+        "            \"client-class\": \"bar\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
         "            \"option-data\": [ ]\n"
         "        }\n"
@@ -563,6 +565,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
                                IOAddress("2001:db8:2::"), 48, 64));
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
+    pdpool2->allowClientClass("bar");
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"foo\": [ \"bar\" ] }");
     pdpool1->setContext(ctx1);
@@ -597,7 +600,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"delegated-len\": 56,\n"
         "            \"excluded-prefix\": \"2001:db8:3::\",\n"
         "            \"excluded-prefix-len\": 64,\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"client-class\": \"bar\"\n"
         "        }\n"
         "    ],\n"
         "    \"option-data\": [ ]\n"

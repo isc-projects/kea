@@ -4100,6 +4100,7 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
 
     EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     checkResult(x, 0);
@@ -4155,6 +4156,95 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
     EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
     EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
     EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+}
+
+// Goal of this test is to verify that multiple pools can be configured
+// with defined client classes.
+TEST_F(Dhcp4ParserTest, classifyPools) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { "
+        "        \"pool\": \"192.0.2.1 - 192.0.2.100\", "
+        "        \"client-class\": \"alpha\" "
+        "     },"
+        "     {"
+        "        \"pool\": \"192.0.3.101 - 192.0.3.150\", "
+        "        \"client-class\": \"beta\" "
+        "     },"
+        "     {"
+        "        \"pool\": \"192.0.4.101 - 192.0.4.150\", "
+        "        \"client-class\": \"gamma\" "
+        "     },"
+        "     {"
+        "        \"pool\": \"192.0.5.101 - 192.0.5.150\" "
+        "     } ],"
+        "    \"subnet\": \"192.0.0.0/16\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+    const PoolCollection& pools = subnets->at(0)->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(4, pools.size()); // We expect 4 pools
+
+    // Let's check if client belonging to alpha class is supported in pool[0]
+    // and not supported in any other pool (except pool[3], which allows
+    // everyone).
+    ClientClasses classes;
+    classes.insert("alpha");
+    EXPECT_TRUE(pools.at(0)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to beta class is supported in pool[1]
+    // and not supported in any other pool  (except pools[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("beta");
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(1)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to gamma class is supported in pool[2]
+    // and not supported in any other pool  (except pool[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("gamma");
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(2)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to some other class (not mentioned in
+    // the config) is supported only in pool[3], which allows everyone.
+    classes.clear();
+    classes.insert("delta");
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
+
+    // Finally, let's check class-less client. He should be allowed only in
+    // the last pool, which does not have any class restrictions.
+    classes.clear();
+    EXPECT_FALSE(pools.at(0)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(1)->clientSupported(classes));
+    EXPECT_FALSE(pools.at(2)->clientSupported(classes));
+    EXPECT_TRUE(pools.at(3)->clientSupported(classes));
 }
 
 // This test verifies that the host reservations can be specified for

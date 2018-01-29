@@ -168,15 +168,18 @@ TEST(Subnet4Test, pool4InSubnet4) {
     PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
     PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
     PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
+    pool3->allowClientClass("bar");
+    PoolPtr pool4(new Pool4(IOAddress("192.1.2.200"), 30));
 
     // Add pools in reverse order to make sure that they get ordered by
     // first address.
-    EXPECT_NO_THROW(subnet->addPool(pool3));
+    EXPECT_NO_THROW(subnet->addPool(pool4));
 
     // If there's only one pool, get that pool
     PoolPtr mypool = subnet->getAnyPool(Lease::TYPE_V4);
-    EXPECT_EQ(mypool, pool3);
+    EXPECT_EQ(mypool, pool4);
 
+    EXPECT_NO_THROW(subnet->addPool(pool3));
     EXPECT_NO_THROW(subnet->addPool(pool2));
     EXPECT_NO_THROW(subnet->addPool(pool1));
 
@@ -188,8 +191,8 @@ TEST(Subnet4Test, pool4InSubnet4) {
 
     // If we provide a hint, we should get a pool that this hint belongs to
     ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
-                                             IOAddress("192.1.2.195")));
-    EXPECT_EQ(mypool, pool3);
+                                             IOAddress("192.1.2.201")));
+    EXPECT_EQ(mypool, pool4);
 
     ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
                                              IOAddress("192.1.2.129")));
@@ -203,7 +206,7 @@ TEST(Subnet4Test, pool4InSubnet4) {
     // third parameter prevents it from returning "any" available
     // pool if a good match is not found.
     ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
-                                             IOAddress("192.1.2.200"),
+                                             IOAddress("192.1.2.210"),
                                              false));
     EXPECT_FALSE(mypool);
 
@@ -211,6 +214,57 @@ TEST(Subnet4Test, pool4InSubnet4) {
                                              IOAddress("192.1.1.254"),
                                              false));
     EXPECT_FALSE(mypool);
+
+    // Now play with classes
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // If we provide a hint, we should get a pool that this hint belongs to
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
+                                             IOAddress("192.1.2.201")));
+    EXPECT_EQ(mypool, pool4);
+
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
+                                             IOAddress("192.1.2.129")));
+    EXPECT_EQ(mypool, pool2);
+
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
+                                             IOAddress("192.1.2.64")));
+    EXPECT_EQ(mypool, pool1);
+
+    // Specify addresses which don't belong to any existing pools.
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, three_classes,
+                                             IOAddress("192.1.2.210")));
+    EXPECT_FALSE(mypool);
+
+    // Pool3 requires a member of bar
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
+                                             IOAddress("192.1.2.195")));
+    EXPECT_FALSE(mypool);
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, foo_class,
+                                             IOAddress("192.1.2.195")));
+    EXPECT_FALSE(mypool);
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, bar_class,
+                                             IOAddress("192.1.2.195")));
+    EXPECT_EQ(mypool, pool3);
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, three_classes,
+                                             IOAddress("192.1.2.195")));
+    EXPECT_EQ(mypool, pool3);
 }
 
 // Check if it's possible to get specified number of possible leases for
@@ -237,6 +291,38 @@ TEST(Subnet4Test, getCapacity) {
     PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
     subnet->addPool(pool3);
     EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4));
+
+    // Let's add a forth pool /30. This one has 4 addresses.
+    PoolPtr pool4(new Pool4(IOAddress("192.1.2.200"), 30));
+    subnet->addPool(pool4);
+    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4));
+
+    // Now play with classes
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    pool3->allowClientClass("bar");
+
+    // Pool3 requires a member of bar
+    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, no_class));
+    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, foo_class));
+    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class));
+    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, three_classes));
 }
 
 // Checks that it is not allowed to add invalid pools.
@@ -435,19 +521,44 @@ TEST(Subnet4Test, inRangeinPool) {
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.0.0")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.0.0")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.0.0")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.3.4")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.255.255")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.255.255")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.255.255")));
 
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.3.0.0")));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.3.0.0")));
+
+    // Add with classes
+    pool1->allowClientClass("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), no_class));
+
+    // This client belongs to foo only
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), foo_class));
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), bar_class));
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes));
 }
 
 // This test checks if the toText() method returns text representation
@@ -647,6 +758,37 @@ TEST(Subnet6Test, Pool6getCapacity) {
     EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
               subnet->getPoolCapacity(Lease::TYPE_NA));
 
+    // Now play with classes
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    pool3->allowClientClass("bar");
+
+    // Pool3 requires a member of bar
+    EXPECT_EQ(uint64_t(4294967296ull + 65536),
+              subnet->getPoolCapacity(Lease::TYPE_NA, no_class));
+    EXPECT_EQ(uint64_t(4294967296ull + 65536),
+              subnet->getPoolCapacity(Lease::TYPE_NA, foo_class));
+    EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
+              subnet->getPoolCapacity(Lease::TYPE_NA, bar_class));
+    EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
+              subnet->getPoolCapacity(Lease::TYPE_NA, three_classes));
+
     // This is 2^64 prefixes. We're overflown uint64_t.
     PoolPtr pool4(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:4::"), 64));
     subnet->addPool(pool4);
@@ -657,6 +799,7 @@ TEST(Subnet6Test, Pool6getCapacity) {
     subnet->addPool(pool5);
     EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
               subnet->getPoolCapacity(Lease::TYPE_NA));
+
 }
 
 // Test checks whether the number of prefixes available in the pools are
@@ -724,6 +867,41 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     // If we provide a hint, we should get a pool that this hint belongs to
     mypool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:3::dead:beef"));
 
+    EXPECT_EQ(mypool, pool3);
+
+    // Now play with classes
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    pool3->allowClientClass("bar");
+
+    // Pool3 requires a member of bar
+    mypool = subnet->getPool(Lease::TYPE_NA, no_class,
+                             IOAddress("2001:db8:1:3::dead:beef"));    
+    EXPECT_FALSE(mypool);
+    mypool = subnet->getPool(Lease::TYPE_NA, foo_class,
+                             IOAddress("2001:db8:1:3::dead:beef"));    
+    EXPECT_FALSE(mypool);
+    mypool = subnet->getPool(Lease::TYPE_NA, bar_class,
+                             IOAddress("2001:db8:1:3::dead:beef"));    
+    EXPECT_EQ(mypool, pool3);
+    mypool = subnet->getPool(Lease::TYPE_NA, three_classes,
+                             IOAddress("2001:db8:1:3::dead:beef"));    
     EXPECT_EQ(mypool, pool3);
 }
 
@@ -1198,11 +1376,11 @@ TEST(Subnet6Test, inRangeinPool) {
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::10")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::10")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::10")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::18")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::20")));
@@ -1211,6 +1389,31 @@ TEST(Subnet6Test, inRangeinPool) {
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
     EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::21")));
+
+    // Add with classes
+    pool1->allowClientClass("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), no_class));
+
+    // This client belongs to foo only
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), foo_class));
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), bar_class));
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes));
 }
 
 // This test verifies that inRange() and inPool() methods work properly

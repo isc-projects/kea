@@ -74,6 +74,7 @@ public:
             :IterativeAllocator(type) {
         }
 
+        using AllocEngine::IterativeAllocator::increaseAddress;
         using AllocEngine::IterativeAllocator::increasePrefix;
     };
 };
@@ -221,10 +222,10 @@ public:
     /// @param input address to be increased
     /// @param exp_output expected address after increase
     void
-    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator&,
+    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator& alloc,
                       std::string input, std::string exp_output) {
-        EXPECT_EQ(exp_output, asiolink::IOAddress::increase(
-                      asiolink::IOAddress(input)).toText());
+        EXPECT_EQ(exp_output, alloc.increaseAddress(asiolink::IOAddress(input),
+                                                    false, 0).toText());
     }
 
     /// @brief Checks if increasePrefix() works as expected
@@ -409,6 +410,7 @@ public:
     bool fqdn_fwd_;           ///< Perform forward update for a lease.
     bool fqdn_rev_;           ///< Perform reverse update for a lease.
     LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
+    ClientClasses cc_;        ///< client classes
 };
 
 /// @brief Used in Allocation Engine tests for IPv4
@@ -510,6 +512,7 @@ public:
     Pool4Ptr pool_;             ///< Pool belonging to subnet_
     LeaseMgrFactory factory_;   ///< Pointer to LeaseMgr factory
     AllocEngine::ClientContext4 ctx_; ///< Context information passed to various
+    ClientClasses cc_;          ///< Client classes
                                      ///< allocation engine functions.
 };
 

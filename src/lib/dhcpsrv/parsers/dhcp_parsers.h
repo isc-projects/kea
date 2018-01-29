@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -651,7 +651,16 @@ private:
     /// A storage for pool specific option values.
     CfgOptionPtr options_;
 
+    /// @brief User context (optional, may be null)
+    ///
+    /// User context is arbitrary user data, to be used by hooks.
     isc::data::ConstElementPtr user_context_;
+
+    /// @brief Client class (a client has to belong to to use this pd-pool)
+    ///
+    /// If null, everyone is allowed.
+    isc::data::ConstElementPtr client_class_;
+
 };
 
 /// @brief Parser for a list of prefix delegation pools.

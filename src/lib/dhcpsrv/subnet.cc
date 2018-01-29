@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,9 +135,48 @@ Subnet::getPoolCapacity(Lease::Type type) const {
 }
 
 uint64_t
+Subnet::getPoolCapacity(Lease::Type type,
+                        const ClientClasses& client_classes) const {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        return sumPoolCapacity(pools_, client_classes);
+    case Lease::TYPE_TA:
+        return sumPoolCapacity(pools_ta_, client_classes);
+    case Lease::TYPE_PD:
+        return sumPoolCapacity(pools_pd_, client_classes);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
+    }
+}
+
+uint64_t
 Subnet::sumPoolCapacity(const PoolCollection& pools) const {
     uint64_t sum = 0;
     for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
+        uint64_t x = (*p)->getCapacity();
+
+        // Check if we can add it. If sum + x > uint64::max, then we would have
+        // overflown if we tried to add it.
+        if (x > std::numeric_limits<uint64_t>::max() - sum) {
+            return (std::numeric_limits<uint64_t>::max());
+        }
+
+        sum += x;
+    }
+
+    return (sum);
+}
+
+uint64_t
+Subnet::sumPoolCapacity(const PoolCollection& pools,
+                        const ClientClasses& client_classes) const {
+    uint64_t sum = 0;
+    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
+        if (!(*p)->clientSupported(client_classes)) {
+            continue;
+        }
         uint64_t x = (*p)->getCapacity();
 
         // Check if we can add it. If sum + x > uint64::max, then we would have
@@ -329,6 +368,33 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
     return (candidate);
 }
 
+const PoolPtr Subnet::getPool(Lease::Type type,
+                              const ClientClasses& client_classes,
+                              const isc::asiolink::IOAddress& hint) const {
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
+    const PoolCollection& pools = getPools(type);
+
+    PoolPtr candidate;
+
+    if (!pools.empty()) {
+        PoolCollection::const_iterator ub =
+            std::upper_bound(pools.begin(), pools.end(), hint,
+                             prefixLessThanFirstAddress);
+
+        if (ub != pools.begin()) {
+            --ub;
+            if ((*ub)->inRange(hint) && (*ub)->clientSupported(client_classes)) {
+                candidate = *ub;
+            }
+        }
+    }
+
+    // Return a pool or NULL if no match found.
+    return (candidate);
+}
+
 void
 Subnet::addPool(const PoolPtr& pool) {
     // check if the type is valid (and throw if it isn't)
@@ -401,6 +467,31 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
     for (PoolCollection::const_iterator pool = pools.begin();
          pool != pools.end(); ++pool) {
+        if ((*pool)->inRange(addr)) {
+            return (true);
+        }
+    }
+    // There's no pool that address belongs to
+    return (false);
+}
+
+bool
+Subnet::inPool(Lease::Type type,
+               const isc::asiolink::IOAddress& addr,
+               const ClientClasses& client_classes) const {
+
+    // Let's start with checking if it even belongs to that subnet.
+    if ((type != Lease::TYPE_PD) && !inRange(addr)) {
+        return (false);
+    }
+
+    const PoolCollection& pools = getPools(type);
+
+    for (PoolCollection::const_iterator pool = pools.begin();
+         pool != pools.end(); ++pool) {
+        if (!(*pool)->clientSupported(client_classes)) {
+            continue;
+        }
         if ((*pool)->inRange(addr)) {
             return (true);
         }
@@ -618,78 +709,16 @@ Subnet6::toElement() const {
     ElementPtr pool_list = Element::createList();
     for (PoolCollection::const_iterator pool = pools.cbegin();
          pool != pools.cend(); ++pool) {
-        // Prepare the map for a pool (@todo move this code to pool.cc)
-        ElementPtr pool_map = Element::createMap();
-        // Set user-context
-        (*pool)->contextToElement(pool_map);
-        // Set pool
-        const IOAddress& first = (*pool)->getFirstAddress();
-        const IOAddress& last = (*pool)->getLastAddress();
-        std::string range = first.toText() + "-" + last.toText();
-        // Try to output a prefix (vs a range)
-        int prefix_len = prefixLengthFromRange(first, last);
-        if (prefix_len >= 0) {
-            std::ostringstream oss;
-            oss << first.toText() << "/" << prefix_len;
-            range = oss.str();
-        }
-        pool_map->set("pool", Element::create(range));
-        // Set pool options
-        ConstCfgOptionPtr opts = (*pool)->getCfgOption();
-        pool_map->set("option-data", opts->toElement());
-        // Push on the pool list
-        pool_list->add(pool_map);
+	pool_list->add((*pool)->toElement());
     }
     map->set("pools", pool_list);
+
     // Set pd-pools
     const PoolCollection& pdpools = getPools(Lease::TYPE_PD);
     ElementPtr pdpool_list = Element::createList();
     for (PoolCollection::const_iterator pool = pdpools.cbegin();
          pool != pdpools.cend(); ++pool) {
-        // Get it as a Pool6 (@todo move this code to pool.cc)
-        const Pool6* pdpool = dynamic_cast<Pool6*>(pool->get());
-        if (!pdpool) {
-            isc_throw(ToElementError, "invalid pd-pool pointer");
-        }
-        // Prepare the map for a pd-pool
-        ElementPtr pool_map = Element::createMap();
-        // Set user-context
-        pdpool->contextToElement(pool_map);
-        // Set prefix
-        const IOAddress& prefix = pdpool->getFirstAddress();
-        pool_map->set("prefix", Element::create(prefix.toText()));
-        // Set prefix-len (get it from min - max)
-        const IOAddress& last = pdpool->getLastAddress();
-        int prefix_len = prefixLengthFromRange(prefix, last);
-        if (prefix_len < 0) {
-            // The pool is bad: give up
-            isc_throw(ToElementError, "invalid prefix range "
-                      << prefix.toText() << "-" << last.toText());
-        }
-        pool_map->set("prefix-len", Element::create(prefix_len));
-        // Set delegated-len
-        uint8_t len = pdpool->getLength();
-        pool_map->set("delegated-len",
-                      Element::create(static_cast<int>(len)));
-
-        // Set excluded prefix
-        const Option6PDExcludePtr& xopt =
-            pdpool->getPrefixExcludeOption();
-        if (xopt) {
-            const IOAddress& xprefix =
-                xopt->getExcludedPrefix(prefix, len);
-            pool_map->set("excluded-prefix",
-                          Element::create(xprefix.toText()));
-            uint8_t xlen = xopt->getExcludedPrefixLength();
-            pool_map->set("excluded-prefix-len",
-                          Element::create(static_cast<int>(xlen)));
-        }
-
-        // Set pool options
-        ConstCfgOptionPtr opts = pdpool->getCfgOption();
-        pool_map->set("option-data", opts->toElement());
-        // Push on the pool list
-        pdpool_list->add(pool_map);
+        pdpool_list->add((*pool)->toElement());
     }
     map->set("pd-pools", pdpool_list);
 
