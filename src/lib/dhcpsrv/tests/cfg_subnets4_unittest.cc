@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -819,6 +819,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 123));
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
+    pool2->allowClientClass("bar");
 
     std::string json1 = "{ \"comment\": \"foo\", \"version\": 1 }";
     data::ElementPtr ctx1 = data::Element::fromJSON(json1);
@@ -857,6 +858,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "        },{\n"
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\"\n,"
+        "            \"client-class\": \"bar\",\n"
         "            \"user-context\": { \"foo\": \"bar\" }\n"
         "        }\n"
         "    ]\n"

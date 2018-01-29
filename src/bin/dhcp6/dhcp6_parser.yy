@@ -1307,6 +1307,7 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
+          | client_class
           | user_context
           | comment
           | unknown_map_entry
@@ -1427,6 +1428,7 @@ pd_pool_param: pd_prefix
              | pd_prefix_len
              | pd_delegated_len
              | option_data_list
+             | client_class
              | excluded_prefix
              | excluded_prefix_len
              | user_context
@@ -1622,11 +1624,11 @@ client_classes: CLIENT_CLASSES {
     ctx.leave();
 };
 
-client_classes_list: client_class
-                   | client_classes_list COMMA client_class
+client_classes_list: client_class_entry
+                   | client_classes_list COMMA client_class_entry
                    ;
 
-client_class: LCURLY_BRACKET {
+client_class_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
