@@ -3,7 +3,7 @@
 	on per pool basis. This capability will be useful for grouping
 	certain types of devices into specific address and/or prefix
 	pools.
-	(Trac #5425, git xxx)
+	(Trac #5425, git 5f3a89d6e32e90cd9cbb2347c7b2208c3e1561e0)
 
 1349.	[build]		andreipavelQ
 	Compilation parameters unified (every file now includes config.h,
