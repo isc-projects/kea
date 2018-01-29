@@ -134,7 +134,7 @@ public:
     /// @brief creates an option with specified option code
     ///
     /// This method is static, because it is used from callouts
-    /// that do not have a pointer to HooksDhcpv4SSrvTest object
+    /// that do not have a pointer to HooksDhcpv4SrvTest object
     ///
     /// @param option_code code of option to be created
     ///
@@ -235,7 +235,7 @@ public:
 
         // If there is at least one option with data
         if (pkt->data_.size() >= Pkt4::DHCPV4_PKT_HDR_LEN) {
-            // Offset of the first byte of the CHWADDR field. Let's the first
+            // Offset of the first byte of the CHADDR field. Let's the first
             // byte to some new value that we could later check
             pkt->data_[28] = 0xff;
         }
@@ -1949,7 +1949,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     client1.setIfaceName("eth1");
     ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
-    // We should be offerred an address but the DHCPACK should not arrive
+    // We should be offered an address but the DHCPACK should not arrive
     // at this point, because the packet is parked.
     ASSERT_FALSE(client1.getContext().response_);
 
@@ -1991,7 +1991,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     // Check that the callback called is indeed the one we installed.
     EXPECT_EQ("leases4_committed", callback_name_);
 
-    // There should be now two actions schedulede on our IO service
+    // There should be now two actions scheduled on our IO service
     // by the invoked callouts. They unpark both DHCPACK messages.
     ASSERT_NO_THROW(io_service_->poll());
 
@@ -2639,7 +2639,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
 }
 
 // Checks if callouts installed on the dhcp4_srv_configured ared indeed called
-// and all the necessary parameters are pased.
+// and all the necessary parameters are passed.
 TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
     boost::shared_ptr<ControlledDhcpv4Srv> srv(new ControlledDhcpv4Srv(0));
 
