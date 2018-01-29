@@ -241,7 +241,7 @@ public:
     /// before the response is sent to a client. In this case, the object type
     /// is a pointer to the processed packet. Therefore, further in this
     /// description we're going to refer to the parked objects as "parked
-    /// packets". However, any other object can be parked if neccessary.
+    /// packets". However, any other object can be parked if necessary.
     ///
     /// The following is the typical flow when packets are parked. The callouts
     /// responsible for performing an asynchronous operation signal this need

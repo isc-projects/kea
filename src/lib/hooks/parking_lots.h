@@ -104,7 +104,7 @@ public:
     ///
     /// @param parked_object parked object to be unparked.
     /// @param force boolean value indicating if the reference counting should
-    /// be ignored and the object should be unparked immediatelly.
+    /// be ignored and the object should be unparked immediately.
     /// @return false if the object couldn't be unparked because there is
     /// no such object, true otherwise.
     template<typename T>
@@ -126,7 +126,7 @@ public:
             }
 
             // Parked object found, so return true to indicate that the
-            // operation was successful. It doesn't neccessarily mean
+            // operation was successful. It doesn't necessarily mean
             // that the object was unparked, but at least the reference
             // count was decreased.
             return (true);
@@ -206,7 +206,7 @@ private:
     }
 };
 
-/// @brief Type of the pointer to the pakring lot.
+/// @brief Type of the pointer to the parking lot.
 typedef boost::shared_ptr<ParkingLot> ParkingLotPtr;
 
 /// @brief Provides a limited view to the @c ParkingLot.
