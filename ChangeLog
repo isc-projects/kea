@@ -1,3 +1,8 @@
+1351.	[build,bug]	andrei, razvan
+	Various small changes and bugfixes. Thank you to Andrei Pavel
+	and Razvan Becheriu for submitting their patch.
+	(Github #54, git 2efa7494228a1797dff8d9d74107a452c61e2386)
+
 1350.	[func]		fdupont
 	It is now possible to specify client classification restrictions
 	on per pool basis. This capability will be useful for grouping
