@@ -52,6 +52,11 @@ namespace hooks {
 /// be unparked, but the object will be unparked when all callouts call this
 /// function, i.e. when all callouts signal completion of their respective
 /// asynchronous operations.
+///
+/// The types of the parked objects provided as T parameter of respective
+/// functions are most often shared pointers. One should not use references
+/// to parked objects nor references to shared pointers to avoid premature
+/// destruction of the parked objects.
 class ParkingLot {
 public:
 
@@ -218,6 +223,11 @@ typedef boost::shared_ptr<ParkingLot> ParkingLotPtr;
 /// The handle is provided to the callouts which can reference and unpark
 /// parked objects. The callouts should not park objects, therefore this
 /// operation is not available.
+///
+/// The types of the parked objects provided as T parameter of respective
+/// functions are most often shared pointers. One should not use references
+/// to parked objects nor references to shared pointers to avoid premature
+/// destruction of the parked objects.
 class ParkingLotHandle {
 public:
 
