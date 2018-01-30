@@ -7,9 +7,9 @@
 #include <config.h>
 
 #include <dhcp/libdhcp++.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_space.h>
 #include <util/encode/hex.h>
 #include <string>
 #include <sstream>
@@ -285,5 +285,5 @@ CfgOption::toElement() const {
     return (result);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // namespace isc

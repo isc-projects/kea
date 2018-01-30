@@ -217,9 +217,10 @@ public:
         result_ = result;
         received_ncr_ = ncr;
     }
-    // @brief Handler invoked when test timeout is hit.
-    //
-    // This callback stops all running (hanging) tasks on IO service.
+
+    /// @brief Handler invoked when test timeout is hit
+    ///
+    /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
         io_service_.stop();
         FAIL() << "Test timeout hit.";
@@ -656,9 +657,9 @@ public:
         sent_ncrs_.push_back(ncr);
     }
 
-    // @brief Handler invoked when test timeout is hit.
-    //
-    // This callback stops all running (hanging) tasks on IO service.
+    /// @brief Handler invoked when test timeout is hit
+    ///
+    /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
         io_service_.stop();
         FAIL() << "Test timeout hit.";

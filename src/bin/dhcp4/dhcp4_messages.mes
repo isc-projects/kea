@@ -176,6 +176,10 @@ a client's error or a server's purged database.
 % DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
 A malformed DHCPv4o6 packet was received.
 
+% DHCP4_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication.
+
 % DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 on interface %5 encapsulating %6: %7 (type %8)
 The arguments specify the client identification information (HW address
 and client identifier), DHCPv6 message name and type, source IPv6
@@ -706,7 +710,3 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
-
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 on interface %3
-This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication.
