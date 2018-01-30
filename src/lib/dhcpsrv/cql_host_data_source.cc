@@ -1607,6 +1607,7 @@ CqlHostDataSourceImpl::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) cons
     // Run statement.
     ConstHostCollection result = getHostCollection(CqlHostExchange::GET_HOST_BY_HOST_ID,
                                                    where_values);
+
     return (result);
 }
 
@@ -1642,6 +1643,7 @@ CqlHostDataSourceImpl::getAll4(const asiolink::IOAddress& address) const {
     // Run statement.
     ConstHostCollection result = getHostCollection(CqlHostExchange::GET_HOST_BY_IPV4_ADDRESS,
                                                    where_values);
+
     return (result);
 }
 
