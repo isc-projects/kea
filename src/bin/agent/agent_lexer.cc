@@ -1322,9 +1322,9 @@ static const flex_int16_t yy_rule_linenum[56] =
       133,  135,  137,  142,  143,  148,  149,  150,  162,  165,
       170,  177,  186,  195,  204,  213,  222,  231,  240,  249,
       258,  267,  276,  285,  294,  303,  312,  321,  330,  339,
-      348,  357,  366,  375,  384,  393,  402,  411,  509,  514,
-      519,  524,  525,  526,  527,  528,  529,  531,  549,  562,
-      567,  571,  573,  575,  577
+      348,  357,  366,  375,  384,  393,  402,  411,  510,  515,
+      520,  525,  526,  527,  528,  529,  530,  532,  550,  563,
+      568,  572,  574,  576,  578
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2215,6 +2215,7 @@ YY_RULE_SETUP
         case '"':
             /* impossible condition */
             driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
+            break;
         case '\\':
             ++pos;
             if (pos >= len) {
@@ -2300,7 +2301,7 @@ YY_RULE_SETUP
 case 39:
 /* rule 39 can match eol */
 YY_RULE_SETUP
-#line 509 "agent_lexer.ll"
+#line 510 "agent_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
@@ -2309,7 +2310,7 @@ YY_RULE_SETUP
 case 40:
 /* rule 40 can match eol */
 YY_RULE_SETUP
-#line 514 "agent_lexer.ll"
+#line 515 "agent_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
@@ -2317,7 +2318,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 519 "agent_lexer.ll"
+#line 520 "agent_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
@@ -2325,37 +2326,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 524 "agent_lexer.ll"
+#line 525 "agent_lexer.ll"
 { return AgentParser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 525 "agent_lexer.ll"
+#line 526 "agent_lexer.ll"
 { return AgentParser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 526 "agent_lexer.ll"
+#line 527 "agent_lexer.ll"
 { return AgentParser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 527 "agent_lexer.ll"
+#line 528 "agent_lexer.ll"
 { return AgentParser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 528 "agent_lexer.ll"
+#line 529 "agent_lexer.ll"
 { return AgentParser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 529 "agent_lexer.ll"
+#line 530 "agent_lexer.ll"
 { return AgentParser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 531 "agent_lexer.ll"
+#line 532 "agent_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -2376,7 +2377,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 549 "agent_lexer.ll"
+#line 550 "agent_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -2392,7 +2393,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 562 "agent_lexer.ll"
+#line 563 "agent_lexer.ll"
 {
     string tmp(yytext);
     return AgentParser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2400,33 +2401,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 567 "agent_lexer.ll"
+#line 568 "agent_lexer.ll"
 {
    return AgentParser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 571 "agent_lexer.ll"
+#line 572 "agent_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 573 "agent_lexer.ll"
+#line 574 "agent_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 575 "agent_lexer.ll"
+#line 576 "agent_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 577 "agent_lexer.ll"
+#line 578 "agent_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 579 "agent_lexer.ll"
+#line 580 "agent_lexer.ll"
 {
     if (driver.states_.empty()) {
         return AgentParser::make_END(driver.loc_);
@@ -2452,10 +2453,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 602 "agent_lexer.ll"
+#line 603 "agent_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2458 "agent_lexer.cc"
+#line 2459 "agent_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3560,7 +3561,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 602 "agent_lexer.ll"
+#line 603 "agent_lexer.ll"
 
 
 using namespace isc::dhcp;

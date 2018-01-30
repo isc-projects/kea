@@ -31,6 +31,7 @@ public:
     /// @return Valid shared network configuration.
     std::string getWorkingConfig() const {
             std::string config = "{"
+                "    \"user-context\": { \"comment\": \"example\" },"
                 "    \"name\": \"bird\","
                 "    \"interface\": \"eth1\","
                 "    \"option-data\": ["
@@ -106,6 +107,11 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1", network->getIface());
 
+    // Check user context.
+    ConstElementPtr context = network->getContext();
+    ASSERT_TRUE(context);
+    EXPECT_TRUE(context->get("comment"));
+
     // Subnet with id 1
     Subnet4Ptr subnet1 = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet1);
@@ -177,6 +183,7 @@ public:
             std::string config = "{"
                 "    \"name\": \"bird\","
                 "    \"interface\": \"eth1\","
+                "    \"user-context\": { },"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -239,6 +246,11 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     // Check basic parameters.
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1", network->getIface());
+
+    // Check user context.
+    ConstElementPtr context = network->getContext();
+    ASSERT_TRUE(context);
+    EXPECT_EQ(0, context->size());
 
     // Subnet with id 1
     Subnet6Ptr subnet1 = network->getSubnet(SubnetID(1));

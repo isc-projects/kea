@@ -59,7 +59,8 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, database_config->mapValue()) {
         try {
-            if ((param.first == "persist") || (param.first == "readonly")) {
+            if ((param.first == "persist") || (param.first == "readonly") ||
+                (param.first == "tcp-nodelay")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -69,6 +70,21 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                     boost::lexical_cast<std::string>(lfc_interval);
 
             } else if (param.first == "connect-timeout") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
+
+            } else if (param.first == "reconnect-wait-time") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
+
+            } else if (param.first == "request-timeout") {
+                timeout = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(timeout);
+
+            } else if (param.first == "tcp-keepalive") {
                 timeout = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(timeout);
@@ -153,11 +169,9 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // 5. Save the database access string in the Configuration Manager.
     if (type_ == LEASE_DB) {
         cfg_db->setLeaseDbAccessString(getDbAccessString());
-
-    } else {
+    } else if (type_ == HOSTS_DB) {
         cfg_db->setHostDbAccessString(getDbAccessString());
     }
-
 }
 
 // Create the database access string
@@ -183,5 +197,5 @@ DbAccessParser::getDbAccessString() const {
     return (dbaccess);
 }
 
-};  // namespace dhcp
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc

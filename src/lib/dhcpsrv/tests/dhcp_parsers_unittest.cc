@@ -1819,7 +1819,8 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
 
@@ -1845,6 +1846,8 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
 
     // Verify that the configuration object unparses.
     ConstElementPtr expected;
@@ -1871,7 +1874,8 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"override-client-update\" : false, "
         "     \"replace-client-name\" : \"never\", "
         "     \"generated-prefix\" : \"\", "
-        "     \"qualifying-suffix\" : \"\" "
+        "     \"qualifying-suffix\" : \"\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
 
@@ -1896,6 +1900,8 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
 
     ASSERT_NO_THROW(expected = Element::fromJSON(config_str2)->get("dhcp-ddns"));
     ASSERT_TRUE(expected);

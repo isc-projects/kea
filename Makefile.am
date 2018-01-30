@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = compatcheck tools doc . ext src m4macros @PREMIUM_DIR@
+SUBDIRS = compatcheck tools doc . ext src m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -77,7 +77,6 @@ report-cpp-coverage:
 if HAVE_BOTAN
 			botan/\* \
 endif
-			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
 			log4cplus/\* \
@@ -119,9 +118,6 @@ install-exec-hook:
 
 EXTRA_DIST  = tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh
-
-#### include external sources in the distributed tarball:
-EXTRA_DIST += ext/coroutine/coroutine.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc

@@ -427,6 +427,7 @@ public:
     ///                should be performed
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
+    /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, bool preproc = false);
 
     /// Creates an Element from the given input stream containing JSON
@@ -438,6 +439,7 @@ public:
     ///                should be performed
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
+    /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file_name,
                                bool preproc = false);
 
@@ -453,6 +455,7 @@ public:
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
+    /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
                                int& line, int &pos);
 
@@ -738,8 +741,8 @@ void merge(ElementPtr element, ConstElementPtr other);
 /// @param level nesting level (default is 100, 0 means shallow copy,
 /// negative means outbound and perhaps looping forever).
 /// @return a pointer to a fresh copy
-/// \throw raises a BadValue is a null pointer occurs.
-ElementPtr copy(ConstElementPtr from, int level = 100);
+/// @throw raises a BadValue is a null pointer occurs.
+ElementPtr copy(ConstElementPtr from, int level = 100); 
 
 /// @brief Compares the data with other using unordered lists
 ///
@@ -753,6 +756,7 @@ bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
 /// This operator converts the @c ConstElementPtr into a string and
 /// inserts it into the output stream @c out with an initial
 /// indentation @c indent and add at each level @c step spaces.
+/// For maps if there is a comment property it is printed first.
 ///
 /// @param element A @c ConstElementPtr to pretty print
 /// @param out A @c std::ostream on which the print operation is performed
@@ -765,6 +769,7 @@ void prettyPrint(ConstElementPtr element, std::ostream& out,
 ///
 /// This operator converts the @c ConstElementPtr into a string with
 /// an initial indentation @c indent and add at each level @c step spaces.
+/// For maps if there is a comment property it is printed first.
 ///
 /// @param element A @c ConstElementPtr to pretty print
 /// @param indent An initial number of spaces to add each new line

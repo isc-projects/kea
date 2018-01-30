@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space_container.h>
+#include <cc/user_context.h>
 
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -131,6 +132,7 @@ class OptionIntArray;
 /// @todo Extend the comment to describe "generic factories".
 /// @todo Extend this class to use custom namespaces.
 /// @todo Extend this class with more factory functions.
+/// @todo Derive from UserContext without breaking the multi index.
 class OptionDefinition {
 public:
 
@@ -283,6 +285,27 @@ public:
     ///
     /// @return option data type.
     OptionDataType getType() const { return (type_); };
+
+    /// @brief Returns const pointer to the user context
+    data::ConstElementPtr getContext() const {
+        return (user_context_.getContext());
+    }
+
+    /// @brief Sets user context.
+    /// @param ctx user context to be stored.
+    void setContext(const data::ConstElementPtr& ctx) {
+        user_context_.setContext(ctx);
+    }
+
+    /// @brief Merge unparse a user_context object.
+    ///
+    /// Add user-context to map, but only if defined. Omit if it was not.
+    /// Extract comment so it will be pretty-printed first.
+    ///
+    /// @param map A pointer to map where the user context will be unparsed.
+    void contextToElement(data::ElementPtr map) const {
+        user_context_.contextToElement(map);
+    }
 
     /// @brief Check if the option definition is valid.
     ///
@@ -708,6 +731,8 @@ private:
     std::string encapsulated_space_;
     /// Collection of data fields within the record.
     RecordFieldsCollection record_fields_;
+    /// User context
+    UserContext user_context_;
 };
 
 

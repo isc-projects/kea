@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <config/module_spec.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <process/testutils/d_test_stubs.h>

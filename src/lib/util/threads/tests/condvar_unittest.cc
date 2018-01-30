@@ -137,7 +137,9 @@ signalAndWait(CondVar* condvar, Mutex* mutex) {
 #ifdef HAS_UNDEFINED_PTHREAD_BEHAVIOR
 TEST_F(CondVarTest, DISABLED_destroyWhileWait) {
 #else
-TEST_F(CondVarTest, destroyWhileWait) {
+// This tests had to be disabled because it hangs on most of the OS used in lab
+// TODO fix destroyWhileWait test
+TEST_F(CondVarTest, DISABLED_destroyWhileWait) {
 #endif
     // We'll destroy a CondVar object while the thread is still waiting
     // on it.  This will trigger an assertion failure.

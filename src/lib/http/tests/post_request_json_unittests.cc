@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <http/tests/request_test.h>
 #include <gtest/gtest.h>
 #include <map>
+#include <sstream>
 
 using namespace isc::data;
 using namespace isc::http;
@@ -43,7 +44,6 @@ public:
 
     /// @brief Default value of the JSON body.
     std::string json_body_;
-
 };
 
 // This test verifies that PostHttpRequestJson class only accepts
@@ -168,6 +168,30 @@ TEST_F(PostHttpRequestJsonTest, getJsonElement) {
 
     // An attempt to retrieve non-existing element should return NULL.
     EXPECT_FALSE(request_.getJsonElement("bar"));
+}
+
+// This test verifies that it is possible to create client side request
+// containing JSON body.
+TEST_F(PostHttpRequestJsonTest, clientRequest) {
+    request_.setDirection(HttpMessage::OUTBOUND);
+
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 0));
+    addHeaderToContext("Content-Type", "application/json");
+
+    ElementPtr json = Element::fromJSON(json_body_);
+    request_.setBodyAsJson(json);
+
+    // Commit and validate the data.
+    ASSERT_NO_THROW(request_.finalize());
+
+    std::ostringstream expected_request_text;
+    expected_request_text << "POST /isc/org HTTP/1.0\r\n"
+        "Content-Length: " << json->str().size() << "\r\n"
+        "Content-Type: application/json\r\n"
+        "\r\n"
+        << json->str();
+
+    EXPECT_EQ(expected_request_text.str(), request_.toString());
 }
 
 }

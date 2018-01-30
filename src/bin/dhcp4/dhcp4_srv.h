@@ -15,10 +15,11 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp_ddns/ncr_msg.h>
-#include <dhcpsrv/d2_client_mgr.h>
-#include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/d2_client_mgr.h>
+#include <dhcpsrv/network_state.h>
+#include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
 
@@ -766,14 +767,18 @@ protected:
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query) const;
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
+                                       bool& drop) const;
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
     /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query) const;
+    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
+                                          bool& drop) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
@@ -839,6 +844,12 @@ private:
 
     uint16_t port_;  ///< UDP port number on which server listens.
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+
+protected:
+
+    /// @brief Holds information about disabled DHCP service and/or
+    /// disabled subnet/network scopes.
+    NetworkState network_state_;
 
 public:
     /// Class methods for DHCPv4-over-DHCPv6 handler

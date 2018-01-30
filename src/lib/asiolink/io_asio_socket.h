@@ -16,12 +16,13 @@
 #include <string>
 
 #include <exceptions/exceptions.h>
-#include <coroutine.h>
 
 #include <util/buffer.h>
 
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
+
+#include <boost/asio/coroutine.hpp>
 
 namespace isc {
 namespace asiolink {

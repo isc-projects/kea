@@ -28,6 +28,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::data;
 using namespace std;
 
 namespace {
@@ -340,6 +341,12 @@ TEST_F(MySqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
 }
 
+// Test verifies if a host with user context can be stored and later retrieved.
+TEST_F(MySqlHostDataSourceTest, usercontext) {
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testUserContext(Element::fromJSON(comment));
+}
+
 // Test verifies if the hardware or client-id query can match hardware address.
 TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId1) {
     /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
@@ -492,13 +499,15 @@ TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
 // This test verifies that DHCPv4 options can be inserted in a binary format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, optionsReservations4) {
-    testOptionsReservations4(false);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations4(false, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv6 options can be inserted in a binary format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, optionsReservations6) {
-    testOptionsReservations6(false);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations6(false, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
@@ -510,13 +519,15 @@ TEST_F(MySqlHostDataSourceTest, optionsReservations46) {
 // This test verifies that DHCPv4 options can be inserted in a textual format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations4) {
-    testOptionsReservations4(true);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations4(true, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv6 options can be inserted in a textual format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations6) {
-    testOptionsReservations6(true);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations6(true, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv4 and DHCPv6 options can be inserted in a

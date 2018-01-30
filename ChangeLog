@@ -1,3 +1,79 @@
+1349.	[build]		andreipavelQ
+	Compilation parameters unified (every file now includes config.h,
+	several makefile tweaks).
+	(Github #38, git 7206aa79c57be7466c4ab3dd558663c6c4f858b7)
+
+1348.	[func]		fdupont
+	Several hook points now support next step status DROP. This allows
+	more flexibility with dropping packets from within hooks.
+	(Trac #5443, git ff22a906915a34df327174f550f69a396a05bb2c)
+
+1347.	[func]		marcin
+	Implemented HTTP client classes in libkea-http.
+	(Trac #5451, git 94267e252b372650e4235389251b49d6f5501322)
+
+1346.	[build]		fdupont
+	Modified configure.ac to include premium module m4 macros, if the
+	module is present. Prior to this it relied on premium having it's
+	own configure.ac script.
+	(Trac #5400, git 38c4f2fb8fc8c8874a0e4671cc295a049acf675f)
+
+1345.	[build]		fdupont
+	Added support of boost 1.66.0 ASIO.
+	(Github #60/Trac #5496, git bc2947de4296bd99b74e50e65f272c7ad5312429)
+
+1344.	[func]		marcin
+	Implemented lease4-get-all command in lease_cmds hooks library.
+	(Trac #5468, git a378ec28489e98df64830d1f26c3bebd20e256b2)
+
+1343.	[func]		marcin
+	Implemented "force-create" parameter for lease4-update and
+	lease6-update commands.
+	(Trac #5472, git 369245e4c5308a701fd483123f2cb2fd7d3d0966)
+
+1342.	[func]		andrei, razvan
+	Support for host reservations stored in Cassandra added. The core
+	functionality was added. There are some limitations (delete,
+	client classes, fixed DHCPv4 fields, statistics recount, etc.)
+	These will be addressed in upcoming tickets.
+	(github #37, git e37606fd2d0c02234a55f7445c52a12b2e7a82ec)
+
+1343.	[func]		fdupont
+	User-context and comments are now supported in many new scopes:
+	global, shared-network, subnet, pool, host reservation, option,
+	option definition, client-class, control-socket, dhcp-ddns,
+	interfaces, loggers, and for DHCPv6 pd-pool and server-id.
+	(Trac #5351, git 3405a8fa5d391d96cd15874fd3de3ac63ceb33b6)
+
+1342.	[bug]		fdupont
+	Fixed subnets and host reservations returned by config-get and
+	config-write.
+	(Trac #5452, git c24d057bed2692eaf3cdb6af889122eb582ffede)
+
+1341.	[func]		razvan, andrei
+	Significant update of Cassandra support. A lot of code for
+	Cassandr Lease Manager has been updated and partially rewritten.
+	(github #35, git 41795494720cd9886c1e98d21eaeefd94d674e37)
+
+1340.	[func]		marcin
+	Added support for "dhcp-enable" and "dhcp-disable" commands in
+	the DHCPv4 and DHCPv6 server.
+	(Trac #5442, git 36dc68ff7aa8b3cfd265c4f982d10248590039bd)
+
+1339.	[doc]		marcin
+	Updated User's Guide describing how to selectively disable
+	legal logging for a subnet.
+	(Trac #5407, git 469080abd711f8e88a5133f76f4ab31a5549a858)
+
+1338.	[func]		marcin
+	Persistent HTTP/1.1 connections and HTTP/1.0 keep-alive
+	are supported by RESTful API.
+	(Trac #5448, git 05018f7cc0662d6956b9b7648646e0c17da948ba)
+
+1337.	[doc]		marcin
+	Added placeholder section for the libdhcp_ha hooks library.
+	(Trac #5447, git d939b5b8bc4befb24daf863f2408d97493e4bfbf)
+
 1336.	[bug]		marcin
 	DHCPv6 server always sends prefixes with the lifetime of 0 for
 	the prefix leases that should no longer be used, even if those

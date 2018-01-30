@@ -127,6 +127,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         opts_parser.parse(options, option_data);
     }
 
+    // Parse user context
+    ConstElementPtr user_context = class_def_cfg->get("user-context");
+
     // Let's try to parse the next-server field
     IOAddress next_server("0.0.0.0");
     if (class_def_cfg->contains("next-server")) {
@@ -182,8 +185,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Add the client class definition
     try {
-        class_dictionary->addClass(name, match_expr, test, options,
-                                   defs, next_server, sname, filename);
+        class_dictionary->addClass(name, match_expr, test, options, defs,
+                                   user_context, next_server, sname, filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");

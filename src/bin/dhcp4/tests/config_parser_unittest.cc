@@ -10,8 +10,8 @@
 #include <gtest/gtest.h>
 
 #include <cc/command_interpreter.h>
-#include <config/module_spec.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
@@ -129,24 +129,84 @@ const char* PARSER_CONFIGS[] = {
     "        ],"
     "        \"subnet\": \"192.0.2.0/24\""
     "     } ]"
+    "}",
+
+    // Last Configuration for comments
+    "{"
+    "    \"comment\": \"A DHCPv4 server\","
+    "    \"interfaces-config\": {"
+    "        \"comment\": \"Use wildcard\","
+    "        \"interfaces\": [ \"*\" ] },"
+    "    \"option-def\": [ {"
+    "        \"comment\": \"An option definition\","
+    "        \"name\": \"foo\","
+    "        \"code\": 100,"
+    "        \"type\": \"ipv4-address\","
+    "        \"space\": \"isc\""
+    "     } ],"
+    "    \"option-data\": [ {"
+    "        \"comment\": \"Set option value\","
+    "        \"name\": \"dhcp-message\","
+    "        \"data\": \"ABCDEF0105\","
+    "        \"csv-format\": false"
+    "     } ],"
+    "    \"client-classes\": ["
+    "        {"
+    "           \"comment\": \"match all\","
+    "           \"name\": \"all\","
+    "           \"test\": \"'' == ''\""
+    "        },"
+    "        {"
+    "           \"name\": \"none\""
+    "        },"
+    "        {"
+    "           \"comment\": \"a comment\","
+    "           \"name\": \"both\","
+    "           \"user-context\": {"
+    "               \"version\": 1"
+    "           }"
+    "        }"
+    "        ],"
+    "    \"control-socket\": {"
+    "        \"socket-type\": \"unix\","
+    "        \"socket-name\": \"/tmp/kea4-ctrl-socket\","
+    "        \"user-context\": { \"comment\": \"Indirect comment\" }"
+    "    },"
+    "    \"shared-networks\": [ {"
+    "        \"comment\": \"A shared network\","
+    "        \"name\": \"foo\","
+    "        \"subnet4\": ["
+    "        { "
+    "            \"comment\": \"A subnet\","
+    "            \"subnet\": \"192.0.1.0/24\","
+    "            \"id\": 100,"
+    "            \"pools\": ["
+    "            {"
+    "                 \"comment\": \"A pool\","
+    "                 \"pool\": \"192.0.1.1-192.0.1.10\""
+    "            }"
+    "            ],"
+    "            \"reservations\": ["
+    "            {"
+    "                 \"comment\": \"A host reservation\","
+    "                 \"hw-address\": \"AA:BB:CC:DD:EE:FF\","
+    "                 \"hostname\": \"foo.example.com\","
+    "                 \"option-data\": [ {"
+    "                     \"comment\": \"An option in a reservation\","
+    "                     \"name\": \"domain-name\","
+    "                     \"data\": \"example.com\""
+    "                 } ]"
+    "            }"
+    "            ]"
+    "        }"
+    "        ]"
+    "     } ],"
+    "    \"dhcp-ddns\": {"
+    "        \"comment\": \"No dynamic DNS\","
+    "        \"enable-updates\": false"
+    "    }"
     "}"
 };
-
-/// @brief Prepends the given name with the DHCP4 source directory
-///
-/// @param name file name of the desired file
-/// @return string containing the absolute path of the file in the DHCP source
-/// directory.
-std::string specfile(const std::string& name) {
-    return (std::string(DHCP4_SRC_DIR) + "/" + name);
-}
-
-/// @brief Tests that the spec file is valid.
-/// Verifies that the Kea DHCPv4 configuration specification file is valid.
-TEST(Dhcp4SpecTest, basicSpec) {
-    (isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
-    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
-}
 
 class Dhcp4ParserTest : public ::testing::Test {
 protected:
@@ -165,7 +225,7 @@ public:
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_.reset(new Dhcpv4Srv(0));
+        srv_.reset(new ControlledDhcpv4Srv(0));
         // Create fresh context.
         resetConfiguration();
     }
@@ -5605,6 +5665,221 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
     classes = s->getClientClasses();
     EXPECT_TRUE(classes.empty());
+}
+
+// This test checks comments. Please keep it last.
+TEST_F(Dhcp4ParserTest, comments) {
+
+    string config = PARSER_CONFIGS[4];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Check global user context.
+    ConstElementPtr ctx = CfgMgr::instance().getStagingCfg()->getContext();
+    ASSERT_TRUE(ctx);
+    ASSERT_EQ(1, ctx->size());
+    ASSERT_TRUE(ctx->get("comment"));
+    EXPECT_EQ("\"A DHCPv4 server\"", ctx->get("comment")->str());
+
+    // There is a network interface configuration.
+    ConstCfgIfacePtr iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(iface);
+
+    // Check network interface configuration user context.
+    ConstElementPtr ctx_iface = iface->getContext();
+    ASSERT_TRUE(ctx_iface);
+    ASSERT_EQ(1, ctx_iface->size());
+    ASSERT_TRUE(ctx_iface->get("comment"));
+    EXPECT_EQ("\"Use wildcard\"", ctx_iface->get("comment")->str());
+
+    // There is a global option definition.
+    const OptionDefinitionPtr& opt_def =
+        LibDHCP::getRuntimeOptionDef("isc", 100);
+    ASSERT_TRUE(opt_def);
+    EXPECT_EQ("foo", opt_def->getName());
+    EXPECT_EQ(100, opt_def->getCode());
+    EXPECT_FALSE(opt_def->getArrayType());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, opt_def->getType());
+    EXPECT_TRUE(opt_def->getEncapsulatedSpace().empty());
+
+    // Check option definition user context.
+    ConstElementPtr ctx_opt_def = opt_def->getContext();
+    ASSERT_TRUE(ctx_opt_def);
+    ASSERT_EQ(1, ctx_opt_def->size());
+    ASSERT_TRUE(ctx_opt_def->get("comment"));
+    EXPECT_EQ("\"An option definition\"", ctx_opt_def->get("comment")->str());
+
+    // There is an option descriptor aka option data.
+    const OptionDescriptor& opt_desc =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->
+            get(DHCP4_OPTION_SPACE, DHO_DHCP_MESSAGE);
+    ASSERT_TRUE(opt_desc.option_);
+    EXPECT_EQ(DHO_DHCP_MESSAGE, opt_desc.option_->getType());
+
+    // Check option descriptor user context.
+    ConstElementPtr ctx_opt_desc = opt_desc.getContext();
+    ASSERT_TRUE(ctx_opt_desc);
+    ASSERT_EQ(1, ctx_opt_desc->size());
+    ASSERT_TRUE(ctx_opt_desc->get("comment"));
+    EXPECT_EQ("\"Set option value\"", ctx_opt_desc->get("comment")->str());
+
+    // And there are some client classes.
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dict);
+    EXPECT_EQ(3, dict->getClasses()->size());
+    ClientClassDefPtr cclass = dict->findClass("all");
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("all", cclass->getName());
+    EXPECT_EQ("'' == ''", cclass->getTest());
+
+    // Check client class user context.
+    ConstElementPtr ctx_class = cclass->getContext();
+    ASSERT_TRUE(ctx_class);
+    ASSERT_EQ(1, ctx_class->size());
+    ASSERT_TRUE(ctx_class->get("comment"));
+    EXPECT_EQ("\"match all\"", ctx_class->get("comment")->str());
+
+    // The 'none' class has no user-context/comment.
+    cclass = dict->findClass("none");
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("none", cclass->getName());
+    EXPECT_EQ("", cclass->getTest());
+    EXPECT_FALSE(cclass->getContext());
+
+    // The 'both' class has a user context and a comment.
+    cclass = dict->findClass("both");
+    EXPECT_EQ("both", cclass->getName());
+    EXPECT_EQ("", cclass->getTest());
+    ctx_class = cclass->getContext();
+    ASSERT_TRUE(ctx_class);
+    ASSERT_EQ(2, ctx_class->size());
+    ASSERT_TRUE(ctx_class->get("comment"));
+    EXPECT_EQ("\"a comment\"", ctx_class->get("comment")->str());
+    ASSERT_TRUE(ctx_class->get("version"));
+    EXPECT_EQ("1", ctx_class->get("version")->str());
+
+    // There is a control socket.
+    ConstElementPtr socket =
+        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ASSERT_TRUE(socket->get("socket-type"));
+    EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
+    ASSERT_TRUE(socket->get("socket-name"));
+    EXPECT_EQ("\"/tmp/kea4-ctrl-socket\"", socket->get("socket-name")->str());
+
+    // Check control socket comment and user context.
+    ConstElementPtr ctx_socket = socket->get("user-context");
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
+
+    // Now verify that the shared network was indeed configured.
+    const CfgSharedNetworks4Ptr& cfg_net =
+        CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4();
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(1, nets->size());
+    SharedNetwork4Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+    EXPECT_EQ("foo", net->getName());
+
+    // Check shared network user context.
+    ConstElementPtr ctx_net = net->getContext();
+    ASSERT_TRUE(ctx_net);
+    ASSERT_EQ(1, ctx_net->size());
+    ASSERT_TRUE(ctx_net->get("comment"));
+    EXPECT_EQ("\"A shared network\"", ctx_net->get("comment")->str());
+
+    // The shared network has a subnet.
+    const Subnet4Collection* subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    ASSERT_EQ(1, subs->size());
+    Subnet4Ptr sub = subs->at(0);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(100, sub->getID());
+    EXPECT_EQ("192.0.1.0/24", sub->toText());
+
+    // Check subnet user context.
+    ConstElementPtr ctx_sub = sub->getContext();
+    ASSERT_TRUE(ctx_sub);
+    ASSERT_EQ(1, ctx_sub->size());
+    ASSERT_TRUE(ctx_sub->get("comment"));
+    EXPECT_EQ("\"A subnet\"", ctx_sub->get("comment")->str());
+
+    // The subnet has a pool.
+    const PoolCollection& pools = sub->getPools(Lease::TYPE_V4);
+    ASSERT_EQ(1, pools.size());
+    PoolPtr pool = pools.at(0);
+    ASSERT_TRUE(pool);
+
+    // Check pool user context.
+    ConstElementPtr ctx_pool = pool->getContext();
+    ASSERT_TRUE(ctx_pool);
+    ASSERT_EQ(1, ctx_pool->size());
+    ASSERT_TRUE(ctx_pool->get("comment"));
+    EXPECT_EQ("\"A pool\"", ctx_pool->get("comment")->str());
+
+    // The subnet has a host reservation.
+    uint8_t hw[] = { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF };
+    HWAddrPtr hwaddr(new HWAddr(hw, sizeof(hw), HTYPE_ETHER));
+    ConstHostPtr host =
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->get4(100, hwaddr);
+    ASSERT_TRUE(host);
+    EXPECT_EQ(Host::IDENT_HWADDR, host->getIdentifierType());
+    EXPECT_EQ("aa:bb:cc:dd:ee:ff", host->getHWAddress()->toText(false));
+    EXPECT_FALSE(host->getDuid());
+    EXPECT_EQ(100, host->getIPv4SubnetID());
+    EXPECT_EQ(0, host->getIPv6SubnetID());
+    EXPECT_EQ("foo.example.com", host->getHostname());
+
+    // Check host user context.
+    ConstElementPtr ctx_host = host->getContext();
+    ASSERT_TRUE(ctx_host);
+    ASSERT_EQ(1, ctx_host->size());
+    ASSERT_TRUE(ctx_host->get("comment"));
+    EXPECT_EQ("\"A host reservation\"", ctx_host->get("comment")->str());
+
+    // The host reservation has an option data.
+    ConstCfgOptionPtr opts = host->getCfgOption4();
+    ASSERT_TRUE(opts);
+    EXPECT_FALSE(opts->empty());
+    const OptionDescriptor& host_desc =
+        opts->get(DHCP4_OPTION_SPACE, DHO_DOMAIN_NAME);
+    ASSERT_TRUE(host_desc.option_);
+    EXPECT_EQ(DHO_DOMAIN_NAME, host_desc.option_->getType());
+
+    // Check embedded option data user context.
+    ConstElementPtr ctx_host_desc = host_desc.getContext();
+    ASSERT_TRUE(ctx_host_desc);
+    ASSERT_EQ(1, ctx_host_desc->size());
+    ASSERT_TRUE(ctx_host_desc->get("comment"));
+    EXPECT_EQ("\"An option in a reservation\"",
+              ctx_host_desc->get("comment")->str());
+
+    // Finally dynamic DNS update configuration.
+    const D2ClientConfigPtr& d2 =
+        CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+    ASSERT_TRUE(d2);
+    EXPECT_FALSE(d2->getEnableUpdates());
+
+    // Check dynamic DNS update configuration user context.
+    ConstElementPtr ctx_d2 = d2->getContext();
+    ASSERT_TRUE(ctx_d2);
+    ASSERT_EQ(1, ctx_d2->size());
+    ASSERT_TRUE(ctx_d2->get("comment"));
+    EXPECT_EQ("\"No dynamic DNS\"", ctx_d2->get("comment")->str());
+
+#if 0
+    // Loggers section supports comments too.
+
+    string logging = "{\n"
+        "\"loggers\": [ {\n"
+        "    \"comment\": \"A logger\",\n"
+        "    \"name\": \"kea-dhcp4\"\n"
+        "} ]\n";
+#endif
 }
 
 }

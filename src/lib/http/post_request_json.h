@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,8 +39,19 @@ typedef boost::shared_ptr<const PostHttpRequestJson> ConstPostHttpRequestJsonPtr
 class PostHttpRequestJson : public PostHttpRequest {
 public:
 
-    /// @brief Constructor.
-    PostHttpRequestJson();
+    /// @brief Constructor for inbound HTTP request.
+    explicit PostHttpRequestJson();
+
+    /// @brief Constructor for outbound HTTP request.
+    ///
+    /// This constructor adds "Content-Type" header with the value of
+    /// "application/json" to the context.
+    ///
+    /// @param method HTTP method, e.g. POST.
+    /// @param uri URI.
+    /// @param version HTTP version.
+    explicit PostHttpRequestJson(const Method& method, const std::string& uri,
+                                 const HttpVersion& version);
 
     /// @brief Complete parsing of the HTTP request.
     ///
@@ -57,6 +68,16 @@ public:
     /// @throw HttpRequestJsonError if an error occurred.
     data::ConstElementPtr getBodyAsJson() const;
 
+    /// @brief Sets JSON body for an outbound message.
+    ///
+    /// Note that this method copies the pointer to the body, rather than
+    /// the entire data structure. Thus, the original object should not be
+    /// modified after this method is called. If the specified pointer is
+    /// null, the empty body is set.
+    ///
+    /// @param body JSON structure to be used as a body.
+    void setBodyAsJson(const data::ConstElementPtr& body);
+
     /// @brief Retrieves a single JSON element.
     ///
     /// The element must be at top level of the JSON structure.
@@ -70,6 +91,8 @@ public:
 
 protected:
 
+    /// @brief Interprets body as JSON, which can be later retrieved using
+    /// data element objects.
     void parseBodyAsJson();
 
     /// @brief Pointer to the parsed JSON body.

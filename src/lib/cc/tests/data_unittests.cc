@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
@@ -1116,6 +1118,7 @@ TEST(Element, prettyPrint) {
 
     // default step is 2, order is alphabetic, no \n at the end
     string text = "{\n"
+        "  \"comment\": \"this is an exception\",\n"
         "  \"boolean\": true,\n"
         "  \"empty-list\": [ ],\n"
         "  \"empty-map\": { },\n"

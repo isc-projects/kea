@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <asiolink/io_address.h>
 #include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/pool.h>
@@ -81,10 +83,7 @@ Pool::toElement() const {
     ElementPtr map = Element::createMap();
 
     // Set user-context
-    ConstElementPtr context = getContext();
-    if (!isNull(context)) {
-        map->set("user-context", context);
-    }
+    contextToElement(map);
 
     // Set pool options
     ConstCfgOptionPtr opts = getCfgOption();

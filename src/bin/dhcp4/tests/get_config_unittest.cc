@@ -10,13 +10,15 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
+#include <testutils/user_context_utils.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/json_config_parser.h>
-#include <dhcpsrv/parsers/simple_parser4.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -30,6 +32,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -68,7 +71,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -78,7 +82,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 1
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"subnet4\": [\n"
@@ -96,7 +101,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 2
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"renew-timer\": 1000,\n"
 "        \"subnet4\": [\n"
@@ -114,7 +120,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 3
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -133,7 +140,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 4
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -177,7 +185,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 5
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -225,7 +234,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "{\n"
 "        \"boot-file-name\": \"bar\",\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"next-server\": \"1.2.3.4\",\n"
 "        \"rebind-timer\": 2000,\n"
@@ -246,7 +256,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 7
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -269,7 +280,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "{\n"
 "        \"boot-file-name\": \"nofile\",\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"next-server\": \"192.0.0.1\",\n"
 "        \"rebind-timer\": 2000,\n"
@@ -294,7 +306,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "{\n"
 "        \"echo-client-id\": false,\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -314,7 +327,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "{\n"
 "        \"echo-client-id\": true,\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -333,7 +347,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 11
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -362,7 +377,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 12
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"match-client-id\": true,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -391,7 +407,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 13
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -413,7 +430,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 14
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -446,7 +464,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 15
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -551,7 +570,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 23
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -582,7 +602,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 24
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -613,7 +634,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 25
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -652,7 +674,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 26
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -687,7 +710,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 27
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -743,7 +767,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 28
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -781,7 +806,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 29
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -822,7 +848,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 30
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -853,7 +880,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 31
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -889,7 +917,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 32
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -918,7 +947,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 33
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -953,7 +983,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 34
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -1004,7 +1035,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 35
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -1039,7 +1071,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 36
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
@@ -1074,7 +1107,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 37
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"eth0\", \"eth1\" ]\n"
+"            \"interfaces\": [ \"eth0\", \"eth1\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1083,7 +1117,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 38
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"eth0\", \"*\", \"eth1\" ]\n"
+"            \"interfaces\": [ \"eth0\", \"*\", \"eth1\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1108,7 +1143,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"server-port\": 777\n"
 "        },\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1127,7 +1163,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 40
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1152,7 +1189,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 41
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1250,7 +1288,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 42
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"option-def\": [\n"
 "            {\n"
@@ -1334,14 +1373,16 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 44
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
     // CONFIGURATION 45
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
@@ -1349,7 +1390,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "{\n"
 "        \"decline-probation-period\": 12345,\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
@@ -1364,14 +1406,16 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"unwarned-reclaim-cycles\": 10\n"
 "        },\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"subnet4\": [ ]\n"
 "    }\n",
     // CONFIGURATION 48
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1390,7 +1434,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 49
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1410,7 +1455,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 50
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1430,7 +1476,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 51
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1451,7 +1498,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 52
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1482,7 +1530,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1501,7 +1550,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 54
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1520,7 +1570,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 55
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1540,7 +1591,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 56
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1564,7 +1616,8 @@ const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 57
 "{\n"
 "        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ]\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
 "        },\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
@@ -1584,6 +1637,91 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 58
+"{\n"
+"        \"comment\": \"A DHCPv4 server\",\n"
+"        \"client-classes\": [\n"
+"            {\n"
+"                \"comment\": \"match all\",\n"
+"                \"name\": \"all\",\n"
+"                \"test\": \"'' == ''\"\n"
+"            },\n"
+"            {\n"
+"                \"name\": \"none\"\n"
+"            },\n"
+"            {\n"
+"                \"comment\": \"a comment\",\n"
+"                \"name\": \"both\",\n"
+"                \"user-context\": {\n"
+"                    \"version\": 1\n"
+"                }\n"
+"            }\n"
+"        ],\n"
+"        \"control-socket\": {\n"
+"            \"comment\": \"Indirect comment\",\n"
+"            \"socket-name\": \"/tmp/kea4-ctrl-socket\",\n"
+"            \"socket-type\": \"unix\"\n"
+"        },\n"
+"        \"dhcp-ddns\": {\n"
+"            \"comment\": \"No dynamic DNS\",\n"
+"            \"enable-updates\": false\n"
+"        },\n"
+"        \"interfaces-config\": {\n"
+"            \"comment\": \"Use wildcard\",\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"option-data\": [\n"
+"            {\n"
+"                \"comment\": \"Set option value\",\n"
+"                \"csv-format\": false,\n"
+"                \"data\": \"ABCDEF0105\",\n"
+"                \"name\": \"dhcp-message\"\n"
+"            }\n"
+"        ],\n"
+"        \"option-def\": [\n"
+"            {\n"
+"                \"comment\": \"An option definition\",\n"
+"                \"code\": 100,\n"
+"                \"name\": \"foo\",\n"
+"                \"space\": \"isc\",\n"
+"                \"type\": \"ipv4-address\"\n"
+"            }\n"
+"        ],\n"
+"        \"shared-networks\": [\n"
+"            {\n"
+"                \"comment\": \"A shared network\",\n"
+"                \"name\": \"foo\",\n"
+"                \"subnet4\": [\n"
+"                    {\n"
+"                        \"comment\": \"A subnet\",\n"
+"                        \"id\": 100,\n"
+"                        \"pools\": [\n"
+"                            {\n"
+"                                \"comment\": \"A pool\",\n"
+"                                \"pool\": \"192.0.1.1-192.0.1.10\"\n"
+"                            }\n"
+"                        ],\n"
+"                        \"reservations\": [\n"
+"                            {\n"
+"                                \"comment\": \"A host reservation\",\n"
+"                                \"hostname\": \"foo.example.com\",\n"
+"                                \"hw-address\": \"AA:BB:CC:DD:EE:FF\",\n"
+"                                \"option-data\": [\n"
+"                                    {\n"
+"                                        \"comment\": \"An option in a reservation\",\n"
+"                                        \"data\": \"example.com\",\n"
+"                                        \"name\": \"domain-name\"\n"
+"                                    }\n"
+"                                ]\n"
+"                            }\n"
+"                        ],\n"
+"                        \"subnet\": \"192.0.1.0/24\"\n"
+"                    }\n"
+"                ]\n"
+"            }\n"
+"        ]\n"
 "    }\n"
 };
 
@@ -6227,6 +6365,175 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"valid-lifetime\": 4000\n"
 "            }\n"
 "        ]\n"
+"    }\n",
+    // CONFIGURATION 58
+"{\n"
+"        \"comment\": \"A DHCPv4 server\",\n"
+"        \"client-classes\": [\n"
+"            {\n"
+"                \"comment\": \"match all\",\n"
+"                \"boot-file-name\": \"\",\n"
+"                \"name\": \"all\",\n"
+"                \"next-server\": \"0.0.0.0\",\n"
+"                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
+"                \"server-hostname\": \"\",\n"
+"                \"test\": \"'' == ''\"\n"
+"            },\n"
+"            {\n"
+"                \"comment\": \"a comment\",\n"
+"                \"boot-file-name\": \"\",\n"
+"                \"name\": \"both\",\n"
+"                \"next-server\": \"0.0.0.0\",\n"
+"                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
+"                \"server-hostname\": \"\",\n"
+"                \"user-context\": {\n"
+"                    \"version\": 1\n"
+"                }\n"
+"            },\n"
+"            {\n"
+"                \"boot-file-name\": \"\",\n"
+"                \"name\": \"none\",\n"
+"                \"next-server\": \"0.0.0.0\",\n"
+"                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
+"                \"server-hostname\": \"\"\n"
+"            }\n"
+"        ],\n"
+"        \"control-socket\": {\n"
+"            \"comment\": \"Indirect comment\",\n"
+"            \"socket-name\": \"/tmp/kea4-ctrl-socket\",\n"
+"            \"socket-type\": \"unix\"\n"
+"        },\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"comment\": \"No dynamic DNS\",\n"
+"            \"always-include-fqdn\": false,\n"
+"            \"enable-updates\": false,\n"
+"            \"generated-prefix\": \"myhost\",\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"override-client-update\": false,\n"
+"            \"override-no-update\": false,\n"
+"            \"qualifying-suffix\": \"\",\n"
+"            \"replace-client-name\": \"never\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"echo-client-id\": true,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\", \"circuit-id\", \"client-id\" ],\n"
+"        \"interfaces-config\": {\n"
+"            \"comment\": \"Use wildcard\",\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"option-data\": [\n"
+"            {\n"
+"                \"comment\": \"Set option value\",\n"
+"                \"always-send\": false,\n"
+"                \"code\": 56,\n"
+"                \"csv-format\": false,\n"
+"                \"data\": \"ABCDEF0105\",\n"
+"                \"name\": \"dhcp-message\",\n"
+"                \"space\": \"dhcp4\"\n"
+"            }\n"
+"        ],\n"
+"        \"option-def\": [\n"
+"            {\n"
+"                \"comment\": \"An option definition\",\n"
+"                \"array\": false,\n"
+"                \"code\": 100,\n"
+"                \"encapsulate\": \"\",\n"
+"                \"name\": \"foo\",\n"
+"                \"record-types\": \"\",\n"
+"                \"space\": \"isc\",\n"
+"                \"type\": \"ipv4-address\"\n"
+"            }\n"
+"        ],\n"
+"        \"shared-networks\": [\n"
+"            {\n"
+"                \"comment\": \"A shared network\",\n"
+"                \"match-client-id\": true,\n"
+"                \"name\": \"foo\",\n"
+"                \"option-data\": [ ],\n"
+"                \"rebind-timer\": 0,\n"
+"                \"relay\": {\n"
+"                    \"ip-address\": \"0.0.0.0\"\n"
+"                },\n"
+"                \"renew-timer\": 0,\n"
+"                \"reservation-mode\": \"all\",\n"
+"                \"subnet4\": [\n"
+"                    {\n"
+"                        \"comment\": \"A subnet\",\n"
+"                        \"4o6-interface\": \"\",\n"
+"                        \"4o6-interface-id\": \"\",\n"
+"                        \"4o6-subnet\": \"\",\n"
+"                        \"boot-file-name\": \"\",\n"
+"                        \"id\": 100,\n"
+"                        \"match-client-id\": true,\n"
+"                        \"next-server\": \"0.0.0.0\",\n"
+"                        \"option-data\": [ ],\n"
+"                        \"pools\": [\n"
+"                            {\n"
+"                                \"comment\": \"A pool\",\n"
+"                                \"option-data\": [ ],\n"
+"                                \"pool\": \"192.0.1.1-192.0.1.10\"\n"
+"                            }\n"
+"                        ],\n"
+"                        \"rebind-timer\": 1800,\n"
+"                        \"relay\": {\n"
+"                            \"ip-address\": \"0.0.0.0\"\n"
+"                        },\n"
+"                        \"renew-timer\": 900,\n"
+"                        \"reservation-mode\": \"all\",\n"
+"                        \"reservations\": [\n"
+"                            {\n"
+"                                \"comment\": \"A host reservation\",\n"
+"                                \"boot-file-name\": \"\",\n"
+"                                \"client-classes\": [ ],\n"
+"                                \"hostname\": \"foo.example.com\",\n"
+"                                \"hw-address\": \"aa:bb:cc:dd:ee:ff\",\n"
+"                                \"next-server\": \"0.0.0.0\",\n"
+"                                \"option-data\": [\n"
+"                                    {\n"
+"                                        \"comment\": \"An option in a reservation\",\n"
+"                                        \"always-send\": false,\n"
+"                                        \"code\": 15,\n"
+"                                        \"csv-format\": true,\n"
+"                                        \"data\": \"example.com\",\n"
+"                                        \"name\": \"domain-name\",\n"
+"                                        \"space\": \"dhcp4\"\n"
+"                                    }\n"
+"                                ],\n"
+"                                \"server-hostname\": \"\"\n"
+"                            }\n"
+"                        ],\n"
+"                        \"server-hostname\": \"\",\n"
+"                        \"subnet\": \"192.0.1.0/24\",\n"
+"                        \"valid-lifetime\": 7200\n"
+"                    }\n"
+"                ],\n"
+"                \"valid-lifetime\": 0\n"
+"            }\n"
+"        ],\n"
+"        \"subnet4\": [ ]\n"
 "    }\n"
 };
 
@@ -6258,7 +6565,7 @@ static_assert(max_config_counter == sizeof(UNPARSED_CONFIGS) / sizeof(char*),
 void
 outputFormatted(const std::string& config) {
     // pretty print it
-    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr json = extractComments(parseDHCP4(config));
     std::string prettier = prettyPrint(json, 4, 4);
     // get it as a line array
     std::list<std::string> lines;
@@ -6323,7 +6630,7 @@ public:
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_.reset(new Dhcpv4Srv(0));
+        srv_.reset(new ControlledDhcpv4Srv(0));
         // Create fresh context.
         resetConfiguration();
     }
@@ -6425,7 +6732,7 @@ public:
         CfgMgr::instance().setFamily(AF_INET);
     }
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv_; ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
     ConstElementPtr comment_;           ///< Reason for parse fail
 };
@@ -6472,9 +6779,12 @@ TEST_P(Dhcp4GetConfigTest, run) {
         ASSERT_NO_THROW(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
-        ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseDHCP4(expected, true));
-        EXPECT_TRUE(isEquivalent(dhcp, json));
+        ElementPtr jsond;
+        ASSERT_NO_THROW(jsond = parseDHCP4(expected, true));
+        ElementPtr jsonj;
+        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {
