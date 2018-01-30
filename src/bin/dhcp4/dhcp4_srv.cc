@@ -78,6 +78,8 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace std;
 
+namespace {
+
 /// Structure that holds registered hook indexes
 struct Dhcp4Hooks {
     int hook_index_buffer4_receive_;   ///< index for "buffer4_receive" hook point
@@ -104,11 +106,14 @@ struct Dhcp4Hooks {
     }
 };
 
+} // end of anonymous namespace
+
 // Declare a Hooks object. As this is outside any function or method, it
 // will be instantiated (and the constructor run) when the module is loaded.
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
 Dhcp4Hooks Hooks;
+
 
 namespace isc {
 namespace dhcp {
@@ -1062,7 +1067,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         }
         callout_handle->setArgument("leases4", new_leases);
 
-        Lease4CollectionPtr deleted_leases(new Lease4Collection);
+        Lease4CollectionPtr deleted_leases(new Lease4Collection());
         if (ctx->old_lease_) {
             if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
                 deleted_leases->push_back(ctx->old_lease_);

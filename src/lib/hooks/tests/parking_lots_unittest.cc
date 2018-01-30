@@ -43,7 +43,7 @@ TEST(ParkingLotsTest, createGetParkingLot) {
 TEST(ParkingLotTest, parkWithoutReferencing) {
     ParkingLot parking_lot;
     std::string parked_object = "foo";
-    EXPECT_THROW(parking_lot.park(parked_object, [this] {
+    EXPECT_THROW(parking_lot.park(parked_object, [] {
     }), InvalidOperation);
 }
 
@@ -62,7 +62,7 @@ TEST(ParkingLotTest, unpark) {
 
     // This flag will indicate if the callback has been called.
     bool unparked = false;
-    ASSERT_NO_THROW(parking_lot->park(parked_object, [this, &unparked] {
+    ASSERT_NO_THROW(parking_lot->park(parked_object, [&unparked] {
         unparked = true;
     }));
 
@@ -96,7 +96,7 @@ TEST(ParkingLotTest, drop) {
 
     // This flag will indicate if the callback has been called.
     bool unparked = false;
-    ASSERT_NO_THROW(parking_lot->park(parked_object, [this, &unparked] {
+    ASSERT_NO_THROW(parking_lot->park(parked_object, [&unparked] {
         unparked = true;
     }));
 

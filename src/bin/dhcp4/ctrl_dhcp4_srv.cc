@@ -39,6 +39,7 @@ struct CtrlDhcp4Hooks {
     CtrlDhcp4Hooks() {
         hooks_index_dhcp4_srv_configured_ = HooksManager::registerHook("dhcp4_srv_configured");
     }
+
 };
 
 // Declare a Hooks object. As this is outside any function or method, it
@@ -653,7 +654,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp4_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-        callout_handle->setArgument("io_service", srv->getIOService());
+        callout_handle->setArgument("io_context", srv->getIOService());
         callout_handle->setArgument("json_config", config);
         callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
 

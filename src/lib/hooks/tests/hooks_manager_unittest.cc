@@ -787,7 +787,7 @@ TEST_F(HooksManagerTest, Parking) {
     // got unparked.
     ASSERT_NO_THROW(
         HooksManager::park<std::string>("hookpt_one", "foo",
-        [this, &unparked] {
+        [&unparked] {
             unparked = true;
         })
     );
@@ -848,7 +848,7 @@ TEST_F(HooksManagerTest, ServerUnpark) {
     // can later test the value of this flag to verify when exactly the packet
     // got unparked.
     HooksManager::park<std::string>("hookpt_one", "foo",
-    [this, &unparked] {
+    [&unparked] {
         unparked = true;
     });
 
@@ -890,7 +890,7 @@ TEST_F(HooksManagerTest, ServerDropParked) {
     // can later test the value of this flag to verify when exactly the packet
     // got unparked.
     HooksManager::park<std::string>("hookpt_one", "foo",
-    [this, &unparked] {
+    [&unparked] {
         unparked = true;
     });
 
@@ -938,7 +938,7 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     // can later test the value of this flag to verify when exactly the packet
     // got unparked.
     HooksManager::park<std::string>("hookpt_one", "foo",
-    [this, &unparked] {
+    [&unparked] {
         unparked = true;
     });
 

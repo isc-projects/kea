@@ -48,15 +48,15 @@ to the end of this list.
 
  @subsection dhcp4HooksDhcpv4SrvConfigured dhcp4_srv_configured
  - @b Arguments:
-   - name: @b io_service, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
+   - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
    - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
    - name: @b server_config, type: isc::dhcp::SrvConfigPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has completed
    its (re)configuration. The server provides received and parsed configuration
-   structures to the hook library. It also provides a pointer to the io_service
+   structures to the hook library. It also provides a pointer to the IOService
    object which is used by the server to run asynchronous operations. The hooks
-   libraries can use this IO service object to schedule asynchronous tasks which
+   libraries can use this IOService object to schedule asynchronous tasks which
    are triggered by the DHCP server's main loop. The hook library should hold the
    provided pointer until the library is unloaded.
 
