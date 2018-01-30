@@ -2050,4 +2050,107 @@ TEST_F(LibDhcpTest, option43) {
     EXPECT_EQ(def, def_by_name);
 }
 
+// RFC7598 defines several options for configuration of lw4over6 devices.
+// These options are have complex structure, so dedicated tests are needed
+// to test them reliably.
+TEST_F(LibDhcpTest, sw46options) {
+
+
+    // This constant defines the following structure:
+    // MAP-E container
+    //  - BR address option
+    //  - S46 rule option
+    //    - portparameters
+    //  - S46 rule option
+    std::vector<uint8_t> mape_bin = {
+        0, 94, 0, 64,  // MAP-E container with 3 suboptions
+
+        0, 90, 0, 16,                    // BR address
+        0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0, // 2001:db8::abcd
+        0, 0, 0, 0, 0, 0, 0xab, 0xcd,
+
+        0, 89, 0, 16+8, // S46 rule
+        128, // flags = 128 (F flag set)
+        4, // ea-len
+        30, // prefix4-len
+        192, 0, 2, 192, // ipv4-prefix = 192.168.0.192
+        64, // prefix6-len = /64
+        0x20, 0x01, 0xd, 0xb8, 0, 1, 2, 3, // ipv6-prefix = 2001:db8::1:203::/64
+
+        0, 93, 0, 4, // S46_PORTPARAMS option
+        8, 6, 0xfc, 0x00, // offset is 8, psid-len 6, psid is fc00
+
+        0, 89, 0, 12, // S46 rule
+        0, // flags = 0 (F flag clear)
+        6, // ea-len
+        32, // prefix4-len
+        192, 0, 2, 1, // ipv4-prefix = 192.168.0.1
+        32, // prefix6-len = /32
+        0x20, 0x01, 0xd, 0xb8 // ipv6-prefix = 2001:db8::/32
+    };
+
+    // List of parsed options will be stored here.
+    isc::dhcp::OptionCollection options;
+
+    OptionBuffer buf(mape_bin);
+
+    size_t parsed;
+
+    EXPECT_NO_THROW (parsed = LibDHCP::unpackOptions6(buf, "dhcp6", options));
+    EXPECT_EQ(mape_bin.size(), parsed);
+
+    // We expect to have exactly one option (with tons of suboptions, but we'll
+    // get to that in a minute)
+    EXPECT_EQ(1, options.size());
+    auto opt = options.find(D6O_S46_CONT_MAPE);
+    ASSERT_FALSE(opt == options.end());
+
+    // Ok, let's iterate over the options. Start with the top one.
+    using boost::shared_ptr;
+    shared_ptr<OptionCustom> mape = dynamic_pointer_cast<OptionCustom>(opt->second);
+    ASSERT_TRUE(mape);
+    EXPECT_EQ(D6O_S46_CONT_MAPE, mape->getType());
+    EXPECT_EQ(68, mape->len());
+    EXPECT_EQ(64, mape->getData().size());
+
+    // Let's check if there's a border router option.
+    ASSERT_TRUE(mape->getOption(D6O_S46_BR));
+
+    // Make sure the option is of proper type, not just plain Option
+    shared_ptr<OptionCustom> br =
+        dynamic_pointer_cast<OptionCustom>(mape->getOption(D6O_S46_BR));
+    ASSERT_TRUE(br);
+    EXPECT_EQ("type=00090, len=00016: 2001:db8::abcd (ipv6-address)", br->toText());
+
+    // Now let's check the suboptions. There should be 3 (BR, 2x rule)
+    const OptionCollection& subopts = mape->getOptions();
+    ASSERT_EQ(3, subopts.size());
+    EXPECT_EQ(1, subopts.count(D6O_S46_BR));
+    EXPECT_EQ(2, subopts.count(D6O_S46_RULE));
+
+    // Let's check the rules. There should be two of them.
+    auto range = subopts.equal_range(D6O_S46_RULE);
+    ASSERT_EQ(2, std::distance(range.first, range.second));
+    OptionPtr opt1 = range.first->second;
+    OptionPtr opt2 = (++range.first)->second;
+    shared_ptr<OptionCustom> rule1 = dynamic_pointer_cast<OptionCustom>(opt1);
+    shared_ptr<OptionCustom> rule2 = dynamic_pointer_cast<OptionCustom>(opt2);
+    ASSERT_TRUE(rule1);
+    ASSERT_TRUE(rule2);
+
+    EXPECT_EQ("type=00089, len=00024: 128 (uint8) 4 (uint8) 30 (uint8) "
+              "192.0.2.192 (ipv4-address)  (ipv6-prefix),\noptions:\n"
+              "  type=00093, len=00004: 8 (uint8) len=6,psid=63 (psid)", rule1->toText());
+
+    EXPECT_EQ("type=00089, len=00012: 0 (uint8) 6 (uint8) 32 (uint8) "
+              "192.0.2.1 (ipv4-address)  (ipv6-prefix)", rule2->toText());
+
+    // Finally, check that the subsuboption in the first rule is ok
+    OptionPtr subsubopt = opt1->getOption(D6O_S46_PORTPARAMS);
+    shared_ptr<OptionCustom> portparam = dynamic_pointer_cast<OptionCustom>(subsubopt);
+    ASSERT_TRUE(portparam);
+
+    EXPECT_EQ("type=00093, len=00004: 8 (uint8) len=6,psid=63 (psid)", portparam->toText());
+}
+
 } // end of anonymous space
