@@ -6900,7 +6900,7 @@ outputFormatted(const std::string& config) {
     }
 }
 
-};
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -6931,9 +6931,9 @@ extractConfig(const std::string& config) {
     ++extract_count;
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 namespace {
 
@@ -7120,8 +7120,16 @@ TEST_P(Dhcp4GetConfigTest, run) {
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }
 
-/// Define the parameterized test loop
-INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
-                        ::testing::Range(static_cast<size_t>(0), max_config_counter));
-
+class IntToString {
+public:
+    std::string operator()(const testing::TestParamInfo<size_t>& n) {
+        return to_string(n.param);
+    }
 };
+
+/// Define the parameterized test loop.
+INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
+                        ::testing::Range(static_cast<size_t>(0),
+                                         max_config_counter),
+                        IntToString());
+}  // namespace

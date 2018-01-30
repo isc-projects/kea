@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option4_addrlst.h>
@@ -38,7 +39,6 @@ using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
-
 
 OptionDefinition::OptionDefinition(const std::string& name,
                                  const uint16_t code,
@@ -654,7 +654,6 @@ OptionDefinition::writeToBuffer(Option::Universe u,
                           << txt_prefix
                           << " is not valid.");
             }
-
 
             // Write a prefix.
             OptionDataTypeUtil::writePrefix(PrefixLen(len), address, buf);

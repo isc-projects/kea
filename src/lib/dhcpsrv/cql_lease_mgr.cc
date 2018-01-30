@@ -58,8 +58,7 @@ public:
     /// @param statement_tag prepared statement being executed; defaults to an
     ///     invalid index
     virtual void
-    createBindForSelect(AnyArray &data,
-                        StatementTag statement_tag = NULL) override = 0;
+    createBindForSelect(AnyArray &data, StatementTag statement_tag = NULL) override = 0;
 
     /// @brief Copy received data into the derived class' object.
     ///
@@ -115,8 +114,9 @@ class CqlLease4Exchange : public CqlLeaseExchange {
 public:
     /// @brief Constructor
     ///
-    /// The initialization of the variables here is only to satisfy cppcheck -
-    /// all variables are initialized/set in the methods before they are used.
+    /// The initialization of the variables here is only to satisfy
+    /// cppcheck - all variables are initialized/set in the methods before
+    /// they are used.
     ///
     /// @param connection connection used for this query
     explicit CqlLease4Exchange(const CqlConnection &connection);
@@ -138,8 +138,7 @@ public:
     /// @param lease Updated lease information.
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForUpdate(const Lease4Ptr &lease,
-                             AnyArray &data,
+    void createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
                              StatementTag statement_tag = NULL);
 
     /// @brief Create CQL_BIND objects for Lease4 Pointer
@@ -329,7 +328,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
 
     // Gets an IPv4 lease with specified hardware addr and subnet-id
     {GET_LEASE4_HWADDR_SUBID,
-        {GET_LEASE4_HWADDR_SUBID,
+     {GET_LEASE4_HWADDR_SUBID,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
@@ -431,10 +430,9 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         data.add(&state_);
 
     } catch (const Exception &ex) {
-        isc_throw(DbOperationError,
-                  "CqlLease4Exchange::createBindForInsert(): "
-                  "could not create bind array from Lease4: "
-                      << lease_->addr_.toText() << ", reason: " << ex.what());
+        isc_throw(DbOperationError, "CqlLease4Exchange::createBindForInsert(): "
+                  "could not create bind array from Lease4: " << lease_->addr_.toText()
+                  << ", reason: " << ex.what());
     }
 }
 
@@ -541,8 +539,6 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
 
     try {
         // address: int
-        // The address in the Lease structure is an IOAddress object.
-        // Convert this to an integer for storage.
         address_ = static_cast<cass_int32_t>(address.toUint32());
 
         // Start with a fresh array.
@@ -552,8 +548,8 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease4Exchange::createBindForDelete(): "
-                  "could not create bind array from Lease4: "
-                      << lease_->addr_.toText() << ", reason: " << ex.what());
+                  "could not create bind array with address: "
+                      << address_ << ", reason: " << ex.what());
     }
 }
 
@@ -639,7 +635,7 @@ CqlLease4Exchange::retrieve() {
         return (result);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
-                  "CqlLease4Exchange::retrieveLease(): "
+                  "CqlLease4Exchange::retrieve(): "
                   "could not convert data to Lease4, reason: "
                       << ex.what());
     }
@@ -732,7 +728,7 @@ class CqlLease6Exchange : public CqlLeaseExchange {
 public:
     /// @brief Constructor
     ///
-    /// The initialization of the variables here is nonly to satisfy
+    /// The initialization of the variables here is only to satisfy
     /// cppcheck - all variables are initialized/set in the methods before
     /// they are used.
     ///
@@ -741,7 +737,7 @@ public:
 
     /// @brief Create CQL_BIND objects for Lease6 Pointer
     ///
-    /// Fills in the CQL_BIND array for sending data in the Lease4 object to
+    /// Fills in the CQL_BIND array for sending data in the Lease6 object to
     /// the database. Used for INSERT statements.
     ///
     /// @param lease The lease information to be inserted
@@ -750,7 +746,7 @@ public:
 
     /// @brief Create CQL_BIND objects for Lease6 Pointer
     ///
-    /// Fills in the CQL_BIND array for sending data in the Lease4 object to
+    /// Fills in the CQL_BIND array for sending data in the Lease6 object to
     /// the database. Used for UPDATE statements.
     ///
     /// @param lease Updated lease information.
@@ -761,13 +757,14 @@ public:
 
     /// @brief Create CQL_BIND objects for Lease4 Pointer
     ///
-    /// Fills in the CQL_BIND array for sending data in the Lease4 object to
+    /// Fills in the CQL_BIND array for sending data in the Lease6 object to
     /// the database. Used for DELETE statements.
     ///
     /// @param address address of the lease to be deleted
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForDelete(const IOAddress &address, AnyArray &data,
+    void createBindForDelete(const IOAddress &address,
+                             AnyArray &data,
                              StatementTag statement_tag = NULL);
 
     /// @brief Create BIND array to receive data
@@ -776,13 +773,13 @@ public:
     ///
     /// @param data info returned by CQL will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForSelect(AnyArray &data,
-                             StatementTag statement_tag = NULL) override;
+    virtual void
+    createBindForSelect(AnyArray &data, StatementTag statement_tag = NULL) override;
 
     /// @brief Retrieves the Lease6 object in Kea format
     ///
     /// @return C++ representation of the object being returned
-    boost::any retrieve() override;
+    virtual boost::any retrieve() override;
 
     /// @brief Retrieves zero or more IPv6 leases
     ///
@@ -963,7 +960,8 @@ CqlLease6Exchange::CqlLease6Exchange(const CqlConnection &connection)
 void
 CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
     if (!lease) {
-        isc_throw(BadValue, "Lease6 object is NULL");
+        isc_throw(BadValue, "CqlLease6Exchange::createBindForInsert(): "
+                            "Lease6 object is NULL");
     }
     // Store lease object to ensure it remains valid.
     lease_ = lease;
@@ -1087,7 +1085,8 @@ void
 CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
                                        StatementTag /* unused */) {
     if (!lease) {
-        isc_throw(BadValue, "Lease6 object is NULL");
+        isc_throw(BadValue, "CqlLease6Exchange::createBindForUpdate(): "
+                            "Lease6 object is NULL");
     }
     // Store lease object to ensure it remains valid.
     lease_ = lease;
@@ -1225,8 +1224,6 @@ CqlLease6Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     // structure.
     try {
         // address: varchar
-        // The address in the Lease structure is an IOAddress object.
-        // Convert this to an integer for storage.
         address_ = address.toText();
 
         // Start with a fresh array.
@@ -1356,11 +1353,12 @@ CqlLease6Exchange::retrieve() {
         result->cltt_ = cltt;
 
         result->state_ = state_;
-        return result;
+
+        return (result);
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease6Exchange::retrieve(): "
-                  "could not convert data to Lease4, reason: "
+                  "could not convert data to Lease6, reason: "
                       << ex.what());
     }
     return Lease6Ptr();
@@ -1391,11 +1389,10 @@ CqlLease6Exchange::getLease(StatementTag &statement_tag, AnyArray &data,
     // Return single record if present, else clear the lease.
     const size_t collection_size = collection.size();
     if (collection_size >= 2u) {
-        isc_throw(
-            MultipleRecords,
-            "CqlLease6Exchange::getLease(): multiple records were found in "
-            "the database where only one was expected for statement "
-                << statement_tag);
+        isc_throw(MultipleRecords,
+                  "CqlLease6Exchange::getLease(): multiple records were found in "
+                  "the database where only one was expected for statement "
+                  << statement_tag);
     } else if (collection_size == 0u) {
         result.reset();
     } else {
@@ -1467,8 +1464,7 @@ CqlLeaseMgr::addLease(const Lease4Ptr &lease) {
 
     AnyArray data;
 
-    std::unique_ptr<CqlLease4Exchange> exchange4(
-        new CqlLease4Exchange(dbconn_));
+    std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->createBindForInsert(lease, data);
     try {
         exchange4->executeMutation(dbconn_, data, CqlLease4Exchange::INSERT_LEASE4);
@@ -1578,7 +1574,7 @@ CqlLeaseMgr::getLease4(const ClientId &clientid) const {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_CLIENTID, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease4Ptr
@@ -1684,7 +1680,7 @@ CqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID &duid, uint32_t iaid)
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID_IAID, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease6Collection
@@ -1715,6 +1711,7 @@ CqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID &duid, uint32_t iaid,
     Lease6Collection result;
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID, data, result);
+
     return (result);
 }
 
@@ -1734,8 +1731,7 @@ CqlLeaseMgr::getExpiredLeases6(Lease6Collection &expired_leases,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_EXPIRED6)
         .arg(max_leases);
 
-    std::unique_ptr<CqlLease6Exchange> exchange6(
-        new CqlLease6Exchange(dbconn_));
+    std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getExpiredLeases(max_leases, expired_leases);
 }
 

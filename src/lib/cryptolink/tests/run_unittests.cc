@@ -5,11 +5,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <gtest/gtest.h>
 
 #include <log/logger_support.h>
 #include <util/unittests/run_all.h>
-
-#include <gtest/gtest.h>
 
 int
 main(int argc, char* argv[]) {

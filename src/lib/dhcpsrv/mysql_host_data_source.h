@@ -11,6 +11,11 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/mysql_connection.h>
 
+#include <stdint.h>
+
+#include <utility>
+#include <string>
+
 namespace isc {
 namespace dhcp {
 
@@ -306,7 +311,6 @@ public:
     virtual void rollback();
 
 private:
-
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImpl* impl_;
 };
@@ -315,3 +319,4 @@ private:
 }
 
 #endif // MYSQL_HOST_DATA_SOURCE_H
+

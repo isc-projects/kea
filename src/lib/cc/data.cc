@@ -1235,7 +1235,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
 
         // open the list
         out << "[" << (complex ? "\n" : " ");
-        
+
         // iterate on items
         typedef std::vector<ElementPtr> ListType;
         const ListType& l = element->listValue();
