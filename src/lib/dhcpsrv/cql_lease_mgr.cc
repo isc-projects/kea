@@ -985,8 +985,7 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
