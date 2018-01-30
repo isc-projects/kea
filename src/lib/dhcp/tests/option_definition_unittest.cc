@@ -38,7 +38,7 @@ namespace {
 /// it around for the future.
 class OptionDefinitionTest : public ::testing::Test {
 public:
-    // @brief Constructor.
+    /// @brief Constructor
     OptionDefinitionTest() { }
 
 };
@@ -1611,7 +1611,7 @@ TEST_F(OptionDefinitionTest, tuple4Tokenized) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
-}    
+}
 
 // This test verifies that a definition of an option with a single DHCPv6
 // tuple can be created and that the instance of this option can be
@@ -1640,7 +1640,7 @@ TEST_F(OptionDefinitionTest, tuple6Tokenized) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
-}    
+}
 
 // This test verifies that a definition of an option with an array
 // of DHCPv4 tuples can be created and that the instance of this option
