@@ -415,10 +415,11 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         OptionDefContainerTypeRange range;
         // Number of option definitions returned.
         size_t num_defs = 0;
-        if (option_space == DHCP6_OPTION_SPACE) {
-            range = idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
-        }
+
+        // We previously did the lookup only for dhcp6 option space, but with the
+        // addition of S46 options, we now do it for every space.
+        range = idx.equal_range(opt_type);
+        num_defs = distance(range.first, range.second);
 
         // Standard option definitions do not include the definition for
         // our option or we're searching for non-standard option. Try to
