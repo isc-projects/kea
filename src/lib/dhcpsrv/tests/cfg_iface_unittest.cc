@@ -238,6 +238,20 @@ TEST_F(CfgIfaceTest, explicitLoopbackV4) {
     EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
 }
 
+// Tests that the loopback socket is not opened in raw mode.
+TEST_F(CfgIfaceTest, explicitLoopbackV4Negative) {
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
+
+    // Use UDP sockets
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_RAW));
+
+    // Open sockets on specified interfaces and addresses.
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+    EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
+    EXPECT_FALSE(socketOpen("lo", AF_INET));
+}
+
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv6 sockets are opened on these interfaces.
 TEST_F(CfgIfaceTest, explicitNamesV6) {
@@ -275,6 +289,20 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
     EXPECT_FALSE(socketOpen("eth0", AF_INET6));
     EXPECT_TRUE(socketOpen("eth1", AF_INET6));
     EXPECT_FALSE(socketOpen("lo", AF_INET6));
+}
+
+// This test checks that the loopback socket can be opened.
+TEST_F(CfgIfaceTest, loopback6) {
+    CfgIface cfg;
+    // Specify valid interface names. There should be no error.
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "lo"));
+
+    // Open sockets on specified interfaces.
+    cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
+
+    // There should be a socket open.
+    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+    EXPECT_FALSE(socketOpen("lo", "::1"));
 }
 
 // This test checks that the wildcard interface name can be specified to
