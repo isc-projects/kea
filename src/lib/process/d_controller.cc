@@ -39,7 +39,7 @@ DControllerBasePtr DControllerBase::controller_;
 // Note that the constructor instantiates the controller's primary IOService.
 DControllerBase::DControllerBase(const char* app_name, const char* bin_name)
     : app_name_(app_name), bin_name_(bin_name),
-      verbose_(false), check_only_(false), spec_file_name_(""),
+      verbose_(false), check_only_(false),
       io_service_(new isc::asiolink::IOService()),
       io_signal_queue_() {
 }

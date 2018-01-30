@@ -14,6 +14,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
 
@@ -48,7 +49,7 @@ public:
 /// parameters associated with DHCP-DDNS and acting as a client of D2.
 /// Instances of this class may be constructed through configuration parsing.
 ///
-class D2ClientConfig : public isc::data::CfgToElement {
+class D2ClientConfig : public UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Default configuration constants.
     /// @todo For now these are hard-coded as configuration layer cannot

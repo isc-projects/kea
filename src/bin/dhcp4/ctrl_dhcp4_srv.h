@@ -223,12 +223,34 @@ private:
     commandConfigTestHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
+    /// @brief A handler for processing 'dhcp-disable' command.
+    ///
+    /// @param command command name (ignored).
+    /// @param args aguments for the command. It must be a map and
+    /// it may include optional 'max-period' parameter.
+    ///
+    /// @return result of the command.
+    isc::data::ConstElementPtr
+    commandDhcpDisableHandler(const std::string& command,
+                              isc::data::ConstElementPtr args);
+
+    /// @brief A handler for processing 'dhcp-enable' command.
+    ///
+    /// @param command command name (ignored)
+    /// @param args arguments for the command (ignored).
+    ///
+    /// @return result of the command.
+    isc::data::ConstElementPtr
+    commandDhcpEnableHandler(const std::string& command,
+                             isc::data::ConstElementPtr args);
+
+
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
     /// over the control channel the -v and -V command line arguments.
     /// @param command (parameter ignored)
-    /// @param args (parameter ignored) 
+    /// @param args (parameter ignored)
     ///
     /// @return status of the command with the version in text and
     /// the extended version in arguments.
@@ -241,7 +263,7 @@ private:
     /// This handler processes build-report command, which returns
     /// over the control channel the -W command line argument.
     /// @param command (parameter ignored)
-    /// @param args (parameter ignored) 
+    /// @param args (parameter ignored)
     ///
     /// @return status of the command with the config report
     isc::data::ConstElementPtr

@@ -224,6 +224,22 @@ TEST_F(HttpRequestParserTest, getLowerCase) {
     EXPECT_EQ(1, request_.getHttpVersion().minor_);
 }
 
+// This test verifies that headers are case insensitive.
+TEST_F(HttpRequestParserTest, headersCaseInsensitive) {
+    std::string http_req = "get /foo/bar HTTP/1.1\r\n"
+        "Content-type: text/html\r\n"
+        "connection: keep-Alive\r\n\r\n";
+
+    ASSERT_NO_FATAL_FAILURE(doParse(http_req));
+
+    EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_.getMethod());
+    EXPECT_EQ("/foo/bar", request_.getUri());
+    EXPECT_EQ("text/html", request_.getHeader("Content-Type")->getValue());
+    EXPECT_EQ("keep-alive", request_.getHeader("Connection")->getLowerCaseValue());
+    EXPECT_EQ(1, request_.getHttpVersion().major_);
+    EXPECT_EQ(1, request_.getHttpVersion().minor_);
+}
+
 // This test verifies that other value of the HTTP version can be
 // specified in the request.
 TEST_F(HttpRequestParserTest, http20) {

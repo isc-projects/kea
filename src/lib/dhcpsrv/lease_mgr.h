@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/db_exceptions.h>
+#include <dhcpsrv/sql_common.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -60,92 +61,8 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Used to map server data types with internal backend storage data
-/// types.
-enum ExchangeDataType {
-    EXCHANGE_DATA_TYPE_NONE,
-    EXCHANGE_DATA_TYPE_BOOL,
-    EXCHANGE_DATA_TYPE_INT32,
-    EXCHANGE_DATA_TYPE_INT64,
-    EXCHANGE_DATA_TYPE_TIMESTAMP,
-    EXCHANGE_DATA_TYPE_STRING,
-    EXCHANGE_DATA_TYPE_BYTES
-};
-
-/// @brief Used to specify the direction of the data exchange between the
-/// database and the server.
-enum ExchangeDataTypeIO {
-    EXCHANGE_DATA_TYPE_IO_IN,
-    EXCHANGE_DATA_TYPE_IO_OUT,
-    EXCHANGE_DATA_TYPE_IO_IN_OUT
-};
-
-/// @brief Used to map the column name with internal backend storage data types.
-struct ExchangeColumnInfo {
-    ExchangeColumnInfo () : name_(""), index_(0), type_io_(EXCHANGE_DATA_TYPE_IO_IN),
-                            type_(EXCHANGE_DATA_TYPE_NONE) {};
-    ExchangeColumnInfo (const char* name, const uint32_t index,
-        const ExchangeDataTypeIO type_io, const ExchangeDataType type) :
-        name_(name), index_(index), type_io_(type_io), type_(type) {};
-    std::string name_;
-    uint32_t index_;
-    ExchangeDataTypeIO type_io_;
-    ExchangeDataType type_;
-};
-
-typedef boost::shared_ptr<ExchangeColumnInfo> ExchangeColumnInfoPtr;
-
-typedef boost::multi_index_container<
-    // Container comprises elements of ExchangeColumnInfoPtr type.
-    ExchangeColumnInfoPtr,
-    // Here we start enumerating various indexes.
-    boost::multi_index::indexed_by<
-        // Sequenced index allows accessing elements in the same way as elements
-        // in std::list.
-        // Sequenced is an index #0.
-        boost::multi_index::sequenced<>,
-        // Start definition of index #1.
-        boost::multi_index::hashed_non_unique<
-            boost::multi_index::member<
-                ExchangeColumnInfo,
-                std::string,
-                &ExchangeColumnInfo::name_
-             >
-        >,
-        // Start definition of index #2.
-        boost::multi_index::hashed_non_unique<
-            boost::multi_index::member<
-                ExchangeColumnInfo,
-                uint32_t,
-                &ExchangeColumnInfo::index_
-            >
-        >
-    >
-> ExchangeColumnInfoContainer;
-
-/// Pointer to the ExchangeColumnInfoContainer object.
-typedef boost::shared_ptr<ExchangeColumnInfoContainer> ExchangeColumnInfoContainerPtr;
-/// Type of the index #1 - name.
-typedef ExchangeColumnInfoContainer::nth_index<1>::type ExchangeColumnInfoContainerName;
-/// Pair of iterators to represent the range of ExchangeColumnInfo having the
-/// same name value. The first element in this pair represents
-/// the beginning of the range, the second element represents the end.
-typedef std::pair<ExchangeColumnInfoContainerName::const_iterator,
-                  ExchangeColumnInfoContainerName::const_iterator> ExchangeColumnInfoContainerNameRange;
-/// Type of the index #2 - index.
-typedef ExchangeColumnInfoContainer::nth_index<2>::type ExchangeColumnInfoContainerIndex;
-/// Pair of iterators to represent the range of ExchangeColumnInfo having the
-/// same index value. The first element in this pair represents
-/// the beginning of the range, the second element represents the end.
-typedef std::pair<ExchangeColumnInfoContainerIndex::const_iterator,
-                  ExchangeColumnInfoContainerIndex::const_iterator> ExchangeColumnInfoContainerIndexRange;
-
-class SqlExchange {
-public:
-    SqlExchange () {};
-    virtual ~SqlExchange() {};
-    ExchangeColumnInfoContainer parameters_;   ///< Column names and types
-};
+/// @brief Pair containing major and minor versions
+typedef std::pair<uint32_t, uint32_t> VersionPair;
 
 /// @brief Contains a single row of lease statistical data
 ///
@@ -257,7 +174,7 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
-    virtual bool addLease(const isc::dhcp::Lease4Ptr& lease) = 0;
+    virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
@@ -343,6 +260,18 @@ public:
     /// @return a pointer to the lease (or NULL if a lease is not found)
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const = 0;
+
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const = 0;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const = 0;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -453,10 +382,13 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
-    ///        IPv6.)
+    /// @param addr Address of the lease to be deleted. This can be an IPv4
+    ///             address or an IPv6 address.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
@@ -593,7 +525,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual std::pair<uint32_t, uint32_t> getVersion() const = 0;
+    virtual VersionPair getVersion() const = 0;
 
     /// @brief Commit Transactions
     ///
@@ -606,9 +538,13 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
+
+    /// @todo: Add host management here
+    /// As host reservation is outside of scope for 2012, support for hosts
+    /// is currently postponed.
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // LEASE_MGR_H

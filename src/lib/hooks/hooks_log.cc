@@ -6,6 +6,8 @@
 
 /// Defines the logger used by the Hooks
 
+#include <config.h>
+
 #include <hooks/hooks_log.h>
 #include <log/macros.h>
 

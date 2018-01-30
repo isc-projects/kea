@@ -11,6 +11,7 @@
 #include <dhcp/option6_pdexclude.h>
 #include <boost/shared_ptr.hpp>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 #include <boost/shared_ptr.hpp>
@@ -24,7 +25,7 @@ namespace dhcp {
 ///
 /// Stores information about pool of IPv4 or IPv6 addresses.
 /// That is a basic component of a configuration.
-class Pool {
+class Pool : public UserContext {
 
 public:
     /// @note:
@@ -95,17 +96,6 @@ public:
         return (cfg_option_);
     }
 
-    /// @brief Returns const pointer to the user context.
-    data::ConstElementPtr getContext() const {
-        return (user_context_);
-    }
-
-    /// @brief Sets user context.
-    /// @param ctx user context to be stored.
-    void setContext(const data::ConstElementPtr& ctx) {
-        user_context_ = ctx;
-    }
-
     /// @brief Unparse a pool object.
     ///
     /// @return A pointer to unparsed pool configuration.
@@ -145,11 +135,6 @@ protected:
     /// @brief The last address in a pool
     isc::asiolink::IOAddress last_;
 
-    /// @brief Comments field
-    ///
-    /// @todo: This field is currently not used.
-    std::string comments_;
-
     /// @brief defines a lease type that will be served from this pool
     Lease::Type type_;
 
@@ -163,9 +148,6 @@ protected:
 
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
-
-    /// @brief Pointer to the user context (may be NULL)
-    data::ConstElementPtr user_context_;
 };
 
 /// @brief Pool information for IPv4 addresses

@@ -6,6 +6,8 @@
 
 /// @brief Defines the logger used by the @c isc::dhcp::AllocEngine
 
+#include <config.h>
+
 #include "dhcpsrv/alloc_engine_log.h"
 
 namespace isc {

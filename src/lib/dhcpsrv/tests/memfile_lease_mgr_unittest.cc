@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -915,6 +915,18 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSize) {
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetId) {
     startBackend(V4);
     testGetLease4ClientIdSubnetId();
+}
+
+// This test checks that all IPv4 leases for a specified subnet id are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4SubnetId) {
+    startBackend(V4);
+    testGetLeases4SubnetId();
+}
+
+// This test checks that all IPv4 leases are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4) {
+    startBackend(V4);
+    testGetLeases4();
 }
 
 /// @brief Basic Lease6 Checks

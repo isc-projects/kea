@@ -86,7 +86,10 @@ public:
         PARSER_HOOKS_LIBRARY,
 
         /// This will parse the input as dhcp-ddns.
-        PARSER_DHCP_DDNS
+        PARSER_DHCP_DDNS,
+
+        /// This will parse the content of Logging.
+        PARSER_LOGGING
     } ParserType;
 
     /// @brief Default constructor.

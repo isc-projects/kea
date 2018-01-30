@@ -9,7 +9,6 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
-#include <process/spec_config.h>
 
 #include <stdlib.h>
 
@@ -45,14 +44,6 @@ DProcessBase* D2Controller::createProcess() {
 
 D2Controller::D2Controller()
     : DControllerBase(d2_app_name_, d2_bin_name_) {
-    // set the spec file either from the environment or
-    // use the production value.
-    if (getenv("KEA_FROM_BUILD")) {
-        setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
-            "/src/bin/d2/dhcp-ddns.spec");
-    } else {
-        setSpecFileName(D2_SPECFILE_LOCATION);
-    }
 }
 
 isc::data::ConstElementPtr 

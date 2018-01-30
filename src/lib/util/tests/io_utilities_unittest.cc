@@ -9,6 +9,8 @@
 /// Tests the functionality of the asiolink utilities code by comparing them
 /// with the equivalent methods in isc::dns::[Input/Output]Buffer.
 
+#include <config.h>
+
 #include <cstddef>
 
 #include <arpa/inet.h>

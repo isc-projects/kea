@@ -119,13 +119,12 @@ void Dhcp6to4Ipc::handler() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
                     .arg(pkt->getLabel());
                 return;
             }
-
-            /// @todo: Add support for DROP status
 
             callout_handle->getArgument("response6", pkt);
         }

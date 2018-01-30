@@ -135,6 +135,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp4Parser::make_SUB_HOOKS_LIBRARY(driver.loc_);
         case Parser4Context::PARSER_DHCP_DDNS:
             return isc::dhcp::Dhcp4Parser::make_SUB_DHCP_DDNS(driver.loc_);
+        case Parser4Context::PARSER_LOGGING:
+            return isc::dhcp::Dhcp4Parser::make_SUB_LOGGING(driver.loc_);
         }
     }
 %}
@@ -578,11 +580,41 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"user-context\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::OPTION_DEF:
+    case isc::dhcp::Parser4Context::OPTION_DATA:
+    case isc::dhcp::Parser4Context::RESERVATIONS:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::LOGGERS:
+    case isc::dhcp::Parser4Context::DHCP_DDNS:
         return isc::dhcp::Dhcp4Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("user-context", driver.loc_);
+    }
+}
+
+\"comment\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::OPTION_DEF:
+    case isc::dhcp::Parser4Context::OPTION_DATA:
+    case isc::dhcp::Parser4Context::RESERVATIONS:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::LOGGERS:
+    case isc::dhcp::Parser4Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp4Parser::make_COMMENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("comment", driver.loc_);
     }
 }
 
@@ -1426,6 +1458,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         case '"':
             /* impossible condition */
             driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
+            break;
         case '\\':
             ++pos;
             if (pos >= len) {

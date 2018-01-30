@@ -409,6 +409,8 @@ Host::toElement4() const {
 
     // Prepare the map
     ElementPtr map = Element::createMap();
+    // Set the user context
+    contextToElement(map);
     // Set the identifier
     Host::IdentifierType id_type = getIdentifierType();
     if (id_type == Host::IDENT_HWADDR) {
@@ -432,9 +434,11 @@ Host::toElement4() const {
     } else {
         isc_throw(ToElementError, "invalid identifier type: " << id_type);
     }
-    // Set the reservation
+    // Set the reservation (if not 0.0.0.0 which may not be re-read)
     const IOAddress& address = getIPv4Reservation();
-    map->set("ip-address", Element::create(address.toText()));
+    if (!address.isV4Zero()) {
+        map->set("ip-address", Element::create(address.toText()));
+    }
     // Set the hostname
     const std::string& hostname = getHostname();
     map->set("hostname", Element::create(hostname));
@@ -466,6 +470,8 @@ ElementPtr
 Host::toElement6() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
+    // Set the user context
+    contextToElement(map);
     // Set the identifier
     Host::IdentifierType id_type = getIdentifierType();
     if (id_type == Host::IDENT_HWADDR) {

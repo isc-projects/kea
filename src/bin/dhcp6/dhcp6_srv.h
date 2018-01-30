@@ -19,6 +19,7 @@
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
@@ -312,8 +313,9 @@ protected:
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question);
+    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question, bool& drop);
 
     /// @brief Processes IA_NA option (and assigns addresses if necessary).
     ///
@@ -687,7 +689,10 @@ protected:
     ///
     /// @param pkt pointer to a packet for which context will be created.
     /// @param [out] ctx reference to context object to be initialized.
-    void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+    /// @param [out] drop if it is true the packet will be dropped.
+    void initContext(const Pkt6Ptr& pkt,
+                     AllocEngine::ClientContext6& ctx,
+                     bool& drop);
 
     /// @brief this is a prefix added to the content of vendor-class option
     ///
@@ -871,6 +876,11 @@ protected:
     /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
     /// are waiting for sending to kea-dhcp-ddns module.
     std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
+
+    /// @brief Holds information about disabled DHCP service and/or
+    /// disabled subnet/network scopes.
+    NetworkState network_state_;
+
 };
 
 }; // namespace isc::dhcp

@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+#include <config.h>
+
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>

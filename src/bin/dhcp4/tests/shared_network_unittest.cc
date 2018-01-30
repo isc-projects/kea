@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <stats/stats_mgr.h>
@@ -45,6 +46,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"interface\": \"eth1\","
+    "            \"comment\": \"example\","
     "            \"subnet4\": ["
     "                {"
     "                    \"subnet\": \"192.0.2.0/26\","
@@ -1061,6 +1063,38 @@ public:
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
+
+// Check user-context parsing
+TEST_F(Dhcpv4SharedNetworkTest, parse) {
+    // Create client
+    Dhcp4Client client1(Dhcp4Client::SELECTING);
+
+    // Don't use configure from utils
+    Parser4Context ctx;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(NETWORKS_CONFIG[0], true));
+    ConstElementPtr status;
+    disableIfacesReDetect(json);
+    EXPECT_NO_THROW(status = configureDhcp4Server(*client1.getServer(), json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+    ASSERT_NO_THROW( {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=4");
+        cfg_db->createManagers();
+    } );
+    CfgMgr::instance().commit();
+
+    CfgSharedNetworks4Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSharedNetworks4();
+    SharedNetwork4Ptr network = cfg->getByName("frog");
+    ConstElementPtr context = network->getContext();
+    ASSERT_TRUE(context);
+    ASSERT_EQ(1, context->size());
+    ASSERT_TRUE(context->get("comment"));
+    EXPECT_EQ("\"example\"", context->get("comment")->str());
+}
 
 // Running out of addresses within a subnet in a shared network.
 TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {

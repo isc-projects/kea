@@ -384,16 +384,6 @@ public:
         return (getController()->getBinName().compare(should_be) == 0);
     }
 
-    /// @brief Returns true if the Controller's spec file name matches the
-    /// given value.
-    ///
-    /// @param should_be is the value to compare against.
-    ///
-    /// @return returns true if the values are equal.
-    bool checkSpecFileName(const std::string& should_be) {
-        return (getController()->getSpecFileName().compare(should_be) == 0);
-    }
-
     /// @brief Tests the existence of the Controller's application process.
     ///
     /// @return returns true if the process instance exists.

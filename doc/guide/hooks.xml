@@ -80,7 +80,9 @@
         hooks-libraries was a list of strings, each string being the name of
         a library.  The change was made in Kea 1.0 to facilitate the
         specification of library-specific parameters, a capability
-        available in Kea 1.1.0 onwards.
+        available in Kea 1.1.0 onwards. Libraries should allow a parameter
+        entry where to put comments as it is done for many configuration
+        scopes with comment and user context.
       </para></note>
 
         <note>
@@ -254,6 +256,25 @@
               fetching detailed information about a selected subnet. The
               commands exposed by this library do not affect other subnets
               or configuration parameters currently used by the server.
+              </entry>
+            </row>
+            <row>
+              <entry>High Availability</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>Minimizing a risk of DHCP service unavailability is achieved
+              by setting up multiple instances of the DHCP servers in a network.
+              Each server can serve selected group of clients in this network
+              (load balancing) or all clients, if it detects that its partner has
+              crashed or cannot be providing DHCP service for any other reason.
+              It is also possible to designate one server to serve all DHCP clients,
+              and leave another server as "standby". This server will activate its
+              DHCP function when it detects that its partner is not available.
+              Such cooperation between the DHCP servers requires that these
+              servers constantly communicate with each other to send updates about
+              allocated leases and to periodically test whether their partners are still
+              operational. The "libdhcp_ha" library provides such functionality for
+              Kea DHCP.
               </entry>
             </row>
           </tbody>
@@ -684,6 +705,59 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
             to <filename>kea-legal</filename>.
             </para></listitem>
           </itemizedlist>
+          </para>
+
+          <para>
+            If it is desired to restrict forensic logging to certain subnets, the
+            "legal-logging" boolean parameter can be specified within a user context of
+            these subnets. For example:
+<screen>
+"Dhcpv4" {
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [
+                {
+                     "pool": "192.0.2.1 - 192.0.2.200"
+                }
+            ],
+            <userinput>"user-context": {
+                "legal-logging": false
+            }</userinput>
+        }
+    ]
+}
+</screen>
+              disables legal logging for the subnet "192.0.2.0/24". If this parameter
+              is not specified, it defaults to 'true', which enables legal logging for
+              the subnet.
+          </para>
+
+          <para>
+            The following example demonstrates how to selectively disable legal logging
+            for an IPv6 subnet.
+<screen>
+"Dhcpv6": {
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            "pools": [
+                 {
+                     "pool": "2001:db8:1::1-2001:db8:1::ffff"
+                 }
+            ],
+            <userinput>"user-context": {
+                "legal-logging": false
+            }</userinput>
+        }
+    ]
+}
+</screen>
+          </para>
+
+          <para>
+            See <xref linkend="dhcp4-user-contexts"/> and <xref linkend="dhcp6-user-contexts"/>
+            to learn more about user contexts in Kea configuration.
           </para>
         </section>
       </section>
@@ -1267,6 +1341,10 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
               the specified parameters exists and returns it if it does;</para>
             </listitem>
             <listitem>
+              <para><command>lease4-get-all</command> - returns all IPv4 leases
+              or IPv4 leases for specified subnets;</para>
+            </listitem>
+            <listitem>
               <para><command>lease6-get</command> - checks if an IPv6 lease with
               the specified parameters exists and returns it if it does;</para>
             </listitem>
@@ -1585,6 +1663,80 @@ An example result returned when the host was found:
         </section>
 
         <section>
+          <title>lease4-get-all command</title>
+          <para><command>lease4-get-all</command> is used to retrieve all IPv4
+          leases or all leases for the specified set of subnets. All leases are
+          returned when there are no arguments specified with the command as
+          in the following example:
+<screen>
+{
+    "command": "lease4-get-all"
+}
+</screen>
+          </para>
+
+          <para>If the arguments are provided, it is expected that they contain
+          "subnets" parameter, being a list of subnet identifiers for which the
+          leases should be returned, e.g.:
+<screen>
+{
+    "command": "lease4-get-all",
+    "arguments": {
+        "subnets": [ 1, 2, 3, 4 ]
+    }
+}
+</screen>
+          </para>
+
+          <para>
+            The returned response contains a detailed list of leases in the
+            following format:
+<screen>{
+    "arguments": {
+        "leases": [
+            {
+                "client-id": "42:42:42:42:42:42:42:42",
+                "cltt": 12345678,
+                "fqdn-fwd": false,
+                "fqdn-rev": true,
+                "hostname": "myhost.example.com.",
+                "hw-address": "08:08:08:08:08:08",
+                "ip-address": "192.0.2.1",
+                "state": 0,
+                "subnet-id": 44,
+                "valid-lft": 3600
+            },
+            {
+                "client-id": "21:21:21:21:21:21:21:21",
+                "cltt": 12345678,
+                "fqdn-fwd": false,
+                "fqdn-rev": true,
+                "hostname": "",
+                "hw-address": "10:10:10:10:10:10",
+                "ip-address": "192.0.2.2",
+                "state": 0,
+                "subnet-id": 44,
+                "valid-lft": 3600
+            }
+        ]
+    },
+    "result": 0,
+    "text": "2 IPv4 lease(s) found."
+}</screen>
+          </para>
+
+          <warning>
+            <para>The <command>lease4-get-command</command> may result in very
+            large responses. This may have negative impact on the DHCP server
+            responsiveness while the response is generated and transmitted
+            over the control channel, as the server imposes no restriction
+            on the number of leases returned as a result of this command.
+            </para>
+          </warning>
+
+        </section>
+
+        <section>
           <title>lease4-del, lease6-del commands</title>
           <para><command>leaseX-del</command> can be used to delete a lease from
           the lease database. There are two types of parameters this command
@@ -1642,12 +1794,14 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           <command>leaseX-del</command> followed by
           <command>leaseX-add</command> commands.</para>
 
-          <para>To use <command>leaseX-update</command> the lease must
-          be present in the lease database. If the lease is not there,
-          an error will be returned. Please use
-          <command>leaseX-add</command> to add new leases. You may
-          check if a lease is present using
-          <command>leaseX-get</command>, if needed.</para>
+          <para>The optional boolean parameter "force-create" specifies
+          if the lease should be created if it doesn't exist in the database.
+          It defaults to false, which indicates that the lease is not created
+          if it doesn't exist. In such case, an error is returned as a result
+          of trying to update a non-existing lease. If the "force-create" parameter
+          is set to true and the updated lease doesn't exist, the new lease is
+          created as a result of receiving the <command>leaseX-update</command>.
+          </para>
 
           <para>
             An example command updating IPv4 lease looks as follows:
@@ -1657,7 +1811,8 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
     "ip-address": "192.0.2.1",
     "hostname": "newhostname.example.org",
     "hw-address": "1a:1b:1c:1d:1e:1f",
-    "subnet-id": 44
+    "subnet-id": 44,
+    "force-create": true
   }
 }</screen>
           </para>
@@ -1671,7 +1826,8 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
     "duid": "88:88:88:88:88:88:88:88",
     "iaid": 7654321,
     "hostname": "newhostname.example.org",
-    "subnet-id": 66
+    "subnet-id": 66,
+    "force-create": false
   }
 }</screen>
           </para>
@@ -2527,8 +2683,19 @@ both the command and the response.
         </para>
     </section>
 
-    </section>
-  </section> <!-- end of subnet commands -->
+    </section> <!-- end of subnet commands -->
+
+    <section id="high-availability-library">
+      <title>libdhcp_ha: High Availability</title>
+      <para>
+        This section will describe the <command>libdhcp_ha</command> hook library
+        being developed for the Kea 1.4.0 release.
+      </para>
+    </section> <!-- end of high-availability-library -->
+
+  </section>
+
+
 
     <section id="user-context">
       <title>User contexts</title>
@@ -2551,10 +2718,19 @@ both the command and the response.
         operations for example.
       </para>
       <para>
-        As of Kea 1.3, the structures that allow user contexts are pools of all
-        types (addresses and prefixes) and subnets. These are supported in both
-        DHCPv4 and DHCPv6. It is expected that other structures will be extended
-        in the future to provide the user context capability.
+        If user context is supported in a given context, the parser translates
+        "comment" entries into user context with a "comment" entry. The pretty
+        print of a configuration does the opposite operation and puts "comment"
+        entries at the beginning of maps as it seems to be the common usage.
+      </para>
+      <para>
+        As of Kea 1.3, the structures that allow user contexts are
+        pools of all types (addresses and prefixes) and subnets. Kea
+        1.4 extended user context support to the global scope, interfaces config,
+        shared networks, subnets, client classes, option datas and definitions,
+        host reservations, control socket, dhcp ddns, loggers and server id.
+        These are supported in both DHCPv4 and DHCPv6 at the exception
+        of server id which is DHCPv6 only.
       </para>
     </section>
 

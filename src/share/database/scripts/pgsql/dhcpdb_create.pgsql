@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -528,6 +528,24 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
 UPDATE schema_version
     SET version = '3', minor = '2';
 
+-- Set 4.0 schema version.
+
+-- Add a column holding hosts for user context.
+ALTER TABLE hosts ADD COLUMN user_context TEXT;
+
+-- Add a column holding DHCP options for user context.
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT;
+
+-- Create index for searching leases by subnet identifier.
+CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
+
+-- Create for searching leases by subnet identifier and lease type.
+CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
+
+-- Set 4.0 schema version.
+UPDATE schema_version
+    SET version = '4', minor = '0';
 
 -- Commit the script transaction.
 COMMIT;

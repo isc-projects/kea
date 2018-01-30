@@ -28,7 +28,7 @@ libstats_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libstats_unittests_LDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD)
+libstats_unittests_LDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD) $(BOOST_LIBS)
 
 endif
 
