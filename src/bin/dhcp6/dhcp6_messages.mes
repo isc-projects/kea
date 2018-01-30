@@ -763,7 +763,7 @@ processing will continue, but the response will only contain generic
 configuration and no addresses or prefixes. The argument includes
 the client and the transaction identification information.
 
-% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %d) on interface %2
+% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %1) on interface %2
 This debug message is printed when server receives a message of unknown type.
 That could either mean missing functionality or invalid or broken relay or client.
 The list of formally defined message types is available here:
