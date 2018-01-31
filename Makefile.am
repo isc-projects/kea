@@ -100,7 +100,9 @@ endif
 			--ignore-errors gcov,source,graph \
 			--output report.info; \
 		sed --in-place --expression "s|$(abs_top_srcdir)|$(abs_top_builddir)|g" report.info; \
-		"$(GENHTML)" --frames --show-details --title 'Kea code coverage report' --legend --function-coverage --ignore-errors source --demangle-cpp --output "$(OVERALL_COVERAGE_DIR)" report.info; \
+		"$(GENHTML)" --frames --show-details --title 'Kea code coverage report' --legend \
+                --function-coverage --ignore-errors source --demangle-cpp \
+                --output "$(OVERALL_COVERAGE_DIR)" report.info; \
 		printf "Generated C++ code coverage report in HTML at %s.\n" "$(OVERALL_COVERAGE_DIR)"; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
