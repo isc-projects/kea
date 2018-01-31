@@ -1,3 +1,9 @@
+1353.	[func]		tomek
+	Lightweight 4over6 options reinstantiated. Definitions for DHCPv6
+	options 89 through 96 were added back. DHCPv4 v4 Parameters Option
+        159 has its definition tweaked slightly.
+	(Trac #5514, git 6a4aac2b3bfffe41460db6d1cd3c55b1430aa50c)
+
 1352.	[build]		andrei
 	Support for coverage tests has been improved.
 	(Github #43, git 1949bb3abf71fb3997044d239eb683095166c39f)
