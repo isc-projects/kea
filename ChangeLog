@@ -1,3 +1,7 @@
+1352.	[build]		andrei
+	Support for coverage tests has been improved.
+	(Github #43, git 1949bb3abf71fb3997044d239eb683095166c39f)
+
 1351.	[build,bug]	andrei, razvan
 	Various small changes and bugfixes. Thank you to Andrei Pavel
 	and Razvan Becheriu for submitting their patch.
