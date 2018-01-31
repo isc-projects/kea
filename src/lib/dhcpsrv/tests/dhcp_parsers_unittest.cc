@@ -937,6 +937,56 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
     cfg2.runCfgOptionsTest(family_, config);
 }
 
+// This test verifies that definitions of standard encapsulated
+// options can be used.
+TEST_F(ParseConfigTest, encapsulatedOptionData) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"space\": \"s46-cont-mape-options\","
+        "    \"name\": \"s46-rule\","
+        "    \"data\": \"1, 0, 24, 192.0.2.0, 2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    // Make sure that we're using correct universe.
+    family_ = AF_INET6;
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option data is correct.
+    OptionCustomPtr s46_rule = boost::dynamic_pointer_cast<OptionCustom>
+        (getOptionPtr(MAPE_V6_OPTION_SPACE, D6O_S46_RULE));
+    ASSERT_TRUE(s46_rule);
+
+    uint8_t flags;
+    uint8_t ea_len;
+    uint8_t prefix4_len;
+    IOAddress ipv4_prefix(IOAddress::IPV4_ZERO_ADDRESS());
+    PrefixTuple ipv6_prefix(PrefixLen(0), IOAddress::IPV6_ZERO_ADDRESS());;
+
+    ASSERT_NO_THROW({
+        flags = s46_rule->readInteger<uint8_t>(0);
+        ea_len = s46_rule->readInteger<uint8_t>(1);
+        prefix4_len = s46_rule->readInteger<uint8_t>(2);
+        ipv4_prefix = s46_rule->readAddress(3);
+        ipv6_prefix = s46_rule->readPrefix(4);
+    });
+
+    EXPECT_EQ(1, flags);
+    EXPECT_EQ(0, ea_len);
+    EXPECT_EQ(24, prefix4_len);
+    EXPECT_EQ("192.0.2.0", ipv4_prefix.toText());
+    EXPECT_EQ(64, ipv6_prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", ipv6_prefix.second.toText());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(D6O_S46_RULE));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
+}
+
 // This test checks behavior of the configuration parser for option data
 // for different values of csv-format parameter and when there is no
 // option definition.

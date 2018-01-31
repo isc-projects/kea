@@ -438,6 +438,11 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
     case OPT_STRING_TYPE:
         text << "\"" << readString(index) << "\"";
         break;
+    case OPT_PSID_TYPE:
+    {
+        PSIDTuple t = readPsid(index);
+        text << "len=" << t.first.asUnsigned() << ",psid=" << t.second.asUint16();
+    }
     default:
         ;
     }
