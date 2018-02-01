@@ -143,6 +143,7 @@ protected:
 
         virtual isc::asiolink::IOAddress
             pickAddressInternal(const SubnetPtr& subnet,
+                                const ClientClasses& client_classes,
                                 const DuidPtr& duid,
                                 const isc::asiolink::IOAddress& hint,
                                 uint8_t psid_offset,
@@ -174,7 +175,8 @@ protected:
         /// @return result address or prefix
         static isc::asiolink::IOAddress
         increaseAddress(const isc::asiolink::IOAddress& address,
-                        bool prefix, const uint8_t prefix_len);
+                        bool prefix, const uint8_t prefix_len,
+                        uint8_t psid_offset = 0, uint8_t psid_len = 0);
 
     };
 

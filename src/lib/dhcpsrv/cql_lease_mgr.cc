@@ -537,7 +537,7 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
 
     try {
         // address: bigint
-        address_ = lease_->addr_.addressPlusPortToUint64();
+        address_ = address.addressPlusPortToUint64();
 
         // Start with a fresh array.
         data.clear();
