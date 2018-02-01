@@ -6,7 +6,7 @@ SHTESTS += d2_process_tests.sh
 noinst_SCRIPTS = d2_process_tests.sh
 
 EXTRA_DIST  = d2_process_tests.sh.in
-EXTRA_DIST += testdata/d2_cfg_tests.json
+EXTRA_DIST += testdata/d2_cfg_tests.json testdata/get_config.json
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -18,15 +18,15 @@ check-local:
 	done
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
-AM_CPPFLAGS += -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/d2/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/ddns\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES = d2_process_tests.sh
+DISTCLEANFILES = d2_process_tests.sh test_data_files_config.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -50,13 +50,14 @@ d2_unittests_SOURCES += d2_update_message_unittests.cc
 d2_unittests_SOURCES += d2_update_mgr_unittests.cc
 d2_unittests_SOURCES += d2_zone_unittests.cc
 d2_unittests_SOURCES += dns_client_unittests.cc
-d2_unittests_SOURCES += labeled_value_unittests.cc
 d2_unittests_SOURCES += nc_add_unittests.cc
 d2_unittests_SOURCES += nc_remove_unittests.cc
 d2_unittests_SOURCES += nc_test_utils.cc nc_test_utils.h
 d2_unittests_SOURCES += nc_trans_unittests.cc
-d2_unittests_SOURCES += state_model_unittests.cc
 d2_unittests_SOURCES += d2_controller_unittests.cc
+d2_unittests_SOURCES += d2_simple_parser_unittest.cc
+d2_unittests_SOURCES += parser_unittest.cc parser_unittest.h
+d2_unittests_SOURCES += get_config_unittest.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
@@ -78,6 +79,7 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la

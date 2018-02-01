@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -97,7 +97,7 @@ private:
 
     /// \brief Split string to the array of C-strings.
     ///
-    /// \param text_to_split string to be splited.
+    /// \param text_to_split string to be split.
     /// \param [out] num number of substrings returned.
     /// \param std::bad_alloc if allocation of C-strings failed.
     /// \return array of C-strings created from split.
@@ -108,7 +108,7 @@ private:
         // Iterators to be used for tokenization
         std::istream_iterator<std::string> text_iterator(text_stream);
         std::istream_iterator<std::string> text_end;
-        // Tokenize string (space is a separator) using begin and end iteratos
+        // Tokenize string (space is a separator) using begin and end iterators
         std::vector<std::string> tokens(text_iterator, text_end);
 
         if (!tokens.empty()) {

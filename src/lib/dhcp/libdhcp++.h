@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space_container.h>
+#include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <util/buffer.h>
 #include <util/staged_value.h>
@@ -112,6 +113,44 @@ public:
     static OptionDefContainerPtr
     getRuntimeOptionDefs(const std::string& space);
 
+    /// @brief Returns last resort option definition by space and option code.
+    ///
+    /// @param space Option space name.
+    /// @param code Option code.
+    ///
+    /// @return Pointer to option definition or NULL if it doesn't exist.
+    static OptionDefinitionPtr getLastResortOptionDef(const std::string& space,
+                                                      const uint16_t code);
+
+    /// @brief Returns last resort option definition by space and option name.
+    ///
+    /// @param space Option space name.
+    /// @param name Option name.
+    ///
+    /// @return Pointer to option definition or NULL if it doesn't exist.
+    static OptionDefinitionPtr getLastResortOptionDef(const std::string& space,
+                                                      const std::string& name);
+
+    /// @brief Returns last resort option definitions for specified option
+    /// space name.
+    ///
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the container holding option definitions or NULL.
+    static OptionDefContainerPtr
+    getLastResortOptionDefs(const std::string& space);
+
+    /// @brief Checks if an option unpacking has to be deferred.
+    ///
+    /// DHCPv4 option 43 and 224-254 unpacking is done after classification.
+    ///
+    /// @param space Option space name.
+    /// @param code Option code.
+    ///
+    /// @return True if option processing should be deferred.
+    static bool shouldDeferOptionUnpack(const std::string& space,
+                                        const uint16_t code);
+
     /// @brief Factory function to create instance of option.
     ///
     /// Factory method creates instance of specified option. The option
@@ -210,13 +249,16 @@ public:
     ///        to be used to parse options in the packets.
     /// @param options Reference to option container. Options will be
     ///        put here.
+    /// @param deferred Reference to an option code list. Options which
+    ///        processing is deferred will be put here.
     /// @return offset to the first byte after the last successfully
     /// parsed option or the offset of the DHO_END option type.
     ///
     /// The unpackOptions6 note applies too.
     static size_t unpackOptions4(const OptionBuffer& buf,
                                  const std::string& option_space,
-                                 isc::dhcp::OptionCollection& options);
+                                 isc::dhcp::OptionCollection& options,
+                                 std::list<uint16_t>& deferred);
 
     /// Registers factory method that produces options of specific option types.
     ///
@@ -298,7 +340,7 @@ public:
     /// @brief Removes runtime option definitions.
     static void clearRuntimeOptionDefs();
 
-    /// @brief Reverts uncommited changes to runtime option definitions.
+    /// @brief Reverts uncommitted changes to runtime option definitions.
     static void revertRuntimeOptionDefs();
 
     /// @brief Commits runtime option definitions.
@@ -340,8 +382,13 @@ private:
     /// is incorrect. This is a programming error.
     static void initStdOptionDefs6();
 
+    /// Initialize last resort DHCPv4 option definitions.
+    static void initLastResortOptionDefs();
+
+    /// Initialize DOCSIS DHCPv4 option definitions.
     static void initVendorOptsDocsis4();
 
+    /// Initialize DOCSIS DHCPv6 option definitions.
     static void initVendorOptsDocsis6();
 
     /// Initialize private DHCPv6 option definitions.
@@ -368,7 +415,10 @@ private:
     /// Container for v6 vendor option definitions
     static VendorOptionDefContainers vendor6_defs_;
 
-    /// Container for additional option defnitions created in runtime.
+    /// Container with DHCPv4 last resort option definitions.
+    static OptionDefContainerPtr lastresort_defs_;
+
+    /// Container for additional option definitions created in runtime.
     static util::StagedValue<OptionDefSpaceContainer> runtime_option_defs_;
 };
 

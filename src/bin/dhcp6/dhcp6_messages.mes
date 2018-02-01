@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,35 +46,12 @@ buffer holding the DHCPv6 message. The arguments specify the source and
 destination addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP6_BUFFER_WAIT waiting for next DHCPv6 packet with timeout %1 ms
-This debug message is issued when the server enters the state when it
-waits for new packets. The argument specifies the timeout for the server
-to wait for the packet. When this time elapses the server will pass
-through its main loop to perform handling of any pending signals
-and timers. After that, it will enter the wait state again.
-
-% DHCP6_BUFFER_WAIT_INTERRUPTED interrupted wait for the next packet due to timeout, signal or external socket callback (timeout value is %1)
-This debug message is issued when the server interrupts waiting
-for reception of the next DHCPv6 message due to timeout, signal
-or reception of the data over socket other than used for DHCPv6
-message transmission. The server will now handle signals
-received and ready timers before waiting for next packets again.
-The argument specifies the timeout value in milliseconds.
-
 % DHCP6_BUFFER_WAIT_SIGNAL signal received while waiting for next packet, next waiting signal is %1
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
 waiting for next packets. The argument specifies the next signal to
 be handled by the server.
-
-% DHCP6_CCSESSION_STARTED control channel session started on socket %1
-A debug message issued during startup after the IPv6 DHCP server has
-successfully established a session with the Kea control channel.
-
-% DHCP6_CCSESSION_STARTING starting control channel session, specfile: %1
-This debug message is issued just before the IPv6 DHCP server attempts
-to establish a session with the Kea control channel.
 
 % DHCP6_CLASS_ASSIGNED %1: client packet has been assigned to the following class(es): %2
 This debug message informs that incoming packet has been assigned to specified
@@ -83,7 +60,7 @@ The first argument specifies the client and transaction identification
 information. The second argument includes all classes to which the
 packet has been assigned.
 
-% DHCP6_CLASS_UNCONFIGURED %1: client packet belongs to an unconfigured class: %1
+% DHCP6_CLASS_UNCONFIGURED %1: client packet belongs to an unconfigured class: %2
 This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
@@ -104,15 +81,6 @@ This error message indicates that the DHCPv6 configuration has failed.
 If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
-
-% DHCP6_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
-This is an informational message reporting that the configuration has
-been extended to include the specified subnet.
-
-% DHCP6_CONFIG_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
-This warning message is issued on an attempt to configure multiple options with the
-same option code for the particular subnet. Adding multiple options is uncommon
-for DHCPv6, but it is not prohibited.
 
 % DHCP6_CONFIG_RECEIVED received configuration: %1
 A debug message listing the configuration received by the DHCPv6 server.
@@ -263,6 +231,12 @@ as a result of receiving SIGHUP signal.
 This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
+% DHCP6_FLEX_ID flexible identifier generated for incoming packet: %1
+This debug message is printed when host reservation type is set to flexible identifier
+and the expression specified in its configuration generated (was evaluated to)
+an identifier for incoming packet. This debug message is mainly intended as a
+debugging assistance for flexible identifier.
+
 % DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
 This error message is printed when an exception was raised during signal
 processing. This likely indicates a coding error and should be reported to ISC.
@@ -272,23 +246,31 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
-% DHCP6_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 was dropped because a callout set the skip flag
+% DHCP6_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 This debug message is printed when a callout installed on buffer6_receive
-hook point set the skip flag. For this particular hook point, the
+hook point set the drop flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 The arguments specify the source and destination address as well as
 the name of the interface over which the buffer has been received.
 
-% DHCP6_HOOK_BUFFER_SEND_SKIP %1: prepared DHCPv6 response was dropped because a callout set the skip flag
+% DHCP6_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP
+This debug message is printed when a callout installed on
+buffer6_receive hook point set the next step status to skip. For this particular
+hook point, this value set by a callout instructs the server to
+not parse the buffer because it was already parsed by the hook. The
+arguments specify the source and destination address as well as the
+name of the interface over which the buffer has been received.
+
+% DHCP6_HOOK_BUFFER_SEND_SKIP %1: prepared DHCPv6 response was dropped because a callout set the next step to SKIP
 This debug message is printed when a callout installed on buffer6_send
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to drop the packet.
+hook point set the next step to SKIP value. For this particular hook point, the
+SKIP setting a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 The argument includes the client and transaction identification
 information.
 
-% DHCP6_HOOK_DECLINE_DROP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to DROP, dropping packet.
+% DHCP6_HOOK_DECLINE_DROP During Decline processing (client=%1, interface=%2, addr=%3) hook callout set next step to DROP, dropping packet.
 This message indicates that the server received DECLINE message, it was verified
 to be correct and matching server's lease information. The server called hooks
 for the lease6_decline hook point and one of the callouts set next step status to DROP.
@@ -303,45 +285,60 @@ The server will skip the operation of moving the lease to the declined state and
 will continue processing the packet. In particular, it will send a REPLY message
 as if the decline actually took place.
 
-% DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP %1: DHCPv6 address lease was not released because a callout set the skip flag
+% DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP %1: DHCPv6 address lease was not released because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the
-lease6_release hook point set the skip flag. For this particular hook
-point, the setting of the flag by a callout instructs the server to not
+lease6_release hook point set the next step to SKIP. For this particular hook
+point, this setting by a callout instructs the server to not
 release a lease. If a client requested the release of multiples leases
 (by sending multiple IA options), the server will retain this particular
 lease and proceed with other releases as usual. The argument holds the
 client and transaction identification information.
 
-% DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP %1: prefix lease was not released because a callout set the skip flag
+% DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP %1: prefix lease was not released because a callout set the next step to SKIP
 This debug message is printed when a callout installed on lease6_release
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to not release
+hook point set the next step to SKIP value. For this particular hook point, that
+setting by a callout instructs the server to not release
 a lease. If client requested release of multiples leases (by sending
 multiple IA options), the server will retains this particular lease and
 will proceed with other renewals as usual. The argument holds the
 client and transaction identification information.
 
-% DHCP6_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the skip flag.
+% DHCP6_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the pkt6_receive
-hook point sets the skip flag. For this particular hook point, the
-setting of the flag instructs the server to drop the packet.
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting instructs the server to drop the packet.
 
-% DHCP6_HOOK_PACKET_SEND_SKIP %1: prepared DHCPv6 response was not sent because a callout set the skip flag
+% DHCP6_HOOK_PACKET_SEND_DROP %1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP
 This debug message is printed when a callout installed on the pkt6_send
-hook point set the skip flag. For this particular hook point, the setting
-of the flag by a callout instructs the server to drop the packet. This
+hook point set the next step to DROP. For this particular hook point, the setting
+of the value by a callout instructs the server to drop the packet. This
 effectively means that the client will not get any response, even though
 the server processed client's request and acted on it (e.g. possibly
 allocated a lease). The argument specifies the client and transaction
 identification information.
 
-% DHCP6_HOOK_SUBNET6_SELECT_SKIP %1: no subnet was selected because a callout set the skip flag
+% DHCP6_HOOK_PACKET_SEND_SKIP %1: prepared DHCPv6 response is not built because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the
-subnet6_select hook point set the skip flag. For this particular hook
-point, the setting of the flag instructs the server not to choose a
+pkt6_send hook point set the next step to SKIP. For this particular hook
+point, the setting of the value by a callout instructs the server to
+not build the wire data (pack) because it was already done by the
+book. The argument specifies the client and transaction identification
+information.
+
+% DHCP6_HOOK_SUBNET6_SELECT_SKIP %1: no subnet was selected because a callout set the next step to SKIP
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the next step to SKIP value. For this particular hook
+point, the setting of this value instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses or prefixes
 will be assigned. The argument holds the client and transaction
+identification information.
+
+% DHCP6_HOOK_SUBNET6_SELECT_DROP %1: packet was dropped because a callout set the drop flag
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the drop flag. For this particular hook
+point, the setting of the flag instructs the server to drop the
+received packet. The argument holds the client and transaction
 identification information.
 
 % DHCP6_INIT_FAIL failed to initialize Kea server: %1
@@ -435,8 +432,14 @@ server is about to open sockets on the specified port.
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
+% DHCP6_PACKET_DROP_DHCP_DISABLED %1: DHCP service is globally disabled
+This debug message is issued when a packet is dropped because the DHCP service
+has been temporarily disabled. This affects all received DHCP packets. The
+service may be enabled by the "dhcp-enable" control command or automatically
+after a specified amount of time since receiving "dhcp-disable" command.
+
 % DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4
-The DHCPv4 server has received a packet that it is unable to
+The DHCPv6 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
 % DHCP6_PACKET_DROP_SERVERID_MISMATCH %1: dropping packet with server identifier: %2, server is using: %3
@@ -501,11 +504,6 @@ On receipt of message containing details to a change of the IPv6 DHCP
 server configuration, a set of parsers were successfully created, but
 one of them failed to commit its changes.  The reason for the failure
 is given in the message.
-
-% DHCP6_PARSER_CREATED created parser for configuration element %1
-A debug message output during a configuration update of the IPv6 DHCP
-server, notifying that the parser for the specified configuration element
-has been successfully created.
 
 % DHCP6_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,
@@ -742,6 +740,14 @@ the client. The first argument includes the client and the
 transaction identification information. The second argument
 includes the subnet details.
 
+% DHCP6_SUBNET_DYNAMICALLY_CHANGED %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+This debug message indicates that the server is using another subnet
+than initially selected for client assignments. This newly selected
+subnet belongs to the same shared network as the original subnet.
+Some reasons why the new subnet was selected include: address pool
+exhaustion in the original subnet or the fact that the new subnet
+includes some static reservations for this client.
+
 % DHCP6_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
 This is a debug message noting the selection of a subnet to be used for
 address and option assignment. Subnet selection is one of the early
@@ -757,7 +763,7 @@ processing will continue, but the response will only contain generic
 configuration and no addresses or prefixes. The argument includes
 the client and the transaction identification information.
 
-% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %d) on interface %2
+% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %1) on interface %2
 This debug message is printed when server receives a message of unknown type.
 That could either mean missing functionality or invalid or broken relay or client.
 The list of formally defined message types is available here:

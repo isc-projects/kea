@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,8 +76,8 @@ IntervalTimerImpl::setup(const IntervalTimer::Callback& cbfunc,
                          const long interval,
                          const IntervalTimer::Mode& mode)
 {
-    // Interval should not be less than or equal to 0.
-    if (interval <= 0) {
+    // Interval should not be less than 0.
+    if (interval < 0) {
         isc_throw(isc::BadValue, "Interval should not be less than or "
                                  "equal to 0");
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,7 +66,7 @@ public:
     /// is destroyed.
     ///
     /// If you create the locker on the stack or using some other "garbage
-    /// collecting" mechanism (auto_ptr, for example), it ensures exception
+    /// collecting" mechanism (unique_ptr, for example), it ensures exception
     /// safety with regards to the mutex - it'll get released on the exit
     /// of function no matter by what means.
     class Locker : boost::noncopyable {

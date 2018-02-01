@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,9 +8,11 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/classify.h>
 #include <dhcp/option6_pdexclude.h>
 #include <boost/shared_ptr.hpp>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 #include <boost/shared_ptr.hpp>
@@ -24,7 +26,7 @@ namespace dhcp {
 ///
 /// Stores information about pool of IPv4 or IPv6 addresses.
 /// That is a basic component of a configuration.
-class Pool {
+class Pool : public UserContext {
 
 public:
     /// @note:
@@ -95,16 +97,61 @@ public:
         return (cfg_option_);
     }
 
-    /// @brief Returns const pointer to the user context.
-    data::ConstElementPtr getContext() const {
-        return (user_context_);
+    /// @brief Checks whether this pool supports client that belongs to
+    /// specified classes.
+    ///
+    /// @todo: currently doing the same as network which needs improving.
+    ///
+    /// @param client_classes list of all classes the client belongs to
+    /// @return true if client can be supported, false otherwise
+    bool clientSupported(const ClientClasses& client_classes) const;
+
+    /// @brief Adds class class_name to the list of supported classes
+    ///
+    /// @param class_name client class to be supported by this pool
+    void allowClientClass(const ClientClass& class_name);
+
+    /// @brief returns the client class white list
+    ///
+    /// @note Currently white list is empty or has one element
+    /// @note The returned reference is only valid as long as the object
+    /// returned is valid.
+    ///
+    /// @return client classes @ref white_list_
+    const ClientClasses& getClientClasses() const {
+        return (white_list_);
     }
 
-    /// @brief Sets user context.
-    /// @param ctx user context to be stored.
-    void setUserContext(const data::ConstElementPtr& ctx) {
-        user_context_ = ctx;
+    /// @brief returns the last address that was tried from this pool
+    ///
+    /// @return address/prefix that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated() const {
+        return last_allocated_;
     }
+
+    /// @brief checks if the last address is valid
+    /// @return true if the last address is valid
+    bool isLastAllocatedValid() const {
+        return last_allocated_valid_;
+    }
+
+    /// @brief sets the last address that was tried from this pool
+    ///
+    /// @param addr address/prefix to that was tried last
+    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
+        last_allocated_ = addr;
+        last_allocated_valid_ = true;
+    }
+
+    /// @brief resets the last address to invalid
+    void resetLastAllocated() {
+        last_allocated_valid_ = false;
+    }
+
+    /// @brief Unparse a pool object.
+    ///
+    /// @return A pointer to unparsed pool configuration.
+    virtual data::ElementPtr toElement() const;
 
 protected:
 
@@ -140,11 +187,6 @@ protected:
     /// @brief The last address in a pool
     isc::asiolink::IOAddress last_;
 
-    /// @brief Comments field
-    ///
-    /// @todo: This field is currently not used.
-    std::string comments_;
-
     /// @brief defines a lease type that will be served from this pool
     Lease::Type type_;
 
@@ -159,8 +201,21 @@ protected:
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
 
-    /// @brief Pointer to the user context (may be NULL)
-    data::ConstElementPtr user_context_;
+    /// @brief Optional definition of a client class
+    ///
+    /// If empty, all classes are allowed. If non-empty, only those listed
+    /// here are allowed.
+    ///
+    /// @ref Network::white_list_
+    ClientClasses white_list_;
+
+    /// @brief Last allocated address
+    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
+    /// Initialized and reset to first
+    isc::asiolink::IOAddress last_allocated_;
+
+    /// @brief Status of last allocated address
+    bool last_allocated_valid_;
 };
 
 /// @brief Pool information for IPv4 addresses
@@ -182,6 +237,11 @@ public:
     /// @param prefix_len specifies length of the prefix of the pool
     Pool4(const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len);
+
+    /// @brief Unparse a Pool4 object.
+    ///
+    /// @return A pointer to unparsed Pool4 configuration.
+    virtual data::ElementPtr toElement() const;
 };
 
 /// @brief a pointer an IPv4 Pool
@@ -263,7 +323,7 @@ public:
     /// This may be useful for "prefix/len" style definition for
     /// addresses, but is mostly useful for prefix pools.
     /// @return prefix length (1-128)
-    uint8_t getLength() {
+    uint8_t getLength() const {
         return (prefix_len_);
     }
 
@@ -274,6 +334,11 @@ public:
     Option6PDExcludePtr getPrefixExcludeOption() const {
         return (pd_exclude_option_);
     }
+
+    /// @brief Unparse a Pool6 object.
+    ///
+    /// @return A pointer to unparsed Pool6 configuration.
+    virtual data::ElementPtr toElement() const;
 
     /// @brief returns textual representation of the pool
     ///

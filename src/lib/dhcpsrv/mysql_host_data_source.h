@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,11 @@
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/mysql_connection.h>
+
+#include <stdint.h>
+
+#include <utility>
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -86,7 +91,7 @@ public:
     /// because a particular client may have reservations in multiple subnets.
     ///
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -109,7 +114,7 @@ public:
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// Implementations of this method should guard against the case when
-    /// mutliple instances of the @c Host are present, e.g. when two
+    /// multiple instances of the @c Host are present, e.g. when two
     /// @c Host objects are found, one for the DUID, another one for the
     /// HW address. In such case, an implementation of this method
     /// should throw an MultipleRecords exception.
@@ -128,7 +133,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -160,7 +165,7 @@ public:
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// Implementations of this method should guard against the case when
-    /// mutliple instances of the @c Host are present, e.g. when two
+    /// multiple instances of the @c Host are present, e.g. when two
     /// @c Host objects are found, one for the DUID, another one for the
     /// HW address. In such case, an implementation of this method
     /// should throw an MultipleRecords exception.
@@ -179,7 +184,7 @@ public:
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a begining of a buffer containing
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
     /// an identifier.
     /// @param identifier_len Identifier length.
     ///
@@ -219,6 +224,48 @@ public:
     ///
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
+
+    /// @brief Attempts to delete a host by (subnet-id, address)
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier type, identifier)
+    ///
+    /// This method supports v4 hosts only.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier type, identifier)
+    ///
+    /// This method supports v6 hosts only.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
 
     /// @brief Return backend type
     ///
@@ -264,7 +311,6 @@ public:
     virtual void rollback();
 
 private:
-
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImpl* impl_;
 };
@@ -273,3 +319,4 @@ private:
 }
 
 #endif // MYSQL_HOST_DATA_SOURCE_H
+

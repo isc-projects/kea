@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -158,7 +158,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
         // Verify that peek did not alter the queue size.
         EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr->getQueueSize());
 
-        // Verify the dequeueing from non-empty queue works
+        // Verify the dequeuing from non-empty queue works
         EXPECT_NO_THROW(queue_mgr->dequeue());
 
         // Verify queue size decrements following dequeue.
@@ -176,11 +176,11 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
     // Verify queue count is correct.
     EXPECT_EQ(VALID_MSG_CNT, queue_mgr->getQueueSize());
 
-    // Verfiy that peekAt returns the correct entry.
+    // Verify that peekAt returns the correct entry.
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
     EXPECT_TRUE (*(ref_msgs[1]) == *ncr);
 
-    // Verfiy that dequeueAt removes the correct entry.
+    // Verify that dequeueAt removes the correct entry.
     // Removing it, this should shift the queued entries forward by one.
     EXPECT_NO_THROW(queue_mgr->dequeueAt(1));
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));

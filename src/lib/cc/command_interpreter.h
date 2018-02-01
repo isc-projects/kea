@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,14 @@ const int CONTROL_RESULT_SUCCESS = 0;
 /// @brief Status code indicating a general failure
 const int CONTROL_RESULT_ERROR = 1;
 
+/// @brief Status code indicating that the specified command is not supported.
+const int CONTROL_RESULT_COMMAND_UNSUPPORTED = 2;
+
+/// @brief Status code indicating that the specified command was completed
+///        correctly, but failed to produce any results. For example, get
+///        completed the search, but couldn't find the object it was looking for.
+const int CONTROL_RESULT_EMPTY = 3;
+
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
 class CtrlChannelError : public isc::Exception {
@@ -73,7 +81,7 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 /// @brief Creates a standard config/command level answer message
 ///
 /// @param status_code The return code (0 for success)
-/// @param status textual represenation of the status (used mostly for errors)
+/// @param status textual representation of the status (used mostly for errors)
 /// @param arg The optional argument for the answer. This can be of
 ///        any Element type. May be NULL.
 /// @return Standard command/config answer message
@@ -89,6 +97,12 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
 /// @return The optional argument in the message.
 isc::data::ConstElementPtr parseAnswer(int &status_code,
                                        const isc::data::ConstElementPtr& msg);
+
+/// @brief Converts answer to printable text
+///
+/// @param msg answer to be parsed
+/// @return printable string
+std::string answerToText(const isc::data::ConstElementPtr& msg);
 
 /// @brief Creates a standard config/command command message with no
 /// argument (of the form { "command": "my_command" })
@@ -119,6 +133,23 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 /// @return The command name
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
+
+/// @brief Combines lists of commands carried in two responses.
+///
+/// This method is used to combine list of commands returned by the
+/// two command managers.
+///
+/// If the same command appears in two responses only a single
+/// instance is returned in the combined response.
+///
+/// @param response1 First command response.
+/// @param response2 Second command response.
+///
+/// @return Pointer to the 'list-commands' response holding combined
+/// list of commands.
+isc::data::ConstElementPtr
+combineCommandsLists(const isc::data::ConstElementPtr& response1,
+                     const isc::data::ConstElementPtr& response2);
 
 }; // end of namespace isc::config
 }; // end of namespace isc

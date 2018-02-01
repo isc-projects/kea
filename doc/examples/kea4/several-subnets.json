@@ -1,45 +1,67 @@
-# This is an example configuration file for DHCPv4 server in Kea.
-# It's a basic scenario with three IPv4 subnets configured. In each
-# subnet, there's a smaller pool of dynamic addresses.
+// This is an example configuration file for DHCPv4 server in Kea.
+// It's a basic scenario with three IPv4 subnets configured. In each
+// subnet, there's a smaller pool of dynamic addresses.
 
 { "Dhcp4":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify the the database used to store leases. As of
-# September 2016, four database backends are supported: MySQL,
-# PostgreSQL, Cassandra, and the in-memory database, Memfile.
-# We'll use memfile  because it doesn't require any prior set up.
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
     "type": "memfile"
   },
 
-# Addresses will be assigned with a lifetime of 4000 seconds.
-# The client is told to start renewing after 1000 seconds. If the server
-# does not respond within 2000 seconds of the lease being granted, client
-# is supposed to start REBIND procedure (emergency renewal that allows
-# switching to a different server).
+// Addresses will be assigned with a lifetime of 4000 seconds.
+// The client is told to start renewing after 1000 seconds. If the server
+// does not respond within 2000 seconds of the lease being granted, client
+// is supposed to start REBIND procedure (emergency renewal that allows
+// switching to a different server).
   "valid-lifetime": 4000,
   "renew-timer": 1000,
   "rebind-timer": 2000,
 
-# The following list defines subnets. Each subnet consists of at
-# least subnet and pool entries.
-  "subnet4": [ 
-  {    "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
-       "subnet": "192.0.2.0/24"  },
-  {    "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
-       "subnet": "192.0.3.0/24"  },
-  {    "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
-       "subnet": "192.0.4.0/24"  } ]
+// RFC6842 says that the server is supposed to echo back client-id option.
+// However, some older clients do not support this and are getting confused
+// when they get their own client-id. Kea can disable RFC6842 support.
+  "echo-client-id": false,
+
+// Some clients don't use stable client identifier, but rather generate them
+// during each boot. This may cause a client that reboots frequently to get
+// multiple leases, which may not be desirable. As such, sometimes admins
+// prefer to tell their DHCPv4 server to ignore client-id value altogether
+// and rely exclusively on MAC address. This is a parameter that is defined
+// globally, but can be overridden on a subnet level.
+  "match-client-id": true,
+
+// The following list defines subnets. Each subnet consists of at
+// least subnet and pool entries.
+  "subnet4": [
+  {
+      "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+      "subnet": "192.0.2.0/24"
+  },
+  {
+// This particular subnet has match-client-id value changed.
+      "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
+      "subnet": "192.0.3.0/24",
+      "match-client-id": false
+  },
+  {
+      "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
+      "subnet": "192.0.4.0/24"
+  } ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

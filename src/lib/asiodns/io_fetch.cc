@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -225,19 +225,23 @@ IOFetch::getProtocol() const {
 }
 
 /// The function operator is implemented with the "stackless coroutine"
-/// pattern; see internal/coroutine.h for details.
+/// pattern; see boost/asio/coroutine.hpp for details.
 
 void
 IOFetch::operator()(boost::system::error_code ec, size_t length) {
 
     if (data_->stopped) {
         return;
-    } else if (ec) {
+
+    // On Debian it has been often observed that boost::asio async
+    // operations result in EINPROGRESS. This doesn't necessarily
+    // indicate an issue. Thus, we continue as if no error occurred.
+    } else if (ec && (ec.value() != boost::asio::error::in_progress)) {
         logIOFailure(ec);
         return;
     }
 
-    CORO_REENTER (this) {
+    BOOST_ASIO_CORO_REENTER (this) {
 
         /// Generate the upstream query and render it to wire format
         /// This is done in a different scope to allow inline variable
@@ -266,14 +270,14 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
         if (data_->socket->isOpenSynchronous()) {
             data_->socket->open(data_->remote_snd.get(), *this);
         } else {
-            CORO_YIELD data_->socket->open(data_->remote_snd.get(), *this);
+            BOOST_ASIO_CORO_YIELD data_->socket->open(data_->remote_snd.get(), *this);
         }
 
         do {
             // Begin an asynchronous send, and then yield.  When the send completes,
             // we will resume immediately after this point.
             data_->origin = ASIODNS_SEND_DATA;
-            CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
+            BOOST_ASIO_CORO_YIELD data_->socket->asyncSend(data_->msgbuf->getData(),
                 data_->msgbuf->getLength(), data_->remote_snd.get(), *this);
     
             // Now receive the response.  Since TCP may not receive the entire
@@ -293,20 +297,20 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
             // So... we need to loop until we have at least two bytes, then store
             // the expected amount of data.  Then we need to loop until we have
             // received all the data before copying it back to the user's buffer.
-            // And we want to minimise the amount of copying...
+            // And we want to minimize the amount of copying...
     
             data_->origin = ASIODNS_READ_DATA;
             data_->cumulative = 0;          // No data yet received
             data_->offset = 0;              // First data into start of buffer
             data_->received->clear();       // Clear the receive buffer
             do {
-                CORO_YIELD data_->socket->asyncReceive(data_->staging,
-                                                       static_cast<size_t>(STAGING_LENGTH),
-                                                       data_->offset,
-                                                       data_->remote_rcv.get(), *this);
+                BOOST_ASIO_CORO_YIELD data_->socket->asyncReceive(data_->staging,
+                                        static_cast<size_t>(STAGING_LENGTH),
+                                        data_->offset,
+                                        data_->remote_rcv.get(), *this);
             } while (!data_->socket->processReceivedData(data_->staging, length,
-                                                         data_->cumulative, data_->offset,
-                                                         data_->expected, data_->received));
+                                        data_->cumulative, data_->offset,
+                                        data_->expected, data_->received));
         } while (!data_->responseOK());
 
         // Finished with this socket, so close it.  This will not generate an

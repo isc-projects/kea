@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -210,10 +211,8 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
     def.reset(new OptionDefinition("routers", DHO_ROUTERS, "uint32"));
     EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
 
-    /// There is no definition for the Access Network Domain Name Option
-    /// (RFC5986, option code 213) in libdhcp++. Once it is implemented it
-    /// should be not allowed to add a custom definition for it.
-    def.reset(new OptionDefinition("access-network-domain-name", 213, "string"));
+    /// There is no definition for unassigned option 170.
+    def.reset(new OptionDefinition("unassigned-option-170", 170, "string"));
     EXPECT_NO_THROW(cfg.add(def, DHCP4_OPTION_SPACE));
 
     // It is not allowed to override the definition of the option which
@@ -221,9 +220,9 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
     def.reset(new OptionDefinition("sntp-servers", D6O_SNTP_SERVERS,
                                    "ipv4-address"));
     EXPECT_THROW(cfg.add(def, DHCP6_OPTION_SPACE), isc::BadValue);
-    // There is no definition for option 63 in libdhcp++ yet, so it should
+    // There is no definition for option 163 in libdhcp++ yet, so it should
     // be possible provide a custom definition.
-    def.reset(new OptionDefinition("geolocation", 63, "uint32"));
+    def.reset(new OptionDefinition("geolocation", 163, "uint32"));
     EXPECT_NO_THROW(cfg.add(def, DHCP6_OPTION_SPACE));
 }
 
@@ -243,6 +242,65 @@ TEST(CfgOptionDefTest, addNegative) {
     // fails on the second attempt.
     ASSERT_NO_THROW(cfg.add(def, "isc"));
     EXPECT_THROW(cfg.add(def, "isc"), DuplicateOptionDefinition);
+}
+
+// This test verifies that the function that unparses configuration
+// works as expected.
+TEST(CfgOptionDefTest, unparse) {
+    CfgOptionDef cfg;
+
+    // Add some options.
+    cfg.add(OptionDefinitionPtr(new 
+        OptionDefinition("option-foo", 5, "uint16")), "isc");
+    cfg.add(OptionDefinitionPtr(new
+        OptionDefinition("option-bar", 5, "uint16", true)), "dns");
+    cfg.add(OptionDefinitionPtr(new
+        OptionDefinition("option-baz", 6, "uint16", "dns")), "isc");
+    OptionDefinitionPtr rec(new OptionDefinition("option-rec", 6, "record"));
+    std::string json = "{ \"comment\": \"foo\", \"bar\": 1 }";
+    rec->setContext(data::Element::fromJSON(json));
+    rec->addRecordField("uint16");
+    rec->addRecordField("uint16");
+    cfg.add(rec, "dns");
+    
+    // Unparse
+    std::string expected = "[\n"
+        "{\n"
+        "    \"name\": \"option-bar\",\n"
+        "    \"code\": 5,\n"
+        "    \"type\": \"uint16\",\n"
+        "    \"array\": true,\n"
+        "    \"record-types\": \"\",\n"
+        "    \"encapsulate\": \"\",\n"
+        "    \"space\": \"dns\"\n"
+        "},{\n"
+        "    \"name\": \"option-rec\",\n"
+        "    \"code\": 6,\n"
+        "    \"comment\": \"foo\",\n"
+        "    \"type\": \"record\",\n"
+        "    \"array\": false,\n"
+        "    \"record-types\": \"uint16, uint16\",\n"
+        "    \"encapsulate\": \"\",\n"
+        "    \"space\": \"dns\",\n"
+        "    \"user-context\": { \"bar\": 1 }\n"
+        "},{\n"
+        "    \"name\": \"option-foo\",\n"
+        "    \"code\": 5,\n"
+        "    \"type\": \"uint16\",\n"
+        "    \"array\": false,\n"
+        "    \"record-types\": \"\",\n"
+        "    \"encapsulate\": \"\",\n"
+        "    \"space\": \"isc\"\n"
+        "},{\n"
+        "    \"name\": \"option-baz\",\n"
+        "    \"code\": 6,\n"
+        "    \"type\": \"uint16\",\n"
+        "    \"array\": false,\n"
+        "    \"record-types\": \"\",\n"
+        "    \"encapsulate\": \"dns\",\n"
+        "    \"space\": \"isc\"\n"
+        "}]\n";
+    isc::test::runToElementTest<CfgOptionDef>(expected, cfg);
 }
 
 }

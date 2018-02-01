@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,7 +171,7 @@ public:
     /// @brief Returns the number of valid columns found in the header
     /// For newly created files this will always match the number of defined
     /// columns (i.e. getColumnCount()).  For existing files, this will be
-    /// the number of columns in the header that match the defined columnns.
+    /// the number of columns in the header that match the defined columns.
     /// When this number is less than getColumnCount() it means the input file
     /// is from an earlier schema.  This value is zero until the file has
     /// been opened.
@@ -189,7 +189,7 @@ public:
     /// true, the file will be opened and the internal pointer will be set
     /// to the end of file.
     ///
-    /// @param seek_to_end A boolean value which indicates if the intput and
+    /// @param seek_to_end A boolean value which indicates if the input and
     /// output file pointer should be set at the end of file.
     ///
     /// @throw VersionedCSVFileError if schema has not been defined,

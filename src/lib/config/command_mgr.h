@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,72 +7,39 @@
 #ifndef COMMAND_MGR_H
 #define COMMAND_MGR_H
 
+#include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <config/command_socket.h>
+#include <config/hooked_command_mgr.h>
+#include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
-#include <boost/function.hpp>
-#include <string>
-#include <list>
-#include <map>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace config {
 
-/// @brief CommandMgr exception indicating that the handler specified is not valid
-class InvalidCommandHandler : public Exception {
+/// @brief An exception indicating that specified socket parameters are invalid
+class BadSocketInfo : public Exception {
 public:
-    InvalidCommandHandler(const char* file, size_t line, const char* what) :
+    BadSocketInfo(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
-/// @brief CommandMgr exception indicating that the command name is not valid
-class InvalidCommandName : public Exception {
+/// @brief An exception indicating a problem with socket operation
+class SocketError : public Exception {
 public:
-    InvalidCommandName(const char* file, size_t line, const char* what) :
+    SocketError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Commands Manager, responsible for processing external commands
-///
-/// Commands Manager is a generic interface for handling external commands.
-/// Commands can be received over control sockets. Currently unix socket is
-/// supported, but additional type (udp, tcp, https etc.) may be added later.
-/// The commands and responses are sent in JSON format.
-/// See http://kea.isc.org/wiki/StatsDesign for details.
-///
-/// In general, the command has the following format:
-/// {
-///     "command": "statistic-get",
-///     "arguments": {
-///         "name": "received-packets"
-///     }
-/// }
-///
-/// And the response is:
-///
-/// {
-///     "result": 0,
-///     "observations": {
-///         "received-packets": [ [ 1234, "2015-04-15 12:34:45.123" ] ]
-///     }
-/// }
-///
-/// CommandsMgr does not implement the commands (except one, "list-commands")
-/// itself, but rather provides an interface (see @ref registerCommand,
-/// @ref deregisterCommand, @ref processCommand) for other components to use
-/// it. The @ref CommandHandler type is specified in a way to easily use
-/// existing command handlers in DHCPv4 and DHCPv6 components.
-class CommandMgr : public boost::noncopyable {
-public:
 
-    /// @brief Defines command handler type
-    ///
-    /// Command handlers are expected to use this format.
-    /// @param name name of the commands
-    /// @param params parameters specific to the command
-    /// @return response (created with createAnswer())
-    typedef boost::function<isc::data::ConstElementPtr (const std::string& name,
-        const isc::data::ConstElementPtr& params)> CommandHandler;
+class CommandMgrImpl;
+
+/// @brief Commands Manager implementation for the Kea servers.
+///
+/// This class extends @ref BaseCommandMgr with the ability to receive and
+/// respond to commands over unix domain sockets.
+class CommandMgr : public HookedCommandMgr, public boost::noncopyable {
+public:
 
     /// @brief CommandMgr is a singleton class. This method returns reference
     /// to its sole instance.
@@ -80,114 +47,45 @@ public:
     /// @return the only existing instance of the manager
     static CommandMgr& instance();
 
-    /// @brief Opens control socket with paramters specified in socket_info
+    /// @brief Sets IO service to be used by the command manager.
+    ///
+    /// The server should use this method to provide the Command Manager with the
+    /// common IO service used by the server.
+    /// @param io_service Pointer to the IO service.
+    void setIOService(const asiolink::IOServicePtr& io_service);
+
+    /// @brief Override default connection timeout.
+    ///
+    /// @param timeout New connection timeout in seconds.
+    void setConnectionTimeout(const unsigned short timeout);
+
+    /// @brief Opens control socket with parameters specified in socket_info
     ///
     /// Currently supported types are:
     /// - unix (required parameters: socket-type: unix, socket-name:/unix/path)
     ///
-    /// This method will close previously open command socket (if exists).
+    /// @throw BadSocketInfo When socket configuration is invalid.
+    /// @throw SocketError When socket operation fails.
     ///
-    /// @throw CommandSocketError if socket creation fails.
-    /// @throw SocketError if command socket is already open.
-    ///
-    /// @param socket_info describes control socket parameters
-    /// @return object representing a socket
-    CommandSocketPtr
+    /// @param socket_info Configuration information for the control socket.
+    void
     openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
     /// @brief Shuts down any open control sockets
     void closeCommandSocket();
 
-    /// @brief Registers specified command handler for a given command
-    ///
-    /// @param cmd name of the command to be handled
-    /// @param handler pointer to the method that will handle the command
-    void registerCommand(const std::string& cmd, CommandHandler handler);
-
-    /// @brief Deregisters specified command handler
-    ///
-    /// @param cmd name of the command that's no longer handled
-    void deregisterCommand(const std::string& cmd);
-
-    /// @brief Triggers command processing
-    ///
-    /// This method processes specified command. The command is specified using
-    /// a single Element. See @ref CommandMgr for description of its syntax.
-    /// Typically, this method is called internally, when there's a new data
-    /// received over control socket. However, in some cases (e.g. signal received)
-    /// it may be called by external code explicitly. Hence this method is public.
-    isc::data::ConstElementPtr processCommand(const isc::data::ConstElementPtr& cmd);
-
-    /// @brief Reads data from a socket, parses as JSON command and processes it
-    ///
-    /// This method is used to handle traffic on connected socket. This callback
-    /// is installed by the @c isc::config::UnixCommandSocket::receiveHandler
-    /// (located in the src/lib/config/command_socket_factory.cc)
-    /// once the incoming connection is accepted. If end-of-file is detected, this
-    /// method will close the socket and will uninstall itself from
-    /// @ref isc::dhcp::IfaceMgr.
-    ///
-    /// @param sockfd socket descriptor of a connected socket
-    static void commandReader(int sockfd);
-
-    /// @brief Auxiliary method that removes all installed commands.
-    ///
-    /// The only unwipeable method is list-commands, which is internally
-    /// handled at all times.
-    void deregisterAll();
-
-    /// @brief Adds an information about opened connection socket
-    ///
-    /// @param conn Connection socket to be stored
-    void addConnection(const CommandSocketPtr& conn);
-
-    /// @brief Closes connection with a specific socket descriptor
-    ///
-    /// @param fd socket descriptor
-    /// @return true if closed successfully, false if not found
-    bool closeConnection(int fd);
-
     /// @brief Returns control socket descriptor
     ///
     /// This method should be used only in tests.
-    int getControlSocketFD() const {
-        return (socket_->getFD());
-    }
+    int getControlSocketFD();
 
 private:
 
     /// @brief Private constructor
-    ///
-    /// Registers internal 'list-commands' command.
     CommandMgr();
 
-    /// @brief 'list-commands' command handler
-    ///
-    /// This method implements command 'list-commands'. It returns a list of all
-    /// currently supported commands.
-    /// @param name name of the command (should always be 'list-commands')
-    /// @param params additional parameters (ignored)
-    /// @return structure that includes all currently supported commands
-    isc::data::ConstElementPtr
-    listCommandsHandler(const std::string& name,
-                        const isc::data::ConstElementPtr& params);
-
-    typedef std::map<std::string, CommandHandler> HandlerContainer;
-
-    /// @brief Container for command handlers
-    HandlerContainer handlers_;
-
-    /// @brief Control socket structure
-    ///
-    /// This is the socket that accepts incoming connections. There can be at
-    /// most one (if command channel is configured).
-    CommandSocketPtr socket_;
-
-    /// @brief Sockets for open connections
-    ///
-    /// These are the sockets that are dedicated to handle a specific connection.
-    /// Their number is equal to number of current control connections.
-    std::list<CommandSocketPtr> connections_;
+    /// @brief Pointer to the implementation of the @ref CommandMgr.
+    boost::shared_ptr<CommandMgrImpl> impl_;
 };
 
 }; // end of isc::config namespace

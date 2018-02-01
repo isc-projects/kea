@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp/tests/pkt_captures.h>
+#include <log/logger_support.h>
 #include <util/pointer_util.h>
 #include <cc/command_interpreter.h>
 #include <stats/stats_mgr.h>
@@ -46,6 +47,9 @@ BaseServerTest::~BaseServerTest() {
 
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
+
+    // Revert to unit test logging in case the test reconfigured logging.
+    isc::log::initLogger();
 }
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
@@ -62,6 +66,7 @@ Dhcpv6SrvTest::Dhcpv6SrvTest()
     subnet_->addPool(pool_);
 
     isc::dhcp::CfgMgr::instance().clear();
+    CfgMgr::instance().setFamily(AF_INET6);
     isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet_);
     isc::dhcp::CfgMgr::instance().commit();
 
@@ -675,7 +680,7 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
     // fakeReceive()
     srv.run();
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
     tested_stat = mgr.getObservation(stat_name);
     ASSERT_TRUE(pkt6_rcvd);
@@ -693,8 +698,12 @@ Dhcpv6SrvTest::configure(const std::string& config) {
 
 void
 Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
-    ElementPtr json = data::Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
     ConstElementPtr status;
+
+    // Disable the re-detect flag
+    disableIfacesReDetect(json);
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));

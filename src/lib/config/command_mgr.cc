@@ -1,74 +1,546 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
+#include <asiolink/unix_domain_socket.h>
+#include <asiolink/unix_domain_socket_acceptor.h>
+#include <asiolink/unix_domain_socket_endpoint.h>
 #include <config/command_mgr.h>
-#include <config/command_socket_factory.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <cc/json_feed.h>
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
 #include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <array>
+#include <unistd.h>
 
+using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
+
+namespace {
+
+/// @brief Maximum size of the data chunk sent/received over the socket.
+const size_t BUF_SIZE = 8192;
+
+/// @brief Default connection timeout in seconds.
+const unsigned short DEFAULT_CONNECTION_TIMEOUT = 10;
+
+class ConnectionPool;
+
+/// @brief Represents a single connection over control socket.
+///
+/// An instance of this object is created when the @c CommandMgr acceptor
+/// receives new connection from a controlling client.
+class Connection : public boost::enable_shared_from_this<Connection> {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor registers a socket of this connection in the Interface
+    /// Manager to cause the blocking call to @c select() to return as soon as
+    /// a transmission over the control socket is received.
+    ///
+    /// @param io_service IOService object used to handle the asio operations
+    /// @param socket Pointer to the object representing a socket which is used
+    /// for data transmission.
+    /// @param connection_pool Reference to the connection pool to which this
+    /// connection belongs.
+    /// @param timeout Connection timeout (in seconds).
+    Connection(const IOServicePtr& io_service,
+               const boost::shared_ptr<UnixDomainSocket>& socket,
+               ConnectionPool& connection_pool,
+               const unsigned short timeout)
+        : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
+          buf_(), response_(), connection_pool_(connection_pool), feed_(),
+          response_in_progress_(false) {
+
+        LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED)
+            .arg(socket_->getNative());
+
+        // Callback value of 0 is used to indicate that callback function is
+        // not installed.
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
+        // Initialize state model for receiving and preparsing commands.
+        feed_.initModel();
+
+        // Start timer for detecting timeouts.
+        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
+                             timeout_ * 1000, IntervalTimer::ONE_SHOT);
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Cancels timeout timer if one is scheduled.
+    ~Connection() {
+        timeout_timer_.cancel();
+    }
+
+    /// @brief Close current connection.
+    ///
+    /// Connection is not closed if the invocation of this method is a result of
+    /// server reconfiguration. The connection will be closed once a response is
+    /// sent to the client. Closing a socket during processing a request would
+    /// cause the server to not send a response to the client.
+    void stop() {
+        if (!response_in_progress_) {
+            LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_CLOSED)
+                .arg(socket_->getNative());
+
+            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+            socket_->close();
+            timeout_timer_.cancel();
+        }
+    }
+
+    /// @brief Gracefully terminates current connection.
+    ///
+    /// This method should be called prior to closing the socket to initiate
+    /// graceful shutdown.
+    void terminate();
+
+    /// @brief Start asynchronous read over the unix domain socket.
+    ///
+    /// This method doesn't block. Once the transmission is received over the
+    /// socket, the @c Connection::receiveHandler callback is invoked to
+    /// process received data.
+    void doReceive() {
+        socket_->asyncReceive(&buf_[0], sizeof(buf_),
+                              boost::bind(&Connection::receiveHandler,
+                                          shared_from_this(), _1, _2));
+
+
+    }
+
+    /// @brief Starts asynchronous send over the unix domain socket.
+    ///
+    /// This method doesn't block. Once the send operation (that covers the whole
+    /// data if it's small or first BUF_SIZE bytes if its large) is completed, the
+    /// @c Connection::sendHandler callback is invoked. That handler will either
+    /// close the connection gracefully if all data has been sent, or will
+    /// call @ref doSend() again to send the next chunk of data.
+    void doSend() {
+        size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
+        socket_->asyncSend(&response_[0], chunk_size,
+           boost::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
+    }
+
+    /// @brief Handler invoked when the data is received over the control
+    /// socket.
+    ///
+    /// It collects received data into the @c isc::config::JSONFeed object and
+    /// schedules additional asynchronous read of data if this object signals
+    /// that command is incomplete. When the entire command is received, the
+    /// handler processes this command and asynchronously responds to the
+    /// controlling client.
+    //
+    ///
+    /// @param ec Error code.
+    /// @param bytes_transferred Number of bytes received.
+    void receiveHandler(const boost::system::error_code& ec,
+                        size_t bytes_transferred);
+
+
+    /// @brief Handler invoked when the data is sent over the control socket.
+    ///
+    /// If there are still data to be sent, another asynchronous send is
+    /// scheduled. When the entire command is sent, the connection is shutdown
+    /// and closed.
+    ///
+    /// @param ec Error code.
+    /// @param bytes_transferred Number of bytes sent.
+    void sendHandler(const boost::system::error_code& ec,
+                     size_t bytes_transferred);
+
+    /// @brief Handler invoked when timeout has occurred.
+    ///
+    /// Asynchronously sends a response to the client indicating that the
+    /// timeout has occurred.
+    void timeoutHandler();
+
+private:
+
+    /// @brief Pointer to the socket used for transmission.
+    boost::shared_ptr<UnixDomainSocket> socket_;
+
+    /// @brief Interval timer used to detect connection timeouts.
+    IntervalTimer timeout_timer_;
+
+    /// @brief Connection timeout (in seconds)
+    unsigned short timeout_;
+
+    /// @brief Buffer used for received data.
+    std::array<char, BUF_SIZE> buf_;
+
+    /// @brief Response created by the server.
+    std::string response_;
+
+    /// @brief Reference to the pool of connections.
+    ConnectionPool& connection_pool_;
+
+    /// @brief State model used to receive data over the connection and detect
+    /// when the command ends.
+    JSONFeed feed_;
+
+    /// @brief Boolean flag indicating if the request to stop connection is a
+    /// result of server reconfiguration.
+    bool response_in_progress_;
+
+};
+
+/// @brief Pointer to the @c Connection.
+typedef boost::shared_ptr<Connection> ConnectionPtr;
+
+/// @brief Holds all open connections.
+class ConnectionPool {
+public:
+
+    /// @brief Starts new connection.
+    ///
+    /// @param connection Pointer to the new connection object.
+    void start(const ConnectionPtr& connection) {
+        connection->doReceive();
+        connections_.insert(connection);
+    }
+
+    /// @brief Stops running connection.
+    ///
+    /// @param connection Pointer to the new connection object.
+    void stop(const ConnectionPtr& connection) {
+        try {
+            connection->stop();
+            connections_.erase(connection);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_CONNECTION_CLOSE_FAIL)
+                .arg(ex.what());
+        }
+    }
+
+    /// @brief Stops all connections which are allowed to stop.
+    void stopAll() {
+        for (auto conn = connections_.begin(); conn != connections_.end();
+             ++conn) {
+            (*conn)->stop();
+        }
+        connections_.clear();
+    }
+
+private:
+
+    /// @brief Pool of connections.
+    std::set<ConnectionPtr> connections_;
+
+};
+
+void
+Connection::terminate() {
+    try {
+        socket_->shutdown();
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(command_logger, COMMAND_SOCKET_CONNECTION_SHUTDOWN_FAIL)
+            .arg(ex.what());
+    }
+}
+
+void
+Connection::receiveHandler(const boost::system::error_code& ec,
+                           size_t bytes_transferred) {
+    if (ec) {
+        if (ec.value() == boost::asio::error::eof) {
+            // Foreign host has closed the connection. We should remove it from the
+            // connection pool.
+            LOG_INFO(command_logger, COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST)
+                .arg(socket_->getNative());
+
+        } else if (ec.value() != boost::asio::error::operation_aborted) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL)
+                .arg(ec.value()).arg(socket_->getNative());
+        }
+
+        connection_pool_.stop(shared_from_this());
+        return;
+
+    } else if (bytes_transferred == 0) {
+        // Nothing received. Close the connection.
+        connection_pool_.stop(shared_from_this());
+        return;
+    }
+
+    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ)
+        .arg(bytes_transferred).arg(socket_->getNative());
+
+    ConstElementPtr rsp;
+
+    try {
+        // Received some data over the socket. Append them to the JSON feed
+        // to see if we have reached the end of command.
+        feed_.postBuffer(&buf_[0], bytes_transferred);
+        feed_.poll();
+        // If we haven't yet received the full command, continue receiving.
+        if (feed_.needData()) {
+            doReceive();
+            return;
+        }
+
+        // Received entire command. Parse the command into JSON.
+        if (feed_.feedOk()) {
+            ConstElementPtr cmd = feed_.toElement();
+            response_in_progress_ = true;
+
+            // If successful, then process it as a command.
+            rsp = CommandMgr::instance().processCommand(cmd);
+
+            response_in_progress_ = false;
+
+        } else {
+            // Failed to parse command as JSON or process the received command.
+            // This exception will be caught below and the error response will
+            // be sent.
+            isc_throw(BadValue, feed_.getErrorMessage());
+        }
+
+    } catch (const Exception& ex) {
+        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
+        rsp = createAnswer(CONTROL_RESULT_ERROR, std::string(ex.what()));
+    }
+
+    // No response generated. Connection will be closed.
+    if (!rsp) {
+        LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
+        rsp = createAnswer(CONTROL_RESULT_ERROR,
+                           "internal server error: no response generated");
+
+    } else {
+
+        // Let's convert JSON response to text. Note that at this stage
+        // the rsp pointer is always set.
+        response_ = rsp->str();
+
+        doSend();
+        return;
+    }
+
+    // Close the connection if we have sent the entire response.
+    connection_pool_.stop(shared_from_this());
+}
+
+void
+Connection::sendHandler(const boost::system::error_code& ec,
+                        size_t bytes_transferred) {
+    if (ec) {
+        // If an error occurred, log this error and stop the connection.
+        if (ec.value() != boost::asio::error::operation_aborted) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL)
+                .arg(socket_->getNative()).arg(ec.message());
+        }
+
+    } else {
+        // No error. We are in a process of sending a response. Need to
+        // remove the chunk that we have managed to sent with the previous
+        // attempt.
+        response_.erase(0, bytes_transferred);
+
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE)
+            .arg(bytes_transferred).arg(response_.size())
+            .arg(socket_->getNative());
+
+        // Check if there is any data left to be sent and sent it.
+        if (!response_.empty()) {
+            doSend();
+            return;
+        }
+
+        // Gracefully shutdown the connection and close the socket if
+        // we have sent the whole response.
+        terminate();
+    }
+
+    // All data sent or an error has occurred. Close the connection.
+    connection_pool_.stop(shared_from_this());
+}
+
+void
+Connection::timeoutHandler() {
+    LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_TIMEOUT)
+        .arg(socket_->getNative());
+
+    try {
+        socket_->cancel();
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(command_logger, COMMAND_SOCKET_CONNECTION_CANCEL_FAIL)
+            .arg(socket_->getNative())
+            .arg(ex.what());
+    }
+
+    ConstElementPtr rsp = createAnswer(CONTROL_RESULT_ERROR, "Connection over"
+                                       " control channel timed out");
+    response_ = rsp->str();
+    doSend();
+}
+
+
+}
 
 namespace isc {
 namespace config {
 
-CommandMgr::CommandMgr() {
-    registerCommand("list-commands",
-        boost::bind(&CommandMgr::listCommandsHandler, this, _1, _2));
-}
+/// @brief Implementation of the @c CommandMgr.
+class CommandMgrImpl {
+public:
 
-CommandSocketPtr
-CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
-    if (socket_) {
-        isc_throw(SocketError, "There is already a control socket open");
+    /// @brief Constructor.
+    CommandMgrImpl()
+        : io_service_(), acceptor_(), socket_(), socket_name_(),
+          connection_pool_(), timeout_(DEFAULT_CONNECTION_TIMEOUT) {
     }
 
-    socket_ = CommandSocketFactory::create(socket_info);
+    /// @brief Opens acceptor service allowing the control clients to connect.
+    ///
+    /// @param socket_info Configuration information for the control socket.
+    /// @throw BadSocketInfo When socket configuration is invalid.
+    /// @throw SocketError When socket operation fails.
+    void openCommandSocket(const isc::data::ConstElementPtr& socket_info);
 
-    return (socket_);
+    /// @brief Asynchronously accepts next connection.
+    void doAccept();
+
+    /// @brief Pointer to the IO service used by the server process for running
+    /// asynchronous tasks.
+    IOServicePtr io_service_;
+
+    /// @brief Pointer to the acceptor service.
+    boost::shared_ptr<UnixDomainSocketAcceptor> acceptor_;
+
+    /// @brief Pointer to the socket into which the new connection is accepted.
+    boost::shared_ptr<UnixDomainSocket> socket_;
+
+    /// @brief Path to the unix domain socket descriptor.
+    ///
+    /// This is used to remove the socket file once the connection terminates.
+    std::string socket_name_;
+
+    /// @brief Pool of connections.
+    ConnectionPool connection_pool_;
+
+    /// @brief Connection timeout
+    unsigned short timeout_;
+};
+
+void
+CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
+    socket_name_.clear();
+
+    if(!socket_info) {
+        isc_throw(BadSocketInfo, "Missing socket_info parameters, can't create socket.");
+    }
+
+    ConstElementPtr type = socket_info->get("socket-type");
+    if (!type) {
+        isc_throw(BadSocketInfo, "Mandatory 'socket-type' parameter missing");
+    }
+
+    // Only supporting unix sockets right now.
+    if (type->stringValue() != "unix") {
+        isc_throw(BadSocketInfo, "Invalid 'socket-type' parameter value "
+                  << type->stringValue());
+    }
+
+    // UNIX socket is requested. It takes one parameter: socket-name that
+    // specifies UNIX path of the socket.
+    ConstElementPtr name = socket_info->get("socket-name");
+    if (!name) {
+        isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
+    }
+
+    if (name->getType() != Element::string) {
+        isc_throw(BadSocketInfo, "'socket-name' parameter expected to be a string");
+    }
+
+    socket_name_ = name->stringValue();
+
+    try {
+        // Start asynchronous acceptor service.
+        acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
+        UnixDomainSocketEndpoint endpoint(socket_name_);
+        acceptor_->open(endpoint);
+        acceptor_->bind(endpoint);
+        acceptor_->listen();
+
+        // Install this socket in Interface Manager.
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+
+        doAccept();
+
+    } catch (const std::exception& ex) {
+        isc_throw(SocketError, ex.what());
+    }
+}
+
+void
+CommandMgrImpl::doAccept() {
+    // Create a socket into which the acceptor will accept new connection.
+    socket_.reset(new UnixDomainSocket(*io_service_));
+    acceptor_->asyncAccept(*socket_, [this](const boost::system::error_code& ec) {
+        if (!ec) {
+            // New connection is arriving. Start asynchronous transmission.
+            ConnectionPtr connection(new Connection(io_service_, socket_,
+                                                    connection_pool_,
+                                                    timeout_));
+            connection_pool_.start(connection);
+
+        } else if (ec.value() != boost::asio::error::operation_aborted) {
+            LOG_ERROR(command_logger, COMMAND_SOCKET_ACCEPT_FAIL)
+                .arg(acceptor_->getNative()).arg(ec.message());
+        }
+
+        // Unless we're stopping the service, start accepting connections again.
+        if (ec.value() != boost::asio::error::operation_aborted) {
+            doAccept();
+        }
+    });
+}
+
+CommandMgr::CommandMgr()
+    : HookedCommandMgr(), impl_(new CommandMgrImpl()) {
+}
+
+void
+CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
+    impl_->openCommandSocket(socket_info);
 }
 
 void CommandMgr::closeCommandSocket() {
-    // First, let's close the socket for incoming new connections.
-    if (socket_) {
-        socket_->close();
-        socket_.reset();
+    // Close acceptor if the acceptor is open.
+    if (impl_->acceptor_ && impl_->acceptor_->isOpen()) {
+        isc::dhcp::IfaceMgr::instance().deleteExternalSocket(impl_->acceptor_->getNative());
+        impl_->acceptor_->close();
+        static_cast<void>(::remove(impl_->socket_name_.c_str()));
     }
 
-    // Now let's close all existing connections that we may have.
-    for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
-         conn != connections_.end(); ++conn) {
-        (*conn)->close();
-    }
-    connections_.clear();
+    // Stop all connections which can be closed. The only connection that won't
+    // be closed is the one over which we have received a request to reconfigure
+    // the server. This connection will be held until the CommandMgr responds to
+    // such request.
+    impl_->connection_pool_.stopAll();
 }
 
-
-void CommandMgr::addConnection(const CommandSocketPtr& conn) {
-    connections_.push_back(conn);
+int
+CommandMgr::getControlSocketFD() {
+    return (impl_->acceptor_ ? impl_->acceptor_->getNative() : -1);
 }
 
-bool CommandMgr::closeConnection(int fd) {
-
-    // Let's iterate over all currently registered connections.
-    for (std::list<CommandSocketPtr>::iterator conn = connections_.begin();
-         conn != connections_.end(); ++conn) {
-
-        // If found, close it.
-        if ((*conn)->getFD() == fd) {
-            (*conn)->close();
-            connections_.erase(conn);
-            return (true);
-        }
-    }
-
-    return (false);
-}
 
 CommandMgr&
 CommandMgr::instance() {
@@ -76,163 +548,16 @@ CommandMgr::instance() {
     return (cmd_mgr);
 }
 
-void CommandMgr::registerCommand(const std::string& cmd, CommandHandler handler) {
-
-    if (!handler) {
-        isc_throw(InvalidCommandHandler, "Specified command handler is NULL");
-    }
-
-    HandlerContainer::const_iterator it = handlers_.find(cmd);
-    if (it != handlers_.end()) {
-        isc_throw(InvalidCommandName, "Handler for command '" << cmd
-                  << "' is already installed.");
-    }
-
-    handlers_.insert(make_pair(cmd, handler));
-
-    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_REGISTERED).arg(cmd);
-}
-
-void CommandMgr::deregisterCommand(const std::string& cmd) {
-    if (cmd == "list-commands") {
-        isc_throw(InvalidCommandName,
-                  "Can't uninstall internal command 'list-commands'");
-    }
-
-    HandlerContainer::iterator it = handlers_.find(cmd);
-    if (it == handlers_.end()) {
-        isc_throw(InvalidCommandName, "Handler for command '" << cmd
-                  << "' not found.");
-    }
-    handlers_.erase(it);
-
-    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_DEREGISTERED).arg(cmd);
-}
-
-void CommandMgr::deregisterAll() {
-
-    // No need to log anything here. deregisterAll is not used in production
-    // code, just in tests.
-    handlers_.clear();
-    registerCommand("list-commands",
-        boost::bind(&CommandMgr::listCommandsHandler, this, _1, _2));
+void
+CommandMgr::setIOService(const IOServicePtr& io_service) {
+    impl_->io_service_ = io_service;
 }
 
 void
-CommandMgr::commandReader(int sockfd) {
-
-    /// @todo: We do not handle commands that are larger than 64K.
-
-    // We should not expect commands bigger than 64K.
-    char buf[65536];
-    memset(buf, 0, sizeof(buf));
-    ConstElementPtr cmd, rsp;
-
-    // Read incoming data.
-    int rval = read(sockfd, buf, sizeof(buf));
-    if (rval < 0) {
-        // Read failed
-        LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL).arg(rval).arg(sockfd);
-
-        /// @todo: Should we close the connection, similar to what is already
-        /// being done for rval == 0?
-        return;
-    } else if (rval == 0) {
-
-        // Remove it from the active connections list.
-        instance().closeConnection(sockfd);
-
-        return;
-    }
-
-    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ).arg(rval).arg(sockfd);
-
-    // Ok, we received something. Let's see if we can make any sense of it.
-    try {
-
-        // Try to interpret it as JSON.
-        std::string sbuf(buf, static_cast<size_t>(rval));
-        cmd = Element::fromJSON(sbuf, true);
-
-        // If successful, then process it as a command.
-        rsp = CommandMgr::instance().processCommand(cmd);
-    } catch (const Exception& ex) {
-        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR1).arg(ex.what());
-        rsp = createAnswer(CONTROL_RESULT_ERROR, std::string(ex.what()));
-    }
-
-    if (!rsp) {
-        LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR);
-        return;
-    }
-
-    // Let's convert JSON response to text. Note that at this stage
-    // the rsp pointer is always set.
-    std::string txt = rsp->str();
-    size_t len = txt.length();
-    if (len > 65535) {
-        // Hmm, our response is too large. Let's send the first
-        // 64KB and hope for the best.
-        LOG_ERROR(command_logger, COMMAND_SOCKET_RESPONSE_TOOLARGE).arg(len);
-
-        len = 65535;
-    }
-
-    // Send the data back over socket.
-    rval = write(sockfd, txt.c_str(), len);
-
-    LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE).arg(len).arg(sockfd);
-
-    if (rval < 0) {
-        // Response transmission failed. Since the response failed, it doesn't
-        // make sense to send any status codes. Let's log it and be done with
-        // it.
-        LOG_ERROR(command_logger, COMMAND_SOCKET_WRITE_FAIL).arg(len).arg(sockfd);
-    }
+CommandMgr::setConnectionTimeout(const unsigned short timeout) {
+    impl_->timeout_ = timeout;
 }
 
-isc::data::ConstElementPtr
-CommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
-    if (!cmd) {
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Command processing failed: NULL command parameter"));
-    }
-
-    try {
-        ConstElementPtr arg;
-        std::string name = parseCommand(arg, cmd);
-
-        LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
-
-        HandlerContainer::const_iterator it = handlers_.find(name);
-        if (it == handlers_.end()) {
-            // Ok, there's no such command.
-            return (createAnswer(CONTROL_RESULT_ERROR,
-                                 "'" + name + "' command not supported."));
-        }
-
-        // Call the actual handler and return whatever it returned
-        return (it->second(name, arg));
-
-    } catch (const Exception& e) {
-        LOG_WARN(command_logger, COMMAND_PROCESS_ERROR2).arg(e.what());
-        return (createAnswer(CONTROL_RESULT_ERROR,
-                             std::string("Error during command processing:")
-                             + e.what()));
-    }
-}
-
-isc::data::ConstElementPtr
-CommandMgr::listCommandsHandler(const std::string& name,
-                                const isc::data::ConstElementPtr& params) {
-    using namespace isc::data;
-    ElementPtr commands = Element::createList();
-    for (HandlerContainer::const_iterator it = handlers_.begin();
-         it != handlers_.end(); ++it) {
-        commands->add(Element::create(it->first));
-    }
-    return (createAnswer(CONTROL_RESULT_SUCCESS, commands));
-}
 
 }; // end of isc::config
 }; // end of isc

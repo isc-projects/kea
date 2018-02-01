@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,7 +109,7 @@ protected:
     ///
     /// This method provides a means to open a fallback socket and bind it
     /// to a given IPv4 address and UDP port. This function may be used by the
-    /// derived classes to create a fallback socket. It can be overriden
+    /// derived classes to create a fallback socket. It can be overridden
     /// in the derived classes if it happens to be insufficient on some
     /// environments.
     ///

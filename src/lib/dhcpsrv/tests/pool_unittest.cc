@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/pool.h>
 
@@ -21,6 +22,7 @@
 using boost::scoped_ptr;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::data;
 using namespace isc::asiolink;
 
 namespace {
@@ -112,12 +114,180 @@ TEST(Pool4Test, unique_id) {
 }
 
 // Simple check if toText returns reasonable values
-TEST(Pool4Test,toText) {
+TEST(Pool4Test, toText) {
     Pool4 pool1(IOAddress("192.0.2.7"), IOAddress("192.0.2.17"));
     EXPECT_EQ("type=V4, 192.0.2.7-192.0.2.17", pool1.toText());
 
     Pool4 pool2(IOAddress("192.0.2.128"), 28);
     EXPECT_EQ("type=V4, 192.0.2.128-192.0.2.143", pool2.toText());
+}
+
+// This test checks that it is possible to specify pool specific options.
+TEST(Pool4Test, addOptions) {
+    // Create a pool to add options to it.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "dhcp4"));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp4 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V4, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    }
+
+    // Get options from the pool and check if all 10 are there.
+    OptionContainerPtr options = pool->getCfgOption()->getAll("dhcp4");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // Validate codes of options added to dhcp4 option space.
+    uint16_t expected_code = 100;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    options = pool->getCfgOption()->getAll("isc");
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option_);
+        EXPECT_EQ(expected_code, option_desc->option_->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = pool->getCfgOption()->getAll("abcd");
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+}
+
+// This test checks that handling for user-context is valid.
+TEST(Pool4Test, userContext) {
+    // Create a pool to add options to it.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // Context should be empty until explicitly set.
+    EXPECT_FALSE(pool->getContext());
+
+    // When set, should be returned properly.
+    ElementPtr ctx = Element::create("{ \"comment\": \"foo\" }");
+    EXPECT_NO_THROW(pool->setContext(ctx));
+    ASSERT_TRUE(pool->getContext());
+    EXPECT_EQ(ctx->str(), pool->getContext()->str());
+}
+
+// This test checks that handling for client-class is valid.
+TEST(Pool4Test, clientClass) {
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool->getClientClasses().size());
+    EXPECT_TRUE(pool->clientSupported(no_class));
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(three_classes));
+
+    // Let's allow only clients belonging to "bar" class.
+    pool->allowClientClass("bar");
+    EXPECT_EQ(1, pool->getClientClasses().size());
+
+    EXPECT_FALSE(pool->clientSupported(no_class));
+    EXPECT_FALSE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(three_classes));
+}
+
+// This test checks that handling for multiple client-classes is valid.
+TEST(Pool4Test, clientClasses) {    
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool->getClientClasses().size());
+    EXPECT_TRUE(pool->clientSupported(no_class));
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+
+    // Let's allow clients belonging to "bar" or "foo" class.
+    pool->allowClientClass("bar");
+    pool->allowClientClass("foo");
+    EXPECT_EQ(2, pool->getClientClasses().size());
+
+    // Class-less clients are to be rejected.
+    EXPECT_FALSE(pool->clientSupported(no_class));
+
+    // Clients in foo class should be accepted.
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+
+    // Clients in bar class should be accepted as well.
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+}
+
+// This test checks that handling for last allocated address/prefix is valid.
+TEST(Pool4Test, lastAllocated) {
+    // Create a pool.
+    IOAddress first("192.0.2.0");
+    Pool4Ptr pool(new Pool4(first, IOAddress("192.0.2.255")));
+
+    // Initial values are first invalid.
+    EXPECT_EQ(first.toText(), pool->getLastAllocated().toText());
+    EXPECT_FALSE(pool->isLastAllocatedValid());
+
+    // Now set last allocated
+    IOAddress addr("192.0.2.100");
+    EXPECT_NO_THROW(pool->setLastAllocated(addr));
+    EXPECT_EQ(addr.toText(), pool->getLastAllocated().toText());
+    EXPECT_TRUE(pool->isLastAllocatedValid());
+
+    // Reset makes it invalid and does not touch address
+    pool->resetLastAllocated();
+    EXPECT_EQ(addr.toText(), pool->getLastAllocated().toText());
+    EXPECT_FALSE(pool->isLastAllocatedValid());
 }
 
 TEST(Pool6Test, constructor_first_last) {
@@ -329,7 +499,7 @@ TEST(Pool6Test, unique_id) {
 }
 
 // Simple check if toText returns reasonable values
-TEST(Pool6Test,toText) {
+TEST(Pool6Test, toText) {
     Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                 IOAddress("2001:db8::2"));
     EXPECT_EQ("type=IA_NA, 2001:db8::1-2001:db8::2, delegated_len=128",
@@ -406,6 +576,122 @@ TEST(Pool6Test, addOptions) {
     options = pool->getCfgOption()->getAll("abcd");
     ASSERT_TRUE(options);
     EXPECT_TRUE(options->empty());
+}
+
+// This test checks that handling for user-context is valid.
+TEST(Pool6Test, userContext) {
+    // Create a pool to add options to it.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+
+    // Context should be empty until explicitly set.
+    EXPECT_FALSE(pool.getContext());
+
+    // When set, should be returned properly.
+    ElementPtr ctx = Element::create("{ \"comment\": \"foo\" }");
+    EXPECT_NO_THROW(pool.setContext(ctx));
+    ASSERT_TRUE(pool.getContext());
+    EXPECT_EQ(ctx->str(), pool.getContext()->str());
+}
+
+// This test checks that handling for client-class is valid.
+TEST(Pool6Test, clientClass) {
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool.getClientClasses().size());
+    EXPECT_TRUE(pool.clientSupported(no_class));
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(three_classes));
+
+    // Let's allow only clients belonging to "bar" class.
+    pool.allowClientClass("bar");
+    EXPECT_EQ(1, pool.getClientClasses().size());
+
+    EXPECT_FALSE(pool.clientSupported(no_class));
+    EXPECT_FALSE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(three_classes));
+}
+
+// This test checks that handling for multiple client-classes is valid.
+TEST(Pool6Test, clientClasses) {    
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+               IOAddress("2001:db8::2"));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_EQ(0, pool.getClientClasses().size());
+    EXPECT_TRUE(pool.clientSupported(no_class));
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+
+    // Let's allow clients belonging to "bar" or "foo" class.
+    pool.allowClientClass("bar");
+    pool.allowClientClass("foo");
+    EXPECT_EQ(2, pool.getClientClasses().size());
+
+    // Class-less clients are to be rejected.
+    EXPECT_FALSE(pool.clientSupported(no_class));
+
+    // Clients in foo class should be accepted.
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+
+    // Clients in bar class should be accepted as well.
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+}
+
+// This test checks that handling for last allocated address/prefix is valid.
+TEST(Pool6Test, lastAllocated) {
+    // Create a pool.
+    IOAddress first("2001:db8::1");
+    Pool6 pool(Lease::TYPE_NA, first, IOAddress("2001:db8::200"));
+
+    // Initial values are first invalid.
+    EXPECT_EQ(first.toText(), pool.getLastAllocated().toText());
+    EXPECT_FALSE(pool.isLastAllocatedValid());
+
+    // Now set last allocated
+    IOAddress addr("2001:db8::100");
+    EXPECT_NO_THROW(pool.setLastAllocated(addr));
+    EXPECT_EQ(addr.toText(), pool.getLastAllocated().toText());
+    EXPECT_TRUE(pool.isLastAllocatedValid());
+
+    // Reset makes it invalid and does not touch address
+    pool.resetLastAllocated();
+    EXPECT_EQ(addr.toText(), pool.getLastAllocated().toText());
+    EXPECT_FALSE(pool.isLastAllocatedValid());
 }
 
 }; // end of anonymous namespace

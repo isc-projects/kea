@@ -1,8 +1,10 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <asiolink/interval_timer.h>
 #include <process/d_log.h>
@@ -60,7 +62,7 @@ IOSignal::TimerCallback::operator()() {
 IOSignalQueue::IOSignalQueue(asiolink::IOServicePtr& io_service)
     : io_service_(io_service), signals_() {
     if (!io_service_) {
-        isc_throw(IOSignalError, "IOSignalQueue - io_serivce cannot be NULL");
+        isc_throw(IOSignalError, "IOSignalQueue - io_service cannot be NULL");
     }
 }
 

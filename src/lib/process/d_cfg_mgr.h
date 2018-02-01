@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,10 @@
 #define D_CFG_MGR_H
 
 #include <cc/data.h>
+#include <cc/cfg_to_element.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <functional>
 
 #include <stdint.h>
 #include <string>
@@ -57,7 +59,7 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 ///    // Restore from backup
 ///    context_ = backup_copy;
 ///
-class DCfgContextBase {
+class DCfgContextBase : public isc::data::CfgToElement {
 public:
     /// @brief Indicator that a configuration parameter is optional.
     static const bool OPTIONAL = true;
@@ -180,6 +182,17 @@ public:
     /// @return returns a pointer to the new clone.
     virtual DCfgContextBasePtr clone() = 0;
 
+    /// @brief Unparse a configuration object
+    ///
+    /// Returns an element which must parse into the same object, i.e.
+    /// @code
+    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
+    /// @endcode
+    ///
+    /// @return a pointer to a configuration which can be parsed into
+    /// the initial configuration object
+    virtual isc::data::ElementPtr toElement() const = 0;
+
 protected:
     /// @brief Copy constructor for use by derivations in clone().
     DCfgContextBase(const DCfgContextBase& rhs);
@@ -210,6 +223,10 @@ typedef std::vector<std::string> ElementIdList;
 /// class which is handed a set of configuration values to process by upper
 /// application management layers.
 ///
+/// This class allows two configuration methods:
+///
+/// 1. classic method
+///
 /// The class presents a public method for receiving new configurations,
 /// parseConfig.  This method coordinates the parsing effort as follows:
 ///
@@ -230,7 +247,7 @@ typedef std::vector<std::string> ElementIdList;
 ///        update context with parsed results
 ///        break on error
 ///
-///    if an error occurred
+///    if an error occurred or this is only a check
 ///        restore configuration context from backup
 /// @endcode
 ///
@@ -244,18 +261,32 @@ typedef std::vector<std::string> ElementIdList;
 /// This allows a derivation to specify the order in which its elements are
 /// parsed if there are dependencies between elements.
 ///
-/// To parse a given element, its id is passed into createConfigParser,
-/// which returns an instance of the appropriate parser.  This method is
-/// abstract so the derivation's implementation determines the type of parser
-/// created. This isolates the knowledge of specific element ids and which
-/// application specific parsers to derivation.
-///
-/// Once the parser has been created, it is used to parse the data value
-/// associated with the element id and update the context with the parsed
-/// results.
+/// To parse a given element, its id along with the element itself, 
+/// is passed into the virtual method, @c parseElement. Derivations are 
+/// expected to converts the element into application specific object(s),
+/// thereby isolating the CPL from application details.
 ///
 /// In the event that an error occurs, parsing is halted and the
 /// configuration context is restored from backup.
+///
+/// See @ref isc::d2::D2CfgMgr and @ref isc::d2::D2Process for example use of
+/// this approach.
+///
+/// 2. simple configuration method
+///
+/// This approach assumes usage of @ref isc::data::SimpleParser paradigm. It
+/// does not use any intermediate storage, does not use parser pointers, does
+/// not enforce parsing order.
+///
+/// Here's the expected control flow order:
+/// 1. implementation calls simpleParseConfig from its configure method.
+/// 2. simpleParseConfig makes a configuration context
+/// 3. parse method from the derived class is called
+/// 4. if the configuration was unsuccessful or this is only a check, the
+///    old context is reinstantiated. If not, the configuration is kept.
+///
+/// See @ref isc::agent::CtrlAgentCfgMgr and @ref isc::agent::CtrlAgentProcess
+/// for example use of this approach.
 class DCfgMgrBase {
 public:
     /// @brief Constructor
@@ -272,13 +303,43 @@ public:
     /// @brief Acts as the receiver of new configurations and coordinates
     /// the parsing as described in the class brief.
     ///
-    /// @param config_set is a set of configuration elements to parsed.
+    /// @param config_set is a set of configuration elements to be parsed.
+    /// @param check_only true if the config is to be checked only, but not applied
     ///
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    isc::data::ConstElementPtr parseConfig(isc::data::ConstElementPtr
-                                           config_set);
+    isc::data::ConstElementPtr
+    parseConfig(isc::data::ConstElementPtr config_set,
+                bool check_only = false);
+
+
+    /// @brief Acts as the receiver of new configurations.
+    ///
+    /// This method is similar to what @ref parseConfig does, execept it employs
+    /// the simple parser paradigm: no intermediate storage, no parser pointers
+    /// no distinction between params_map and objects_map, parse order (if needed)
+    /// can be enforced in the actual implementation by calling specific
+    /// parsers first. See @ref isc::agent::CtrlAgentCfgMgr::parse for example.
+    ///
+    /// If check_only is true, the actual parsing is done to check if the configuration
+    /// is sane, but is then reverted.
+    ///
+    /// @param config set of configuration elements to be parsed
+    /// @param check_only true if the config is to be checked only, but not applied
+    /// @param post_config_cb Callback to be executed after the usual parsing stage.
+    /// This can be specified as a C++ lambda which configures other parts of the
+    /// system based on the parsed configuration information. The callback should
+    /// throw an exception to signal an error. This method will catch this
+    /// exception and place an exception string within the result returned.
+    ///
+    /// @return an Element that contains the results of configuration composed
+    /// of an integer status value (0 means successful, non-zero means failure),
+    /// and a string explanation of the outcome.
+    isc::data::ConstElementPtr
+    simpleParseConfig(isc::data::ConstElementPtr config,
+                      bool check_only = false,
+                      const std::function<void()>& post_config_cb = nullptr);
 
     /// @brief Adds a given element id to the end of the parse order list.
     ///
@@ -320,37 +381,40 @@ public:
     virtual std::string getConfigSummary(const uint32_t selection) = 0;
 
 protected:
+    /// @brief Adds default values to the given config
+    ///
+    /// Provides derivations a means to add defaults to a configuration
+    /// Element map prior to parsing it.
+    ///
+    /// @param mutable_config - configuration to which defaults should be added
+    virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
+
+    /// @brief Parses an individual element
+    ///
+    /// Each element to be parsed is passed into this method to be converted
+    /// into the requisite application object(s).
+    ///
+    /// @param element_id name of the element as it is expected in the cfg
+    /// @param element value of the element as ElementPtr
+    ///
+    virtual void parseElement(const std::string& element_id,
+                              isc::data::ConstElementPtr element);
+
     /// @brief Parses a set of scalar configuration elements into global
     /// parameters
     ///
     /// For each scalar element in the set:
-    ///  - create a parser for the element
-    ///  - invoke the parser's build method
-    ///  - invoke the parser's commit method
+    /// - Invoke parseElement
+    /// - If it returns true go to the next element otherwise:
+    ///     - create a parser for the element
+    ///     - invoke the parser's build method
+    ///     - invoke the parser's commit method
     ///
     /// This will commit the values to context storage making them accessible
     /// during object parsing.
     ///
     /// @param params_config set of scalar configuration elements to parse
     virtual void buildParams(isc::data::ConstElementPtr params_config);
-
-    /// @brief  Create a parser instance based on an element id.
-    ///
-    /// Given an element_id returns an instance of the appropriate parser.
-    /// This method is abstract, isolating any direct knowledge of element_ids
-    /// and parsers to within the application-specific derivation.
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
-    ///
-    /// @return returns a ParserPtr to the parser instance.
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos
-                       = isc::data::Element::Position()) = 0;
 
     /// @brief Abstract factory which creates a context instance.
     ///
@@ -363,7 +427,7 @@ protected:
     /// @return Returns a DCfgContextBasePtr to the new context instance.
     virtual DCfgContextBasePtr createNewContext() = 0;
 
-    /// @brief Replaces existing context with a new, emtpy context.
+    /// @brief Replaces existing context with a new, empty context.
     void resetContext();
 
     /// @brief Update the current context.
@@ -373,12 +437,32 @@ protected:
     /// @throw DCfgMgrBaseError if context is NULL.
     void setContext(DCfgContextBasePtr& context);
 
+    /// @brief Parses actual configuration.
+    ///
+    /// This method is expected to be implemented in derived classes that employ
+    /// SimpleParser paradigm (i.e. they call simpleParseConfig rather than
+    /// parseConfig from their configure method).
+    ///
+    /// Implementations that do not employ this method may provide dummy
+    /// implementation.
+    ///
+    /// @param config the Element tree structure that describes the configuration.
+    /// @param check_only false for normal configuration, true when verifying only
+    ///
+    /// @return an Element that contains the results of configuration composed
+    /// of an integer status value (0 means successful, non-zero means failure),
+    /// and a string explanation of the outcome.
+    virtual isc::data::ConstElementPtr parse(isc::data::ConstElementPtr config,
+                                             bool check_only);
+
 private:
 
     /// @brief Parse a configuration element.
     ///
-    /// Given an element_id and data value, instantiate the appropriate
-    /// parser,  parse the data value, and commit the results.
+    /// Given an element_id and data value, invoke parseElement. If
+    /// it returns true the return, otherwise created the appropriate
+    /// parser, parse the data value, and commit the results.
+    ///
     ///
     /// @param element_id is the string name of the element as it will appear
     /// in the configuration set.

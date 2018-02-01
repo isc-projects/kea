@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,10 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
-#include <dhcp/iface_mgr.h>
+#include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
-#include <util/stopwatch.h>
 
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
@@ -88,6 +88,9 @@ public:
     /// timers.
     typedef std::map<std::string, unsigned int> CallsCount;
 
+    /// @brief Pointer to IO service used by the tests.
+    IOServicePtr io_service_;
+
     /// @brief Holds the calls count for test timers.
     ///
     /// The key of this map holds the timer names. The value holds the number
@@ -100,16 +103,14 @@ public:
 
 void
 TimerMgrTest::SetUp() {
+    io_service_.reset(new IOService());
     timer_mgr_ = TimerMgr::instance();
+    timer_mgr_->setIOService(io_service_);
     calls_count_.clear();
-    // Make sure there are no dangling threads.
-    timer_mgr_->stopThread();
 }
 
 void
 TimerMgrTest::TearDown() {
-    // Make sure there are no dangling threads.
-    timer_mgr_->stopThread();
     // Remove all timers.
     timer_mgr_->unregisterTimers();
 }
@@ -129,14 +130,13 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
 }
 
 void
-TimerMgrTest::doWait(const long timeout, const bool call_receive) {
-    util::Stopwatch stopwatch;
-    while (stopwatch.getTotalMilliseconds() < timeout) {
-        if (call_receive) {
-            // Block for one 1 millisecond.
-            IfaceMgr::instancePtr()->receive6(0, 1000);
-        }
-    }
+TimerMgrTest::doWait(const long timeout, const bool /*call_receive*/) {
+    IntervalTimer timer(*io_service_);
+    timer.setup([this]() {
+        io_service_->stop();
+    }, timeout, IntervalTimer::ONE_SHOT);
+    io_service_->run();
+    io_service_->get_io_service().reset();
 }
 
 void
@@ -176,25 +176,13 @@ TEST_F(TimerMgrTest, registerTimer) {
     // Add a timer with a correct name.
     ASSERT_NO_THROW(timer_mgr_->registerTimer("timer2", makeCallback("timer2"), 1,
                                               IntervalTimer::ONE_SHOT));
+    EXPECT_TRUE(timer_mgr_->isTimerRegistered("timer2"));
+
     // Adding the timer with the same name as the existing timer is not
     // allowed.
     ASSERT_THROW(timer_mgr_->registerTimer("timer2", makeCallback("timer2"), 1,
                                            IntervalTimer::ONE_SHOT),
                  BadValue);
-
-    // Start worker thread.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
-    // Can't register the timer when the thread is running.
-    ASSERT_THROW(timer_mgr_->registerTimer("timer1", makeCallback("timer1"), 1,
-                                           IntervalTimer::ONE_SHOT),
-                 InvalidOperation);
-
-    // Stop the thread and retry.
-    ASSERT_NO_THROW(timer_mgr_->stopThread());
-    EXPECT_NO_THROW(timer_mgr_->registerTimer("timer1", makeCallback("timer1"), 1,
-                                              IntervalTimer::ONE_SHOT));
-
 }
 
 // This test verifies that it is possible to unregister a timer from
@@ -204,20 +192,16 @@ TEST_F(TimerMgrTest, unregisterTimer) {
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
     ASSERT_EQ(1, timer_mgr_->timersCount());
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
-    ASSERT_NO_THROW(timer_mgr_->startThread());
 
     // Wait for the timer to execute several times.
     doWait(100);
-
-    // Stop the thread but execute pending callbacks.
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // Remember how many times the timer's callback was executed.
     const unsigned int calls_count = calls_count_["timer1"];
     ASSERT_GT(calls_count, 0);
 
     // Check that an attempt to unregister a non-existing timer would
-    // result in exeception.
+    // result in exception.
     ASSERT_THROW(timer_mgr_->unregisterTimer("timer2"), BadValue);
     // Number of timers shouldn't have changed.
     ASSERT_EQ(1, timer_mgr_->timersCount());
@@ -225,11 +209,9 @@ TEST_F(TimerMgrTest, unregisterTimer) {
     // Now unregister the correct one.
     ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
     ASSERT_EQ(0, timer_mgr_->timersCount());
+    EXPECT_FALSE(timer_mgr_->isTimerRegistered("timer1"));
 
-    // Start the thread again and wait another 100ms.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(100);
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // The number of calls for the timer1 shouldn't change as the
     // timer had been unregistered.
@@ -252,10 +234,7 @@ TEST_F(TimerMgrTest, unregisterTimers) {
             << s.str();
     }
 
-    // Start worker thread and wait for 500ms.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // Make sure that all timers have been executed at least once.
     for (CallsCount::iterator it = calls_count_.begin();
@@ -276,30 +255,11 @@ TEST_F(TimerMgrTest, unregisterTimers) {
     // Make sure there are no timers registered.
     ASSERT_EQ(0, timer_mgr_->timersCount());
 
-    // Start worker thread again and wait for 500ms.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
 
     // The calls counter shouldn't change because there are
     // no timers registered.
     EXPECT_TRUE(calls_count == calls_count_);
-}
-
-// This test checks that it is not possible to unregister timers
-// while the thread is running.
-TEST_F(TimerMgrTest, unregisterTimerWhileRunning) {
-    // Register two timers.
-    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
-    ASSERT_NO_FATAL_FAILURE(registerTimer("timer2", 1));
-
-    // Start the thread and make sure we can't unregister them.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-    EXPECT_THROW(timer_mgr_->unregisterTimer("timer1"), InvalidOperation);
-    EXPECT_THROW(timer_mgr_->unregisterTimers(), InvalidOperation);
-
-    // No need to stop the thread as it will be stopped by the
-    // test fixture destructor.
 }
 
 // This test verifies that the timer execution can be cancelled.
@@ -309,14 +269,13 @@ TEST_F(TimerMgrTest, cancel) {
 
     // Kick in the timer and wait for 500ms.
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-    doWait(500);
-    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
-    // Cancelling non-existing timer should fail.
+    doWait(500);
+
+    // Canceling non-existing timer should fail.
     EXPECT_THROW(timer_mgr_->cancel("timer2"), BadValue);
 
-    // Cancelling the good one should pass, even when the worker
+    // Canceling the good one should pass, even when the worker
     // thread is running.
     ASSERT_NO_THROW(timer_mgr_->cancel("timer1"));
 
@@ -324,10 +283,7 @@ TEST_F(TimerMgrTest, cancel) {
     // another 500ms.
     unsigned int calls_count = calls_count_["timer1"];
 
-    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
-    // Stop thread before we setup again.
-    ASSERT_NO_THROW(timer_mgr_->stopThread());
 
     // The number of calls shouldn't change because the timer had been
     // cancelled.
@@ -337,7 +293,6 @@ TEST_F(TimerMgrTest, cancel) {
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
 
     // Restart the thread.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
 
     // New calls should be recorded.
@@ -357,9 +312,6 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
     ASSERT_NO_THROW(timer_mgr_->setup("timer2"));
 
-    // We can start the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
     // Run IfaceMgr::receive6() in the loop for 1000ms. This function
     // will read data from the watch sockets created when the timers
     // were registered. The data is delivered to the watch sockets
@@ -368,13 +320,9 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     // with the watch sockets should be called.
     doWait(1000);
 
-    // Stop the worker thread, which would halt the execution of
-    // the timers.
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
-
     // We have been running the timer for 1000ms at the interval of
     // 50ms. The maximum number of callbacks is 20. However, the
-    // callback itself takes time. Stoping the thread takes time.
+    // callback itself takes time. Stopping the thread takes time.
     // So, the real number differs significantly. We don't know
     // exactly how many have been executed. It should be more
     // than 10 for sure. But we really made up the numbers here.
@@ -394,9 +342,6 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     // Unregister the 'timer1'.
     ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
 
-    // Restart the thread.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
     // Wait another 500ms. The 'timer1' was unregistered so it
     // should not make any more calls. The 'timer2' should still
     // work as previously.
@@ -406,48 +351,6 @@ TEST_F(TimerMgrTest, scheduleTimers) {
     EXPECT_EQ(calls_count_timer1, calls_count_["timer1"]);
     // There should be some new calls registered for the 'timer2'.
     EXPECT_GT(calls_count_["timer2"], calls_count_timer2);
-}
-
-// This test verifies that it is possible to force that the pending
-// timer callbacks are executed when the worker thread is stopped.
-TEST_F(TimerMgrTest, stopThreadWithRunningHandlers) {
-    // Register 'timer1'.
-    ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
-
-    // Kick in the timer.
-    ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
-    // Run the thread for 100ms. This should run some timers. The 'false'
-    // value indicates that the IfaceMgr::receive6 is not called, so the
-    // watch socket is never cleared.
-    doWait(100, false);
-
-    // There should be no calls registered for the timer1.
-    EXPECT_EQ(0, calls_count_["timer1"]);
-
-    // Stop the worker thread without completing pending callbacks.
-    ASSERT_NO_THROW(timer_mgr_->stopThread(false));
-
-    // There should be still not be any calls registered.
-    EXPECT_EQ(0, calls_count_["timer1"]);
-
-    // We can restart the worker thread before we even kick in the timers.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
-
-    // Run the thread for 100ms. This should run some timers. The 'false'
-    // value indicates that the IfaceMgr::receive6 is not called, so the
-    // watch socket is never cleared.
-    doWait(100, false);
-
-    // There should be no calls registered for the timer1.
-    EXPECT_EQ(0, calls_count_["timer1"]);
-
-    // Stop the worker thread with completing pending callbacks.
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
-
-    // There should be one call registered.
-    EXPECT_EQ(1, calls_count_["timer1"]);
 }
 
 // This test verifies that exceptions emitted from the callback would
@@ -464,9 +367,14 @@ TEST_F(TimerMgrTest, callbackWithException) {
 
     // Start thread. We hope that exception will be caught by the @c TimerMgr
     // and will not kill the process.
-    ASSERT_NO_THROW(timer_mgr_->startThread());
     doWait(500);
-    ASSERT_NO_THROW(timer_mgr_->stopThread(true));
+}
+
+// This test verifies that IO service specified for the TimerMgr
+// must not be null.
+TEST_F(TimerMgrTest, setIOService) {
+    EXPECT_THROW(timer_mgr_->setIOService(IOServicePtr()),
+                 BadValue);
 }
 
 } // end of anonymous namespace

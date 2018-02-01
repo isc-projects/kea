@@ -20,19 +20,20 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
+CLEANFILES = dhcp6_messages.h dhcp6_messages.cc s-messages
 
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp6.xml
 EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
+EXTRA_DIST += dhcp6_parser.yy
 
 if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
-        $(srcdir)/kea-dhcp6.xml
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	$(srcdir)/kea-dhcp6.xml
 
 else
 
@@ -42,16 +43,13 @@ $(man_MANS):
 
 endif
 
-spec_config.h: spec_config.h.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
-
 dhcp6_messages.h dhcp6_messages.cc: s-messages
 
 s-messages: dhcp6_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
 	touch $@
 
-BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
+BUILT_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 
 # convenience archive
 
@@ -63,9 +61,9 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
-
-libdhcp6_la_SOURCES += kea_controller.cc
-
+libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
+libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
+libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
@@ -75,8 +73,8 @@ kea_dhcp6_SOURCES  = main.cc
 
 kea_dhcp6_LDADD  = libdhcp6.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
@@ -104,4 +102,30 @@ kea_dhcp6_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp6dir = $(pkgdatadir)
-kea_dhcp6_DATA = dhcp6.spec
+
+if GENERATE_PARSER
+
+parser: dhcp6_lexer.cc location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h
+	@echo "Flex/bison files regenerated"
+
+# --- Flex/Bison stuff below --------------------------------------------------
+# When debugging grammar issues, it's useful to add -v to bison parameters.
+# bison will generate parser.output file that explains the whole grammar.
+# It can be used to manually follow what's going on in the parser.
+# This is especially useful if yydebug_ is set to 1 as that variable
+# will cause parser to print out its internal state.
+# Call flex with -s to check that the default rule can be suppressed
+# Call bison with -W to get warnings like unmarked empty rules
+# Note C++11 deprecated register still used by flex < 2.6.0
+location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h: dhcp6_parser.yy
+	$(YACC) --defines=dhcp6_parser.h --report=all --report-file=dhcp6_parser.report -o dhcp6_parser.cc dhcp6_parser.yy
+
+dhcp6_lexer.cc: dhcp6_lexer.ll
+	$(LEX) --prefix parser6_ -o dhcp6_lexer.cc dhcp6_lexer.ll
+
+else
+
+parser location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h dhcp6_lexer.cc:
+	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
+
+endif

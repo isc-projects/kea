@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -93,7 +93,7 @@
 
   @subsection dhcpdb-keywords-cql Cassandra (CQL) connection string keywords
 
-  - <b>contact_points</b> - a list of comma separated IP addresses of the
+  - <b>contact-points</b> - a list of comma separated IP addresses of the
     cluster contact points>
   - <b>port</b> - an integer specifying a connection port. If not specified, the
     default port will be used.

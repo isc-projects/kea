@@ -1,0 +1,98 @@
+// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_lease_cmds Kea Lease Commands Hooks Library
+
+@section libdhcp_lease_cmdsIntro Introduction
+
+Welcome to Kea Lease Commands Hooks Library. This documentation is addressed to
+developers who are interested in the internal operation of the Lease Commands
+library. This file provides information needed to understand and perhaps extend
+this library.
+
+This documentation is stand-alone: you should have read and understood <a
+href="http://kea.isc.org/docs/devel/">Kea Developer's Guide</a> and in
+particular its section about hooks.
+
+@section lease_cmds Lease Commands Overview
+
+Lease Commands (or lease_cmds) is a Hook library that can be loaded by Kea to
+extend it with additional mechanisms.
+
+The primary purpose of this library is to provide commands that manage leases.
+As such, the whole library is structured around command handlers. When the
+library is loaded it registers a number of handlers for new commands.  When a
+command is issued (be it directly via control channel or indirectly via REST
+interface from control agent), the code receives a JSON command with
+parameters. Those are parsed and then actual operation commences.  This
+operation always interacts with an instantiation of isc::dhcp::LeaseMgr
+instance, which is Kea's way of storing leases. At the time of writing this text
+(Aug. 2017), Kea supports four types of lease managers: memfile, MySQL,
+PostgreSQL or Cassandra. The lease commands provided by this library
+provide a unified interface for those backends.
+
+As with other hooks, this one also keeps its code in a separate namespace which
+corresponds to the file name of the library: isc::lease_cmds.
+
+@section lease_cmdsCode Lease Commands Code Overview
+
+The library operation starts with Kea calling the load() function (file
+load_unload.cc).  It instantiates an isc::lease_cmds::LeaseCmds object.
+The constructor of that object registers all of the lease commands. For a list,
+see @ref isc::lease_cmds::LeaseCmds class documentation.  This class uses Pimpl
+design pattern, thus the real implementation is hidden in isc::lease_cmds::LeaseCmdsImpl.
+
+Almost every command has its own handler, except few that share the same handler
+between v4 and v6 due to its similarity. For example
+isc::lease_cmds::LeaseCmdsImpl::leaseAddHandler handles lease4-add and lease6-add
+commands. Although the details differ between handlers, the general approach
+is the same. First, it starts with parameters sanitization and then some
+interaction with isc::dhcp::LeaseMgr is conducted.
+
+For commands that do something with a specific lease (lease4-get, lease6-get,
+lease4-del, lease6-del), there is a @ref isc::lease_cmds::LeaseCmdsImpl::Parameters
+class that contains parsed elements.
+
+For details see documentation and code of the following handlers:
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseAddHandler (lease4-add, lease6-add)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetHandler (lease4-get, lease6-get)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease4DelHandler (lease4-del)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease6DelHandler (lease6-del)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease4UpdateHandler (lease4-update)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease6UpdateHandler (lease6-update)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease4WipeHandler (lease4-wipe)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease6WipeHandler (lease6-wipe)
+
+@section lease_cmdsDesigns Lease Commands Design choices
+
+The lease manipulation commands were implemented to provide a convenient interface
+for sysadmins. The primary goal was to offer a way to interact with the live
+lease database in unified way, regardless of the actual backend being used.
+
+For some backends (MySQL, PostgreSQL and Cassandra) it is possible to interact
+directly with the backend while Kea is running and possibly change its content. This
+ability is both powerful and dangerous. In particular, only rudimentary
+checks are enforced by the DB schemas (e.g. not possible to have two leases
+for the same address). However, it does not prevent sysadmins from making
+more obscure errors, like inserting leases for subnets that do not exist
+or configuring an address that is topologically outside of the subnet to which
+it should belong. These kind of checks are only possible by DHCP-aware
+code, which this library provides.
+
+Some of the queries may require a seemingly odd set of parameters. For example,
+lease6-get query requires at least DUID, subnet-id and IAID to retrieve a lease
+by DUID. The need for a sysadmin to know and specify an IAID is troublesome.
+However, the guiding principle here was to use whatever queries were already
+exposed by the lease manager and not introduce new indexes, unless absolutely
+necessary. This ensures that there is no performance degradation when the
+library is loaded. The only exception for that was lease4-wipe and lease6-wipe
+commands that remove all leases from specific subnet. As there were no
+queries that could retrieve or otherwise enumerate leases for a specific subnet,
+a new query type and a new index had to be added.
+
+*/

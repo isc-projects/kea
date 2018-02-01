@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,59 @@ CONFIG="{
     }
 }"
 
-# Invalid configuration (invalid port) to check that D2
+# Invalid configuration (syntax error) to check that Kea can check syntax.
+CONFIG_BAD_SYNTAX="{
+    \"DhcpDdns\":
+    {
+        \"ip-address\": \"127.0.0.1\",
+        \"port\": BOGUS,
+        \"tsig-keys\": [],
+        \"forward-ddns\" : {},
+        \"reverse-ddns\" : {}
+    },
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp-ddns\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid configuration (out of range port) to check that Kea can check syntax.
+CONFIG_BAD_VALUE="{
+    \"DhcpDdns\":
+    {
+        \"ip-address\": \"127.0.0.1\",
+        \"port\": 80000,
+        \"tsig-keys\": [],
+        \"forward-ddns\" : {},
+        \"reverse-ddns\" : {}
+    },
+    \"Logging\":
+    {
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp-ddns\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid value configuration (invalid port) to check that D2
 # gracefully handles reconfiguration errors.
 CONFIG_INVALID="{
     \"DhcpDdns\":
@@ -69,6 +121,33 @@ bin_path=@abs_top_builddir@/src/bin/d2
 
 # Import common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
+
+# This test verifies that syntax checking works properly. This function
+# requires 3 parameters:
+# testname
+# config - string with a content of the config (will be written to a file)
+# exp_code - expected exit code returned by kea (0 - success, 1 - failure)
+syntax_check_test() {
+    local TESTNAME="${1}"
+    local CONFIG="${2}"
+    local EXP_CODE="${3}"
+
+    # Log the start of the test and print test name.
+    test_start $TESTNAME
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+    ${bin_path}/${bin} -t ${CFG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne $EXP_CODE ]; then
+        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
+        clean_exit 1
+    fi
+    test_finish 0
+}
 
 # This test verifies that D2 can be reconfigured with a SIGHUP signal.
 dynamic_reconfiguration_test() {
@@ -233,3 +312,6 @@ shutdown_test "dhcp-ddns.sigterm_test" 15
 shutdown_test "dhcp-ddns.sigint_test" 2
 version_test "dhcp-ddns.version"
 logger_vars_test "dhcp-ddns.variables"
+syntax_check_test "dhcp-ddns.syntax_check_success" "${CONFIG}" 0
+syntax_check_test "dhcp-ddns.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
+syntax_check_test "dhcp-ddns.syntax_check_bad_values" "${CONFIG_BAD_VALUE}" 1

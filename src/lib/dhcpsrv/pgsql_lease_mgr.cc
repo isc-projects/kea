@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,8 +26,8 @@ using namespace std;
 
 namespace {
 
-/// @todo TKM lease6 needs to accomodate hwaddr,hwtype, and hwaddr source
-/// columns.  This is coverd by tickets #3557, #4530, and PR#9.
+/// @todo TKM lease6 needs to accommodate hwaddr,hwtype, and hwaddr source
+/// columns.  This is covered by tickets #3557, #4530, and PR#9.
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
 /// that the order columns appear in statement body must match the order they
@@ -54,6 +54,14 @@ PgSqlTaggedStatement tagged_statements[] = {
       "delete_lease6_state_expired",
       "DELETE FROM lease6 "
           "WHERE state = $1 AND expire < $2"},
+
+    // GET_LEASE4
+    { 0, { OID_NONE },
+      "get_lease4",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, state "
+      "FROM lease4"},
 
     // GET_LEASE4_ADDR
     { 1, { OID_INT8 },
@@ -99,6 +107,15 @@ PgSqlTaggedStatement tagged_statements[] = {
         "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
+
+    // GET_LEASE4_SUBID
+    { 1, { OID_INT8 },
+      "get_lease4_subid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, state "
+      "FROM lease4 "
+      "WHERE subnet_id = $1"},
 
     // GET_LEASE4_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -704,7 +721,7 @@ private:
 
 /// @brief Base PgSql derivation of the statistical lease data query
 ///
-/// This class provides the functionality such as results storgae and row
+/// This class provides the functionality such as results storage and row
 /// fetching common to fulfilling the statistical lease data query.
 ///
 class PgSqlLeaseStatsQuery : public LeaseStatsQuery {
@@ -821,9 +838,11 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
     pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
-        isc_throw(DbOpenError, "Posgresql schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << "." << db_version.second);
+        isc_throw(DbOpenError,
+                  "PostgreSQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
     }
 }
 
@@ -890,11 +909,11 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
-    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name,
-                                 tagged_statements[stindex].nbparams,
-                                 &bind_array.values_[0],
-                                 &bind_array.lengths_[0],
-                                 &bind_array.formats_[0], 0));
+    const int n = tagged_statements[stindex].nbparams;
+    PgSqlResult r(PQexecPrepared(conn_, tagged_statements[stindex].name, n,
+                                 n > 0 ? &bind_array.values_[0] : NULL,
+                                 n > 0 ? &bind_array.lengths_[0] : NULL,
+                                 n > 0 ? &bind_array.formats_[0] : NULL, 0));
 
     conn_.checkStatementError(r, tagged_statements[stindex]);
 
@@ -1068,6 +1087,38 @@ PgSqlLeaseMgr::getLease4(const ClientId&, const HWAddr&, SubnetID) const {
     /// consider if this function is needed at all.
     isc_throw(NotImplemented, "The PgSqlLeaseMgr::getLease4 function was"
               " called, but it is not implemented");
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID4)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // SUBNET_ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
+
+    // ... and get the data
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_SUBID, bind_array, result);
+
+    return (result);
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getLeases4() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET4);
+
+    // Provide empty binding array because our query has no parameters in
+    // WHERE clause.
+    PsqlBindArray bind_array;
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4, bind_array, result);
+
+    return (result);
 }
 
 Lease6Ptr
@@ -1359,6 +1410,16 @@ PgSqlLeaseMgr::startLeaseStatsQuery6() {
                                  true));
     query->start();
     return(query);
+}
+
+size_t
+PgSqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases4 is not implemented for PgSQL backend");
+}
+
+size_t
+PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
+    isc_throw(NotImplemented, "wipeLeases6 is not implemented for PgSQL backend");
 }
 
 string

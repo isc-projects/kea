@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -165,10 +165,10 @@ public:
     /// @brief Test lease retrieval using client id, HW address and subnet id.
     void testGetLease4ClientIdHWAddrSubnetId();
 
-    // @brief Get lease4 by hardware address (2)
-    //
-    // Check that the system can cope with getting a hardware address of
-    // any size.
+    /// @brief Get lease4 by hardware address (2)
+    ///
+    /// Check that the system can cope with getting a hardware address of
+    /// any size.
     void testGetLease4HWAddrSize();
 
     /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
@@ -199,6 +199,12 @@ public:
     /// Adds leases to the database and checks that they can be accessed via
     /// a combination of client and subnet IDs.
     void testGetLease4ClientIdSubnetId();
+
+    /// @brief Test method which returns all IPv4 leases for Subnet ID.
+    void testGetLeases4SubnetId();
+
+    /// @brief Test method which returns all IPv4 leases.
+    void testGetLeases4();
 
     /// @brief Basic Lease4 Checks
     ///
@@ -307,7 +313,7 @@ public:
     /// @brief Checks that the expired DHCPv4 leases can be retrieved.
     ///
     /// This test checks the following:
-    /// - all expired and not reclaimed leases are retured
+    /// - all expired and not reclaimed leases are returned
     /// - number of leases returned can be limited
     /// - leases are returned in the order from the most expired to the
     ///   least expired
@@ -317,7 +323,7 @@ public:
     /// @brief Checks that the expired IPv6 leases can be retrieved.
     ///
     /// This test checks the following:
-    /// - all expired and not reclaimed leases are retured
+    /// - all expired and not reclaimed leases are returned
     /// - number of leases returned can be limited
     /// - leases are returned in the order from the most expired to the
     ///   least expired
@@ -373,6 +379,19 @@ public:
     /// them, then verifies that lease statistics are recalculated correctly
     /// after altering the lease states in various ways.
     void testRecountLeaseStats6();
+
+
+    /// @brief Check if wipeLeases4 works properly.
+    ///
+    /// This test creates a bunch of leases in several subnets and then
+    /// attempts to delete them, one subnet at a time.
+    void testWipeLeases4();
+
+    /// @brief Check if wipeLeases6 works properly.
+    ///
+    /// This test creates a bunch of leases in several subnets and then
+    /// attempts to delete them, one subnet at a time.
+    void testWipeLeases6();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

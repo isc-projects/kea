@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,8 +27,8 @@ using namespace isc;
 
 namespace {
 
-/// @brief Test fixture for excerising D2ClientMgr send management
-/// services.  It inherents from D2ClientMgr to allow overriding various
+/// @brief Test fixture for exercising D2ClientMgr send management
+/// services.  It inherits from D2ClientMgr to allow overriding various
 /// methods and accessing otherwise restricted member.  In particular it
 /// overrides the NameChangeSender completion completion callback, allowing
 /// the injection of send errors.
@@ -128,10 +128,10 @@ public:
     /// @brief Overrides base class completion callback.
     ///
     /// This method will be invoked each time a send completes. It allows
-    /// intervention prior to calling the production implemenation in the
+    /// intervention prior to calling the production implementation in the
     /// base.  If simulate_send_failure_ is true, the base call impl will
     /// be called with an error status, otherwise it will be called with
-    /// the result paramater given.
+    /// the result parameter given.
     ///
     /// @param result Result code of the send operation.
     /// @param ncr NameChangeRequest which failed to send.
@@ -170,7 +170,7 @@ public:
         return (boost::bind(&D2ClientMgrTest::error_handler, this, _1, _2));
     }
 
-    /// @brief Contructs a NameChangeRequest message from a fixed JSON string.
+    /// @brief Constructs a NameChangeRequest message from a fixed JSON string.
     dhcp_ddns::NameChangeRequestPtr buildTestNcr() {
         // Build an NCR from json string.
         const char* ncr_str =
@@ -483,7 +483,7 @@ TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
     EXPECT_FALSE(amSending());
 
     // Stopping the sender should have completed the second message's
-    // in-progess send, so queue size should be 1.
+    // in-progress send, so queue size should be 1.
     ASSERT_EQ(1, getQueueSize());
 }
 

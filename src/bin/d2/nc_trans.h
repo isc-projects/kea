@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,9 @@
 #include <exceptions/exceptions.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/dns_client.h>
-#include <d2/state_model.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dns/tsig.h>
+#include <util/state_model.h>
 
 #include <boost/shared_ptr.hpp>
 #include <map>
@@ -74,7 +74,7 @@ typedef isc::dhcp_ddns::D2Dhcid TransactionKey;
 /// as needed, but it must support the common set.  NameChangeTransaction
 /// does not supply any state handlers.  These are the sole responsibility of
 /// derivations.
-class NameChangeTransaction : public DNSClient::Callback, public StateModel {
+class NameChangeTransaction : public DNSClient::Callback, public util::StateModel {
 public:
 
     //@{ States common to all transactions.
@@ -144,7 +144,7 @@ public:
     static const int NCT_DERIVED_EVENT_MIN = SM_DERIVED_EVENT_MIN + 101;
     //@}
 
-    /// @brief Defualt time to assign to a single DNS udpate.
+    /// @brief Default time to assign to a single DNS update.
     /// @todo  This value will be made configurable in the very near future
     /// under trac3268. For now we will define it to 100 milliseconds
     /// so unit tests will run within a reasonable amount of time.
@@ -289,7 +289,7 @@ protected:
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
     /// @brief Destroys the current update request packet and resets
-    /// udpate attempts count.
+    /// update attempts count.
     void clearDnsUpdateRequest();
 
     /// @brief Sets the update status to the given status value.

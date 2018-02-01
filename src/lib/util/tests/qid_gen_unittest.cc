@@ -14,6 +14,8 @@
 /// \brief Test of QidGenerator
 ///
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 
 #include <util/random/qid_gen.h>

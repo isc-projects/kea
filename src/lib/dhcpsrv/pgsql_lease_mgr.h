@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -161,6 +161,17 @@ public:
     virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
@@ -319,7 +330,7 @@ public:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS4 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
@@ -329,9 +340,31 @@ public:
     /// invokes its start method, which fetches its statistical data
     /// result set by executing the RECOUNT_LEASE_STATS6 query.
     /// The query object is then returned.
-    /// 
+    ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Removes specified IPv4 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+
+    /// @brief Removed specified IPv6 leases.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @todo: Not implemented yet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @return number of leases removed.
+    virtual size_t wipeLeases6(const SubnetID& subnet_id);
 
     /// @brief Return backend type
     ///
@@ -386,11 +419,13 @@ public:
         DELETE_LEASE4_STATE_EXPIRED,// Delete expired lease4s in certain state.
         DELETE_LEASE6,              // Delete from lease6 by address
         DELETE_LEASE6_STATE_EXPIRED,// Delete expired lease6s in certain state.
+        GET_LEASE4,                 // Get all IPv4 leases
         GET_LEASE4_ADDR,            // Get lease4 by address
         GET_LEASE4_CLIENTID,        // Get lease4 by client ID
         GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
         GET_LEASE4_HWADDR,          // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
+        GET_LEASE4_SUBID,           // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,          // Get expired lease4
         GET_LEASE6_ADDR,            // Get lease6 by address
         GET_LEASE6_DUID_IAID,       // Get lease6 by DUID and IAID
@@ -495,7 +530,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
@@ -507,7 +542,7 @@ private:
     ///
     /// This method performs the common actions for the various getLease4()
     /// methods.  It acts as an interface to the getLeaseCollection() method,
-    /// but retrieveing only a single lease.
+    /// but retrieving only a single lease.
     ///
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query

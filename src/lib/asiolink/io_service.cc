@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 
 #include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
+#include <boost/shared_ptr.hpp>
 #include <sys/socket.h>
 
 namespace isc {
@@ -40,7 +41,7 @@ public:
     /// \brief The constructor
     IOServiceImpl() :
         io_service_(),
-        work_(io_service_)
+        work_(new boost::asio::io_service::work(io_service_))
     {};
     /// \brief The destructor.
     ~IOServiceImpl() {};
@@ -76,6 +77,12 @@ public:
     /// This will return the control to the caller of the \c run() method.
     void stop() { io_service_.stop();} ;
 
+    /// \brief Removes IO service work object to let it finish running
+    /// when all handlers have been invoked.
+    void stopWork() {
+        work_.reset();
+    }
+
     /// \brief Return the native \c io_service object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
@@ -89,7 +96,7 @@ public:
     }
 private:
     boost::asio::io_service io_service_;
-    boost::asio::io_service::work work_;
+    boost::shared_ptr<boost::asio::io_service::work> work_;
 };
 
 IOService::IOService() {
@@ -118,6 +125,11 @@ IOService::poll() {
 void
 IOService::stop() {
     io_impl_->stop();
+}
+
+void
+IOService::stopWork() {
+    io_impl_->stopWork();
 }
 
 boost::asio::io_service&

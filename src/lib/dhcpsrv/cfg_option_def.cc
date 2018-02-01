@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,13 @@
 
 #include <config.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option_data_types.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <sstream>
+
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -38,7 +42,7 @@ CfgOptionDef::equals(const CfgOptionDef& other) const {
     // Get option space names held by the other object.
     const std::list<std::string>&
         other_names = other.option_definitions_.getOptionSpaceNames();
-    // Compareg that sizes are the same. If they hold different number of
+    // Compare that sizes are the same. If they hold different number of
     // option space names the objects are not equal.
     if (names.size() != other_names.size()) {
         return (false);
@@ -146,6 +150,60 @@ CfgOptionDef::get(const std::string& option_space,
     }
     // Nothing found. Return NULL pointer.
     return (OptionDefinitionPtr());
+}
+
+ElementPtr
+CfgOptionDef::toElement() const {
+    // option-defs value is a list of maps
+    ElementPtr result = Element::createList();
+    // Iterate through the container by names and definitions
+    const std::list<std::string>& names =
+        option_definitions_.getOptionSpaceNames();
+    for (std::list<std::string>::const_iterator name = names.begin();
+         name != names.end(); ++name) {
+        OptionDefContainerPtr defs = getAll(*name);
+        for (OptionDefContainer::const_iterator def = defs->begin();
+             def != defs->end(); ++def) {
+            // Get and fill the map for this definition
+            ElementPtr map = Element::createMap();
+            // Set user context
+            (*def)->contextToElement(map);
+            // Set space from parent iterator
+            map->set("space", Element::create(*name));
+            // Set required items: name, code and type
+            map->set("name", Element::create((*def)->getName()));
+            map->set("code", Element::create((*def)->getCode()));
+            std::string data_type =
+                OptionDataTypeUtil::getDataTypeName((*def)->getType());
+            map->set("type", Element::create(data_type));
+            // Set the array type
+            bool array_type = (*def)->getArrayType();
+            map->set("array", Element::create(array_type));
+            // Set the encapsulate space
+            std::string encapsulates = (*def)->getEncapsulatedSpace();
+            map->set("encapsulate", Element::create(encapsulates));
+            // Set the record field types
+            OptionDefinition::RecordFieldsCollection fields =
+                (*def)->getRecordFields();
+            if (!fields.empty()) {
+                std::ostringstream oss;
+                for (OptionDefinition::RecordFieldsCollection::const_iterator
+                         field = fields.begin();
+                     field != fields.end(); ++field) {
+                    if (field != fields.begin()) {
+                        oss << ", ";
+                    }
+                    oss << OptionDataTypeUtil::getDataTypeName(*field);
+                }
+                map->set("record-types", Element::create(oss.str()));
+            } else {
+                map->set("record-types", Element::create(std::string()));
+            }
+            // Push on the list
+            result->add(map);
+        }
+    }
+    return (result);
 }
 
 } // end of namespace isc::dhcp

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,12 @@
 #include <d2/d2_log.h>
 #include <d2/nc_trans.h>
 #include <dns/rdata.h>
+#include <util/random/qid_gen.h>
 
 #include <sstream>
+
+using namespace isc::util;
+using namespace isc::util::random;
 
 namespace isc {
 namespace d2 {
@@ -81,7 +85,7 @@ NameChangeTransaction::~NameChangeTransaction(){
 
 void
 NameChangeTransaction::startTransaction() {
-    LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_STARTING_TRANSACTION)
               .arg(getRequestId());
 
@@ -96,7 +100,7 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     // runModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
     setDnsUpdateStatus(status);
-    LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+    LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_UPDATE_RESPONSE_RECEIVED)
               .arg(getRequestId())
               .arg(current_server_->toText())
@@ -130,7 +134,7 @@ NameChangeTransaction::responseString() const {
             stream << "OTHER";
             break;
         default:
-            stream << "UKNOWNN("
+            stream << "UNKNOWN("
                    << static_cast<int>(getDnsUpdateStatus()) << ")";
             break;
 
@@ -175,7 +179,7 @@ NameChangeTransaction::sendUpdate(const std::string& comment) {
                               d2_params->getDnsServerTimeout(), tsig_key_);
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
-        LOG_DEBUG(d2_to_dns_logger, DBGLVL_TRACE_DETAIL,
+        LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
                   DHCP_DDNS_UPDATE_REQUEST_SENT)
                   .arg(getRequestId())
                   .arg(comment)
@@ -319,6 +323,8 @@ NameChangeTransaction::prepNewRequest(DdnsDomainPtr domain) {
         // Create a "blank" update request.
         D2UpdateMessagePtr request(new D2UpdateMessage(D2UpdateMessage::
                                                        OUTBOUND));
+        // Set the query id
+        request->setId(QidGenerator::getInstance().generateQid());
         // Construct the Zone Section.
         dns::Name zone_name(domain->getName());
         request->setZone(zone_name, dns::RRClass::IN());

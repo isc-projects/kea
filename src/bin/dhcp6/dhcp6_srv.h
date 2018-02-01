@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
+#include <asiolink/io_service.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
@@ -18,6 +19,7 @@
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
@@ -53,6 +55,10 @@ public:
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
 class Dhcpv6Srv : public Daemon {
+private:
+
+    /// @brief Pointer to IO service used by the server.
+    asiolink::IOServicePtr io_service_;
 
 public:
     /// @brief defines if certain option may, must or must not appear
@@ -78,11 +84,16 @@ public:
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
 
+    /// @brief Returns pointer to the IO service used by the server.
+    asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
 
-    /// @brief Returns server-indentifier option.
+    /// @brief Returns server-identifier option.
     ///
     /// @return server-id option
     OptionPtr getServerID() { return serverid_; }
@@ -302,8 +313,9 @@ protected:
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
+    /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question);
+    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question, bool& drop);
 
     /// @brief Processes IA_NA option (and assigns addresses if necessary).
     ///
@@ -639,7 +651,7 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Attempts to get a MAC/hardware address using configred sources
+    /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
     /// Tries to extract MAC/hardware address information from the packet
     /// using MAC sources configured in 'mac-sources' configuration parameter.
@@ -677,9 +689,12 @@ protected:
     ///
     /// @param pkt pointer to a packet for which context will be created.
     /// @param [out] ctx reference to context object to be initialized.
-    void initContext(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+    /// @param [out] drop if it is true the packet will be dropped.
+    void initContext(const Pkt6Ptr& pkt,
+                     AllocEngine::ClientContext6& ctx,
+                     bool& drop);
 
-    /// @brief this is a prefix added to the contend of vendor-class option
+    /// @brief this is a prefix added to the content of vendor-class option
     ///
     /// If incoming packet has a vendor class option, its content is
     /// prepended with this prefix and then interpreted as a class.
@@ -692,7 +707,7 @@ protected:
     /// This method iterates over all IA_NA options and calls @ref declineIA on
     /// each of them.
     ///
-    /// @param decline Decline messege sent by a client
+    /// @param decline Decline message sent by a client
     /// @param reply Server's response (IA_NA with status will be added here)
     /// @param ctx context
     /// @return true when expected to continue, false when hooks told us to drop
@@ -722,7 +737,7 @@ protected:
     /// - cleans up DNS, if necessary
     /// - updates subnet[X].declined-addresses (per subnet stat)
     /// - updates declined-addresses (global stat)
-    /// - deassociates client information from the lease
+    /// - disassociates client information from the lease
     /// - moves the lease to DECLINED state
     /// - sets lease expiration time to decline-probation-period
     /// - adds status-code success
@@ -753,6 +768,25 @@ private:
     /// @param pkt packet to be classified
     /// @param classes a reference to added class names for logging
     void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
+
+    /// @brief Update FQDN based on the reservations in the current subnet.
+    ///
+    /// When shared networks are in use the allocation engine may switch to
+    /// a different subnet than originally selected. If this new subnet has
+    /// hostname reservations there is a need to update the FQDN option
+    /// value.
+    ///
+    /// This method should be called after lease assignments to perform
+    /// such update when required.
+    ///
+    /// @param ctx Client context.
+    /// @param answer Message being sent to a client, which may hold an FQDN
+    /// option to be updated.
+    ///
+    /// @throw isc::Unexpected if specified message is NULL. This is treated
+    /// as a programmatic error.
+    void updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
+                            const Pkt6Ptr& answer);
 
     /// @private
     /// @brief Generate FQDN to be sent to a client if none exists.
@@ -842,6 +876,11 @@ protected:
     /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
     /// are waiting for sending to kea-dhcp-ddns module.
     std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
+
+    /// @brief Holds information about disabled DHCP service and/or
+    /// disabled subnet/network scopes.
+    NetworkState network_state_;
+
 };
 
 }; // namespace isc::dhcp

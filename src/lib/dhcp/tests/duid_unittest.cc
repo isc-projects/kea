@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ namespace {
 
 // This is a workaround for strange linking problems with gtest:
 // libdhcp___unittests-duid_unittest.o: In function `Compare<long unsigned int, long unsigned int>':
-// ~/gtest-1.6.0/include/gtest/gtest.h:1353: undefined reference to `isc::dhcp::ClientId::MAX_CLIENT_ID_LE'N
+// ~/gtest-1.6.0/include/gtest/gtest.h:1353: undefined reference to `isc::dhcp::ClientId::MAX_CLIENT_ID_LEN'
 // collect2: ld returned 1 exit status
 
 const size_t MAX_DUID_LEN = DUID::MAX_DUID_LEN;

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@
 
 #include <pthread.h>
 
-using std::auto_ptr;
+using std::unique_ptr;
 
 namespace isc {
 namespace util {
@@ -82,7 +82,7 @@ Mutex::Mutex() :
         isc_throw(isc::InvalidOperation, std::strerror(result));
     }
 
-    auto_ptr<Impl> impl(new Impl);
+    unique_ptr<Impl> impl(new Impl);
     result = pthread_mutex_init(&impl->mutex, &attributes);
     switch (result) {
         case 0: // All 0K

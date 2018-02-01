@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@
 
 #include <log/logger_level.h>
 #include <log/logger_specification.h>
+#include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <stdint.h>
 #include <vector>
 
@@ -18,7 +20,8 @@ namespace dhcp {
 /// @brief Defines single logging destination
 ///
 /// This structure is used to keep log4cplus configuration parameters.
-struct LoggingDestination {
+struct LoggingDestination : public isc::data::CfgToElement {
+public:
 
     /// @brief defines logging destination output
     ///
@@ -44,8 +47,13 @@ struct LoggingDestination {
 
     /// @brief Default constructor.
     LoggingDestination()
-        : output_("stdout"), maxver_(1), maxsize_(204800), flush_(true) {
+        : output_("stdout"), maxver_(1), maxsize_(10240000), flush_(true) {
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 /// @brief structure that describes one logging entry
@@ -65,7 +73,8 @@ struct LoggingDestination {
 ///            "severity": "WARN",
 ///            "debuglevel": 99
 ///        },
-struct LoggingInfo {
+class LoggingInfo : public UserContext, public isc::data::CfgToElement {
+public:
 
     /// @brief logging name
     std::string name_;
@@ -116,6 +125,11 @@ struct LoggingInfo {
 
     /// @brief Converts logger configuration to a spec.
     isc::log::LoggerSpecification toSpec() const;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 /// @brief storage for logging information in log4cplus format

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -121,7 +121,7 @@ public:
     /// address to existing list or setAddresses() if you want to
     /// set the whole list at once.
     ///
-    /// Passed address must be IPv4 address. Otherwire BadValue exception
+    /// Passed address must be IPv4 address. Otherwise BadValue exception
     /// will be thrown.
     ///
     /// @param addrs address collection to be set
@@ -135,7 +135,7 @@ public:
     /// address to existing list or setAddresses() if you want to
     /// set the whole list at once.
     ///
-    /// Passed address must be IPv4 address. Otherwire BadValue exception
+    /// Passed address must be IPv4 address. Otherwise BadValue exception
     /// will be thrown.
     ///
     /// @param addr an address that is going to be set as 1-element address list
@@ -147,10 +147,10 @@ public:
     /// define only a single address or setAddresses() if you want to
     /// set the whole list at once.
     ///
-    /// Passed address must be IPv4 address. Otherwire BadValue exception
+    /// Passed address must be IPv4 address. Otherwise BadValue exception
     /// will be thrown.
     ///
-    /// @param addr an address thait is going to be added to existing list
+    /// @param addr an address that is going to be added to existing list
     void addAddress(const isc::asiolink::IOAddress& addr);
 
 protected:

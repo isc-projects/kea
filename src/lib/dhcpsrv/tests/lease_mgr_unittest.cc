@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,6 +129,22 @@ public:
         return (Lease4Ptr());
     }
 
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID) const {
+        return (Lease4Collection());
+    }
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const {
+        return (Lease4Collection());
+    }
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// @param addr address of the searched lease
@@ -221,6 +237,18 @@ public:
     virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t) {
         isc_throw(NotImplemented, "ConcreteLeaseMgr::deleteExpiredReclaimedLeases6"
                   " is not implemented");
+    }
+
+    /// @brief Pretends to wipe all IPv4 leases from a subnet
+    /// @param subnet_id (ignored, but one day may specify the subnet)
+    virtual size_t wipeLeases4(const SubnetID&) {
+        isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
+    }
+
+    /// @brief Pretends to wipe all IPv4 leases from a subnet
+    /// @param subnet_id (ignored, but one day may specify the subnet)
+    virtual size_t wipeLeases6(const SubnetID&) {
+        isc_throw(NotImplemented, "ConreteLeaseMgr::wipeLeases4 not implemented");
     }
 
     /// @brief Returns backend type.

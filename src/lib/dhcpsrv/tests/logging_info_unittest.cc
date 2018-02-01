@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,14 +7,17 @@
 #include <config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/logging_info.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::dhcp;
+using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
 // Checks if two destinations can be compared for equality.
-TEST(LoggingDestintaion, equals) {
+TEST(LoggingDestination, equals) {
     LoggingDestination dest1;
     LoggingDestination dest2;
 
@@ -69,6 +72,28 @@ TEST_F(LoggingInfoTest, defaults) {
     ASSERT_EQ(1, info_non_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_non_verbose.destinations_[0].output_);
 
+    std::string header = "{\n";
+    std::string begin =
+        "\"name\": \"kea\",\n"
+        "\"output_options\": [ {\n"
+        " \"output\": \"stdout\",\n \"maxsize\": 10240000,\n"
+        " \"maxver\": 1,\n \"flush\": true } ],\n"
+        "\"severity\": \"";
+    std::string dbglvl = "\",\n\"debuglevel\": ";
+    std::string trailer = "\n}\n";
+    std::string expected = header + begin + "INFO" + dbglvl + "0" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_non_verbose);
+
+    // Add a user context
+    std::string comment = "\"comment\": \"foo\"";
+    std::string user_context = "{ " + comment + " }";
+    EXPECT_FALSE(info_non_verbose.getContext());
+    info_non_verbose.setContext(Element::fromJSON(user_context));
+    ASSERT_TRUE(info_non_verbose.getContext());
+    EXPECT_EQ(user_context, info_non_verbose.getContext()->str());
+    expected = header + comment + ",\n" + begin + "INFO" + dbglvl + "0" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_non_verbose);
+
     CfgMgr::instance().setVerbose(true);
     LoggingInfo info_verbose;
     EXPECT_EQ("kea", info_verbose.name_);
@@ -77,6 +102,20 @@ TEST_F(LoggingInfoTest, defaults) {
 
     ASSERT_EQ(1, info_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_verbose.destinations_[0].output_);
+
+    EXPECT_EQ(10240000, info_verbose.destinations_[0].maxsize_);
+    EXPECT_EQ(1, info_verbose.destinations_[0].maxver_);
+
+    expected = header + begin + "DEBUG" + dbglvl + "99" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_verbose);
+
+    // User comment again
+    EXPECT_FALSE(info_verbose.getContext());
+    info_verbose.setContext(Element::fromJSON(user_context));
+    ASSERT_TRUE(info_verbose.getContext());
+    EXPECT_EQ(user_context, info_verbose.getContext()->str());
+    expected = header + comment + ",\n" + begin + "DEBUG" + dbglvl + "99" + trailer;
+    runToElementTest<LoggingInfo>(expected, info_verbose);
 }
 
 // Checks if (in)equality operators work for LoggingInfo.
@@ -120,7 +159,7 @@ TEST_F(LoggingInfoTest, equalityOperators) {
     EXPECT_TRUE(info1 == info2);
     EXPECT_FALSE(info1 != info2);
 
-    // Create two different desinations.
+    // Create two different destinations.
     LoggingDestination dest1;
     LoggingDestination dest2;
     dest1.output_ = "foo";

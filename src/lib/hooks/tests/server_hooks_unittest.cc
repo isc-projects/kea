@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <hooks/server_hooks.h>
 
@@ -28,7 +30,9 @@ TEST(ServerHooksTest, RegisterHooks) {
     // There should be two hooks already registered, with indexes 0 and 1.
     EXPECT_EQ(2, hooks.getCount());
     EXPECT_EQ(0, hooks.getIndex("context_create"));
+    EXPECT_EQ(0, hooks.findIndex("context_create"));
     EXPECT_EQ(1, hooks.getIndex("context_destroy"));
+    EXPECT_EQ(1, hooks.findIndex("context_destroy"));
 
     // Check that the constants are as expected. (The intermediate variables
     // are used because of problems with g++ 4.6.1/Ubuntu 11.10 when resolving
@@ -54,8 +58,9 @@ TEST(ServerHooksTest, RegisterHooks) {
 }
 
 // Check that duplicate names cannot be registered.
-
-TEST(ServerHooksTest, DuplicateHooks) {
+// This test has been updated. See #5251 for details. The old
+// code is retained in case we decide to get back to it.
+TEST(ServerHooksTest, DISABLED_OldDuplicateHooks) {
     ServerHooks& hooks = ServerHooks::getServerHooks();
     hooks.reset();
 
@@ -66,6 +71,29 @@ TEST(ServerHooksTest, DuplicateHooks) {
     int gamma = hooks.registerHook("gamma");
     EXPECT_EQ(2, gamma);
     EXPECT_THROW(hooks.registerHook("gamma"), DuplicateHook);
+}
+
+// Check that duplicate names are handled properly. The code used to throw,
+// but it now returns the existing index. See #5251 for details.
+TEST(ServerHooksTest, NewDuplicateHooks) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+
+    int index = hooks.getIndex("context_create");
+
+    // Ensure we can duplicate one of the existing names.
+    // Instead of throwing, we just check that a reasonable
+    // index has been returned.
+    EXPECT_EQ(index, hooks.registerHook("context_create"));
+
+    // Check that mutiple attempts to register the same hook will return
+    // existing index.
+    int gamma = hooks.registerHook("gamma");
+    EXPECT_EQ(2, gamma);
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
+    EXPECT_EQ(gamma, hooks.registerHook("gamma"));
 }
 
 // Checks that we can get the name of the hooks.
@@ -153,6 +181,7 @@ TEST(ServerHooksTest, UnknownHookName) {
     hooks.reset();
 
     EXPECT_THROW(static_cast<void>(hooks.getIndex("unknown")), NoSuchHook);
+    EXPECT_EQ(-1, hooks.findIndex("unknown"));
 }
 
 // Check that the count of hooks is correct.
@@ -169,6 +198,25 @@ TEST(ServerHooksTest, HookCount) {
 
     // Should be two more hooks that the number we have registered.
     EXPECT_EQ(6, hooks.getCount());
+}
+
+// Check that the hook name is correctly generated for a control command name
+// and vice versa.
+
+TEST(ServerHooksTest, CommandToHookName) {
+    EXPECT_EQ("$x_y_z", ServerHooks::commandToHookName("x-y-z"));
+    EXPECT_EQ("$foo_bar_foo", ServerHooks::commandToHookName("foo-bar_foo"));
+    EXPECT_EQ("$", ServerHooks::commandToHookName(""));
+}
+
+TEST(ServerHooksTest, HookToCommandName) {
+    // Underscores replaced by hyphens.
+    EXPECT_EQ("x-y-z", ServerHooks::hookToCommandName("$x_y_z"));
+    EXPECT_EQ("foo-bar-foo", ServerHooks::hookToCommandName("$foo_bar-foo"));
+    // Single dollar is converted to empty string.
+    EXPECT_TRUE(ServerHooks::hookToCommandName("$").empty());
+    // If no dollar, it is not a hook name. Return empty string.
+    EXPECT_TRUE(ServerHooks::hookToCommandName("abc").empty());
 }
 
 } // Anonymous namespace

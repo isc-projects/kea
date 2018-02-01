@@ -1,0 +1,126 @@
+// This is an example configuration file for the DHCPv6 server in Kea.
+// It uses embedded (i.e., which will be included in configuration objects
+// and not stripped by at lexical analysis) comments.
+
+{ "Dhcp6":
+
+{
+   // Global scope
+   "comment": "A DHCPv6 server",
+
+   // In interface config
+   "interfaces-config": {
+       "comment": "Use wildcard",
+       "interfaces": [ "*" ] },
+
+   // In option definitions
+   "option-def": [ {
+       "comment": "An option definition",
+       "name": "foo",
+       "code": 100,
+       "type": "ipv6-address",
+       "space": "isc"
+    } ],
+
+   // In option data
+   "option-data": [ {
+       "comment": "Set option value",
+       "name": "subscriber-id",
+       "data": "ABCDEF0105",
+       "csv-format": false
+    } ],
+
+   // In client classes
+   "client-classes": [
+       {
+          "comment": "match all",
+          "name": "all",
+          "test": "'' == ''"
+       },
+       // Of course comments are optional
+       {
+          "name": "none"
+       },
+       // A comment and a user-context can be specified
+       {
+          "comment": "a comment",
+          "name": "both",
+          "user-context": {
+              "version": 1
+          }
+       }
+   ],
+
+   // In control socket (more for the agent)
+   "control-socket": {
+       "socket-type": "unix",
+       "socket-name": "/tmp/kea6-ctrl-socket",
+       "user-context": { "comment": "Indirect comment" }
+   },
+
+   // In shared networks
+   "shared-networks": [ {
+       "comment": "A shared network",
+       "name": "foo",
+
+       // In subnets
+       "subnet6": [
+         { 
+           "comment": "A subnet",
+           "subnet": "2001:db1::/64",
+           "id": 100,
+
+           // In pools
+           "pools": [
+             {
+                "comment": "A pool",
+                "pool": "2001:db1::/64"
+             }
+           ],
+
+           // In prefix pools
+           "pd-pools": [
+             {
+                "comment": "A prefix pool",
+                "prefix": "2001:db2::",
+                "prefix-len": 48,
+                "delegated-len": 64
+             }
+           ],
+
+           // In host reservations
+           "reservations": [
+             {
+                "comment": "A host reservation",
+                "hw-address": "AA:BB:CC:DD:EE:FF",
+                "hostname": "foo.example.com",
+
+                // Again in an option data
+                "option-data": [ {
+                    "comment": "An option in a reservation",
+                    "name": "domain-search",
+                    "data": "example.com"
+                } ]
+             }
+           ]
+         }
+       ]
+    } ],
+
+   // In dhcp ddns
+   "dhcp-ddns": {
+       "comment": "No dynamic DNS",
+       "enable-updates": false
+   }
+},
+
+"Logging": {
+   // In loggers
+   "loggers": [ {
+       "comment": "A logger",
+       "name": "kea-dhcp6"
+   } ]
+}
+
+}
+

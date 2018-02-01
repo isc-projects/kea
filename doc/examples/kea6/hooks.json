@@ -1,47 +1,55 @@
-# This is an example configuration file for the DHCPv6 server in Kea
-# illustrating the configuration of hooks libraries.  It uses a basic scenario
-# of one IPv6 subnet configured with the default values for all parameters.
+// This is an example configuration file for the DHCPv6 server in Kea
+// illustrating the configuration of hooks libraries.  It uses a basic scenario
+// of one IPv6 subnet configured with the default values for all parameters.
 
 {"Dhcp6":
 
 {
-# Kea is told to listen on the ethX interface only.
+// Kea is told to listen on the ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# Set up the storage for leases.
+// Set up the storage for leases.
   "lease-database": {
     "type": "memfile"
   },
 
-# Set values to mandatory timers
+// Set values to mandatory timers
   "renew-timer": 900,
   "rebind-timer": 1200,
   "preferred-lifetime": 1800,
   "valid-lifetime": 2700,
 
-# Define a single subnet.
+// Define a single subnet.
   "subnet6": [
     {
-      "pools": [ { "pool": "2001:db8:1::/80" } ],
+      "pools": [
+        {
+          "pool": "2001:db8:1::/80",
+          "user-context": { "charging": true }
+        } ],
       "subnet": "2001:db8:1::/64",
       "interface": "ethX"
     }
   ],
 
-# Set up the hooks libraries.  For this example, we assume that two libraries
-# are loaded, called "security" and "charging".  Note that order is important:
-# "security" is specified first so if both libraries supply a hook function
-# for a given hook, the function in "security" will be called before that in
-# "charging".
+// Set up the hooks libraries.  For this example, we assume that two libraries
+// are loaded, called "security" and "charging".  Note that order is important:
+// "security" is specified first so if both libraries supply a hook function
+// for a given hook, the function in "security" will be called before that in
+// "charging".
 
   "hooks-libraries": [
      {
         "library": "/opt/lib/security.so"
      },
      {
-        "library": "/opt/lib/charging.so"
+        "library": "/opt/lib/charging.so",
+        "parameters": {
+             "path": "/var/kea/var",
+             "base-name": "kea-forensic6"
+        }
      }
   ]
 }

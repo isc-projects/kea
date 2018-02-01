@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
+#include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <boost/shared_ptr.hpp>
 #include <map>
 #include <set>
@@ -114,7 +116,7 @@ public:
 /// socket and bind to link local address as well as open a socket bound to
 /// the specified unicast address.
 ///
-/// The DHCPv4 configuration doesn't accept the simulatenous use of the
+/// The DHCPv4 configuration doesn't accept the simultaneous use of the
 /// "interface-name" and the "interface-name/address" tuple for the
 /// given interface. When the "interface-name" is specified it implies
 /// that the sockets will be opened on for all addresses configured on
@@ -125,7 +127,7 @@ public:
 /// to which it is bound. It is allowed to select multiple addresses on the
 /// particular interface explicitly, e.g. "eth0/192.168.8.1",
 /// "eth0/192.168.8.2".
-class CfgIface {
+class CfgIface : public UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Socket type used by the DHCPv4 server.
@@ -134,6 +136,15 @@ public:
         SOCKET_RAW,
         /// Datagram socket, i.e. IP/UDP socket.
         SOCKET_UDP
+    };
+
+    /// @brief Indicates how outbound interface is selected for relayed traffic.
+    enum OutboundIface {
+        /// Server sends responses over the same interface on which queries are
+        /// received.
+        SAME_AS_INBOUND,
+        /// Server uses routing to determine the right interface to send response.
+        USE_ROUTING
     };
 
     /// @brief Keyword used to enable all interfaces.
@@ -177,11 +188,11 @@ public:
 
     /// @brief Select interface to be used to receive DHCP traffic.
     ///
-    /// @ref CfgIface for a detail explaination of the interface name argument.
+    /// @ref CfgIface for a detail explanation of the interface name argument.
     ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param iface_name Explicit interface name, a wildcard name (*) of
-    /// the interface(s) or the pair of iterface/unicast-address to be used
+    /// the interface(s) or the pair of interface/unicast-address to be used
     /// to receive DHCP traffic.
     ///
     /// @throw InvalidIfaceName If the interface name is incorrect, e.g. empty.
@@ -223,8 +234,34 @@ public:
     void useSocketType(const uint16_t family,
                        const std::string& socket_type_name);
 
+    /// @brief Returns DHCP socket type used by the server.
+    SocketType getSocketType() const {
+        return (socket_type_);
+    }
+
     /// @brief Returns the socket type in the textual format.
     std::string socketTypeToText() const;
+
+    /// @brief Sets outbound interface selection mode.
+    ///
+    /// @param outbound_iface New outbound interface selection mode setting.
+    void setOutboundIface(const OutboundIface& outbound_iface);
+
+    /// @brief Returns outbound interface selection mode.
+    ///
+    /// @return Outbound interface selection mode.
+    OutboundIface getOutboundIface() const;
+
+    /// @brief Returns outbound interface selection mode as string.
+    ///
+    /// @return text representation of the outbound interface selection mode.
+    std::string outboundTypeToText() const;
+
+    /// @brief Converts text to outbound interface selection mode.
+    ///
+    /// @param txt either 'same-as-inbound' or 'use-routing'
+    /// @return Outbound interface selection mode.
+    static OutboundIface textToOutboundIface(const std::string& txt);
 
     /// @brief Converts the socket type in the textual format to the type
     /// represented by the @c SocketType.
@@ -251,6 +288,18 @@ public:
         return (!equals(other));
     }
 
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
+
+    /// @brief Set the re-detect flag
+    ///
+    /// @param re_detect the new value of the flag
+    void setReDetect(bool re_detect) {
+        re_detect_ = re_detect;
+    }
+
 private:
 
     /// @brief Checks if multiple IPv4 addresses has been activated on any
@@ -258,7 +307,7 @@ private:
     ///
     /// This method is useful to check if the current configuration uses
     /// multiple IPv4 addresses on any interface. This is important when
-    /// using raw sockets to recieve messages from the clients because
+    /// using raw sockets to receive messages from the clients because
     /// each packet may be received multiple times when it is sent from
     /// a directly connected client. If this is the case, a warning must
     /// be logged.
@@ -318,12 +367,18 @@ private:
     /// for which the sockets should be opened.
     ExplicitAddressMap address_map_;
 
-    /// @brief A booolean value which indicates that the wildcard interface name
+    /// @brief A boolean value which indicates that the wildcard interface name
     /// has been specified (*).
     bool wildcard_used_;
 
     /// @brief A type of the sockets used by the DHCP server.
     SocketType socket_type_;
+
+    /// @brief A boolean value which reflects current re-detect setting
+    bool re_detect_;
+
+    /// @brief Indicates how outbound interface is selected for relayed traffic.
+    OutboundIface outbound_iface_;
 };
 
 /// @brief A pointer to the @c CfgIface .

@@ -1,14 +1,17 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <dhcp/option_data_types.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
 #include <util/encode/hex.h>
 #include <algorithm>
+#include <limits>
 
 using namespace isc::asiolink;
 
@@ -30,6 +33,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_types_["ipv6-prefix"] = OPT_IPV6_PREFIX_TYPE;
     data_types_["psid"] = OPT_PSID_TYPE;
     data_types_["string"] = OPT_STRING_TYPE;
+    data_types_["tuple"] = OPT_TUPLE_TYPE;
     data_types_["fqdn"] = OPT_FQDN_TYPE;
     data_types_["record"] = OPT_RECORD_TYPE;
 
@@ -47,6 +51,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_IPV6_PREFIX_TYPE] = "ipv6-prefix";
     data_type_names_[OPT_PSID_TYPE] = "psid";
     data_type_names_[OPT_STRING_TYPE] = "string";
+    data_type_names_[OPT_TUPLE_TYPE] = "tuple";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
     data_type_names_[OPT_RECORD_TYPE] = "record";
     // The "unknown" data type is declared here so as
@@ -141,7 +146,7 @@ OptionDataTypeUtil::readAddress(const std::vector<uint8_t>& buf,
         return (IOAddress::fromBytes(AF_INET6, &buf[0]));
     } else {
         isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
-                  "IP address. Invalid family: " << family);
+                  << " IP address. Invalid family: " << family);
     }
 }
 
@@ -168,6 +173,118 @@ OptionDataTypeUtil::writeBinary(const std::string& hex_str,
     // Decode was successful so append decoded binary value
     // to the buffer.
     buf.insert(buf.end(), binary.begin(), binary.end());
+}
+
+std::string
+OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
+                              OpaqueDataTuple::LengthFieldType lengthfieldtype) {
+    if (lengthfieldtype == OpaqueDataTuple::LENGTH_1_BYTE) {
+        if (buf.size() < 1) {
+            isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                      << " tuple (length). Invalid buffer size: "
+                      << buf.size());
+        }
+        uint8_t len = buf[0];
+        if (buf.size() < 1 + len) {
+            isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                      << " tuple (length " << static_cast<unsigned>(len)
+                      << "). Invalid buffer size: " << buf.size());
+        }
+        std::string value;
+        value.resize(len);
+        std::memcpy(&value[0], &buf[1], len);
+        return (value);
+    } else if (lengthfieldtype == OpaqueDataTuple::LENGTH_2_BYTES) {
+        if (buf.size() < 2) {
+            isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                      << " tuple (length). Invalid buffer size: "
+                      << buf.size());
+        }
+        uint16_t len = isc::util::readUint16(&buf[0], 2);
+        if (buf.size() < 2 + len) {
+            isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                      << " tuple (length " << len
+                      << "). Invalid buffer size: " << buf.size());
+        }
+        std::string value;
+        value.resize(len);
+        std::memcpy(&value[0], &buf[2], len);
+        return (value);
+    } else {
+        isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
+                  << " tuple. Invalid length type field: "
+                  << static_cast<unsigned>(lengthfieldtype));
+    }
+}
+
+void
+OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
+                              OpaqueDataTuple& tuple) {
+    try {
+        tuple.unpack(buf.begin(), buf.end());
+    } catch (const OpaqueDataTupleError& ex) {
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
+void
+OptionDataTypeUtil::writeTuple(const std::string& value,
+                               OpaqueDataTuple::LengthFieldType lengthfieldtype,
+                               std::vector<uint8_t>& buf) {
+    if (lengthfieldtype == OpaqueDataTuple::LENGTH_1_BYTE) {
+        if (value.size() > std::numeric_limits<uint8_t>::max()) {
+            isc_throw(BadDataTypeCast, "invalid tuple value (size "
+                      << value.size() << " larger than "
+                      << std::numeric_limits<uint8_t>::max() << ")");
+        }
+        buf.push_back(static_cast<uint8_t>(value.size()));
+
+    } else if (lengthfieldtype == OpaqueDataTuple::LENGTH_2_BYTES) {
+        if (value.size() > std::numeric_limits<uint16_t>::max()) {
+            isc_throw(BadDataTypeCast, "invalid tuple value (size "
+                      << value.size() << " larger than "
+                      << std::numeric_limits<uint16_t>::max() << ")");
+        }
+        buf.resize(buf.size() + 2);
+        isc::util::writeUint16(static_cast<uint16_t>(value.size()),
+                               &buf[buf.size() - 2], 2);
+    } else {
+        isc_throw(BadDataTypeCast, "unable to write data to the buffer as"
+                  << " tuple. Invalid length type field: "
+                  << static_cast<unsigned>(lengthfieldtype));
+    }
+    buf.insert(buf.end(), value.begin(), value.end());
+}
+
+void
+OptionDataTypeUtil::writeTuple(const OpaqueDataTuple& tuple,
+                               std::vector<uint8_t>& buf) {
+    if (tuple.getLength() == 0) {
+        isc_throw(BadDataTypeCast, "invalid empty tuple value");
+    }
+    if (tuple.getLengthFieldType() == OpaqueDataTuple::LENGTH_1_BYTE) {
+        if (tuple.getLength() > std::numeric_limits<uint8_t>::max()) {
+            isc_throw(BadDataTypeCast, "invalid tuple value (size "
+                      << tuple.getLength() << " larger than "
+                      << std::numeric_limits<uint8_t>::max() << ")");
+        }
+        buf.push_back(static_cast<uint8_t>(tuple.getLength()));
+
+    } else if (tuple.getLengthFieldType() == OpaqueDataTuple::LENGTH_2_BYTES) {
+        if (tuple.getLength() > std::numeric_limits<uint16_t>::max()) {
+            isc_throw(BadDataTypeCast, "invalid tuple value (size "
+                      << tuple.getLength() << " larger than "
+                      << std::numeric_limits<uint16_t>::max() << ")");
+        }
+        buf.resize(buf.size() + 2);
+        isc::util::writeUint16(static_cast<uint16_t>(tuple.getLength()),
+                               &buf[buf.size() - 2], 2);
+    } else {
+        isc_throw(BadDataTypeCast, "unable to write data to the buffer as"
+                  << " tuple. Invalid length type field: "
+                  << tuple.getLengthFieldType());
+    }
+    buf.insert(buf.end(), tuple.getData().begin(), tuple.getData().end());
 }
 
 bool
@@ -420,7 +537,12 @@ OptionDataTypeUtil::readPsid(const std::vector<uint8_t>& buf) {
 
     // All is good, so we can convert the PSID value read from the buffer to
     // the port set number.
-    psid = psid >> (sizeof(psid) * 8 - psid_len);
+    if (psid_len == sizeof(psid) * 8) {
+        // Shift by 16 always gives zero (CID 1398333)
+        psid = 0;
+    } else {
+        psid = psid >> (sizeof(psid) * 8 - psid_len);
+    }
     return (std::make_pair(PSIDLen(psid_len), PSID(psid)));
 }
 

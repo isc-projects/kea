@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/cfg_hosts_util.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
@@ -15,6 +16,7 @@
 #include <sstream>
 
 using namespace isc::log;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -23,26 +25,32 @@ SrvConfig::SrvConfig()
     : sequence_(0), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
+      cfg_shared_networks4_(new CfgSharedNetworks4()),
+      cfg_shared_networks6_(new CfgSharedNetworks6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       cfg_db_access_(new CfgDbAccess()),
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0) {
+      decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
+      d2_client_config_(new D2ClientConfig()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
     : sequence_(sequence), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
+      cfg_shared_networks4_(new CfgSharedNetworks4()),
+      cfg_shared_networks6_(new CfgSharedNetworks6()),
       cfg_hosts_(new CfgHosts()), cfg_rsoo_(new CfgRSOO()),
       cfg_expiration_(new CfgExpiration()), cfg_duid_(new CfgDUID()),
       cfg_db_access_(new CfgDbAccess()),
       cfg_host_operations4_(CfgHostOperations::createConfig4()),
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
-      decline_timer_(0), dhcp4o6_port_(0) {
+      decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
+      d2_client_config_(new D2ClientConfig()) {
 }
 
 std::string
@@ -70,7 +78,7 @@ SrvConfig::getConfigSummary(const uint32_t selection) const {
     }
 
     if ((selection & CFGSEL_DDNS) == CFGSEL_DDNS) {
-        bool ddns_enabled = CfgMgr::instance().ddnsEnabled();
+        bool ddns_enabled = getD2ClientConfig()->getEnableUpdates();
         s << "DDNS: " << (ddns_enabled ? "enabled" : "disabled") << "; ";
     }
 
@@ -106,7 +114,16 @@ SrvConfig::copy(SrvConfig& new_config) const {
     cfg_option_->copyTo(*new_config.cfg_option_);
     // Replace the client class dictionary
     new_config.class_dictionary_.reset(new ClientClassDictionary(*class_dictionary_));
-
+    // Replace the D2 client configuration
+    new_config.setD2ClientConfig(getD2ClientConfig());
+    // Replace configured hooks libraries.
+    new_config.hooks_config_.clear();
+    using namespace isc::hooks;
+    for (HookLibsCollection::const_iterator it =
+           hooks_config_.get().begin();
+         it != hooks_config_.get().end(); ++it) {
+        new_config.hooks_config_.add(it->first, it->second);
+    }
 }
 
 void
@@ -148,10 +165,21 @@ SrvConfig::equals(const SrvConfig& other) const {
         }
     }
     // Logging information is equal between objects, so check other values.
-    return ((*cfg_iface_ == *other.cfg_iface_) &&
-            (*cfg_option_def_ == *other.cfg_option_def_) &&
-            (*cfg_option_ == *other.cfg_option_) &&
-            (*class_dictionary_ == *other.class_dictionary_));
+    if ((*cfg_iface_ != *other.cfg_iface_) ||
+        (*cfg_option_def_ != *other.cfg_option_def_) ||
+        (*cfg_option_ != *other.cfg_option_) ||
+        (*class_dictionary_ != *other.class_dictionary_) ||
+        (*d2_client_config_ != *other.d2_client_config_)) {
+        return (false);
+    }
+    // Now only configured hooks libraries can differ.
+    // If number of configured hooks libraries are different, then
+    // configurations aren't equal.
+    if (hooks_config_.get().size() != other.hooks_config_.get().size()) {
+        return (false);
+    }
+    // Pass through all configured hooks libraries.
+    return (hooks_config_.equal(other.hooks_config_));
 }
 
 void
@@ -176,6 +204,210 @@ SrvConfig::updateStatistics() {
 
         getCfgSubnets6()->updateStatistics();
     }
+}
+
+ElementPtr
+SrvConfig::toElement() const {
+    // Get family for the configuration manager
+    uint16_t family = CfgMgr::instance().getFamily();
+    // Toplevel map
+    ElementPtr result = Element::createMap();
+    // DhcpX global map
+    ElementPtr dhcp = Element::createMap();
+    // Set user-context
+    contextToElement(dhcp);
+    // Set decline-probation-period
+    dhcp->set("decline-probation-period",
+              Element::create(static_cast<long long>(decline_timer_)));
+    // Set echo-client-id (DHCPv4)
+    if (family == AF_INET) {
+        dhcp->set("echo-client-id", Element::create(echo_v4_client_id_));
+    }
+    // Set dhcp4o6-port
+    dhcp->set("dhcp4o6-port",
+              Element::create(static_cast<int>(dhcp4o6_port_)));
+    // Set dhcp-ddns
+    dhcp->set("dhcp-ddns", d2_client_config_->toElement());
+    // Set interfaces-config
+    dhcp->set("interfaces-config", cfg_iface_->toElement());
+    // Set option-def
+    dhcp->set("option-def", cfg_option_def_->toElement());
+    // Set option-data
+    dhcp->set("option-data", cfg_option_->toElement());
+
+    // Set subnets and shared networks.
+
+    // We have two problems to solve:
+    //   - a subnet is unparsed once:
+    //       * if it is a plain subnet in the global subnet list
+    //       * if it is a member of a shared network in the shared network
+    //         subnet list
+    //   - unparsed subnets must be kept to add host reservations in them.
+    //     Of course this can be done only when subnets are unparsed.
+
+    // The list of all unparsed subnets
+    std::vector<ElementPtr> sn_list;
+
+    if (family == AF_INET) {
+        // Get plain subnets
+        ElementPtr plain_subnets = Element::createList();
+        const Subnet4Collection* subnets = cfg_subnets4_->getAll();
+        for (Subnet4Collection::const_iterator subnet = subnets->cbegin();
+             subnet != subnets->cend(); ++subnet) {
+            // Skip subnets which are in a shared-network
+            SharedNetwork4Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network) {
+                continue;
+            }
+            ElementPtr subnet_cfg = (*subnet)->toElement();
+            sn_list.push_back(subnet_cfg);
+            plain_subnets->add(subnet_cfg);
+        }
+        dhcp->set("subnet4", plain_subnets);
+
+        // Get shared networks
+        ElementPtr shared_networks = cfg_shared_networks4_->toElement();
+        dhcp->set("shared-networks", shared_networks);
+
+        // Get subnets in shared network subnet lists
+        const std::vector<ElementPtr> networks = shared_networks->listValue();
+        for (auto network = networks.cbegin();
+             network != networks.cend(); ++network) {
+            const std::vector<ElementPtr> sh_list =
+                (*network)->get("subnet4")->listValue();
+            for (auto subnet = sh_list.cbegin();
+                 subnet != sh_list.cend(); ++subnet) {
+                sn_list.push_back(*subnet);
+            }
+        }
+
+    } else {
+        // Get plain subnets
+        ElementPtr plain_subnets = Element::createList();
+        const Subnet6Collection* subnets = cfg_subnets6_->getAll();
+        for (Subnet6Collection::const_iterator subnet = subnets->cbegin();
+             subnet != subnets->cend(); ++subnet) {
+            // Skip subnets which are in a shared-network
+            SharedNetwork6Ptr network;
+            (*subnet)->getSharedNetwork(network);
+            if (network) {
+                continue;
+            }
+            ElementPtr subnet_cfg = (*subnet)->toElement();
+            sn_list.push_back(subnet_cfg);
+            plain_subnets->add(subnet_cfg);
+        }
+        dhcp->set("subnet6", plain_subnets);
+
+        // Get shared networks
+        ElementPtr shared_networks = cfg_shared_networks6_->toElement();
+        dhcp->set("shared-networks", shared_networks);
+
+        // Get subnets in shared network subnet lists
+        const std::vector<ElementPtr> networks = shared_networks->listValue();
+        for (auto network = networks.cbegin();
+             network != networks.cend(); ++network) {
+            const std::vector<ElementPtr> sh_list =
+                (*network)->get("subnet6")->listValue();
+            for (auto subnet = sh_list.cbegin();
+                 subnet != sh_list.cend(); ++subnet) {
+                sn_list.push_back(*subnet);
+            }
+        }
+    }
+    // Insert reservations
+    CfgHostsList resv_list;
+    resv_list.internalize(cfg_hosts_->toElement());
+    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.cbegin();
+         subnet != sn_list.cend(); ++subnet) {
+        ConstElementPtr id = (*subnet)->get("id");
+        if (isNull(id)) {
+            isc_throw(ToElementError, "subnet has no id");
+        }
+        SubnetID subnet_id = id->intValue();
+        ConstElementPtr resvs = resv_list.get(subnet_id);
+        (*subnet)->set("reservations", resvs);
+    }
+    // Set expired-leases-processing
+    ConstElementPtr expired = cfg_expiration_->toElement();
+    dhcp->set("expired-leases-processing", expired);
+    if (family == AF_INET6) {
+        // Set server-id (DHCPv6)
+        dhcp->set("server-id", cfg_duid_->toElement());
+
+        // Set relay-supplied-options (DHCPv6)
+        dhcp->set("relay-supplied-options", cfg_rsoo_->toElement());
+    }
+    // Set lease-database
+    CfgLeaseDbAccess lease_db(*cfg_db_access_);
+    dhcp->set("lease-database", lease_db.toElement());
+    // Set hosts-database
+    CfgHostDbAccess host_db(*cfg_db_access_);
+    // @todo accept empty map
+    ConstElementPtr hosts_database = host_db.toElement();
+    if (hosts_database->size() > 0) {
+        dhcp->set("hosts-database", hosts_database);
+    }
+    // Set host-reservation-identifiers
+    ConstElementPtr host_ids;
+    if (family == AF_INET) {
+        host_ids = cfg_host_operations4_->toElement();
+    } else {
+        host_ids = cfg_host_operations6_->toElement();
+    }
+    dhcp->set("host-reservation-identifiers", host_ids);
+    // Set mac-sources (DHCPv6)
+    if (family == AF_INET6) {
+        dhcp->set("mac-sources", cfg_mac_source_.toElement());
+    }
+    // Set control-socket (skip if null as empty is not legal)
+    if (!isNull(control_socket_)) {
+        ElementPtr csocket = isc::data::copy(control_socket_);
+        ConstElementPtr ctx = csocket->get("user-context");
+        // Protect against not map
+        if (ctx && (ctx->getType() != Element::map)) {
+            ctx.reset();
+        }
+        // Extract comment
+        if (ctx && ctx->contains("comment")) {
+            ElementPtr ctx_copy = isc::data::copy(ctx);
+            csocket->set("comment", ctx_copy->get("comment"));
+            ctx_copy->remove("comment");
+            csocket->remove("user-context");
+            if (ctx_copy->size() > 0) {
+                csocket->set("user-context", ctx_copy);
+            }
+        }
+        dhcp->set("control-socket", csocket);
+    }
+    // Set client-classes
+    ConstElementPtr client_classes = class_dictionary_->toElement();
+    // @todo accept empty list
+    if (!client_classes->empty()) {
+        dhcp->set("client-classes", client_classes);
+    }
+    // Set hooks-libraries
+    ConstElementPtr hooks_libs = hooks_config_.toElement();
+    dhcp->set("hooks-libraries", hooks_libs);
+    // Set DhcpX
+    result->set(family == AF_INET ? "Dhcp4" : "Dhcp6", dhcp);
+
+    // Logging global map (skip if empty)
+    if (!logging_info_.empty()) {
+        ElementPtr logging = Element::createMap();
+        // Set loggers list
+        ElementPtr loggers = Element::createList();
+        for (LoggingInfoStorage::const_iterator logger =
+                 logging_info_.cbegin();
+             logger != logging_info_.cend(); ++logger) {
+            loggers->add(logger->toElement());
+        }
+        logging->set("loggers", loggers);
+        result->set("Logging", logging);
+    }
+
+    return (result);
 }
 
 }

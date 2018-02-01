@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -213,7 +213,7 @@ TEST(WatchSocketTest, badReadOnClear) {
     /// @todo maybe clear should never throw, log only
     ASSERT_THROW(watch->clearReady(), WatchSocketError);
 
-    // Verify the select_fd does not evalute to ready.
+    // Verify the select_fd does not evaluate to ready.
     EXPECT_NE(1, selectCheck(select_fd));
 
     // Verify that getSelectFd() returns INVALID.
