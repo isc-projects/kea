@@ -1500,8 +1500,8 @@ CqlLeaseMgr::getLease4(const IOAddress &addr) const {
     // Set up the WHERE clause value
     AnyArray data;
 
-    cass_int64_t address = static_cast<cass_int64_t>(addr.addressPlusPortToUint64());
-    data.add(&address);
+    cass_int64_t addr4 = static_cast<cass_int64_t>(addr.addressPlusPortToUint64());
+    data.add(&addr4);
 
     // Get the data.
     Lease4Ptr result;
