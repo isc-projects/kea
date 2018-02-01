@@ -23,12 +23,12 @@
 
   - The MySQL lease manager uses the freely available MySQL as its backend
   database.  This is not included in Kea DHCP by default:
-  the \--with-mysql switch must be supplied to "configure" for support
+  the \--with-dhcp-mysql switch must be supplied to "configure" for support
   to be compiled into the software.
 
   - The PostgreSQL lease manager uses the freely available PostgreSQL as its
   backend database.  This is not included in Kea DHCP by default:
-  the \--with-pgsql switch must be supplied to "configure" for
+  the \--with-dhcp-pgsql switch must be supplied to "configure" for
   support to be compiled into the software.
 
   @section dhcpdb-instantiation Instantiation of Lease Managers
