@@ -358,7 +358,7 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         // address: bigint
         // The address in the Lease structure is an IOAddress object.
         // Convert this to an integer for storage.
-        address_ = lease_->addr_.addressPlusPortToUint64();
+        address_ = static_cast<cass_int64_t>(lease_->addr_.addressPlusPortToUint64());
 
         // hwaddr: blob
         if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
@@ -451,7 +451,7 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         // address: bigint
         // The address in the Lease structure is an IOAddress object.
         // Convert this to an integer for storage.
-        address_ = lease_->addr_.addressPlusPortToUint64();
+        address_ = static_cast<cass_int64_t>(lease_->addr_.addressPlusPortToUint64());
 
         // hwaddr: blob
         if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
@@ -537,7 +537,7 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
 
     try {
         // address: bigint
-        address_ = address.addressPlusPortToUint64();
+        address_ = static_cast<cass_int64_t>(address.addressPlusPortToUint64());
 
         // Start with a fresh array.
         data.clear();
