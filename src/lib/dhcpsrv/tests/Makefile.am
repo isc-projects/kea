@@ -5,7 +5,6 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DDHCP_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DKEA_LFC_BUILD_DIR=\"$(abs_top_builddir)/src/bin/lfc\"
-AM_CPPFLAGS += -DLOGGING_SPEC_FILE=\"$(abs_top_srcdir)/src/lib/dhcpsrv/logging.spec\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -15,6 +14,7 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+DISTCLEANFILES = test_libraries.h
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
@@ -74,6 +74,8 @@ libdhcpsrv_unittests_SOURCES += cfg_mac_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_option_def_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_rsoo_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_shared_networks4_unittest.cc
+libdhcpsrv_unittests_SOURCES += cfg_shared_networks6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets4_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_subnets6_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
@@ -118,15 +120,21 @@ libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 endif
 if HAVE_CQL
+libdhcpsrv_unittests_SOURCES += cql_connection_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += cql_host_data_source_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
+libdhcpsrv_unittests_SOURCES += shared_network_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += shared_network_unittest.cc
+libdhcpsrv_unittests_SOURCES += shared_networks_list_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += srv_config_unittest.cc
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_utils.cc test_utils.h
 libdhcpsrv_unittests_SOURCES += timer_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += network_state_unittest.cc
 
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 if HAVE_MYSQL
@@ -160,6 +168,7 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

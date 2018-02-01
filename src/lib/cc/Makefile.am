@@ -6,16 +6,30 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = data.cc data.h
+libkea_cc_la_SOURCES += cfg_to_element.h dhcp_config_error.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
+libkea_cc_la_SOURCES += json_feed.cc json_feed.h
+libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
+libkea_cc_la_SOURCES += user_context.cc user_context.h
 
-libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
+libkea_cc_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libkea_cc_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cc_la_LIBADD += $(BOOST_LIBS)
 
-libkea_cc_la_LDFLAGS = -no-undefined -version-info 1:0:0
+libkea_cc_la_LDFLAGS = -no-undefined -version-info 3:0:0
 
-# Since data.h is now used in the hooks interface, it needs to be
-# installed on target system.
+# Specify the headers for copying into the installation directory tree.
 libkea_cc_includedir = $(pkgincludedir)/cc
-libkea_cc_include_HEADERS = data.h
+libkea_cc_include_HEADERS = \
+	cfg_to_element.h \
+	command_interpreter.h \
+	data.h \
+	dhcp_config_error.h \
+	json_feed.h \
+	simple_parser.h \
+	user_context.h
+
+EXTRA_DIST = cc.dox
 
 CLEANFILES = *.gcno *.gcda

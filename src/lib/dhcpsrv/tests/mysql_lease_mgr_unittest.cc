@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -116,7 +116,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-	string connection_string = validMySQLConnectionString() + string(" ") +
+        string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
@@ -321,6 +321,16 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
+// This test checks that all IPv4 leases for a specified subnet id are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases4SubnetId) {
+    testGetLeases4SubnetId();
+}
+
+// This test checks that all IPv4 leases are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases4) {
+    testGetLeases4();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
@@ -485,6 +495,16 @@ TEST_F(MySqlLeaseMgrTest, recountLeaseStats4) {
 // Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(MySqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4) {
+    testWipeLeases4();
+}
+
+// Tests that leases from specific subnet can be removed.
+TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
+    testWipeLeases6();
 }
 
 }; // Of anonymous namespace

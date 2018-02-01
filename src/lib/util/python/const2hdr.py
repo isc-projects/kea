@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Internet Systems Consortium.
+# Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ with open(filename_in) as file_in, open(filename_out, "w") as file_out:
                            "\n" +
                            "// \\file " + filename_out + "\n" +
 '''// \\brief Common shared constants\n
-// This file contains common definitions of constasts used across the sources.
+// This file contains common definitions of constants used across the sources.
 // It includes, but is not limited to the definitions of messages sent from
 // one process to another. Since the names should be self-explanatory and
 // the variables here are used mostly to synchronize the same values across

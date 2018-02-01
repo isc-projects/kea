@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,8 +154,7 @@ TEST_F(IntervalTimerTest, invalidArgumentToIntervalTimer) {
     // expect throw if call back function is empty
     EXPECT_THROW(itimer.setup(IntervalTimer::Callback(), 1),
                  isc::InvalidParameter);
-    // expect throw if interval is not greater than 0
-    EXPECT_THROW(itimer.setup(TimerCallBack(this), 0), isc::BadValue);
+    // expect throw if interval is negative.
     EXPECT_THROW(itimer.setup(TimerCallBack(this), -1), isc::BadValue);
 }
 

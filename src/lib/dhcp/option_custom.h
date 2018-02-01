@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,6 +102,10 @@ public:
     void addArrayDataField(const T value) {
         checkArrayType();
         OptionDataType data_type = definition_.getType();
+        // Handle record last field.
+        if (data_type == OPT_RECORD_TYPE) {
+            data_type = definition_.getRecordFields().back();
+        }
         if (OptionDataTypeTraits<T>::type != data_type) {
             isc_throw(isc::dhcp::InvalidDataType,
                       "specified data type " << data_type << " does not"
@@ -112,6 +116,16 @@ public:
         OptionDataTypeUtil::writeInt<T>(value, buf);
         buffers_.push_back(buf);
     }
+
+    /// @brief Create new buffer and store tuple value in it
+    ///
+    /// @param value value to be stored as a tuple in the created buffer.
+    void addArrayDataField(const std::string& value);
+
+    /// @brief Create new buffer and store tuple value in it
+    ///
+    /// @param value value to be stored as a tuple in the created buffer.
+    void addArrayDataField(const OpaqueDataTuple& value);
 
     /// @brief Create new buffer and store variable length prefix in it.
     ///
@@ -162,6 +176,34 @@ public:
     /// @param buf buffer holding binary data to be written.
     /// @param index buffer index.
     void writeBinary(const OptionBuffer& buf, const uint32_t index = 0);
+
+    /// @brief Read a buffer as length and string tuple.
+    ///
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    /// @return string read from a buffer.
+    std::string readTuple(const uint32_t index = 0) const;
+
+    /// @brief Read a buffer into a length and string tuple.
+    ///
+    /// @param tuple tuple to fill.
+    /// @param index buffer index.
+    ///
+    /// @throw isc::OutOfRange if index is out of range.
+    void readTuple(OpaqueDataTuple& tuple, const uint32_t index = 0) const;
+
+    /// @brief Write a length and string tuple into a buffer.
+    ///
+    /// @param value value to be written.
+    /// @param index buffer index.
+    void writeTuple(const std::string& value, const uint32_t index = 0);
+
+    /// @brief Write a length and string tuple into a buffer.
+    ///
+    /// @param value value to be written.
+    /// @param index buffer index.
+    void writeTuple(const OpaqueDataTuple& value, const uint32_t index = 0);
 
     /// @brief Read a buffer as boolean value.
     ///
@@ -367,8 +409,28 @@ private:
     /// @throw isc::OutOfRange if index is out of range.
     void checkIndex(const uint32_t index) const;
 
+    /// @brief Create a non initialized buffer.
+    ///
+    /// @param buffer buffer to update.
+    /// @param data_type data type of buffer.
+    void createBuffer(OptionBuffer& buffer,
+                      const OptionDataType data_type) const;
+
     /// @brief Create a collection of non initialized buffers.
     void createBuffers();
+
+    /// @brief Return length of a buffer.
+    ///
+    /// @param data_type data type of buffer.
+    /// @param in_array true is called from the array case
+    /// @param begin iterator to first byte of input data.
+    /// @param end iterator to end of input data.
+    ///
+    /// @return size of data to copy to the buffer.
+    /// @throw isc::OutOfRange if option buffer is truncated.
+    size_t bufferLength(const OptionDataType data_type, bool in_array,
+                        OptionBuffer::const_iterator begin,
+                        OptionBuffer::const_iterator end) const;
 
     /// @brief Create collection of buffers representing data field values.
     ///
@@ -415,12 +477,23 @@ OptionCustom::checkDataType(const uint32_t index) const {
     if (data_type == OPT_RECORD_TYPE) {
         const OptionDefinition::RecordFieldsCollection& record_fields =
             definition_.getRecordFields();
-        // When we initialized buffers we have already checked that
-        // the number of these buffers is equal to number of option
-        // fields in the record so the condition below should be met.
-        assert(index < record_fields.size());
-        // Get the data type to be returned.
-        data_type = record_fields[index];
+        if (definition_.getArrayType()) {
+            // If the array flag is set the last record field is an array.
+            if (index < record_fields.size()) {
+                // Get the data type to be returned.
+                data_type = record_fields[index];
+            } else {
+                // Get the data type to be returned from the last record field.
+                data_type = record_fields.back();
+            }
+        } else {
+            // When we initialized buffers we have already checked that
+            // the number of these buffers is equal to number of option
+            // fields in the record so the condition below should be met.
+            assert(index < record_fields.size());
+            // Get the data type to be returned.
+            data_type = record_fields[index];
+        }
     }
 
     if (OptionDataTypeTraits<T>::type != data_type) {

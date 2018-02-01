@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,7 @@ public:
            Length: 127
            Enterprise ID: Cable Television Laboratories, Inc. (4491)
            Suboption 1: Option Request
-           Suboption 5: Modem capabilties */
+           Suboption 5: Modem capabilities */
         string from_wireshark = "7d7f0000118b7a01010205750101010201030301010401"
             "0105010106010107010f0801100901030a01010b01180c01010d0200400e020010"
             "0f010110040000000211010014010015013f1601011701011801041901041a0104"

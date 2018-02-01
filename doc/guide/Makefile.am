@@ -8,14 +8,14 @@ dist_html_DATA = $(HTMLDOCS) kea-guide.css kea-logo-100x70.png
 DOCBOOK = kea-guide.xml intro.xml quickstart.xml install.xml admin.xml config.xml
 DOCBOOK += keactrl.xml dhcp4-srv.xml dhcp6-srv.xml lease-expiration.xml logging.xml
 DOCBOOK += ddns.xml hooks.xml libdhcp.xml lfc.xml stats.xml ctrl-channel.xml faq.xml
-DOCBOOK += classify.xml
+DOCBOOK += classify.xml shell.xml agent.xml
 
 EXTRA_DIST = $(DOCBOOK)
 
 DISTCLEANFILES = $(HTMLDOCS) $(DOCS) kea-messages.xml
 
 kea-messages.xml:
-	$(top_srcdir)/tools/system_messages -o $@ \
+	$(top_builddir)/tools/system_messages -o $@ \
 	`find $(top_srcdir) -name "*.mes" -print`
 
 # This is not a "man" manual, but reuse this for now for docbook.
@@ -49,7 +49,7 @@ $(HTMLDOCS) $(DOCS):
 	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
 	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
-endif 
+endif
 
 if HAVE_DBLATEX
 
@@ -58,7 +58,7 @@ CLEANFILES = kea-guide.pdf kea-messages.pdf
 DBLATEX_FLAGS = --xslt-opts=--path --xslt-opts=$(abs_top_builddir)/doc \
 	-P doc.collab.show=0 -P latex.output.revhistory=0 \
 	-P term.breakline=1 -P filename.as.url=0 \
-	-P imagedata.default.scale="maxwidth=50px,maxheigth=35px"
+	-P imagedata.default.scale="maxwidth=50px,maxheight=35px"
 
 pdf: kea-guide.pdf kea-messages.pdf
 

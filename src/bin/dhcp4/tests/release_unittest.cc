@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,7 +171,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     if (expected_result == SHOULD_PASS) {
         EXPECT_FALSE(lease);
 
-        // The removal succeded, so the assigned-addresses statistic should
+        // The removal succeeded, so the assigned-addresses statistic should
         // be decreased by one
         EXPECT_EQ(before, after + 1);
     } else {

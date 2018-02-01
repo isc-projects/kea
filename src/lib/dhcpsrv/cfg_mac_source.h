@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef CFG_MAC_SOURCE_H
 #define CFG_MAC_SOURCE_H
 
+#include <cc/cfg_to_element.h>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -21,7 +22,7 @@ typedef std::vector<uint32_t> CfgMACSources;
 ///
 /// It's a simple wrapper around a vector of uint32_t, with each entry
 /// holding one MAC source.
-class CfgMACSource {
+class CfgMACSource : public isc::data::CfgToElement {
 
  public:
     /// @brief Default constructor.
@@ -47,15 +48,13 @@ class CfgMACSource {
     static uint32_t MACSourceFromText(const std::string& name);
 
 
-    /// @brief Adds additional MAC/hardware address aquisition.
+    /// @brief Adds additional MAC/hardware address acquisition.
     ///
     /// @param source MAC source (see constants in Pkt::HWADDR_SOURCE_*)
     ///
     /// Specified source is being added to the mac_sources_ array.
-    /// @todo implement add(string) version of this method.
-    void add(uint32_t source) {
-        mac_sources_.push_back(source);
-    }
+    /// @throw InvalidParameter if such a source is already defined.
+    void add(uint32_t source);
 
     /// @brief Provides access to the configure MAC/Hardware address sources.
     ///
@@ -69,6 +68,11 @@ class CfgMACSource {
     void clear() {
         mac_sources_.clear();
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
  protected:
     /// @brief Actual MAC sources storage

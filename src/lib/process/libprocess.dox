@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,7 +103,7 @@ isc::asiolink::IOService::run() or its variants.  These calls are not
 interrupted upon signal receipt as is the select() function and while
 boost::asio provides a signal mechanism it requires linking in additional
 libraries.  Therefore, CPL provides its own signal handling mechanism to
-propagate an OS signal such as SIGHUP to an IOSerivce as a ready event with a
+propagate an OS signal such as SIGHUP to an IOService as a ready event with a
 callback.
 
 isc::process::DControllerBase uses two mechanisms to carry out signal handling.  It

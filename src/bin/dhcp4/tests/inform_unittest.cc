@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,6 +109,8 @@ const char* INFORM_CONFIGS[] = {
         "},"
         "\"valid-lifetime\": 600,"
         "\"next-server\": \"10.0.0.1\","
+        "\"server-hostname\": \"nohost\","
+        "\"server-hostname\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"reservations\": [ "
@@ -139,7 +141,7 @@ public:
         isc::stats::StatsMgr::instance().removeAll();
     }
 
-    /// @brief Desctructor.
+    /// @brief Destructor.
     ///
     /// Cleans up statistics after the test.
     ~InformTest() {

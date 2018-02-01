@@ -1,10 +1,10 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "config.h"
+#include <config.h>
 
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
@@ -16,6 +16,10 @@
 
 #ifdef HAVE_PGSQL
 #include <dhcpsrv/pgsql_host_data_source.h>
+#endif
+
+#ifdef HAVE_CQL
+#include <dhcpsrv/cql_host_data_source.h>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -34,7 +38,6 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-
 HostDataSourcePtr&
 HostDataSourceFactory::getHostDataSourcePtr() {
     static HostDataSourcePtr hostDataSourcePtr;
@@ -47,7 +50,7 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
 
-    // Get the databaase type and open the corresponding database
+    // Get the database type and open the corresponding database
     DatabaseConnection::ParameterMap::iterator it = parameters.find("type");
     if (it == parameters.end()) {
         isc_throw(InvalidParameter, "Host database configuration does not "
@@ -76,8 +79,10 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
 
 #ifdef HAVE_CQL
     if (db_type == "cql") {
-        isc_throw(NotImplemented, "Sorry, CQL backend for host reservations "
-                  "is not implemented yet.");
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        getHostDataSourcePtr().reset(new CqlHostDataSource(parameters));
+        return;
     }
 #endif
 
@@ -109,5 +114,5 @@ HostDataSourceFactory::instance() {
 }
 #endif
 
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc

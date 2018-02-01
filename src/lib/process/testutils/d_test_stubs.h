@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,11 +30,6 @@ using namespace boost::posix_time;
 namespace isc {
 namespace process {
 
-/// @brief Provides a valid DHCP-DDNS configuration for testing basic
-/// parsing fundamentals.
-extern const char* valid_d2_config;
-
-
 /// @brief Class is used to set a globally accessible value that indicates
 /// a specific type of failure to simulate.  Test derivations of base classes
 /// can exercise error handling code paths by testing for specific SimFailure
@@ -50,8 +45,6 @@ public:
         ftCreateProcessNull,
         ftProcessInit,
         ftProcessConfigure,
-        ftControllerCommand,
-        ftProcessCommand,
         ftProcessShutdown,
         ftElementBuild,
         ftElementCommit,
@@ -109,9 +102,6 @@ public:
 class DStubProcess : public DProcessBase {
 public:
 
-    /// @brief Static constant that defines a custom process command string.
-    static const char* stub_proc_command_;
-
     /// @brief Constructor
     ///
     /// @param name name is a text label for the process. Generally used
@@ -150,29 +140,12 @@ public:
     /// of the inbound configuration.
     ///
     /// @param config_set a new configuration (JSON) for the process
+    /// @param check_only true if configuration is to be verified only, not applied
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr configure(isc::data::ConstElementPtr
-                                                 config_set);
-
-    /// @brief Executes the given command.
-    ///
-    /// This implementation will recognizes one "custom" process command,
-    /// stub_proc_command_.  It will fail if SimFailure is set to
-    /// ftProcessCommand.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is:
-    /// COMMAND_SUCCESS if the command is recognized and executes successfully.
-    /// COMMAND_ERROR if the command is recognized but fails to execute.
-    /// COMMAND_INVALID if the command is not recognized.
-    virtual isc::data::ConstElementPtr command(const std::string& command,
-                                               isc::data::ConstElementPtr args);
+    virtual isc::data::ConstElementPtr
+    configure(isc::data::ConstElementPtr config_set, bool check_only);
 
     /// @brief Returns configuration summary in the textual format.
     ///
@@ -181,7 +154,7 @@ public:
         return ("");
     }
 
-    // @brief Destructor
+    /// @brief Destructor
     virtual ~DStubProcess();
 };
 
@@ -201,10 +174,6 @@ public:
     ///
     /// @return returns a pointer reference to the singleton instance.
     static DControllerBasePtr& instance();
-
-    /// @brief Defines a custom controller command string. This is a
-    /// custom command supported by DStubController.
-    static const char* stub_ctl_command_;
 
     /// @brief Defines a custom command line option supported by
     /// DStubController.
@@ -235,6 +204,19 @@ public:
        record_signal_only_ = value;
     }
 
+    /// @brief Determines if parseFile() implementation is used
+    ///
+    /// If true, parseFile() will return a Map of elements with fixed content,
+    /// mimicking a controller which is using alternate JSON parsing.
+    /// If false, parseFile() will return an empty pointer mimicking a
+    /// controller which is using original JSON parsing supplied by the
+    /// Element class.
+    ///
+    /// @param value boolean which if true enables record-only behavior
+    void useAlternateParser(bool value) {
+       use_alternate_parser_ = value;
+    }
+
 protected:
     /// @brief Handles additional command line options that are supported
     /// by DStubController.  This implementation supports an option "-x".
@@ -257,23 +239,6 @@ protected:
     /// ftCreateProcessException.
     virtual DProcessBase* createProcess();
 
-    /// @brief Executes custom controller commands are supported by
-    /// DStubController. This implementation supports one custom controller
-    /// command, stub_ctl_command_.  It will fail if SimFailure is set
-    /// to ftControllerCommand.
-    ///
-    /// @param command is a string label representing the command to execute.
-    /// @param args is a set of arguments (if any) required for the given
-    /// command.
-    /// @return an Element that contains the results of command composed
-    /// of an integer status value and a string explanation of the outcome.
-    /// The status value is:
-    /// COMMAND_SUCCESS if the command is recognized and executes successfully.
-    /// COMMAND_ERROR if the command is recognized but fails to execute.
-    /// COMMAND_INVALID if the command is not recognized.
-    virtual isc::data::ConstElementPtr customControllerCommand(
-            const std::string& command, isc::data::ConstElementPtr args);
-
     /// @brief Provides a string of the additional command line options
     /// supported by DStubController.  DStubController supports one
     /// addition option, stub_option_x_.
@@ -291,6 +256,36 @@ protected:
     /// @param signum OS signal value received
     virtual void processSignal(int signum);
 
+    /// @brief Provides alternate parse file implementation
+    ///
+    /// Overrides the base class implementation to mimick controllers which
+    /// implement alternate file parsing.  If enabled via useAlternateParser()
+    /// the method will return a fixed map of elements reflecting the following
+    /// JSON:
+    ///
+    /// @code
+    ///     { "<name>getController()->getAppName()" :
+    ///          { "string_test": "alt value" };
+    ///     }
+    ///
+    /// @endcode
+    ///
+    ///  where <name> is getController()->getAppName()
+    ///
+    /// otherwise it return an empty pointer.
+    virtual isc::data::ConstElementPtr parseFile(const std::string&);
+
+public:
+
+    /// @brief Provides additional extended version text
+    ///
+    /// Overrides the base class implementation so we can
+    /// verify the getting the extended version text
+    /// contains derivaiton specific contributions.
+    virtual std::string getVersionAddendum() {
+        return ("StubController Version Text");
+    }
+
 private:
     /// @brief Constructor is private to protect singleton integrity.
     DStubController();
@@ -300,6 +295,9 @@ private:
 
     /// @brief Boolean for controlling if signals are merely recorded.
     bool record_signal_only_;
+
+    /// @brief Boolean for controlling if parseFile is "implemented"
+    bool use_alternate_parser_;
 
 public:
     virtual ~DStubController();
@@ -386,16 +384,6 @@ public:
         return (getController()->getBinName().compare(should_be) == 0);
     }
 
-    /// @brief Returns true if the Controller's spec file name matches the
-    /// given value.
-    ///
-    /// @param should_be is the value to compare against.
-    ///
-    /// @return returns true if the values are equal.
-    bool checkSpecFileName(const std::string& should_be) {
-        return (getController()->getSpecFileName().compare(should_be) == 0);
-    }
-
     /// @brief Tests the existence of the Controller's application process.
     ///
     /// @return returns true if the process instance exists.
@@ -461,18 +449,18 @@ public:
         return (getController()->updateConfig(new_config));
     }
 
-    /// @Wrapper to invoke the Controller's executeCommand method.  Please
-    /// refer to DControllerBase::executeCommand for details.
-    isc::data::ConstElementPtr executeCommand(const std::string& command,
-                                       isc::data::ConstElementPtr args){
-        return (getController()->executeCommand(command, args));
+    /// @Wrapper to invoke the Controller's checkConfig method.  Please
+    /// refer to DControllerBase::checkConfig for details.
+    isc::data::ConstElementPtr checkConfig(isc::data::ConstElementPtr
+                                           new_config) {
+        return (getController()->checkConfig(new_config));
     }
 
     /// @brief Callback that will generate shutdown command via the
     /// command callback function.
     static void genShutdownCallback() {
         isc::data::ElementPtr arg_set;
-        getController()->executeCommand(SHUT_DOWN_COMMAND, arg_set);
+        getController()->shutdownHandler(SHUT_DOWN_COMMAND, arg_set);
     }
 
     /// @brief Callback that throws an exception.
@@ -488,7 +476,7 @@ public:
     ///
     /// @code
     ///    { "<app_name>" : <content> }
-    /// @endcod
+    /// @endcode
     ///
     /// suffix the content within a JSON element with the given module
     /// name or  wrapped by a JSON
@@ -513,7 +501,7 @@ public:
     /// file to replaced write_time_ms after DControllerBase::launch() has
     /// invoked runProcess().
     ///
-    /// @param config JSON string containing the deisred content for the config
+    /// @param config JSON string containing the desired content for the config
     /// file.
     /// @param write_time_ms time in milliseconds to delay before writing the
     /// file.
@@ -570,51 +558,6 @@ public:
 typedef isc::dhcp::ValueStorage<isc::data::ConstElementPtr> ObjectStorage;
 typedef boost::shared_ptr<ObjectStorage> ObjectStoragePtr;
 
-/// @brief Simple parser derivation for parsing object elements.
-class ObjectParser : public isc::dhcp::DhcpConfigParser {
-public:
-
-    /// @brief Constructor
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @param param_name name of the parsed parameter
-    ObjectParser(const std::string& param_name, ObjectStoragePtr& object_values);
-
-    /// @brief Destructor
-    virtual ~ObjectParser();
-
-    /// @brief Builds parameter value.
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @param new_config pointer to the new configuration
-    /// @throw throws DCfgMgrBaseError if the SimFailure is set to
-    /// ftElementBuild. This allows for the simulation of an
-    /// exception during the build portion of parsing an element.
-    virtual void build(isc::data::ConstElementPtr new_config);
-
-    /// @brief Commits the parsed value to storage.
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @throw throws DCfgMgrBaseError if SimFailure is set to ftElementCommit.
-    /// This allows for the simulation of an exception during the commit
-    /// portion of parsing an element.
-    virtual void commit();
-
-private:
-    /// name of the parsed parameter
-    std::string param_name_;
-
-    /// pointer to the parsed value of the parameter
-    isc::data::ConstElementPtr value_;
-
-    /// Pointer to the storage where committed value is stored.
-    ObjectStoragePtr object_values_;
-};
-
-
 /// @brief Test Derivation of the DCfgContextBase class.
 ///
 /// This class is used to test basic functionality of configuration context.
@@ -660,6 +603,11 @@ private:
 
     /// @brief Stores non-scalar configuration elements
     ObjectStoragePtr object_values_;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to a configuration
+    virtual isc::data::ElementPtr toElement() const;
 };
 
 /// @brief Defines a pointer to DStubContext.
@@ -690,20 +638,42 @@ public:
     /// @brief Destructor
     virtual ~DStubCfgMgr();
 
-    /// @brief Given an element_id returns an instance of the appropriate
-    /// parser. It supports the element ids as described in the class brief.
+    /// @brief Parses the given element into the appropriate object
     ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param pos position within the configuration text (or file) of element
-    /// to be parsed.  This is passed for error messaging.
+    /// The method supports three named elements:
     ///
-    /// @return returns a ParserPtr to the parser instance.
-    /// @throw throws DCfgMgrBaseError if SimFailure is ftElementUnknown.
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string& element_id,
-                       const isc::data::Element::Position& pos
-                       = isc::data::Element::Position());
+    /// -# "bool_test"
+    /// -# "uint32_test"
+    /// -# "string_test"
+    ///
+    /// which are parsed and whose value is then stored in the
+    /// the appropriate context value store.
+    ///
+    /// Any other element_id is treated generically and stored
+    /// in the context's object store, unless the simulated
+    /// error has been set to SimFailure::ftElementUnknown.
+    ///
+    /// @param element_id name of the element to parse
+    /// @param element Element to parse
+    ///
+    /// @throw DCfgMgrBaseError if simulated error is set
+    /// to ftElementUnknown and element_id is not one of
+    /// the named elements.
+    virtual void parseElement(const std::string& element_id,
+                              isc::data::ConstElementPtr element);
+
+    /// @brief Pretends to parse the config
+    ///
+    /// This method pretends to parse the configuration specified on input
+    /// and returns a positive answer. The check_only flag is currently ignored.
+    ///
+    /// @param config configuration specified
+    /// @param check_only whether it's real configuration (false) or just
+    ///                configuration check (true)
+    /// @return always positive answer
+    ///
+    isc::data::ConstElementPtr
+    parse(isc::data::ConstElementPtr config, bool check_only);
 
     /// @brief Returns a summary of the configuration in the textual format.
     ///
@@ -857,10 +827,6 @@ private:
     /// @brief Timer which controls when the signal is sent.
     asiolink::IntervalTimerPtr timer_;
 };
-
-/// @brief Defines a small but valid DHCP-DDNS compliant configuration for
-/// testing configuration parsing fundamentals.
-extern const char* valid_d2_config;
 
 }; // namespace isc::process
 }; // namespace isc

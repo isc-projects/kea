@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,7 +64,7 @@ class LabelSequence;
 ///     implementation is really needed, we can make them virtual in future.
 ///     The only one that is virtual is writeName and it's because this
 ///     function is much more complicated, therefore there's a lot of space
-///     for different implementations or behaviours.
+///     for different implementations or different behavior.
 class AbstractMessageRenderer {
 public:
     /// \brief Compression mode constants.
@@ -124,7 +124,7 @@ private:
     ///
     /// It was decided that there's no need to have this in every subclass,
     /// at least not now, and this reduces code size and gives compiler a
-    /// better chance to optimise.
+    /// better chance to optimize.
     isc::util::OutputBuffer* buffer_;
 public:
     ///
@@ -390,6 +390,6 @@ private:
 }
 #endif // MESSAGERENDERER_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

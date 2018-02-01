@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,13 +7,9 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
-#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
-#include <util/threads/sync.h>
-#include <util/threads/thread.h>
-#include <util/watch_socket.h>
 
 #include <boost/bind.hpp>
 
@@ -21,47 +17,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::util;
-using namespace isc::util::thread;
 
 namespace {
-
-/// @brief Simple RAII object setting value to true while in scope.
-///
-/// This class is useful to temporarly set the value to true and
-/// automatically reset it to false when the object is destroyed
-/// as a result of return or exception.
-class ScopedTrue {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// Sets the boolean value to true.
-    ///
-    /// @param value reference to the value to be set to true.
-    ScopedTrue(bool& value, Mutex& mutex)
-        : value_(value), mutex_(mutex) {
-        Mutex::Locker lock(mutex_);
-        value_ = true;
-    }
-
-    /// @brief Destructor.
-    ///
-    /// Sets the value to false.
-    ~ScopedTrue() {
-        Mutex::Locker lock(mutex_);
-        value_ = false;
-    }
-
-private:
-
-    /// @brief Reference to the controlled value.
-    bool& value_;
-
-    /// @brief Mutex to be used to lock while performing write
-    /// operations.
-    Mutex& mutex_;
-};
 
 /// @brief Structure holding information for a single timer.
 ///
@@ -69,9 +26,6 @@ private:
 /// signal that the timer is "ready". It also holds the instance of the
 /// interval timer and other parameters pertaining to it.
 struct TimerInfo {
-    /// @brief Instance of the watch socket.
-    util::WatchSocket watch_socket_;
-
     /// @brief Instance of the interval timer.
     asiolink::IntervalTimer interval_timer_;
 
@@ -97,8 +51,7 @@ struct TimerInfo {
               const asiolink::IntervalTimer::Callback& user_callback,
               const long interval,
               const asiolink::IntervalTimer::Mode& mode)
-        : watch_socket_(),
-          interval_timer_(io_service),
+        : interval_timer_(io_service),
           user_callback_(user_callback),
           interval_(interval),
           scheduling_mode_(mode) { };
@@ -123,12 +76,12 @@ public:
     /// @brief Constructor.
     TimerMgrImpl();
 
-    /// @brief Returns a reference to IO service used by the @c TimerMgr.
-    asiolink::IOService& getIOService() const {
-        return (*io_service_);
-    }
+    /// @brief Sets IO service to be used by the Timer Manager.
+    ///
+    /// @param io_service Pointer to the new IO service.
+    void setIOService(const IOServicePtr& io_service);
 
-    /// @brief Registers new timers in the @c TimerMgr.
+    /// @brief Registers new timer in the @c TimerMgr.
     ///
     /// @param timer_name Unique name for the timer.
     /// @param callback Pointer to the callback function to be invoked
@@ -139,7 +92,6 @@ public:
     /// @c asiolink::IntervalTimer::Mode.
     ///
     /// @throw BadValue if the timer name is invalid or duplicate.
-    /// @throw InvalidOperation if the worker thread is running.
     void registerTimer(const std::string& timer_name,
                        const asiolink::IntervalTimer::Callback& callback,
                        const long interval,
@@ -148,9 +100,8 @@ public:
 
     /// @brief Unregisters specified timer.
     ///
-    /// This method cancels the timer if it is setup. It removes the external
-    /// socket from the @c IfaceMgr and closes it. It finally removes the
-    /// timer from the internal collection of timers.
+    /// This method cancels the timer if it is setup and removes the timer
+    /// from the internal collection of timers.
     ///
     /// @param timer_name Name of the timer to be unregistered.
     ///
@@ -162,6 +113,13 @@ public:
     /// This method must be explicitly called prior to termination of the
     /// process.
     void unregisterTimers();
+
+    /// @brief Checks if the timer with a specified name has been registered.
+    ///
+    /// @param timer_name Name of the timer.
+    /// @return true if the timer with the specified name has been registered,
+    /// false otherwise.
+    bool isTimerRegistered(const std::string& timer_name);
 
     /// @brief Returns the number of registered timers.
     size_t timersCount() const;
@@ -187,127 +145,32 @@ public:
     /// @throw BadValue if the timer hasn't been registered.
     void cancel(const std::string& timer_name);
 
-    /// @brief Checks if the thread is running.
-    ///
-    /// @return true if the thread is running.
-    bool threadRunning() const;
-
-    /// @brief Starts thread.
-    void createThread();
-
-    /// @brief Stops thread gracefully.
-    ///
-    /// This methods unblocks worker thread if it is blocked waiting for
-    /// any handlers and stops it. Outstanding handlers are later executed
-    /// in the main thread and all watch sockets are cleared.
-    ///
-    /// @param run_pending_callbacks Indicates if the pending callbacks
-    /// should be executed (if true).
-    void stopThread(const bool run_pending_callbacks);
-
 private:
 
-    /// @name Internal callbacks.
-    //@{
-    ///
     /// @brief Callback function to be executed for each interval timer when
     /// its scheduled interval elapses.
     ///
-    /// This method marks the @c util::Watch socket associated with the
-    /// timer as ready (writes data to a pipe). This method will BLOCK until
-    /// @c TimerMgrImpl::ifaceMgrCallback is executed from the main thread by
-    /// the @c IfaceMgr.
-    ///
-    /// @param timer_name Unique timer name to be passed to the callback.
-    void timerCallback(const std::string& timer_name);
-
-    /// @brief Callback function installed on the @c IfaceMgr and associated
-    /// with the particular timer.
-    ///
-    /// This callback function is executed by the @c IfaceMgr when the data
-    /// over the specific @c util::WatchSocket is received. This method clears
-    /// the socket (reads the data from the pipe) and executes the callback
-    /// supplied when the timer was registered.
-    ///
     /// @param timer_name Unique timer name.
-    void ifaceMgrCallback(const std::string& timer_name);
-
-    //@}
-
-    /// @name Methods to handle ready sockets.
-    //@{
-    ///
-    /// @brief Clear ready sockets and optionally run callbacks.
-    ///
-    /// This method is called by the @c TimerMgr::stopThread method
-    /// to clear watch sockets which may be marked as ready. It will
-    /// also optionally run callbacks installed for the timers which
-    /// marked sockets as ready.
-    ///
-    /// @param run_pending_callbacks Indicates if the callbacks should
-    /// be executed for the sockets being cleared (if true).
-    void clearReadySockets(const bool run_pending_callbacks);
-
-    /// @brief Clears a socket and optionally runs a callback.
-    ///
-    /// This method clears the ready socket pointed to by the specified
-    /// iterator. If the @c run_callback is set, the callback will
-    /// also be executed.
-    ///
-    /// @param timer_info_iterator Iterator pointing to the timer
-    /// configuration structure.
-    /// @param run_callback Boolean value indicating if the callback
-    /// should be executed for the socket being cleared (if true).
-    ///
-    /// @tparam Iterator Iterator pointing to the timer configuration
-    /// structure.
-    template<typename Iterator>
-    void handleReadySocket(Iterator timer_info_iterator,
-                           const bool run_callback);
-
-    //@}
-
-    /// @brief Blocking wait for the socket to be cleared.
-    void waitForSocketClearing(WatchSocket& watch_socket);
-
-    /// @brief Signals that a watch socket has been cleared.
-    void signalSocketClearing();
-
-    /// @brief Pointer to the @c IfaceMgr.
-    IfaceMgrPtr iface_mgr_;
+    void timerCallback(const std::string& timer_name);
 
     /// @brief Pointer to the io service.
     asiolink::IOServicePtr io_service_;
 
-    /// @brief Pointer to the worker thread.
-    ///
-    /// This is initially set to NULL until the thread is started using the
-    /// @c TimerMgr::startThread. The @c TimerMgr::stopThread sets it back
-    /// to NULL.
-    boost::shared_ptr<util::thread::Thread> thread_;
-
-    /// @brief Mutex used to synchronize main thread and the worker thread.
-    util::thread::Mutex mutex_;
-
-    /// @brief Conditional variable used to synchronize main thread and
-    /// worker thread.
-    util::thread::CondVar cond_var_;
-
-    /// @brief Boolean value indicating if the thread is being stopped.
-    bool stopping_;
-
-    /// @brief Holds mapping of the timer name to the watch socket, timer
-    /// instance and other parameters pertaining to the timer.
-    ///
-    /// Each registered timer has a unique name which is used as a key to
-    /// the map. The timer is associated with an instance of the @c WatchSocket
-    /// which is marked ready when the interval for the particular elapses.
+    /// @brief Holds mapping of the timer name to timer instance and other
+    /// parameters pertaining to the timer.
     TimerInfoMap registered_timers_;
 };
 
 TimerMgrImpl::TimerMgrImpl() :
-    iface_mgr_(IfaceMgr::instancePtr()), io_service_(new IOService()), thread_(),
-    mutex_(), cond_var_(), stopping_(false), registered_timers_() {
+    io_service_(new IOService()), registered_timers_() {
+}
+
+void
+TimerMgrImpl::setIOService(const IOServicePtr& io_service) {
+    if (!io_service) {
+        isc_throw(BadValue, "IO service object must not be null for TimerMgr");
+    }
+    io_service_ = io_service;
 }
 
 void
@@ -327,28 +190,11 @@ TimerMgrImpl::registerTimer(const std::string& timer_name,
                   << timer_name << "'");
     }
 
-    // Must not register new timer when the worker thread is running. Note
-    // that worker thread is using IO service and trying to register a new
-    // timer while IO service is being used would result in hang.
-    if (thread_) {
-        isc_throw(InvalidOperation, "unable to register new timer when the"
-                  " timer manager's worker thread is running");
-    }
-
     // Create a structure holding the configuration for the timer. It will
-    // create the instance if the IntervalTimer and WatchSocket. It will
-    // also hold the callback, interval and scheduling mode parameters.
-    // This may throw a WatchSocketError if the socket creation fails.
-    TimerInfoPtr timer_info(new TimerInfo(getIOService(), callback,
+    // create the instance if the IntervalTimer. It will also hold the
+    // callback, interval and scheduling mode parameters.
+    TimerInfoPtr timer_info(new TimerInfo(*io_service_, callback,
                                           interval, scheduling_mode));
-
-    // Register the WatchSocket in the IfaceMgr and register our own callback
-    // to be executed when the data is received over this socket. The only time
-    // this may fail is when the socket failed to open which would have caused
-    // an exception in the previous call. So we should be safe here.
-    iface_mgr_->addExternalSocket(timer_info->watch_socket_.getSelectFd(),
-                                  boost::bind(&TimerMgrImpl::ifaceMgrCallback,
-                                              this, timer_name));
 
     // Actually register the timer.
     registered_timers_.insert(std::pair<std::string, TimerInfoPtr>(timer_name,
@@ -357,11 +203,6 @@ TimerMgrImpl::registerTimer(const std::string& timer_name,
 
 void
 TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
-
-    if (thread_) {
-        isc_throw(InvalidOperation, "unable to unregister timer "
-                  << timer_name << " while worker thread is running");
-    }
 
     // Find the timer with specified name.
     TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
@@ -374,11 +215,6 @@ TimerMgrImpl::unregisterTimer(const std::string& timer_name) {
 
     // Cancel any pending asynchronous operation and stop the timer.
     cancel(timer_name);
-
-    const TimerInfoPtr& timer_info = timer_info_it->second;
-
-    // Unregister the watch socket from the IfaceMgr.
-    iface_mgr_->deleteExternalSocket(timer_info->watch_socket_.getSelectFd());
 
     // Remove the timer.
     registered_timers_.erase(timer_info_it);
@@ -402,6 +238,11 @@ TimerMgrImpl::unregisterTimers() {
          timer_info_it != registered_timers_copy.end(); ++timer_info_it) {
         unregisterTimer(timer_info_it->first);
     }
+}
+
+bool
+TimerMgrImpl::isTimerRegistered(const std::string& timer_name) {
+    return (registered_timers_.find(timer_name) != registered_timers_.end());
 }
 
 size_t
@@ -439,45 +280,6 @@ TimerMgrImpl::cancel(const std::string& timer_name) {
     }
     // Cancel the timer.
     timer_info_it->second->interval_timer_.cancel();
-    // Clear watch socket, if ready.
-    timer_info_it->second->watch_socket_.clearReady();
-}
-
-
-bool
-TimerMgrImpl::threadRunning() const {
-    return (static_cast<bool>(thread_));
-}
-
-void
-TimerMgrImpl::createThread() {
-    thread_.reset(new Thread(boost::bind(&IOService::run, &getIOService())));
-}
-
-void
-TimerMgrImpl::stopThread(const bool run_pending_callbacks) {
-    // Set the stopping flag to true while we're stopping. This will be
-    // automatically reset to false when the function exits or exception
-    // is thrown.
-    ScopedTrue scoped_true(stopping_, mutex_);
-
-    // Stop the IO Service. This will break the IOService::run executed in the
-    // worker thread. The thread will now terminate.
-    getIOService().stop();
-
-    // Some of the watch sockets may be already marked as ready and
-    // have some pending callbacks to be executed. If the caller
-    // wants us to run the callbacks we clear the sockets and run
-    // them. If pending callbacks shouldn't be executed, this will
-    // only clear the sockets (which should be substantially faster).
-    clearReadySockets(run_pending_callbacks);
-    // Wait for the thread to terminate.
-    thread_->wait();
-    // Set the thread pointer to NULL to indicate that the thread is not running.
-    thread_.reset();
-    // IO Service has to be reset so as we can call run() on it again if we
-    // desire (using the startThread()).
-    getIOService().get_io_service().reset();
 }
 
 void
@@ -485,74 +287,17 @@ TimerMgrImpl::timerCallback(const std::string& timer_name) {
     // Find the specified timer setup.
     TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
     if (timer_info_it != registered_timers_.end()) {
-        // We will mark watch socket ready - write data to a socket to
-        // interrupt the execution of the select() function. This is
-        // executed from the worker thread.
-        const TimerInfoPtr& timer_info = timer_info_it->second;
 
-        // This function is called from the worker thread and we don't want
-        // the worker thread to get exceptions out of here. It is unlikely
-        // that markReady() would cause any problems but theoretically
-        // possible. Hence, we rather log an error and leave.
-        try {
-            timer_info->watch_socket_.markReady();
-
-        } catch (const std::exception& ex) {
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_TIMERMGR_SOCKET_MARK_FAILED)
-                .arg(timer_name)
-                .arg(ex.what());
-
-            // Do not wait for clearing the socket because we were unable
-            // to mark it ready anyway.
-            return;
-        }
-
-        // Blocking wait for the socket to be cleared on the other
-        // end. This may be interrupted both if the socket is cleared
-        // or if the stopThread() has been called on the TimerMgr.
-        waitForSocketClearing(timer_info->watch_socket_);
-    }
-}
-
-void
-TimerMgrImpl::ifaceMgrCallback(const std::string& timer_name) {
-    // Find the specified timer setup.
-    TimerInfoMap::iterator timer_info_it = registered_timers_.find(timer_name);
-    if (timer_info_it != registered_timers_.end()) {
-        // We're executing a callback function from the Interface Manager.
-        // This callback function is executed when the call to select() is
-        // interrupted as a result of receiving some data over the watch
-        // socket. We have to clear the socket which has been marked as
-        // ready. Then execute the callback function supplied by the
-        // TimerMgr user to perform custom actions on the expiration of
-        // the given timer.
-        handleReadySocket(timer_info_it, true);
-    }
-}
-
-void
-TimerMgrImpl::clearReadySockets(const bool run_pending_callbacks) {
-    for (TimerInfoMap::iterator timer_info_it = registered_timers_.begin();
-         timer_info_it != registered_timers_.end(); ++timer_info_it) {
-        handleReadySocket(timer_info_it, run_pending_callbacks);
-   }
-}
-
-template<typename Iterator>
-void
-TimerMgrImpl::handleReadySocket(Iterator timer_info_iterator,
-                            const bool run_callback) {
-    if (run_callback) {
         // Running user-defined operation for the timer. Logging it
         // on the slightly lower debug level as there may be many
         // such traces.
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
                   DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION)
-            .arg(timer_info_iterator->first);
+            .arg(timer_info_it->first);
 
         std::string error_string;
         try {
-            timer_info_iterator->second->user_callback_();
+            timer_info_it->second->user_callback_();
 
         } catch (const std::exception& ex){
             error_string = ex.what();
@@ -564,46 +309,10 @@ TimerMgrImpl::handleReadySocket(Iterator timer_info_iterator,
         // Exception was thrown. Log an error.
         if (!error_string.empty()) {
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_TIMERMGR_CALLBACK_FAILED)
-                .arg(timer_info_iterator->first)
+                .arg(timer_info_it->first)
                 .arg(error_string);
         }
     }
-
-    try {
-        // This shouldn't really fail, but if it does we want to log an
-        // error and make sure that the thread is not stuck waiting for
-        // the socket to clear.
-        timer_info_iterator->second->watch_socket_.clearReady();
-
-    } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_TIMERMGR_SOCKET_CLEAR_FAILED)
-            .arg(timer_info_iterator->first)
-            .arg(ex.what());
-    }
-
-    // Whether it succeeded or not, clear the socket to make sure that
-    // the worker thread is not stuck waiting for the main thread.
-    signalSocketClearing();
-}
-
-void
-TimerMgrImpl::waitForSocketClearing(WatchSocket& watch_socket) {
-    // Waiting for the specific socket to be cleared.
-    while (watch_socket.isReady()) {
-        Mutex::Locker lock(mutex_);
-        // If stopThread has been called there is no sense to further
-        // wait for the socket clearing. Leave from here to unblock the
-        // worker thread.
-        if (stopping_) {
-            break;
-        }
-        cond_var_.wait(mutex_);
-    }
-}
-
-void
-TimerMgrImpl::signalSocketClearing() {
-    cond_var_.signal();
 }
 
 const TimerMgrPtr&
@@ -617,7 +326,6 @@ TimerMgr::TimerMgr()
 }
 
 TimerMgr::~TimerMgr() {
-    stopThread();
     unregisterTimers();
     delete impl_;
 }
@@ -655,6 +363,11 @@ TimerMgr::unregisterTimers() {
     impl_->unregisterTimers();
 }
 
+bool
+TimerMgr::isTimerRegistered(const std::string& timer_name) {
+    return (impl_->isTimerRegistered(timer_name));
+}
+
 size_t
 TimerMgr::timersCount() const {
     return (impl_->timersCount());
@@ -681,31 +394,8 @@ TimerMgr::cancel(const std::string& timer_name) {
 }
 
 void
-TimerMgr::startThread() {
-    // Do not start the thread if the thread is already there.
-    if (!impl_->threadRunning()) {
-        // Only log it if we really start the thread.
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_TIMERMGR_START_THREAD);
-
-        impl_->createThread();
-    }
-}
-
-void
-TimerMgr::stopThread(const bool run_pending_callbacks) {
-    // If thread is not running, this is no-op.
-    if (impl_->threadRunning()) {
-        // Only log it if we really have something to stop.
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_TIMERMGR_STOP_THREAD);
-
-        impl_->stopThread(run_pending_callbacks);
-    }
-}
-IOService&
-TimerMgr::getIOService() const {
-    return (impl_->getIOService());
+TimerMgr::setIOService(const IOServicePtr& io_service) {
+    impl_->setIOService(io_service);
 }
 
 

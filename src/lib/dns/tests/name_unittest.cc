@@ -1,8 +1,10 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <vector>
 #include <string>
@@ -355,7 +357,7 @@ TEST_F(NameTest, atSign) {
     EXPECT_EQ(Name::ROOT_NAME(), Name("@"));
 
     // It is not alone. It is taken verbatim. We check the name converted
-    // back to the textual form, since checking it agains other name object
+    // back to the textual form, since checking it against other name object
     // may be wrong -- if we create it wrong the same way as the tested
     // object.
     EXPECT_EQ("\\@.", Name("@.").toText());

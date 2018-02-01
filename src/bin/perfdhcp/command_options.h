@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -145,7 +145,7 @@ public:
     /// \return type of lease being requested by perfdhcp.
     LeaseType getLeaseType() const { return (lease_type_); }
 
-    /// \brief Returns echange rate.
+    /// \brief Returns exchange rate.
     ///
     /// \return exchange rate per second.
     int getRate() const { return rate_; }
@@ -252,7 +252,7 @@ public:
     /// \return true if seed was provided.
     bool isSeeded() const { return seeded_; }
 
-    /// \brief Returns radom seed.
+    /// \brief Returns random seed.
     ///
     /// \return random seed.
     uint32_t getSeed() const { return seed_; }
@@ -272,7 +272,7 @@ public:
     /// \return true if server-iD to be taken from first package.
     bool isUseFirst() const { return use_first_; }
 
-    /// \brief Check if generated DHCPv6 messages shuold appear as relayed.
+    /// \brief Check if generated DHCPv6 messages should appear as relayed.
     ///
     /// \return true if generated traffic should appear as relayed.
     bool isUseRelayedV6() const { return (v6_relay_encapsulation_level_ > 0); }

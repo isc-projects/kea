@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010-2016 Internet Systems Consortium.
+# Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -966,7 +966,7 @@ class NSECBASE(RR):
       representation of the bitmap field.  For example, for a bitmap
       where the 7th and 15th bits (and only these bits) are set, it
       must be '0101'.  Note also that the value must be quoted with
-      single quatations because it could also be interpreted as an
+      single quotations because it could also be interpreted as an
       integer.
     '''
     nbitmap = 1                 # number of bitmaps

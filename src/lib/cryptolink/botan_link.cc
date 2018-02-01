@@ -1,14 +1,19 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
 
+#define BOTAN_NO_DEPRECATED_WARNINGS
+
 #include <botan/botan.h>
+#include <botan/init.h>
 
 namespace isc {
 namespace cryptolink {
@@ -30,7 +35,7 @@ CryptoLink::initialize() {
         try {
             c.impl_ = new CryptoLinkImpl();
         } catch (const Botan::Exception& ex) {
-            isc_throw(InitializationError, ex.what());
+            isc_throw(InitializationError, "Botan error: " << ex.what());
         }
     }
 }

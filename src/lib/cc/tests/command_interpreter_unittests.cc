@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,6 +85,19 @@ TEST(CommandInterpreterTest, parseAnswer) {
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
     EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
+}
+
+// This checks whether we can convert an answer to easily printable form.
+TEST(CommandInterpreterTest, answerToText) {
+    ConstElementPtr answer;
+
+    // Doing jolly good here.
+    answer = el("{ \"result\": 0 }");
+    EXPECT_EQ("success(0)", answerToText(answer));
+
+    // Sometimes things don't go according to plan.
+    answer = el("{ \"result\": 1, \"text\": \"ho lee fuk sum ting wong\" }");
+    EXPECT_EQ("failure(1), text=ho lee fuk sum ting wong", answerToText(answer));
 }
 
 // This test checks whether createCommand function is able to create commands

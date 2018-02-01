@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,10 +20,12 @@
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
+using namespace isc::util;
+
 
 namespace {
 
-/// @brief Test class derived from NameRemoveTransaction to provide visiblity
+/// @brief Test class derived from NameRemoveTransaction to provide visibility
 // to protected methods.
 class NameRemoveStub : public NameRemoveTransaction {
 public:
@@ -69,7 +71,7 @@ public:
 
     /// @brief Prepares the initial D2UpdateMessage
     ///
-    /// This method overrides the NameChangeTransactio implementation to
+    /// This method overrides the NameChangeTransaction implementation to
     /// provide the ability to simulate an exception throw in the build
     /// request logic.
     /// If the one-shot flag, simulate_build_request_exception_ is true,
@@ -479,7 +481,7 @@ TEST_F(NameRemoveTransactionTest, selectingFwdServerHandler) {
                   name_remove->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_remove->postNextEvent(NameChangeTransaction::
                                                    SERVER_IO_ERROR_EVT))
@@ -967,7 +969,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_FqdnNotInUse) {
     // Run removingFwdRRsHandler again to process the response.
     EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
 
-    // Forwad completion flag should be true, reverse should still be false.
+    // Forward completion flag should be true, reverse should still be false.
     EXPECT_TRUE(name_remove->getForwardChangeCompleted());
     EXPECT_FALSE(name_remove->getReverseChangeCompleted());
 
@@ -1014,7 +1016,7 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_OtherRcode) {
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());
     EXPECT_FALSE(name_remove->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned
+    // We should have failed the transaction. Verify that we transitioned
     // correctly.
     EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_remove->getCurrState());
@@ -1201,7 +1203,7 @@ TEST_F(NameRemoveTransactionTest, selectingRevServerHandler) {
                   name_remove->getNextEvent())
                   << " num_servers: " << num_servers << " selections: " << i;
 
-        // Post a server IO error event.  This simulates an IO error occuring
+        // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_remove->postNextEvent(NameChangeTransaction::
                                                 SERVER_IO_ERROR_EVT))

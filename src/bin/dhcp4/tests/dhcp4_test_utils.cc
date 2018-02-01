@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 
 using namespace std;
@@ -47,6 +48,9 @@ BaseServerTest::~BaseServerTest() {
 
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
+
+    // Revert to unit test logging, in case the test reconfigured it.
+    isc::log::initLogger();
 }
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
@@ -66,6 +70,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     subnet_->getCfgOption()->add(opt_routers, false, DHCP4_OPTION_SPACE);
 
     CfgMgr::instance().clear();
+    CfgMgr::instance().setFamily(AF_INET);
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
     CfgMgr::instance().commit();
 
@@ -79,7 +84,6 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
 
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
-    CfgMgr::instance().echoClientId(true);
 
     LibDHCP::clearRuntimeOptionDefs();
 
@@ -266,7 +270,7 @@ HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
 }
 
 void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
-                                       const SubnetPtr subnet,
+                                       const Subnet4Ptr subnet,
                                        bool t1_present,
                                        bool t2_present) {
 
@@ -356,7 +360,8 @@ void Dhcpv4SrvTest::checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_
 
 void Dhcpv4SrvTest::checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid) {
 
-    bool include_clientid = CfgMgr::instance().echoClientId();
+    bool include_clientid =
+        CfgMgr::instance().getCurrentCfg()->getEchoClientId();
 
     // check that server included our own client-id
     OptionPtr opt = rsp->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
@@ -599,8 +604,12 @@ Dhcpv4SrvTest::configure(const std::string& config, const bool commit) {
 void
 Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
                          const bool commit) {
-    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseJSON(config));
     ConstElementPtr status;
+
+    // Disable the re-detect flag
+    disableIfacesReDetect(json);
 
     // Configure the server and make sure the config is accepted
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
@@ -623,7 +632,11 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
 
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
-    return (Dhcpv4Exchange(srv_.alloc_engine_, query, srv_.selectSubnet(query)));
+    bool drop = false;
+    Dhcpv4Exchange ex(srv_.alloc_engine_, query,
+                      srv_.selectSubnet(query, drop));
+    EXPECT_FALSE(drop);
+    return (ex);
 }
 
 void
@@ -662,7 +675,7 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
     ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
     ObservationPtr tested_stat = mgr.getObservation(stat_name);
 
-    // All expected statstics must be present.
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt4_rcvd);
     ASSERT_TRUE(tested_stat);
 

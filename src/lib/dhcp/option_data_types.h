@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define OPTION_DATA_TYPES_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
@@ -57,6 +58,7 @@ enum OptionDataType {
     OPT_IPV6_PREFIX_TYPE,
     OPT_PSID_TYPE,
     OPT_STRING_TYPE,
+    OPT_TUPLE_TYPE,
     OPT_FQDN_TYPE,
     OPT_RECORD_TYPE,
     OPT_UNKNOWN_TYPE
@@ -107,7 +109,7 @@ struct OptionDataTypeTraits<OptionBuffer> {
 template<>
 struct OptionDataTypeTraits<bool> {
     static const bool valid = true;
-    static const int len = sizeof(bool);
+    static const int len = sizeof(uint8_t);
     static const bool integer_type = false;
     static const OptionDataType type = OPT_BOOLEAN_TYPE;
 };
@@ -341,7 +343,7 @@ public:
     /// @brief Get data type buffer length.
     ///
     /// This function returns the size of a particular data type.
-    /// Values retured by this function correspond to the data type
+    /// Values returned by this function correspond to the data type
     /// sizes defined in OptionDataTypeTraits (IPV4_ADDRESS_TYPE and
     /// IPV6_ADDRESS_TYPE are exceptions here) so they rather indicate
     /// the fixed length of the data being written into the buffer,
@@ -381,6 +383,42 @@ public:
     /// @param [out] buf output buffer.
     static void writeBinary(const std::string& hex_str,
                             std::vector<uint8_t>& buf);
+
+    /// @brief Read length and string tuple from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @param lengthfieldtype LENGTH_1_BYTE (DHCPv4) or LENGTH_2_BYTES (DHCPv6)
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated.
+    /// @return string being read.
+    static std::string readTuple(const std::vector<uint8_t>& buf,
+                                 OpaqueDataTuple::LengthFieldType lengthfieldtype);
+
+    /// @brief Read length and string tuple from a buffer.
+    ///
+    /// @param buf input buffer.
+    /// @param tuple reference of the tuple to read into
+    /// @throw isc::dhcp::BadDataTypeCast when the data being read
+    /// is truncated.
+    /// @return tuple being read.
+    static void readTuple(const std::vector<uint8_t>& buf,
+                          OpaqueDataTuple& tuple);
+
+    /// @brief Append length and string tuple to a buffer
+    ///
+    /// @param value length and string tuple
+    /// @param lengthfieldtype LENGTH_1_BYTE (DHCPv4) or LENGTH_2_BYTES (DHCPv6)
+    /// @param [out] buf output buffer.
+    static void writeTuple(const std::string& value,
+                           OpaqueDataTuple::LengthFieldType lengthfieldtype,
+                           std::vector<uint8_t>& buf);
+
+    /// @brief Append length and string tuple to a buffer
+    ///
+    /// @param tuple length and string tuple
+    /// @param [out] buf output buffer.
+    static void writeTuple(const OpaqueDataTuple& tuple,
+                           std::vector<uint8_t>& buf);
 
     /// @brief Read boolean value from a buffer.
     ///

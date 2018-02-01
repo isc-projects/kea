@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
-#include <process/spec_config.h>
+#include <d2/parser_context.h>
 
 #include <stdlib.h>
 
@@ -44,17 +44,32 @@ DProcessBase* D2Controller::createProcess() {
 
 D2Controller::D2Controller()
     : DControllerBase(d2_app_name_, d2_bin_name_) {
-    // set the spec file either from the environment or
-    // use the production value.
-    if (getenv("KEA_FROM_BUILD")) {
-        setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
-            "/src/bin/d2/dhcp-ddns.spec");
-    } else {
-        setSpecFileName(D2_SPECFILE_LOCATION);
+}
+
+isc::data::ConstElementPtr 
+D2Controller::parseFile(const std::string& file_name) {
+    isc::data::ConstElementPtr elements;
+
+    // Read contents of the file and parse it as JSON
+    D2ParserContext parser;
+    elements = parser.parseFile(file_name, D2ParserContext::PARSER_DHCPDDNS);
+    if (!elements) {
+        isc_throw(isc::BadValue, "no configuration found in file");
     }
+
+    return (elements);
 }
 
 D2Controller::~D2Controller() {
+}
+
+std::string
+D2Controller::getVersionAddendum() {
+    std::stringstream stream;
+    // Currently the only dependency D2 adds to base is cryptolink
+    stream << isc::cryptolink::CryptoLink::getVersion() << std::endl;
+    return (stream.str());
+
 }
 
 }; // end namespace isc::d2

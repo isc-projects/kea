@@ -17,20 +17,21 @@ check-local:
 	done
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
-AM_CPPFLAGS += -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea6\"
 
 CLEANFILES  = $(builddir)/logger_lockfile
 CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += $(builddir)/test_leases.csv.*
 CLEANFILES += *.json *.log
 
-DISTCLEANFILES = dhcp6_process_tests.sh
+DISTCLEANFILES = dhcp6_process_tests.sh marker_file.h
+DISTCLEANFILES += test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -93,6 +94,10 @@ dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
 dhcp6_unittests_SOURCES += classify_unittests.cc
+dhcp6_unittests_SOURCES += parser_unittest.cc
+dhcp6_unittests_SOURCES += simple_parser6_unittest.cc
+dhcp6_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
+dhcp6_unittests_SOURCES += shared_network_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 

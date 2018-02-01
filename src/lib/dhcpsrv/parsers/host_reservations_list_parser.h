@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,9 @@
 #define HOST_RESERVATIONS_LIST_PARSER_H
 
 #include <cc/data.h>
+#include <cc/simple_parser.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <boost/foreach.hpp>
 
 namespace isc {
@@ -21,39 +22,29 @@ namespace dhcp {
 /// parse individual reservations: @c HostReservationParser4 or
 /// @c HostReservationParser6.
 template<typename HostReservationParserType>
-class HostReservationsListParser : public DhcpConfigParser {
+class HostReservationsListParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief Constructor.
-    ///
-    /// @param subnet_id Identifier of the subnet to which the reservations
-    /// belong.
-    HostReservationsListParser(const SubnetID& subnet_id)
-        : subnet_id_(subnet_id) {
-    }
 
     /// @brief Parses a list of host reservation entries for a subnet.
     ///
+    /// @param subnet_id Identifier of the subnet to which the reservations
+    /// belong.
     /// @param hr_list Data element holding a list of host reservations.
     /// Each host reservation is described by a map object.
+    /// @param [out] hosts_list Hosts representing parsed reservations are stored
+    /// in this list.
     ///
     /// @throw DhcpConfigError If the configuration if any of the reservations
     /// is invalid.
-    virtual void build(isc::data::ConstElementPtr hr_list) {
+    void parse(const SubnetID& subnet_id, isc::data::ConstElementPtr hr_list,
+               HostCollection& hosts_list) {
+        HostCollection hosts;
         BOOST_FOREACH(data::ConstElementPtr reservation, hr_list->listValue()) {
-            ParserPtr parser(new HostReservationParserType(subnet_id_));
-            parser->build(reservation);
+            HostReservationParserType parser;
+            hosts.push_back(parser.parse(subnet_id, reservation));
         }
+        hosts_list.swap(hosts);
     }
-
-    /// @brief Commit, unused.
-    virtual void commit() { }
-
-private:
-
-    /// @brief Identifier of the subnet to whic the reservations belong.
-    SubnetID subnet_id_;
-
 };
 
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,11 +8,14 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
@@ -342,7 +345,7 @@ TEST_F(CfgIfaceTest, equality) {
     EXPECT_FALSE(cfg1 == cfg2);
     EXPECT_TRUE(cfg1 != cfg2);
 
-    // Finally, both are equal as they use wildacard.
+    // Finally, both are equal as they use wildcard.
     cfg2.use(AF_INET, "*");
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
@@ -358,6 +361,41 @@ TEST_F(CfgIfaceTest, equality) {
     EXPECT_FALSE(cfg1 != cfg2);
 }
 
+// This test verifies that it is possible to unparse the interface config.
+TEST_F(CfgIfaceTest, unparse) {
+    CfgIface cfg4;
+
+    // Add things in it
+    EXPECT_NO_THROW(cfg4.use(AF_INET, "*"));
+    EXPECT_NO_THROW(cfg4.use(AF_INET, "eth0"));
+    EXPECT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+    std::string comment = "{ \"comment\": \"foo\", \"bar\": 1 }";
+    EXPECT_NO_THROW(cfg4.setContext(Element::fromJSON(comment)));
+    
+    // Check unparse
+    std::string expected =
+        "{ \"comment\": \"foo\", "
+        "\"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
+        "\"re-detect\": false, "
+        "\"user-context\": { \"bar\": 1 } }";
+    runToElementTest<CfgIface>(expected, cfg4);
+
+    // Now check IPv6
+    CfgIface cfg6;
+    EXPECT_NO_THROW(cfg6.use(AF_INET6, "*"));
+    EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
+    EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    comment = "{ \"comment\": \"bar\", \"foo\": 2 }";
+    EXPECT_NO_THROW(cfg6.setContext(Element::fromJSON(comment)));
+
+    expected =
+        "{ \"comment\": \"bar\", "
+        "\"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
+        "\"re-detect\": false, "
+        "\"user-context\": { \"foo\": 2 } }";
+    runToElementTest<CfgIface>(expected, cfg6);
+}
+
 // This test verifies that it is possible to specify the socket
 // type to be used by the DHCPv4 server.
 // This test is enabled on LINUX and BSD only, because the
@@ -371,6 +409,13 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
     ASSERT_NO_THROW(cfg.openSockets(AF_INET, 10067, true));
     // For datagram sockets, the direct traffic is not supported.
     ASSERT_TRUE(!IfaceMgr::instance().isDirectResponseSupported());
+
+    // Check unparse
+    std::string expected = "{\n"
+        " \"interfaces\": [ ],\n"
+        " \"dhcp-socket-type\": \"udp\",\n"
+        " \"re-detect\": false }";
+    runToElementTest<CfgIface>(expected, cfg);
 
     // Select raw sockets.
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, "raw"));

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -157,7 +157,7 @@ public:
             stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
         );
 
-        // There is way to differentiate timstamps of two packets other than
+        // There is way to differentiate timestamps of two packets other than
         // sleep for before we create another packet. Packet is using current
         // time to update its timestamp.
         // Sleeping for X seconds will guarantee that delay between packets

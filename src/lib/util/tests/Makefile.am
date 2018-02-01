@@ -17,6 +17,8 @@ CLEANFILES = *.gcno *.gcda
 # CSV files are created by unit tests for CSVFile class.
 CLEANFILES += *.csv
 
+DISTCLEANFILES = process_spawn_app.sh
+
 noinst_SCRIPTS = process_spawn_app.sh
 
 TESTS_ENVIRONMENT = \
@@ -36,6 +38,7 @@ run_unittests_SOURCES += fd_tests.cc
 run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
+run_unittests_SOURCES += labeled_value_unittest.cc
 run_unittests_SOURCES += memory_segment_local_unittest.cc
 run_unittests_SOURCES += memory_segment_common_unittest.h
 run_unittests_SOURCES += memory_segment_common_unittest.cc
@@ -46,6 +49,7 @@ run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += random_number_generator_unittest.cc
 run_unittests_SOURCES += socketsession_unittest.cc
 run_unittests_SOURCES += staged_value_unittest.cc
+run_unittests_SOURCES += state_model_unittest.cc
 run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += time_utilities_unittest.cc
 run_unittests_SOURCES += range_utilities_unittest.cc

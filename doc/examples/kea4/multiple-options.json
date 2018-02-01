@@ -1,61 +1,176 @@
-# This is an example configuration file for the DHCPv4 server in Kea.
-# It demonstrates simple configuration of the options for a subnet.
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It demonstrates simple configuration of the options for a subnet.
 
 { "Dhcp4":
 
 {
-# Kea is told to listen on ethX interface only.
+// Kea is told to listen on ethX interface only.
   "interfaces-config": {
     "interfaces": [ "ethX" ]
   },
 
-# We need to specify the the database used to store leases. As of
-# September 2016, four database backends are supported: MySQL,
-# PostgreSQL, Cassandra, and the in-memory database, Memfile.
-# We'll use memfile  because it doesn't require any prior set up.
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
   "lease-database": {
     "type": "memfile"
   },
 
-# Addresses will be assigned with a lifetime of 4000 seconds.
+// Addresses will be assigned with a lifetime of 4000 seconds.
   "valid-lifetime": 4000,
 
-# Renew and rebind timers are commented out. This implies that options
-# 58 and 59 will not be sent to the client. In this case it is up to
-# the client to pick the timer values according to RFC2131. Uncomment the
-# timers to send these options to the client.
-#  "renew-timer": 1000,
-#  "rebind-timer": 2000,
+// Renew and rebind timers are commented out. This implies that options
+// 58 and 59 will not be sent to the client. In this case it is up to
+// the client to pick the timer values according to RFC2131. Uncomment the
+// timers to send these options to the client.
+//  "renew-timer": 1000,
+//  "rebind-timer": 2000,
 
-# Defining a subnet. There are 3 DHCP options returned to the
-# clients connected to this subnet. The first two options are
-# identified by the name. The third option is identified by the
-# option code.
+// Defining a subnet. There are some DHCP options returned to the
+// clients connected to this subnet. The first and third options are
+// clients connected to this subnet. The first two options are
+// identified by the name. The third option is identified by the
+// option code.
+// There is an address pool defined within this subnet. Pool
+// specific value for option domain-name-servers is defined
+// for the pool.
   "subnet4": [
     {
-       "pools": [ { "pool":  "192.0.2.10 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "ethX",
        "option-data": [
+            // When specifying options, you typically need to specify
+            // one of (name or code) and data. The full option specification
+            // covers name, code, space, csv-format and data.
+            // space defaults to "dhcp4" which is usually correct, unless you
+            // use encapsulate options. csv-format defaults to "true", so
+            // this is also correct, unless you want to specify the whole
+            // option value as long hex string. For example, to specify
+            // domain-name-servers you could do this:
+            // {
+            //     "name": "domain-name-servers",
+            //     "code": 6,
+            //     "csv-format": true,
+            //     "space": "dhcp4",
+            //     "data": "192.0.2.1, 192.0.2.2"
+            // }
+            // but it's a lot of writing, so it's easier to do this instead:
          {
              "name": "domain-name-servers",
              "data": "192.0.2.1, 192.0.2.2"
          },
+            // Note the Kea provides some of the options on its own. In
+            // particular:
+
+            // - IP address lease time (option 51) is governed by
+            //   valid-lifetime parameter, so you don't need to specify
+            //   it as option.
+            // - Subnet mask (option 1) is calculated automatically from the
+            //   subnet parameter specified for each "subnet4" entry.
+            // - renewal-timer (option 58) is calculated from renew-timer
+            //   parameter
+            // - rebind timer (option 59) is calculated from rebind-timer
+            //   parameter
+
+            // For each IPv4 subnet you most likely need to specify at least
+            // one router.
          {
              "name": "routers",
              "data": "192.0.2.1"
          },
+
+            // Typically people prefer to refer to options by their
+            // names, so they don't need to remember the code names.
+            // However, some people like to use numerical values. For
+            // example, option "domain-name" uses option code 15, so you
+            // can reference to it either by
+            // "name": "domain-name" or "code": 15.
          {
              "code": 15,
              "data": "example.org"
+         },
+             // Domain search is also a popular option. It tells the client to
+             // attempt to resolve names within those specificed domains. For
+             // example, name "foo" would be attempted to be resolved as
+             // foo.mydomain.example.com and if it fails, then as
+             // foo.example.com
+
+         {
+             "name": "domain-search",
+             "data": "mydomain.example.com, example.com"
+         },
+
+           // Options can also be specified using hexadecimal format.
+           // This should be avoided if possible, because Kea ability to
+           // validate correctness is limited when using hex values.
+         {
+             "name": "broadcast-address",
+             "csv-format": false,
+             "data": "ffff8000"
+         },
+
+            // String options that have a comma in their values need to have
+            // it escaped (i.e. each comma is preceded by two backslashes).
+            // That's because commas are reserved for separating fields in
+            // compound options. At the same time, we need to be conformant
+            // with JSON spec, that does not allow "\,". Therefore the
+            // slightly uncommon double backslashes notation is needed.
+
+            // Legal JSON escapes are \ followed by "\/bfnrt character
+            // or \u followed by 4 hexa-decimal numbers (currently Kea
+            // supports only \u0000 to \u00ff code points).
+            // CSV processing translates '\\' into '\' and '\,' into ','
+            // only so for instance '\x' is translated into '\x'. But
+            // as it works on a JSON string value each of these '\'
+            // characters must be doubled on JSON input.
+         {
+            "name": "boot-file-name",
+            "data": "EST5EDT4\\,M3.2.0/02:00\\,M11.1.0/02:00"
+
+         },
+            // Options that take integer values can either be specified in
+            // dec or hex format. Hex format could be either plain (e.g. abcd)
+            // or prefixed with 0x (e.g. 0xabcd).
+         {
+            "name": "default-ip-ttl",
+            "data": "0xf0"
+         },
+            // At a few exceptions options are added to response only when
+            // the client requests them. The always-send flag should be used
+            // to enforce a particular option.
+         {
+            "name": "vendor-class-identifier",
+            "data": "isc",
+            "always-send": true
          }
-       ]
-    } 
-  ]
+       ],
+
+        // Now we define pools. There are two pools here.
+        "pools": [ {
+            // This is the first pool. Nothing spectacular here, just a range
+            // of addresses.
+           "pool": "192.0.2.10 - 192.0.2.100"
+
+          }, {
+            // This second pool is more interesting. Anyone who gets an
+            // address from this pool will also get this specific option
+            // value if asks for DNS servers configuration. This value,
+            // being more specific, overrides any values that were specified
+            // on either global or subnet scope.
+            "pool":  "192.0.2.101 - 192.0.2.200",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "data": "192.0.2.3, 192.0.2.4"
+                }
+          ]
+        } ]
+    } ]
 },
 
-# The following configures logging. It assumes that messages with at least
-# informational level (info, warn, error and fatal) should be logged to stdout.
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
 "Logging": {
     "loggers": [
         {

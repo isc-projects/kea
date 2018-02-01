@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ public:
     ///
     /// This check method uses \c Name::compare() for comparison, which performs
     /// deeper checks including the equality of offsets, and should be better
-    /// than EXPECT_EQ, which uses operater==.  Like the \c matchWireData()
+    /// than EXPECT_EQ, which uses operator==.  Like the \c matchWireData()
     /// method, the usage is a bit awkward; the caller should use
     /// \c EXPECT_PRED_FORMAT2.
     ///

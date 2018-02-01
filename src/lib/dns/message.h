@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -476,7 +476,7 @@ public:
                   const RRClass& rrclass, const RRType& rrtype) const;
 
     /// \brief Determine whether the given section already has an RRset
-    /// matching the one pointed to by the argumet
+    /// matching the one pointed to by the argument
     ///
     /// \c section must be a valid constant of the \c Section type;
     /// otherwise, an exception of class \c OutOfRange will be thrown.

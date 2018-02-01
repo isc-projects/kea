@@ -1,8 +1,10 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
@@ -46,7 +48,7 @@ protected:
 const uint8_t MessageRendererTest::testdata[5] = {1, 2, 3, 4, 5};
 
 // The test cases are borrowed from those for the OutputBuffer class.
-TEST_F(MessageRendererTest, writeIntger) {
+TEST_F(MessageRendererTest, writeInteger) {
     renderer.writeUint16(data16);
     expected_size += sizeof(data16);
 

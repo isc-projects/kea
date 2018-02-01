@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <log/logger_name.h>
 
 using namespace isc::log;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -20,6 +21,22 @@ LoggingDestination::equals(const LoggingDestination& other) const {
             maxver_ == other.maxver_ &&
             maxsize_ == other.maxsize_ &&
             flush_ == other.flush_);
+}
+
+ElementPtr
+LoggingDestination::toElement() const {
+    ElementPtr result = Element::createMap();
+
+    // Set output
+    result->set("output", Element::create(output_));
+    // Set maxver
+    result->set("maxver", Element::create(maxver_));
+    // Set maxsize
+    result->set("maxsize", Element::create(static_cast<long long>(maxsize_)));
+    // Set flush
+    result->set("flush", Element::create(flush_));
+
+    return(result);
 }
 
 LoggingInfo::LoggingInfo()
@@ -89,7 +106,7 @@ LoggingInfo::toSpec() const {
 
     LoggerSpecification spec(name_, severity_, debuglevel_);
 
-    // Go over logger destinations and create output options accordinly.
+    // Go over logger destinations and create output options accordingly.
     for (std::vector<LoggingDestination>::const_iterator dest =
              destinations_.begin(); dest != destinations_.end(); ++dest) {
 
@@ -125,6 +142,8 @@ LoggingInfo::toSpec() const {
             // Not a recognized destination, assume a file.
             option.destination = OutputOption::DEST_FILE;
             option.filename = dest->output_;
+            option.maxsize = dest->maxsize_;
+            option.maxver = dest->maxver_;
         }
 
         // Copy the immediate flush flag
@@ -135,6 +154,54 @@ LoggingInfo::toSpec() const {
     }
 
     return (spec);
+}
+
+ElementPtr
+LoggingInfo::toElement() const {
+    ElementPtr result = Element::createMap();
+    // Set user context
+    contextToElement(result);
+    // Set name
+    result->set("name", Element::create(name_));
+    // Set output_options if not empty
+    if (!destinations_.empty()) {
+        ElementPtr options = Element::createList();
+        for (std::vector<LoggingDestination>::const_iterator dest =
+                 destinations_.cbegin();
+             dest != destinations_.cend(); ++dest) {
+            options->add(dest->toElement());
+        }
+        result->set("output_options", options);
+    }
+    // Set severity
+    std::string severity;
+    switch (severity_) {
+    case isc::log::DEBUG:
+        severity = "DEBUG";
+        break;
+    case isc::log::INFO:
+        severity = "INFO";
+        break;
+    case isc::log::WARN:
+        severity = "WARN";
+        break;
+    case isc::log::ERROR:
+        severity = "ERROR";
+        break;
+    case isc::log::FATAL:
+        severity = "FATAL";
+        break;
+    case isc::log::NONE:
+        severity = "NONE";
+        break;
+    default:
+        isc_throw(ToElementError, "illegal severity: " << severity_);
+        break;
+    }
+    result->set("severity", Element::create(severity));
+    // Set debug level
+    result->set("debuglevel", Element::create(debuglevel_));
+    return (result);
 }
 
 } // end of namespace isc::dhcp

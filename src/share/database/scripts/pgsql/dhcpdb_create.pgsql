@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2016 Internet Systems Consortium.
+-- Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -261,7 +261,7 @@ INSERT INTO dhcp_option_scope VALUES (3, 'host');
 --
 -- Table structure for table hosts.
 --
--- Primary key and unique contraints automatically create indexes,
+-- Primary key and unique constraints automatically create indexes,
 -- foreign key constraints do not.
 CREATE TABLE hosts (
   host_id SERIAL PRIMARY KEY NOT NULL,
@@ -482,6 +482,70 @@ UPDATE schema_version
     SET version = '3', minor = '0';
 
 -- Schema 3.0 specification ends here.
+
+-- This is a placeholder for the changes between 3.0 and 3.1. We have added a
+-- missing 'client-id' host reservation type entry that had been accidentally
+-- omitted when the 2.0 -> 3.0 upgrade script was created.
+-- Also, new flexible identifier has been added.
+INSERT INTO host_identifier_type VALUES (4, 'flex-id');
+
+-- Set 3.1 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '1';
+
+-- Set 3.2 schema version.
+
+-- Remove constraints which perform too restrictive checks on the inserted
+-- host reservations. We want to be able to insert host reservations which
+-- include no specific IPv4 address or those that have repeating subnet
+-- identifiers, e.g. IPv4 reservations would typically include 0 (or null)
+-- IPv6 subnet identifiers.
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp4_ipv4_address_subnet_id;
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp4_identifier_subnet_id;
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp6_identifier_subnet_id;
+
+-- Create partial indexes instead of the constraints that we have removed.
+
+-- IPv4 address/IPv4 subnet identifier pair is unique if subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id ON hosts
+       (ipv4_address ASC, dhcp4_subnet_id ASC)
+    WHERE ipv4_address IS NOT NULL AND ipv4_address <> 0;
+
+-- Client identifier is unique within an IPv4 subnet when subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp4_subnet_id ASC)
+    WHERE (dhcp4_subnet_id IS NOT NULL AND dhcp4_subnet_id <> 0);
+
+-- Client identifier is unique within an IPv6 subnet when subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
+    WHERE (dhcp6_subnet_id IS NOT NULL AND dhcp6_subnet_id <> 0);
+
+-- Set 3.2 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '2';
+
+-- Set 4.0 schema version.
+
+-- Add a column holding hosts for user context.
+ALTER TABLE hosts ADD COLUMN user_context TEXT;
+
+-- Add a column holding DHCP options for user context.
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT;
+
+-- Create index for searching leases by subnet identifier.
+CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
+
+-- Create for searching leases by subnet identifier and lease type.
+CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
+
+-- Set 4.0 schema version.
+UPDATE schema_version
+    SET version = '4', minor = '0';
 
 -- Commit the script transaction.
 COMMIT;

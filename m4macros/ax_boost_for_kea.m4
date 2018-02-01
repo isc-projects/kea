@@ -40,7 +40,7 @@ AC_LANG([C++])
 
 DISTCHECK_BOOST_CONFIGURE_FLAG=
 
-# No library by default (and as goal)
+# We'll attempt to Use Boost system library by default
 BOOST_LIBS=
 BOOST_LIB_DIR=
 boost_lib_path=
@@ -74,7 +74,7 @@ if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio/coroutine.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
@@ -155,7 +155,16 @@ AC_ARG_WITH([boost-lib-dir],
   AC_HELP_STRING([--with-boost-lib-dir=PATH],
     [specify directory where to find Boost libraries]),
     [BOOST_LIB_DIR="$withval"
-     DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boot-lib-dir=$withval"])
+     DISTCHECK_BOOST_CONFIGURE_FLAG="$DISTCHECK_BOOST_CONFIGURE_FLAG --with-boost-lib-dir=$withval"])
+
+AC_ARG_ENABLE([boost-headers-only],
+    [AS_HELP_STRING([--enable-boost-headers-only],
+        [Build with boost headers only rather than link
+         with boost_system library. This is NOT recommended
+         as it may result in non-optimized code on some
+         platforms or introduce runtime errors on others.])],
+    [enable_boost_header="yes"; BOOST_LIBS=""],
+    [BOOST_LIBS="${BOOST_LIBS} -lboost_system"])
 
 # BOOST_ERROR_CODE_HEADER_ONLY in versions below Boost 1.56.0 can fail
 # to find the error_code.cpp file.
@@ -187,14 +196,18 @@ if test "x${BOOST_LIBS}" != "x"; then
    LIBS_SAVED="$LIBS"
    LIBS="$BOOST_LIBS $LIBS"
 
+   if test $enable_static_link = yes; then
+       LIBS="-static $LIBS"
+   fi
+
    AC_LINK_IFELSE(
      [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
                       [boost::system::error_code ec;])],
      [AC_MSG_RESULT([checking for Boost system library... yes])],
      [AC_MSG_RESULT([checking for Boost system library... no])
-      AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed])])
+      AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed; Check config.log for details, you may be missing other libraries.])])
 
-    LIBS="$LIBS_SAVED"
+   LIBS="$LIBS_SAVED"
 fi
 
 CXXFLAGS="$CXXFLAGS_SAVED"
@@ -210,7 +223,8 @@ cat > conftest.cpp << EOF
 AUTOCONF_BOOST_LIB_VERSION=BOOST_LIB_VERSION
 EOF
 
-BOOST_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_BOOST_LIB_VERSION=' | $SED -e 's/^AUTOCONF_BOOST_LIB_VERSION=//' -e 's/_/./g' -e 's/"//g' 2> /dev/null`
+dnl CPPP is defined in configure to $CPP or $CPP -P
+BOOST_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_BOOST_LIB_VERSION=' | $SED -e 's/^AUTOCONF_BOOST_LIB_VERSION=//' -e 's/_/./g' -e 's/"//g' 2> /dev/null`
 if test -z "$BOOST_VERSION"; then
   BOOST_VERSION="unknown"
 fi

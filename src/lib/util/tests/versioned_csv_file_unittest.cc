@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -148,7 +148,7 @@ TEST_F(VersionedCSVFileTest, addColumn) {
     // We should have 3 defined columns
     // Input Header should match defined columns on new files
     // Valid columns should match defined columns on new files
-    // Minium valid columns wasn't set. (Remember it's optional)
+    // Minimum valid columns wasn't set. (Remember it's optional)
     EXPECT_EQ(3, csv->getColumnCount());
     EXPECT_EQ(3, csv->getInputHeaderCount());
     EXPECT_EQ(3, csv->getValidColumnCount());
@@ -193,7 +193,7 @@ TEST_F(VersionedCSVFileTest, currentSchemaTest) {
     // 3 defined columns
     // 3 columns total found in the header
     // 3 valid columns found in the header
-    // Minium valid columns wasn't set. (Remember it's optional)
+    // Minimum valid columns wasn't set. (Remember it's optional)
     EXPECT_EQ(3, csv->getColumnCount());
     EXPECT_EQ(3, csv->getInputHeaderCount());
     EXPECT_EQ(3, csv->getValidColumnCount());
@@ -252,7 +252,7 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     // 2 defined columns
     // 1 column found in the header
     // 1 valid column in the header
-    // Minium valid columns wasn't set. (Remember it's optional)
+    // Minimum valid columns wasn't set. (Remember it's optional)
     EXPECT_EQ(2, csv->getColumnCount());
     EXPECT_EQ(1, csv->getInputHeaderCount());
     EXPECT_EQ(1, csv->getValidColumnCount());
@@ -312,7 +312,7 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     // 3 defined columns
     // 1 column found in the header
     // 1 valid column in the header
-    // Minium valid columns wasn't set. (Remember it's optional)
+    // Minimum valid columns wasn't set. (Remember it's optional)
     EXPECT_EQ(3, csv->getColumnCount());
     EXPECT_EQ(1, csv->getInputHeaderCount());
     EXPECT_EQ(1, csv->getValidColumnCount());
@@ -432,7 +432,7 @@ TEST_F(VersionedCSVFileTest, downGrading) {
     // 2 defined columns
     // 3 columns found in the header
     // 2 valid columns in the header
-    // Minium valid columns wasn't set. (Remember it's optional)
+    // Minimum valid columns wasn't set. (Remember it's optional)
     EXPECT_EQ(2, csv->getColumnCount());
     EXPECT_EQ(3, csv->getInputHeaderCount());
     EXPECT_EQ(2, csv->getValidColumnCount());

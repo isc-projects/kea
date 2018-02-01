@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,7 +75,11 @@ public:
 
     /// \brief Return file descriptor of underlying socket
     virtual int getNative() const {
+#if BOOST_VERSION < 106600
         return (socket_.native());
+#else
+        return (socket_.native_handle());
+#endif
     }
 
     /// \brief Return protocol of socket
@@ -87,6 +91,48 @@ public:
     ///
     /// Indicates that the opening of a TCP socket is asynchronous.
     virtual bool isOpenSynchronous() const {
+        return (false);
+    }
+
+    /// \brief Checks if the connection is usable.
+    ///
+    /// The connection is usable if the socket is open and the peer has not
+    /// closed its connection.
+    ///
+    /// \return true if the connection is usable.
+    bool isUsable() const {
+        // If the socket is open it doesn't mean that it is still usable. The connection
+        // could have been closed on the other end. We have to check if we can still
+        // use this socket.
+        if (socket_.is_open()) {
+            // Remember the current non blocking setting.
+            const bool non_blocking_orig = socket_.non_blocking();
+            // Set the socket to non blocking mode. We're going to test if the socket
+            // returns would_block status on the attempt to read from it.
+            socket_.non_blocking(true);
+
+            boost::system::error_code ec;
+            char data[2];
+
+            // Use receive with message peek flag to avoid removing the data awaiting
+            // to be read.
+            socket_.receive(boost::asio::buffer(data, sizeof(data)),
+                            boost::asio::socket_base::message_peek,
+                            ec);
+
+            // Revert the original non_blocking flag on the socket.
+            socket_.non_blocking(non_blocking_orig);
+
+            // If the connection is alive we'd typically get would_block status code.
+            // If there are any data that haven't been read we may also get success
+            // status. We're guessing that try_again may also be returned by some
+            // implementations in some situations. Any other error code indicates a
+            // problem with the connection so we assume that the connection has been
+            // closed.
+            return (!ec || (ec.value() == boost::asio::error::try_again) ||
+                    (ec.value() == boost::asio::error::would_block));
+        }
+
         return (false);
     }
 
@@ -110,8 +156,23 @@ public:
     /// \param endpoint Target of the send. (Unused for a TCP socket because
     ///        that was determined when the connection was opened.)
     /// \param callback Callback object.
+    /// \throw BufferTooLarge on attempt to send a buffer larger than 64kB.
     virtual void asyncSend(const void* data, size_t length,
                            const IOEndpoint* endpoint, C& callback);
+
+    /// \brief Send Asynchronously without count.
+    ///
+    /// This variant of the method sends data over the TCP socket without
+    /// preceding the data with a data count. Eventually, we should migrate
+    /// the virtual method to not insert the count but there are existing
+    /// classes using the count. Once this migration is done, the existing
+    /// virtual method should be replaced by this method.
+    ///
+    /// \param data Data to send
+    /// \param length Length of data to send
+    /// \param callback Callback object.
+    /// \throw BufferTooLarge on attempt to send a buffer larger than 64kB.
+    void asyncSend(const void* data, size_t length, C& callback);
 
     /// \brief Receive Asynchronously
     ///
@@ -153,6 +214,12 @@ public:
     /// \brief Close socket
     virtual void close();
 
+    /// \brief Returns reference to the underlying ASIO socket.
+    ///
+    /// \return Reference to underlying ASIO socket.
+    virtual boost::asio::ip::tcp::socket& getASIOSocket() const {
+        return (socket_);
+    }
 
 private:
     // Two variables to hold the socket - a socket and a pointer to it.  This
@@ -160,7 +227,6 @@ private:
     // construction, or where it is asked to manage its own socket.
     boost::asio::ip::tcp::socket*      socket_ptr_;    ///< Pointer to own socket
     boost::asio::ip::tcp::socket&      socket_;        ///< Socket
-    bool                               isopen_;        ///< true when socket is open
 
     // TODO: Remove temporary buffer
     // The current implementation copies the buffer passed to asyncSend() into
@@ -182,7 +248,7 @@ private:
 
 template <typename C>
 TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
-    socket_ptr_(NULL), socket_(socket), isopen_(true), send_buffer_()
+    socket_ptr_(NULL), socket_(socket), send_buffer_()
 {
 }
 
@@ -191,7 +257,7 @@ TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
 template <typename C>
 TCPSocket<C>::TCPSocket(IOService& service) :
     socket_ptr_(new boost::asio::ip::tcp::socket(service.get_io_service())),
-    socket_(*socket_ptr_), isopen_(false)
+    socket_(*socket_ptr_)
 {
 }
 
@@ -207,18 +273,21 @@ TCPSocket<C>::~TCPSocket()
 
 template <typename C> void
 TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
-
+    // If socket is open on this end but has been closed by the peer,
+    // we need to reconnect.
+    if (socket_.is_open() && !isUsable()) {
+        close();
+    }
     // Ignore opens on already-open socket.  Don't throw a failure because
     // of uncertainties as to what precedes whan when using asynchronous I/O.
     // At also allows us a treat a passed-in socket as a self-managed socket.
-    if (!isopen_) {
+    if (!socket_.is_open()) {
         if (endpoint->getFamily() == AF_INET) {
             socket_.open(boost::asio::ip::tcp::v4());
         }
         else {
             socket_.open(boost::asio::ip::tcp::v6());
         }
-        isopen_ = true;
 
         // Set options on the socket:
 
@@ -245,10 +314,34 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
+TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
+{
+    if (socket_.is_open()) {
+
+        try {
+            send_buffer_.reset(new isc::util::OutputBuffer(length));
+            send_buffer_->writeData(data, length);
+
+            // Send the data.
+            socket_.async_send(boost::asio::buffer(send_buffer_->getData(),
+                                                   send_buffer_->getLength()),
+                               callback);
+        } catch (boost::numeric::bad_numeric_cast&) {
+            isc_throw(BufferTooLarge,
+                      "attempt to send buffer larger than 64kB");
+        }
+
+    } else {
+        isc_throw(SocketNotOpen,
+            "attempt to send on a TCP socket that is not open");
+    }
+}
+
+template <typename C> void
 TCPSocket<C>::asyncSend(const void* data, size_t length,
     const IOEndpoint*, C& callback)
 {
-    if (isopen_) {
+    if (socket_.is_open()) {
 
         // Need to copy the data into a temporary buffer and precede it with
         // a two-byte count field.
@@ -283,7 +376,7 @@ template <typename C> void
 TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
     IOEndpoint* endpoint, C& callback)
 {
-    if (isopen_) {
+    if (socket_.is_open()) {
         // Upconvert to a TCPEndpoint.  We need to do this because although
         // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it
         // does not contain a method for getting at the underlying endpoint
@@ -385,7 +478,7 @@ TCPSocket<C>::processReceivedData(const void* staging, size_t length,
 
 template <typename C> void
 TCPSocket<C>::cancel() {
-    if (isopen_) {
+    if (socket_.is_open()) {
         socket_.cancel();
     }
 }
@@ -395,9 +488,8 @@ TCPSocket<C>::cancel() {
 
 template <typename C> void
 TCPSocket<C>::close() {
-    if (isopen_ && socket_ptr_) {
+    if (socket_.is_open() && socket_ptr_) {
         socket_.close();
-        isopen_ = false;
     }
 }
 

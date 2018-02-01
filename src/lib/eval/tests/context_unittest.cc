@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -151,7 +151,7 @@ public:
     /// @param expected_code expected option code
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay6Option(const TokenPtr& token,
-                                uint8_t expected_level,
+                                int8_t expected_level,
                                 uint16_t expected_code,
                                 TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
@@ -174,7 +174,7 @@ public:
     /// @param exp_repr expected representation to be parsed
     /// @param exp_tokens expected number of tokens
     void testRelay6Option(const std::string& expr,
-                         uint8_t exp_level,
+                         int8_t exp_level,
                          uint16_t exp_code,
                          TokenOption::RepresentationType exp_repr,
                          int exp_tokens) {
@@ -189,13 +189,13 @@ public:
             return;
         }
 
-        // Parsing should succed and return a token.
+        // Parsing should succeed and return a token.
         EXPECT_TRUE(parsed_);
 
         // There should be the expected number of tokens.
         ASSERT_EQ(exp_tokens, eval.expression.size());
 
-        // checkt that the first token is TokenRelay6Option and that
+        // checked that the first token is TokenRelay6Option and that
         // is has the correct attributes
         checkTokenRelay6Option(eval.expression.at(0), exp_level, exp_code, exp_repr);
     }
@@ -212,7 +212,7 @@ public:
         EXPECT_EQ(type, pkt->getType());
     }
 
-    /// @brief Test that verifies access to the DHCP packet metadatas.
+    /// @brief Test that verifies access to the DHCP packet metadata.
     ///
     /// This test attempts to parse the expression, will check if the number
     /// of tokens is exactly as expected and then will try to verify if the
@@ -345,7 +345,7 @@ public:
     /// @param expected_code expected option code
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay6Field(const TokenPtr& token,
-                               uint8_t expected_level,
+                               int8_t expected_level,
                                TokenRelay6Field::FieldType expected_type) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenRelay6Field> opt =
@@ -365,7 +365,7 @@ public:
     /// @param exp_type expected field type to be parsed
     /// @param exp_tokens expected number of tokens
     void testRelay6Field(const std::string& expr,
-                         uint8_t exp_level,
+                         int8_t exp_level,
                          TokenRelay6Field::FieldType exp_type,
                          int exp_tokens) {
         EvalContext eval(Option::V6);
@@ -379,13 +379,13 @@ public:
             return;
         }
 
-        // Parsing should succed and return a token.
+        // Parsing should succeed and return a token.
         EXPECT_TRUE(parsed_);
 
         // There should be the expected number of tokens.
         ASSERT_EQ(exp_tokens, eval.expression.size());
 
-        // checkt that the first token is TokenRelay6Field and that
+        // checked that the first token is TokenRelay6Field and that
         // is has the correct attributes
         checkTokenRelay6Field(eval.expression.at(0), exp_level, exp_type);
     }
@@ -404,6 +404,14 @@ public:
         boost::shared_ptr<TokenConcat> conc =
             boost::dynamic_pointer_cast<TokenConcat>(token);
         EXPECT_TRUE(conc);
+    }
+
+    /// @brief checks if the given token is an ifelse operator
+    void checkTokenIfElse(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenIfElse> alt =
+            boost::dynamic_pointer_cast<TokenIfElse>(token);
+        EXPECT_TRUE(alt);
     }
 
     /// @brief checks if the given expression raises the expected message
@@ -934,7 +942,15 @@ TEST_F(EvalContextTest, relay6OptionHex) {
                      2, 85, TokenOption::HEXADECIMAL, 3);
 }
 
-// Test the nest level of a relay6 option should be in [0..32[
+// Test the parsing of a relay6 option in reverse order
+TEST_F(EvalContextTest, relay6OptionReverse) {
+    EvalContext eval(Option::V6);
+
+    testRelay6Option("relay6[-1].option[123].text == 'foo'",
+                     -1, 123, TokenOption::TEXTUAL, 3);
+}
+
+// Test the nest level of a relay6 option should be in [-32..32[
 TEST_F(EvalContextTest, relay6OptionLimits) {
     EvalContext eval(Option::V6);
 
@@ -946,11 +962,14 @@ TEST_F(EvalContextTest, relay6OptionLimits) {
 
     checkError("relay6[32].option[123].text == 'foo'",
                "<string>:1.8-9: Nest level has invalid value in 32. "
-               "Allowed range: 0..31");
+               "Allowed range: -32..31");
 
-    // next level must be a positive number
-    checkError("relay6[-1].option[123].text == 'foo'",
-               "<string>:1.8-9: Invalid value in -1. Allowed range: 0..255");
+    // min nest level is minus hop count limit
+    testRelay6Option("relay6[-32].option[123].text == 'foo'",
+                     -32, 123, TokenOption::TEXTUAL, 3);
+
+    checkError("relay6[-33].option[123].text == 'foo'",
+               "<string>:1.8-10: Nest level has invalid value in -33. Allowed range: -32..31");
 }
 
 // Verify that relay6[13].option is not usable in v4
@@ -1041,7 +1060,7 @@ TEST_F(EvalContextTest, relay6FieldPeerAddr) {
                     1, TokenRelay6Field::PEERADDR, 3);
 }
 
-// Verify that relay6[13].<field> is not usable in v4
+// Verify that relay6[0].<field> is not usable in v4
 TEST_F(EvalContextTest, relay6FieldError) {
     universe_ = Option::V4;
 
@@ -1198,6 +1217,26 @@ TEST_F(EvalContextTest, concat) {
     checkTokenConcat(tmp3);
 }
 
+// Test the parsing of an ifelse expression
+TEST_F(EvalContextTest, ifElse) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("ifelse('foo' == 'bar', 'us', 'them') == 'you'"));
+
+    ASSERT_EQ(8, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(2);
+    TokenPtr tmp2 = eval.expression.at(3);
+    TokenPtr tmp3 = eval.expression.at(4);
+    TokenPtr tmp4 = eval.expression.at(5);
+
+    checkTokenEq(tmp1);
+    checkTokenString(tmp2, "us");
+    checkTokenString(tmp3, "them");
+    checkTokenIfElse(tmp4);
+}
+
 //
 // Test some scanner error cases
 TEST_F(EvalContextTest, scanErrors) {
@@ -1207,7 +1246,10 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("0x123h", "<string>:1.6: Invalid character: h");
     checkError(":1", "<string>:1.1: Invalid character: :");
     checkError("=", "<string>:1.1: Invalid character: =");
+
+    // Typo should be handled as well.
     checkError("subtring", "<string>:1.1: Invalid character: s");
+
     checkError("foo", "<string>:1.1: Invalid character: f");
     checkError(" bar", "<string>:1.2: Invalid character: b");
     checkError("relay[12].hex == 'foo'", "<string>:1.1: Invalid character: r");
@@ -1344,6 +1386,10 @@ TEST_F(EvalContextTest, parseErrors) {
                "<string>:1.16: syntax error, unexpected ), expecting \",\"");
     checkError("concat('foo','bar','') == 'foobar'",
                "<string>:1.19: syntax error, unexpected \",\", expecting )");
+    checkError("ifelse('foo'=='bar','foo')",
+               "<string>:1.26: syntax error, unexpected ), expecting \",\"");
+    checkError("ifelse('foo'=='bar','foo','bar','')",
+               "<string>:1.32: syntax error, unexpected \",\", expecting )");
 }
 
 // Tests some type error cases
@@ -1359,7 +1405,7 @@ TEST_F(EvalContextTest, typeErrors) {
                "hexstring, expecting integer");
 
     // With the #4483 addition, all integers are treated as 4 byte strings,
-    // so those checks no longer makes sense. Commeting it out.
+    // so those checks no longer makes sense. Commenting it out.
     // checkError("concat('foo',3) == 'foo3'",
     //            "<string>:1.14: syntax error, unexpected integer");
     // checkError("concat(3,'foo') == '3foo'",
@@ -1374,6 +1420,14 @@ TEST_F(EvalContextTest, typeErrors) {
                "<string>:1.8-10: syntax error, unexpected and, expecting ==");
     checkError("'true' or 'false'",
                "<string>:1.8-9: syntax error, unexpected or, expecting ==");
+    // Ifelse requires a boolean condition and string branches.
+    checkError("ifelse('foobar','foo','bar')",
+               "<string>:1.16: syntax error, unexpected \",\", expecting ==");
+    checkError("ifelse('foo'=='bar','foo'=='foo','bar')",
+               "<string>:1.26-27: syntax error, unexpected ==, "
+               "expecting \",\"");
+    checkError("ifelse('foo'=='bar','foo','bar'=='bar')",
+               "<string>:1.32-33: syntax error, unexpected ==, expecting )");
 }
 
 

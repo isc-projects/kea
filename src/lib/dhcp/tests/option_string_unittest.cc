@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +105,7 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     EXPECT_EQ(optv6_value, optv6->getValue());
 }
 
-// This test verifies that the current option value can be overriden
+// This test verifies that the current option value can be overridden
 // with new value, using setValue method.
 TEST_F(OptionStringTest, setValue) {
     // Create an instance of the option and set some initial value.

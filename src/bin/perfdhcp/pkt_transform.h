@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,7 @@ public:
     /// The method copies the input buffer and options contents
     /// to the output buffer. The input buffer must contain whole
     /// initial packet data. Parts of this data will be
-    /// overriden by options data specified in an options
+    /// overridden by options data specified in an options
     /// collection. Such options must have their offsets within
     /// a packet specified (see \ref LocalizedOption to find out
     /// how to specify options offset).
@@ -146,7 +146,7 @@ private:
     ///
     /// \param universe universe used, V4 or V6
     /// \param in_buffer input buffer to be parsed.
-    /// \param options oprions collection with their offsets
+    /// \param options options collection with their offsets
     /// in input buffer specified.
     ///
     /// \throw isc::Unexpected if options unpack failed.

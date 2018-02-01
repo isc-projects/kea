@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
@@ -93,6 +95,17 @@ public:
                                                   r1, d2, r2, d3, r3);
     }
 
+    /// @brief Call command handlers test.
+    ///
+    /// A wrapper around the method of the same name in the HooksCommonTestClass
+    /// object, this passes this class's CalloutManager to that method.
+    ///
+    /// @param r1..r2, d1..d2 Values and intermediate values expected.
+    void executeCallCommandHandlers(int d1, int r1, int d2, int r2) {
+        HooksCommonTestClass::executeCallCommandHandlers(callout_manager_,
+                                                         d1, r1, d2, r2);
+    }
+
     /// Callout manager used for the test.
     boost::shared_ptr<CalloutManager> callout_manager_;
 };
@@ -127,6 +140,14 @@ public:
     using LibraryManager::runUnload;
 };
 
+
+// Check that LibraryManager constructor requires a not null manager
+
+TEST_F(LibraryManagerTest, NullManager) {
+    boost::shared_ptr<CalloutManager> null_manager;
+    EXPECT_THROW(PublicLibraryManager(std::string("foo"), 0, null_manager),
+                 NoCalloutManager);
+}
 
 // Check that openLibrary() reports an error when it can't find the specified
 // library.
@@ -263,6 +284,8 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
@@ -273,6 +296,8 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-two"));
     EXPECT_FALSE(callout_manager_->calloutsPresent(
                  ServerHooks::CONTEXT_DESTROY));
 
@@ -281,6 +306,11 @@ TEST_F(LibraryManagerTest, CheckLoadCalled) {
     //
     // r3 = (5 * d1 + d2) * d3
     executeCallCallouts(5, 5, 25, 7, 32, 10, 320);
+
+    // Execute command handlers for 'command-one' and 'command-two'.
+    //
+    // r2 = d1 * d2 * 10;
+    executeCallCommandHandlers(5, 5, 7, 350);
 
     // Tidy up
     EXPECT_TRUE(lib_manager.closeLibrary());
@@ -406,7 +436,7 @@ TEST_F(LibraryManagerTest, LibUnload) {
 
     // Load the only library, specifying the index of 0 as it's the only
     // library.  This should load all callouts.
-    PublicLibraryManager lib_manager(std::string(FULL_CALLOUT_LIBRARY),
+    PublicLibraryManager lib_manager(std::string(LOAD_CALLOUT_LIBRARY),
                                0, callout_manager_);
     EXPECT_TRUE(lib_manager.openLibrary());
 
@@ -417,18 +447,24 @@ TEST_F(LibraryManagerTest, LibUnload) {
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
 
     // Load the single standard callout and check it is registered correctly.
     EXPECT_NO_THROW(lib_manager.registerStandardCallouts());
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
 
     // Call the load function to load the other callouts.
     EXPECT_TRUE(lib_manager.runLoad());
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_TRUE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_TRUE(callout_manager_->commandHandlersPresent("command-two"));
 
     // Unload the library and check that the callouts have been removed from
     // the CalloutManager.
@@ -436,6 +472,8 @@ TEST_F(LibraryManagerTest, LibUnload) {
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_one_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_two_index_));
     EXPECT_FALSE(callout_manager_->calloutsPresent(hookpt_three_index_));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-one"));
+    EXPECT_FALSE(callout_manager_->commandHandlersPresent("command-two"));
 }
 
 // Now come the loadLibrary() tests that make use of all the methods tested
@@ -572,7 +610,7 @@ TEST_F(LibraryManagerTest, libraryLoggerSetup) {
     EXPECT_TRUE(lib_manager.loadLibrary());
 
     // After loading the library, the global logging dictionary should
-    // contain log messages registerd for this library.
+    // contain log messages registered for this library.
     const MessageDictionaryPtr& dict = MessageDictionary::globalDictionary();
     EXPECT_EQ("basic callout load %1", dict->getText("BCL_LOAD_START"));
     EXPECT_EQ("basic callout load end", dict->getText("BCL_LOAD_END"));

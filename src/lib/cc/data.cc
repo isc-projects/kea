@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,15 +11,16 @@
 #include <cstring>
 #include <cassert>
 #include <climits>
+#include <list>
 #include <map>
 #include <cstdio>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <fstream>
 #include <cerrno>
 
-#include <boost/algorithm/string.hpp> // for iequals
 #include <boost/lexical_cast.hpp>
 
 #include <cmath>
@@ -86,7 +87,7 @@ Element::getValue(std::string&) const {
 }
 
 bool
-Element::getValue(std::vector<ConstElementPtr>&) const {
+Element::getValue(std::vector<ElementPtr>&) const {
     return (false);
 }
 
@@ -116,7 +117,7 @@ Element::setValue(const std::string&) {
 }
 
 bool
-Element::setValue(const std::vector<ConstElementPtr>&) {
+Element::setValue(const std::vector<ElementPtr>&) {
     return (false);
 }
 
@@ -130,13 +131,18 @@ Element::get(const int) const {
     throwTypeError("get(int) called on a non-list Element");
 }
 
+ElementPtr
+Element::getNonConst(const int) const {
+    throwTypeError("get(int) called on a non-list Element");
+}
+
 void
-Element::set(const size_t, ConstElementPtr) {
+Element::set(const size_t, ElementPtr) {
     throwTypeError("set(int, element) called on a non-list Element");
 }
 
 void
-Element::add(ConstElementPtr) {
+Element::add(ElementPtr) {
     throwTypeError("add() called on a non-list Element");
 }
 
@@ -336,7 +342,7 @@ skipTo(std::istream& in, const std::string& file, int& line,
 // error on the rest)?
 std::string
 strFromStringstream(std::istream& in, const std::string& file,
-                    const int line, int& pos) throw (JSONError)
+                    const int line, int& pos)
 {
     std::stringstream ss;
     int c = in.get();
@@ -457,10 +463,10 @@ fromStringstreamBool(std::istream& in, const std::string& file,
     // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
 
-    if (boost::iequals(word, "True")) {
+    if (word == "true") {
         return (Element::create(true, Element::Position(file, line,
                                                         start_pos)));
-    } else if (boost::iequals(word, "False")) {
+    } else if (word == "false") {
         return (Element::create(false, Element::Position(file, line,
                                                          start_pos)));
     } else {
@@ -479,7 +485,7 @@ fromStringstreamNull(std::istream& in, const std::string& file,
     const uint32_t start_pos = pos;
     // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
-    if (boost::iequals(word, "null")) {
+    if (word == "null") {
         return (Element::create(Element::Position(file, line, start_pos)));
     } else {
         throwJSONError(std::string("Bad null value: ") + word, file,
@@ -507,7 +513,7 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
 {
     int c = 0;
     ElementPtr list = Element::createList(Element::Position(file, line, pos));
-    ConstElementPtr cur_list_element;
+    ElementPtr cur_list_element;
 
     skipChars(in, WHITESPACE, line, pos);
     while (c != EOF && c != ']') {
@@ -602,7 +608,7 @@ Element::nameToType(const std::string& type_name) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
+Element::fromJSON(std::istream& in, bool preproc) {
 
     int line = 1, pos = 1;
     stringstream filtered;
@@ -617,7 +623,6 @@ Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
-    throw(JSONError)
 {
     int line = 1, pos = 1;
     stringstream filtered;
@@ -629,7 +634,7 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file, int& line,
-                  int& pos) throw(JSONError)
+                  int& pos)
 {
     int c = 0;
     ElementPtr element;
@@ -658,16 +663,13 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
                 el_read = true;
                 break;
             case 't':
-            case 'T':
             case 'f':
-            case 'F':
                 in.putback(c);
                 --pos;
                 element = fromStringstreamBool(in, file, line, pos);
                 el_read = true;
                 break;
             case 'n':
-            case 'N':
                 in.putback(c);
                 --pos;
                 element = fromStringstreamNull(in, file, line, pos);
@@ -795,7 +797,17 @@ StringElement::toJSON(std::ostream& ss) const {
             ss << '\\' << 't';
             break;
         default:
-            ss << c;
+            if ((c >= 0) && (c < 0x20)) {
+                std::ostringstream esc;
+                esc << "\\u"
+                    << hex
+                    << setw(4)
+                    << setfill('0')
+                    << (static_cast<unsigned>(c) & 0xff);
+                ss << esc.str();
+            } else {
+                ss << c;
+            }
         }
     }
     ss << "\"";
@@ -805,8 +817,8 @@ void
 ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
-    const std::vector<ConstElementPtr>& v = listValue();
-    for (std::vector<ConstElementPtr>::const_iterator it = v.begin();
+    const std::vector<ElementPtr>& v = listValue();
+    for (std::vector<ElementPtr>::const_iterator it = v.begin();
          it != v.end(); ++it) {
         if (it != v.begin()) {
             ss << ", ";
@@ -1055,6 +1067,260 @@ merge(ElementPtr element, ConstElementPtr other) {
     }
 }
 
+ElementPtr
+copy(ConstElementPtr from, int level) {
+    if (isNull(from)) {
+        isc_throw(BadValue, "copy got a null pointer");
+    }
+    int from_type = from->getType();
+    if (from_type == Element::integer) {
+        return (ElementPtr(new IntElement(from->intValue())));
+    } else if (from_type == Element::real) {
+        return (ElementPtr(new DoubleElement(from->doubleValue())));
+    } else if (from_type == Element::boolean) {
+        return (ElementPtr(new BoolElement(from->boolValue())));
+    } else if (from_type == Element::null) {
+        return (ElementPtr(new NullElement()));
+    } else if (from_type == Element::string) {
+        return (ElementPtr(new StringElement(from->stringValue())));
+    } else if (from_type == Element::list) {
+        ElementPtr result = ElementPtr(new ListElement());
+        typedef std::vector<ElementPtr> ListType;
+        const ListType& value = from->listValue();
+        for (ListType::const_iterator it = value.cbegin();
+             it != value.cend(); ++it) {
+            if (level == 0) {
+                result->add(*it);
+            } else {
+                result->add(copy(*it, level - 1));
+            }
+        }
+        return (result);
+    } else if (from_type == Element::map) {
+        ElementPtr result = ElementPtr(new MapElement());
+        typedef std::map<std::string, ConstElementPtr> MapType;
+        const MapType& value = from->mapValue();
+        for (MapType::const_iterator it = value.cbegin();
+             it != value.cend(); ++it) {
+            if (level == 0) {
+                result->set(it->first, it->second);
+            } else {
+                result->set(it->first, copy(it->second, level - 1));
+            }
+        }
+        return (result);
+    } else {
+        isc_throw(BadValue, "copy got an element of type: " << from_type);
+    }
+}
+
+namespace {
+
+// Helper function which blocks infinite recursion
+bool
+isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level)
+{
+    // check looping forever on cycles
+    if (!level) {
+        isc_throw(BadValue, "isEquivalent got infinite recursion: "
+                  "arguments include cycles");
+    }
+    if (!a || !b) {
+        isc_throw(BadValue, "isEquivalent got a null pointer");
+    }
+    // check types
+    if (a->getType() != b->getType()) {
+        return (false);
+    }
+    if (a->getType() == Element::list) {
+        // check empty
+        if (a->empty()) {
+            return (b->empty());
+        }
+        // check size
+        if (a->size() != b->size()) {
+            return (false);
+        }
+
+        // copy b into a list
+        const size_t s = a->size();
+        typedef std::list<ConstElementPtr> ListType;
+        ListType l;
+        for (size_t i = 0; i < s; ++i) {
+            l.push_back(b->get(i));
+        }
+
+        // iterate on a
+        for (size_t i = 0; i < s; ++i) {
+            ConstElementPtr item = a->get(i);
+            // lookup this item in the list
+            bool found = false;
+            for (ListType::iterator it = l.begin();
+                 it != l.end(); ++it) {
+                // if found in the list remove it
+                if (isEquivalent0(item, *it, level - 1)) {
+                    found = true;
+                    l.erase(it);
+                    break;
+                }
+            }
+            // if not found argument differs
+            if (!found) {
+                return (false);
+            }
+        }
+
+        // sanity check: the list must be empty
+        if (!l.empty()) {
+            isc_throw(Unexpected, "isEquivalent internal error");
+        }
+        return (true);
+    } else if (a->getType() == Element::map) {
+        // iterate on the first map
+        typedef std::map<std::string, ConstElementPtr> MapType;
+        const MapType& ma = a->mapValue();
+        for (MapType::const_iterator it = ma.begin();
+             it != ma.end() ; ++it) {
+            // get the b value for the given keyword and recurse
+            ConstElementPtr item = b->get(it->first);
+            if (!item || !isEquivalent0(it->second, item, level - 1)) {
+                return (false);
+            }
+        }
+        // iterate on the second map
+        const MapType& mb = b->mapValue();
+        for (MapType::const_iterator it = mb.begin();
+             it != mb.end() ; ++it) {
+            // check if the keyword exists
+            if (!a->contains(it->first)) {
+                return (false);
+            }
+        }
+        return (true);
+    } else {
+        return (a->equals(*b));
+    }
+}
+
+}
+
+bool
+isEquivalent(ConstElementPtr a, ConstElementPtr b) {
+    return (isEquivalent0(a, b, 100));
+}
+
+void
+prettyPrint(ConstElementPtr element, std::ostream& out,
+            unsigned indent, unsigned step) {
+    if (!element) {
+        isc_throw(BadValue, "prettyPrint got a null pointer");
+    }
+    if (element->getType() == Element::list) {
+        // empty list case
+        if (element->empty()) {
+            out << "[ ]";
+            return;
+        }
+
+        // complex ? multiline : oneline
+        if (!element->get(0)) {
+            isc_throw(BadValue, "prettyPrint got a null pointer");
+        }
+        int first_type = element->get(0)->getType();
+        bool complex = false;
+        if ((first_type == Element::list) || (first_type == Element::map)) {
+            complex = true;
+        }
+        std::string separator = complex ? ",\n" : ", ";
+
+        // open the list
+        out << "[" << (complex ? "\n" : " ");
+
+        // iterate on items
+        typedef std::vector<ElementPtr> ListType;
+        const ListType& l = element->listValue();
+        for (ListType::const_iterator it = l.begin();
+             it != l.end(); ++it) {
+            // add the separator if not the first item
+            if (it != l.begin()) {
+                out << separator;
+            }
+            // add indentation
+            if (complex) {
+                out << std::string(indent + step, ' ');
+            }
+            // recursive call
+            prettyPrint(*it, out, indent + step, step);
+        }
+
+        // close the list
+        if (complex) {
+            out << "\n" << std::string(indent, ' ');
+        } else {
+            out << " ";
+        }
+        out << "]";
+    } else if (element->getType() == Element::map) {
+        // empty map case
+        if (element->size() == 0) {
+            out << "{ }";
+            return;
+        }
+
+        // open the map
+        out << "{\n";
+
+        bool first = true;
+        // output comment first
+        if (element->contains("comment")) {
+            // add indentation
+            out << std::string(indent + step, ' ');
+            // add keyword:
+            out << "\"comment\": ";
+            // recursive call
+            prettyPrint(element->get("comment"), out, indent + step, step);
+            // it was the first
+            first = false;
+        }
+
+        // iterate on keyword: value
+        typedef std::map<std::string, ConstElementPtr> MapType;
+        const MapType& m = element->mapValue();
+        for (MapType::const_iterator it = m.begin();
+             it != m.end(); ++it) {
+            // skip comment
+            if (it->first == "comment") {
+                continue;
+            }
+            // add the separator if not the first item
+            if (first) {
+                first = false;
+            } else {
+                out << ",\n";
+            }
+            // add indentation
+            out << std::string(indent + step, ' ');
+            // add keyword:
+            out << "\"" << it->first << "\": ";
+            // recursive call
+            prettyPrint(it->second, out, indent + step, step);
+        }
+
+        // close the map
+        out << "\n" << std::string(indent, ' ') << "}";
+    } else {
+        // not a list or a map
+        element->toJSON(out);
+    }
+}
+
+std::string
+prettyPrint(ConstElementPtr element, unsigned indent, unsigned step) {
+    std::stringstream ss;
+    prettyPrint(element, ss, indent, step);
+    return (ss.str());
+}
+
 void Element::preprocess(std::istream& in, std::stringstream& out) {
 
     std::string line;
@@ -1066,7 +1332,7 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
             line = "";
         }
 
-        // getline() removes end line charaters. Unfortunately, we need
+        // getline() removes end line characters. Unfortunately, we need
         // it for getting the line numbers right (in case we report an
         // error.
         out << line;

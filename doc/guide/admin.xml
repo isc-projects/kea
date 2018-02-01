@@ -18,7 +18,7 @@
       For example, Kea currently only stores lease information
       and host reservations. Future versions of Kea will store
       additional data such as subnet definitions: the database
-      structure will need to be updated to accomdate the extra
+      structure will need to be updated to accommodate the extra
       information.
     </para>
 
@@ -72,7 +72,7 @@
         <listitem>
           <simpara>
             <command>lease-init</command> &mdash;
-            Initializes a new lease database. This is useful during a new 
+            Initializes a new lease database. This is useful during a new
             Kea installation. The database is initialized to the
             latest version supported by the version of the software being
             installed.
@@ -160,19 +160,19 @@
     <para>
       <table frame="all" id="backends">
         <title>List of available backends</title>
-        <tgroup cols='2'>
+        <tgroup cols='5'>
           <colspec colname='feature'/>
           <colspec colname='memfile'/>
           <colspec colname='mysql'/>
           <colspec colname='pgsql'/>
-          <colspec colname='cql'/>
+          <colspec colname='cql' colwidth='1.5*'/>
           <thead>
             <row>
               <entry>Feature</entry>
               <entry>Memfile</entry>
               <entry>MySQL</entry>
               <entry>PostgreSQL</entry>
-              <entry>CQL(Cassandra)</entry>
+              <entry>CQL (Cassandra)</entry>
             </row>
           </thead>
           <tbody>
@@ -206,7 +206,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
             </row>
 
             <row>
@@ -214,7 +214,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
             </row>
 
           </tbody>
@@ -409,6 +409,8 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       <title>PostgreSQL</title>
 
       <para>
+        PostgreSQL is able to store leases, host reservations and options
+        defined on a per host basis.
         A PostgreSQL database must be set up if you want Kea to store
         lease and other information in PostgreSQL. This step can be
         safely ignored if you are using other database backends.
@@ -590,10 +592,9 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       <para>
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
         added to Kea. Since it was added recently and has not undergone as much
-        testing as other backends, it is considered experimental: please use
-        with caution. The CQL backend is currently able to store leases only. The
-        ability to store host reservations will likely be added some time in the
-        future.
+        testing as other backends, it is considered experimental. Please use
+        with caution. The Cassandra backend is able to store leases,
+        host reservations and options defined on a per host basis.
       </para>
 
       <para>
@@ -616,7 +617,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
         <orderedlist>
           <listitem>
             <para>
-              Export CQLSH_HOST environemnt variable:
+              Export CQLSH_HOST environment variable:
 <screen>
 $ <userinput>export CQLSH_HOST=localhost</userinput>
 </screen>
@@ -715,7 +716,7 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
       read-only mode.
       Sections <xref linkend="read-only-database-configuration4"/> and
       <xref linkend="read-only-database-configuration6"/> describe when
-      such configuration may be reqired and how to configure Kea to
+      such configuration may be required and how to configure Kea to
       operate using a read-only host database.
       </para>
     </section>
@@ -723,20 +724,55 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
     <section>
       <title>Limitations Related to the use of SQL Databases</title>
 
-      <para>
-        The lease expiration time is stored in the SQL database for each lease
-        as a timestamp value. Kea developers observed that MySQL database doesn't
-        accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
-        from the beginning of the epoch. At the same time, some versions of PostgreSQL
-        do accept greater values but the value is altered when it is read back.
-        For this reason the lease database backends put the restriction for the
-        maximum timestamp to be stored in the database, which is equal to the
-        maximum signed 32-bit number. This effectively means that the current
-        Kea version can't store the leases which expiration time is later than
-        2147483647 seconds since the beginning of the epoch (around year 2038).
-        This will be fixed when the database support for longer timestamps
-        is available.
-      </para>
+
+      <section>
+        <title>Year 2038 issue</title>
+        <para>
+          The lease expiration time is stored in the SQL database for each lease
+          as a timestamp value. Kea developers observed that MySQL database doesn't
+          accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
+          from the beginning of the epoch. At the same time, some versions of PostgreSQL
+          do accept greater values but the value is altered when it is read back.
+          For this reason the lease database backends put the restriction for the
+          maximum timestamp to be stored in the database, which is equal to the
+          maximum signed 32-bit number. This effectively means that the current
+          Kea version can't store the leases which expiration time is later than
+          2147483647 seconds since the beginning of the epoch (around year 2038).
+          This will be fixed when the database support for longer timestamps
+          is available.
+        </para>
+      </section>
+
+      <section>
+        <title>Server Terminates when Database Connection is Lost</title>
+        <para>
+          If Kea is configured to use an external database it opens a connection
+          to the database and requires that this connection is not interrupted.
+          When the database connection breaks, e.g. as a result of SQL server
+          restart, DHCP servers will terminate indicating a fatal error. In such
+          a case, the system administrator is required to start the database and
+          then "manually" start Kea to resume the service.
+        </para>
+
+        <para>
+          Although the engineering team is planning to implement some form of
+          reconnect mechanism in the future, this will mostly be applicable in
+          cases when the database service is restarted and the connection
+          down time is relatively short. The DHCP server can't provide its
+          service as long as the database is down, because it can't store
+          leases being assigned to the clients. The server will have to
+          reject any DHCP messages as long as the connection is down and
+          terminate if the reconnection attempt fails multiple times.
+        </para>
+
+        <para>
+          Because the database connection is critical for the operation of the
+          DHCP service, the current behavior is to terminate when that
+          connection is unavailable to indicate that server is in inconsistent
+          state and can't serve clients.
+        </para>
+      </section>
+
     </section>
 
   </section> <!-- End of Database sections -->

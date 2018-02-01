@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,17 +85,17 @@ const char* CONFIGS[] = {
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth0\","
-        "    \"rapid-commit\": True"
+        "    \"rapid-commit\": true"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"interface\": \"eth1\","
-        "    \"rapid-commit\": False"
+        "    \"rapid-commit\": false"
         " } ],"
         "\"valid-lifetime\": 4000,"
         " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : True, "
+        "     \"enable-updates\" : true, "
         "     \"qualifying-suffix\" : \"example.com\" }"
     "}",
 
@@ -513,7 +513,7 @@ TEST_F(SARRTest, sarrStats) {
     // Server should have assigned a prefix.
     ASSERT_EQ(1, client.getLeaseNum());
 
-    // All expected statstics must be present now.
+    // All expected statistics must be present now.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
     pkt6_solicit_rcvd = mgr.getObservation("pkt6-solicit-received");
     pkt6_adv_sent = mgr.getObservation("pkt6-advertise-sent");

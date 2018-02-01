@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1220,6 +1220,33 @@ GenericLeaseMgrTest::testGetLease4ClientIdSubnetId() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases4SubnetId() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // There should be exactly two leases for the subnet id that the second
+    // lease belongs to.
+    Lease4Collection returned = lmptr_->getLeases4(leases[1]->subnet_id_);
+    ASSERT_EQ(2, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases4() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // All leases should be returned.
+    Lease4Collection returned = lmptr_->getLeases4();
+    ASSERT_EQ(leases.size(), returned.size());
+}
+
+void
 GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
@@ -1566,7 +1593,7 @@ GenericLeaseMgrTest::testRecreateLease4() {
     EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
 
-    // Check that the lease has been successfuly added.
+    // Check that the lease has been successfully added.
     Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[0]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(lease, l_returned);
@@ -1606,7 +1633,7 @@ GenericLeaseMgrTest::testRecreateLease6() {
     EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
 
-    // Check that the lease has been successfuly added.
+    // Check that the lease has been successfully added.
     Lease6Ptr l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(lease, l_returned);
@@ -2404,7 +2431,7 @@ void
 GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     // Global accumulators
     int64_t declined_addresses = 0;
-    int64_t declined_reclaimed_addresses = 0;
+    int64_t reclaimed_declined_addresses = 0;
 
     // Iterate over all stats for each subnet
     for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
@@ -2417,15 +2444,15 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
             // Add the value to globals as needed.
             if (expectedStat.first == "declined-addresses") {
                 declined_addresses += expectedStat.second;
-            } else if (expectedStat.first == "declined-reclaimed-addresses") {
-                declined_reclaimed_addresses += expectedStat.second;
+            } else if (expectedStat.first == "reclaimed-declined-addresses") {
+                reclaimed_declined_addresses += expectedStat.second;
             }
         }
     }
 
     // Verify the globals.
     checkStat("declined-addresses", declined_addresses);
-    checkStat("declined-reclaimed-addresses", declined_reclaimed_addresses);
+    checkStat("reclaimed-declined-addresses", reclaimed_declined_addresses);
 }
 
 void
@@ -2501,7 +2528,8 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
         expectedStats[i]["total-addresses"] = 256;
         expectedStats[i]["assigned-addresses"] = 0;
         expectedStats[i]["declined-addresses"] = 0;
-        expectedStats[i]["declined-reclaimed-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-leases"] = 0;
     }
 
     // Make sure stats are as expected.
@@ -2535,7 +2563,7 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     // Now let's add leases to subnet 2.
     subnet_id = 2;
 
-    // Insert one delined lease.
+    // Insert one declined lease.
     makeLease4("192.0.2.2", subnet_id, Lease::STATE_DECLINED);
 
     // Update the expected stats.
@@ -2604,8 +2632,9 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     for (int i = 0; i < num_subnets; ++i) {
         expectedStats[i]["assigned-nas"] = 0;
         expectedStats[i]["declined-addresses"] = 0;
-        expectedStats[i]["declined-reclaimed-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
         expectedStats[i]["assigned-pds"] = 0;
+        expectedStats[i]["reclaimed-leases"] = 0;
     }
 
     // Make sure stats are as expected.
@@ -2682,6 +2711,69 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
 
+void
+GenericLeaseMgrTest::testWipeLeases6() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease6Ptr> leases = createLeases6();
+    leases[0]->subnet_id_ = 1;
+    leases[1]->subnet_id_ = 1;
+    leases[2]->subnet_id_ = 1;
+    leases[3]->subnet_id_ = 22;
+    leases[4]->subnet_id_ = 333;
+    leases[5]->subnet_id_ = 333;
+    leases[6]->subnet_id_ = 333;
+    leases[7]->subnet_id_ = 333;
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Let's try something simple. There shouldn't be any leases in
+    // subnet 2. The keep deleting the leases, perhaps in a different
+    // order they were added.
+    EXPECT_EQ(0, lmptr_->wipeLeases6(2));
+    EXPECT_EQ(4, lmptr_->wipeLeases6(333));
+    EXPECT_EQ(3, lmptr_->wipeLeases6(1));
+    EXPECT_EQ(1, lmptr_->wipeLeases6(22));
+
+    // All the leases should be gone now. Check that that repeated
+    // attempt to delete them will not result in any additional removals.
+    EXPECT_EQ(0, lmptr_->wipeLeases6(1));
+    EXPECT_EQ(0, lmptr_->wipeLeases6(22));
+    EXPECT_EQ(0, lmptr_->wipeLeases6(333));
+}
+
+void
+GenericLeaseMgrTest::testWipeLeases4() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    leases[0]->subnet_id_ = 1;
+    leases[1]->subnet_id_ = 1;
+    leases[2]->subnet_id_ = 1;
+    leases[3]->subnet_id_ = 22;
+    leases[4]->subnet_id_ = 333;
+    leases[5]->subnet_id_ = 333;
+    leases[6]->subnet_id_ = 333;
+    leases[7]->subnet_id_ = 333;
+
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Let's try something simple. There shouldn't be any leases in
+    // subnet 2. The keep deleting the leases, perhaps in a different
+    // order they were added.
+    EXPECT_EQ(0, lmptr_->wipeLeases4(2));
+    EXPECT_EQ(4, lmptr_->wipeLeases4(333));
+    EXPECT_EQ(3, lmptr_->wipeLeases4(1));
+    EXPECT_EQ(1, lmptr_->wipeLeases4(22));
+
+    // All the leases should be gone now. Check that that repeated
+    // attempt to delete them will not result in any additional removals.
+    EXPECT_EQ(0, lmptr_->wipeLeases4(1));
+    EXPECT_EQ(0, lmptr_->wipeLeases4(22));
+    EXPECT_EQ(0, lmptr_->wipeLeases4(333));
+}
 
 }; // namespace test
 }; // namespace dhcp

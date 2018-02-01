@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ index of the library (in the list of loaded libraries) that registered
 it and the address of the callout.  The error is otherwise ignored.
 The error message includes the callout execution time in milliseconds.
 
-% HOOKS_CALLOUT_EXCEPTION exception thrown by callout on hook %1 registered by library with index %2 (callout address %3): %4 (callout duration: $5)
+% HOOKS_CALLOUT_EXCEPTION exception thrown by callout on hook %1 registered by library with index %2 (callout address %3): %4 (callout duration: %5)
 If a callout throws an exception when called, this error message is
 issued.  It identifies the hook to which the callout is attached, the
 index of the library (in the list of loaded libraries) that registered

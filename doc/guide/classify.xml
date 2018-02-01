@@ -33,23 +33,30 @@
       behavior of almost any part of the DHCP message processing, including the assignment of
       leases from different pools, the assignment of different options (or different values of
       the same options) etc. In the current release of the software however, there are
-      only three mechanisms that take
-      advantage of client classification: subnet selection, assignment of different
+      only four mechanisms that take
+      advantage of client classification: subnet selection, definition of DHCPv4 private (codes 224-254) and code 43 options, assignment of different
       options and, for DHCPv4 cable modems, the setting of specific options for use with
       the TFTP server address and the boot file field.
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps:
+      The process of doing classification is conducted in four steps:
       <orderedlist>
       <listitem><para>
       Assess an incoming packet and assign it to zero or more classes.
+      </para></listitem>
+      <listitem><para>
+      If a private or code 43 DHCPv4 option is received, decoding it
+      following its client class or global (or for option 43 last
+      resort) definition.
       </para></listitem>
       <listitem><para>
       Choose a subnet, possibly based on the class information.
       </para></listitem>
       <listitem><para>
       Assign options, again possibly based on the class information.
+      For DHCPv4 private and code 43 options this includes class local
+      option definitions.
       </para></listitem>
       </orderedlist>
       </para>
@@ -484,9 +491,12 @@
       "relay6[nest]" allows access to the encapsulations used by any DHCPv6
       relays that forwarded the packet.  The "nest" level specifies the relay
       from which to extract the information, with a value of 0 indicating
-      the relay closest to the DHCPv6 server.  If the requested encapsulation
-      doesn't exist an empty string "" is returned.  This expression is
-      allowed in DHCPv6 only.
+      the relay closest to the DHCPv6 server. Negative values allow to
+      specify relays counted from the DHCPv6 client, -1 indicating the
+      relay closest to the client. In general negative "nest" level is
+      the same as the number of relays + "nest" level.
+      If the requested encapsulation doesn't exist an empty string ""
+      is returned.  This expression is allowed in DHCPv6 only.
       </para></listitem>
 
       <listitem><para>
@@ -569,6 +579,7 @@
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
 <row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
 concatenation of the strings</entry></row>
+<row><entry>Ifelse</entry><entry>ifelse('foo' == 'bar','us','them')</entry><entry>Return the branch value according to the condition</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -614,6 +625,15 @@ concatenation of the strings</entry></row>
         concat('foo', 'bar') == 'foobar'
           </screen>
        </section>
+       <section>
+         <title>Ifelse</title>
+         The ifelse function "ifelse(cond, iftrue, ifelse)" returns the
+         "iftrue" or "ifelse" branch value following the boolean
+         condition "cond". For instance:
+           <screen>
+         ifelse(option[230].exists, option[230].hex, 'none')
+           </screen>
+        </section>
     </section>
 
   <note>
@@ -781,6 +801,96 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
+ <section id="classification-pools">
+   <title>Configuring Pools With Class Information</title>
+     <para>
+       Similar to the subnets, it is possible to restrict access to the certain address
+       or prefix pools to the clients belonging to a specific class, using
+       the "client-class" parameter when defining the pool.
+     </para>
+
+     <para>
+       Let's assume that the server is connected to a network segment using
+       the 192.0.2.0/24 prefix. The Administrator of that network has decided
+       that addresses from the range of 192.0.2.10 to 192.0.2.20 are going to be
+       managed by the DHCP4 server. Only the clients belonging to the client class
+       Client_foo are allowed to use this pool. Such a configuration can be
+       achieved in the following way:
+       <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        },
+        ...
+    ],
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            <userinput>
+            "pools": [
+                {
+                    "pool": "192.0.2.10 - 192.0.2.20",
+                    "client-class": "Client_foo"
+                }
+            ]</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
+      </para>
+
+     <para>
+       The following example shows restricting access to an address pool.
+       This configuration will restrict use of the addresses 2001:db8:1::1
+       to 2001:db8:1::FFFF to members of the "Client_enterprise" class.
+       <screen>
+"Dhcp6": {
+    "client-classes": [
+        {
+            "name": "Client_enterprise_",
+            "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ],
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            <userinput>
+            "pools": [
+                {
+                    "pool": "2001:db8:1::-2001:db8:1::ffff",
+                    "client-class": "Client_foo"
+                }
+            ]</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
+      </para>
+  </section>
+
   <section>
     <title>Using Classes</title>
       <para>
@@ -820,7 +930,7 @@ concatenation of the strings</entry></row>
      </para>
 
      <para>
-     To enable the debug statements in the classifciaton system you will
+     To enable the debug statements in the classification system you will
      need to set the severity to "DEBUG" and the debug level to at least 55.
      The specific loggers are "kea-dhcp4.eval" and "kea-dhcp6.eval".
      </para>

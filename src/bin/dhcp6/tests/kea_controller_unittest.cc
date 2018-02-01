@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
@@ -59,6 +60,7 @@ public:
         LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
+        static_cast<void>(remove(TEST_INCLUDE));
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
@@ -72,23 +74,23 @@ public:
 
     /// @brief Runs timers for specified time.
     ///
-    /// Internally, this method calls @c IfaceMgr::receive6 to run the
-    /// callbacks for the installed timers.
-    ///
+    /// @param io_service Pointer to the IO service to be ran.
     /// @param timeout_ms Amount of time after which the method returns.
-    void runTimersWithTimeout(const long timeout_ms) {
-        isc::util::Stopwatch stopwatch;
-        while (stopwatch.getTotalMilliseconds() < timeout_ms) {
-            // Block for up to one millisecond waiting for the timers'
-            // callbacks to be executed.
-            IfaceMgr::instancePtr()->receive6(0, 1000);
-        }
+    void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms) {
+        IntervalTimer timer(*io_service);
+        timer.setup([this, &io_service]() {
+            io_service->stop();
+        }, timeout_ms, IntervalTimer::ONE_SHOT);
+        io_service->run();
+        io_service->get_io_service().reset();
     }
 
     static const char* TEST_FILE;
+    static const char* TEST_INCLUDE;
 };
 
 const char* JSONFileBackendTest::TEST_FILE = "test-config.json";
+const char* JSONFileBackendTest::TEST_INCLUDE = "test-include.json";
 
 // This test checks if configuration can be read from a JSON file.
 TEST_F(JSONFileBackendTest, jsonFile) {
@@ -167,8 +169,35 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     EXPECT_EQ(Lease::TYPE_NA, pools3.at(0)->getType());
 }
 
-// This test checks if configuration can be read from a JSON file.
-TEST_F(JSONFileBackendTest, comments) {
+// This test verifies that the configurations for various servers
+// can coexist and that the DHCPv6 configuration parsers will simply
+// ignore them.
+TEST_F(JSONFileBackendTest, serverConfigurationsCoexistence) {
+    std::string config = "{ \"Dhcp6\": {"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"preferred-lifetime\": 1000, \n"
+        "\"valid-lifetime\": 4000 }, "
+        "\"Dhcp4\": { },"
+        "\"DhcpDdns\": { },"
+        "\"Control-agent\": { }"
+        "}";
+
+    writeFile(TEST_FILE, config);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using the config file.
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+}
+
+// This test checks if configuration can be read from a JSON file
+// using hash (#) line comments
+TEST_F(JSONFileBackendTest, hashComments) {
 
     string config_hash_comments = "# This is a comment. It should be \n"
         "#ignored. Real config starts in line below\n"
@@ -186,9 +215,6 @@ TEST_F(JSONFileBackendTest, comments) {
         " } ],"
         "\"valid-lifetime\": 4000 }"
         "}";
-
-    /// @todo: Implement C++-style (// ...) comments
-    /// @todo: Implement C-style (/* ... */) comments
 
     writeFile(TEST_FILE, config_hash_comments);
 
@@ -219,6 +245,197 @@ TEST_F(JSONFileBackendTest, comments) {
     EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
 }
 
+// This test checks if configuration can be read from a JSON file
+// using C++ line (//) comments.
+TEST_F(JSONFileBackendTest, cppLineComments) {
+
+    string config_cpp_line_comments = "// This is a comment. It should be \n"
+        "//ignored. Real config starts in line below\n"
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "// comments in the middle should be ignored, too\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+    writeFile(TEST_FILE, config_cpp_line_comments);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config without
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(64, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using C block (/* */) comments
+TEST_F(JSONFileBackendTest, cBlockComments) {
+
+    string config_c_block_comments = "/* This is a comment. It should be \n"
+        "ignored. Real config starts in line below*/\n"
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "/* comments in the middle should be ignored, too*/\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+
+      writeFile(TEST_FILE, config_c_block_comments);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config without
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(64, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if configuration can be read from a JSON file
+// using an include file.
+TEST_F(JSONFileBackendTest, include) {
+
+    string config = "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "<?include \"" + string(TEST_INCLUDE) + "\"?>,"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    string include = "\n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ]\n";
+
+    writeFile(TEST_FILE, config);
+    writeFile(TEST_INCLUDE, include);
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config without
+    EXPECT_NO_THROW(srv->init(TEST_FILE));
+
+    // Now check if the configuration has been applied correctly.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(1, subnets->size());
+
+    // Check subnet 1.
+    EXPECT_EQ("2001:db8:1::", subnets->at(0)->get().first.toText());
+    EXPECT_EQ(64, subnets->at(0)->get().second);
+
+    // Check pools in the first subnet.
+    const PoolCollection& pools1 = subnets->at(0)->getPools(Lease::TYPE_NA);
+    ASSERT_EQ(1, pools1.size());
+    EXPECT_EQ("2001:db8:1::", pools1.at(0)->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff:ffff", pools1.at(0)->getLastAddress().toText());
+    EXPECT_EQ(Lease::TYPE_NA, pools1.at(0)->getType());
+}
+
+// This test checks if recursive include of a file is detected
+TEST_F(JSONFileBackendTest, recursiveInclude) {
+
+    string config_recursive_include = "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ <?include \"" + string(TEST_INCLUDE) + "\"?> ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, \n"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    string include = "\"eth\", <?include \"" + string(TEST_INCLUDE) + "\"?>";
+    string msg = "configuration error using file '" + string(TEST_FILE) +
+        "': Too many nested include.";
+
+    writeFile(TEST_FILE, config_recursive_include);
+    writeFile(TEST_INCLUDE, include);
+
+
+    // Now initialize the server
+    boost::scoped_ptr<ControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new ControlledDhcpv6Srv(0))
+    );
+
+    // And configure it using config
+    try {
+        srv->init(TEST_FILE);
+        FAIL() << "Expected Dhcp6ParseError but nothing was raised";
+    }
+    catch (const Exception& ex) {
+        EXPECT_EQ(msg, ex.what());
+    }
+}
+
+// This test checks if configuration can be read from a JSON file.
 // This test checks if configuration detects failure when trying:
 // - empty file
 // - empty filename
@@ -292,7 +509,7 @@ TEST_F(JSONFileBackendTest, timers) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -328,7 +545,7 @@ TEST_F(JSONFileBackendTest, timers) {
 
     // Poll the timers for a while to make sure that each of them is executed
     // at least once.
-    ASSERT_NO_THROW(runTimersWithTimeout(5000));
+    ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 5000));
 
     // Verify that the leases in the database have been processed as expected.
 
@@ -369,7 +586,7 @@ TEST_F(JSONFileBackendTest, serverId) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -400,7 +617,7 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
         "}";
     writeFile(TEST_FILE, config);
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<ControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new ControlledDhcpv6Srv(0)));
     ASSERT_NO_THROW(srv->init(TEST_FILE));
@@ -503,7 +720,7 @@ testBackendReconfiguration(const std::string& backend_first,
                            const std::string& backend_second) {
     writeFile(TEST_FILE, createConfiguration(backend_first));
 
-    // Create an instance of the server and intialize it.
+    // Create an instance of the server and initialize it.
     boost::scoped_ptr<NakedControlledDhcpv6Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedControlledDhcpv6Srv()));
     srv->setConfigFile(TEST_FILE);

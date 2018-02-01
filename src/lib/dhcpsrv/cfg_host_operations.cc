@@ -1,12 +1,17 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <algorithm>
+#include <string>
+
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -23,6 +28,7 @@ CfgHostOperations::createConfig4() {
     cfg->addIdentifierType("hw-address");
     cfg->addIdentifierType("duid");
     cfg->addIdentifierType("circuit-id");
+    cfg->addIdentifierType("client-id");
     return (cfg);
 }
 
@@ -50,6 +56,17 @@ CfgHostOperations::addIdentifierType(const std::string& identifier_name) {
 void
 CfgHostOperations::clearIdentifierTypes() {
     identifier_types_.clear();
+}
+
+ElementPtr
+CfgHostOperations::toElement() const {
+    ElementPtr result = Element::createList();
+    for (IdentifierTypes::const_iterator id = identifier_types_.begin();
+         id != identifier_types_.end(); ++id) {
+        const std::string& name = Host::getIdentifierName(*id);
+        result->add(Element::create(name));
+    }
+    return (result);
 }
 
 }

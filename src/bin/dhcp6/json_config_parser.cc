@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,17 +22,19 @@
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
+#include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
-#include <defaults.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -53,543 +55,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::hooks;
 
 namespace {
-
-// Pointers to various parser objects.
-typedef boost::shared_ptr<BooleanParser> BooleanParserPtr;
-typedef boost::shared_ptr<StringParser> StringParserPtr;
-typedef boost::shared_ptr<Uint32Parser> Uint32ParserPtr;
-
-/// @brief Parser for IPv6 pool definitions.
-///
-/// This is the IPv6 derivation of the PoolParser class and handles pool
-/// definitions, i.e. a list of entries of one of two syntaxes: min-max and
-/// prefix/len for IPv6 pools. Pool6 objects are created and stored in chosen
-/// PoolStorage container.
-///
-/// It is useful for parsing Dhcp6/subnet6[X]/pool parameters.
-class Pool6Parser : public PoolParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param param_name name of the parameter. Note, it is passed through
-    /// but unused, parameter is currently always "Dhcp6/subnet6[X]/pool"
-    /// @param pools storage container in which to store the parsed pool
-    /// upon "commit"
-    Pool6Parser(const std::string& param_name,  PoolStoragePtr pools)
-        :PoolParser(param_name, pools, AF_INET6) {
-    }
-
-protected:
-    /// @brief Creates a Pool6 object given a IPv6 prefix and the prefix length.
-    ///
-    /// @param addr is the IPv6 prefix of the pool.
-    /// @param len is the prefix length.
-    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
-    /// passed in as an int32_t and cast to PoolType to accommodate a
-    /// polymorphic interface.
-    /// @return returns a PoolPtr to the new Pool4 object.
-    PoolPtr poolMaker (IOAddress &addr, uint32_t len, int32_t ptype)
-    {
-        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
-                                  (ptype), addr, len)));
-    }
-
-    /// @brief Creates a Pool6 object given starting and ending IPv6 addresses.
-    ///
-    /// @param min is the first IPv6 address in the pool.
-    /// @param max is the last IPv6 address in the pool.
-    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
-    /// passed in as an int32_t and cast to PoolType to accommodate a
-    /// polymorphic interface.
-    /// @return returns a PoolPtr to the new Pool4 object.
-    PoolPtr poolMaker (IOAddress &min, IOAddress &max, int32_t ptype)
-    {
-        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
-                                  (ptype), min, max)));
-    }
-};
-
-class Pools6ListParser : public PoolsListParser {
-public:
-    Pools6ListParser(const std::string& dummy, PoolStoragePtr pools)
-        :PoolsListParser(dummy, pools) {
-    }
-
-protected:
-    virtual ParserPtr poolParserMaker(PoolStoragePtr storage) {
-        return (ParserPtr(new Pool6Parser("pool", storage)));
-    }
-};
-
-/// @brief Parser for IPv6 prefix delegation definitions.
-///
-/// This class handles prefix delegation pool definitions for IPv6 subnets
-/// Pool6 objects are created and stored in the given PoolStorage container.
-///
-/// PdPool definitions currently support three elements: prefix, prefix-len,
-/// and delegated-len, as shown in the example JSON text below:
-///
-/// @code
-///
-/// {
-///     "prefix": "2001:db8:1::",
-///     "prefix-len": 64,
-///     "delegated-len": 128
-/// }
-/// @endcode
-///
-class PdPoolParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param param_name name of the parameter. Note, it is passed through
-    /// but unused, parameter is currently always "Dhcp6/subnet6[X]/pool"
-    /// @param pools storage container in which to store the parsed pool
-    /// upon "commit"
-    PdPoolParser(const std::string&,  PoolStoragePtr pools)
-        : uint32_values_(new Uint32Storage()),
-          string_values_(new StringStorage()), pools_(pools),
-          options_(new CfgOption()) {
-        if (!pools_) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "PdPoolParser context storage may not be NULL");
-        }
-    }
-
-    /// @brief Builds a prefix delegation pool from the given configuration
-    ///
-    /// This function parses configuration entries and creates an instance
-    /// of a dhcp::Pool6 configured for prefix delegation.
-    ///
-    /// @param pd_pool_ pointer to an element that holds configuration entries
-    /// that define a prefix delegation pool.
-    ///
-    /// @throw DhcpConfigError if configuration parsing fails.
-    virtual void build(ConstElementPtr pd_pool_) {
-        // Parse the elements that make up the option definition.
-        BOOST_FOREACH(ConfigPair param, pd_pool_->mapValue()) {
-            std::string entry(param.first);
-            ParserPtr parser;
-            if (entry == "prefix" || entry =="excluded-prefix") {
-                StringParserPtr str_parser(new StringParser(entry,
-                                                            string_values_));
-                parser = str_parser;
-            } else if (entry == "prefix-len" || entry == "delegated-len" ||
-                       entry == "excluded-prefix-len") {
-                Uint32ParserPtr code_parser(new Uint32Parser(entry,
-                                                             uint32_values_));
-                parser = code_parser;
-            } else if (entry == "option-data") {
-                OptionDataListParserPtr option_parser(new OptionDataListParser(entry,
-                                                                               options_,
-                                                                               AF_INET6));
-                parser = option_parser;
-            } else if (entry == "user-context") {
-                user_context_ = param.second;
-                continue; // no parser to remember, simply store the value
-            } else {
-                isc_throw(DhcpConfigError, "unsupported parameter: " << entry
-                          << " (" << param.second->getPosition() << ")");
-            }
-
-            parser->build(param.second);
-            parser->commit();
-        }
-
-        // Try to obtain the pool parameters. It will throw an exception if any
-        // of the required parameters are not present or invalid.
-        try {
-            const std::string addr_str = string_values_->getParam("prefix");
-            const uint32_t prefix_len = uint32_values_->getParam("prefix-len");
-            const uint32_t delegated_len = uint32_values_->getParam("delegated-len");
-            const std::string excluded_prefix_str =
-                string_values_->getOptionalParam("excluded-prefix", "::");
-            const uint32_t excluded_prefix_len =
-                uint32_values_->getOptionalParam("excluded-prefix-len", 0);
-
-            // Attempt to construct the local pool.
-            pool_.reset(new Pool6(IOAddress(addr_str), prefix_len,
-                                  delegated_len, IOAddress(excluded_prefix_str),
-                                  excluded_prefix_len));
-            // Merge options specified for a pool into pool configuration.
-            options_->copyTo(*pool_->getCfgOption());
-        } catch (const std::exception& ex) {
-            // Some parameters don't exist or are invalid. Since we are not
-            // aware whether they don't exist or are invalid, let's append
-            // the position of the pool map element.
-            isc_throw(isc::dhcp::DhcpConfigError, ex.what()
-                      << " (" << pd_pool_->getPosition() << ")");
-        }
-
-        if (user_context_) {
-            pool_->setUserContext(user_context_);
-        }
-    }
-
-    // @brief Commits the constructed local pool to the pool storage.
-    virtual void commit() {
-        // Add the local pool to the external storage ptr.
-        pools_->push_back(pool_);
-    }
-
-protected:
-    /// Storage for subnet-specific integer values.
-    Uint32StoragePtr uint32_values_;
-
-    /// Storage for subnet-specific string values.
-    StringStoragePtr string_values_;
-
-    /// Parsers are stored here.
-    ParserCollection parsers_;
-
-    /// Pointer to the created pool object.
-    isc::dhcp::Pool6Ptr pool_;
-
-    /// Pointer to storage to which the local pool is written upon commit.
-    isc::dhcp::PoolStoragePtr pools_;
-
-    /// A storage for pool specific option values.
-    CfgOptionPtr options_;
-
-    isc::data::ConstElementPtr user_context_;
-};
-
-/// @brief Parser for a list of prefix delegation pools.
-///
-/// This parser iterates over a list of prefix delegation pool entries and
-/// creates pool instances for each one. If the parsing is successful, the
-/// collection of pools is committed to the provided storage.
-class PdPoolListParser : public DhcpConfigParser {
-public:
-    /// @brief Constructor.
-    ///
-    /// @param dummy first argument is ignored, all Parser constructors
-    /// accept string as first argument.
-    /// @param storage is the pool storage in which to store the parsed
-    /// pools in this list
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    PdPoolListParser(const std::string&, PoolStoragePtr pools)
-        : local_pools_(new PoolStorage()), pools_(pools) {
-        if (!pools_) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "PdPoolListParser pools storage may not be NULL");
-        }
-    }
-
-    /// @brief Parse configuration entries.
-    ///
-    /// This function parses configuration entries and creates instances
-    /// of prefix delegation pools .
-    ///
-    /// @param pd_pool_list pointer to an element that holds entries
-    /// that define a prefix delegation pool.
-    ///
-    /// @throw DhcpConfigError if configuration parsing fails.
-    void build(isc::data::ConstElementPtr pd_pool_list) {
-        // Make sure the local list is empty.
-        local_pools_.reset(new PoolStorage());
-
-        // Make sure we have a configuration elements to parse.
-        if (!pd_pool_list) {
-            isc_throw(DhcpConfigError,
-                      "PdPoolListParser: list of pool definitions is NULL");
-        }
-
-        // Loop through the list of pd pools.
-        BOOST_FOREACH(ConstElementPtr pd_pool, pd_pool_list->listValue()) {
-            boost::shared_ptr<PdPoolParser>
-                // Create the PdPool parser.
-                parser(new PdPoolParser("pd-pool", local_pools_));
-                // Build the pool instance
-                parser->build(pd_pool);
-                // Commit the pool to the local list of pools.
-                parser->commit();
-        }
-    }
-
-    /// @brief  Commits the pools created to the external storage area.
-    ///
-    /// Note that this method adds the local list of pools to the storage area
-    /// rather than replacing its contents.  This permits other parsers to
-    /// contribute to the set of pools.
-    void commit() {
-        // local_pools_ holds the values produced by the build function.
-        // At this point parsing should have completed successfully so
-        // we can append new data to the supplied storage.
-        pools_->insert(pools_->end(), local_pools_->begin(),
-                       local_pools_->end());
-    }
-
-private:
-    /// @brief storage for local pools
-    PoolStoragePtr local_pools_;
-
-    /// @brief External storage where pools are stored upon list commit.
-    PoolStoragePtr pools_;
-};
-
-/// @anchor Subnet6ConfigParser
-/// @brief This class parses a single IPv6 subnet.
-///
-/// This is the IPv6 derivation of the SubnetConfigParser class and it parses
-/// the whole subnet definition. It creates parsersfor received configuration
-/// parameters as needed.
-class Subnet6ConfigParser : public SubnetConfigParser {
-public:
-
-    /// @brief Constructor
-    ///
-    /// @param ignored first parameter
-    /// stores global scope parameters, options, option definitions.
-    Subnet6ConfigParser(const std::string&)
-        :SubnetConfigParser("", globalContext(), IOAddress("::")) {
-    }
-
-    /// @brief Parses a single IPv6 subnet configuration and adds to the
-    /// Configuration Manager.
-    ///
-    /// @param subnet A new subnet being configured.
-    void build(ConstElementPtr subnet) {
-        SubnetConfigParser::build(subnet);
-
-        if (subnet_) {
-            Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
-            if (!sub6ptr) {
-                // If we hit this, it is a programming error.
-                isc_throw(Unexpected,
-                          "Invalid cast in Subnet6ConfigParser::commit");
-            }
-
-            // Set relay information if it was provided
-            if (relay_info_) {
-                sub6ptr->setRelayInfo(*relay_info_);
-            }
-
-            // Adding a subnet to the Configuration Manager may fail if the
-            // subnet id is invalid (duplicate). Thus, we catch exceptions
-            // here to append a position in the configuration string.
-            try {
-                CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(sub6ptr);
-            } catch (const std::exception& ex) {
-                isc_throw(DhcpConfigError, ex.what() << " ("
-                          << subnet->getPosition() << ")");
-            }
-
-            // Parse Host Reservations for this subnet if any.
-            ConstElementPtr reservations = subnet->get("reservations");
-            if (reservations) {
-                ParserPtr parser(new HostReservationsListParser<
-                                 HostReservationParser6>(subnet_->getID()));
-                parser->build(reservations);
-            }
-        }
-    }
-
-    /// @brief Commits subnet configuration.
-    ///
-    /// This function is currently no-op because subnet should already
-    /// be added into the Config Manager in the build().
-    void commit() { }
-
-protected:
-
-    /// @brief creates parsers for entries in subnet definition
-    ///
-    /// @param config_id name of the entry
-    ///
-    /// @return parser object for specified entry name. Note the caller is
-    /// responsible for deleting the parser created.
-    /// @throw isc::dhcp::DhcpConfigError if trying to create a parser
-    /// for unknown config element
-    DhcpConfigParser* createSubnetConfigParser(const std::string& config_id) {
-        DhcpConfigParser* parser = NULL;
-        if ((config_id.compare("preferred-lifetime") == 0)  ||
-            (config_id.compare("valid-lifetime") == 0)  ||
-            (config_id.compare("renew-timer") == 0)  ||
-            (config_id.compare("rebind-timer") == 0) ||
-            (config_id.compare("id") == 0)) {
-            parser = new Uint32Parser(config_id, uint32_values_);
-        } else if ((config_id.compare("subnet") == 0) ||
-                   (config_id.compare("interface") == 0) ||
-                   (config_id.compare("client-class") == 0) ||
-                   (config_id.compare("interface-id") == 0) ||
-                   (config_id.compare("reservation-mode") == 0)) {
-            parser = new StringParser(config_id, string_values_);
-        } else if (config_id.compare("pools") == 0) {
-            parser = new Pools6ListParser(config_id, pools_);
-        } else if (config_id.compare("relay") == 0) {
-            parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
-        } else if (config_id.compare("pd-pools") == 0) {
-            parser = new PdPoolListParser(config_id, pools_);
-        } else if (config_id.compare("option-data") == 0) {
-            parser = new OptionDataListParser(config_id, options_, AF_INET6);
-        } else if (config_id.compare("rapid-commit") == 0) {
-            parser = new BooleanParser(config_id, boolean_values_);
-        } else {
-            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
-        }
-
-        return (parser);
-    }
-
-    /// @brief Issues a DHCP6 server specific warning regarding duplicate subnet
-    /// options.
-    ///
-    /// @param code is the numeric option code of the duplicate option
-    /// @param addr is the subnet address
-    /// @todo A means to know the correct logger and perhaps a common
-    /// message would allow this message to be emitted by the base class.
-    virtual void duplicate_option_warning(uint32_t code,
-                                         isc::asiolink::IOAddress& addr) {
-        LOG_WARN(dhcp6_logger, DHCP6_CONFIG_OPTION_DUPLICATE)
-            .arg(code).arg(addr.toText());
-    }
-
-    /// @brief Instantiates the IPv6 Subnet based on a given IPv6 address
-    /// and prefix length.
-    ///
-    /// @param addr is IPv6 prefix of the subnet.
-    /// @param len is the prefix length
-    void initSubnet(isc::asiolink::IOAddress addr, uint8_t len) {
-        // Get all 'time' parameters using inheritance.
-        // If the subnet-specific value is defined then use it, else
-        // use the global value. The global value must always be
-        // present. If it is not, it is an internal error and exception
-        // is thrown.
-        Triplet<uint32_t> t1 = getParam("renew-timer");
-        Triplet<uint32_t> t2 = getParam("rebind-timer");
-        Triplet<uint32_t> pref = getParam("preferred-lifetime");
-        Triplet<uint32_t> valid = getParam("valid-lifetime");
-        // Subnet ID is optional. If it is not supplied the value of 0 is used,
-        // which means autogenerate.
-        SubnetID subnet_id =
-            static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
-
-        // Get interface-id option content. For now we support string
-        // representation only
-        std::string ifaceid;
-        try {
-            ifaceid = string_values_->getParam("interface-id");
-        } catch (const DhcpConfigError &) {
-            // interface-id is not mandatory
-        }
-
-        // Specifying both interface for locally reachable subnets and
-        // interface id for relays is mutually exclusive. Need to test for
-        // this condition.
-        if (!ifaceid.empty()) {
-            std::string iface;
-            try {
-                iface = string_values_->getParam("interface");
-            } catch (const DhcpConfigError &) {
-                // iface not mandatory
-            }
-
-            if (!iface.empty()) {
-                isc_throw(isc::dhcp::DhcpConfigError,
-                      "parser error: interface (defined for locally reachable "
-                      "subnets) and interface-id (defined for subnets reachable"
-                      " via relays) cannot be defined at the same time for "
-                      "subnet " << addr << "/" << (int)len);
-            }
-        }
-
-        // Gather boolean parameters values.
-        bool rapid_commit = boolean_values_->getOptionalParam("rapid-commit", false);
-
-        std::ostringstream output;
-        output << addr << "/" << static_cast<int>(len)
-               << " with params t1=" << t1 << ", t2="
-               << t2 << ", preferred-lifetime=" << pref
-               << ", valid-lifetime=" << valid
-               << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
-
-
-        LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(output.str());
-
-        // Create a new subnet.
-        Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
-                                       subnet_id);
-
-        // Configure interface-id for remote interfaces, if defined
-        if (!ifaceid.empty()) {
-            OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
-            OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-            subnet6->setInterfaceId(opt);
-        }
-
-        // Enable or disable Rapid Commit option support for the subnet.
-        subnet6->setRapidCommit(rapid_commit);
-
-        // Try setting up client class (if specified)
-        try {
-            string client_class = string_values_->getParam("client-class");
-            subnet6->allowClientClass(client_class);
-        } catch (const DhcpConfigError&) {
-            // That's ok if it fails. client-class is optional.
-        }
-
-        subnet_.reset(subnet6);
-    }
-
-};
-
-
-/// @brief this class parses a list of DHCP6 subnets
-///
-/// This is a wrapper parser that handles the whole list of Subnet6
-/// definitions. It iterates over all entries and creates Subnet6ConfigParser
-/// for each entry.
-class Subnets6ListConfigParser : public DhcpConfigParser {
-public:
-
-    /// @brief constructor
-    ///
-    /// @param dummy first argument, always ignored. All parsers accept a
-    /// string parameter "name" as their first argument.
-    Subnets6ListConfigParser(const std::string&) {
-    }
-
-    /// @brief parses contents of the list
-    ///
-    /// Iterates over all entries on the list and creates a Subnet6ConfigParser
-    /// for each entry.
-    ///
-    /// @param subnets_list pointer to a list of IPv6 subnets
-    void build(ConstElementPtr subnets_list) {
-        BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
-            ParserPtr parser(new Subnet6ConfigParser("subnet"));
-            parser->build(subnet);
-            subnets_.push_back(parser);
-        }
-
-    }
-
-    /// @brief commits subnets definitions.
-    ///
-    /// Iterates over all Subnet6 parsers. Each parser contains definitions of
-    /// a single subnet and its parameters and commits each subnet separately.
-    void commit() {
-        BOOST_FOREACH(ParserPtr subnet, subnets_) {
-            subnet->commit();
-        }
-
-    }
-
-    /// @brief Returns Subnet6ListConfigParser object
-    /// @param param_name name of the parameter
-    /// @return Subnets6ListConfigParser object
-    static DhcpConfigParser* factory(const std::string& param_name) {
-        return (new Subnets6ListConfigParser(param_name));
-    }
-
-    /// @brief collection of subnet parsers.
-    ParserCollection subnets_;
-};
 
 /// @brief Parser for list of RSOO options
 ///
@@ -599,22 +67,8 @@ public:
 /// The options on this list can be specified using an option code or option
 /// name. Therefore, the values on the list should always be enclosed in
 /// "quotes".
-class RSOOListConfigParser : public DhcpConfigParser {
+class RSOOListConfigParser : public isc::data::SimpleParser {
 public:
-
-    /// @brief constructor
-    ///
-    /// As this is a dedicated parser, it must be used to parse
-    /// "relay-supplied-options" parameter only. All other types will throw exception.
-    ///
-    /// @param param_name name of the configuration parameter being parsed
-    /// @throw BadValue if supplied parameter name is not "relay-supplied-options"
-    RSOOListConfigParser(const std::string& param_name) {
-        if (param_name != "relay-supplied-options") {
-            isc_throw(BadValue, "Internal error. RSOO configuration "
-                      "parser called for the wrong parameter: " << param_name);
-        }
-    }
 
     /// @brief parses parameters value
     ///
@@ -622,7 +76,8 @@ public:
     /// to the RSOO list.
     ///
     /// @param value pointer to the content of parsed values
-    virtual void build(isc::data::ConstElementPtr value) {
+    /// @param cfg server configuration (RSOO will be stored here)
+    void parse(const SrvConfigPtr& cfg, const isc::data::ConstElementPtr& value) {
         try {
             BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
                 std::string option_str = source_elem->stringValue();
@@ -659,7 +114,7 @@ public:
                                   " relay-supplied-options");
                     }
                 }
-                CfgMgr::instance().getStagingCfg()->getCfgRSOO()->enable(code);
+                cfg->getCfgRSOO()->enable(code);
             }
         } catch (const std::exception& ex) {
             // Rethrow exception with the appended position of the parsed
@@ -667,111 +122,254 @@ public:
             isc_throw(DhcpConfigError, ex.what() << " (" << value->getPosition() << ")");
         }
     }
-
-    /// @brief Does nothing.
-    virtual void commit() {}
 };
 
+/// @brief Parser that takes care of global DHCPv6 parameters and utility
+///        functions that work on global level.
+///
+/// This class is a collection of utility method that either handle
+/// global parameters (see @ref parse), or conducts operations on
+/// global level (see @ref sanityChecks and @ref copySubnets6).
+///
+/// See @ref parse method for a list of supported parameters.
+class Dhcp6ConfigParser : public isc::data::SimpleParser {
+public:
+
+    /// @brief Sets global parameters in staging configuration
+    ///
+    /// @param global global configuration scope
+    /// @param cfg Server configuration (parsed parameters will be stored here)
+    ///
+    /// Currently this method sets the following global parameters:
+    ///
+    /// - decline-probation-period
+    /// - dhcp4o6-port
+    /// - user-context
+    ///
+    /// @throw DhcpConfigError if parameters are missing or
+    /// or having incorrect values.
+    void parse(const SrvConfigPtr& srv_config, const ConstElementPtr& global) {
+
+        // Set the probation period for decline handling.
+        uint32_t probation_period =
+            getUint32(global, "decline-probation-period");
+        srv_config->setDeclinePeriod(probation_period);
+
+        // Set the DHCPv4-over-DHCPv6 interserver port.
+        uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
+        srv_config->setDhcp4o6Port(dhcp4o6_port);
+
+        // Set the global user context.
+        ConstElementPtr user_context = global->get("user-context");
+        if (user_context) {
+            srv_config->setContext(user_context);
+        }
+    }
+
+    /// @brief Copies subnets from shared networks to regular subnets container
+    ///
+    /// @param from pointer to shared networks container (copy from here)
+    /// @param dest pointer to cfg subnets6 (copy to here)
+    /// @throw BadValue if any pointer is missing
+    /// @throw DhcpConfigError if there are duplicates (or other subnet defects)
+    void
+    copySubnets6(const CfgSubnets6Ptr& dest, const CfgSharedNetworks6Ptr& from) {
+
+        if (!dest || !from) {
+            isc_throw(BadValue, "Unable to copy subnets: at least one pointer is null");
+        }
+
+        const SharedNetwork6Collection* networks = from->getAll();
+        if (!networks) {
+            // Nothing to copy. Technically, it should return a pointer to empty
+            // container, but let's handle null pointer as well.
+            return;
+        }
+
+        // Let's go through all the networks one by one
+        for (auto net = networks->begin(); net != networks->end(); ++net) {
+
+            // For each network go through all the subnets in it.
+            const Subnet6Collection* subnets = (*net)->getAllSubnets();
+            if (!subnets) {
+                // Shared network without subnets it weird, but we decided to
+                // accept such configurations.
+                continue;
+            }
+
+            // For each subnet, add it to a list of regular subnets.
+            for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
+                dest->add(*subnet);
+            }
+        }
+    }
+
+    /// @brief Conducts global sanity checks
+    ///
+    /// This method is very simple now, but more sanity checks are expected
+    /// in the future.
+    ///
+    /// @param cfg - the parsed structure
+    /// @param global global Dhcp4 scope
+    /// @throw DhcpConfigError in case of issues found
+    void
+    sanityChecks(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
+
+        /// Shared network sanity checks
+        const SharedNetwork6Collection* networks = cfg->getCfgSharedNetworks6()->getAll();
+        if (networks) {
+            sharedNetworksSanityChecks(*networks, global->get("shared-networks"));
+        }
+    }
+
+    /// @brief Sanity checks for shared networks
+    ///
+    /// This method verifies if there are no issues with shared networks.
+    /// @param networks pointer to shared networks being checked
+    /// @param json shared-networks element
+    /// @throw DhcpConfigError if issues are encountered
+    void
+    sharedNetworksSanityChecks(const SharedNetwork6Collection& networks,
+                               ConstElementPtr json) {
+
+        /// @todo: in case of errors, use json to extract line numbers.
+        if (!json) {
+            // No json? That means that the shared-networks was never specified
+            // in the config.
+            return;
+        }
+
+        // Used for names uniqueness checks.
+        std::set<string> names;
+
+        // Let's go through all the networks one by one
+        for (auto net = networks.begin(); net != networks.end(); ++net) {
+            string txt;
+
+            // Let's check if all subnets have either the same interface
+            // or don't have the interface specified at all.
+            string iface = (*net)->getIface();
+
+            const Subnet6Collection* subnets = (*net)->getAllSubnets();
+            if (subnets) {
+
+                bool rapid_commit = false;
+
+                // For each subnet, add it to a list of regular subnets.
+                for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
+
+                    // Rapid commit must either be enabled or disabled in all subnets
+                    // in the shared network.
+                    if (subnet == subnets->begin()) {
+                        // If this is the first subnet, remember the value.
+                        rapid_commit = (*subnet)->getRapidCommit();
+                    } else {
+                        // Ok, this is the second or following subnets. The value
+                        // must match what was set in the first subnet.
+                        if (rapid_commit != (*subnet)->getRapidCommit()) {
+                            isc_throw(DhcpConfigError, "All subnets in a shared network "
+                                      "must have the same rapid-commit value. Subnet "
+                                      << (*subnet)->toText()
+                                      << " has specified rapid-commit "
+                                      << ( (*subnet)->getRapidCommit() ? "true" : "false")
+                                      << ", but earlier subnet in the same shared-network"
+                                      << " or the shared-network itself used rapid-commit "
+                                      << (rapid_commit ? "true" : "false"));
+                        }
+                    }
+
+
+                    if (iface.empty()) {
+                        iface = (*subnet)->getIface();
+                        continue;
+                    }
+
+                    if ((*subnet)->getIface().empty()) {
+                        continue;
+                    }
+
+                    if (iface != (*subnet)->getIface()) {
+                        isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
+                                  << " has specified interface " << (*subnet)->getIface()
+                                  << ", but earlier subnet in the same shared-network"
+                                  << " or the shared-network itself used " << iface);
+                    }
+
+                    // Let's collect the subnets in case we later find out the
+                    // subnet doesn't have a mandatory name.
+                    txt += (*subnet)->toText() + " ";
+                }
+            }
+
+            // Next, let's check name of the shared network.
+            if ((*net)->getName().empty()) {
+                isc_throw(DhcpConfigError, "Shared-network with subnets "
+                          << txt << " is missing mandatory 'name' parameter");
+            }
+
+            // Is it unique?
+            if (names.find((*net)->getName()) != names.end()) {
+                isc_throw(DhcpConfigError, "A shared-network with "
+                          "name " << (*net)->getName() << " defined twice.");
+            }
+            names.insert((*net)->getName());
+
+        }
+    }
+
+
+};
 
 } // anonymous namespace
 
 namespace isc {
 namespace dhcp {
 
-/// @brief creates global parsers
+/// @brief Initialize the command channel based on the staging configuration
 ///
-/// This method creates global parsers that parse global parameters, i.e.
-/// those that take format of Dhcp6/param1, Dhcp6/param2 and so forth.
+/// Only close the current channel, if the new channel configuration is
+/// different.  This avoids disconnecting a client and hence not sending them
+/// a command result, unless they specifically alter the channel configuration.
+/// In that case the user simply has to accept they'll be disconnected.
 ///
-/// @param config_id pointer to received global configuration entry
-/// @param element pointer to the element to be parsed
-/// @return parser for specified global DHCPv6 parameter
-/// @throw NotImplemented if trying to create a parser for unknown config
-/// element
-DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
-                                                ConstElementPtr element) {
-    DhcpConfigParser* parser = NULL;
-    if ((config_id.compare("preferred-lifetime") == 0)  ||
-        (config_id.compare("valid-lifetime") == 0)  ||
-        (config_id.compare("renew-timer") == 0)  ||
-        (config_id.compare("rebind-timer") == 0) ||
-        (config_id.compare("decline-probation-period") == 0) ||
-        (config_id.compare("dhcp4o6-port") == 0) )  {
-        parser = new Uint32Parser(config_id,
-                                 globalContext()->uint32_values_);
-    } else if (config_id.compare("interfaces-config") == 0) {
-        parser = new IfacesConfigParser6();
-    } else if (config_id.compare("subnet6") == 0) {
-        parser = new Subnets6ListConfigParser(config_id);
-    } else if (config_id.compare("option-data") == 0) {
-        parser = new OptionDataListParser(config_id, CfgOptionPtr(), AF_INET6);
-    } else if (config_id.compare("option-def") == 0) {
-        parser  = new OptionDefListParser(config_id, globalContext());
-    } else if (config_id.compare("version") == 0) {
-        parser  = new StringParser(config_id,
-                                   globalContext()->string_values_);
-    } else if (config_id.compare("lease-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::LEASE_DB);
-    } else if (config_id.compare("hosts-database") == 0) {
-        parser = new DbAccessParser(config_id, DbAccessParser::HOSTS_DB);
-    } else if (config_id.compare("hooks-libraries") == 0) {
-        parser = new HooksLibrariesParser(config_id);
-    } else if (config_id.compare("dhcp-ddns") == 0) {
-        parser = new D2ClientConfigParser(config_id);
-    } else if (config_id.compare("mac-sources") == 0) {
-        parser = new MACSourcesListConfigParser(config_id,
-                                                globalContext());
-    } else if (config_id.compare("relay-supplied-options") == 0) {
-        parser = new RSOOListConfigParser(config_id);
-    } else if (config_id.compare("control-socket") == 0) {
-        parser = new ControlSocketParser(config_id);
-    } else if (config_id.compare("expired-leases-processing") == 0) {
-        parser = new ExpirationConfigParser();
-    } else if (config_id.compare("client-classes") == 0) {
-        parser = new ClientClassDefListParser(config_id, globalContext());
-    } else if (config_id.compare("server-id") == 0) {
-        parser = new DUIDConfigParser();
-    } else if (config_id.compare("host-reservation-identifiers") == 0) {
-        parser = new HostReservationIdsParser6();
-    } else {
-        isc_throw(DhcpConfigError,
-                "unsupported global configuration parameter: "
-                  << config_id << " (" << element->getPosition() << ")");
-    }
+void configureCommandChannel() {
+    // Get new socket configuration.
+    ConstElementPtr sock_cfg =
+        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
 
-    return (parser);
-}
+    // Get current socket configuration.
+    ConstElementPtr current_sock_cfg =
+            CfgMgr::instance().getCurrentCfg()->getControlSocketInfo();
 
-/// @brief Sets global parameters in the staging configuration
-///
-/// Currently this method sets the following global parameters:
-///
-/// - decline-probation-period
-/// - dhcp4o6-port
-void setGlobalParameters6() {
+    // Determine if the socket configuration has changed. It has if
+    // both old and new configuration is specified but respective
+    // data elements aren't equal.
+    bool sock_changed = (sock_cfg && current_sock_cfg &&
+                         !sock_cfg->equals(*current_sock_cfg));
 
-    // Set the probation period for decline handling.
-    try {
-        uint32_t probation_period = globalContext()->uint32_values_
-            ->getOptionalParam("decline-probation-period",
-                               DEFAULT_DECLINE_PROBATION_PERIOD);
-        CfgMgr::instance().getStagingCfg()->setDeclinePeriod(probation_period);
-    } catch (...) {
-        // That's not really needed.
-    }
+    // If the previous or new socket configuration doesn't exist or
+    // the new configuration differs from the old configuration we
+    // close the existing socket and open a new socket as appropriate.
+    // Note that closing an existing socket means the client will not
+    // receive the configuration result.
+    if (!sock_cfg || !current_sock_cfg || sock_changed) {
+        // Close the existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
 
-    // Set the DHCPv4-over-DHCPv6 interserver port.
-    try {
-        uint32_t dhcp4o6_port = globalContext()->uint32_values_
-            ->getOptionalParam("dhcp4o6-port", 0);
-        CfgMgr::instance().getStagingCfg()->setDhcp4o6Port(dhcp4o6_port);
-    } catch (...) {
-        // Ignore errors. This flag is optional
+        if (sock_cfg) {
+            // This will create a control socket and install the external
+            // socket in IfaceMgr. That socket will be monitored when
+            // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
+            // callback in CommandMgr will be called, if necessary.
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        }
     }
 }
 
 isc::data::ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
+configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
+                     bool check_only) {
+
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
@@ -781,157 +379,223 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND,
               DHCP6_CONFIG_START).arg(config_set->str());
 
-    // Reset global context.
-    globalContext().reset(new ParserContext(Option::V6));
-
     // Before starting any subnet operations, let's reset the subnet-id counter,
     // so newly recreated configuration starts with first subnet-id equal 1.
     Subnet::resetSubnetID();
 
     // Remove any existing timers.
-    TimerMgr::instance()->unregisterTimers();
+    if (!check_only) {
+        TimerMgr::instance()->unregisterTimers();
+    }
 
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
     // Let's set empty container in case a user hasn't specified any configuration
-    // for option definitions. This is equivalent to commiting empty container.
+    // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
-    // Some of the values specified in the configuration depend on
-    // other values. Typically, the values in the subnet6 structure
-    // depend on the global values. Also, option values configuration
-    // must be performed after the option definitions configurations.
-    // Thus we group parsers and will fire them in the right order:
-    // all parsers other than lease-database, subnet6 and
-    // option-data parser, then option-data parser, subnet6 parser,
-    // lease-database parser.
-    // Please do not change this order!
-    ParserCollection independent_parsers;
-    ParserPtr subnet_parser;
-    ParserPtr option_parser;
-    ParserPtr iface_parser;
-    ParserPtr leases_parser;
-    ParserPtr client_classes_parser;
-
-    // Some of the parsers alter state of the system that can't easily
-    // be undone. (Or alter it in a way such that undoing the change
-    // has the same risk of failure as doing the change.)
-    ParserPtr hooks_parser;
-
-    // The subnet parsers implement data inheritance by directly
-    // accessing global storage. For this reason the global data
-    // parsers must store the parsed data into global storages
-    // immediately. This may cause data inconsistency if the
-    // parsing operation fails after the global storage has been
-    // modified. We need to preserve the original global data here
-    // so as we can rollback changes when an error occurs.
-    ParserContext original_context(*globalContext());
+    // This is a way to convert ConstElementPtr to ElementPtr.
+    // We need a config that can be edited, because we will insert
+    // default values and will insert derived values as well.
+    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
     // answer will hold the result.
     ConstElementPtr answer;
     // rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
-    // config_pair holds ther details of the current parser when iterating over
+    // config_pair holds the details of the current parser when iterating over
     // the parsers.  It is declared outside the loop so in case of error, the
     // name of the failing parser can be retrieved within the "catch" clause.
     ConfigPair config_pair;
     try {
 
+        SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
+
+        // Set all default values if not specified by the user.
+        SimpleParser6::setAllDefaults(mutable_cfg);
+
+        // And now derive (inherit) global parameters to subnets, if not specified.
+        SimpleParser6::deriveParameters(mutable_cfg);
+
         // Make parsers grouping.
         const std::map<std::string, ConstElementPtr>& values_map =
-            config_set->mapValue();
+            mutable_cfg->mapValue();
+
+        // We need definitions first
+        ConstElementPtr option_defs = mutable_cfg->get("option-def");
+        if (option_defs) {
+            OptionDefListParser parser;
+            CfgOptionDefPtr cfg_option_def = srv_config->getCfgOptionDef();
+            parser.parse(cfg_option_def, option_defs);
+        }
+
+        // This parser is used in several places, so it should be available
+        // early.
+        Dhcp6ConfigParser global_parser;
+
         BOOST_FOREACH(config_pair, values_map) {
-            ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
-                                                           config_pair.second));
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
-                      .arg(config_pair.first);
-            if (config_pair.first == "subnet6") {
-                subnet_parser = parser;
-            } else if (config_pair.first == "lease-database") {
-                leases_parser = parser;
-            } else if (config_pair.first == "option-data") {
-                option_parser = parser;
-            } else if (config_pair.first == "hooks-libraries") {
-                // Executing the commit will alter currently loaded hooks
-                // libraries. Check if the supplied libraries are valid,
-                // but defer the commit until after everything else has
-                // committed.
-                hooks_parser = parser;
-                hooks_parser->build(config_pair.second);
-            } else if (config_pair.first == "interfaces-config") {
-                // The interface parser is independent from any other parser and
-                // can be run here before other parsers.
-                parser->build(config_pair.second);
-                iface_parser = parser;
-            } else if (config_pair.first == "client-classes") {
-                client_classes_parser = parser;
-            } else {
-                // Those parsers should be started before other
-                // parsers so we can call build straight away.
-                independent_parsers.push_back(parser);
-                parser->build(config_pair.second);
-                // The commit operation here may modify the global storage
-                // but we need it so as the subnet6 parser can access the
-                // parsed data.
-                parser->commit();
+            // In principle we could have the following code structured as a series
+            // of long if else if clauses. That would give a marginal performance
+            // boost, but would make the code less readable. We had serious issues
+            // with the parser code debugability, so I decided to keep it as a
+            // series of independent ifs.
+
+            if (config_pair.first == "option-def") {
+                // This is converted to SimpleParser and is handled already above.
+                continue;
             }
+
+            if (config_pair.first == "option-data") {
+                OptionDataListParser parser(AF_INET6);
+                CfgOptionPtr cfg_option = srv_config->getCfgOption();
+                parser.parse(cfg_option, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "mac-sources") {
+                MACSourcesListConfigParser parser;
+                CfgMACSource& mac_source = srv_config->getMACSources();
+                parser.parse(mac_source, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "control-socket") {
+                ControlSocketParser parser;
+                parser.parse(*srv_config, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "host-reservation-identifiers") {
+                HostReservationIdsParser6 parser;
+                parser.parse(config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "server-id") {
+                DUIDConfigParser parser;
+                const CfgDUIDPtr& cfg = srv_config->getCfgDUID();
+                parser.parse(cfg, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "interfaces-config") {
+                ElementPtr ifaces_cfg =
+                    boost::const_pointer_cast<Element>(config_pair.second);
+                if (check_only) {
+                    // No re-detection in check only mode
+                    ifaces_cfg->set("re-detect", Element::create(false));
+                }
+                IfacesConfigParser parser(AF_INET6);
+                CfgIfacePtr cfg_iface = srv_config->getCfgIface();
+                parser.parse(cfg_iface, ifaces_cfg);
+                continue;
+            }
+
+            if (config_pair.first == "expired-leases-processing") {
+                ExpirationConfigParser parser;
+                parser.parse(config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "hooks-libraries") {
+                HooksLibrariesParser hooks_parser;
+                HooksConfig& libraries = srv_config->getHooksConfig();
+                hooks_parser.parse(libraries, config_pair.second);
+                libraries.verifyLibraries(config_pair.second->getPosition());
+                continue;
+            }
+
+            if (config_pair.first == "dhcp-ddns") {
+                // Apply defaults
+                D2ClientConfigParser::setAllDefaults(config_pair.second);
+                D2ClientConfigParser parser;
+                D2ClientConfigPtr cfg = parser.parse(config_pair.second);
+                srv_config->setD2ClientConfig(cfg);
+                continue;
+            }
+
+            if (config_pair.first =="client-classes") {
+                ClientClassDefListParser parser;
+                ClientClassDictionaryPtr dictionary =
+                    parser.parse(config_pair.second, AF_INET6);
+                srv_config->setClientClassDictionary(dictionary);
+                continue;
+            }
+
+            // Please move at the end when migration will be finished.
+            if (config_pair.first == "lease-database") {
+                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "hosts-database") {
+                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "subnet6") {
+                Subnets6ListConfigParser subnets_parser;
+                // parse() returns number of subnets parsed. We may log it one day.
+                subnets_parser.parse(srv_config, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "shared-networks") {
+                /// We need to create instance of SharedNetworks4ListParser
+                /// and parse the list of the shared networks into the
+                /// CfgSharedNetworks4 object. One additional step is then to
+                /// add subnets from the CfgSharedNetworks6 into CfgSubnets6
+                /// as well.
+
+                SharedNetworks6ListParser parser;
+                CfgSharedNetworks6Ptr cfg = srv_config->getCfgSharedNetworks6();
+                parser.parse(cfg, config_pair.second);
+
+                // We also need to put the subnets it contains into normal
+                // subnets list.
+                global_parser.copySubnets6(srv_config->getCfgSubnets6(), cfg);
+                continue;
+            }
+
+            // Timers are not used in the global scope. Their values are derived
+            // to specific subnets (see SimpleParser6::deriveParameters).
+            // decline-probation-period, dhcp4o6-port and user-context
+            // are handled in the global_parser.parse() which sets
+            // global parameters.
+            if ( (config_pair.first == "renew-timer") ||
+                 (config_pair.first == "rebind-timer") ||
+                 (config_pair.first == "preferred-lifetime") ||
+                 (config_pair.first == "valid-lifetime") ||
+                 (config_pair.first == "decline-probation-period") ||
+                 (config_pair.first == "dhcp4o6-port") ||
+                 (config_pair.first == "user-context")) {
+                continue;
+            }
+
+            if (config_pair.first == "relay-supplied-options") {
+                RSOOListConfigParser parser;
+                parser.parse(srv_config, config_pair.second);
+                continue;
+            }
+
+            // If we got here, no code handled this parameter, so we bail out.
+            isc_throw(DhcpConfigError,
+                      "unsupported global configuration parameter: " << config_pair.first
+                      << " (" << config_pair.second->getPosition() << ")");
         }
 
-        // The option values parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator option_config =
-            values_map.find("option-data");
-        if (option_config != values_map.end()) {
-            config_pair.first = "option-data";
-            option_parser->build(option_config->second);
-            option_parser->commit();
-        }
+        // Apply global options in the staging config.
+        global_parser.parse(srv_config, mutable_cfg);
 
-        // The class definitions parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator cc_config =
-            values_map.find("client-classes");
-        if (cc_config != values_map.end()) {
-            config_pair.first = "client-classes";
-            client_classes_parser->build(cc_config->second);
-            client_classes_parser->commit();
-        }
-
-        // The subnet parser is the next one to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
-            values_map.find("subnet6");
-        if (subnet_config != values_map.end()) {
-            config_pair.first = "subnet6";
-            subnet_parser->build(subnet_config->second);
-        }
-
-        // Get command socket configuration from the config file.
-        // This code expects the following structure:
-        // {
-        //     "socket-type": "unix",
-        //     "socket-name": "/tmp/kea6.sock"
-        // }
-        ConstElementPtr sock_cfg =
-            CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
-
-        // Close existing socket (if any).
-        isc::config::CommandMgr::instance().closeCommandSocket();
-        if (sock_cfg) {
-            // This will create a control socket and will install external socket
-            // in IfaceMgr. That socket will be monitored when Dhcp4Srv::receivePacket()
-            // calls IfaceMgr::receive4() and callback in CommandMgr will be called,
-            // if necessary. If there were previously open command socket, it will
-            // be closed.
-            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
-        }
-
-        // The lease database parser is the last to be run.
-        std::map<std::string, ConstElementPtr>::const_iterator leases_config =
-            values_map.find("lease-database");
-        if (leases_config != values_map.end()) {
-            config_pair.first = "lease-database";
-            leases_parser->build(leases_config->second);
-            leases_parser->commit();
-        }
+        // This method conducts final sanity checks and tweaks. In particular,
+        // it checks that there is no conflict between plain subnets and those
+        // defined as part of shared networks.
+        global_parser.sanityChecks(srv_config, mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
@@ -949,28 +613,39 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         rollback = true;
     }
 
+    if (check_only) {
+        rollback = true;
+        if (!answer) {
+            answer = isc::config::createAnswer(0,
+            "Configuration seems sane. Control-socket, hook-libraries, and D2 "
+            "configuration were sanity checked, but not applied.");
+        }
+    }
+
     // So far so good, there was no parsing error so let's commit the
     // configuration. This will add created subnets and option values into
     // the server's configuration.
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-            if (subnet_parser) {
-                subnet_parser->commit();
-            }
 
-            // Apply global options in the staging config.
-            setGlobalParameters6();
+            // Setup the command channel.
+            configureCommandChannel();
 
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
+            // Apply staged D2ClientConfig, used to be done by parser commit
+            D2ClientConfigPtr cfg;
+            cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
+            CfgMgr::instance().setD2ClientConfig(cfg);
+
             // This occurs last as if it succeeds, there is no easy way to
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            if (hooks_parser) {
-                hooks_parser->commit();
-            }
+            const HooksConfig& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksConfig();
+            libraries.loadLibraries();
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -989,7 +664,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
-        globalContext().reset(new ParserContext(original_context));
         // Revert to original configuration of runtime option definitions
         // in the libdhcp++.
         LibDHCP::revertRuntimeOptionDefs();
@@ -1003,11 +677,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration successful.");
     return (answer);
-}
-
-ParserContextPtr& globalContext() {
-    static ParserContextPtr global_context_ptr(new ParserContext(Option::V6));
-    return (global_context_ptr);
 }
 
 }; // end of isc::dhcp namespace

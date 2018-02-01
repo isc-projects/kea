@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,7 @@ Dhcp4to6Ipc& Dhcp4to6Ipc::instance() {
 }
 
 void Dhcp4to6Ipc::open() {
-    uint32_t port = CfgMgr::instance().getStagingCfg()->getDhcp4o6Port();
+    uint16_t port = CfgMgr::instance().getStagingCfg()->getDhcp4o6Port();
     if (port == 0) {
         Dhcp4o6IpcBase::close();
         return;
@@ -45,8 +45,7 @@ void Dhcp4to6Ipc::open() {
     }
 
     int old_fd = socket_fd_;
-    socket_fd_ = Dhcp4o6IpcBase::open(static_cast<uint16_t>(port),
-                                      ENDPOINT_TYPE_V4);
+    socket_fd_ = Dhcp4o6IpcBase::open(port, ENDPOINT_TYPE_V4);
     if ((old_fd == -1) && (socket_fd_ != old_fd)) {
         IfaceMgr::instance().addExternalSocket(socket_fd_,
                                                Dhcp4to6Ipc::handler);
@@ -64,7 +63,7 @@ void Dhcp4to6Ipc::handler() {
 
         // from Dhcpv4Srv::run_one() after receivePacket()
         if (pkt) {
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP6_DHCP4O6_PACKET_RECEIVED)
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_PACKET_RECEIVED)
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getRemoteAddr().toText())
                 .arg(pkt->getIface());
@@ -90,7 +89,7 @@ void Dhcp4to6Ipc::handler() {
         return;
     }
 
-    // Get the DHCPv4 message 
+    // Get the DHCPv4 message.
     OptionPtr msg = msgs.begin()->second;
     if (!msg) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
@@ -134,14 +133,13 @@ void Dhcp4to6Ipc::handler() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_BUFFER_SEND_SKIP)
                     .arg(rsp->getLabel());
                 return;
             }
-
-            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("response4", rsp);
         }

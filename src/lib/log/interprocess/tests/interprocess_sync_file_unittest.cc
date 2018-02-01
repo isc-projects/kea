@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,14 @@ using namespace isc::log::interprocess;
 using isc::util::unittests::parentReadState;
 
 namespace {
+TEST(InterprocessSyncFileTest, BadFile) {
+    InterprocessSyncFile sync("/no-such--dir/or--file");
+    InterprocessSyncLocker locker(sync);
+
+    EXPECT_FALSE(locker.isLocked());
+    ASSERT_THROW(locker.lock(), InterprocessSyncFileError);
+}
+
 TEST(InterprocessSyncFileTest, TestLock) {
     InterprocessSyncFile sync("test");
     InterprocessSyncLocker locker(sync);

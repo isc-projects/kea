@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,8 @@
 #define HOST_H
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -22,7 +24,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief HostID (used only when storing in MySQL or Postgres)
+/// @brief HostID (used only when storing in MySQL, PostgreSQL or Cassandra)
 typedef uint64_t HostID;
 
 /// @brief IPv6 reservation for a host.
@@ -170,7 +172,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
 /// Note that the last three operations are mainly required for managing
 /// host reservations which will be implemented later.
-class Host {
+class Host : public UserContext {
 public:
 
     /// @brief Type of the host identifier.
@@ -184,12 +186,13 @@ public:
         IDENT_HWADDR,
         IDENT_DUID,
         IDENT_CIRCUIT_ID,
-        IDENT_CLIENT_ID
+        IDENT_CLIENT_ID,
+        IDENT_FLEX, ///< Flexible host identifier.
     };
 
     /// @brief Constant pointing to the last identifier of the
     /// @ref IdentifierType enumeration.
-    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_CLIENT_ID;
+    static const IdentifierType LAST_IDENTIFIER_TYPE = IDENT_FLEX;
 
     /// @brief Constructor.
     ///
@@ -240,7 +243,7 @@ public:
     /// - "yy:yy:yy:yy:yy:yy"
     /// - "yyyyyyyyyy",
     /// - "0xyyyyyyyyyy",
-    /// - "'some identfier'".
+    /// - "'some identifier'".
     /// where y is a hexadecimal digit.
     ///
     /// Note that it is possible to use textual representation, e.g. 'some identifier',
@@ -501,7 +504,7 @@ public:
     /// @brief Returns pointer to the DHCPv4 option data configuration for
     /// this host.
     ///
-    /// Returned pointer can be used to add, remove and udate options
+    /// Returned pointer can be used to add, remove and update options
     /// reserved for a host.
     CfgOptionPtr getCfgOption4() {
         return (cfg_option4_);
@@ -516,7 +519,7 @@ public:
     /// @brief Returns pointer to the DHCPv6 option data configuration for
     /// this host.
     ///
-    /// Returned pointer can be used to add, remove and udate options
+    /// Returned pointer can be used to add, remove and update options
     /// reserved for a host.
     CfgOptionPtr getCfgOption6() {
         return (cfg_option6_);
@@ -531,17 +534,27 @@ public:
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
-    /// @brief Sets Host ID (primary key in MySQL and Postgres backends)
+    /// @brief Sets Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
     /// @param id HostId value
     void setHostId(HostID id) {
         host_id_ = id;
     }
 
-    /// @brief Returns Host ID (primary key in MySQL and Postgres backends)
+    /// @brief Returns Host ID (primary key in MySQL, PostgreSQL and Cassandra backends)
     /// @return id HostId value (or 0 if not set)
     HostID getHostId() const {
         return (host_id_);
     }
+
+    /// @brief Unparses (converts to Element representation) IPv4 host
+    ///
+    /// @return Element representation of the host
+    isc::data::ElementPtr toElement4() const;
+
+    /// @brief Unparses (converts to Element representation) IPv4 host
+    ///
+    /// @return Element representation of the host
+    isc::data::ElementPtr toElement6() const;
 
 private:
 
@@ -584,7 +597,7 @@ private:
     std::string boot_file_name_;
 
     /// @brief HostID (a unique identifier assigned when the host is stored in
-    ///                MySQL or Pgsql)
+    ///     MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
     /// @brief Pointer to the DHCPv4 option data configuration for this host.

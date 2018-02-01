@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,10 @@
 #ifndef CLIENT_CLASS_DEF_H
 #define CLIENT_CLASS_DEF_H
 
+#include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
@@ -37,7 +40,7 @@ public:
 };
 
 /// @brief Embodies a single client class definition
-class ClientClassDef {
+class ClientClassDef : public UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -69,6 +72,22 @@ public:
     ///
     /// @param match_expr the expression to assign the class
     void setMatchExpr(const ExpressionPtr& match_expr);
+
+    /// @brief Fetches the class's original match expression
+    std::string getTest() const;
+
+    /// @brief Sets the class's original match expression
+    ///
+    /// @param test the original expression to assign the class
+    void setTest(const std::string& test);
+
+    /// @brief Fetches the class's option definitions
+    const CfgOptionDefPtr& getCfgOptionDef() const;
+
+    /// @brief Sets the class's option definition collection
+    ///
+    /// @param cfg_option_def the option definitions to assign the class
+    void setCfgOptionDef(const CfgOptionDefPtr& cfg_option_def);
 
     /// @brief Fetches the class's option collection
     const CfgOptionPtr& getCfgOption() const;
@@ -145,6 +164,11 @@ public:
         return (filename_);
     }
 
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
+
 private:
     /// @brief Unique text identifier by which this class is known.
     std::string name_;
@@ -152,6 +176,13 @@ private:
     /// @brief The logical expression which determines membership in
     /// this class.
     ExpressionPtr match_expr_;
+
+    /// @brief The original expression which determines membership in
+    /// this class.
+    std::string test_;
+
+    /// @brief The option definition configuration for this class
+    CfgOptionDefPtr cfg_option_def_;
 
     /// @brief The option data configuration for this class
     CfgOptionPtr cfg_option_;
@@ -188,7 +219,7 @@ typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
 
 /// @brief Maintains a list of ClientClassDef's
-class ClientClassDictionary {
+class ClientClassDictionary : public isc::data::CfgToElement {
 
 public:
     /// @brief Constructor
@@ -203,7 +234,10 @@ public:
     ///
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
+    /// @param test Original version of match_expr
     /// @param options Collection of options members should be given
+    /// @param defs Option definitions (optional)
+    /// @param user_context User context (optional)
     /// @param next_server next-server value for this class (optional)
     /// @param sname server-name value for this class (optional)
     /// @param filename boot-file-name value for this class (optional)
@@ -212,7 +246,9 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const CfgOptionPtr& options,
+                  const std::string& test, const CfgOptionPtr& options,
+                  CfgOptionDefPtr defs = CfgOptionDefPtr(),
+                  isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string());
@@ -270,6 +306,11 @@ public:
     bool operator!=(const ClientClassDictionary& other) const {
         return (!equals(other));
     }
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const;
 
 private:
 

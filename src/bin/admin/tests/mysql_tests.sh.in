@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ mysql_lease_init_test() {
     # Let's wipe the whole database
     mysql_wipe
 
-    # Ok, now let's initalize the database
+    # Ok, now let's initialize the database
     ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -117,7 +117,7 @@ mysql_host_reservation_init_test() {
     # Let's wipe the whole database
     mysql_wipe
 
-    # Ok, now let's initalize the database
+    # Ok, now let's initialize the database
     ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -193,7 +193,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 5.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 6.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -276,7 +276,7 @@ EOF
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from lease_hwaddr_source failed. (expected status code %d, returned %d)"
-    assert_eq 1 "$count" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UKNOWN. (record count %d, expected %d)"
+    assert_eq 1 "$count" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 
     # table: stored procedures for lease data dumps were modified (upgrade 4.0 -> 4.1)
     # verify  lease4DumpData has order by lease address
@@ -295,12 +295,13 @@ EOF
     count=`echo $text | grep -ic "order by l\.address"`
     assert_eq 1 $count "lease6DumpData doesn't have order by clause. (returned count %d, expected %d)"
 
+    #table: host_identifier_type (upgrade 4.1 -> 5.0)
     # verify that host_identifier_type table exists.
     qry="select count(*) from host_identifier_type";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from host_identifier_type failed. (expected status code %d, returned %d)"
-    assert_eq 3 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
+    assert_eq 5 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
 
     # verify that foreign key fk_host_identifier_type exists
     qry="show create table hosts";
@@ -310,6 +311,7 @@ EOF
     assert_eq 0 $ERRCODE "show create table hosts failed. (expected status code %d, returned %d)"
     assert_eq 1 "$count" "show create table hosts did not return correct number of fk_host_identifier_type instances. (expected %d, returned %d)"
 
+    #table: dhcp_option_scope (upgrade 4.1 -> 5.0)
     # verify that dhcp_option_scope table exists.
     qry="select count(*) from dhcp_option_scope";
     count=`mysql_execute "${qry}"`
@@ -317,18 +319,21 @@ EOF
     assert_eq 0 $ERRCODE "select from dhcp_option_scope failed. (expected status code %d, returned %d)"
     assert_eq 4 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
 
+    #table: scope_id columns to dhcp4_options (upgrade 4.1 -> 5.0) 
     # verify that dhcp4_options table includes scope_id
     qry="select scope_id from dhcp4_options";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select scope_id from dhcp4_options failed. (expected status code %d, returned %d)"
 
+    #table: scope_id columns to dhcp6_options (upgrade 4.1 -> 5.0) 
     # verify that dhcp6_options table includes scope_id
     qry="select scope_id from dhcp6_options";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select scope_id from dhcp6_options failed. (expected status code %d, returned %d)"
 
+    #table: DHCPv4 fixed field colums (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
     qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts";
     count=`mysql_execute "${qry}"`
@@ -351,9 +356,35 @@ EOF
     count=`echo $text | grep -ic unsigned`
     assert_eq 1 $count "dhcp6_subnet_id is not of unsigned type. (expected count %d, returned %d)"
 
-    # Verify upgraded schema reports version 5.0
+    #host_identifier_type should have rows for types 3 and 4 (upgrade 5.0 -> 5.1)
+    qry="select count(*) from host_identifier_type";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select from host_identifier_type failed. (expected status code %d, returned %d)"
+    assert_eq 5 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
+    
+    #table: user_context columns to hosts, dhcp4_options and dhcp6_options (upgrade 5.1 -> 6.0)
+    # verify that hosts table includes user_context
+    qry="select user_context from hosts";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from hosts failed. (expected status code %d, returned %d)"
+
+    # verify that dhcp4_options table includes user_context
+    qry="select user_context from dhcp4_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from dhcp4_options failed. (expected status code %d, returned %d)"
+
+    # verify that dhcp6_options table includes user_context
+    qry="select user_context from dhcp6_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from dhcp6_options failed. (expected status code %d, returned %d)"
+
+    # Verify upgraded schema reports version 6.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "5.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "6.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -387,7 +418,7 @@ mysql_lease4_dump_test() {
     # Let's wipe the whole database
     mysql_wipe
 
-    # Ok, now let's initalize the database
+    # Ok, now let's initialize the database
     ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
@@ -447,7 +478,7 @@ mysql_lease6_dump_test() {
     # Let's wipe the whole database
     mysql_wipe
 
-    # Ok, now let's initalize the database
+    # Ok, now let's initialize the database
     ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
     assert_eq 0 $ERRCODE "could not create database, expected exit code %d, actual %d"
