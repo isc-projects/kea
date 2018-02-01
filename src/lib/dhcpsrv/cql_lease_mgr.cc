@@ -1512,7 +1512,7 @@ CqlLeaseMgr::getLease4(const IOAddress &addr) const {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLease(CqlLease4Exchange::GET_LEASE4_ADDR, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease4Collection
@@ -1531,7 +1531,7 @@ CqlLeaseMgr::getLease4(const HWAddr &hwaddr) const {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_HWADDR, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease4Ptr
@@ -1555,7 +1555,7 @@ CqlLeaseMgr::getLease4(const HWAddr &hwaddr, SubnetID subnet_id) const {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLease(CqlLease4Exchange::GET_LEASE4_HWADDR_SUBID, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease4Collection
@@ -1574,7 +1574,7 @@ CqlLeaseMgr::getLease4(const ClientId &clientid) const {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_CLIENTID, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease4Ptr
@@ -1613,7 +1613,7 @@ CqlLeaseMgr::getLease4(const ClientId &clientid, SubnetID subnet_id) const {
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
     exchange4->getLease(CqlLease4Exchange::GET_LEASE4_CLIENTID_SUBID, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease4Collection
@@ -1653,7 +1653,7 @@ CqlLeaseMgr::getLease6(Lease::Type lease_type, const IOAddress &addr) const {
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLease(CqlLease6Exchange::GET_LEASE6_ADDR, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease6Collection
@@ -1680,7 +1680,7 @@ CqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID &duid, uint32_t iaid)
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID_IAID, data, result);
 
-    return result;
+    return (result);
 }
 
 Lease6Collection
@@ -1712,7 +1712,7 @@ CqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID &duid, uint32_t iaid,
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID, data, result);
 
-    return result;
+    return (result);
 }
 
 void
