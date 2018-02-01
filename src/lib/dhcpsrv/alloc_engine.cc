@@ -147,9 +147,11 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& address,
                                                  bool prefix,
-                                                 const uint8_t prefix_len) {
+                                                 const uint8_t prefix_len,
+                                                 uint8_t psid_offset,
+                                                 uint8_t psid_len) {
     if (!prefix) {
-        return (IOAddress::increase(address));
+        return (IOAddress::increase(address, psid_offset, psid_len));
     } else {
         return (increasePrefix(address, prefix_len));
     }
@@ -158,8 +160,29 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                                              const ClientClasses& client_classes,
-                                             const DuidPtr&,
-                                             const IOAddress&) {
+                                             const DuidPtr& duid,
+                                             const IOAddress& hint) {
+    uint8_t psid_offset = 0;
+    uint8_t psid_len = 0;
+    if (subnet->get().first.isV4()) {
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
+        if (subnet4->get4o6().enabled()) {
+            psid_offset = subnet4->get4o6().getPsidOffset();
+            psid_len = subnet4->get4o6().getPsidLen();
+        }
+    }
+    const IOAddress& result = pickAddressInternal(subnet, client_classes, duid, hint,
+            psid_offset, psid_len);
+    return IOAddress(result.toText(), psid_offset, psid_len, result.getPsid());
+}
+
+isc::asiolink::IOAddress
+AllocEngine::IterativeAllocator::pickAddressInternal(const SubnetPtr& subnet,
+                                                     const ClientClasses& client_classes,
+                                                     const DuidPtr&,
+                                                     const IOAddress&,
+                                                     uint8_t psid_offset,
+                                                     uint8_t psid_len) {
 
     // Is this prefix allocation?
     bool prefix = pool_type_ == Lease::TYPE_PD;
@@ -252,7 +275,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                 prefix_len = pool6->getLength();
             }
 
-            IOAddress next = increaseAddress(last, prefix, prefix_len);
+            IOAddress next = increaseAddress(last, prefix, prefix_len, psid_offset, psid_len);
             if ((*it)->inRange(next)) {
                 // the next one is in the pool as well, so we haven't hit
                 // pool boundary yet
@@ -2439,7 +2462,6 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     // expired-reclaimed state or simply remove it.
     if (remove_lease) {
         lease_mgr.deleteLease(lease->addr_);
-
     } else if (!lease_update_fun.empty()) {
         // Clear FQDN information as we have already sent the
         // name change request to remove the DNS record.
@@ -2745,6 +2767,10 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     Lease4Ptr client_lease;
     findClientLease(ctx, client_lease);
 
+    if (client_lease && client_lease->addr_.getPsidLen() != ctx.requested_address_.getPsidLen()) {
+        client_lease = Lease4Ptr();
+    }
+
     // new_lease will hold the pointer to the lease that we will offer to the
     // caller.
     Lease4Ptr new_lease;
@@ -2850,6 +2876,10 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // not be continued.
     Lease4Ptr client_lease;
     findClientLease(ctx, client_lease);
+
+    if (client_lease && client_lease->addr_.getPsidLen() != ctx.requested_address_.getPsidLen()) {
+        client_lease = Lease4Ptr();
+    }
 
     // Obtain the sole instance of the LeaseMgr.
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
@@ -3355,9 +3385,9 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             client_id = ctx.clientid_;
         }
 
-        uint64_t possible_attempts =
-            subnet->getPoolCapacity(Lease::TYPE_V4,
-                                    ctx.query_->getClasses());
+        uint64_t possible_attempts = (1 << subnet->get4o6().getPsidLen()) *
+                                     subnet->getPoolCapacity(Lease::TYPE_V4,
+                                     ctx.query_->getClasses());
         uint64_t max_attempts = (attempts_ > 0 ? attempts_ : possible_attempts);
         // Skip trying if there is no chance to get something
         if (possible_attempts == 0) {

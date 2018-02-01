@@ -28,7 +28,19 @@ namespace asiolink {
 
 // XXX: we cannot simply construct the address in the initialization list,
 // because we'd like to throw our own exception on failure.
-IOAddress::IOAddress(const std::string& address_str) {
+IOAddress::IOAddress(const std::string& address_str) :
+        offset_(0), psid_len_(0), psid_(0) {
+    boost::system::error_code err;
+    asio_address_ = ip::address::from_string(address_str, err);
+    if (err) {
+        isc_throw(IOError, "Failed to convert string to address '"
+                  << address_str << "': " << err.message());
+    }
+}
+
+IOAddress::IOAddress(const std::string& address_str, uint8_t offset,
+        uint8_t psid_len, uint16_t psid) :
+        offset_(offset), psid_len_(psid_len), psid_(psid) {
     boost::system::error_code err;
     asio_address_ = ip::address::from_string(address_str, err);
     if (err) {
@@ -38,12 +50,30 @@ IOAddress::IOAddress(const std::string& address_str) {
 }
 
 IOAddress::IOAddress(const boost::asio::ip::address& asio_address) :
-    asio_address_(asio_address)
-{}
+        asio_address_(asio_address), offset_(0), psid_len_(0), psid_(0) {
+}
 
-IOAddress::IOAddress(uint32_t v4address):
-    asio_address_(boost::asio::ip::address_v4(v4address)) {
+IOAddress::IOAddress(uint32_t v4address) :
+        asio_address_(boost::asio::ip::address_v4(v4address)),
+        offset_(0), psid_len_(0), psid_(0) {
+}
 
+IOAddress::IOAddress(uint32_t v4address, uint8_t offset, uint8_t psid_len,
+        uint16_t psid) : asio_address_(boost::asio::ip::address_v4(v4address)),
+        offset_(offset), psid_len_(psid_len), psid_(psid) {
+}
+
+IOAddress::IOAddress(uint64_t v4address) :
+        asio_address_(boost::asio::ip::address_v4(static_cast<uint32_t>(v4address))),
+        offset_(0), psid_len_(0), psid_(0) {
+    offset_ = static_cast<uint8_t>(v4address >>
+        (8 * (sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t))));
+    psid_len_ = static_cast<uint8_t>((v4address <<
+        (8 * sizeof(uint8_t))) >>
+        (8 * (sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t))));
+    psid_ = static_cast<uint16_t>((v4address <<
+        (8 * (sizeof(uint8_t) + sizeof(uint8_t)))) >>
+        (8 * (sizeof(uint32_t) + sizeof(uint16_t))));
 }
 
 string
@@ -117,6 +147,21 @@ IOAddress::toUint32() const {
     }
 }
 
+uint64_t
+IOAddress::addressPlusPortToUint64() const {
+    if (asio_address_.is_v4()) {
+        uint64_t addr = offset_;
+        addr = (addr << (8 * sizeof(uint8_t))) + psid_len_;
+        addr = (addr << (8 * sizeof(uint16_t))) + psid_;
+        addr = (addr << (8 * sizeof(uint32_t))) +
+            static_cast<uint32_t>(asio_address_.to_v4().to_ulong());
+        return addr;
+    } else {
+        isc_throw(BadValue, "Can't convert " << toText()
+                  << " address to IPv4.");
+    }
+}
+
 std::ostream&
 operator<<(std::ostream& os, const IOAddress& address) {
     os << address.toText();
@@ -158,18 +203,26 @@ IOAddress::subtract(const IOAddress& a, const IOAddress& b) {
 }
 
 IOAddress
-IOAddress::increase(const IOAddress& addr) {
+IOAddress::increase(const IOAddress& addr, uint8_t, uint8_t psid_len) {
+    uint16_t increment = 0;
+    if (psid_len) {
+        increment = ((addr.psid_ + 1) & ((1 << psid_len) - 1));
+    }
+
     std::vector<uint8_t> packed(addr.toBytes());
 
-    // Start increasing the least significant byte
-    for (int i = packed.size() - 1; i >= 0; --i) {
-        // if we haven't overflowed (0xff -> 0x0), than we are done
-        if (++packed[i] != 0) {
-            break;
+    if (!increment) {
+        // Start increasing the least significant byte
+        for (int i = packed.size() - 1; i >= 0; --i) {
+            // if we haven't overflowed (0xff -> 0x0), than we are done
+            if (++packed[i] != 0) {
+                break;
+            }
         }
     }
 
-    return (IOAddress::fromBytes(addr.getFamily(), &packed[0]));
+    return IOAddress(IOAddress::fromBytes(addr.getFamily(), &packed[0]).toText(),
+            0, 0, increment);
 }
 
 

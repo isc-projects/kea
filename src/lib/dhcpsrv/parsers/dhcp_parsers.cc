@@ -738,6 +738,32 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
 
+    // address plus port specific parameter: v4-psid-offset. If not explicitly specified,
+    // it will have the default value of "0".
+    uint8_t psid_offset = getInteger(params, "v4-psid-offset");
+    if (psid_offset) {
+        subnet4->get4o6().setPsidOffset(psid_offset);
+        subnet4->get4o6().enabled(true);
+    }
+
+    // address plus port specific parameter: v4-psid-len. If not explicitly
+    // specified,
+    // it will have the default value of "0".
+    uint8_t psid_len = getInteger(params, "v4-psid-len");
+    if (psid_len) {
+        subnet4->get4o6().setPsidLen(psid_len);
+        subnet4->get4o6().enabled(true);
+    }
+
+    ConstElementPtr excluded_psids = params->get("v4-excluded-psids");
+    if (excluded_psids) {
+        BOOST_FOREACH (ConstElementPtr psid, excluded_psids->listValue()) {
+            int64_t value;
+            psid->getValue(value);
+            subnet4->getExcludedPSIDs().insert(static_cast<uint16_t>(value));
+        }
+    }
+
     // Here globally defined options were merged to the subnet specific
     // options but this is no longer the case (they have a different
     // and not consecutive priority).
@@ -849,7 +875,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         OptionDataListParser opts_parser(AF_INET6);
         opts_parser.parse(options_, option_data);
     }
-                    
+
     ConstElementPtr user_context = pd_pool_->get("user-context");
     if (user_context) {
         user_context_ = user_context;
@@ -1000,7 +1026,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
            << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
 
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(output.str());
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET6).arg(output.str());
 
     // Create a new subnet.
     Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
@@ -1155,9 +1181,9 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
 
     std::string sender_ip_str = getString(client_config, "sender-ip");
 
-    uint32_t sender_port = getUint32(client_config, "sender-port"); 
+    uint32_t sender_port = getUint32(client_config, "sender-port");
 
-    uint32_t max_queue_size = getUint32(client_config, "max-queue-size"); 
+    uint32_t max_queue_size = getUint32(client_config, "max-queue-size");
 
     dhcp_ddns::NameChangeProtocol ncr_protocol =
         getProtocol(client_config, "ncr-protocol");
@@ -1186,9 +1212,9 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     if (client_config->contains("qualifying-suffix")) {
             qualifying_suffix = getString(client_config, "qualifying-suffix");
             found_qualifying_suffix = true;
-    }   
+    }
 
-    IOAddress sender_ip(0);
+    IOAddress sender_ip(0U);
     if (sender_ip_str.empty()) {
         // The default sender IP depends on the server IP family
         sender_ip = (server_ip.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() :

@@ -278,6 +278,13 @@ isc::asiolink::IOAddress Subnet4::getSiaddr() const {
     return (siaddr_);
 }
 
+bool Subnet4::isExcludedAddress(const asiolink::IOAddress& address) {
+    if (address.getPsidLen()) {
+        return excludedPSIDs.find(address.getPsid()) != excludedPSIDs.end();
+    }
+    return false;
+}
+
 void Subnet4::setSname(const std::string& sname) {
     sname_ = sname;
 }

@@ -31,11 +31,8 @@ namespace {
 
 class PgSqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    PgSqlLeaseMgrTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyPgSQLSchema();
         createPgSQLSchema();
@@ -51,7 +48,26 @@ public:
                          "*** accompanying exception output.\n";
             throw;
         }
+
         lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    /// @brief Destroys the LM and the schema.
+    void destroyTest() {
+        try {
+            lmptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
+        LeaseMgrFactory::destroy();
+        destroyPgSQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    PgSqlLeaseMgrTest() {
+        initializeTest();
     }
 
     /// @brief Destructor
@@ -59,9 +75,7 @@ public:
     /// Rolls back all pending transactions.  The deletion of lmptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~PgSqlLeaseMgrTest() {
-        lmptr_->rollback();
-        LeaseMgrFactory::destroy();
-        destroyPgSQLSchema();
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -76,7 +90,6 @@ public:
         LeaseMgrFactory::create(validPgSQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
-
 };
 
 /// @brief Check that database can be opened
@@ -96,7 +109,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     // If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
-        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -108,10 +121,10 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-        string connection_string = validPgSQLConnectionString() + string(" ") +
-                                   string(VALID_TIMEOUT);
+        string connection_string =
+            validPgSQLConnectionString() + string(" ") + string(VALID_TIMEOUT);
         LeaseMgrFactory::create(connection_string);
-        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -127,45 +140,56 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+    EXPECT_THROW(
+        LeaseMgrFactory::create(connectionString(NULL, VALID_NAME, VALID_HOST,
+                                                 INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
 
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+    EXPECT_THROW(
+        LeaseMgrFactory::create(connectionString(
+            INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
-        DbOpenError);
+    EXPECT_THROW(LeaseMgrFactory::create(
+                     connectionString(PGSQL_VALID_TYPE, INVALID_NAME,
+                                      VALID_HOST, VALID_USER, VALID_PASSWORD)),
+                 DbOpenError);
 
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
-        DbOpenError);
+                     PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER,
+                     VALID_PASSWORD)),
+                 DbOpenError);
 
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
-        DbOpenError);
+    EXPECT_THROW(LeaseMgrFactory::create(
+                     connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST,
+                                      INVALID_USER, VALID_PASSWORD)),
+                 DbOpenError);
 
-    // This test might fail if 'auth-method' in PostgresSQL host-based authentication
+    // This test might fail if 'auth-method' in PostgresSQL host-based
+    // authentication
     // file (/var/lib/pgsql/9.4/data/pg_hba.conf) is set to 'trust',
-    // which allows logging without password. 'Auth-method' should be changed to 'password'.
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
-        DbOpenError);
+    // which allows logging without password. 'Auth-method' should be changed to
+    // 'password'.
+    EXPECT_THROW(LeaseMgrFactory::create(
+                     connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST,
+                                      VALID_USER, INVALID_PASSWORD)),
+                 DbOpenError);
 
     // Check for invalid timeouts
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
-        DbInvalidTimeout);
+                     PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_1)),
+                 DbInvalidTimeout);
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
-        DbInvalidTimeout);
+                     PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_2)),
+                 DbInvalidTimeout);
 
     // Check for missing parameters
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+    EXPECT_THROW(
+        LeaseMgrFactory::create(connectionString(
+            PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Tidy up after the test
@@ -292,8 +316,9 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4) {
 
 /// @brief Basic Lease4 Checks
 ///
-/// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+/// Checks that the addLease, getLease4(by address),
+/// getLease4(hwaddr,subnet_id),
+/// updateLease4() and deleteLease can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
     testLease4NullClientId();
@@ -410,6 +435,11 @@ TEST_F(PgSqlLeaseMgrTest, nullDuid) {
 /// which is marked as 'reclaimed' is not returned.
 TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
+}
+
+/// @brief Check that expired reclaimed DHCPv6 leases are removed.
+TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
+    testDeleteExpiredReclaimedLeases6();
 }
 
 // Verifies that IPv4 lease statistics can be recalculated.

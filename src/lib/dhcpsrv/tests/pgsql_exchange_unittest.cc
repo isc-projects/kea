@@ -598,7 +598,7 @@ TEST_F(PgSqlBasicsTest, smallIntTest) {
     ints.push_back(-1);
     ints.push_back(0);
     ints.push_back(0x7fff);
-    ints.push_back(0xffff);
+    ints.push_back(static_cast<int16_t>(0xffff));
 
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;

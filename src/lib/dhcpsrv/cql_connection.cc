@@ -177,6 +177,8 @@ CqlConnection::openDatabase() {
         try {
             port_number = boost::lexical_cast<int32_t>(port);
             if (port_number < 1 || port_number > 65535) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "port outside of range, expected "
@@ -184,6 +186,8 @@ CqlConnection::openDatabase() {
                               << port);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid "
                       "port, expected castable to int, instead got "
@@ -199,12 +203,16 @@ CqlConnection::openDatabase() {
             reconnect_wait_time_number =
                 boost::lexical_cast<int32_t>(reconnect_wait_time);
             if (reconnect_wait_time_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): invalid reconnect "
                           "wait time, expected positive number, instead got "
                               << reconnect_wait_time);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): "
                       "invalid reconnect wait time, expected "
@@ -221,6 +229,8 @@ CqlConnection::openDatabase() {
             connect_timeout_number =
                 boost::lexical_cast<int32_t>(connect_timeout);
             if (connect_timeout_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "invalid connect timeout, expected "
@@ -228,6 +238,8 @@ CqlConnection::openDatabase() {
                               << connect_timeout);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid connect timeout, "
                       "expected castable to int, instead got \""
@@ -242,6 +254,8 @@ CqlConnection::openDatabase() {
             request_timeout_number =
                 boost::lexical_cast<int32_t>(request_timeout);
             if (request_timeout_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "invalid request timeout, expected "
@@ -249,6 +263,8 @@ CqlConnection::openDatabase() {
                               << request_timeout);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid request timeout, "
                       "expected castable to int, instead got \""
@@ -262,6 +278,8 @@ CqlConnection::openDatabase() {
         try {
             tcp_keepalive_number = boost::lexical_cast<int32_t>(tcp_keepalive);
             if (tcp_keepalive_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "invalid TCP keepalive, expected "
@@ -269,6 +287,8 @@ CqlConnection::openDatabase() {
                               << tcp_keepalive);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid TCP keepalive, "
                       "expected castable to int, instead got \""

@@ -35,11 +35,8 @@ namespace {
 
 class PgSqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    PgSqlHostDataSourceTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyPgSQLSchema();
         createPgSQLSchema();
@@ -59,20 +56,31 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
-    /// @brief Destructor
-    ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
-    /// close the database.  Then reopen it and delete everything created by
-    /// the test.
-    virtual ~PgSqlHostDataSourceTest() {
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
         try {
             hdsptr_->rollback();
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         HostDataSourceFactory::destroy();
-        hdsptr_.reset();
         destroyPgSQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    PgSqlHostDataSourceTest() {
+        initializeTest();
+    }
+
+    /// @brief Destructor
+    ///
+    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
+    /// close the database.  Then reopen it and delete everything created by
+    /// the test.
+    virtual ~PgSqlHostDataSourceTest() {
+        destroyTest();
     }
 
     /// @brief Reopen the database

@@ -50,7 +50,7 @@ CfgDbAccess::createManagers() const {
     }
 }
 
-std::string 
+std::string
 CfgDbAccess::getAccessString(const std::string& access_string) const {
     std::ostringstream s;
     s << access_string;
@@ -81,6 +81,9 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
             std::string value = token.substr(pos + 1);
             if ((keyword == "lfc-interval") ||
                 (keyword == "connect-timeout") ||
+                (keyword == "reconnect-wait-time") ||
+                (keyword == "request-timeout") ||
+                (keyword == "tcp-keepalive") ||
                 (keyword == "port")) {
                 // integer parameters
                 int64_t int_value;
@@ -93,6 +96,7 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                               << keyword << "=" << value);
                 }
             } else if ((keyword == "persist") ||
+                       (keyword == "tcp-nodelay") ||
                        (keyword == "readonly")) {
                 if (value == "true") {
                     result->set(keyword, Element::create(true));

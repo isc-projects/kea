@@ -222,8 +222,8 @@ public:
 private:
     // Pointer to lease object
     Lease4Ptr lease_;
-    // IPv4 address
-    cass_int32_t address_;
+    // IPv4 address plus port
+    cass_int64_t address_;
     // Client identification
     CassBlob client_id_;
 };  // CqlLease4Exchange
@@ -355,10 +355,10 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
     // structure.
 
     try {
-        // address: int
+        // address: bigint
         // The address in the Lease structure is an IOAddress object.
         // Convert this to an integer for storage.
-        address_ = static_cast<cass_int32_t>(lease->addr_.toUint32());
+        address_ = lease_->addr_.addressPlusPortToUint64();
 
         // hwaddr: blob
         if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
@@ -391,8 +391,7 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -449,10 +448,10 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
     // structure.
 
     try {
-        // address: int
+        // address: bigint
         // The address in the Lease structure is an IOAddress object.
         // Convert this to an integer for storage.
-        address_ = static_cast<cass_int32_t>(lease->addr_.toUint32());
+        address_ = lease_->addr_.addressPlusPortToUint64();
 
         // hwaddr: blob
         if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
@@ -485,8 +484,7 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -538,8 +536,8 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     // structure.
 
     try {
-        // address: int
-        address_ = static_cast<cass_int32_t>(address.toUint32());
+        // address: bigint
+        address_ = lease_->addr_.addressPlusPortToUint64();
 
         // Start with a fresh array.
         data.clear();
@@ -623,7 +621,7 @@ CqlLease4Exchange::retrieve() {
         // Recreate the hardware address.
         HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
-        uint32_t addr4 = static_cast<uint32_t>(address_);
+        uint64_t addr4 = static_cast<uint64_t>(address_);
 
         Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
                                     client_id_.size(), valid_lifetime_, 0, 0,
@@ -1112,8 +1110,7 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         // For convenience for external tools, this is converted to lease
         // expiry time (expire). The relationship is given by:
         // expire = cltt_ + valid_lft_
-        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_,
-                                           expire_);
+        CqlExchange::convertToDatabaseTime(lease_->cltt_, lease_->valid_lft_, expire_);
 
         // subnet_id: int
         subnet_id_ = static_cast<cass_int32_t>(lease_->subnet_id_);
@@ -1503,7 +1500,7 @@ CqlLeaseMgr::getLease4(const IOAddress &addr) const {
     // Set up the WHERE clause value
     AnyArray data;
 
-    cass_int32_t address = static_cast<cass_int32_t>(addr.toUint32());
+    cass_int64_t address = static_cast<cass_int64_t>(addr.addressPlusPortToUint64());
     data.add(&address);
 
     // Get the data.
@@ -1833,7 +1830,7 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
               DHCPSRV_CQL_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
     AnyArray data;
-    uint64_t n_of_deleted_leases = 0u;
+    uint64_t deleted = 0u;
     cass_int32_t limit = 1024;
 
     // State is reclaimed.
@@ -1852,10 +1849,10 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_EXPIRE, data, leases);
     for (Lease6Ptr &lease : leases) {
         if (deleteLease(lease->addr_)) {
-            ++n_of_deleted_leases;
+            ++deleted;
         }
     }
-    return n_of_deleted_leases;
+    return (deleted);
 }
 
 size_t

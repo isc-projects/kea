@@ -40,7 +40,11 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       ciaddr_(DEFAULT_ADDRESS),
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS)
+      giaddr_(DEFAULT_ADDRESS),
+      address_plus_port_(false),
+      psid_offset_(0),
+      psid_len_(0),
+      psid_(0)
 {
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
@@ -59,7 +63,11 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       ciaddr_(DEFAULT_ADDRESS),
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS)
+      giaddr_(DEFAULT_ADDRESS),
+      address_plus_port_(false),
+      psid_offset_(0),
+      psid_len_(0),
+      psid_(0)
 {
 
     if (len < DHCPV4_PKT_HDR_LEN) {

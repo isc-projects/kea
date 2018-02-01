@@ -87,6 +87,22 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
             continue; // No? Let's try the next one.
         }
 
+        if (selector.address_plus_port_ &&
+            cfg4o6.getPsidOffset() == selector.psid_offset_ &&
+            cfg4o6.getPsidLen() == selector.psid_len_) {
+            return (*subnet);
+        }
+
+        if (selector.address_plus_port_ &&
+            cfg4o6.getPsidLen() && !selector.psid_len_) {
+            return (*subnet);
+        }
+
+        if (!selector.address_plus_port_ &&
+            (cfg4o6.getPsidOffset() || cfg4o6.getPsidLen())) {
+            continue;
+        }
+
         // First match criteria: check if we have a prefix/len defined.
         std::pair<asiolink::IOAddress, uint8_t> pref = cfg4o6.getSubnet4o6();
         if (!pref.first.isV6Zero()) {

@@ -39,11 +39,8 @@ namespace {
 
 class MySqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    MySqlLeaseMgrTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyMySQLSchema();
         createMySQLSchema();
@@ -59,7 +56,26 @@ public:
                          "*** accompanying exception output.\n";
             throw;
         }
+
         lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    /// @brief Destroys the LM and the schema.
+    void destroyTest() {
+        try {
+            lmptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
+        LeaseMgrFactory::destroy();
+        destroyMySQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    MySqlLeaseMgrTest() {
+        initializeTest();
     }
 
     /// @brief Destructor
@@ -67,9 +83,7 @@ public:
     /// Rolls back all pending transactions.  The deletion of lmptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlLeaseMgrTest() {
-        lmptr_->rollback();
-        LeaseMgrFactory::destroy();
-        destroyMySQLSchema();
+        destroyTest();
     }
 
     /// @brief Reopen the database

@@ -1181,7 +1181,7 @@ TEST_F(OptionCustomTest, recordDataWithSuboption) {
     ASSERT_NO_THROW(value0 = option->readInteger<uint32_t>(0));
     EXPECT_EQ(0x01020304, value0);
 
-    IOAddress value1 = 0;
+    IOAddress value1 = 0U;
     ASSERT_NO_THROW(value1 = option->readAddress(1));
     EXPECT_EQ("192.168.0.1", value1.toText());
 

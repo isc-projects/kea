@@ -85,6 +85,24 @@ public:
         initializeTest();
     }
 
+    /// @brief Destroys the LM and the schema.
+    void destroyTest() {
+        try {
+            lmptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
+        LeaseMgrFactory::destroy();
+        destroyCqlSchema(false, true);
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    CqlLeaseMgrTest() {
+        initializeTest();
+    }
+
     /// @brief Destructor
     ///
     /// Rolls back all pending transactions. The deletion of lmptr_ will close

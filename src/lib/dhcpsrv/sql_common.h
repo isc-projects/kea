@@ -32,9 +32,7 @@ enum ExchangeDataType {
     EXCHANGE_DATA_TYPE_TIMESTAMP,
     EXCHANGE_DATA_TYPE_STRING,
     EXCHANGE_DATA_TYPE_BYTES,
-    EXCHANGE_DATA_TYPE_UUID,
-    EXCHANGE_DATA_TYPE_UDT,       ///< User-Defined Type (used in Cassandra)
-    EXCHANGE_DATA_TYPE_COLLECTION ///< Collection (used in Cassandra)
+    EXCHANGE_DATA_TYPE_UUID
 };
 
 /// @brief Base class for backend exchanges.

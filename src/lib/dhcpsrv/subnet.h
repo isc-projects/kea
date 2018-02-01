@@ -28,6 +28,8 @@
 namespace isc {
 namespace dhcp {
 
+typedef std::set<uint16_t> PSIDContainer;
+
 class Subnet : public virtual UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
@@ -519,6 +521,18 @@ public:
         return (dhcp4o6_);
     }
 
+    /// @brief Returns container with excluded PSIDs.
+    ///
+    /// @return container with excluded PSIDs
+    PSIDContainer& getExcludedPSIDs() {
+        return (excludedPSIDs);
+    }
+
+    /// @brief Returns if address contains excluded PSID.
+    ///
+    /// @return true if address contains excluded PSID, false otherwise
+    bool isExcludedAddress(const asiolink::IOAddress& address);
+
     /// @brief Unparse a subnet object.
     ///
     /// @return A pointer to unparsed subnet configuration.
@@ -551,6 +565,9 @@ private:
 
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;
+
+    /// @brief container with excluded PSIDs
+    PSIDContainer excludedPSIDs;
 };
 
 class Subnet6;

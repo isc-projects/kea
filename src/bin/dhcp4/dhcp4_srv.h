@@ -261,6 +261,11 @@ public:
     /// @param rsp A pointer to the response
     void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp);
 
+    /// @brief Update DHCPv4 packet with address plus port information.
+    ///
+    /// @param query A pointer to the packet to be updated.
+    void updateDhcpV4AddressPlusPortPacket(Pkt4Ptr& query);
+
     /// @brief Instructs the server to shut down.
     void shutdown();
 

@@ -81,6 +81,10 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  TCP_NODELAY "tcp-nodelay"
+  RECONNECT_WAIT_TIME "reconnect-wait-time"
+  REQUEST_TIMEOUT "request-timeout"
+  TCP_KEEPALIVE "tcp-keepalive"
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
 
@@ -92,6 +96,9 @@ using namespace std;
   SUBNET_4O6_INTERFACE "4o6-interface"
   SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
   SUBNET_4O6_SUBNET "4o6-subnet"
+  SUBNET_V4_PSID_OFFSET "v4-psid-offset"
+  SUBNET_V4_PSID_LEN "v4-psid-len"
+  SUBNET_V4_EXCLUDED_PSIDS "v4-excluded-psids"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
   NAME "name"
@@ -470,7 +477,6 @@ match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
     ctx.stack_.back()->set("match-client-id", match);
 };
 
-
 interfaces_config: INTERFACES_CONFIG {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces-config", i);
@@ -582,6 +588,10 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | tcp_nodelay
+                  | reconnect_wait_time
+                  | request_timeout
+                  | tcp_keepalive
                   | contact_points
                   | keyspace
                   | unknown_map_entry
@@ -657,6 +667,26 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
+tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-nodelay", n);
+};
+
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
+request_timeout: REQUEST_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("request-timeout", n);
+};
+
+tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-keepalive", n);
+};
+
 contact_points: CONTACT_POINTS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -672,7 +702,6 @@ keyspace: KEYSPACE {
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
 };
-
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -927,6 +956,9 @@ subnet4_param: valid_lifetime
              | subnet_4o6_interface
              | subnet_4o6_interface_id
              | subnet_4o6_subnet
+             | subnet_v4_psid_offset
+             | subnet_v4_psid_len
+             | subnet_v4_excluded_psids
              | user_context
              | comment
              | unknown_map_entry
@@ -961,6 +993,28 @@ subnet_4o6_subnet: SUBNET_4O6_SUBNET {
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("4o6-subnet", iface);
+    ctx.leave();
+};
+
+subnet_v4_psid_offset: SUBNET_V4_PSID_OFFSET COLON INTEGER {
+    ElementPtr offset(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("v4-psid-offset", offset);
+};
+
+subnet_v4_psid_len: SUBNET_V4_PSID_LEN COLON INTEGER {
+    ElementPtr psid_len(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("v4-psid-len", psid_len);
+};
+
+// This defines the "v4-excluded-psids": [ ... ] entry that may appear
+// in subnet4 entries.
+subnet_v4_excluded_psids: SUBNET_V4_EXCLUDED_PSIDS {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("v4-excluded-psids", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON LSQUARE_BRACKET list_content RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 
@@ -1826,7 +1880,7 @@ replace_client_name: REPLACE_CLIENT_NAME {
 
 replace_client_name_value:
     WHEN_PRESENT {
-      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
       }
   | NEVER {
       $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));

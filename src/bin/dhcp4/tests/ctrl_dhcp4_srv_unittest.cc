@@ -92,7 +92,7 @@ public:
 /// @brief Default control connection timeout.
 const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
 
-/// @brief Fixture class intended for testin control channel in the DHCPv4Srv
+/// @brief Fixture class intended for testing control channel in the DHCPv4Srv
 class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
 public:
 

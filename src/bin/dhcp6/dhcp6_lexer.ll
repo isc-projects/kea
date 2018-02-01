@@ -36,7 +36,7 @@ unsigned int comment_start_line = 0;
 
 using namespace isc::dhcp;
 
-};
+}
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
@@ -572,6 +572,46 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("lfc-interval", driver.loc_);
+    }
+}
+
+\"tcp-nodelay\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_TCP_NODELAY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-nodelay", driver.loc_);
+    }
+}
+
+\"reconnect-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("reconnect-wait-time", driver.loc_);
+    }
+}
+
+\"request-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_REQUEST_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("request-timeout", driver.loc_);
+    }
+}
+
+\"tcp-keepalive\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_TCP_KEEPALIVE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-keepalive", driver.loc_);
     }
 }
 
@@ -1238,7 +1278,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_STRING("hooks-libraries", driver.loc_);
     }
 }
-
 
 \"parameters\" {
     switch(driver.ctx_) {

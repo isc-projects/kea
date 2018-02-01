@@ -279,8 +279,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr())
-    {
+    Lease4() : Lease(0U, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()) {
     }
 
     /// @brief Copy constructor
@@ -420,7 +419,6 @@ typedef std::vector<Lease4Ptr> Lease4Collection;
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease6 : public Lease {
-
     /// @brief Lease type
     ///
     /// One of normal address, temporary address, or prefix.

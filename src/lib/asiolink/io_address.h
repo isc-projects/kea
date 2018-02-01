@@ -38,20 +38,20 @@ namespace asiolink {
     ///     separators.
     static constexpr size_t V6ADDRESS_TEXT_MAX_LEN = 39u;
 
-/// \brief The \c IOAddress class represents an IP addresses (version
+/// @brief The \c IOAddress class represents an IP addresses (version
 /// agnostic)
 ///
 /// This class is a wrapper for the ASIO \c ip::address class.
 class IOAddress {
 public:
     ///
-    /// \name Constructors and Destructor
+    /// @name Constructors and Destructor
     ///
     /// This class is copyable.  We use default versions of copy constructor
     /// and the assignment operator.
     /// We use the default destructor.
     //@{
-    /// \brief Constructor from string.
+    /// @brief Constructor from string.
     ///
     /// This constructor converts a textual representation of IPv4 and IPv6
     /// addresses into an IOAddress object.
@@ -60,17 +60,34 @@ public:
     /// This constructor allocates memory for the object, and if that fails
     /// a corresponding standard exception will be thrown.
     ///
-    /// \param address_str Textual representation of address.
+    /// @param address_str Textual representation of address.
     IOAddress(const std::string& address_str);
 
-    /// \brief Constructor from an ASIO \c ip::address object.
+    /// @brief Constructor from string.
+    ///
+    /// This constructor converts a textual representation of IPv4, IPV4
+    /// address plus port and IPv6
+    /// addresses into an IOAddress object.
+    /// If \c address_str is not a valid representation of any type of
+    /// address, an exception of class \c IOError will be thrown.
+    /// This constructor allocates memory for the object, and if that fails
+    /// a corresponding standard exception will be thrown.
+    ///
+    /// @param address_str Textual representation of address.
+    /// @param offset value of offset in IPv4 address plus port.
+    /// @param psid_len value of psid_len in IPv4 address plus port.
+    /// @param psid value of psid in IPv4 address plus port.
+    IOAddress(const std::string& address_str, uint8_t offset, uint8_t psid_len,
+            uint16_t psid);
+
+    /// @brief Constructor from an ASIO \c ip::address object.
     ///
     /// This constructor is intended to be used within the wrapper
     /// implementation; user applications of the wrapper API won't use it.
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param asio_address The ASIO \c ip::address to be converted.
+    /// @param asio_address The ASIO \c ip::address to be converted.
     IOAddress(const boost::asio::ip::address& asio_address);
     //@}
 
@@ -83,112 +100,136 @@ public:
     /// @param v4address IPv4 address represented by uint32_t
     IOAddress(uint32_t v4address);
 
-    /// \brief Convert the address to a string.
+    /// @brief Constructor for ip::address_v4 address plus port object.
+    ///
+    /// This constructor is intended to be used when constructing
+    /// IPv4 address plus port out of uint32_t type, uint8_t offset,
+    /// uint8_t psid_len and uint16_t psid. Passed value for address
+    /// must be in network byte order
+    ///
+    /// @param v4address IPv4 address represented by uint32_t
+    /// @param offset PSID offset (see https://tools.ietf.org/html/rfc7618)
+    /// @param psid_len PSID length
+    /// @param psid PSID value
+    IOAddress(uint32_t v4address,
+              uint8_t offset,
+              uint8_t psid_len,
+              uint16_t psid);
+
+    /// @brief Constructor for ip::address_v4 address plus port object.
+    ///
+    /// This constructor is intended to be used when constructing
+    /// IPv4 address plus port out of uint64_t type.
+    ///
+    /// @param v4address IPv4 address plus port represented by uint64_t
+    IOAddress(uint64_t v4address);
+
+    /// @brief Convert the address to a string.
     ///
     /// This method is basically expected to be exception free, but
     /// generating the string will involve resource allocation,
     /// and if it fails the corresponding standard exception will be thrown.
     ///
-    /// \return A string representation of the address.
+    /// @return A string representation of the address.
     std::string toText() const;
 
-    /// \brief Returns the address family
+    /// @brief Returns the address family
     ///
-    /// \return AF_INET for IPv4 or AF_INET6 for IPv6.
+    /// @return AF_INET for IPv4 or AF_INET6 for IPv6.
     short getFamily() const;
 
-    /// \brief Convenience function to check for an IPv4 address
+    /// @brief Convenience function to check for an IPv4 address
     ///
-    /// \return true if the address is a V4 address
+    /// @return true if the address is a V4 address
     bool isV4() const {
         return (asio_address_.is_v4());
     }
 
-    /// \brief Convenience function to check if it is an IPv4 zero address.
+    /// @brief Convenience function to check if it is an IPv4 zero address.
     ///
-    /// \return true if the address is the zero IPv4 address.
+    /// @return true if the address is the zero IPv4 address.
     bool isV4Zero() const {
         return (equals(IPV4_ZERO_ADDRESS()));
     }
 
-    /// \brief Convenience function to check if it is an IPv4 broadcast
+    /// @brief Convenience function to check if it is an IPv4 broadcast
     ///        address.
     ///
-    /// \return true if the address is the broadcast IPv4 address.
+    /// @return true if the address is the broadcast IPv4 address.
     bool isV4Bcast() const {
         return (equals(IPV4_BCAST_ADDRESS()));
     }
 
-    /// \brief Convenience function to check for an IPv6 address
+    /// @brief Convenience function to check for an IPv6 address
     ///
-    /// \return true if the address is a V6 address
+    /// @return true if the address is a V6 address
     bool isV6() const {
         return (asio_address_.is_v6());
     }
 
-    /// \brief Convenience function to check if it is an IPv4 zero address.
+    /// @brief Convenience function to check if it is an IPv4 zero address.
     ///
-    /// \return true if the address is the zero IPv4 address.
+    /// @return true if the address is the zero IPv4 address.
     bool isV6Zero() const {
         return (equals(IPV6_ZERO_ADDRESS()));
     }
 
-    /// \brief checks whether and address is IPv6 and is link-local
+    /// @brief checks whether and address is IPv6 and is link-local
     ///
-    /// \return true if the address is IPv6 link-local, false otherwise
+    /// @return true if the address is IPv6 link-local, false otherwise
     bool isV6LinkLocal() const;
 
-    /// \brief checks whether and address is IPv6 and is multicast
+    /// @brief checks whether and address is IPv6 and is multicast
     ///
-    /// \return true if the address is IPv6 multicast, false otherwise
+    /// @return true if the address is IPv6 multicast, false otherwise
     bool isV6Multicast() const;
 
-    /// \brief Creates an address from over wire data.
+    /// @brief Creates an address from over wire data.
     ///
     /// \param family AF_INET for IPv4 or AF_INET6 for IPv6.
     /// \param data pointer to first char of data
     ///
-    /// \return Created IOAddress object
+    /// @return Created IOAddress object
     static IOAddress fromBytes(short family, const uint8_t* data);
 
-    /// \brief Return address as set of bytes
+    /// @brief Return address as set of bytes
     ///
-    /// \return Contents of the address as a set of bytes in network-byte
+    /// @return Contents of the address as a set of bytes in network-byte
     ///         order.
     std::vector<uint8_t> toBytes() const;
 
-    /// \brief Compare addresses for equality
+    /// @brief Compare addresses for equality
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// \return true if addresses are equal, false if not.
+    /// @return true if addresses are equal, false if not.
     bool equals(const IOAddress& other) const {
         return (asio_address_ == other.asio_address_);
     }
 
-    /// \brief Compare addresses for equality
+    /// @brief Compare addresses for equality
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// \return true if addresses are equal, false if not.
+    /// @return true if addresses are equal, false if not.
     bool operator==(const IOAddress& other) const {
         return equals(other);
     }
 
-    /// \brief Compare addresses for inequality
+    /// @brief Compare addresses for inequality
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// \return false if addresses are equal, true if not.
+    /// @return false if addresses are equal, true if not.
     bool nequals(const IOAddress& other) const {
         return (!equals(other));
     }
 
-    /// \brief Checks if one address is smaller than the other
+    /// @brief Checks if one address is smaller than the other
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// \return true if this address is smaller than the other address.
+    /// @return true if this address is smaller than the other address.
     ///
     /// It is useful for comparing which address is bigger.
     /// Operations within one protocol family are obvious.
@@ -205,11 +246,11 @@ public:
         return (this->getFamily() < other.getFamily());
     }
 
-    /// \brief Checks if one address is smaller or equal than the other
+    /// @brief Checks if one address is smaller or equal than the other
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// \return true if this address is smaller than the other address.
+    /// @return true if this address is smaller than the other address.
     bool smallerEqual(const IOAddress& other) const {
         if (equals(other)) {
             return (true);
@@ -217,29 +258,29 @@ public:
         return (lessThan(other));
     }
 
-    /// \brief Checks if one address is smaller than the other
+    /// @brief Checks if one address is smaller than the other
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// See \ref lessThan method for details.
+    /// See @ref lessThan method for details.
     bool operator<(const IOAddress& other) const {
         return (lessThan(other));
     }
 
-    /// \brief Checks if one address is smaller or equal than the other
+    /// @brief Checks if one address is smaller or equal than the other
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// See \ref smallerEqual method for details.
+    /// See @ref smallerEqual method for details.
     bool operator<=(const IOAddress& other) const {
         return (smallerEqual(other));
     }
 
-    /// \brief Compare addresses for inequality
+    /// @brief Compare addresses for inequality
     ///
-    /// \param other Address to compare against.
+    /// @param other Address to compare against.
     ///
-    /// \return false if addresses are equal, true if not.
+    /// @return false if addresses are equal, true if not.
     bool operator!=(const IOAddress& other) const {
         return (nequals(other));
     }
@@ -282,32 +323,43 @@ public:
     /// could take extra parameter that specifies the value by which the
     /// address should be increased.
     ///
-    /// @param addr address to be increased
+    /// @param addr address being increased
+    /// @param offset PSID offset
+    /// @param psid_len PSID length
     /// @return address increased by one
     static IOAddress
-    increase(const IOAddress& addr);
+    increase(const IOAddress& addr, uint8_t offset = 0, uint8_t psid_len = 0);
 
-    /// \brief Converts IPv4 address to uint32_t
+    /// @brief Converts IPv4 address to uint32_t
     ///
     /// Will throw BadValue exception if that is not IPv4
     /// address.
     ///
-    /// \return uint32_t that represents IPv4 address in
+    /// @return uint32_t that represents IPv4 address in
     ///         network byte order
     uint32_t toUint32() const;
+
+    /// @brief Converts IPv4 address plus port to uint64_t
+    ///
+    /// Will throw BadValue exception if that is not IPv4
+    /// address.
+    ///
+    /// @return uint64_t that represents IPv4 address plus port in
+    ///         network byte order
+    uint64_t addressPlusPortToUint64() const;
 
     /// @name Methods returning @c IOAddress objects encapsulating typical addresses.
     ///
     //@{
     /// @brief Returns an address set to all zeros.
     static const IOAddress& IPV4_ZERO_ADDRESS() {
-        static IOAddress address(0);
+        static IOAddress address(0U);
         return (address);
     }
 
     /// @brief Returns a "255.255.255.255" broadcast address.
     static const IOAddress& IPV4_BCAST_ADDRESS() {
-        static IOAddress address(0xFFFFFFFF);
+        static IOAddress address(0xFFFFFFFFU);
         return (address);
     }
 
@@ -317,13 +369,28 @@ public:
         return (address);
     }
 
+    uint8_t getPsidOffset() const {
+        return offset_;
+    }
+
+    uint8_t getPsidLen() const {
+        return psid_len_;
+    }
+
+    uint16_t getPsid() const {
+        return psid_;
+    }
+
     //@}
 
 private:
     boost::asio::ip::address asio_address_;
+    uint8_t offset_;
+    uint8_t psid_len_;
+    uint16_t psid_;
 };
 
-/// \brief Insert the IOAddress as a string into stream.
+/// @brief Insert the IOAddress as a string into stream.
 ///
 /// This method converts the \c address into a string and inserts it
 /// into the output stream \c os.
@@ -331,10 +398,10 @@ private:
 /// This function overloads the global operator<< to behave as described
 /// in ostream::operator<< but applied to \c IOAddress objects.
 ///
-/// \param os A \c std::ostream object on which the insertion operation is
+/// @param os A \c std::ostream object on which the insertion operation is
 /// performed.
-/// \param address The \c IOAddress object output by the operation.
-/// \return A reference to the same \c std::ostream object referenced by
+/// @param address The \c IOAddress object output by the operation.
+/// @return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream&
 operator<<(std::ostream& os, const IOAddress& address);

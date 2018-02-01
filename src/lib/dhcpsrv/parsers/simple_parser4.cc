@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <cc/data.h>
 #include <boost/foreach.hpp>
@@ -83,6 +85,8 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
+    { "v4-psid-offset",   Element::integer, "0" },
+    { "v4-psid-len",      Element::integer, "0" },
 };
 
 /// @brief This table defines default values for each IPv4 subnet that is
@@ -96,6 +100,8 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
+    { "v4-psid-offset",   Element::integer, "0" },
+    { "v4-psid-len",      Element::integer, "0" },
 };
 
 /// @brief This table defines default values for each IPv4 shared network.

@@ -352,7 +352,7 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
 
     // Fetch the parameters in the config, performing any logical
     // validation required.
-    asiolink::IOAddress ip_address(0);
+    asiolink::IOAddress ip_address(0U);
     uint32_t port = 0;
     uint32_t dns_server_timeout = 0;
     dhcp_ddns::NameChangeProtocol ncr_protocol = dhcp_ddns::NCR_UDP;

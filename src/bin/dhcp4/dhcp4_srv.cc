@@ -650,6 +650,10 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
         }
     }
 
+    selector.address_plus_port_ = query->getAddressPlusPort();
+    selector.psid_offset_ = query->getPsidOffset();
+    selector.psid_len_ = query->getPsidLen();
+
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet4o6(selector);
 
@@ -1047,6 +1051,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
         callout_handle->getArgument("query4", query);
     }
 
+    updateDhcpV4AddressPlusPortPacket(query);
     try {
         switch (query->getType()) {
         case DHCPDISCOVER:
@@ -1149,6 +1154,36 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
             LOG_ERROR(options4_logger, DHCP4_PACKET_PACK_FAIL)
                 .arg(rsp->getLabel())
                 .arg(e.what());
+        }
+    }
+}
+
+void Dhcpv4Srv::updateDhcpV4AddressPlusPortPacket(Pkt4Ptr& query) {
+    OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<OptionUint8Array>
+        (query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+    if (option_prl) {
+        // PRL option exists, so check if the portparams option code is
+        // included in it.
+        const std::vector<uint8_t>&
+            requested_opts = option_prl->getValues();
+        if (std::find(requested_opts.begin(), requested_opts.end(),
+                DHO_V4_PORTPARAMS) != requested_opts.end()) {
+            // Client has requested DHO_V4_PORTPARAMS via Parameter Request
+            // List option.
+            query->setAddressPlusPort(true);
+            OptionPtr portparams = query->getOption(DHO_V4_PORTPARAMS);
+            if (portparams) {
+                OptionCustomPtr oc = boost::dynamic_pointer_cast<OptionCustom>(portparams);
+                if (oc) {
+                    // Read offset for address plus port
+                    query->setPsidOffset(PSIDOffset(oc->readInteger<uint8_t>(0)).asUint8());
+                    PSIDTuple psid;
+                    // Read PSID length / PSID value for address plus port
+                    psid = oc->readPsid(1);
+                    query->setPsidLen(psid.first.asUint8());
+                    query->setPsid(psid.second.asUint16());
+                }
+            }
         }
     }
 }
@@ -1767,11 +1802,11 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         OptionCustom>(query->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     IOAddress hint(IOAddress::IPV4_ZERO_ADDRESS());
     if (opt_requested_address) {
-        hint = opt_requested_address->readAddress();
-
+        hint = IOAddress(opt_requested_address->readAddress().toText(),
+                query->getPsidOffset(), query->getPsidLen(), query->getPsid());
     } else if (!query->getCiaddr().isV4Zero()) {
-        hint = query->getCiaddr();
-
+        hint = IOAddress(query->getCiaddr().toText(),
+                query->getPsidOffset(), query->getPsidLen(), query->getPsid());
     }
 
     HWAddrPtr hwaddr = query->getHWAddr();
@@ -2024,6 +2059,16 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                                                 DHO_DHCP_REBINDING_TIME,
                                                 subnet->getT2()));
             resp->addOption(t2);
+        }
+
+        if (subnet->get4o6().enabled() && subnet->get4o6().getPsidLen() &&
+                subnet->get4o6().getPsidLen() == lease->addr_.getPsidLen()) {
+            OptionDefinitionPtr portparams_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                    DHO_V4_PORTPARAMS);
+            OptionCustomPtr portparams(new OptionCustom(*portparams_def, Option::V4));
+            portparams->writeInteger<uint8_t>(lease->addr_.getPsidOffset(), 0);
+            portparams->writePsid(PSIDLen(lease->addr_.getPsidLen()), PSID(lease->addr_.getPsid()), 1);
+            resp->addOption(portparams);
         }
 
         // Create NameChangeRequests if DDNS is enabled and this is a
