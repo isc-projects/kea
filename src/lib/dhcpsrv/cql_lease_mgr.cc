@@ -361,7 +361,7 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         address_ = static_cast<cass_int64_t>(lease_->addr_.addressPlusPortToUint64());
 
         // hwaddr: blob
-        if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
+        if (lease_->hwaddr_ && lease_->hwaddr_->hwaddr_.size() > 0) {
             if (lease_->hwaddr_->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
                 isc_throw(DbOperationError,
                           "hardware address "
@@ -376,7 +376,7 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         }
 
         // client_id: blob
-        if (lease_->client_id_ && lease->client_id_->getClientId().size() > 0) {
+        if (lease_->client_id_ && lease_->client_id_->getClientId().size() > 0) {
             client_id_ = lease_->client_id_->getClientId();
         } else {
             client_id_.clear();
@@ -454,7 +454,7 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         address_ = static_cast<cass_int64_t>(lease_->addr_.addressPlusPortToUint64());
 
         // hwaddr: blob
-        if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
+        if (lease_->hwaddr_ && lease_->hwaddr_->hwaddr_.size() > 0) {
             if (lease_->hwaddr_->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
                 isc_throw(DbOperationError,
                           "hardware address "
@@ -469,7 +469,7 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         }
 
         // client_id: blob
-        if (lease_->client_id_ && lease->client_id_->getClientId().size() > 0) {
+        if (lease_->client_id_ && lease_->client_id_->getClientId().size() > 0) {
             client_id_ = lease_->client_id_->getClientId();
         } else {
             client_id_.clear();
@@ -1022,7 +1022,7 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         hostname_ = lease_->hostname_;
 
         // hwaddr: blob
-        if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
+        if (lease_->hwaddr_ && lease_->hwaddr_->hwaddr_.size() > 0) {
             if (lease_->hwaddr_->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
                 isc_throw(DbOperationError, "hardware address " << lease_->hwaddr_->toText()
                           << " of length " << lease_->hwaddr_->hwaddr_.size()
@@ -1152,7 +1152,7 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         hostname_ = lease_->hostname_;
 
         // hwaddr: blob
-        if (lease_->hwaddr_ && lease->hwaddr_->hwaddr_.size() > 0) {
+        if (lease_->hwaddr_ && lease_->hwaddr_->hwaddr_.size() > 0) {
             if (lease_->hwaddr_->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
                 isc_throw(DbOperationError,
                           "hardware address "
