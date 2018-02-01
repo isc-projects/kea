@@ -41,7 +41,7 @@ extern const int MLM_MYSQL_FETCH_FAILURE;
 /// @name Current database schema version values.
 //@{
 const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 5;
-const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 1;
+const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 2;
 
 //@}
 

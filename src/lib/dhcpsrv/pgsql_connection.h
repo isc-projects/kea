@@ -17,9 +17,9 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Define PostgreSQL backend version: 3.2
+/// @brief Define PostgreSQL backend version: 3.3
 const uint32_t PG_SCHEMA_VERSION_MAJOR = 3;
-const uint32_t PG_SCHEMA_VERSION_MINOR = 2;
+const uint32_t PG_SCHEMA_VERSION_MINOR = 3;
 
 // Maximum number of parameters that can be used a statement
 // @todo This allows us to use an initializer list (since we can't

@@ -493,7 +493,7 @@ INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 UPDATE schema_version
     SET version = '3', minor = '1';
 
--- Set 3.2 schema version.
+-- Schema 3.1 specification ends here.
 
 -- Remove constraints which perform too restrictive checks on the inserted
 -- host reservations. We want to be able to insert host reservations which
@@ -528,8 +528,22 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
 UPDATE schema_version
     SET version = '3', minor = '2';
 
+-- Schema 3.2 specification ends here.
 
--- Commit the script transaction.
+-- Change subnet ID columns type to BIGINT to match lease4/6 tables 
+ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+
+ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+-- Set 3.3 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '3';
+
+-- Schema 3.3 specification ends here.
+
+-- Commit the script transaction
 COMMIT;
 
 -- Notes:
