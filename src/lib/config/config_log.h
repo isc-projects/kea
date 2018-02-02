@@ -21,7 +21,7 @@ namespace config {
 extern isc::log::Logger command_logger;
 
 // Enumerate configuration elements as they are processed.
-const int DBG_COMMAND = isc::log::DBGLVL_COMMAND;
+extern const int DBG_COMMAND;
 
 } // namespace config
 } // namespace isc
