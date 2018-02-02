@@ -964,7 +964,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
 
     // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    LeaseMgrFactory::instance().deleteLease(lease);
 
     // Apply restrictions on the pool1. This should be only assigned
     // to clients belonging to cable-modem class.
@@ -980,7 +980,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
 
     // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    LeaseMgrFactory::instance().deleteLease(lease);
 
     // Assign cable-modem class and try again. This time, we should
     // offer an address from the pool1.
