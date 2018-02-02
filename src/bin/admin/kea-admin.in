@@ -25,6 +25,11 @@ db_host="localhost"
 db_user="keatest"
 db_password="keatest"
 db_name="keatest"
+db_server_address=""
+db_server_port=""
+
+# These are CQL default parameters
+db_server_version=""
 
 # lease dump parameters
 dump_type=0
@@ -50,7 +55,12 @@ usage() {
     printf "\n"
     printf "COMMAND: Currently supported operations are:\n"
     printf "\n"
+    printf " - -h or --help: Displays this help.\n"
+    printf " - db-create: Creates new empty databases. Useful for first time installation.\n"
+    printf " - db-remove: Removes an existing database.\n"
+    printf " - create-db-and-users: internal use only\n"
     printf " - lease-init: Initializes new lease database. Useful for first time installation.\n"
+    printf " - lease-drop: Drops all tables in the lease database. \n"
     printf " - lease-version: Checks version of the existing lease database scheme. Useful\n"
     printf " -                for checking lease DB version when preparing for an upgrade.\n"
     printf " - lease-upgrade: Upgrades your lease database scheme\n"
@@ -60,6 +70,9 @@ usage() {
     printf "\n"
     printf "PARAMETERS: Parameters are optional in general, but may be required\n"
     printf "            for specific operation.\n"
+    printf " -s or --server - specifies remote database server address\n"
+    printf " -sp or --server-port - specifies remote database server port\n"
+    printf " --db-server-version - specifies remote database version\n"
     printf " -h or --host hostname - specifies a hostname of a database to connect to\n"
     printf " -u or --user name - specifies username when connecting to a database\n"
     printf " -p or --password pass - specifies a password when connecting to a database\n"
@@ -130,7 +143,7 @@ memfile_init() {
 # some extra sanity checks. It will refuse to use it if there are any
 # existing tables. It's better safe than sorry.
 mysql_init() {
-    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+    printf "Checking if there is a database initialized already.\n"
 
     # Let's try to count the number of tables. Anything above 0 means that there
     # is some database in place. If there is anything, we abort. Note that
@@ -140,7 +153,7 @@ mysql_init() {
     #
     RESULT=`mysql_execute "SHOW TABLES;"`
     ERRCODE=$?
-    if [ $ERRCODE -ne  0 ]
+    if [ $ERRCODE -ne 0 ]
     then
         log_error "mysql_init table query failed, mysql status = $ERRCODE"
         exit 1
@@ -155,7 +168,7 @@ mysql_init() {
     fi
 
     printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
-    mysql -B --host=$db_host --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
+    mysql_execute_script $scripts_dir/mysql/dhcpdb_create.mysql
     ERRCODE=$?
 
     printf "mysql returned status code $ERRCODE\n"
@@ -169,8 +182,88 @@ mysql_init() {
     exit $ERRCODE
 }
 
+#Creates a new, empty MySQL database.
+mysql_db_create() {
+    for name in $(echo $db_name  | tr "," "\n")
+    do
+        printf "Creating '$name' database\n"
+
+        command="CREATE DATABASE $name;"
+        RESULT=`mysql_execute_no_dbname "$command"`
+        ERRCODE=$?
+        if [ $ERRCODE -ne 0 ]
+        then
+            log_error "Database creation failed, status code: $ERRCODE?"
+            exit 1
+        fi
+
+        printf "The database has been created.\n"
+   done
+   exit 0
+}
+
+#Removes an existing MySQL database.
+mysql_db_remove() {
+    for name in $(echo $db_name  | tr "," "\n")
+    do
+        printf "Removing '$name' database\n"
+
+        command="DROP DATABASE $name;"
+        RESULT=`mysql_execute_no_dbname "$command"`
+        ERRCODE=$?
+        if [ $ERRCODE -ne 0 ]
+        then
+            log_error "Database deletion failed, status code: $ERRCODE?"
+            exit 1
+        fi
+
+        printf "The database has been removed.\n"
+    done
+    exit 0
+}
+
+#Creates a new, empty Postgresql database.
+pgsql_db_create() {
+    for name in $(echo $db_name  | tr "," "\n")
+    do
+        printf "Creating '$name' database\n"
+
+        command="CREATE DATABASE $name;"
+        RESULT=`pgsql_execute_no_dbname "$command"`
+        ERRCODE=$?
+        if [ $ERRCODE -ne 0 ]
+        then
+            log_error "Database creation failed, status code: $ERRCODE?"
+            exit 1
+        fi
+
+        printf "The database has been created.\n"
+   done
+   exit 0
+}
+
+#Removes an existing MySQL database.
+pgsql_db_remove() {
+    for name in $(echo $db_name  | tr "," "\n")
+    do
+        printf "Removing '$name' database\n"
+
+        command="DROP DATABASE $name;"
+        RESULT=`pgsql_execute_no_dbname "$command"`
+        ERRCODE=$?
+        if [ $ERRCODE -ne 0 ]
+        then
+            log_error "Database deletion failed, status code: $ERRCODE?"
+            exit 1
+        fi
+
+        printf "The database has been removed.\n"
+    done
+    exit 0
+}
+
 pgsql_init() {
-    printf "Checking if there is a database initialized already. Please ignore errors.\n"
+    printf "Checking if there is a database initialized already.\n"
 
     # Let's try to count the number of tables. Anything above 0 means that there
     # is some database in place. If there is anything, we abort.
@@ -202,24 +295,106 @@ pgsql_init() {
     exit 0
 }
 
-cql_init() {
-    printf "Checking if there is a database initialized already... Please ignore errors.\n"
+# Creates a new, empty CQL database.
+cql_db_create() {
+    #setting default values for the keyspace strategy and replication
+    strategy="SimpleStrategy"
+    replication="1"
 
-    result=$(cql_execute "DESCRIBE tables;")
-    if [ $(echo "$result" | grep "<empty>" | wc -w) -gt 0 ]; then
-        printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
-        cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
-    else
-        log_error "Expected empty database $db_name, but the following tables are present \n$result. Aborting."
-        exit 2
-    fi
+    for name in $(echo $db_name  | tr "," "\n")
+    do
+        printf "Creating '$name' keyspace\n"
 
-    version=$(cql_version)
-    printf "Lease DB version reported after initialization: %s\n" "$version"
+        command="create KEYSPACE $name WITH REPLICATION = { 'class' : '$strategy', 'replication_factor' : $replication };"
+        RESULT=`cql_execute_no_keyspace "$command"`
+        ERRCODE=$?
+        if [ "$ERRCODE" -ne 0 ]; then
+            log_error "Keyspace creation failed, status code: $ERRCODE?"
+            exit 1
+        fi
+
+        printf "The keyspace has been created.\n"
+    done
 
     exit 0
 }
 
+# Removes an existing CQL database.
+cql_db_remove() {
+    for name in $(echo $db_name  | tr "," "\n")
+    do
+        printf "Removing '$name' keyspace\n"
+
+        command="drop KEYSPACE $name"
+        RESULT=`cql_execute_no_keyspace "$command"`
+        ERRCODE=$?
+        if [ "$ERRCODE" -ne 0 ]; then
+            log_error "Keyspace deletion failed, status code: $ERRCODE?"
+            exit 1
+        fi
+
+        printf "The keyspace has been removed.\n"
+    done
+
+    exit 0
+}
+
+cql_init() {
+    printf "Checking if there is a database initialized already...\n"
+
+    result=$(cql_execute "DESCRIBE tables;")
+    cql_exit_code=${?}
+    if [ $(echo "$result" | grep "<empty>" | wc -w) -gt 0 ]; then
+        printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
+        cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
+    else
+        if [ ${cql_exit_code} -eq 0 ]; then
+          log_error "ERROR: Expected empty database $db_name, but the following tables are present: \n$result. Aborting."
+        else
+          log_error "ERROR: Unable to execute cql_execute, reason: \n$result. Aborting."
+        fi
+        exit 2
+    fi
+
+    version=$(cql_version)
+    printf "Lease DB version reported after initialization: %s\n" "${version}"
+
+    exit 0
+}
+
+# Drop functions
+memfile_drop() {
+    # @todo Implement this as part of #3601
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+mysql_drop() {
+    script=$scripts_dir/mysql/dhcpdb_drop.mysql
+    printf "Droping tables in database using script $script%s\n"
+    mysql -B --user=$db_user --password=$db_password $db_name < $script
+    return_code=$?
+    printf "mysql_drop returned with code $return_code\n"
+    exit $return_code
+}
+
+pgsql_drop() {
+    script="$scripts_dir/pgsql/dhcpdb_drop.pgsql"
+    printf "Droping tables in database using script $script%s\n"
+    pgsql_execute_script $script
+    return_code=$?
+    printf "pgsql_drop returned with code $return_code\n"
+    exit $return_code
+}
+
+cql_drop() {
+    script="$scripts_dir/cql/dhcpdb_drop.cql"
+    printf "Droping tables in database using script $script%s\n"
+    cql_execute_script $script
+    return_code=$?
+    printf "cql_drop returned with code $return_code\n"
+    exit $return_code
+}
 ### Functions that implement database version checking commands
 memfile_version() {
     # @todo Implement this as part of #3601
@@ -324,7 +499,11 @@ cql_upgrade() {
         for script in ${scripts_dir}/cql/upgrade*.sh
         do
             echo "Processing $script file..."
-            sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+            if [ -z ${db_server_version} ]; then
+                sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+            else
+                sh ${script} -u ${db_user} -p ${db_password} -k ${db_name} --cqlversion=${db_server_version}
+            fi
         done
     else
         echo "No upgrade script available."
@@ -528,6 +707,57 @@ cql_dump() {
     exit 0
 }
 
+
+memfile_create_database_and_users() {
+    log_error "NOT IMPLEMENTED"
+    exit 1
+}
+
+mysql_create_database_and_users() {
+    mysql_execute "GRANT ALL ON *.* TO keatest IDENTIFIED BY 'keatest';" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
+    mysql_execute "CREATE DATABASE keatest;" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
+    mysql_execute "GRANT SELECT ON keatest.* TO keatest_readonly IDENTIFIED BY 'keatest';" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
+    exit 0
+}
+
+pgsql_create_database_and_users() {
+    export PGPASSWORD=${db_password}
+    query="DO
+\$body\$
+BEGIN
+   IF NOT EXISTS (
+      SELECT usename
+      FROM pg_catalog.pg_user
+      WHERE usename = 'keatest') THEN
+      CREATE ROLE keatest LOGIN PASSWORD 'keatest';
+      ALTER USER keatest CREATEDB;
+   END IF;
+END
+\$body\$;"
+    pgsql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --username=postgres
+    pgsql_execute "CREATE DATABASE keatest;" --host=${db_server_address} --port=${db_server_port} --username=postgres
+    pgsql_execute "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;" --host=${db_server_address} --port=${db_server_port} --username=postgres
+    query="DO
+\$body\$
+BEGIN
+   IF NOT EXISTS (
+      SELECT usename
+      FROM pg_catalog.pg_user
+      WHERE usename = 'keatest_readonly') THEN
+      CREATE ROLE keatest_readonly LOGIN PASSWORD 'keatest';
+   END IF;
+END
+\$body\$;"
+    pgsql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --username=postgres
+    pgsql_execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;" --host=${db_server_address} --port=${db_server_port} --username=postgres
+    exit 0
+}
+
+cql_create_database_and_users() {
+    cql_execute_no_keyspace "CREATE KEYSPACE keatest WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1}"
+    exit 0
+}
+
 ### Script starts here ###
 
 # First, find what the command is
@@ -537,7 +767,11 @@ if [ -z ${command} ]; then
     usage
     exit 1
 fi
-is_in_list "${command}" "lease-init lease-version lease-upgrade lease-dump"
+if [ "${command}" = "-h" -o "${command}" = "--help" ]; then
+    usage
+    exit 0
+fi
+is_in_list "${command}" "db-create db-remove lease-init lease-drop lease-version lease-upgrade lease-dump create-db-and-users"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     exit 1
@@ -563,6 +797,36 @@ while [ ! -z "${1}" ]
 do
     option=${1}
     case ${option} in
+        # Specify server address
+        -s|--server)
+            shift
+            db_server_address=${1}
+            if [ -z ${db_server_address} ]; then
+                log_error "-s or --server requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        # Specify server port
+        -sp|--server-port)
+            shift
+            db_server_port=${1}
+            if [ -z ${db_server_port} ]; then
+                log_error "-sp or --server-port requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
+        # Specify CQL database version
+        --db-server-version)
+            shift
+            db_server_version=${1}
+            if [ -z ${db_server_version} ]; then
+                log_error "--db-server-version requires a parameter"
+                usage
+                exit 1
+            fi
+            ;;
         # Specify database host
         -h|--host)
             shift
@@ -649,6 +913,40 @@ do
 done
 
 case ${command} in
+    # Create the database
+    db-create)
+        case ${backend} in
+            memfile)
+                log_error "this command is not compatible with memory file backend"
+                ;;
+            mysql)
+                mysql_db_create
+                ;;
+            pgsql)
+                pgsql_db_create
+                ;;
+            cql)
+                cql_db_create
+                ;;
+            esac
+        ;;
+    # Removes the database
+    db-remove)
+        case ${backend} in
+            memfile)
+                log_error "this command is not compatible with memory file backend"
+                ;;
+            mysql)
+                mysql_db_remove
+                ;;
+            pgsql)
+                pgsql_db_remove
+                ;;
+            cql)
+                cql_db_remove
+                ;;
+            esac
+        ;;
     # Initialize the database
     lease-init)
         case ${backend} in
@@ -666,6 +964,22 @@ case ${command} in
                 ;;
             esac
         ;;
+    lease-drop)
+        case ${backend} in
+            memfile)
+                memfile_drop
+                ;;
+            mysql)
+                mysql_drop
+                ;;
+            pgsql)
+                pgsql_drop
+                ;;
+            cql)
+                cql_drop
+                ;;
+            esac
+        ;;
     lease-version)
         case ${backend} in
             memfile)
@@ -673,7 +987,6 @@ case ${command} in
                 ;;
             mysql)
                 mysql_version
-                printf "\n"
                 ;;
             pgsql)
                 pgsql_version
@@ -712,6 +1025,22 @@ case ${command} in
                 ;;
             cql)
                 cql_dump
+                ;;
+            esac
+        ;;
+    create-db-and-users)
+        case ${backend} in
+            memfile)
+                memfile_create_database_and_users
+                ;;
+            mysql)
+                mysql_create_database_and_users
+                ;;
+            pgsql)
+                pgsql_create_database_and_users
+                ;;
+            cql)
+                cql_create_database_and_users
                 ;;
             esac
         ;;
