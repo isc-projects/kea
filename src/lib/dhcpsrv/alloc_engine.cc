@@ -1233,7 +1233,7 @@ AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
         }
 
         // Remove this lease from LeaseMgr as it doesn't belong to a pool.
-        LeaseMgrFactory::instance().deleteLease(candidate->addr_);
+        LeaseMgrFactory::instance().deleteLease(candidate);
 
         // Update DNS if needed.
         queueNCR(CHG_REMOVE, candidate);
