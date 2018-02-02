@@ -1236,7 +1236,13 @@ CqlLease6Exchange::createBindForDelete(const Lease6Ptr &lease, AnyArray &data,
     // structure.
     try {
         // address: varchar
-        address_ = address.toText();
+        address_ = lease_->addr_.toText();
+        if (address_.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue,
+                      "address " << address_ << " of length " << address_.size()
+                                 << " exceeds maximum allowed length of "
+                                 << ADDRESS6_TEXT_MAX_LEN);
+        }
 
         // Start with a fresh array.
         data.clear();
@@ -1515,8 +1521,8 @@ CqlLeaseMgr::getLease4(const IOAddress &addr) const {
     // Set up the WHERE clause value
     AnyArray data;
 
-    cass_int32_t address = static_cast<cass_int32_t>(addr.toUint32());
-    data.add(&address);
+    cass_int32_t addr4 = static_cast<cass_int32_t>(addr.toUint32());
+    data.add(&addr4);
 
     // Get the data.
     Lease4Ptr result;
