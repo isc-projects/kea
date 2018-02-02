@@ -1,3 +1,13 @@
+1335.	[bug]		tmark
+	Fixed a bug which prevented inserting multiple host reservations
+	where IPv4 address was unspecified or when selected subnet identifier
+	was not specified (5416).  Corrected inconsistent data types for
+	subnet id columns in both Postgres and MySQL schemas.  Now both
+	schemas support upto MAX UINT32 in all subnet id columns. These 
+	changes bumped the schema versions for both Postgres and MySQL.
+	Exiting databases may be updated without data migration.
+	(Trac 5416, 5522, git 0fb62b7cc8f1c6c1401596c1a48c90ef05640b6f)
+
 Kea 1.3.0 released on October 27, 2017
 
 1334.	[bug]		marcin
