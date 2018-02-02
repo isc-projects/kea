@@ -798,7 +798,7 @@ TEST_F(Pkt6Test, relayPack) {
     vector<uint8_t> relay_data(relay_opt_data,
                                relay_opt_data + sizeof(relay_opt_data));
 
-    OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
+    OptionPtr optRelay1(new Option(Option::V6, 300, relay_data));
 
     relay1.options_.insert(make_pair(optRelay1->getType(), optRelay1));
 
@@ -850,7 +850,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     // There should be exactly one option
     EXPECT_EQ(1, clone->relay_info_[0].options_.size());
-    OptionPtr opt = clone->getRelayOption(200, 0);
+    OptionPtr opt = clone->getRelayOption(300, 0);
     EXPECT_TRUE(opt);
     EXPECT_EQ(opt->getType() , optRelay1->getType());
     EXPECT_EQ(opt->len(), optRelay1->len());
@@ -898,19 +898,19 @@ TEST_F(Pkt6Test, getRelayOption) {
 TEST_F(Pkt6Test, getAnyRelayOption) {
 
     boost::scoped_ptr<NakedPkt6> msg(new NakedPkt6(DHCPV6_ADVERTISE, 0x020304));
-    msg->addOption(generateRandomOption(300));
+    msg->addOption(generateRandomOption(400));
 
     // generate options for relay1
     Pkt6::RelayInfo relay1;
 
-    // generate 3 options with code 200,201,202 and random content
-    OptionPtr relay1_opt1(generateRandomOption(200));
-    OptionPtr relay1_opt2(generateRandomOption(201));
-    OptionPtr relay1_opt3(generateRandomOption(202));
+    // generate 3 options with code 300,301,302 and random content
+    OptionPtr relay1_opt1(generateRandomOption(300));
+    OptionPtr relay1_opt2(generateRandomOption(301));
+    OptionPtr relay1_opt3(generateRandomOption(302));
 
-    relay1.options_.insert(make_pair(200, relay1_opt1));
-    relay1.options_.insert(make_pair(201, relay1_opt2));
-    relay1.options_.insert(make_pair(202, relay1_opt3));
+    relay1.options_.insert(make_pair(300, relay1_opt1));
+    relay1.options_.insert(make_pair(301, relay1_opt2));
+    relay1.options_.insert(make_pair(302, relay1_opt3));
     msg->addRelayInfo(relay1);
 
     // generate options for relay2
@@ -918,18 +918,18 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     OptionPtr relay2_opt1(new Option(Option::V6, 100));
     OptionPtr relay2_opt2(new Option(Option::V6, 101));
     OptionPtr relay2_opt3(new Option(Option::V6, 102));
-    OptionPtr relay2_opt4(new Option(Option::V6, 200));
+    OptionPtr relay2_opt4(new Option(Option::V6, 300));
     // the same code as relay1_opt3
     relay2.options_.insert(make_pair(100, relay2_opt1));
     relay2.options_.insert(make_pair(101, relay2_opt2));
     relay2.options_.insert(make_pair(102, relay2_opt3));
-    relay2.options_.insert(make_pair(200, relay2_opt4));
+    relay2.options_.insert(make_pair(300, relay2_opt4));
     msg->addRelayInfo(relay2);
 
     // generate options for relay3
     Pkt6::RelayInfo relay3;
-    OptionPtr relay3_opt1(generateRandomOption(200, 7));
-    relay3.options_.insert(make_pair(200, relay3_opt1));
+    OptionPtr relay3_opt1(generateRandomOption(300, 7));
+    relay3.options_.insert(make_pair(300, relay3_opt1));
     msg->addRelayInfo(relay3);
 
     // Ok, so we now have a packet that traversed the following network:
@@ -937,41 +937,41 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
 
     // First check that the getAnyRelayOption does not confuse client options
     // and relay options
-    // 300 is a client option, present in the message itself.
+    // 400 is a client option, present in the message itself.
     OptionPtr opt =
-        msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+        msg->getAnyRelayOption(400, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_FALSE(opt);
-    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    opt = msg->getAnyRelayOption(400, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_FALSE(opt);
-    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
+    opt = msg->getAnyRelayOption(400, Pkt6::RELAY_GET_FIRST);
     EXPECT_FALSE(opt);
-    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
+    opt = msg->getAnyRelayOption(400, Pkt6::RELAY_GET_LAST);
     EXPECT_FALSE(opt);
 
-    // Option 200 is added in every relay.
+    // Option 300 is added in every relay.
 
     // We want to get that one inserted by relay3 (first match, starting from
     // closest to the client.
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_TRUE(opt == relay3_opt1);
 
     // We want to ge that one inserted by relay1 (first match, starting from
     // closest to the server.
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_TRUE(opt == relay1_opt1);
 
     // We just want option from the first relay (closest to the client)
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_TRUE(opt == relay3_opt1);
 
     // We just want option from the last relay (closest to the server)
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_TRUE(opt == relay1_opt1);
@@ -981,38 +981,38 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // are returned.
     msg->setCopyRetrievedOptions(true);
 
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_FALSE(opt == relay3_opt1);
     // Test that option copy has replaced the original option within the
     // packet. We achieve that by calling a variant of the method which
     // retrieved non-copied option.
-    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    relay3_opt1 = msg->getNonCopiedAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(relay3_opt1);
     EXPECT_TRUE(opt == relay3_opt1);
 
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_FALSE(opt == relay1_opt1);
-    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    relay1_opt1 = msg->getNonCopiedAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
     ASSERT_TRUE(relay1_opt1);
     EXPECT_TRUE(opt == relay1_opt1);
 
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_FALSE(opt == relay3_opt1);
-    relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    relay3_opt1 = msg->getNonCopiedAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
     ASSERT_TRUE(relay3_opt1);
     EXPECT_TRUE(opt == relay3_opt1);
 
-    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_FALSE(opt == relay1_opt1);
-    relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    relay1_opt1 = msg->getNonCopiedAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
     ASSERT_TRUE(relay1_opt1);
     EXPECT_TRUE(opt == relay1_opt1);
 

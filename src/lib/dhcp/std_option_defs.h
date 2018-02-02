@@ -268,7 +268,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
 
 /// Number of option definitions defined.
 const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
-    sizeof(STANDARD_V4_OPTION_DEFINITIONS) / sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
+    sizeof(STANDARD_V4_OPTION_DEFINITIONS) /
+    sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
 
 /// Last resort definitions (only option 43 for now, these definitions
 /// are applied in deferred unpacking when none is found).
@@ -277,7 +278,9 @@ const OptionDefParams LAST_RESORT_V4_OPTION_DEFINITIONS[] = {
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" }
 };
 
-const int LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE = 1;
+const int LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE =
+    sizeof(LAST_RESORT_V4_OPTION_DEFINITIONS) /
+    sizeof(LAST_RESORT_V4_OPTION_DEFINITIONS[0]);
 
 /// Start Definition of DHCPv6 options
 

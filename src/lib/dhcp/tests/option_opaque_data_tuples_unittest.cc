@@ -210,10 +210,7 @@ TEST(OptionOpaqueDataTuples, unpack6Truncated) {
 // This test checks that the DHCPv6 bootfile-param option containing no opaque
 // data is parsed correctly.
 TEST(OptionOpaqueDataTuples, unpack6NoTuple) {
-    // Prepare data to decode.
-    const uint8_t buf_data[] = {
-    };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    OptionBuffer buf;
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(

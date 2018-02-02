@@ -437,7 +437,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     EXPECT_NO_THROW ({
             LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(v6packed)),
-                                    "dhcp6", options);
+                                    DHCP6_OPTION_SPACE, options);
     });
 
     EXPECT_EQ(options.size(), 6); // there should be 5 options
@@ -783,7 +783,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     list<uint16_t> deferred;
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, "dhcp4", options, deferred);
+        LibDHCP::unpackOptions4(v4packed, DHCP4_OPTION_SPACE, options, deferred);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -1813,8 +1813,8 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
 // This test checks if the definition of the DHCPv6 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
-    const OptionDefContainerPtr& defs =
-        LibDHCP::getVendorOption6Defs(VENDOR_ID_CABLE_LABS);
+    const OptionDefContainerPtr defs =
+        LibDHCP::getVendorOptionDefs(Option::V6, VENDOR_ID_CABLE_LABS);
     ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
@@ -1829,8 +1829,8 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
 // This test checks if the definition of the DHCPv4 vendor option can
 // be searched by option name.
 TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
-    const OptionDefContainerPtr& defs =
-        LibDHCP::getVendorOption4Defs(VENDOR_ID_CABLE_LABS);
+    const OptionDefContainerPtr defs =
+        LibDHCP::getVendorOptionDefs(Option::V4, VENDOR_ID_CABLE_LABS);
     ASSERT_TRUE(defs);
     for (OptionDefContainer::const_iterator def = defs->begin();
          def != defs->end(); ++def) {
@@ -1975,7 +1975,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     isc::util::encode::decodeHex(vendor_class_hex, bin);
 
     ASSERT_NO_THROW ({
-            LibDHCP::unpackOptions6(bin, "dhcp6", options);
+            LibDHCP::unpackOptions6(bin, DHCP6_OPTION_SPACE, options);
         });
 
     EXPECT_EQ(options.size(), 1); // There should be 1 option.
