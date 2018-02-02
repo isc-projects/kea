@@ -25,6 +25,8 @@ db_host="localhost"
 db_user="keatest"
 db_password="keatest"
 db_name="keatest"
+
+# These are CQL default parameters
 db_use_ssl=""
 
 # lease dump parameters
@@ -565,6 +567,7 @@ while [ ! -z "${1}" ]
 do
     option=${1}
     case ${option} in
+        # Specify use of ssl
         --ssl)
             shift
             db_use_ssl=${1}
