@@ -532,7 +532,7 @@ UPDATE schema_version
 
 -- Change subnet ID columns type to BIGINT to match lease4/6 tables 
 ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
-ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
 
 ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
 ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
