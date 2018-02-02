@@ -271,6 +271,18 @@ TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
 }
 
+// Verifies that IPv4 host reservation with options can have a max value
+// for  dhcp4_subnet id
+TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
+    testMaxSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a max value
+// for  dhcp6_subnet id
+TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
+    testMaxSubnetId6();
+}
+
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address. Host uses client-id (DUID) as identifier.
 TEST_F(MySqlHostDataSourceTest, basic4ClientId) {
@@ -603,6 +615,17 @@ TEST_F(MySqlHostDataSourceTest, deleteById6) {
 // even when options are present.
 TEST_F(MySqlHostDataSourceTest, deleteById6Options) {
     testDeleteById6Options();
+}
+
+// Tests that multiple reservations without IPv4 addresses can be
+// specified within a subnet.
+TEST_F(MySqlHostDataSourceTest, testMultipleHostsNoAddress4) {
+    testMultipleHostsNoAddress4();
+}
+
+// Tests that multiple hosts can be specified within an IPv6 subnet.
+TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
+    testMultipleHosts6();
 }
 
 }; // Of anonymous namespace

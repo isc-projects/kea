@@ -493,8 +493,57 @@ INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 UPDATE schema_version
     SET version = '3', minor = '1';
 
+-- Schema 3.1 specification ends here.
 
--- Commit the script transaction.
+-- Remove constraints which perform too restrictive checks on the inserted
+-- host reservations. We want to be able to insert host reservations which
+-- include no specific IPv4 address or those that have repeating subnet
+-- identifiers, e.g. IPv4 reservations would typically include 0 (or null)
+-- IPv6 subnet identifiers.
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp4_ipv4_address_subnet_id;
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp4_identifier_subnet_id;
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp6_identifier_subnet_id;
+
+-- Create partial indexes instead of the constraints that we have removed.
+
+-- IPv4 address/IPv4 subnet identifier pair is unique if subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id ON hosts
+       (ipv4_address ASC, dhcp4_subnet_id ASC)
+    WHERE ipv4_address IS NOT NULL AND ipv4_address <> 0;
+
+-- Client identifier is unique within an IPv4 subnet when subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp4_subnet_id ASC)
+    WHERE (dhcp4_subnet_id IS NOT NULL AND dhcp4_subnet_id <> 0);
+
+-- Client identifier is unique within an IPv6 subnet when subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
+    WHERE (dhcp6_subnet_id IS NOT NULL AND dhcp6_subnet_id <> 0);
+
+-- Set 3.2 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '2';
+
+-- Schema 3.2 specification ends here.
+
+-- Change subnet ID columns type to BIGINT to match lease4/6 tables 
+ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+-- Set 3.3 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '3';
+
+-- Schema 3.3 specification ends here.
+
+-- Commit the script transaction
 COMMIT;
 
 -- Notes:

@@ -394,6 +394,18 @@ public:
     /// @param id Identifier type.
     void testBasic4(const Host::IdentifierType& id);
 
+    /// @brief Test that Verifies that an IPv4 host reservation with
+    /// options can have a max value for dhcp4_subnet id
+    ///
+    /// Uses gtest macros to report failures.
+    void testMaxSubnetId4();
+
+    /// @brief Test that Verifies that an IPv6 host reservation with
+    /// options can have a max value for dhcp6_subnet id
+    ///
+    /// Uses gtest macros to report failures.
+    void testMaxSubnetId6();
+
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///
@@ -579,6 +591,17 @@ public:
     ///
     /// Uses gtest macros to report failures.
     void testDeleteById6Options();
+
+    /// @brief Tests that multiple reservations without IPv4 addresses can be
+    /// specified within a subnet.
+    ///
+    /// Uses gtest macros to report failures.
+    void testMultipleHostsNoAddress4();
+
+    /// @brief Tests that multiple hosts can be specified within an IPv6 subnet.
+    ///
+    /// Uses gtest macros to report failures.
+    void testMultipleHosts6();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///
