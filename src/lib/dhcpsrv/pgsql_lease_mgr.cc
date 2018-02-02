@@ -1348,7 +1348,7 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     PsqlBindArray bind_array;
 
     std::string addr4_str =
-        boost::lexical_cast<std::string>(addr.addr.toUint32());
+        boost::lexical_cast<std::string>(addr.toUint32());
     bind_array.add(addr4_str);
     return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
 }
