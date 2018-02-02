@@ -543,7 +543,7 @@ CqlLease4Exchange::createBindForDelete(const Lease4Ptr &lease, AnyArray &data,
 
     try {
         // address: int
-        address_ = static_cast<cass_int32_t>(address.toUint32());
+        address_ = static_cast<cass_int32_t>(lease_->addr_.toUint32());
 
         // Start with a fresh array.
         data.clear();
