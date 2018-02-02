@@ -14,6 +14,8 @@ namespace isc {
 namespace dhcp {
 
 isc::log::Logger eval_logger("eval");
+const int EVAL_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+const int EVAL_DBG_STACK = isc::log::DBGLVL_TRACE_DETAIL_DATA;
 
 } // namespace dhcp
 } // namespace isc

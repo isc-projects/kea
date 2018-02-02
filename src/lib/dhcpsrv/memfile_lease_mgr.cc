@@ -1369,7 +1369,7 @@ size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
     size_t num = leases.size();
     for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease((*l)->addr_);
+        deleteLease(*l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED)
         .arg(subnet_id).arg(num);
@@ -1397,7 +1397,7 @@ size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
     size_t num = leases.size();
     for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease((*l)->addr_);
+        deleteLease(*l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED)
         .arg(subnet_id).arg(num);
