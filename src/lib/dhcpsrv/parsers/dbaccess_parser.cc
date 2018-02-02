@@ -59,8 +59,9 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, database_config->mapValue()) {
         try {
-            if ((param.first == "persist") || (param.first == "readonly") ||
-                (param.first == "tcp-nodelay")) {
+            if ((param.first == "persist") ||
+                (param.first == "tcp-nodelay") ||
+                (param.first == "readonly")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -95,6 +96,16 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                     boost::lexical_cast<std::string>(port);
 
             } else {
+                // all remaining string parameters
+                // type
+                // user
+                // password
+                // host
+                // name
+                // contact-points
+                // keyspace
+                // ssl-cert
+                // protocol
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {
