@@ -25,6 +25,7 @@ db_host="localhost"
 db_user="keatest"
 db_password="keatest"
 db_name="keatest"
+db_use_ssl=""
 
 # lease dump parameters
 dump_type=0
@@ -65,6 +66,7 @@ usage() {
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
     printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
+    printf " --ssl - specifies the use of ssl encrypted connections\n"
     printf "\n"
     printf " Parameters specific to lease-dump:\n"
     printf "     -4 to dump IPv4 leases to file\n"
@@ -563,6 +565,20 @@ while [ ! -z "${1}" ]
 do
     option=${1}
     case ${option} in
+        --ssl)
+            shift
+            db_use_ssl=${1}
+            if [ -z ${db_use_ssl} ]; then
+                log_error "--ssl requires a parameter"
+                usage
+                exit 1
+            fi
+            if [ ${db_use_ssl} != "yes" ]; then
+                log_error "--ssl must be set to 'yes'"
+                usage
+                exit 1
+            fi
+            ;;
         # Specify database host
         -h|--host)
             shift

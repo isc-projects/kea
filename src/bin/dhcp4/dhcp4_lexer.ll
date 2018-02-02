@@ -36,7 +36,7 @@ unsigned int comment_start_line = 0;
 
 using namespace isc::dhcp;
 
-};
+}
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser4Context::fatal(msg)
@@ -380,6 +380,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"protocol\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_PROTOCOL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("protocol", driver.loc_);
+    }
+}
+
 \"port\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -410,6 +420,46 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"tcp-nodelay\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_TCP_NODELAY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("tcp-nodelay", driver.loc_);
+    }
+}
+
+\"reconnect-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("reconnect-wait-time", driver.loc_);
+    }
+}
+
+\"request-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_REQUEST_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("request-timeout", driver.loc_);
+    }
+}
+
+\"tcp-keepalive\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_TCP_KEEPALIVE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("tcp-keepalive", driver.loc_);
+    }
+}
+
 \"connect-timeout\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -437,6 +487,16 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_CONTACT_POINTS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("contact-points", driver.loc_);
+    }
+}
+
+\"ssl-cert\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_SSL_CERT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl-cert", driver.loc_);
     }
 }
 
@@ -985,7 +1045,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-
 \"parameters\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOOKS_LIBRARIES:
@@ -1440,8 +1499,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_STRING("boot-file-name", driver.loc_);
     }
 }
-
-
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

@@ -195,6 +195,9 @@ public:
     /// @brief CQL session handle
     CassSession* session_;
 
+    /// @brief CQL ssl handle
+    CassSsl* ssl_;
+
     /// @brief CQL consistency
     CassConsistency consistency_;
 
