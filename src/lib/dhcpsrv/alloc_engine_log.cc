@@ -13,6 +13,11 @@
 namespace isc {
 namespace dhcp {
 
+const int ALLOC_ENGINE_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+const int ALLOC_ENGINE_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+const int ALLOC_ENGINE_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+const int ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+
 isc::log::Logger alloc_engine_logger("alloc-engine");
 
 } // namespace dhcp

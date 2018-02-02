@@ -149,7 +149,7 @@ public:
     /// @param address address of the lease to be deleted
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForDelete(const IOAddress &address,
+    void createBindForDelete(const Lease4Ptr &lease,
                              AnyArray &data,
                              StatementTag statement_tag = NULL);
 
@@ -532,8 +532,14 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
 }
 
 void
-CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
+CqlLease4Exchange::createBindForDelete(const Lease4Ptr &lease, AnyArray &data,
                                        StatementTag /* unused */) {
+    if (!lease) {
+        isc_throw(BadValue, "CqlLease4Exchange::createBindForDelete(): "
+                            "Lease4 object is NULL");
+    }
+    // Store lease object to ensure it remains valid.
+    lease_ = lease;
     // Set up the structures for the various components of the lease4
     // structure.
 
@@ -548,8 +554,8 @@ CqlLease4Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease4Exchange::createBindForDelete(): "
-                  "could not create bind array with address: "
-                      << address_ << ", reason: " << ex.what());
+                  "could not create bind array from Lease4: "
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
     }
 }
 
@@ -763,7 +769,7 @@ public:
     /// @param address address of the lease to be deleted
     /// @param data lease info in CQL format will be stored here
     /// @param statement_tag tag identifying the query (optional)
-    void createBindForDelete(const IOAddress &address,
+    void createBindForDelete(const Lease6Ptr &lease,
                              AnyArray &data,
                              StatementTag statement_tag = NULL);
 
@@ -1217,8 +1223,14 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
 }
 
 void
-CqlLease6Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
+CqlLease6Exchange::createBindForDelete(const Lease6Ptr &lease, AnyArray &data,
                                        StatementTag /* unused */) {
+
+    if (!lease) {
+        isc_throw(BadValue, "Lease6 object is NULL");
+    }
+    // Store lease object to ensure it remains valid.
+    lease_ = lease;
 
     // Set up the structures for the various components of the lease4
     // structure.
@@ -1233,8 +1245,8 @@ CqlLease6Exchange::createBindForDelete(const IOAddress &address, AnyArray &data,
     } catch (const Exception &ex) {
         isc_throw(DbOperationError,
                   "CqlLease6Exchange::createBindForDelete(): "
-                  "could not create bind array with address: "
-                      << address_ << ", reason: " << ex.what());
+                  "could not create bind array from Lease6: "
+                      << lease_->addr_.toText() << ", reason: " << ex.what());
     }
 }
 
@@ -1768,7 +1780,8 @@ CqlLeaseMgr::updateLease6(const Lease6Ptr &lease) {
 }
 
 bool
-CqlLeaseMgr::deleteLease(const IOAddress &addr) {
+CqlLeaseMgr::deleteLease(const Lease4Ptr &lease) {
+    const IOAddress &addr = lease->addr_;
     std::string addr_data = addr.toText();
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_DELETE_ADDR)
         .arg(addr_data);
@@ -1776,18 +1789,36 @@ CqlLeaseMgr::deleteLease(const IOAddress &addr) {
     // Set up the WHERE clause value
     AnyArray data;
 
+    std::unique_ptr<CqlLease4Exchange> exchange4(
+        new CqlLease4Exchange(dbconn_));
+
     try {
-        if (addr.isV4()) {
-            std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
-            exchange4->createBindForDelete(addr, data, CqlLease4Exchange::DELETE_LEASE4);
-            exchange4->executeMutation(dbconn_, data, CqlLease4Exchange::DELETE_LEASE4);
-        } else if (addr.isV6()) {
-            std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
-            exchange6->createBindForDelete(addr, data, CqlLease6Exchange::DELETE_LEASE6);
-            exchange6->executeMutation(dbconn_, data, CqlLease6Exchange::DELETE_LEASE6);
-        } else {
-            return false;
-        }
+        exchange4->createBindForDelete(lease, data, CqlLease4Exchange::DELETE_LEASE4);
+        exchange4->executeMutation(dbconn_, data, CqlLease4Exchange::DELETE_LEASE4);
+    } catch (const Exception &exception) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_LEASE_EXCEPTION_THROWN)
+            .arg(exception.what());
+        return false;
+    }
+    return true;
+}
+
+bool
+CqlLeaseMgr::deleteLease(const Lease6Ptr &lease) {
+    const IOAddress &addr = lease->addr_;
+    std::string addr_data = addr.toText();
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_DELETE_ADDR)
+        .arg(addr_data);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+
+    std::unique_ptr<CqlLease6Exchange> exchange6(
+        new CqlLease6Exchange(dbconn_));
+
+    try {
+        exchange6->createBindForDelete(lease, data, CqlLease6Exchange::DELETE_LEASE6);
+        exchange6->executeMutation(dbconn_, data, CqlLease6Exchange::DELETE_LEASE6);
     } catch (const Exception &exception) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_LEASE_EXCEPTION_THROWN)
             .arg(exception.what());

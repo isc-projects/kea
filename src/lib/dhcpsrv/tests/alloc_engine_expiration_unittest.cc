@@ -1483,7 +1483,7 @@ ExpirationAllocEngine6Test::testReclaimDeclinedHook(bool skip) {
         // The hook hasn't modified next step status. The lease should be gone.
         EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
     }
-};
+}
 
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
@@ -2141,7 +2141,7 @@ ExpirationAllocEngine4Test::testReclaimDeclinedHook(bool skip) {
         // The hook hasn't modified next step status. The lease should be gone.
         EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
     }
-};
+}
 
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to

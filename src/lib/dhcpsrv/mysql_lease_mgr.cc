@@ -471,6 +471,7 @@ public:
             bind_[9].is_unsigned = MLM_TRUE;
             // bind_[9].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
@@ -623,7 +624,10 @@ public:
                                      client_id_buffer_, client_id_length_,
                                      valid_lifetime_, 0, 0, cltt, subnet_id_,
                                      fqdn_fwd_, fqdn_rev_, hostname));
+
+        // Set state.
         lease->state_ = state_;
+
         return (lease);
     }
 
@@ -648,8 +652,8 @@ private:
     // Note: Arrays are declared fixed length for speed of creation
     uint32_t        addr4_;             ///< IPv4 address
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
-    std::string     columns_[LEASE_COLUMNS];///< Column names
-    my_bool         error_[LEASE_COLUMNS];  ///< Error array
+    std::string     columns_[LEASE_COLUMNS]; ///< Column names
+    my_bool         error_[LEASE_COLUMNS]; ///< Error array
     std::vector<uint8_t> hwaddr_;       ///< Hardware address
     uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
                                         ///< Hardware address buffer
@@ -673,9 +677,7 @@ private:
                                         ///< Client hostname
     unsigned long   hostname_length_;   ///< Client hostname length
     uint32_t        state_;             ///< Lease state
-
 };
-
 
 
 /// @brief Exchange MySQL and Lease6 Data
@@ -698,7 +700,7 @@ class MySqlLease6Exchange : public MySqlLeaseExchange {
 public:
     /// @brief Constructor
     ///
-    /// The initialization of the variables here is nonly to satisfy cppcheck -
+    /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
                             iaid_(0), lease_type_(0), prefixlen_(0),
@@ -981,7 +983,7 @@ public:
         // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
-        // address:  varchar(39)
+        // address: varchar(39)
         // A Lease6_ address has a maximum of 39 characters.  The array is
         // one byte longer than this to guarantee that we can always null
         // terminate it whatever is returned.
@@ -1100,6 +1102,7 @@ public:
         bind_[15].is_unsigned = MLM_TRUE;
         // bind_[15].is_null = &MLM_FALSE; // commented out for performance
                                            // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
@@ -1202,11 +1205,11 @@ private:
     // schema.
     // Note: arrays are declared fixed length for speed of creation
     std::string     addr6_;             ///< String form of address
-    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character
+    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1]; ///< Character
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
-    std::string     columns_[LEASE_COLUMNS];///< Column names
+    std::string     columns_[LEASE_COLUMNS]; ///< Column names
     std::vector<uint8_t> duid_;         ///< Client identification
     uint8_t         duid_buffer_[DUID::MAX_DUID_LEN]; ///< Buffer form of DUID
     unsigned long   duid_length_;       ///< Length of the DUID
@@ -1323,7 +1326,6 @@ public:
         conn_.checkError(status, statement_index_, "results storage failed");
     }
 
-
     /// @brief Fetches the next row in the result set
     ///
     /// Once the internal result set has been populated by invoking the
@@ -1403,7 +1405,6 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     exchange4_.reset(new MySqlLease4Exchange());
     exchange6_.reset(new MySqlLease6Exchange());
 }
-
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
     // There is no need to close the database in this destructor: it is
@@ -1562,7 +1563,6 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     }
 }
 
-
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -1581,7 +1581,6 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
     }
 }
 
-
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -1599,7 +1598,6 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
         result = *collection.begin();
     }
 }
-
 
 // Basic lease access methods.  Obtain leases from the database using various
 // criteria.
@@ -1624,7 +1622,6 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
     return (result);
 }
-
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
@@ -1654,7 +1651,6 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
     return (result);
 }
-
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
@@ -1689,7 +1685,6 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
     return (result);
 }
-
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
@@ -1814,7 +1809,6 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
 
     return (result);
 }
-
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
@@ -1959,8 +1953,6 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     getLeaseCollection(statement_index, inbind, expired_leases);
 }
 
-
-
 // Update lease methods.  These comprise common code that handles the actual
 // update, and type-specific methods that set up the parameters for the prepared
 // statement depending on the type of lease.
@@ -1992,7 +1984,6 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
     }
 }
 
-
 void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
@@ -2016,7 +2007,6 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(stindex, &bind[0], lease);
 }
-
 
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
@@ -2070,36 +2060,46 @@ MySqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind) {
 }
 
 bool
-MySqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+MySqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_MYSQL_DELETE_ADDR)
+        .arg(addr.toText());
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    if (addr.isV4()) {
-        uint32_t addr4 = addr.toUint32();
+    uint32_t addr4 = addr.toUint32();
 
-        inbind[0].buffer_type = MYSQL_TYPE_LONG;
-        inbind[0].buffer = reinterpret_cast<char*>(&addr4);
-        inbind[0].is_unsigned = MLM_TRUE;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&addr4);
+    inbind[0].is_unsigned = MLM_TRUE;
 
-        return (deleteLeaseCommon(DELETE_LEASE4, inbind) > 0);
+    return (deleteLeaseCommon(DELETE_LEASE4, inbind) > 0);
+}
 
-    } else {
-        std::string addr6 = addr.toText();
-        unsigned long addr6_length = addr6.size();
+bool
+MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_DELETE_ADDR)
+        .arg(addr.toText());
 
-        // See the earlier description of the use of "const_cast" when accessing
-        // the address for an explanation of the reason.
-        inbind[0].buffer_type = MYSQL_TYPE_STRING;
-        inbind[0].buffer = const_cast<char*>(addr6.c_str());
-        inbind[0].buffer_length = addr6_length;
-        inbind[0].length = &addr6_length;
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+    std::string addr6 = addr.toText();
+    unsigned long addr6_length = addr6.size();
 
-        return (deleteLeaseCommon(DELETE_LEASE6, inbind) > 0);
-    }
+    // See the earlier description of the use of "const_cast" when accessing
+    // the address for an explanation of the reason.
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(addr6.c_str());
+    inbind[0].buffer_length = addr6_length;
+    inbind[0].length = &addr6_length;
+
+    return (deleteLeaseCommon(DELETE_LEASE6, inbind) > 0);
 }
 
 uint64_t
@@ -2170,12 +2170,10 @@ MySqlLeaseMgr::getName() const {
     return (name);
 }
 
-
 std::string
 MySqlLeaseMgr::getDescription() const {
     return (std::string("MySQL Database"));
 }
-
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
@@ -2252,7 +2250,6 @@ MySqlLeaseMgr::commit() {
         isc_throw(DbOperationError, "commit failed: " << mysql_error(conn_.mysql_));
     }
 }
-
 
 void
 MySqlLeaseMgr::rollback() {

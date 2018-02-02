@@ -14,6 +14,15 @@
 namespace isc {
 namespace dhcp {
 
+const int DBG_DHCP4_START = isc::log::DBGLVL_START_SHUT;
+const int DBG_DHCP4_SHUT = isc::log::DBGLVL_START_SHUT;
+const int DBG_DHCP4_COMMAND = isc::log::DBGLVL_COMMAND;
+const int DBG_DHCP4_BASIC = isc::log::DBGLVL_TRACE_BASIC;
+const int DBG_DHCP4_HOOKS = isc::log::DBGLVL_TRACE_BASIC;
+const int DBG_DHCP4_BASIC_DATA = isc::log::DBGLVL_TRACE_BASIC_DATA;
+const int DBG_DHCP4_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+const int DBG_DHCP4_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+
 const char* DHCP4_ROOT_LOGGER_NAME = "kea-dhcp4";
 const char* DHCP4_APP_LOGGER_NAME = "dhcp4";
 const char* DHCP4_BAD_PACKET_LOGGER_NAME = "bad-packets";

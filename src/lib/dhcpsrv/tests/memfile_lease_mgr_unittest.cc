@@ -873,7 +873,7 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+/// updateLease4() and deleteLease can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(MemfileLeaseMgrTest, lease4NullClientId) {
     startBackend(V4);

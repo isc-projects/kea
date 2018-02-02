@@ -1190,7 +1190,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
 
         // Remove this lease from LeaseMgr as it is reserved to someone
         // else or doesn't belong to a pool.
-        LeaseMgrFactory::instance().deleteLease(candidate->addr_);
+        LeaseMgrFactory::instance().deleteLease(candidate);
 
         // Update DNS if needed.
         queueNCR(CHG_REMOVE, candidate);
@@ -1303,7 +1303,7 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
             // We have reservations, but not for this lease. Release it.
 
             // Remove this lease from LeaseMgr
-            LeaseMgrFactory::instance().deleteLease((*lease)->addr_);
+            LeaseMgrFactory::instance().deleteLease(*lease);
 
             // Update DNS if required.
             queueNCR(CHG_REMOVE, *lease);
@@ -1666,7 +1666,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr
-        LeaseMgrFactory::instance().deleteLease(lease->addr_);
+        LeaseMgrFactory::instance().deleteLease(lease);
 
         // Updated DNS if required.
         queueNCR(CHG_REMOVE, lease);
@@ -2438,8 +2438,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     // Reclaim the lease - depending on the configuration, set the
     // expired-reclaimed state or simply remove it.
     if (remove_lease) {
-        lease_mgr.deleteLease(lease->addr_);
-
+        lease_mgr.deleteLease(lease);
     } else if (!lease_update_fun.empty()) {
         // Clear FQDN information as we have already sent the
         // name change request to remove the DNS record.
@@ -3013,7 +3012,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(client_lease->addr_.toText());
 
-        lease_mgr.deleteLease(client_lease->addr_);
+        lease_mgr.deleteLease(client_lease);
 
         // Need to decrease statistic for assigned addresses.
         StatsMgr::instance().addValue(

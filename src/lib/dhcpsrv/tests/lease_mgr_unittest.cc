@@ -209,13 +209,11 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease6(const Lease6Ptr&) {}
 
-    /// @brief Deletes a lease.
-    ///
-    /// @param addr Address of the lease to be deleted. (This can be either
-    ///        a V4 address or a V6 address.)
-    ///
-    /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease(const isc::asiolink::IOAddress&) {
+    virtual bool deleteLease(const Lease4Ptr&) {
+        return (false);
+    }
+
+    virtual bool deleteLease(const Lease6Ptr&) {
         return (false);
     }
 

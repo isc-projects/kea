@@ -781,7 +781,9 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // check that the lease is really in the database
     Lease6Ptr l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr);
     EXPECT_TRUE(l);
-    LeaseMgrFactory::instance().deleteLease(addr->getAddress());
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = addr->getAddress();
+    LeaseMgrFactory::instance().deleteLease(lease);
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that a
@@ -847,7 +849,9 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     // check that the lease is really in the database
     Lease6Ptr l = checkPdLease(duid_, reply->getOption(D6O_IA_PD), prf);
     EXPECT_TRUE(l);
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(prf->getAddress()));
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = prf->getAddress();
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test checks that the server is offering different addresses to different

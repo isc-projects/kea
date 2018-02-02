@@ -1046,7 +1046,9 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    Lease4Ptr lease(new Lease4());
+    lease->addr_ = addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 // This test verifies that the logic which matches server identifier in the

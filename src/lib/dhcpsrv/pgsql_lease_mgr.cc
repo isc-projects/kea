@@ -275,7 +275,6 @@ protected:
 
 };
 
-
 /// @brief Supports exchanging IPv4 leases with PostgreSQL.
 class PgSqlLease4Exchange : public PgSqlLeaseExchange {
 private:
@@ -437,7 +436,9 @@ public:
                                          valid_lifetime_, 0, 0, cltt_,
                                          subnet_id_, fqdn_fwd_, fqdn_rev_,
                                          hostname_));
+
             result->state_ = state;
+
             return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -646,7 +647,9 @@ public:
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
                                         hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
+
             result->state_ = state;
+
             return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -929,7 +932,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     }
 }
 
-
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                              Lease4Ptr& result) const {
@@ -948,7 +950,6 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
         result = *collection.begin();
     }
 }
-
 
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
@@ -1247,7 +1248,6 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     getLeaseCollection(statement_index, bind_array, expired_leases);
 }
 
-
 template<typename LeasePtr>
 void
 PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
@@ -1282,7 +1282,6 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
     isc_throw(DbOperationError, "apparently updated more than one lease "
                   "that had the address " << lease->addr_.toText());
 }
-
 
 void
 PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
@@ -1339,19 +1338,30 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
 }
 
 bool
-PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_PGSQL_DELETE_ADDR)
+        .arg(addr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
 
-    if (addr.isV4()) {
-        std::string addr4_str = boost::lexical_cast<std::string>
-                                 (addr.toUint32());
-        bind_array.add(addr4_str);
-        return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
-    }
+    std::string addr4_str =
+        boost::lexical_cast<std::string>(addr.addr.toUint32());
+    bind_array.add(addr4_str);
+    return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
+}
+
+bool
+PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_DELETE_ADDR)
+        .arg(addr.toText());
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
 
     std::string addr6_str = addr.toText();
     bind_array.add(addr6_str);

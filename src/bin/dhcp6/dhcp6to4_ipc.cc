@@ -138,7 +138,6 @@ void Dhcp6to4Ipc::handler() {
 
         // Update statistics accordingly for sent packet.
         Dhcpv6Srv::processStatsSent(pkt);
-
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_DHCP4O6_SEND_FAIL).arg(e.what());
     }

@@ -318,13 +318,19 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
-    ///        IPv6.)
+    /// @param lease lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease(const Lease4Ptr& lease);
+
+    /// @brief Deletes an IPv6 lease.
+    ///
+    /// @param lease lease being deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
     ///

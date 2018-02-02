@@ -13,6 +13,11 @@
 namespace isc {
 namespace dhcp {
 
+const int HOSTS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+const int HOSTS_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+const int HOSTS_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+const int HOSTS_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+
 isc::log::Logger hosts_logger("hosts");
 
 } // namespace dhcp

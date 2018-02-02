@@ -382,14 +382,23 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted. This can be an IPv4
-    ///             address or an IPv6 address.
+    /// @param lease IPv4 lease to be deleted
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
+    virtual bool deleteLease(const Lease4Ptr& lease) = 0;
+
+    /// @brief Deletes a lease.
+    ///
+    /// @param lease IPv6 lease to be deleted
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    virtual bool deleteLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
     ///

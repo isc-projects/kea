@@ -295,16 +295,19 @@ public:
     ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param addr Address of the lease to be deleted.  This can be an IPv4
-    ///             address or an IPv6 address.
+    /// @param lease lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease4Ptr& lease);
+
+    /// @brief Deletes an IPv6 lease.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    /// @param lease lease being deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
     ///
