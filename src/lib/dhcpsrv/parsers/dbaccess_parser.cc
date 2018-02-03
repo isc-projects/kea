@@ -104,8 +104,6 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                 // name
                 // contact-points
                 // keyspace
-                // ssl-cert
-                // protocol
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {
