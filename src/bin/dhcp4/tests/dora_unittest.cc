@@ -1745,7 +1745,7 @@ TEST_F(DORATest, changingCircuitId) {
 
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
-// --with-dhcp-mysql.
+// --with-mysql.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the test utilizing MySQL database backend.
@@ -1778,7 +1778,7 @@ TEST_F(DORAMySQLTest, multiStageBoot) {
 
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
-// --with-dhcp-pgsql.
+// --with-pgsql.
 #ifdef HAVE_PGSQL
 
 /// @brief Test fixture class for the test utilizing PostgreSQL database backend.

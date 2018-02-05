@@ -157,7 +157,7 @@ Debian and Ubuntu:
         <listitem>
         <para>
           The MySQL client and the client development libraries, when using
-          the --with-dhcp-mysql configuration flag to build the Kea MySQL
+          the --with-mysql configuration flag to build the Kea MySQL
           database backend. In this case an instance of the MySQL server
           running locally or on a machine reachable over a network
           is required. Note that
@@ -168,7 +168,7 @@ Debian and Ubuntu:
         <listitem>
         <para>
           The PostgreSQL client and the client development libraries, when
-          using the --with-dhcp-pgsql configuration flag to build the Kea
+          using the --with-pgsql configuration flag to build the Kea
           PostgreSQL database backend. In this case an instance of the
           PostgreSQL server running locally or on some other machine,
           reachable over the network from the machine running Kea, is
@@ -315,7 +315,7 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
-            <term>--with-dhcp-mysql</term>
+            <term>--with-mysql</term>
             <listitem>
               <simpara>
                 Build Kea with code to allow it to store leases (and access
@@ -325,7 +325,7 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
-            <term>--with-dhcp-pgsql</term>
+            <term>--with-pgsql</term>
             <listitem>
               <simpara>
                 Build Kea with code to allow it to store leases (and access
@@ -386,7 +386,7 @@ Debian and Ubuntu:
 
           <screen>$ <userinput>./configure \
       --with-boost-include=/usr/pkg/include \
-      --with-dhcp-pgsql=/usr/local/bin/pg_config \
+      --with-pgsql=/usr/local/bin/pg_config \
       --prefix=/opt/kea</userinput></screen>
         </para>
 
@@ -518,12 +518,12 @@ Debian and Ubuntu:
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification. To enable the MySQL database code, at the
-          "configure" step (see <xref linkend="configure"/>), the --with-dhcp-mysql switch
+          "configure" step (see <xref linkend="configure"/>), the --with-mysql switch
           should be specified:
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
+          <screen><userinput>./configure [other-options] --with-mysql</userinput></screen>
 	      If MySQL was not installed in the default location, the location of the MySQL
           configuration program "mysql_config" should be included with the switch, i.e.
-          <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
+          <screen><userinput>./configure [other-options] --with-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
         </para>
         <para>
           See <xref linkend="mysql-database-create"/> for details regarding
@@ -540,12 +540,12 @@ Debian and Ubuntu:
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification. To enable the PostgreSQL database code, at the
-          "configure" step (see <xref linkend="configure"/>), the --with-dhcp-pgsql switch
+          "configure" step (see <xref linkend="configure"/>), the --with-pgsql switch
           should be specified:
-          <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
+          <screen><userinput>./configure [other-options] --with-pgsql</userinput></screen>
 	      If PostgreSQL was not installed in the default location, the location of the PostgreSQL
           configuration program "pg_config" should be included with the switch, i.e.
-          <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
+          <screen><userinput>./configure [other-options] --with-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
         </para>
         <para>
           See <xref linkend="pgsql-database-create"/> for details regarding
