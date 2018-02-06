@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.59])
+AC_PREREQ([2.69])
 
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
@@ -72,13 +72,23 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
+# Include premium configuration
 PREMIUM_DIR=
-if test -d "${srcdir}/premium"; then
-   PREMIUM_DIR=premium
-   AC_CONFIG_SUBDIRS([premium])
-fi
-
+AC_DEFUN([AX_PREMIUM],[])
+# m4_sinclude includes the file if it exists at autoreconf time
+m4_sinclude(premium/config.m4)
+m4_sinclude(premium/tier1.m4)
+m4_sinclude(premium/tier2.m4)
 AC_SUBST(PREMIUM_DIR)
+AX_PREMIUM
+
+# Include contrib configuration
+# (currently only a provision copied from premium support)
+CONTRIB_DIR=
+AC_DEFUN([AX_CONTRIB],[])
+m4_sinclude(contrib/config.m4)
+AC_SUBST(CONTRIB_DIR)
+AX_CONTRIB
 
 # Libtool configuration
 #
@@ -740,7 +750,7 @@ if test "$CQL_CONFIG" != "" ; then
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
     CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
-    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra_static -luv"
+    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra -luv"
     CQL_VERSION=`$CQL_CONFIG --version`
 
     AC_SUBST(CQL_CPPFLAGS)
@@ -1420,11 +1430,13 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
                  src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
+                 src/share/database/scripts/mysql/upgrade_5.1_to_6.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
                  src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
+                 src/share/database/scripts/pgsql/upgrade_3.2_to_4.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1451,21 +1463,6 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x tools/path_replacer.sh
 ])
 
-AM_CONDITIONAL(PREMIUM, test -d "$srcdir/premium/src")
-
-AC_MSG_CHECKING([if premium package is available])
-if test -d "$srcdir/premium/src"; then
-
-    # Define it in the config.h, so C++ code could use it.
-    AC_DEFINE([PREMIUM], [1], [Kea-premium package found])
-
-    # Export it here, so code in configure could use it.
-    PREMIUM=1
-    AC_MSG_RESULT(yes)
-else
-    AC_MSG_RESULT(no)
-fi
-
 AC_OUTPUT
 
 dnl Print the results
@@ -1491,6 +1488,9 @@ END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
   Premium package:   yes
+  Tier1 Packages:    ${TIER1_PACKAGES}
+  Tier2 Packages:    ${TIER2_PACKAGES}
+  Included Packages: ${INCLUDED_PACKAGES}
 END
 else
 cat >> config.report << END

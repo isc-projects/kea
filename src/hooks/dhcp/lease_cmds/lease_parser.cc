@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,8 @@ namespace lease_cmds {
 
 Lease4Ptr
 Lease4Parser::parse(ConstSrvConfigPtr& cfg,
-                    const ConstElementPtr& lease_info) {
+                    const ConstElementPtr& lease_info,
+                    bool& force_create) {
     if (!lease_info) {
         isc_throw(BadValue, "lease information missing");
     }
@@ -117,12 +118,21 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                            cltt, subnet_id,
                            fqdn_fwd, fqdn_rev, hostname));
     l->state_ = state;
+
+    // Retrieve the optional flag indicating if the lease must be created when it
+    // doesn't exist during the update.
+    force_create = false;
+    if (lease_info->contains("force-create")) {
+        force_create = getBoolean(lease_info, "force-create");
+    }
+
     return (l);
 }
 
 Lease6Ptr
 Lease6Parser::parse(ConstSrvConfigPtr& cfg,
-                    const ConstElementPtr& lease_info) {
+                    const ConstElementPtr& lease_info,
+                    bool& force_create) {
     if (!lease_info) {
         isc_throw(BadValue, "lease information missing");
     }
@@ -250,6 +260,14 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                            hwaddr_ptr, prefix_len));
     l->cltt_ = cltt;
     l->state_ = state;
+
+    // Retrieve the optional flag indicating if the lease must be created when it
+    // doesn't exist during the update.
+    force_create = false;
+    if (lease_info->contains("force-create")) {
+        force_create = getBoolean(lease_info, "force-create");
+    }
+
     return (l);
 }
 

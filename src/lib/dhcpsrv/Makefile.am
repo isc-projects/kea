@@ -292,6 +292,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	network.h \
 	pool.h \
 	shared_network.h \
+	sql_common.h \
 	srv_config.h \
 	subnet.h \
 	subnet_id.h \

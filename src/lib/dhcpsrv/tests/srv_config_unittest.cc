@@ -15,6 +15,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::data;
 
 // Those are the tests for SrvConfig storage. Right now they are minimal,
 // but the number is expected to grow significantly once we migrate more
@@ -409,10 +410,10 @@ TEST_F(SrvConfigTest, hooksLibraries) {
     EXPECT_EQ(0, libraries.get().size());
 
     // Verify we can update it.
-    isc::data::ConstElementPtr elem0;
+    ConstElementPtr elem0;
     libraries.add("foo", elem0);
     std::string config = "{ \"library\": \"bar\" }";
-    isc::data::ConstElementPtr elem1 = isc::data::Element::fromJSON(config);
+    ConstElementPtr elem1 = Element::fromJSON(config);
     libraries.add("bar", elem1);
     EXPECT_EQ(2, libraries.get().size());
     EXPECT_EQ(2, conf.getHooksConfig().get().size());
@@ -486,5 +487,262 @@ TEST_F(SrvConfigTest, unparse) {
     isc::test::runToElementTest<SrvConfig>
         (header4 + defaults + defaults4 + params + trailer, conf);
 }    
+
+// Verifies that the toElement method does not miss host reservations
+TEST_F(SrvConfigTest, unparseHR) {
+    // DHCPv4 version
+    SrvConfig conf4(32);
+
+    // Add a plain subnet
+    Triplet<uint32_t> def_triplet;
+    SubnetID p_id(1);
+    Subnet4Ptr psubnet4(new Subnet4(IOAddress("192.0.1.0"), 24,
+                                    def_triplet, def_triplet, 4000, p_id));
+    conf4.getCfgSubnets4()->add(psubnet4);
+
+    // Add a shared network
+    SharedNetwork4Ptr network4(new SharedNetwork4("frog"));
+    conf4.getCfgSharedNetworks4()->add(network4);
+
+    // Add a shared subnet
+    SubnetID s_id(100);
+    Subnet4Ptr ssubnet4(new Subnet4(IOAddress("192.0.2.0"), 24,
+                                    def_triplet, def_triplet, 4000, s_id));
+    network4->add(ssubnet4);
+
+    // Add a host reservation to the plain subnet
+    HostPtr phost4(new Host("00:01:02:03:04:05", "hw-address",
+                            p_id, SubnetID(0), IOAddress("192.0.1.1")));
+    conf4.getCfgHosts()->add(phost4);
+
+    // Add a host reservation to the shared subnet
+    HostPtr shost4(new Host("00:05:04:03:02:01", "hw-address",
+                            s_id, SubnetID(0), IOAddress("192.0.2.1")));
+    conf4.getCfgHosts()->add(shost4);
+
+    // Unparse the config
+    ConstElementPtr unparsed4 = conf4.toElement();
+    ASSERT_TRUE(unparsed4);
+    ASSERT_EQ(Element::map, unparsed4->getType());
+
+    // Get Dhcp4 entry
+    ConstElementPtr dhcp4;
+    ASSERT_NO_THROW(dhcp4 = unparsed4->get("Dhcp4"));
+    ASSERT_TRUE(dhcp4);
+    ASSERT_EQ(Element::map, dhcp4->getType());
+
+    // Get plain subnets
+    ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp4->get("subnet4"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the plain subnet
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Its ID is 1
+    ConstElementPtr sub;
+    ASSERT_NO_THROW(sub = check->get("id"));
+    ASSERT_TRUE(sub);
+    ASSERT_EQ(Element::integer, sub->getType());
+    EXPECT_EQ(p_id, sub->intValue());
+
+    // Get its host reservations
+    ASSERT_NO_THROW(check = check->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the plain host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the reserved address
+    ASSERT_NO_THROW(check = check->get("ip-address"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("192.0.1.1", check->stringValue());
+
+    // Get shared networks
+    ASSERT_NO_THROW(check = dhcp4->get("shared-networks"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the shared network
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Its name is "frog"
+    ASSERT_NO_THROW(sub = check->get("name"));
+    ASSERT_TRUE(sub);
+    ASSERT_EQ(Element::string, sub->getType());
+    EXPECT_EQ("frog", sub->stringValue());
+
+    // Get shared subnets
+    ASSERT_NO_THROW(check = check->get("subnet4"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the shared subnet
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Its ID is 100
+    ASSERT_NO_THROW(sub = check->get("id"));
+    ASSERT_TRUE(sub);
+    ASSERT_EQ(Element::integer, sub->getType());
+    EXPECT_EQ(s_id, sub->intValue());
+
+    // Get its host reservations
+    ASSERT_NO_THROW(check = check->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the shared host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the reserved address
+    ASSERT_NO_THROW(check = check->get("ip-address"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("192.0.2.1", check->stringValue());
+
+    // DHCPv6 version
+    CfgMgr::instance().setFamily(AF_INET6);
+    SrvConfig conf6(32);
+
+    // Add a plain subnet
+    Subnet6Ptr psubnet6(new Subnet6(IOAddress("2001:db8:1::"), 64,
+                                    1000, 2000, 3000, 4000, p_id));
+    conf6.getCfgSubnets6()->add(psubnet6);
+
+    // Add a shared network
+    SharedNetwork6Ptr network6(new SharedNetwork6("frog"));
+    conf6.getCfgSharedNetworks6()->add(network6);
+
+    // Add a shared subnet
+    Subnet6Ptr ssubnet6(new Subnet6(IOAddress("2001:db8:2::"), 64,
+                                    1000, 2000, 3000, 4000, s_id));
+    network6->add(ssubnet6);
+
+    // Add a host reservation to the plain subnet
+    HostPtr phost6(new Host("a1:b2:c3:d4:e5:f6", "duid", SubnetID(0),
+                            p_id, IOAddress::IPV4_ZERO_ADDRESS(),
+                            "foo.example.org"));
+    conf6.getCfgHosts()->add(phost6);
+
+    // Add a host reservation to the shared subnet
+    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SubnetID(0),
+                            s_id, IOAddress::IPV4_ZERO_ADDRESS(),
+                            "bar.example.org"));
+    conf6.getCfgHosts()->add(shost6);
+
+    // Unparse the config
+    ConstElementPtr unparsed6 = conf6.toElement();
+    ASSERT_TRUE(unparsed6);
+    ASSERT_EQ(Element::map, unparsed6->getType());
+
+    // Get Dhcp6 entry
+    ConstElementPtr dhcp6;
+    ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
+    ASSERT_TRUE(dhcp6);
+    ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Get plain subnets
+    ASSERT_NO_THROW(check = dhcp6->get("subnet6"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the plain subnet
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Its ID is 1
+    ASSERT_NO_THROW(sub = check->get("id"));
+    ASSERT_TRUE(sub);
+    ASSERT_EQ(Element::integer, sub->getType());
+    EXPECT_EQ(p_id, sub->intValue());
+
+    // Get its host reservations
+    ASSERT_NO_THROW(check = check->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the plain host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the host name
+    ASSERT_NO_THROW(check = check->get("hostname"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("foo.example.org", check->stringValue());
+
+    // Get shared networks
+    ASSERT_NO_THROW(check = dhcp6->get("shared-networks"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the shared network
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Its name is "frog"
+    ASSERT_NO_THROW(sub = check->get("name"));
+    ASSERT_TRUE(sub);
+    ASSERT_EQ(Element::string, sub->getType());
+    EXPECT_EQ("frog", sub->stringValue());
+
+    // Get shared subnets
+    ASSERT_NO_THROW(check = check->get("subnet6"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the shared subnet
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Its ID is 100
+    ASSERT_NO_THROW(sub = check->get("id"));
+    ASSERT_TRUE(sub);
+    ASSERT_EQ(Element::integer, sub->getType());
+    EXPECT_EQ(s_id, sub->intValue());
+
+    // Get its host reservations
+    ASSERT_NO_THROW(check = check->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the shared host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the host name
+    ASSERT_NO_THROW(check = check->get("hostname"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("bar.example.org", check->stringValue());
+}
 
 } // end of anonymous namespace

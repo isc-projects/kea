@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -165,10 +165,10 @@ public:
     /// @brief Test lease retrieval using client id, HW address and subnet id.
     void testGetLease4ClientIdHWAddrSubnetId();
 
-    // @brief Get lease4 by hardware address (2)
-    //
-    // Check that the system can cope with getting a hardware address of
-    // any size.
+    /// @brief Get lease4 by hardware address (2)
+    ///
+    /// Check that the system can cope with getting a hardware address of
+    /// any size.
     void testGetLease4HWAddrSize();
 
     /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
@@ -199,6 +199,12 @@ public:
     /// Adds leases to the database and checks that they can be accessed via
     /// a combination of client and subnet IDs.
     void testGetLease4ClientIdSubnetId();
+
+    /// @brief Test method which returns all IPv4 leases for Subnet ID.
+    void testGetLeases4SubnetId();
+
+    /// @brief Test method which returns all IPv4 leases.
+    void testGetLeases4();
 
     /// @brief Basic Lease4 Checks
     ///

@@ -88,6 +88,9 @@ kea_ctrl_agent_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_ctrl_agent_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
+if HAVE_CQL
+kea_ctrl_agent_LDFLAGS += $(CQL_LIBS)
+endif
 
 
 if GENERATE_PARSER

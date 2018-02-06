@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,9 +103,8 @@ public:
     /// @param host2 second host to be compared
     /// @param expect_match true = HW addresses expected to be the same,
     ///                     false = HW addresses expected to be different
-    void
-    compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
-                   bool expect_match);
+    void compareHwaddrs(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                        bool expect_match);
 
     /// @brief Compares DUIDs of the two hosts.
     ///
@@ -117,9 +116,8 @@ public:
     /// @param host2 second host to be compared
     /// @param expect_match true = DUIDs expected to be the same,
     ///                     false = DUIDs expected to be different
-    void
-    compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
-                 bool expect_match);
+    void compareDuids(const ConstHostPtr& host1, const ConstHostPtr& host2,
+                      bool expect_match);
 
     /// @brief Compares two hosts
     ///
@@ -130,10 +128,14 @@ public:
     void compareHosts(const ConstHostPtr& host1, const ConstHostPtr& host2);
 
     /// @brief Used to sort a host collection by IPv4 subnet id.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
     static bool compareHostsForSort4(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
     /// @brief Used to sort a host collection by IPv6 subnet id.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
     static bool compareHostsForSort6(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
@@ -379,8 +381,11 @@ public:
     /// value should be used (if true), or binary value (if false).
     /// @param added_options Controls which options should be inserted into
     /// a host: DHCPv4, DHCPv6 options or both.
+    /// @param user_context Optional user context
     void addTestOptions(const HostPtr& host, const bool formatted,
-                        const AddedOptions& added_options) const;
+                        const AddedOptions& added_options,
+                        isc::data::ConstElementPtr user_context =
+                        isc::data::ConstElementPtr()) const;
 
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
@@ -449,6 +454,13 @@ public:
     /// @param num number of hostnames to be added.
     void testHostname(std::string name, int num);
 
+    /// @brief Test insert and retrieve a host with user context.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param user_context The user context.
+    void testUserContext(isc::data::ConstElementPtr user_context);
+
     /// @brief Test inserts multiple reservations for the same host for different
     /// subnets and check that they can be retrieved properly.
     ///
@@ -469,7 +481,6 @@ public:
     /// @brief Test inserts several hosts with unique prefixes and checks
     ///        that the can be retrieved by subnet id and prefix value.
     void testGetBySubnetIPv6();
-
 
     /// @brief Test that hosts can be retrieved by hardware address.
     ///
@@ -525,7 +536,10 @@ public:
     ///
     /// @param formatted Boolean value indicating if the option values
     /// should be stored in the textual format in the database.
-    void testOptionsReservations4(const bool formatted);
+    /// @param user_context Optional user context.
+    void testOptionsReservations4(const bool formatted,
+                                  isc::data::ConstElementPtr user_context =
+                                  isc::data::ConstElementPtr());
 
     /// @brief Test that DHCPv6 options can be inserted and retrieved from
     /// the database.
@@ -534,7 +548,10 @@ public:
     ///
     /// @param formatted Boolean value indicating if the option values
     /// should be stored in the textual format in the database.
-    void testOptionsReservations6(const bool formatted);
+    /// @param user_context Optional user context.
+    void testOptionsReservations6(const bool formatted,
+                                  isc::data::ConstElementPtr user_context =
+                                  isc::data::ConstElementPtr());
 
     /// @brief Test that DHCPv4 and DHCPv6 options can be inserted and retrieved
     /// with a single query to the database.

@@ -48,7 +48,7 @@ class CqlExchange;
 /// behaviour.
 class AnyArray : public std::vector<boost::any> {
 public:
-    /// @brief Add a at the end of the vector.
+    /// @brief Add a value at the end of the vector.
     void add(const boost::any& value);
 
     /// @brief Remove the void pointer to the data value from a specified
@@ -59,7 +59,7 @@ public:
 // @brief Representation of a Cassandra User Defined Type
 class Udt : public AnyArray {
 public:
-    /// @brief Paramterized constructor
+    /// @brief Parameterized constructor
     Udt(const CqlConnection& connection, const std::string& name);
 
     /// @brief Destructor
@@ -85,25 +85,37 @@ public:
     CassUserType* cass_user_type_;
 };
 
-typedef AnyArray Collection;
+/// @brief Defines an array of arbitrary objects (used by Cassandra backend)
+typedef AnyArray AnyCollection;
 
 /// @brief Binds a C++ object to a Cassandra statement's parameter. Used in all
 ///     statements.
+/// @param value the value to be set or retreived
+/// @param index offset of the value being processed
+/// @param statement pointer to the parent statement being used
 typedef CassError (*CqlBindFunction)(const boost::any& value,
                                      const size_t& index,
                                      CassStatement* statement);
 
 /// @brief Sets a member in a UDT. Used in INSERT & UPDATE statements.
-typedef CassError (*CqlUdtSetFunction)(const boost::any& udt_member,
-                                       const size_t& position,
+/// @param value the value to be set or retreived
+/// @param index offset of the value being processed
+/// @param cass_user_type pointer to the user type that uses this member
+typedef CassError (*CqlUdtSetFunction)(const boost::any& value,
+                                       const size_t& index,
                                        CassUserType* cass_user_type);
 
 /// @brief Sets an item in a collection. Used in INSERT & UPDATE statements.
+/// @param value pointer to a value to be inserted or updated
+/// @param collection pointer to collection to be inserted or updated
 typedef CassError (*CqlCollectionAppendFunction)(const boost::any& value,
                                                  CassCollection* collection);
 
 /// @brief Converts a single Cassandra column value to a C++ object. Used in
 ///     SELECT statements.
+///
+/// @param data the result will be stored here (this pointer will be updated)
+/// @param value this value will be converted
 typedef CassError (*CqlGetFunction)(const boost::any& data,
                                     const CassValue* value);
 
@@ -138,9 +150,19 @@ public:
 
     /// @name Time conversion:
     /// @{
+    /// @brief Converts time to Cassandra format
+    ///
+    /// @param cltt timestamp of last client transmission time to be converted
+    /// @param valid_lifetime lifetime of a lease
+    /// @param expire expiration time (result will be stored here)
     static void convertToDatabaseTime(const time_t& cltt,
                                       const uint32_t& valid_lifetime,
                                       cass_int64_t& expire);
+
+    /// @brief Converts time from Cassandra format
+    /// @param expire expiration time in Cassandra format
+    /// @param valid_lifetime lifetime of a lease
+    /// @param cltt client last transmission time (result will be stored here)
     static void convertFromDatabaseTime(const cass_int64_t& expire,
                                         const cass_int64_t& valid_lifetime,
                                         time_t& cltt);
@@ -196,9 +218,8 @@ public:
     ///     same priumary key.
     ///
     /// @return true if statement has been succesfully applied, false otherwise
-    bool hasStatementBeenApplied(CassFuture* future,
-                                 size_t* row_count = NULL,
-                                 size_t* column_count = NULL);
+    bool statementApplied(CassFuture* future, size_t* row_count = NULL,
+                          size_t* column_count = NULL);
 
     /// @brief Copy received data into the derived class' object.
     ///
@@ -269,9 +290,9 @@ private:
 /// @brief Common operations in Cassandra exchanges
 class CqlCommon {
 public:
-    /// @brief Give values to every column of an INSERT or an UPDATE statement.
+    /// @brief Assigns values to every column of an INSERT or an UPDATE statement.
     ///
-    /// Calls cqlBindFunction_() for every column with it's respective type.
+    /// Calls cqlBindFunction_() for every column with its respective type.
     ///
     /// @param data array containing column values to be passed to the statement
     ///     being executed
@@ -281,7 +302,7 @@ public:
 
     /// @brief Retrieves data returned by Cassandra.
     ///
-    /// Calls cqlGetFunction_() for every column with it's respective type.
+    /// Calls cqlGetFunction_() for every column with its respective type.
     ///
     /// @param row internal Cassandra object containing data returned by
     ///     Cassandra

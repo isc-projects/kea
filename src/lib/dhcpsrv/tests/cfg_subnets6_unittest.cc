@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -439,6 +439,11 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
 
+    data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
+    subnet1->setContext(ctx1);
+    data::ElementPtr ctx2 = data::Element::createMap();
+    subnet2->setContext(ctx2);
+
     cfg.add(subnet1);
     cfg.add(subnet2);
     cfg.add(subnet3);
@@ -446,6 +451,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     // Unparse
     std::string expected = "[\n"
         "{\n"
+        "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
         "    \"relay\": { \"ip-address\": \"::\" },\n"
@@ -471,6 +477,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
+        "    \"user-context\": { },\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ]\n"
@@ -503,6 +510,13 @@ TEST(CfgSubnets6Test, unparsePool) {
                              IOAddress("2001:db8:1::100"),
                              IOAddress("2001:db8:1::199")));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+    pool2->allowClientClass("bar");
+
+    std::string json1 = "{ \"comment\": \"foo\", \"version\": 1 }";
+    data::ElementPtr ctx1 = data::Element::fromJSON(json1);
+    pool1->setContext(ctx1);
+    data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
+    pool2->setContext(ctx2);
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -522,10 +536,14 @@ TEST(CfgSubnets6Test, unparsePool) {
         "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [\n"
         "        {\n"
+        "            \"comment\": \"foo\",\n"
         "            \"pool\": \"2001:db8:1::100-2001:db8:1::199\",\n"
+        "            \"user-context\": { \"version\": 1 },\n"
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
+        "            \"client-class\": \"bar\",\n"
+        "            \"user-context\": { \"foo\": \"bar\" },\n"
         "            \"option-data\": [ ]\n"
         "        }\n"
         "    ],\n"
@@ -547,6 +565,10 @@ TEST(CfgSubnets6Test, unparsePdPool) {
                                IOAddress("2001:db8:2::"), 48, 64));
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
+    pdpool2->allowClientClass("bar");
+
+    data::ElementPtr ctx1 = data::Element::fromJSON("{ \"foo\": [ \"bar\" ] }");
+    pdpool1->setContext(ctx1);
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
@@ -570,6 +592,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix\": \"2001:db8:2::\",\n"
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
+        "            \"user-context\": { \"foo\": [ \"bar\" ] },\n"
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
@@ -577,7 +600,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"delegated-len\": 56,\n"
         "            \"excluded-prefix\": \"2001:db8:3::\",\n"
         "            \"excluded-prefix-len\": 64,\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"client-class\": \"bar\"\n"
         "        }\n"
         "    ],\n"
         "    \"option-data\": [ ]\n"

@@ -127,7 +127,7 @@ run_unittests_LDADD     = $(AM_LDADD)
 run_unittests_LDADD    += $(ALL_LIBS)
 run_unittests_LDADD    += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD    += $(top_builddir)/src/lib/cc/libkea-cc.la
-run_unittests_LDADD    += $(GTEST_LDADD)
+run_unittests_LDADD    += $(GTEST_LDADD) $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 # As noted in configure.ac, libtool doesn't work perfectly with Darwin: it
 # embeds the final install path in dynamic libraries and loadable modules refer
 # to that path even if its loaded within the source tree, so preventing tests

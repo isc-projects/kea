@@ -17,9 +17,9 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Define PostgreSQL backend version: 3.2
-const uint32_t PG_SCHEMA_VERSION_MAJOR = 3;
-const uint32_t PG_SCHEMA_VERSION_MINOR = 2;
+/// @brief Define PostgreSQL backend version: 4.0
+const uint32_t PG_SCHEMA_VERSION_MAJOR = 4;
+const uint32_t PG_SCHEMA_VERSION_MINOR = 0;
 
 // Maximum number of parameters that can be used a statement
 // @todo This allows us to use an initializer list (since we can't
@@ -27,7 +27,7 @@ const uint32_t PG_SCHEMA_VERSION_MINOR = 2;
 // statement.
 const size_t PGSQL_MAX_PARAMETERS_IN_QUERY = 32;
 
-/// @brief Define a PostgreSQL SQL statement
+/// @brief Define a PostgreSQL statement.
 ///
 /// Each statement is associated with an index, which is used to reference the
 /// associated prepared statement.
@@ -49,6 +49,7 @@ struct PgSqlTaggedStatement {
     const char* text;
 };
 
+/// @{
 /// @brief Constants for PostgreSQL data types
 /// These are defined by PostgreSQL in <catalog/pg_type.h>, but including
 /// this file is extraordinarily convoluted, so we'll use these to fill-in.
@@ -62,7 +63,7 @@ const size_t OID_INT4 = 23;  // 4 byte int
 const size_t OID_TEXT = 25;
 const size_t OID_VARCHAR = 1043;
 const size_t OID_TIMESTAMP = 1114;
-///@}
+/// @}
 
 /// @brief RAII wrapper for PostgreSQL Result sets
 ///
@@ -293,7 +294,7 @@ private:
 /// that use instances of PgSqlConnection.
 class PgSqlConnection : public DatabaseConnection {
 public:
-    /// @brief Define the PgSql error state for a duplicate key error
+    /// @brief Define the PgSql error state for a duplicate key error.
     static const char DUPLICATE_KEY[];
 
     /// @brief Constructor

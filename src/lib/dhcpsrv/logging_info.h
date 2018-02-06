@@ -10,6 +10,7 @@
 #include <log/logger_level.h>
 #include <log/logger_specification.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <stdint.h>
 #include <vector>
 
@@ -20,6 +21,7 @@ namespace dhcp {
 ///
 /// This structure is used to keep log4cplus configuration parameters.
 struct LoggingDestination : public isc::data::CfgToElement {
+public:
 
     /// @brief defines logging destination output
     ///
@@ -71,7 +73,8 @@ struct LoggingDestination : public isc::data::CfgToElement {
 ///            "severity": "WARN",
 ///            "debuglevel": 99
 ///        },
-struct LoggingInfo : public isc::data::CfgToElement {
+class LoggingInfo : public UserContext, public isc::data::CfgToElement {
+public:
 
     /// @brief logging name
     std::string name_;

@@ -144,19 +144,33 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
     return (IOAddress::fromBytes(AF_INET6, packed));
 }
 
+isc::asiolink::IOAddress
+AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& address,
+                                                 bool prefix,
+                                                 const uint8_t prefix_len) {
+    if (!prefix) {
+        return (IOAddress::increase(address));
+    } else {
+        return (increasePrefix(address, prefix_len));
+    }
+}
 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
+                                             const ClientClasses& client_classes,
                                              const DuidPtr&,
                                              const IOAddress&) {
 
     // Is this prefix allocation?
     bool prefix = pool_type_ == Lease::TYPE_PD;
+    uint8_t prefix_len = 0;
 
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
     IOAddress last = subnet->getLastAllocated(pool_type_);
+    bool valid = true;
+    bool retrying = false;
 
     const PoolCollection& pools = subnet->getPools(pool_type_);
 
@@ -166,58 +180,108 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     // first we need to find a pool the last address belongs to.
     PoolCollection::const_iterator it;
+    PoolCollection::const_iterator first = pools.end();
+    PoolPtr first_pool;
     for (it = pools.begin(); it != pools.end(); ++it) {
+        if (!(*it)->clientSupported(client_classes)) {
+            continue;
+        }
+        if (first == pools.end()) {
+            first = it;
+        }
         if ((*it)->inRange(last)) {
             break;
         }
+    }
+
+    // Caller checked this cannot happen
+    if (first == pools.end()) {
+        isc_throw(AllocFailed, "No allowed pools defined in selected subnet");
     }
 
     // last one was bogus for one of several reasons:
     // - we just booted up and that's the first address we're allocating
     // - a subnet was removed or other reconfiguration just completed
     // - perhaps allocation algorithm was changed
+    // - last pool does not allow this client
     if (it == pools.end()) {
-        // ok to access first element directly. We checked that pools is non-empty
-        IOAddress next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(pool_type_, next);
-        return (next);
+        it = first;
     }
 
-    // Ok, we have a pool that the last address belonged to, let's use it.
-
-    IOAddress next("::");
-    if (!prefix) {
-        next = IOAddress::increase(last); // basically addr++
-    } else {
-        Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
-        if (!pool6) {
-            // Something is gravely wrong here
-            isc_throw(Unexpected, "Wrong type of pool: " << (*it)->toText()
-                      << " is not Pool6");
+    for (;;) {
+        // Trying next pool
+        if (retrying) {
+            for (; it != pools.end(); ++it) {
+                if ((*it)->clientSupported(client_classes)) {
+                    break;
+                }
+            }
+            if (it == pools.end()) {
+                // Really out of luck today. That was the last pool.
+                break;
+            }
         }
-        // Get the next prefix
-        next = increasePrefix(last, pool6->getLength());
-    }
-    if ((*it)->inRange(next)) {
-        // the next one is in the pool as well, so we haven't hit pool boundary yet
-        subnet->setLastAllocated(pool_type_, next);
-        return (next);
+
+        last = (*it)->getLastAllocated();
+        valid = (*it)->isLastAllocatedValid();
+        if (!valid && (last == (*it)->getFirstAddress())) {
+            // Pool was (re)initialized
+            (*it)->setLastAllocated(last);
+            subnet->setLastAllocated(pool_type_, last);
+            return (last);
+        }
+        // still can be bogus
+        if (valid && !(*it)->inRange(last)) {
+            valid = false;
+            (*it)->resetLastAllocated();
+            (*it)->setLastAllocated((*it)->getFirstAddress());
+        }
+
+        if (valid) {
+            // Ok, we have a pool that the last address belonged to, let's use it.
+            if (prefix) {
+                Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
+
+                if (!pool6) {
+                    // Something is gravely wrong here
+                    isc_throw(Unexpected, "Wrong type of pool: "
+                              << (*it)->toText()
+                              << " is not Pool6");
+                }
+                // Get the prefix length
+                prefix_len = pool6->getLength();
+            }
+
+            IOAddress next = increaseAddress(last, prefix, prefix_len);
+            if ((*it)->inRange(next)) {
+                // the next one is in the pool as well, so we haven't hit
+                // pool boundary yet
+                (*it)->setLastAllocated(next);
+                subnet->setLastAllocated(pool_type_, next);
+                return (next);
+            }
+
+            valid = false;
+            (*it)->resetLastAllocated();
+        }
+        // We hit pool boundary, let's try to jump to the next pool and try again
+        ++it;
+        retrying = true;
     }
 
-    // We hit pool boundary, let's try to jump to the next pool and try again
-    ++it;
-    if (it == pools.end()) {
-        // Really out of luck today. That was the last pool. Let's rewind
-        // to the beginning.
-        next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(pool_type_, next);
-        return (next);
+    // Let's rewind to the beginning.
+    for (it = first; it != pools.end(); ++it) {
+        if ((*it)->clientSupported(client_classes)) {
+            (*it)->setLastAllocated((*it)->getFirstAddress());
+            (*it)->resetLastAllocated();
+        }
     }
 
-    // there is a next pool, let's try first address from it
-    next = (*it)->getFirstAddress();
-    subnet->setLastAllocated(pool_type_, next);
-    return (next);
+    // ok to access first element directly. We checked that pools is non-empty
+    last = (*first)->getLastAllocated();
+    (*first)->setLastAllocated(last);
+    subnet->setLastAllocated(pool_type_, last);
+    return (last);
 }
 
 AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
@@ -228,6 +292,7 @@ AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
 
 isc::asiolink::IOAddress
 AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
+                                          const ClientClasses&,
                                           const DuidPtr&,
                                           const IOAddress&) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
@@ -241,6 +306,7 @@ AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type)
 
 isc::asiolink::IOAddress
 AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
+                                          const ClientClasses&,
                                           const DuidPtr&,
                                           const IOAddress&) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
@@ -361,20 +427,29 @@ namespace {
 /// function when it belongs to a shared network.
 /// @param lease_type Type of the lease.
 /// @param address IPv6 address or prefix to be checked.
+/// @param check_subnet if true only subnets are checked else both subnets
+/// and pools are checked
 ///
 /// @return true if address belongs to a pool in a selected subnet or in
 /// a pool within any of the subnets belonging to the current shared network.
 bool
 inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
-              const IOAddress& address) {
+              const IOAddress& address, bool check_subnet) {
     // If the subnet belongs to a shared network we will be iterating
     // over the subnets that belong to this shared network.
     Subnet6Ptr current_subnet = ctx.subnet_;
     while (current_subnet) {
 
         if (current_subnet->clientSupported(ctx.query_->getClasses())) {
-            if (current_subnet->inPool(lease_type, address)) {
-                return (true);
+            if (check_subnet) {
+                if (current_subnet->inPool(lease_type, address)) {
+                    return (true);
+                }
+            } else {
+                if (current_subnet->inPool(lease_type, address,
+                                           ctx.query_->getClasses())) {
+                    return (true);
+                }
             }
         }
 
@@ -677,7 +752,12 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, hint, false));
+            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), hint));
+
+        // check if the pool is allowed
+        if (pool && !pool->clientSupported(ctx.query_->getClasses())) {
+            pool.reset();
+        }
 
         if (pool) {
 
@@ -775,14 +855,23 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // - we find a free address
         // - we find an address for which the lease has expired
         // - we exhaust number of tries
-        uint64_t max_attempts = (attempts_ > 0 ? attempts_  :
-                                 subnet->getPoolCapacity(ctx.currentIA().type_));
+        uint64_t possible_attempts =
+            subnet->getPoolCapacity(ctx.currentIA().type_,
+                                    ctx.query_->getClasses());
+        // Try next subnet if there is no chance to get something
+        if (possible_attempts == 0) {
+            subnet = subnet->getNextSubnet(original_subnet);
+            continue;
+        }
+        uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
 
             ++total_attempts;
 
-            IOAddress candidate = allocator->pickAddress(subnet, ctx.duid_,
+            IOAddress candidate = allocator->pickAddress(subnet,
+                                                         ctx.query_->getClasses(),
+                                                         ctx.duid_,
                                                          hint);
 
             /// In-pool reservations: Check if this address is reserved for someone
@@ -800,7 +889,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             uint8_t prefix_len = 128;
             if (ctx.currentIA().type_ == Lease::TYPE_PD) {
                 pool = boost::dynamic_pointer_cast<Pool6>(
-                    subnet->getPool(ctx.currentIA().type_, candidate, false));
+                        subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), candidate));
                 if (pool) {
                     prefix_len = pool->getLength();
                 }
@@ -1034,11 +1123,14 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
 void
 AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
                                               Lease6Collection& existing_leases) {
-    // If there are no leases (so nothing to remove) or
-    // host reservation is disabled (so there are no reserved leases),
-    // just return.
-    if (existing_leases.empty() || !ctx.subnet_ ||
-        (ctx.subnet_->getHostReservationMode() == Network::HR_DISABLED) ) {
+    // If there are no leases (so nothing to remove) just return.
+    if (existing_leases.empty() || !ctx.subnet_) {
+        return;
+    }
+    // If host reservation is disabled (so there are no reserved leases)
+    // use the simplified version.
+    if (ctx.subnet_->getHostReservationMode() == Network::HR_DISABLED) {
+        removeNonmatchingReservedNoHostLeases6(ctx, existing_leases);
         return;
     }
 
@@ -1075,7 +1167,8 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // be allocated to us from a dynamic pool, but we must check if
         // this lease belongs to any pool. If it does, we can proceed to
         // checking the next lease.
-        if (!host && inAllowedPool(ctx, candidate->type_, candidate->addr_)) {
+        if (!host && inAllowedPool(ctx, candidate->type_,
+                                   candidate->addr_, false)) {
             continue;
         }
 
@@ -1113,6 +1206,44 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
         // only if we get serious complaints from actual users. We want the
         // conflict resolution procedure to really work and user libraries
         // should not interfere with it.
+
+        // Add this to the list of removed leases.
+        ctx.currentIA().old_leases_.push_back(candidate);
+
+        // Let's remove this candidate from existing leases
+        removeLeases(existing_leases, candidate->addr_);
+    }
+}
+
+void
+AllocEngine::removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
+                                                    Lease6Collection& existing_leases) {
+    // We need a copy, so we won't be iterating over a container and
+    // removing from it at the same time. It's only a copy of pointers,
+    // so the operation shouldn't be that expensive.
+    Lease6Collection copy = existing_leases;
+
+    BOOST_FOREACH(const Lease6Ptr& candidate, copy) {
+        // Lease can be allocated to us from a dynamic pool, but we must
+        // check if this lease belongs to any allowed pool. If it does,
+        // we can proceed to checking the next lease.
+        if (inAllowedPool(ctx, candidate->type_,
+                          candidate->addr_, false)) {
+            continue;
+        }
+
+        // Remove this lease from LeaseMgr as it doesn't belong to a pool.
+        LeaseMgrFactory::instance().deleteLease(candidate->addr_);
+
+        // Update DNS if needed.
+        queueNCR(CHG_REMOVE, candidate);
+
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", candidate->subnet_id_,
+                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            static_cast<int64_t>(-1));
 
         // Add this to the list of removed leases.
         ctx.currentIA().old_leases_.push_back(candidate);
@@ -1282,7 +1413,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
             return (Lease6Ptr());
         }
 
-        /// @todo: Add support for DROP status
+        /// DROP status does not make sense here:
+	/// In general as the lease cannot be dropped the DROP action
+	/// has no object so SKIP is the right "cancel" status and
+	/// DROP should not be a synonym as it introduces ambiguity.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -1613,7 +1747,7 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 .arg(ctx.query_->getName());
         }
 
-        /// @todo: Add support for DROP status
+        /// DROP status does not make sense here.
     }
 
     if (!skip) {
@@ -1675,7 +1809,8 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
 
                 // If the lease is in the current subnet we need to account
                 // for the re-assignment of The lease.
-                if (inAllowedPool(ctx, ctx.currentIA().type_, lease->addr_)) {
+                if (inAllowedPool(ctx, ctx.currentIA().type_,
+                                  lease->addr_, true)) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", lease->subnet_id_,
                                                ctx.currentIA().type_ == Lease::TYPE_NA ?
@@ -2009,7 +2144,7 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
         skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
     }
 
-    /// @todo: Maybe add support for DROP status?
+    /// DROP status does not make sense here.
     /// Not sure if we need to support every possible status everywhere.
 
     if (!skipped) {
@@ -2099,7 +2234,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         skipped = callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP;
     }
 
-    /// @todo: Maybe add support for DROP status?
+    /// DROP status does not make sense here.
     /// Not sure if we need to support every possible status everywhere.
 
     if (!skipped) {
@@ -2478,6 +2613,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 /// within a shared network.
 ///
 /// @todo Update this function to take client classification into account.
+/// @note client classification in pools (vs subnets) is checked
 ///
 /// @param ctx Client context. Current subnet may be modified by this
 /// function when it belongs to a shared network.
@@ -2492,7 +2628,8 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     Subnet4Ptr current_subnet = ctx.subnet_;
     while (current_subnet) {
 
-        if (current_subnet->inPool(Lease::TYPE_V4, address)) {
+        if (current_subnet->inPool(Lease::TYPE_V4, address,
+                                   ctx.query_->getClasses())) {
             // We found a subnet that this address belongs to, so it
             // seems that this subnet is the good candidate for allocation.
             // Let's update the selected subnet.
@@ -2816,9 +2953,13 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // If the client is requesting an address which is assigned to the client
     // let's just renew this address. Also, renew this address if the client
     // doesn't request any specific address.
+    // Added extra checks: the address is reserved or belongs to the dynamic
+    // pool for the case the pool class has changed before the request.
     if (client_lease) {
-        if ((client_lease->addr_ == ctx.requested_address_) ||
-            ctx.requested_address_.isV4Zero()) {
+        if (((client_lease->addr_ == ctx.requested_address_) ||
+             ctx.requested_address_.isV4Zero()) &&
+            (hasAddressReservation(ctx) ||
+             inAllowedPool(ctx, client_lease->addr_))) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V4_REQUEST_EXTEND_LEASE)
@@ -2896,7 +3037,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
 
     time_t now = time(NULL);
 
-    // @todo: remove this kludge after ticket #2590 is implemented
+    // @todo: remove this kludge?
     std::vector<uint8_t> local_copy;
     if (ctx.clientid_ && ctx.subnet_->getMatchClientId()) {
         local_copy = ctx.clientid_->getDuid();
@@ -2998,7 +3139,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     // Let's keep the old data. This is essential if we are using memfile
     // (the lease returned points directly to the lease4 object in the database)
     // We'll need it if we want to skip update (i.e. roll back renewal)
-    /// @todo: remove this once #3083 is implemented
+    /// @todo: remove this?
     Lease4 old_values = *lease;
     ctx.old_lease_.reset(new Lease4(old_values));
 
@@ -3061,7 +3202,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
                       DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
         }
 
-        /// @todo: Add support for DROP status
+        /// DROP status does not make sense here.
     }
 
     if (!ctx.fake_allocation_ && !skip) {
@@ -3077,7 +3218,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     }
     if (skip) {
         // Rollback changes (really useful only for memfile)
-        /// @todo: remove this once #3083 is implemented
+        /// @todo: remove this?
         *lease = old_values;
     }
 
@@ -3150,7 +3291,7 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
             return (Lease4Ptr());
         }
 
-        /// @todo: add support for DROP
+        /// DROP status does not make sense here.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -3214,10 +3355,19 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             client_id = ctx.clientid_;
         }
 
-        const uint64_t max_attempts = (attempts_ > 0 ? attempts_ :
-                                       subnet->getPoolCapacity(Lease::TYPE_V4));
+        uint64_t possible_attempts =
+            subnet->getPoolCapacity(Lease::TYPE_V4,
+                                    ctx.query_->getClasses());
+        uint64_t max_attempts = (attempts_ > 0 ? attempts_ : possible_attempts);
+        // Skip trying if there is no chance to get something
+        if (possible_attempts == 0) {
+            max_attempts = 0;
+        }
+
         for (uint64_t i = 0; i < max_attempts; ++i) {
-            IOAddress candidate = allocator->pickAddress(subnet, client_id,
+            IOAddress candidate = allocator->pickAddress(subnet,
+                                                         ctx.query_->getClasses(),
+                                                         client_id,
                                                          ctx.requested_address_);
             // If address is not reserved for another client, try to allocate it.
             if (!addressReserved(candidate, ctx)) {

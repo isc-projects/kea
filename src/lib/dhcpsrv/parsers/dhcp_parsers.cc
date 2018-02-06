@@ -84,12 +84,6 @@ void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr v
     srv_cfg.setControlSocketInfo(value);
 }
 
-
-
-
-
-
-
 template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
@@ -132,6 +126,7 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     std::string record_types = getString(option_def, "record-types");
     std::string space = getString(option_def, "space");
     std::string encapsulates = getString(option_def, "encapsulate");
+    ConstElementPtr user_context = option_def->get("user-context");
 
     if (!OptionSpace::validateName(space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
@@ -166,6 +161,10 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     } else {
         def.reset(new OptionDefinition(name, code, type, array_type));
 
+    }
+
+    if (user_context) {
+        def->setContext(user_context);
     }
 
     // Split the list of record types into tokens.
@@ -376,6 +375,15 @@ PoolParser::parse(PoolStoragePtr pools,
         } catch (const std::exception& ex) {
             isc_throw(isc::dhcp::DhcpConfigError, ex.what()
                       << " (" << option_data->getPosition() << ")");
+        }
+    }
+
+    // Client-class.
+    ConstElementPtr client_class = pool_structure->get("client-class");
+    if (client_class) {
+        string cclass = client_class->stringValue();
+        if (!cclass.empty()) {
+            pool->allowClientClass(cclass);
         }
     }
 }
@@ -847,6 +855,11 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         user_context_ = user_context;
     }
 
+    ConstElementPtr client_class = pd_pool_->get("client-class");
+    if (client_class) {
+        client_class_ = client_class;
+    }
+
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -870,6 +883,14 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         pool_->setContext(user_context_);
     }
 
+
+    if (client_class_) {
+        string cclass = client_class_->stringValue();
+        if (!cclass.empty()) {
+            pool_->allowClientClass(cclass);
+        }
+    }
+        
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
 }
@@ -1245,6 +1266,12 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     }  catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
+    }
+
+    // Add user context
+    ConstElementPtr user_context = client_config->get("user-context");
+    if (user_context) {
+        new_config->setContext(user_context);
     }
 
     return(new_config);

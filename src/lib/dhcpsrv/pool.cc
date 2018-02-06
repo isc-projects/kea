@@ -1,8 +1,10 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/addr_utilities.h>
@@ -18,11 +20,33 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
-     capacity_(0), cfg_option_(new CfgOption()) {
+     capacity_(0), cfg_option_(new CfgOption()), white_list_(),
+     last_allocated_(first), last_allocated_valid_(false) {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
+}
+
+bool Pool::clientSupported(const ClientClasses& classes) const {
+    if (white_list_.empty()) {
+        // There is no class defined for this pool, so we do
+        // support everyone.
+        return (true);
+    }
+
+    for (ClientClasses::const_iterator it = white_list_.begin();
+         it != white_list_.end(); ++it) {
+        if (classes.contains(*it)) {
+            return (true);
+        }
+    }
+
+    return (false);
+}
+
+void Pool::allowClientClass(const ClientClass& class_name) {
+    white_list_.insert(class_name);
 }
 
 std::string
@@ -81,14 +105,21 @@ Pool::toElement() const {
     ElementPtr map = Element::createMap();
 
     // Set user-context
-    ConstElementPtr context = getContext();
-    if (!isNull(context)) {
-        map->set("user-context", context);
-    }
+    contextToElement(map);
 
     // Set pool options
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
+
+    // Set client-class
+    const ClientClasses& cclasses = getClientClasses();
+    if (cclasses.size() > 1) {
+        isc_throw(ToElementError, "client-class has too many items: "
+                  << cclasses.size());
+    } else if (!cclasses.empty()) {
+        map->set("client-class", Element::create(*cclasses.cbegin()));
+    }
+
     return (map);
 }
 
@@ -311,6 +342,7 @@ Pool6::toElement() const {
                 isc_throw(ToElementError, "invalid prefix range "
                           << prefix.toText() << "-" << last.toText());
             }
+            map->set("prefix-len", Element::create(prefix_len));
 
             // Set delegated-len
             uint8_t len = getLength();
@@ -325,10 +357,14 @@ Pool6::toElement() const {
                 uint8_t xlen = xopt->getExcludedPrefixLength();
                 map->set("excluded-prefix-len",
                          Element::create(static_cast<int>(xlen)));
-            } else {
-                map->set("excluded-prefix", Element::create(std::string("::")));
-                map->set("excluded-prefix-len", Element::create(0));
             }
+            // Let's not insert empty excluded-prefix values. If we ever
+            // decide to insert it after all, here's the code to do it:
+            // else {
+            //    map->set("excluded-prefix",
+            //             Element::create(std::string("::")));
+            //    map->set("excluded-prefix-len", Element::create(0));
+            /// }
 
             break;
         }

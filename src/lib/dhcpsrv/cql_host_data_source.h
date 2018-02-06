@@ -34,20 +34,43 @@ class CqlHostDataSourceImpl;
 /// Implements @ref isc::dhcp::BaseHostDataSource interface customized to
 /// Cassandra. Use of this backend implies that a Cassandra database is
 /// available and that the Kea schema has been created within it.
+///
+/// The database schema is radically different than the MySQL and the
+/// PostgreSQL schemas. Rather than creating a different table for
+/// hosts, reservations, DHCPv4 options and DHCPv6 options
+/// respectively, the data is denormalized  into a single table to
+/// benefit from Cassandra's non-relational nature. To make up for the
+/// lack of relations, on insertion, the reservations and options are
+/// matched against hosts on the server and merged into database
+/// entries. When retrieving, each database row is split into the
+/// corresponding host, reservation and options.
+///
+/// There can be an inconsistency in the database due to the order of
+/// the changes e.g. if you insert a host with no reservations and no
+/// options followed by the same host with one reservation will result
+/// in 2 entries versus inserting the host with reservation from the
+/// beginning which will result in a single entry. In spite of this,
+/// retrieving the host will give you the attached reservation in both
+/// cases.
 class CqlHostDataSource : public BaseHostDataSource {
 public:
     /// @brief Constructor
     ///
     /// Uses the following keywords in the parameters passed to it to connect
     /// to the database:
-    /// - name - Name of the database to which to connect (mandatory)
-    /// - host - Host to which to connect (optional, defaults to "localhost")
-    /// - user - Username under which to connect (optional)
-    /// - password - Password for "user" on the database (optional)
+    /// - keyspace
+    /// - host
+    /// - user
+    /// - password
+    /// - contact-points
+    /// - reconnect-wait-time
+    /// - connect-timeout
+    /// - request-timeout
+    /// - tcp-keepalive
+    /// - tcp-nodelay
     ///
-    /// If the database is successfully opened, the version number in the
-    /// schema_version table will be checked against hard-coded value in the
-    /// implementation file.
+    /// For details regarding those paraemters, see
+    /// @ref isc::dhcp::CqlConnection::openDatabase.
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
@@ -58,8 +81,7 @@ public:
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlHostDataSource(
-        const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     ///
@@ -73,8 +95,7 @@ public:
     /// the reservation for the same @ref HWAddr and @ref SubnetID is added
     /// twice, @ref add() should throw a @ref DuplicateEntry exception. Note,
     /// that usually it is impossible to guard against adding duplicated @ref
-    /// Host, where one instance is identified by @ref HWAddr, another one by
-    /// @ref DUID.
+    /// Host, where one instance is identified by different identifier types.
     ///
     /// @param host pointer to the new @ref Host being added.
     virtual void add(const HostPtr& host) override;
@@ -101,6 +122,8 @@ public:
 
     /// @brief Retrieves a @ref Host connected to an IPv4 subnet.
     ///
+    /// The host is identified by specific identifier.
+    ///
     /// @param subnet_id subnet identifier to filter by
     /// @param identifier_type identifier type to filter by
     /// @param identifier_begin pointer to the beginning of a buffer containing
@@ -116,10 +139,7 @@ public:
 
     /// @brief Retrieves a @ref Host connected to an IPv4 subnet.
     ///
-    /// Note that dynamically allocated addresses and reserved addresses can
-    /// come into conflict. When the new address is assigned to a client, the
-    /// allocation mechanism should check if this address is not reserved for
-    /// some other @ref Host and not allocate it if a reservation is present.
+    /// The host is identifier by specified IPv4 address.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param address reserved IPv4 address.
@@ -256,10 +276,10 @@ public:
     virtual bool del(const SubnetID& subnet_id,
                      const asiolink::IOAddress& addr);
 
-    /// @brief Attempts to delete a host by (subnet-id4, identifier,
-    /// identifier-type)
+    /// @brief Attempts to delete a host by (subnet-id4, identifier-type,
+    /// identifier).
     ///
-    /// This method supports both v4 hosts only.
+    /// This method supports v4 hosts only.
     ///
     /// @param subnet_id IPv4 Subnet identifier.
     /// @param identifier_type Identifier type.
@@ -274,10 +294,10 @@ public:
                       const uint8_t* identifier_begin,
                       const size_t identifier_len);
 
-    /// @brief Attempts to delete a host by (subnet-id6, identifier,
-    /// identifier-type)
+    /// @brief Attempts to delete a host by (subnet-id6, identifier-type,
+    /// identifier).
     ///
-    /// This method supports both v6 hosts only.
+    /// This method supports v6 hosts only.
     ///
     /// @param subnet_id IPv6 Subnet identifier.
     /// @param identifier_type Identifier type.
@@ -292,9 +312,7 @@ public:
                       const uint8_t* identifier_begin,
                       const size_t identifier_len);
 
-    /// @brief Returns description of the backend.
-    ///
-    /// This description may be multiline text that describes the backend.
+    /// @brief Returns textual description of the backend.
     ///
     /// @return Description of the backend.
     virtual std::string getDescription() const;
@@ -309,7 +327,7 @@ public:
     /// @return backend type "cql"
     virtual std::string getType() const override;
 
-    /// @brief Retrieves schema version.
+    /// @brief Retrieves schema version from the DB.
     ///
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" is the
@@ -321,12 +339,12 @@ public:
 
     /// @brief Commit Transactions
     ///
-    /// Commits all pending database operations.
+    /// Commits all pending database operations (no-op for Cassandra)
     virtual void commit() override;
 
     /// @brief Rollback Transactions
     ///
-    /// Rolls back all pending database operations.
+    /// Rolls back all pending database operations  (no-op for Cassandra)
     virtual void rollback() override;
 
 private:

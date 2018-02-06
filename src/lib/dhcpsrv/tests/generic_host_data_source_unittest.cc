@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
-#include <boost/foreach.hpp>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -20,6 +18,7 @@
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/schema.h>
+#include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 #include <util/buffer.h>
 
@@ -33,6 +32,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -254,6 +254,16 @@ GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
     EXPECT_EQ(host1->getNextServer(), host2->getNextServer());
     EXPECT_EQ(host1->getServerHostname(), host2->getServerHostname());
     EXPECT_EQ(host1->getBootFileName(), host2->getBootFileName());
+    ConstElementPtr ctx1 = host1->getContext();
+    ConstElementPtr ctx2 = host2->getContext();
+    if (ctx1) {
+        EXPECT_TRUE(ctx2);
+        if (ctx2) {
+            EXPECT_EQ(*ctx1, *ctx2);
+        }
+    } else {
+        EXPECT_FALSE(ctx2);
+    }
 
     // Compare IPv6 reservations
     compareReservations6(host1->getIPv6Reservations(),
@@ -406,6 +416,19 @@ GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
                 << "failed for option " << space << "."
                 << desc1.option_->getType();
 
+            // Compare user context.
+            ConstElementPtr ctx1 = desc1.getContext();
+            ConstElementPtr ctx2 = desc2.getContext();
+            if (ctx1) {
+                EXPECT_TRUE(ctx2);
+                if (ctx2) {
+                    EXPECT_EQ(*ctx1, *ctx2)
+                        << "failed for option " << space << "." << desc1.option_->getType();
+                }
+            } else {
+                EXPECT_FALSE(ctx2);
+            }
+
             // Retrieve options.
             Option* option1 = desc1.option_.get();
             Option* option2 = desc2.option_.get();
@@ -466,31 +489,31 @@ GenericHostDataSourceTest::createVendorOption(const Option::Universe& universe,
 }
 
 void
-GenericHostDataSourceTest::addTestOptions(
-    const HostPtr& host,
-    const bool formatted,
-    const AddedOptions& added_options) const {
+GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
+                                          const bool formatted,
+                                          const AddedOptions& added_options,
+                                          ConstElementPtr user_context) const {
+
     OptionDefSpaceContainer defs;
 
     if ((added_options == DHCP4_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
         // Add DHCPv4 options.
         CfgOptionPtr opts = host->getCfgOption4();
-        opts->add(createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                             true, formatted, "my-boot-file"),
-                  DHCP4_OPTION_SPACE);
+        OptionDescriptor desc = 
+            createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                       true, formatted, "my-boot-file");
+        desc.setContext(user_context);
+        opts->add(desc, DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
                                             false, formatted, 64),
                   DHCP4_OPTION_SPACE);
-        opts->add(
-            createOption<OptionUint32>(Option::V4, 1, false, formatted, 312131),
-            "vendor-encapsulated-options");
+        opts->add(createOption<OptionUint32>(Option::V4, 1, false, formatted, 312131),
+                  "vendor-encapsulated-options");
         opts->add(createAddressOption<Option4AddrLst>(254, false, formatted,
-                                                      "192.0.2.3"),
-                  DHCP4_OPTION_SPACE);
+                                                      "192.0.2.3"), DHCP4_OPTION_SPACE);
         opts->add(createEmptyOption(Option::V4, 1, true), "isc");
-        opts->add(createAddressOption<Option4AddrLst>(
-                      2, false, formatted, "10.0.0.5", "10.0.0.3", "10.0.3.4"),
-                  "isc");
+        opts->add(createAddressOption<Option4AddrLst>(2, false, formatted, "10.0.0.5",
+                                                      "10.0.0.3", "10.0.3.4"), "isc");
 
         // Add definitions for DHCPv4 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
@@ -499,22 +522,20 @@ GenericHostDataSourceTest::addTestOptions(
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "option-254", 254, "ipv4-address", true)),
                      DHCP4_OPTION_SPACE);
-        defs.addItem(
-            OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")),
-            "isc");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "isc-2", 2, "ipv4-address", true)),
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "ipv4-address", true)),
                      "isc");
     }
 
     if ((added_options == DHCP6_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
         // Add DHCPv6 options.
         CfgOptionPtr opts = host->getCfgOption6();
-        opts->add(createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL, true,
-                                             formatted, "my-boot-file"),
-                  DHCP6_OPTION_SPACE);
-        opts->add(createOption<OptionUint32>(Option::V6,
-                                             D6O_INFORMATION_REFRESH_TIME,
+        OptionDescriptor desc = 
+            createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
+                                       true, formatted, "my-boot-file");
+        desc.setContext(user_context);
+        opts->add(desc, DHCP6_OPTION_SPACE);
+        opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME,
                                              false, formatted, 3600),
                   DHCP6_OPTION_SPACE);
         opts->add(createVendorOption(Option::V6, false, formatted, 2495),
@@ -523,19 +544,15 @@ GenericHostDataSourceTest::addTestOptions(
                                                       "2001:db8:1::1"),
                   DHCP6_OPTION_SPACE);
         opts->add(createEmptyOption(Option::V6, 1, true), "isc2");
-        opts->add(createAddressOption<Option6AddrLst>(
-                      2, false, formatted, "3000::1", "3000::2", "3000::3"),
-                  "isc2");
+        opts->add(createAddressOption<Option6AddrLst>(2, false, formatted, "3000::1",
+                                                      "3000::2", "3000::3"), "isc2");
 
         // Add definitions for DHCPv6 non-standard options.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "option-1024", 1024, "ipv6-address", true)),
                      DHCP6_OPTION_SPACE);
-        defs.addItem(
-            OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")),
-            "isc2");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-2", 2, "ipv6-address", true)),
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")), "isc2");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2, "ipv6-address", true)),
                      "isc2");
     }
 
@@ -808,6 +825,46 @@ GenericHostDataSourceTest::testHostname(std::string name, int num) {
 }
 
 void
+GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host reservation.
+    HostPtr host = initializeHost4("192.0.2.1", Host::IDENT_DUID);
+    ASSERT_TRUE(host); // Make sure the host is generated properly.
+    host->setContext(user_context);
+    SubnetID subnet = host->getIPv4SubnetID();
+
+    // Try to add it to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Retrieve it.
+    ConstHostPtr from_hds = hdsptr_->get4(subnet, IOAddress("192.0.2.1"));
+    ASSERT_TRUE(from_hds);
+
+    // Finally, let's check if what we got makes any sense.
+    compareHosts(host, from_hds);
+
+    // Retry with IPv6
+    host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    ASSERT_TRUE(host);
+    ASSERT_TRUE(host->getHWAddress());
+    host->setContext(user_context);
+    host->setHostname("foo.example.com");
+    subnet = host->getIPv6SubnetID();
+
+    ASSERT_NO_THROW(hdsptr_->add(host));
+    
+    from_hds = hdsptr_->get6(subnet, Host::IDENT_HWADDR,
+                             &host->getIdentifier()[0],
+                             host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+
+    compareHosts(host, from_hds);
+}
+
+void
 GenericHostDataSourceTest::testMultipleSubnets(int subnets,
                                                const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.
@@ -900,13 +957,13 @@ GenericHostDataSourceTest::testGet6ByHWAddr() {
     SubnetID subnet1 = host1->getIPv6SubnetID();
     SubnetID subnet2 = host2->getIPv6SubnetID();
 
-    ConstHostPtr from_hds1 =
-        hdsptr_->get6(subnet1, Host::IDENT_HWADDR, &host1->getIdentifier()[0],
-                      host1->getIdentifier().size());
+    ConstHostPtr from_hds1 = hdsptr_->get6(subnet1, Host::IDENT_HWADDR,
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size());
 
-    ConstHostPtr from_hds2 =
-        hdsptr_->get6(subnet2, Host::IDENT_HWADDR, &host2->getIdentifier()[0],
-                      host2->getIdentifier().size());
+    ConstHostPtr from_hds2 = hdsptr_->get6(subnet2, Host::IDENT_HWADDR,
+                                           &host2->getIdentifier()[0],
+                                           host2->getIdentifier().size());
 
     // Now let's check if we got what we expected.
     ASSERT_TRUE(from_hds1);
@@ -937,13 +994,13 @@ GenericHostDataSourceTest::testGet6ByClientId() {
     SubnetID subnet1 = host1->getIPv6SubnetID();
     SubnetID subnet2 = host2->getIPv6SubnetID();
 
-    ConstHostPtr from_hds1 =
-        hdsptr_->get6(subnet1, Host::IDENT_DUID, &host1->getIdentifier()[0],
-                      host1->getIdentifier().size());
+    ConstHostPtr from_hds1 = hdsptr_->get6(subnet1, Host::IDENT_DUID,
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size());
 
-    ConstHostPtr from_hds2 =
-        hdsptr_->get6(subnet2, Host::IDENT_DUID, &host2->getIdentifier()[0],
-                      host2->getIdentifier().size());
+    ConstHostPtr from_hds2 = hdsptr_->get6(subnet2, Host::IDENT_DUID,
+                                           &host2->getIdentifier()[0],
+                                           host2->getIdentifier().size());
 
     // Now let's check if we got what we expected.
     ASSERT_TRUE(from_hds1);
@@ -978,17 +1035,16 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     // Check that the reservations can be retrieved from each subnet separately.
     for (int i = 0; i < subnets; ++i) {
         // Try to retrieve the host
-        ConstHostPtr from_hds =
-            hdsptr_->get6(i + 1000, id, &host->getIdentifier()[0],
-                          host->getIdentifier().size());
+        ConstHostPtr from_hds = hdsptr_->get6(i + 1000, id, &host->getIdentifier()[0],
+                                              host->getIdentifier().size());
 
         ASSERT_TRUE(from_hds) << "failed for i=" << i;
         EXPECT_EQ(i + 1000, from_hds->getIPv6SubnetID());
     }
 
     // Check that the hosts can all be retrieved by HW address or DUID
-    ConstHostCollection all_by_id = hdsptr_->getAll(
-        id, &host->getIdentifier()[0], host->getIdentifier().size());
+    ConstHostCollection all_by_id = hdsptr_->getAll(id, &host->getIdentifier()[0],
+                                                    host->getIdentifier().size());
     ASSERT_EQ(subnets, all_by_id.size());
 
     // Check that the returned values are as expected.
@@ -1066,14 +1122,10 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     ASSERT_NO_THROW(hdsptr_->add(host4));
 
     // And then try to retrieve them back.
-    ConstHostPtr from_hds1 =
-        hdsptr_->get6(host1->getIPv6SubnetID(), IOAddress("2001:db8:1::"));
-    ConstHostPtr from_hds2 =
-        hdsptr_->get6(host2->getIPv6SubnetID(), IOAddress("2001:db8:2::"));
-    ConstHostPtr from_hds3 =
-        hdsptr_->get6(host3->getIPv6SubnetID(), IOAddress("2001:db8:3::"));
-    ConstHostPtr from_hds4 =
-        hdsptr_->get6(host4->getIPv6SubnetID(), IOAddress("2001:db8:4::"));
+    ConstHostPtr from_hds1 = hdsptr_->get6(host1->getIPv6SubnetID(), IOAddress("2001:db8:1::"));
+    ConstHostPtr from_hds2 = hdsptr_->get6(host2->getIPv6SubnetID(), IOAddress("2001:db8:2::"));
+    ConstHostPtr from_hds3 = hdsptr_->get6(host3->getIPv6SubnetID(), IOAddress("2001:db8:3::"));
+    ConstHostPtr from_hds4 = hdsptr_->get6(host4->getIPv6SubnetID(), IOAddress("2001:db8:4::"));
 
     // Make sure we got something back.
     ASSERT_TRUE(from_hds1);
@@ -1232,11 +1284,11 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
                          host2->getIPv6Reservations());
 }
 
-void
-GenericHostDataSourceTest::testOptionsReservations4(const bool formatted) {
+void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
+                                                         ConstElementPtr user_context) {
     HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
-    ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY));
+    ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY, user_context));
     // Insert host and the options into respective tables.
     ASSERT_NO_THROW(hdsptr_->add(host));
     // Subnet id will be used in queries to the database.
@@ -1260,11 +1312,11 @@ GenericHostDataSourceTest::testOptionsReservations4(const bool formatted) {
     ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_addr));
 }
 
-void
-GenericHostDataSourceTest::testOptionsReservations6(const bool formatted) {
+void GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
+                                                         ConstElementPtr user_context) {
     HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
-    ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP6_ONLY));
+    ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP6_ONLY, user_context));
     // Insert host, options and IPv6 reservations into respective tables.
     ASSERT_NO_THROW(hdsptr_->add(host));
     // Subnet id will be used in queries to the database.

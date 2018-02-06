@@ -2303,19 +2303,92 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    bool drop = false;
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Let's add the packet to bar class and try again.
     dis->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Let's add it to matching class.
     dis->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(dis));
+    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+}
+
+// Checks if the client-class field is indeed used for pool selection.
+TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // This test configures 2 pools.
+    // The second pool does not play any role here. The client's
+    // IP address belongs to the first pool, so only that first
+    // pool is being tested.
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{   \"pools\": [ { "
+        "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
+        "      \"client-class\": \"foo\" }, "
+        "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
+        "      \"client-class\": \"xyzzy\" } ], "
+        "    \"subnet\": \"192.0.0.0/16\" } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    CfgMgr::instance().commit();
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Create a simple packet that we'll use for classification
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setCiaddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // This discover does not belong to foo class, so it will not
+    // be serviced
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    EXPECT_FALSE(offer);
+
+    // Let's add the packet to bar class and try again.
+    dis->addClass("bar");
+
+    // Still not supported, because it belongs to wrong class.
+    offer = srv.processDiscover(dis);
+    EXPECT_FALSE(offer);
+
+    // Let's add it to matching class.
+    dis->addClass("foo");
+
+    // This time it should work
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
 }
 
 // Verifies last resort option 43 is backward compatible
@@ -3493,31 +3566,38 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // This is just a sanity check, we're using regular method: ciaddr 192.0.2.1
     // belongs to the first subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.2.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+    bool drop = false;
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Relay belongs to the second subnet, so it  should be selected.
     dis->setGiaddr(IOAddress("192.0.3.1"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Now let's check if the relay override for the first subnets works
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // The same check for the second subnet...
     dis->setGiaddr(IOAddress("192.0.5.2"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // And finally, let's check if mis-matched relay address will end up
     // in not selecting a subnet at all
     dis->setGiaddr(IOAddress("192.0.5.3"));
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Finally, check that the relay override works only with relay address
     // (GIADDR) and does not affect client address (CIADDR)
     dis->setGiaddr(IOAddress("0.0.0.0"));
     dis->setHops(0);
     dis->setCiaddr(IOAddress("192.0.5.1"));
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 }
 
 // Checks if relay IP address specified in the relay-info structure can be
@@ -3573,12 +3653,15 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // subnet[0], even though the relay-ip matches. It should be accepted in
     // subnet[1], because the subnet matches and there are no class
     // requirements.
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    bool drop = false;
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     dis->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 }
 
 // Checks if a RAI link selection sub-option works as expected
@@ -3644,16 +3727,20 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    bool drop = false;
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Put a RAI to select back the second subnet as it has
     // the highest precedence
     dis->addOption(rai);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence
     OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
@@ -3663,7 +3750,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
     dis->delOption(DHO_SUBNET_SELECTION);
 
     // Check client-classification still applies
@@ -3675,10 +3763,12 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     rai->addOption(ols);
     dis->addOption(rai);
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Check it fails with a bad address in the sub-option
     IOAddress addr_bad("10.0.0.1");
@@ -3688,7 +3778,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     rai->addOption(ols);
     dis->addOption(rai);
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 }
 
 // Checks if a subnet selection option works as expected
@@ -3749,28 +3840,35 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    bool drop = false;
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Put a subnet select option to select back the second subnet as
     // it has the second highest precedence
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Check client-classification still applies
     sbnsel->writeAddress(IOAddress("192.0.4.2"));
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis));
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 
     // Check it fails with a bad address in the sub-option
     sbnsel->writeAddress(IOAddress("10.0.0.1"));
-    EXPECT_FALSE(srv_.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
 }
 
 // This test verifies that the direct message is dropped when it has been

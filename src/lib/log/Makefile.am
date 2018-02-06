@@ -4,6 +4,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTOP_BUILDDIR=\"$(abs_top_builddir)\"
 
+AM_CXXFLAGS = $(KEA_CXXFLAGS)
+
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-log.la

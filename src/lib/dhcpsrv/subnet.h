@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
 #include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/lease.h>
@@ -27,7 +28,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public data::CfgToElement {
+class Subnet : public virtual UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.
@@ -54,26 +55,39 @@ public:
     /// @return true if the address is in any of the pools
     bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief returns the last address that was tried from this pool
+    /// @brief checks if the specified address is in allowed pools
+    ///
+    /// This takes also into account client classes
+    ///
+    /// @param type type of pools to iterate over
+    /// @param addr this address will be checked if it belongs to any pools in
+    ///        that subnet
+    /// @param client_classes client class list which must be allowed
+    /// @return true if the address is in any of the allowed pools
+    bool inPool(Lease::Type type,
+                const isc::asiolink::IOAddress& addr,
+                const ClientClasses& client_classes) const;
+
+    /// @brief returns the last address that was tried from this subnet
     ///
     /// This method returns the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
     ///
-    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
     /// @param type lease type to be returned
-    /// @return address/prefix that was last tried from this pool
+    /// @return address/prefix that was last tried from this subnet
     isc::asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
-    /// @brief sets the last address that was tried from this pool
+    /// @brief sets the last address that was tried from this subnet
     ///
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
     ///
-    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     /// @param addr address/prefix to that was tried last
     /// @param type lease type to be set
@@ -142,6 +156,17 @@ public:
     const PoolPtr getPool(Lease::Type type, const isc::asiolink::IOAddress& addr,
                           bool anypool = true) const;
 
+    /// @brief Returns a pool that specified address belongs to with classes
+    ///
+    /// Variant using only pools allowing given classes
+    ///
+    /// @param type pool type that the pool is looked for
+    /// @param client_classes client class list which must be allowed
+    /// @param addr address that the returned pool should cover (optional)
+    const PoolPtr getPool(Lease::Type type,
+                          const ClientClasses& client_classes,
+                          const isc::asiolink::IOAddress& addr) const;
+
     /// @brief Returns a pool without any address specified
     ///
     /// @param type pool type that the pool is looked for
@@ -168,6 +193,14 @@ public:
     ///
     /// @param type type of the lease
     uint64_t getPoolCapacity(Lease::Type type) const;
+
+    /// @brief Returns the number of possible leases for specified lease type
+    /// allowed for a client which belongs to classes.
+    ///
+    /// @param type type of the lease
+    /// @param client_classes List of classes the client belongs to.
+    uint64_t getPoolCapacity(Lease::Type type,
+                             const ClientClasses& client_classes) const;
 
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
@@ -217,19 +250,6 @@ private:
     /// with the subnet.
     void setSharedNetwork(const NetworkPtr& shared_network) {
         shared_network_ = shared_network;
-    }
-
-public:
-
-    /// @brief Sets user context.
-    /// @param ctx user context to be stored.
-    void setContext(const data::ConstElementPtr& ctx) {
-        user_context_ = ctx;
-    }
-
-    /// @brief Returns const pointer to the user context.
-    data::ConstElementPtr getContext() const {
-        return (user_context_);
     }
 
 protected:
@@ -295,10 +315,17 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-    /// @brief returns a sum of possible leases in all pools
+    /// @brief Returns a sum of possible leases in all pools
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
+
+    /// @brief Returns a sum of possible leases in all pools allowing classes
+    /// @param pools list of pools
+    /// @param client_classes list of classes
+    /// @return sum of possible/allowed leases
+    uint64_t sumPoolCapacity(const PoolCollection& pools,
+                             const ClientClasses& client_classes) const;
 
     /// @brief Checks if the specified pool overlaps with an existing pool.
     ///
@@ -362,9 +389,6 @@ protected:
 
     /// @brief Pointer to a shared network that subnet belongs to.
     WeakNetworkPtr shared_network_;
-
-    /// @brief Pointer to the user context (may be NULL)
-    data::ConstElementPtr user_context_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
@@ -382,6 +406,8 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
 class Subnet4 : public Subnet, public Network4 {
 public:
 
@@ -538,6 +564,8 @@ typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
 class Subnet6 : public Subnet, public Network6 {
 public:
 

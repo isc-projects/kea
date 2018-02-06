@@ -22,13 +22,16 @@ EXTRA_DIST = http_messages.mes
 CLEANFILES = *.gcno *.gcda http_messages.h http_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-http.la
-libkea_http_la_SOURCES  = connection.cc connection.h
+libkea_http_la_SOURCES  = client.cc client.h
+libkea_http_la_SOURCES += connection.cc connection.h
 libkea_http_la_SOURCES += connection_pool.cc connection_pool.h
 libkea_http_la_SOURCES += date_time.cc date_time.h
 libkea_http_la_SOURCES += http_log.cc http_log.h
 libkea_http_la_SOURCES += header_context.h
 libkea_http_la_SOURCES += http_acceptor.h
 libkea_http_la_SOURCES += http_header.cc http_header.h
+libkea_http_la_SOURCES += http_message.cc http_message.h
+libkea_http_la_SOURCES += http_message_parser_base.cc http_message_parser_base.h
 libkea_http_la_SOURCES += http_types.h
 libkea_http_la_SOURCES += listener.cc listener.h
 libkea_http_la_SOURCES += post_request.cc post_request.h
@@ -37,9 +40,12 @@ libkea_http_la_SOURCES += request.cc request.h
 libkea_http_la_SOURCES += request_context.h
 libkea_http_la_SOURCES += request_parser.cc request_parser.h
 libkea_http_la_SOURCES += response.cc response.h
+libkea_http_la_SOURCES += response_parser.cc response_parser.h
+libkea_http_la_SOURCES += response_context.h
 libkea_http_la_SOURCES += response_creator.cc response_creator.h
 libkea_http_la_SOURCES += response_creator_factory.h
 libkea_http_la_SOURCES += response_json.cc response_json.h
+libkea_http_la_SOURCES += url.cc url.h
 
 nodist_libkea_http_la_SOURCES = http_messages.cc http_messages.h
 

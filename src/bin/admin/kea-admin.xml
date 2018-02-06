@@ -103,7 +103,6 @@
                 migrating between old and new Kea versions.</para>
               </listitem>
             </varlistentry>
-          </variablelist>
 
             <varlistentry>
               <term>lease-dump</term>
@@ -114,6 +113,7 @@
                 The first line of file is a header line containing the column names.</para>
               </listitem>
             </varlistentry>
+          </variablelist>
 
         </listitem>
       </varlistentry>

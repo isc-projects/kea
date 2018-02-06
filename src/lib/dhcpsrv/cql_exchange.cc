@@ -22,6 +22,20 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/sql_common.h>
 
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace isc {
 namespace dhcp {
 
@@ -33,6 +47,8 @@ namespace dhcp {
         }                            \
     }
 
+/// @brief a helper structure with a function call operator that returns
+///        key value in a format expected by std::hash.
 struct ExchangeDataTypeHash {
 public:
     size_t operator()(const ExchangeDataType& key) const {
@@ -40,13 +56,14 @@ public:
     }
 };
 
+/// @brief Defines a type for storing aux. Cassandra functions
 typedef std::unordered_map<ExchangeDataType, CqlFunction, ExchangeDataTypeHash>
     CqlFunctionMap;
 extern CqlFunctionMap CQL_FUNCTIONS;
 
 /// @brief hash function for CassTypeMap
 ///
-/// Required by c++ versions 5 and below.
+/// Required by g++ versions 5 and below.
 ///
 /// @param key being hashed
 ///
@@ -58,9 +75,12 @@ hash_value(const CassValueType& key) {
 
 /// @brief Map types used to determine exchange type
 /// @{
+
+/// @brief Defines type that maps specific type to an enum
 typedef std::unordered_map<std::type_index, ExchangeDataType> AnyTypeMap;
-// Declare uint8_t as key here for compatibility with c++-5. Ideally, it would
-// 	be CassValueType
+
+// Declare uint8_t as key here for compatibility with g++ version 5. Ideally,
+// it would be CassValueType
 typedef std::unordered_map<uint8_t, ExchangeDataType> CassTypeMap;
 /// @}
 
@@ -75,8 +95,8 @@ static AnyTypeMap ANY_TYPE_MAP = {
     {typeid(std::string*), EXCHANGE_DATA_TYPE_STRING},
     {typeid(CassBlob*), EXCHANGE_DATA_TYPE_BYTES},
     {typeid(CassUuid*), EXCHANGE_DATA_TYPE_UUID},
-    {typeid(Udt*), EXCHANGE_DATA_TYPE_UDT},
-    {typeid(Collection*), EXCHANGE_DATA_TYPE_COLLECTION}};
+    {typeid(Udt*), EXCHANGE_DATA_TYPE_UDT}, // user data type
+    {typeid(AnyCollection*), EXCHANGE_DATA_TYPE_COLLECTION}};
 
 /// @brief Maps Cassandra type to exchange type
 static CassTypeMap CASS_TYPE_MAP = {
@@ -107,7 +127,7 @@ static CassTypeMap CASS_TYPE_MAP = {
     {CASS_VALUE_TYPE_UDT, EXCHANGE_DATA_TYPE_UDT},
     {CASS_VALUE_TYPE_TUPLE, EXCHANGE_DATA_TYPE_UDT}};
 
-/// @brief Udt method implementations
+/// @brief Udt (user data type) method implementations
 /// @{
 Udt::Udt(const CqlConnection& connection, const std::string& name)
     : AnyArray(), connection_(connection), name_(name) {
@@ -128,6 +148,8 @@ Udt::Udt(const CqlConnection& connection, const std::string& name)
 }
 
 Udt::~Udt() {
+    /// @todo: Need to get back to this issue. This is likely a memory leak.
+    //
     // Bug: it seems that if there is no call to
     //      cass_user_type_set_*(cass_user_type_), then
     //      cass_user_type_free(cass_user_type_) might SIGSEGV, so we never
@@ -236,7 +258,14 @@ CqlBindUdt(const boost::any& value,
            CassStatement* statement) {
     Udt* udt = boost::any_cast<Udt*>(value);
 
+    if (!udt) {
+        isc_throw(BadValue, "Invalid value specified, not an Udt object");
+    }
+
     size_t i = 0u;
+
+    // Let's iterate over all elements in udt and check that we indeed
+    // can assign the set function for each specified type.
     for (boost::any& element : *udt) {
         try {
             KEA_CASS_CHECK(
@@ -261,11 +290,13 @@ static CassError
 CqlBindCollection(const boost::any& value,
                   const size_t& index,
                   CassStatement* statement) {
-    Collection* elements = boost::any_cast<Collection*>(value);
+    AnyCollection* elements = boost::any_cast<AnyCollection*>(value);
 
     CassCollection* collection =
         cass_collection_new(CASS_COLLECTION_TYPE_SET, elements->size());
 
+    // Iterate over all elements and assign appropriate append function
+    // for each.
     for (boost::any& element : *elements) {
         ExchangeDataType type = exchangeType(element);
         KEA_CASS_CHECK(CQL_FUNCTIONS[type].cqlCollectionAppendFunction_(
@@ -541,11 +572,15 @@ CqlGetUdt(const boost::any& data, const CassValue* value) {
 
 static CassError
 CqlGetCollection(const boost::any& data, const CassValue* value) {
-    Collection* collection = boost::any_cast<Collection*>(data);
+    AnyCollection* collection = boost::any_cast<AnyCollection*>(data);
+    if (!collection) {
+        isc_throw(DbOperationError, "CqlGetCollection(): column is not a collection");
+    }
+
     BOOST_ASSERT(collection->size() == 1);
 
-    // @todo: Create a copy of the underlying object rather than referencing to
-    // it.
+    /// @todo: Create a copy of the underlying object rather than referencing to
+    /// it.
     boost::any underlying_object = *collection->begin();
 
     collection->clear();
@@ -566,7 +601,7 @@ CqlGetCollection(const boost::any& data, const CassValue* value) {
         collection->push_back(underlying_object);
         KEA_CASS_CHECK(CQL_FUNCTIONS[exchangeType(type)].cqlGetFunction_(
             *collection->rbegin(), item_value));
-        // If cqlGetFunction_() returns != CASS_OK, don't
+        // If cqlGetFunction_() returns != CASS_OK, don't call
         // cass_iterator_free(items_iterator) because we're returning from this
         // function and throwing from the callee.
     }
@@ -724,29 +759,33 @@ void
 CqlExchange::convertFromDatabaseTime(const cass_int64_t& expire,
                                      const cass_int64_t& valid_lifetime,
                                      time_t& cltt) {
+    /// @todo: Although 2037 is still far away, there are people who use infinite
+    /// lifetimes. Cassandra doesn't have to support it right now, but at least
+    /// we should be able to detect a problem.
+
     // Convert to local time
     cltt = static_cast<time_t>(expire - valid_lifetime);
 }
 
 AnyArray
-CqlExchange::executeSelect(const CqlConnection& connection,
-                           const AnyArray& data,
-                           StatementTag statement_tag,
-                           const bool& single /* = false */) {
+CqlExchange::executeSelect(const CqlConnection& connection, const AnyArray& data,
+                           StatementTag statement_tag, const bool& single /* = false */) {
     CassError rc;
     CassStatement* statement = NULL;
     CassFuture* future = NULL;
     AnyArray local_data = data;
 
-    StatementMap::const_iterator it =
-        connection.statements_.find(statement_tag);
+    // Find the query statement first.
+    StatementMap::const_iterator it = connection.statements_.find(statement_tag);
     if (it == connection.statements_.end()) {
         isc_throw(DbOperationError,
                   "CqlExchange::executeSelect(): Statement "
                       << statement_tag << "has not been prepared.");
     }
+
+    // Bind the data before the query is executed.
     CqlTaggedStatement tagged_statement = it->second;
-    if (tagged_statement.is_raw_statement_) {
+    if (tagged_statement.is_raw_) {
         // The entire query is the first element in data.
         std::string* query = boost::any_cast<std::string*>(local_data.back());
         local_data.pop_back();
@@ -760,6 +799,7 @@ CqlExchange::executeSelect(const CqlConnection& connection,
         }
     }
 
+    // Set specific level of consistency if we're told to do so.
     if (connection.force_consistency_) {
         rc = cass_statement_set_consistency(statement, connection.consistency_);
         if (rc != CASS_OK) {
@@ -774,6 +814,7 @@ CqlExchange::executeSelect(const CqlConnection& connection,
 
     CqlCommon::bindData(local_data, statement);
 
+    // Everything's ready. Call the actual statement.
     future = cass_session_execute(connection.session_, statement);
     if (!future) {
         cass_statement_free(statement);
@@ -781,6 +822,8 @@ CqlExchange::executeSelect(const CqlConnection& connection,
                   "CqlExchange::executeSelect(): no CassFuture for statement "
                       << tagged_statement.name_);
     }
+
+    // Wait for the statement execution to complete.
     cass_future_wait(future);
     const std::string error = connection.checkFutureError(
         "CqlExchange::executeSelect(): cass_session_execute() != CASS_OK",
@@ -826,21 +869,20 @@ CqlExchange::executeSelect(const CqlConnection& connection,
 }
 
 void
-CqlExchange::executeMutation(
-    const CqlConnection& connection,
-    const AnyArray& data,
-    StatementTag statement_tag) {
+CqlExchange::executeMutation(const CqlConnection& connection, const AnyArray& data,
+                             StatementTag statement_tag) {
     CassError rc;
     CassStatement* statement = NULL;
     CassFuture* future = NULL;
 
+    // Find the statement on a list of prepared statements.
     StatementMap::const_iterator it =
         connection.statements_.find(statement_tag);
     if (it == connection.statements_.end()) {
-        isc_throw(DbOperationError,
-                  "CqlExchange::executeSelect(): Statement "
-                      << statement_tag << "has not been prepared.");
+        isc_throw(DbOperationError, "CqlExchange::executeSelect(): Statement "
+                  << statement_tag << "has not been prepared.");
     }
+    // Bind the statement.
     CqlTaggedStatement tagged_statement = it->second;
     statement = cass_prepared_bind(tagged_statement.prepared_statement_);
     if (!statement) {
@@ -849,15 +891,14 @@ CqlExchange::executeMutation(
                       << tagged_statement.name_);
     }
 
+    // Set specific level of consistency, if told to do so.
     if (connection.force_consistency_) {
         rc = cass_statement_set_consistency(statement, connection.consistency_);
         if (rc != CASS_OK) {
             cass_statement_free(statement);
-            isc_throw(DbOperationError,
-                      "CqlExchange::executeMutation(): unable to set statement "
-                      "consistency for statement "
-                          << tagged_statement.name_
-                          << ", Cassandra error code: " << cass_error_desc(rc));
+            isc_throw(DbOperationError, "CqlExchange::executeMutation(): unable to set"
+                      " statement consistency for statement " << tagged_statement.name_
+                      << ", Cassandra error code: " << cass_error_desc(rc));
         }
     }
 
@@ -871,9 +912,8 @@ CqlExchange::executeMutation(
                       << tagged_statement.name_);
     }
     cass_future_wait(future);
-    const std::string error = connection.checkFutureError(
-        "CqlExchange::executeMutation(): cass_session_execute() != CASS_OK",
-        future, statement_tag);
+    const std::string error = connection.checkFutureError("CqlExchange::executeMutation():"
+                              "cass_session_execute() != CASS_OK", future, statement_tag);
     rc = cass_future_error_code(future);
     if (rc != CASS_OK) {
         cass_future_free(future);
@@ -882,7 +922,7 @@ CqlExchange::executeMutation(
     }
 
     // Check if statement has been applied.
-    bool applied = hasStatementBeenApplied(future);
+    bool applied = statementApplied(future);
 
     // Free resources.
     cass_future_free(future);
@@ -897,10 +937,14 @@ CqlExchange::executeMutation(
 }
 
 bool
-CqlExchange::hasStatementBeenApplied(CassFuture* future,
+CqlExchange::statementApplied(CassFuture* future,
                                      size_t* row_count,
                                      size_t* column_count) {
     const CassResult* result_collection = cass_future_get_result(future);
+    if (!result_collection) {
+        isc_throw(DbOperationError, "CqlExchange::statementApplied(): unable to get"
+                      " results collection");
+    }
     if (row_count) {
         *row_count = cass_result_row_count(result_collection);
     }
@@ -924,11 +968,7 @@ CqlExchange::hasStatementBeenApplied(CassFuture* future,
 constexpr StatementTag CqlVersionExchange::GET_VERSION;
 
 StatementMap CqlVersionExchange::tagged_statements_ = {
-    {GET_VERSION,   //
-     {GET_VERSION,  //
-      "SELECT "
-      "version, minor "
-      "FROM schema_version "}}  //
+    {GET_VERSION, {GET_VERSION, "SELECT version, minor FROM schema_version "}}
 };
 
 CqlVersionExchange::CqlVersionExchange() {
@@ -938,14 +978,10 @@ CqlVersionExchange::~CqlVersionExchange() {
 }
 
 void
-CqlVersionExchange::createBindForSelect(
-    AnyArray& data, StatementTag /* statement_tag = NULL */) {
-    // Start with a fresh array.
-    data.clear();
-    // id: blob
-    data.add(&version_);
-    // host_identifier: blob
-    data.add(&minor_);
+CqlVersionExchange::createBindForSelect(AnyArray& data, StatementTag) {
+    data.clear(); // Start with a fresh array.
+    data.add(&version_); // first column is a major version
+    data.add(&minor_); // second column is a minor version
 }
 
 boost::any

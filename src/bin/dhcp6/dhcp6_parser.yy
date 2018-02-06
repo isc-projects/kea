@@ -99,6 +99,7 @@ using namespace std;
   EXCLUDED_PREFIX_LEN "excluded-prefix-len"
   DELEGATED_LEN "delegated-len"
   USER_CONTEXT "user-context"
+  COMMENT "comment"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -209,6 +210,7 @@ using namespace std;
   SUB_OPTION_DATA
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
+  SUB_LOGGING
 ;
 
 %token <std::string> STRING "constant string"
@@ -246,6 +248,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_OPTION_DATA { ctx.ctx_ = ctx.OPTION_DATA; } sub_option_data
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
+     | SUB_LOGGING { ctx.ctx_ = ctx.LOGGING; } sub_logging
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -434,6 +437,8 @@ global_param: preferred_lifetime
             | dhcp4o6_port
             | control_socket
             | dhcp_ddns
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 
@@ -488,6 +493,9 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | re_detect
+                       | user_context
+                       | comment
+                       | unknown_map_entry
                        ;
 
 interfaces_list: INTERFACES {
@@ -547,7 +555,7 @@ database_map_param: database_type
                   | contact_points
                   | keyspace
                   | unknown_map_entry
-;
+                  ;
 
 database_type: TYPE {
     ctx.enter(ctx.DATABASE_TYPE);
@@ -908,6 +916,7 @@ subnet6_param: preferred_lifetime
              | reservation_mode
              | relay
              | user_context
+             | comment
              | unknown_map_entry
              ;
 
@@ -1013,6 +1022,8 @@ shared_network_param: name
                     | preferred_lifetime
                     | rapid_commit
                     | valid_lifetime
+                    | user_context
+                    | comment
                     | unknown_map_entry
                     ;
 
@@ -1096,6 +1107,8 @@ option_def_param: option_def_name
                 | option_def_space
                 | option_def_encapsulate
                 | option_def_array
+                | user_context
+                | comment
                 | unknown_map_entry
                 ;
 
@@ -1217,6 +1230,8 @@ option_data_param: option_data_name
                  | option_data_space
                  | option_data_csv_format
                  | option_data_always_send
+                 | user_context
+                 | comment
                  | unknown_map_entry
                  ;
 
@@ -1292,7 +1307,9 @@ pool_params: pool_param
 
 pool_param: pool_entry
           | option_data_list
+          | client_class
           | user_context
+          | comment
           | unknown_map_entry
           ;
 
@@ -1307,7 +1324,52 @@ pool_entry: POOL {
 user_context: USER_CONTEXT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON map_value {
-    ctx.stack_.back()->set("user-context", $4);
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context = $4;
+    ConstElementPtr old = parent->get("user-context");
+
+    // Handle already existing user context
+    if (old) {
+        // Check if it was a comment or a duplicate
+        if ((old->size() != 1) || !old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the comment
+        user_context->set("comment", old->get("comment"));
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
+    ctx.leave();
+};
+
+comment: COMMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
+    ElementPtr comment(new StringElement($4, ctx.loc2pos(@4)));
+    user_context->set("comment", comment);
+
+    // Handle already existing user context
+    ConstElementPtr old = parent->get("user-context");
+    if (old) {
+        // Check for duplicate comment
+        if (old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context/comment entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the user context in the comment
+        merge(user_context, old);
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
     ctx.leave();
 };
 
@@ -1366,9 +1428,11 @@ pd_pool_param: pd_prefix
              | pd_prefix_len
              | pd_delegated_len
              | option_data_list
+             | client_class
              | excluded_prefix
              | excluded_prefix_len
              | user_context
+             | comment
              | unknown_map_entry
              ;
 
@@ -1459,6 +1523,8 @@ reservation_param: duid
                  | hostname
                  | flex_id_value
                  | option_data_list
+                 | user_context
+                 | comment
                  | unknown_map_entry
                  ;
 
@@ -1558,11 +1624,11 @@ client_classes: CLIENT_CLASSES {
     ctx.leave();
 };
 
-client_classes_list: client_class
-                   | client_classes_list COMMA client_class
+client_classes_list: client_class_entry
+                   | client_classes_list COMMA client_class_entry
                    ;
 
-client_class: LCURLY_BRACKET {
+client_class_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
@@ -1583,6 +1649,8 @@ not_empty_client_class_params: client_class_param
 client_class_param: client_class_name
                   | client_class_test
                   | option_data_list
+                  | user_context
+                  | comment
                   | unknown_map_entry
                   ;
 
@@ -1621,6 +1689,8 @@ server_id_param: server_id_type
                | htype
                | enterprise_id
                | persist
+               | user_context
+               | comment
                | unknown_map_entry
                ;
 
@@ -1684,6 +1754,9 @@ control_socket_params: control_socket_param
 
 control_socket_param: socket_type
                     | socket_name
+                    | user_context
+                    | comment
+                    | unknown_map_entry
                     ;
 
 socket_type: SOCKET_TYPE {
@@ -1744,6 +1817,8 @@ dhcp_ddns_param: enable_updates
                | override_client_update
                | replace_client_name
                | generated_prefix
+               | user_context
+               | comment
                | unknown_map_entry
                ;
 
@@ -1899,6 +1974,14 @@ logging_object: LOGGING {
     ctx.leave();
 };
 
+sub_logging: LCURLY_BRACKET {
+    // Parse the Logging map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} logging_params RCURLY_BRACKET {
+    // parsing completed
+};
+
 // This defines the list of allowed parameters that may appear
 // in the top-level Logging object. It can either be a single
 // parameter or several parameters separated by commas.
@@ -1910,7 +1993,7 @@ logging_params: logging_param
 logging_param: loggers;
 
 // "loggers", the only parameter currently defined in "Logging" object,
-// is "Loggers": [ ... ].
+// is "loggers": [ ... ].
 loggers: LOGGERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("loggers", l);
@@ -1944,6 +2027,8 @@ logger_param: name
             | output_options_list
             | debuglevel
             | severity
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 

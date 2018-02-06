@@ -222,6 +222,8 @@ D2ClientConfig::toText() const {
 ElementPtr
 D2ClientConfig::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user context
+    contextToElement(result);
     // Set enable-updates
     result->set("enable-updates", Element::create(enable_updates_));
     // Set qualifying-suffix

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,6 +31,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
+/// @brief Fixture class for testing Cassandra host data source
 class CqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
@@ -59,7 +60,8 @@ public:
         try {
             hdsptr_->rollback();
         } catch (...) {
-            // Rollback may fail if backend is in read only mode. That's ok.
+            // Rollback should never fail, as Cassandra doesn't support transactions
+            // (commit and rollback are both no-op).
         }
         HostDataSourceFactory::destroy();
         destroyCqlSchema(false, true);
@@ -123,8 +125,7 @@ TEST(CqlHostDataSource, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-        std::string connection_string = validCqlConnectionString() +
-                                        std::string(" ") +
+        std::string connection_string = validCqlConnectionString() + std::string(" ") +
                                         std::string(VALID_TIMEOUT);
         HostDataSourceFactory::create(connection_string);
         EXPECT_NO_THROW((void)HostDataSourceFactory::getHostDataSourcePtr());
@@ -143,39 +144,35 @@ TEST(CqlHostDataSource, OpenDatabase) {
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(
-        HostDataSourceFactory::create(connectionString(
-            NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
-        InvalidParameter);
-    EXPECT_THROW(
-        HostDataSourceFactory::create(connectionString(
-            INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
-        InvalidType);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+                 NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+                 InvalidParameter);
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+                 INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+                 InvalidType);
 
     // Check that invalid login data does not cause an exception, CQL should use
     // default values.
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(
-        CQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(
-        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
+    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                    INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                    VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                    VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                    VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
 
     // Check that invalid timeouts throw DbOperationError.
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
-                     VALID_PASSWORD, INVALID_TIMEOUT_1)),
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                 VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
                  DbOperationError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
-                     VALID_PASSWORD, INVALID_TIMEOUT_2)),
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                 VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
                  DbOperationError);
 
     // Check that CQL allows the hostname to not be specified.
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(
-        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+                    NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Tidy up after the test
     destroyCqlSchema(false, true);
@@ -205,6 +202,7 @@ TEST(CqlConnection, checkTimeConversion) {
     CqlExchange::convertFromDatabaseTime(cql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
+
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address. Host uses hw address as identifier.
 TEST_F(CqlHostDataSourceTest, basic4HWAddr) {
@@ -356,7 +354,7 @@ TEST_F(CqlHostDataSourceTest, multipleReservationsDifferentOrder) {
 
 // Test verifies if multiple client classes for IPv4 can be stored.
 TEST_F(CqlHostDataSourceTest, DISABLED_multipleClientClasses4) {
-    /// @todo: Implement this test as part of #4213.
+    /// @todo: Implement this test as part of #5503.
 
     /// Add host reservation with a multiple v4 client-classes, retrieve it and
     /// make sure that all client classes are retrieved properly.
@@ -364,7 +362,7 @@ TEST_F(CqlHostDataSourceTest, DISABLED_multipleClientClasses4) {
 
 // Test verifies if multiple client classes for IPv6 can be stored.
 TEST_F(CqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
-    /// @todo: Implement this test as part of #4213.
+    /// @todo: Implement this test as part of #5503.
 
     /// Add host reservation with a multiple v6 client-classes, retrieve it and
     /// make sure that all client classes are retrieved properly.
@@ -373,7 +371,7 @@ TEST_F(CqlHostDataSourceTest, DISABLED_multipleClientClasses6) {
 // Test verifies if multiple client classes for both IPv4 and IPv6 can be
 // stored.
 TEST_F(CqlHostDataSourceTest, DISABLED_multipleClientClassesBoth) {
-    /// @todo: Implement this test as part of #4213.
+    /// @todo: Implement this test as part of #5503.
 
     /// Add host reservation with a multiple v4 and v6 client-classes, retrieve
     /// it and make sure that all client classes are retrieved properly. Also,
@@ -513,14 +511,56 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
         DbOperationError);
 }
 
-TEST_F(CqlHostDataSourceTest, DISABLED_stressTest) {
-    // Run with 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4092, 8192,
-    // 16384 & 32768 hosts.
-    for (unsigned int i = 0X0001U; i < 0xfffdU; i <<= 1) {
-        initializeTest();
-        stressTest(i);
-        destroyTest();
-    }
+// This test checks that siaddr, sname, file fields can be retrieved
+/// from a database for a host.
+/// @todo: Uncomment this after 5507 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_messageFields) {
+    testMessageFields4();
+}
+
+// Check that delete(subnet-id, addr4) works.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_deleteByAddr4) {
+    testDeleteByAddr4();
+}
+
+// Check that delete(subnet4-id, identifier-type, identifier) works.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_deleteById4) {
+    testDeleteById4();
+}
+
+// Check that delete(subnet4-id, identifier-type, identifier) works,
+// even when options are present.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_deleteById4Options) {
+    testDeleteById4Options();
+}
+
+// Check that delete(subnet6-id, identifier-type, identifier) works.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_deleteById6) {
+    testDeleteById6();
+}
+
+// Check that delete(subnet6-id, identifier-type, identifier) works,
+// even when options are present.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_deleteById6Options) {
+    testDeleteById6Options();
+}
+
+// Tests that multiple reservations without IPv4 addresses can be
+// specified within a subnet.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_testMultipleHostsNoAddress4) {
+    testMultipleHostsNoAddress4();
+}
+
+// Tests that multiple hosts can be specified within an IPv6 subnet.
+/// @todo: Uncomment this after #5506 is implemented.
+TEST_F(CqlHostDataSourceTest, DISABLED_testMultipleHosts6) {
+    testMultipleHosts6();
 }
 
 }  // namespace

@@ -7,22 +7,23 @@
 #ifndef HTTP_RESPONSE_H
 #define HTTP_RESPONSE_H
 
-#include <exceptions/exceptions.h>
-#include <http/http_types.h>
+#include <cc/data.h>
+#include <http/header_context.h>
+#include <http/http_message.h>
+#include <http/response_context.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
-#include <cstdint>
-#include <map>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace http {
 
 /// @brief Generic exception thrown by @ref HttpResponse class.
-class HttpResponseError : public Exception {
+class HttpResponseError : public HttpMessageError {
 public:
     HttpResponseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        HttpMessageError(file, line, what) { };
 };
 
 /// @brief HTTP status codes (cf RFC 2068)
@@ -84,16 +85,24 @@ typedef boost::shared_ptr<const HttpResponse> ConstHttpResponsePtr;
 
 /// @brief Represents HTTP response message.
 ///
-/// This class represents HTTP response message. An instance of this object
-/// or its derivation is typically created by the implementation of the
-/// @ref HttpResponseCreator interface.
+/// This derivation of the @c HttpMessage class is specialized to represent
+/// HTTP responses. This class provides two constructors for creating an inbound
+/// and outbound response instance respectively. This class is associated with
+/// an instance of the @c HttpResponseContext, which is used to provide response
+/// specific values, such as HTTP status and headers.
 ///
-/// It contains @c toString method generating a textual representation of
-/// the HTTP response, which is send to the client over TCP socket.
-class HttpResponse {
+/// The derivations of this class provide specializations and specify the HTTP
+/// versions and headers supported/required in the specific use cases. For example,
+/// the @c HttpResponseJson class derives from the @c HttpResponse and it requires
+/// that response includes a body in the JSON format.
+class HttpResponse : public HttpMessage {
 public:
 
-    /// @brief Constructor.
+    /// @brief Constructor for the inbound HTTP response.
+    explicit HttpResponse();
+
+
+    /// @brief Constructor for outbound HTTP response.
     ///
     /// Creates basic instance of the object. It sets the HTTP version and the
     /// status code to be included in the response.
@@ -110,29 +119,61 @@ public:
                           const CallSetGenericBody& generic_body =
                           CallSetGenericBody::yes());
 
-    /// @brief Destructor.
+    /// @brief Returns pointer to the @ref HttpResponseContext.
     ///
-    /// A class having virtual methods must have a virtual destructor.
-    virtual ~HttpResponse() { }
-
-    /// @brief Adds HTTP header to the response.
+    /// The context holds intermediate data for creating a response. The response
+    /// parser stores parsed raw data in the context. When parsing is finished,
+    /// the data are validated and committed into the @c HttpResponse.
     ///
-    /// The "Content-Length" and "Date" headers should not be added using this
-    /// method because they are generated and added automatically when the
-    /// @c toString is called.
-    ///
-    /// @param name Header name.
-    /// @param value Header value.
-    /// @tparam ValueType Type of the header value.
-    template<typename ValueType>
-    void addHeader(const std::string& name, const ValueType& value) {
-        addHeaderInternal(name, value, headers_);
+    /// @return Pointer to the underlying @ref HttpResponseContext.
+    const HttpResponseContextPtr& context() const {
+        return (context_);
     }
 
-    /// @brief Assigns body/content to the message.
+    /// @brief Commits information held in the context into the response.
     ///
-    /// @param body Body to be assigned.
-    void setBody(const std::string& body);
+    /// This function reads HTTP version, status code and headers from the
+    /// context and validates their values. For the outbound messages, it
+    /// automatically appends Content-Length and Date headers to the response.
+    /// The Content-Length is set to the body size. The Date is set to the
+    /// current date and time.
+    virtual void create();
+
+    /// @brief Completes creation of the HTTP response.
+    ///
+    /// This method marks the response as finalized. The outbound response may now
+    /// be sent over the TCP socket. The information from the inbound message may
+    /// be read, including the response body.
+    virtual void finalize();
+
+    /// @brief Reset the state of the object.
+    virtual void reset();
+
+    /// @brief Returns HTTP status code.
+    HttpStatusCode getStatusCode() const;
+
+    /// @brief Returns HTTP status phrase.
+    std::string getStatusPhrase() const;
+
+    /// @brief Returns HTTP response body as string.
+    virtual std::string getBody() const;
+
+    /// @brief Retrieves JSON body.
+    ///
+    /// @return Pointer to the root element of the JSON structure.
+    /// @throw HttpResponseJsonError if an error occurred.
+    data::ConstElementPtr getBodyAsJson() const;
+
+    /// @brief Retrieves a single JSON element.
+    ///
+    /// The element must be at top level of the JSON structure.
+    ///
+    /// @param element_name Element name.
+    ///
+    /// @return Pointer to the specified element or NULL if such element
+    /// doesn't exist.
+    /// @throw HttpResponseJsonError if an error occurred.
+    data::ConstElementPtr getJsonElement(const std::string& element_name) const;
 
     /// @brief Checks if the status code indicates client error.
     ///
@@ -155,34 +196,13 @@ public:
     /// @brief Returns HTTP version and HTTP status as a string.
     std::string toBriefString() const;
 
-    /// @brief Returns textual representation of the HTTP response.
+    /// @brief Returns HTTP response as string.
     ///
-    /// It includes the "Date" header with the current time in RFC 1123 format.
-    /// It also includes "Content-Length" when the response has a non-empty
-    /// body.
-    ///
-    /// @return Textual representation of the HTTP response.
-    std::string toString() const ;
+    /// This method is called to generate the outbound HTTP response. Make
+    /// sure to call @c finalize prior to calling this method.
+    virtual std::string toString() const;
 
 protected:
-
-    /// @brief Adds HTTP header to the map.
-    ///
-    /// @param name Header name.
-    /// @param value Header value.
-    /// @param [out] headers A map to which header value should be inserted.
-    /// @tparam ValueType Type of the header value.
-    template<typename ValueType>
-    void addHeaderInternal(const std::string& name, const ValueType& value,
-                           std::map<std::string, std::string>& headers) const {
-        try {
-            headers[name] = boost::lexical_cast<std::string>(value);
-
-        } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(HttpResponseError, "unable to convert the "
-                      << name << " header value to a string");
-        }
-    }
 
     /// @brief Returns current time formatted as required by RFC 1123.
     ///
@@ -222,18 +242,11 @@ private:
     /// generated.
     void setGenericBody(const HttpStatusCode& /*status_code*/) { };
 
-    /// @brief Holds HTTP version for the response.
-    HttpVersion http_version_;
+protected:
 
-    /// @brief Holds status code for the response.
-    HttpStatusCode status_code_;
-
-    /// @brief Holds HTTP headers for the response.
-    std::map<std::string, std::string> headers_;
-
-    /// @brief Holds the body/content.
-    std::string body_;
-
+    /// @brief Pointer to the @ref HttpResponseContext holding parsed
+    /// data.
+    HttpResponseContextPtr context_;
 };
 
 } // namespace http

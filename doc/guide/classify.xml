@@ -801,6 +801,96 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
+ <section id="classification-pools">
+   <title>Configuring Pools With Class Information</title>
+     <para>
+       Similar to the subnets, it is possible to restrict access to the certain address
+       or prefix pools to the clients belonging to a specific class, using
+       the "client-class" parameter when defining the pool.
+     </para>
+
+     <para>
+       Let's assume that the server is connected to a network segment using
+       the 192.0.2.0/24 prefix. The Administrator of that network has decided
+       that addresses from the range of 192.0.2.10 to 192.0.2.20 are going to be
+       managed by the DHCP4 server. Only the clients belonging to the client class
+       Client_foo are allowed to use this pool. Such a configuration can be
+       achieved in the following way:
+       <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        },
+        ...
+    ],
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            <userinput>
+            "pools": [
+                {
+                    "pool": "192.0.2.10 - 192.0.2.20",
+                    "client-class": "Client_foo"
+                }
+            ]</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
+      </para>
+
+     <para>
+       The following example shows restricting access to an address pool.
+       This configuration will restrict use of the addresses 2001:db8:1::1
+       to 2001:db8:1::FFFF to members of the "Client_enterprise" class.
+       <screen>
+"Dhcp6": {
+    "client-classes": [
+        {
+            "name": "Client_enterprise_",
+            "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ],
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            <userinput>
+            "pools": [
+                {
+                    "pool": "2001:db8:1::-2001:db8:1::ffff",
+                    "client-class": "Client_foo"
+                }
+            ]</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
+      </para>
+  </section>
+
   <section>
     <title>Using Classes</title>
       <para>

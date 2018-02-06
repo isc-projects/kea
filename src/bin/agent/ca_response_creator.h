@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,6 +56,20 @@ public:
                             const http::HttpStatusCode& status_code) const;
 
 private:
+
+    /// @brief Creates unfinalized stock HTTP response.
+    ///
+    /// The unfinilized response is the response that can't be sent over the
+    /// wire until @c finalize() is called, which commits the contents of the
+    /// message body.
+    ///
+    /// @param request Pointer to an object representing HTTP request.
+    /// @param status_code Status code of the response.
+    /// @return Pointer to an @ref isc::http::HttpResponseJson object
+    /// representing stock HTTP response.
+   http::HttpResponsePtr
+   createStockHttpResponseInternal(const http::ConstHttpRequestPtr& request,
+                                   const http::HttpStatusCode& status_code) const;
 
     /// @brief Creates implementation specific HTTP response.
     ///

@@ -22,7 +22,7 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
-#include <memory>  // for std::unique_ptr
+#include <string>
 
 namespace isc {
 namespace dhcp {
@@ -39,14 +39,15 @@ CqlConnection::~CqlConnection() {
     CassError rc = CASS_OK;
     std::string error;
 
+    // Let's free the prepared statements.
     for (StatementMapEntry s : statements_) {
-        // typeid(s.second.first) is CassPrepared*
         CqlTaggedStatement statement = s.second;
         if (statement.prepared_statement_) {
             cass_prepared_free(statement.prepared_statement_);
         }
     }
 
+    // If there's a session, tear it down and free the resources.
     if (session_) {
         cass_schema_meta_free(schema_meta_);
         CassFuture* close_future = cass_session_close(session_);
@@ -60,6 +61,7 @@ CqlConnection::~CqlConnection() {
         session_ = NULL;
     }
 
+    // Free the cluster if there's one.
     if (cluster_) {
         cass_cluster_free(cluster_);
         cluster_ = NULL;
