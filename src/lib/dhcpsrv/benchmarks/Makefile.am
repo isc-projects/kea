@@ -35,7 +35,7 @@ run_benchmarks_SOURCES += cql_lease_mgr_benchmark.cc
 run_benchmarks_SOURCES += cql_host_data_source_benchmark.cc
 endif
 
-run_benchmarks_CPPFLAGS  = $(AM_CPPFLAGS) $(BENCHMARK_INCLUDES) -Wno-error=overloaded-virtual
+run_benchmarks_CPPFLAGS  = $(AM_CPPFLAGS) $(BENCHMARK_INCLUDES) $(BENCHMARK_CPPFLAGS) -Wno-error=overloaded-virtual
 
 if HAVE_MYSQL
 run_benchmarks_CPPFLAGS += $(MYSQL_CPPFLAGS)

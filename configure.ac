@@ -123,15 +123,15 @@ AX_ISC_CPP11
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
 AC_COMPILE_IFELSE(
-	[AC_LANG_PROGRAM(
-		[#include <type_traits>
-		 class A {};
-		 class B : A {};]
-		[static_assert(std::is_base_of<A, B>::value, "");])],
-	[AC_MSG_RESULT(yes)
-	 AC_DEFINE([HAVE_IS_BASE_OF], [1],
-	 [Define to 1 if std::is_base_of is available])],
-	[AC_MSG_RESULT(no)])
+    [AC_LANG_PROGRAM(
+        [#include <type_traits>
+        class A {};
+        class B : A {};]
+        [static_assert(std::is_base_of<A, B>::value, "");])],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_IS_BASE_OF], [1],
+    [Define to 1 if std::is_base_of is available])],
+    [AC_MSG_RESULT(no)])
 
 dnl Determine if we are using GNU sed
 GNU_SED=no
@@ -397,7 +397,6 @@ case "$host" in
         [Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
         ;;
 esac
-
 
 # Kea-shell is written in python. It can work with python 2.7 or any 3.x.
 # It may likely work with earlier versions, but 2.7 was the oldest one we tested
@@ -896,9 +895,9 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_ERROR([no gtest source but it was selected])
             fi
         else
-	    if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
-		GTEST_SOURCE=$GTEST_SOURCE/googletest
-	    fi
+            if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
+                GTEST_SOURCE=$GTEST_SOURCE/googletest
+            fi
             AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
                 [$GTEST_SOURCE/src/gtest_main.cc],
                 [have_gtest_source=yes],
@@ -908,7 +907,7 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-	GTEST_VERSION="`basename $GTEST_SOURCE`"
+        GTEST_VERSION="`basename $GTEST_SOURCE`"
     fi
 
     if test "$gtest_path" != "no" ; then
@@ -967,6 +966,7 @@ AC_SUBST(GTEST_SOURCE)
 #
 # Check availability of benchmark.
 #
+BENCHMARK_CPPFLAGS=
 BENCHMARK_LDFLAGS=
 BENCHMARK_LDADD=
 DISTCHECK_BENCHMARK_CONFIGURE_FLAG=
@@ -1002,7 +1002,8 @@ if test "x$enable_benchmark" = "xyes" ; then
                 [AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])])
         fi
         have_benchmark_source=yes
-        BENCHMARK_LDADD="\$(top_builddir)/ext/benchmark/libbenchmark.a"
+        BENCHMARK_CPPFLAGS=`cat \${BENCHMARK_SOURCE}/build/src/CMakeFiles/benchmark.dir/flags.make | grep CXX_DEFINES | cut -d "=" -f 2`
+        BENCHMARK_LDADD="\$(BENCHMARK_SOURCE)/build/src/libbenchmark.a"
         DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark-source=$BENCHMARK_SOURCE"
         BENCHMARK_INCLUDES="-I$BENCHMARK_SOURCE \
                             -I$BENCHMARK_SOURCE/src \
@@ -1014,42 +1015,24 @@ if test "x$enable_benchmark" = "xyes" ; then
     if test "$benchmark_path" != "no" ; then
         if test "$benchmark_path" != "yes"; then
             BENCHMARK_PATHS=$benchmark_path
-            if test -x "${benchmark_path}/bin/benchmark-config" ; then
-                BENCHMARK_CONFIG="${benchmark_path}/bin/benchmark-config"
-            fi
-        else
-            AC_PATH_PROG([BENCHMARK_CONFIG], [benchmark-config])
         fi
-        if test -x "${BENCHMARK_CONFIG}" ; then :
-            # using cppflags instead of cxxflags
-            BENCHMARK_INCLUDES=$(${BENCHMARK_CONFIG} --cppflags)
-            BENCHMARK_LDFLAGS=$(${BENCHMARK_CONFIG} --ldflags)
-            BENCHMARK_LDADD=$(${BENCHMARK_CONFIG} --libs)
-            BENCHMARK_VERSION=$(${BENCHMARK_CONFIG} --version)
-            BENCHMARK_FOUND="true"
-        else
-            AC_MSG_WARN([Unable to locate Google Benchmark benchmark-config.])
-            if test -z "${BENCHMARK_PATHS}" ; then
-                BENCHMARK_PATHS="/usr /usr/local"
-            fi
-            BENCHMARK_FOUND="false"
+        if test -z "${BENCHMARK_PATHS}" ; then
+            BENCHMARK_PATHS="/usr /usr/local"
         fi
-        if test "${BENCHMARK_FOUND}" != "true"; then
-            BENCHMARK_FOUND="false"
-            for dir in ${BENCHMARK_PATHS}; do
-                if test -f "$dir/include/benchmark/benchmark.h"; then
-                    if ! test -f "$dir/lib/libbenchmark.a"; then
-                        AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
-                        continue
-                    fi
-                    BENCHMARK_INCLUDES="-I$dir/include"
-                    BENCHMARK_LDFLAGS="-L$dir/lib"
-                    BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
-                    BENCHMARK_FOUND="true"
-                    break
+        BENCHMARK_FOUND="false"
+        for dir in ${BENCHMARK_PATHS}; do
+            if test -f "$dir/include/benchmark/benchmark.h"; then
+                if ! test -f "$dir/lib/libbenchmark.a"; then
+                    AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
+                    continue
                 fi
-            done
-        fi
+                BENCHMARK_INCLUDES="-I$dir/include"
+                BENCHMARK_LDFLAGS="-L$dir/lib"
+                BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
+                BENCHMARK_FOUND="true"
+                break
+            fi
+        done
         if test "${BENCHMARK_FOUND}" != "true"; then
             AC_MSG_ERROR([Cannot find benchmark in: $BENCHMARK_PATHS])
         fi
@@ -1059,6 +1042,7 @@ fi
 AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
 AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
 AC_SUBST(DISTCHECK_BENCHMARK_CONFIGURE_FLAG)
+AC_SUBST(BENCHMARK_CPPFLAGS)
 AC_SUBST(BENCHMARK_INCLUDES)
 AC_SUBST(BENCHMARK_LDFLAGS)
 AC_SUBST(BENCHMARK_LDADD)
@@ -1073,15 +1057,15 @@ if test $enable_gtest != "no"; then
    CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [#include <boost/shared_ptr.hpp>
-	    #include <gtest/gtest.h>
-	    void foo() {
-	        boost::shared_ptr<int> bar;
-		ASSERT_TRUE(bar);
+            [#include <boost/shared_ptr.hpp>
+            #include <gtest/gtest.h>
+            void foo() {
+                boost::shared_ptr<int> bar;
+                ASSERT_TRUE(bar);
             }],
-	    [return 0;])],
-	[AC_MSG_RESULT(yes)],
-    	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
+            [return 0;])],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
@@ -1092,21 +1076,21 @@ if test $enable_gtest != "no"; then
    CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [#include <boost/algorithm/string.hpp>
-	    #include <gtest/gtest.h>
-	    #include <string>
-	    #include <vector>
-	    std::string nodiff(std::string text) {
-	        std::vector<std::string> lines;
-		boost::split(lines, text, boost::is_any_of("\n"));
-		using namespace testing::internal;
-		return (edit_distance::CreateUnifiedDiff(lines, lines));
-	    }],
-	    [return 0;])],
-	[AC_MSG_RESULT(yes)
-	 AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
-	 [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
-	[AC_MSG_RESULT(no)])
+            [#include <boost/algorithm/string.hpp>
+            #include <gtest/gtest.h>
+            #include <string>
+            #include <vector>
+            std::string nodiff(std::string text) {
+                std::vector<std::string> lines;
+                boost::split(lines, text, boost::is_any_of("\n"));
+                using namespace testing::internal;
+                return (edit_distance::CreateUnifiedDiff(lines, lines));
+            }],
+            [return 0;])],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
+        [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
+        [AC_MSG_RESULT(no)])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
@@ -1142,7 +1126,7 @@ AC_CHECK_FUNCS([pselect])
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
-	CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
+    CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
 fi
 
 #
@@ -1498,19 +1482,19 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:            ${PACKAGE_NAME}
-  Version:         ${PACKAGE_VERSION}
-  Extended version:${EXTENDED_VERSION}
-  OS Family:       ${OS_TYPE}
-  Using GNU sed:   ${GNU_SED}
+  Name:              ${PACKAGE_NAME}
+  Version:           ${PACKAGE_VERSION}
+  Extended version:  ${EXTENDED_VERSION}
+  OS Family:         ${OS_TYPE}
+  Using GNU sed:     ${GNU_SED}
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium package: yes
+  Premium package:   yes
 END
 else
 cat >> config.report << END
-  Premium package: no
+  Premium package:   no
 END
 fi
 cat >> config.report << END
@@ -1571,9 +1555,9 @@ ${CRYPTO_NAME}:
 ${DISABLED_CRYPTO}: no
 
 Log4cplus:
-  LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
+  LOG4CPLUS_VERSION:  ${LOG4CPLUS_VERSION}
   LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
-  LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
+  LOG4CPLUS_LIBS:     ${LOG4CPLUS_LIBS}
 
 Flex/bison:
   FLEX:  ${LEX}
@@ -1618,9 +1602,9 @@ if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
 Cassandra CQL:
-  CQL_VERSION:   ${CQL_VERSION}
-  CQL_CPPFLAGS:  ${CQL_CPPFLAGS}
-  CQL_LIBS:      ${CQL_LIBS}
+  CQL_VERSION:                  ${CQL_VERSION}
+  CQL_CPPFLAGS:                 ${CQL_CPPFLAGS}
+  CQL_LIBS:                     ${CQL_LIBS}
 END
 else
 cat >> config.report << END
@@ -1647,6 +1631,7 @@ cat >> config.report << END
 
 Google Benchmark:
   BENCHMARK_VERSION:   ${BENCHMARK_VERSION}
+  BENCHMARK_CPPFLAGS:  ${BENCHMARK_CPPFLAGS}
   BENCHMARK_INCLUDES:  ${BENCHMARK_INCLUDES}
   BENCHMARK_LDFLAGS:   ${BENCHMARK_LDFLAGS}
   BENCHMARK_LDADD:     ${BENCHMARK_LDADD}
@@ -1657,14 +1642,14 @@ fi
 cat >> config.report << END
 
 Developer:
-  Enable Debugging: $debug_enabled
-  Google Tests: $enable_gtest
-  Valgrind: $found_valgrind
-  C++ Code Coverage: $USE_LCOV
-  Logger checks: $enable_logger_checks
+  Enable Debugging:       $debug_enabled
+  Google Tests:           $enable_gtest
+  Valgrind:               $found_valgrind
+  C++ Code Coverage:      $USE_LCOV
+  Logger checks:          $enable_logger_checks
   Generate Documentation: $enable_generate_docs
-  Parser Generation: $enable_generate_parser
-  Kea-shell: $enable_shell
+  Parser Generation:      $enable_generate_parser
+  Kea-shell:              $enable_shell
 
 END
 
