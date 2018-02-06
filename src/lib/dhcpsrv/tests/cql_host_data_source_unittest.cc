@@ -511,6 +511,16 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
         DbOperationError);
 }
 
+TEST_F(CqlHostDataSourceTest, DISABLED_stressTest) {
+    // Run with 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4092, 8192,
+    // 16384 & 32768 hosts.
+    for (unsigned int i = 0X0001U; i < 0xfffdU; i <<= 1) {
+        initializeTest();
+        stressTest(i);
+        destroyTest();
+    }
+}
+
 // This test checks that siaddr, sname, file fields can be retrieved
 /// from a database for a host.
 /// @todo: Uncomment this after 5507 is implemented.
