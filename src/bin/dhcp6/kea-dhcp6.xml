@@ -1,17 +1,13 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
 
-<refentry>
-
-  <refentryinfo>
+  <info>
     <productname>ISC Kea</productname>
     <date>Oct. 27, 2017</date>
     <edition>1.3.0</edition>
@@ -22,10 +18,8 @@
         Wlodek Wencel and Shawn Routhier.  That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
-        contributors, see AUTHORS file.</contrib>
-      <orgname>Internet Systems Consortium, Inc.</orgname>
-    </author>
-  </refentryinfo>
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
 
   <refmeta>
     <refentrytitle>kea-dhcp6</refentrytitle>
@@ -46,15 +40,15 @@
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>kea-dhcp6</command>
-      <arg><option>-v</option></arg>
-      <arg><option>-V</option></arg>
-      <arg><option>-W</option></arg>
-      <arg><option>-d</option></arg>
-      <arg><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
-      <arg><option>-t <replaceable class="parameter">config-file</replaceable></option></arg>
-      <arg><option>-p <replaceable class="parameter">port-number</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-W</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port-number</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -225,8 +219,4 @@
     </para>
   </refsect1>
 
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+</refentry>

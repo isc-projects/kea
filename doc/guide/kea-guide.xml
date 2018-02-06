@@ -1,23 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
-]>
-
+<?xml version="1.0"?>
 <!--
- - Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
-<book>
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
+]>
+
+<!-- Converted by db4-upgrade version 1.1 -->
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
   <?xml-stylesheet href="kea-guide.css" type="text/css"?>
 
-  <bookinfo>
+  <info>
 
     <title>
     <inlinemediaobject>
@@ -28,8 +28,7 @@
     Kea Administrator Reference Manual
     </title>
 
-    <releaseinfo>This is the reference guide for Kea version
-        &__VERSION__;.</releaseinfo>
+    <releaseinfo>This is the reference guide for Kea version &keaversion;.</releaseinfo>
 
     <copyright>
       <year>2010-2017</year>
@@ -45,55 +44,55 @@
       </para>
 
       <para>
-        This is the reference guide for Kea version &__VERSION__;.
+        This is the reference guide for Kea version &keaversion;.
         The most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
-        Kea, can be found at <ulink url="http://kea.isc.org/docs"/>.
+        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs">http://kea.isc.org/docs</uri>.
         </para> </abstract>
 
-  </bookinfo>
+  </info>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="intro.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="intro.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="quickstart.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="quickstart.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="install.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="install.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="admin.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="admin.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="config.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="keactrl.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="keactrl.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="agent.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="agent.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp4-srv.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp4-srv.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp6-srv.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="dhcp6-srv.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lease-expiration.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lease-expiration.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ddns.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ddns.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lfc.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lfc.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="classify.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="classify.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="stats.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="stats.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ctrl-channel.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ctrl-channel.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
 
-    <chapter id="acknowledgments">
+  <chapter xml:id="acknowledgments">
       <title>Acknowledgments</title>
 
       <para>Kea is an open source project designed, developed, and maintained by Internet Systems
@@ -105,31 +104,32 @@
       <para>If you would like to contribute to ISC to assist us in continuing to make quality open
       source software, please visit our donations page at ​<ulink
       url="http://www.isc.org/donate/">http://www.isc.org/donate/</ulink>.</para>
-      
 
       <para>We thank all the organizations and individuals who have helped to make Kea
-      possible. Comcast and the Comcast Innovation Fund provided major support for the development
+      possible. <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://www.comcast.com/">Comcast</link>
+       and the Comcast Innovation Fund provided major support for the development
       of Kea's DHCPv4, DHCPv6 and DDNS modules. Mozilla funded initial work on the REST API via a
       MOSS award.</para>
 
-
       <para>Kea was initially implemented as a collection of applications
       within the BIND 10 framework. We thank the founding sponsors of the BIND10 project:
-      <ulink url="https://www.afilias.info/">Afilias</ulink>,
-      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
-      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
-      <ulink url="https://www.sidn.nl/">SIDN</ulink>; BIND10 patrons 
-      <ulink url="http://jprs.co.jp/">JPRS</ulink> and
-      <ulink url="http://cira.ca/">CIRA</ulink>; and additional sponsors
-      <ulink url="https://www.afnic.fr/">AFNIC</ulink>,
-      <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
-      <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
-      <ulink url="http://www.denic.de/">DENIC eG</ulink>,
-      <ulink url="https://www.google.com/">Google</ulink>,
-      <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
-      <ulink url="https://registro.br/">Registro.br</ulink>,
-      <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
-      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>.</para>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.afilias.info/">Afilias</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.iis.se/">IIS.SE</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>, 
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.sidn.nl/">SIDN</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://jprs.co.jp/">JPRS</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cira.ca/">CIRA</link>; and additional sponsors
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.afnic.fr/">AFNIC</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cnnic.net.cn/">CNNIC</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.nic.cz/">CZ.NIC</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.denic.de/">DENIC eG</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.google.com/">Google</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ripe.net/">RIPE NCC</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://registro.br/">Registro.br</link>,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://nzrs.net.nz/">.nz Registry Services</link>, and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.tcinet.ru/">Technical Center of Internet</link>
+      .</para>
 
     </chapter>
 
