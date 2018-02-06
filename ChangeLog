@@ -1,3 +1,7 @@
+1354.	[doc]		andreipavelQ
+	Documentation has been upgraded to DocBook 5.0.
+	(github #39, git 9b6705bd6c534128ec18820ff0cbdd72b7fce9e9)
+
 1353.	[func]		tomek
 	Lightweight 4over6 options reinstantiated. Definitions for DHCPv6
 	options 89 through 96 were added back. DHCPv4 v4 Parameters Option
