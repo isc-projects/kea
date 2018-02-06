@@ -1300,7 +1300,6 @@ AC_CONFIG_FILES([Makefile
                  doc/guide/Makefile
                  doc/version.ent
                  ext/Makefile
-                 ext/benchmark/Makefile
                  ext/gtest/Makefile
                  m4macros/Makefile
                  src/Makefile
