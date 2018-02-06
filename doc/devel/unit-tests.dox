@@ -130,7 +130,7 @@ The following environment variable can affect the unit tests:
   %@endverbatim
 
   The unit tests are run automatically when "make check" is executed (providing
-  that Kea has been build with the \c --with-dhcp-mysql switch (see the installation
+  that Kea has been build with the \c --with-mysql switch (see the installation
   section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
   Reference Manual</a>).
 
@@ -256,7 +256,7 @@ local   all             postgres                                trust
   that runs tests. Use caution!
 
   The unit tests are run automatically when "make check" is executed (providing
-  that Kea has been build with the \c --with-dhcp-pgsql switch (see the installation
+  that Kea has been build with the \c --with-pgsql switch (see the installation
   section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
   Reference Manual</a>).
 
