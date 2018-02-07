@@ -209,8 +209,10 @@ TEST_F(CfgIfaceTest, explicitLoopbackV4) {
     ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
-    // No loopback socket
-    EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
+    // No wildcard is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", "127.0.0.1"));
 
     // Retry without UDP sockets
     cfg.reset();
@@ -225,31 +227,21 @@ TEST_F(CfgIfaceTest, explicitLoopbackV4) {
     ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
-    // No loopback socket
+    // Only loopback is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+    cfg.closeSockets();
     EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
 
-    // Finally with a second interface and address
+    // Finally with interfaces and addresses
     cfg.reset();
     ASSERT_NO_THROW(cfg.use(AF_INET, "eth0/10.0.0.1"));
-    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo/127.0.0.1"));
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
-    // No loopback socket
+    // Only loopback is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+    cfg.closeSockets();
     EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
-}
-
-// Tests that the loopback socket is not opened in raw mode.
-TEST_F(CfgIfaceTest, explicitLoopbackV4Negative) {
-    CfgIface cfg;
-    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
-
-    // Use UDP sockets
-    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_RAW));
-
-    // Open sockets on specified interfaces and addresses.
-    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
-    EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
-    EXPECT_FALSE(socketOpen("lo", AF_INET));
 }
 
 // This test checks that the interface names can be explicitly selected
@@ -289,20 +281,6 @@ TEST_F(CfgIfaceTest, explicitNamesV6) {
     EXPECT_FALSE(socketOpen("eth0", AF_INET6));
     EXPECT_TRUE(socketOpen("eth1", AF_INET6));
     EXPECT_FALSE(socketOpen("lo", AF_INET6));
-}
-
-// This test checks that the loopback socket can be opened.
-TEST_F(CfgIfaceTest, loopback6) {
-    CfgIface cfg;
-    // Specify valid interface names. There should be no error.
-    ASSERT_NO_THROW(cfg.use(AF_INET6, "lo"));
-
-    // Open sockets on specified interfaces.
-    cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-
-    // There should be a socket open.
-    EXPECT_FALSE(socketOpen("lo", AF_INET6));
-    EXPECT_FALSE(socketOpen("lo", "::1"));
 }
 
 // This test checks that the wildcard interface name can be specified to
@@ -403,24 +381,30 @@ TEST_F(CfgIfaceTest, explicitLoopbackV6) {
     ASSERT_NO_THROW(cfg.use(AF_INET6, "*"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-    // No loopback socket
-    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+    // No wildcard is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
 
     // Retry with a second interface
     cfg.reset();
     ASSERT_NO_THROW(cfg.use(AF_INET6, "eth0"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-    // No loopback socket
-    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+    // Only loopback is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
 
-    // Finally with a second interface and address
+    // Finally with interfaces and addresses
     cfg.reset();
     ASSERT_NO_THROW(cfg.use(AF_INET6, "eth0/2001:db8:1::1"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-    // No loopback socket
-    EXPECT_FALSE(socketOpen("lo", AF_INET6));
+    // Only loopback is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
 }
 
 // Test that the equality and inequality operators work fine for CfgIface.

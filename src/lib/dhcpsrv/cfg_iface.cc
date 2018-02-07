@@ -57,38 +57,22 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // of the IfaceMgr. Those modifications require that sockets are closed.
     closeSockets();
     // The loopback interface can be used only when:
-    //  - wildcard is not used
     //  - UDP socket will be used, i.e. not IPv4 and RAW socket
-    //  - there is one interface name only in the interface set
-    //    and this interface is a loopback interface.
-    //  - or the interface set is empty and all interfaces in the address
-    //    map are the same and a loopback interface.
+    //  - the loopback interface is in the interface set or the address map.
     bool loopback_used_ = false;
-    if (!wildcard_used_ &&
-        ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) &&
-        (iface_set_.size() == 1) &&
-        (address_map_.empty())) {
-        // Get the first and only interface.
-        IfacePtr iface = IfaceMgr::instance().getIface(*iface_set_.begin());
-        if (iface && iface->flag_loopback_) {
-            loopback_used_ = true;
-        }
-    } else if (!wildcard_used_ &&
-               ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) &&
-               iface_set_.empty() &&
-               !address_map_.empty()) {
-        // Get the first interface
-        const std::string& name = address_map_.begin()->first;
-        bool same = true;
-        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
-             unicast != address_map_.end(); ++unicast) {
-            if (unicast->first != name) {
-                same = false;
-                break;
+    if ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) {
+        // Check interface set
+        for (IfaceSet::const_iterator iface_name = iface_set_.begin();
+             iface_name != iface_set_.end(); ++iface_name) {
+            IfacePtr iface = IfaceMgr::instance().getIface(*iface_name);
+            if (iface && iface->flag_loopback_) {
+                loopback_used_ = true;
             }
         }
-        if (same) {
-            IfacePtr iface = IfaceMgr::instance().getIface(name);
+        // Check address map
+        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
+             unicast != address_map_.end(); ++unicast) {
+            IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
             if (iface && iface->flag_loopback_) {
                 loopback_used_ = true;
             }
@@ -99,7 +83,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // interface names specified by the user. If wildcard interface was
     // specified, mark all interfaces active. Mark loopback inactive when
     // not explicitely allowed.
-    setState(family, !wildcard_used_, loopback_used_);
+    setState(family, !wildcard_used_, !loopback_used_);
     IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.
     iface_mgr.clearUnicasts();
