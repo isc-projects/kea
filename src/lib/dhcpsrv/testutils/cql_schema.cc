@@ -79,8 +79,10 @@ runCqlScript(const std::string& path,
 
     cmd << script_name;
 
-    int retval = ::system(cmd.str().c_str());
-    ASSERT_EQ(0, retval) << "runCqlSchema failed:" << cmd.str();
+    int32_t retval = ::system(cmd.str().c_str());
+    if (retval) {
+        std::cerr << "runCqlSchema failed:" << cmd.str() << std::endl;
+    }
 }
 
 }  // namespace test

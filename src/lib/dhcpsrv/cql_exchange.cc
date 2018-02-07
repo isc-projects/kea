@@ -94,68 +94,7 @@ static AnyTypeMap ANY_TYPE_MAP = {
     {typeid(cass_int64_t*), EXCHANGE_DATA_TYPE_INT64},
     {typeid(std::string*), EXCHANGE_DATA_TYPE_STRING},
     {typeid(CassBlob*), EXCHANGE_DATA_TYPE_BYTES},
-    {typeid(CassUuid*), EXCHANGE_DATA_TYPE_UUID},
-    {typeid(Udt*), EXCHANGE_DATA_TYPE_UDT}, // user data type
-    {typeid(AnyCollection*), EXCHANGE_DATA_TYPE_COLLECTION}};
-
-/// @brief Maps Cassandra type to exchange type
-static CassTypeMap CASS_TYPE_MAP = {
-    {CASS_VALUE_TYPE_CUSTOM, EXCHANGE_DATA_TYPE_UDT},
-    {CASS_VALUE_TYPE_ASCII, EXCHANGE_DATA_TYPE_STRING},
-    {CASS_VALUE_TYPE_BIGINT, EXCHANGE_DATA_TYPE_INT64},
-    {CASS_VALUE_TYPE_BLOB, EXCHANGE_DATA_TYPE_BYTES},
-    {CASS_VALUE_TYPE_BOOLEAN, EXCHANGE_DATA_TYPE_BOOL},
-    {CASS_VALUE_TYPE_COUNTER, EXCHANGE_DATA_TYPE_INT32},
-    {CASS_VALUE_TYPE_DECIMAL, EXCHANGE_DATA_TYPE_INT32},
-    {CASS_VALUE_TYPE_DOUBLE, EXCHANGE_DATA_TYPE_INT64},
-    {CASS_VALUE_TYPE_FLOAT, EXCHANGE_DATA_TYPE_INT32},
-    {CASS_VALUE_TYPE_INT, EXCHANGE_DATA_TYPE_INT32},
-    {CASS_VALUE_TYPE_TEXT, EXCHANGE_DATA_TYPE_STRING},
-    {CASS_VALUE_TYPE_TIMESTAMP, EXCHANGE_DATA_TYPE_INT64},
-    {CASS_VALUE_TYPE_UUID, EXCHANGE_DATA_TYPE_UUID},
-    {CASS_VALUE_TYPE_VARCHAR, EXCHANGE_DATA_TYPE_STRING},
-    {CASS_VALUE_TYPE_VARINT, EXCHANGE_DATA_TYPE_INT32},
-    {CASS_VALUE_TYPE_TIMEUUID, EXCHANGE_DATA_TYPE_INT64},
-    {CASS_VALUE_TYPE_INET, EXCHANGE_DATA_TYPE_NONE},
-    {CASS_VALUE_TYPE_DATE, EXCHANGE_DATA_TYPE_INT64},
-    {CASS_VALUE_TYPE_TIME, EXCHANGE_DATA_TYPE_INT64},
-    {CASS_VALUE_TYPE_SMALL_INT, EXCHANGE_DATA_TYPE_INT16},
-    {CASS_VALUE_TYPE_TINY_INT, EXCHANGE_DATA_TYPE_INT8},
-    {CASS_VALUE_TYPE_LIST, EXCHANGE_DATA_TYPE_COLLECTION},
-    {CASS_VALUE_TYPE_MAP, EXCHANGE_DATA_TYPE_COLLECTION},
-    {CASS_VALUE_TYPE_SET, EXCHANGE_DATA_TYPE_COLLECTION},
-    {CASS_VALUE_TYPE_UDT, EXCHANGE_DATA_TYPE_UDT},
-    {CASS_VALUE_TYPE_TUPLE, EXCHANGE_DATA_TYPE_UDT}};
-
-/// @brief Udt (user data type) method implementations
-/// @{
-Udt::Udt(const CqlConnection& connection, const std::string& name)
-    : AnyArray(), connection_(connection), name_(name) {
-    // Create type.
-    cass_data_type_ = cass_keyspace_meta_user_type_by_name(
-        connection_.keyspace_meta_, name_.c_str());
-    if (!cass_data_type_) {
-        isc_throw(DbOperationError,
-                  "Udt::Udt(): UDT " << name_ << " does not exist ");
-    }
-    // Create container.
-    cass_user_type_ = cass_user_type_new_from_data_type(cass_data_type_);
-    if (!cass_user_type_) {
-        isc_throw(DbOperationError,
-                  "Udt::Udt(): Type " << name_
-                                      << " is not a UDT as expected. ");
-    }
-}
-
-Udt::~Udt() {
-    /// @todo: Need to get back to this issue. This is likely a memory leak.
-    //
-    // Bug: it seems that if there is no call to
-    //      cass_user_type_set_*(cass_user_type_), then
-    //      cass_user_type_free(cass_user_type_) might SIGSEGV, so we never
-    //      free. Udt objects should have application scope though.
-    // cass_user_type_free(cass_user_type_);
-}
+    {typeid(CassUuid*), EXCHANGE_DATA_TYPE_UUID}};
 /// @}
 
 /// @brief AnyArray method implementations
@@ -251,237 +190,7 @@ CqlBindUuid(const boost::any& value,
     return cass_statement_bind_uuid(statement, index,
                                     *boost::any_cast<CassUuid*>(value));
 }
-
-static CassError
-CqlBindUdt(const boost::any& value,
-           const size_t& index,
-           CassStatement* statement) {
-    Udt* udt = boost::any_cast<Udt*>(value);
-
-    if (!udt) {
-        isc_throw(BadValue, "Invalid value specified, not an Udt object");
-    }
-
-    size_t i = 0u;
-
-    // Let's iterate over all elements in udt and check that we indeed
-    // can assign the set function for each specified type.
-    for (boost::any& element : *udt) {
-        try {
-            KEA_CASS_CHECK(
-                CQL_FUNCTIONS[exchangeType(element)].cqlUdtSetFunction_(
-                    element, i, udt->cass_user_type_));
-        } catch (const boost::bad_any_cast& exception) {
-            isc_throw(DbOperationError,
-                      "CqlCommon::udtSetData(): "
-                          << exception.what() << " when binding parameter "
-                          << " of type " << element.type().name()
-                          << "in UDT with function CQL_FUNCTIONS["
-                          << exchangeType(element) << "].cqlUdtSetFunction_");
-        }
-        ++i;
-    }
-
-    return cass_statement_bind_user_type(statement, index,
-                                         udt->cass_user_type_);
-}
-
-static CassError
-CqlBindCollection(const boost::any& value,
-                  const size_t& index,
-                  CassStatement* statement) {
-    AnyCollection* elements = boost::any_cast<AnyCollection*>(value);
-
-    CassCollection* collection =
-        cass_collection_new(CASS_COLLECTION_TYPE_SET, elements->size());
-
-    // Iterate over all elements and assign appropriate append function
-    // for each.
-    for (boost::any& element : *elements) {
-        ExchangeDataType type = exchangeType(element);
-        KEA_CASS_CHECK(CQL_FUNCTIONS[type].cqlCollectionAppendFunction_(
-            element, collection));
-    }
-
-    const CassError cass_error =
-        cass_statement_bind_collection(statement, index, collection);
-    cass_collection_free(collection);
-
-    return cass_error;
-}
 /// @}
-
-/// @name CqlUdtSet functions for binding data into Cassandra format for
-///     insertion of a UDT:
-/// @{
-static CassError
-CqlUdtSetNone(const boost::any& /* udt_member */,
-              const size_t& position,
-              CassUserType* cass_user_type) {
-    return cass_user_type_set_null(cass_user_type, position);
-}
-
-static CassError
-CqlUdtSetBool(const boost::any& udt_member,
-              const size_t& position,
-              CassUserType* cass_user_type) {
-    return cass_user_type_set_bool(cass_user_type, position,
-                                   *boost::any_cast<cass_bool_t*>(udt_member));
-}
-
-static CassError
-CqlUdtSetInt8(const boost::any& udt_member,
-              const size_t& position,
-              CassUserType* cass_user_type) {
-    return cass_user_type_set_int8(cass_user_type, position,
-                                   *boost::any_cast<cass_int8_t*>(udt_member));
-}
-
-static CassError
-CqlUdtSetInt16(const boost::any& udt_member,
-               const size_t& position,
-               CassUserType* cass_user_type) {
-    return cass_user_type_set_int16(
-        cass_user_type, position, *boost::any_cast<cass_int16_t*>(udt_member));
-}
-
-static CassError
-CqlUdtSetInt32(const boost::any& udt_member,
-               const size_t& position,
-               CassUserType* cass_user_type) {
-    return cass_user_type_set_int32(
-        cass_user_type, position, *boost::any_cast<cass_int32_t*>(udt_member));
-}
-
-static CassError
-CqlUdtSetInt64(const boost::any& udt_member,
-               const size_t& position,
-               CassUserType* cass_user_type) {
-    return cass_user_type_set_int64(
-        cass_user_type, position, *boost::any_cast<cass_int64_t*>(udt_member));
-}
-
-static CassError
-CqlUdtSetString(const boost::any& udt_member,
-                const size_t& position,
-                CassUserType* cass_user_type) {
-    return cass_user_type_set_string(
-        cass_user_type, position,
-        boost::any_cast<std::string*>(udt_member)->c_str());
-}
-
-static CassError
-CqlUdtSetBytes(const boost::any& udt_member,
-               const size_t& position,
-               CassUserType* cass_user_type) {
-    CassBlob* blob_value = boost::any_cast<CassBlob*>(udt_member);
-    return cass_user_type_set_bytes(cass_user_type, position,
-                                    blob_value->data(), blob_value->size());
-}
-
-static CassError
-CqlUdtSetUuid(const boost::any& udt_member,
-              const size_t& position,
-              CassUserType* cass_user_type) {
-    return cass_user_type_set_uuid(cass_user_type, position,
-                                   *boost::any_cast<CassUuid*>(udt_member));
-}
-
-static CassError
-CqlUdtSetUdt(const boost::any& udt_member,
-             const size_t& position,
-             CassUserType* cass_user_type) {
-    return cass_user_type_set_user_type(
-        cass_user_type, position,
-        boost::any_cast<Udt*>(udt_member)->cass_user_type_);
-}
-
-static CassError
-CqlUdtSetCollection(const boost::any& udt_member,
-                    const size_t& position,
-                    CassUserType* cass_user_type) {
-    return cass_user_type_set_collection(
-        cass_user_type, position, boost::any_cast<CassCollection*>(udt_member));
-}
-/// @}
-
-/// @name CqlCollectionAppend functions for binding data into Cassandra format
-///     for insertion of a collection:
-/// @{
-static CassError
-CqlCollectionAppendNone(const boost::any& /* value */,
-                        CassCollection* /* collection */) {
-    return CASS_OK;
-}
-
-static CassError
-CqlCollectionAppendBool(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_bool(collection,
-                                       *boost::any_cast<cass_bool_t*>(value));
-}
-
-static CassError
-CqlCollectionAppendInt8(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_int8(collection,
-                                       *boost::any_cast<cass_int8_t*>(value));
-}
-
-static CassError
-CqlCollectionAppendInt16(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_int16(collection,
-                                        *boost::any_cast<cass_int16_t*>(value));
-}
-
-static CassError
-CqlCollectionAppendInt32(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_int32(collection,
-                                        *boost::any_cast<cass_int32_t*>(value));
-}
-
-static CassError
-CqlCollectionAppendInt64(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_int64(collection,
-                                        *boost::any_cast<cass_int64_t*>(value));
-}
-
-static CassError
-CqlCollectionAppendString(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_string(
-        collection, boost::any_cast<std::string*>(value)->c_str());
-}
-
-static CassError
-CqlCollectionAppendBytes(const boost::any& value, CassCollection* collection) {
-    CassBlob* blob_value = boost::any_cast<CassBlob*>(value);
-    return cass_collection_append_bytes(collection, blob_value->data(),
-                                        blob_value->size());
-}
-
-static CassError
-CqlCollectionAppendUuid(const boost::any& value, CassCollection* collection) {
-    return cass_collection_append_uuid(collection,
-                                       *boost::any_cast<CassUuid*>(value));
-}
-
-static CassError
-CqlCollectionAppendUdt(const boost::any& value, CassCollection* collection) {
-    Udt* udt = boost::any_cast<Udt*>(value);
-    size_t i = 0u;
-    for (boost::any& element : *udt) {
-        KEA_CASS_CHECK(CQL_FUNCTIONS[exchangeType(element)].cqlUdtSetFunction_(
-            element, i, udt->cass_user_type_));
-        ++i;
-    }
-    return cass_collection_append_user_type(collection, udt->cass_user_type_);
-}
-
-static CassError
-CqlCollectionAppendCollection(const boost::any& value,
-                              CassCollection* collection) {
-    return cass_collection_append_collection(
-        collection, boost::any_cast<CassCollection*>(value));
-}
-// @}
 
 /// @name CqlGet functions for retrieving data of the proper Cassandra format:
 /// @{
@@ -541,101 +250,30 @@ static CassError
 CqlGetUuid(const boost::any& data, const CassValue* value) {
     return cass_value_get_uuid(value, boost::any_cast<CassUuid*>(data));
 }
-
-static CassError
-CqlGetUdt(const boost::any& data, const CassValue* value) {
-    Udt* udt = boost::any_cast<Udt*>(data);
-
-    CassIterator* fields = cass_iterator_fields_from_user_type(value);
-    if (!fields) {
-        isc_throw(DbOperationError, "CqlGetUdt(): column is not a UDT");
-    }
-    Udt::const_iterator it = udt->begin();
-    while (cass_iterator_next(fields)) {
-        const CassValue* field_value =
-            cass_iterator_get_user_type_field_value(fields);
-        if (cass_value_is_null(field_value)) {
-            isc_throw(DbOperationError,
-                      "CqlGetUdt(): null value returned in UDT");
-        }
-        const CassValueType& type = cass_value_type(field_value);
-        KEA_CASS_CHECK(CQL_FUNCTIONS[exchangeType(type)].cqlGetFunction_(
-            *it, field_value));
-        ++it;
-        // If cqlGetFunction_() returns != CASS_OK, don't
-        // cass_iterator_free(items_iterator) because we're returning from this
-        // function and throwing from the callee.
-    }
-    cass_iterator_free(fields);
-    return CASS_OK;
-}
-
-static CassError
-CqlGetCollection(const boost::any& data, const CassValue* value) {
-    AnyCollection* collection = boost::any_cast<AnyCollection*>(data);
-    if (!collection) {
-        isc_throw(DbOperationError, "CqlGetCollection(): column is not a collection");
-    }
-
-    BOOST_ASSERT(collection->size() == 1);
-
-    /// @todo: Create a copy of the underlying object rather than referencing to
-    /// it.
-    boost::any underlying_object = *collection->begin();
-
-    collection->clear();
-
-    CassIterator* items = cass_iterator_from_collection(value);
-    if (!items) {
-        isc_throw(DbOperationError,
-                  "CqlGetCollection(): column is not a collection");
-    }
-    while (cass_iterator_next(items)) {
-        const CassValue* item_value = cass_iterator_get_value(items);
-        if (cass_value_is_null(item_value)) {
-            isc_throw(DbOperationError,
-                      "CqlGetCollection(): null value returned in collection");
-        }
-        const CassValueType& type = cass_value_type(item_value);
-
-        collection->push_back(underlying_object);
-        KEA_CASS_CHECK(CQL_FUNCTIONS[exchangeType(type)].cqlGetFunction_(
-            *collection->rbegin(), item_value));
-        // If cqlGetFunction_() returns != CASS_OK, don't call
-        // cass_iterator_free(items_iterator) because we're returning from this
-        // function and throwing from the callee.
-    }
-    cass_iterator_free(items);
-    return CASS_OK;
-}
 /// @}
 
 /// @brief Functions used to interface with the Cassandra C++ driver
 CqlFunctionMap CQL_FUNCTIONS =  //
     {{EXCHANGE_DATA_TYPE_NONE,
-      {CqlBindNone, CqlUdtSetNone, CqlCollectionAppendNone, CqlGetNone}},
+      {CqlBindNone, CqlGetNone}},
      {EXCHANGE_DATA_TYPE_BOOL,
-      {CqlBindBool, CqlUdtSetBool, CqlCollectionAppendBool, CqlGetBool}},
+      {CqlBindBool, CqlGetBool}},
      {EXCHANGE_DATA_TYPE_INT8,
-      {CqlBindInt8, CqlUdtSetInt8, CqlCollectionAppendInt8, CqlGetInt8}},
+      {CqlBindInt8, CqlGetInt8}},
      {EXCHANGE_DATA_TYPE_INT16,
-      {CqlBindInt16, CqlUdtSetInt16, CqlCollectionAppendInt16, CqlGetInt16}},
+      {CqlBindInt16, CqlGetInt16}},
      {EXCHANGE_DATA_TYPE_INT32,
-      {CqlBindInt32, CqlUdtSetInt32, CqlCollectionAppendInt32, CqlGetInt32}},
+      {CqlBindInt32, CqlGetInt32}},
      {EXCHANGE_DATA_TYPE_INT64,
-      {CqlBindInt64, CqlUdtSetInt64, CqlCollectionAppendInt64, CqlGetInt64}},
+      {CqlBindInt64, CqlGetInt64}},
+     {EXCHANGE_DATA_TYPE_TIMESTAMP,
+      {CqlBindInt64, CqlGetInt64}},
      {EXCHANGE_DATA_TYPE_STRING,
-      {CqlBindString, CqlUdtSetString, CqlCollectionAppendString,
-       CqlGetString}},
+      {CqlBindString, CqlGetString}},
      {EXCHANGE_DATA_TYPE_BYTES,
-      {CqlBindBytes, CqlUdtSetBytes, CqlCollectionAppendBytes, CqlGetBytes}},
+      {CqlBindBytes, CqlGetBytes}},
      {EXCHANGE_DATA_TYPE_UUID,
-      {CqlBindUuid, CqlUdtSetUuid, CqlCollectionAppendUuid, CqlGetUuid}},
-     {EXCHANGE_DATA_TYPE_UDT,
-      {CqlBindUdt, CqlUdtSetUdt, CqlCollectionAppendUdt, CqlGetUdt}},
-     {EXCHANGE_DATA_TYPE_COLLECTION,
-      {CqlBindCollection, CqlUdtSetCollection, CqlCollectionAppendCollection,
-       CqlGetCollection}}};
+      {CqlBindUuid, CqlGetUuid}}};
 
 ExchangeDataType
 exchangeType(const boost::any& object) {
@@ -652,24 +290,6 @@ exchangeType(const boost::any& object) {
                   "exchangeType(): index " << exchange_type << " out of bounds "
                                            << 0 << " - "
                                            << (CQL_FUNCTIONS.size() - 1));
-    }
-    return exchange_type;
-}
-
-ExchangeDataType
-exchangeType(const CassValueType& type) {
-    CassTypeMap::const_iterator exchange_type_it = CASS_TYPE_MAP.find(type);
-    if (exchange_type_it == CASS_TYPE_MAP.end()) {
-        isc_throw(DbOperationError,
-                  "exchangeType(): Cassandra value type "
-                      << type << " does not map to any exchange type");
-    }
-    const ExchangeDataType exchange_type = exchange_type_it->second;
-    if (exchange_type >= CQL_FUNCTIONS.size()) {
-        isc_throw(BadValue,
-                  "exchangeType(): index " << exchange_type << " out of bounds "
-                                           << 0 << " - "
-                                           << CQL_FUNCTIONS.size() - 1);
     }
     return exchange_type;
 }
@@ -812,7 +432,12 @@ CqlExchange::executeSelect(const CqlConnection& connection, const AnyArray& data
         }
     }
 
-    CqlCommon::bindData(local_data, statement);
+    try {
+        CqlCommon::bindData(local_data, statement);
+    } catch (const std::exception& ex) {
+        cass_statement_free(statement);
+        isc_throw(DbOperationError, ex.what());
+    }
 
     // Everything's ready. Call the actual statement.
     future = cass_session_execute(connection.session_, statement);
@@ -902,7 +527,12 @@ CqlExchange::executeMutation(const CqlConnection& connection, const AnyArray& da
         }
     }
 
-    CqlCommon::bindData(data, statement);
+    try {
+        CqlCommon::bindData(data, statement);
+    } catch (const std::exception& ex) {
+        cass_statement_free(statement);
+        isc_throw(DbOperationError, ex.what());
+    }
 
     future = cass_session_execute(connection.session_, statement);
     if (!future) {

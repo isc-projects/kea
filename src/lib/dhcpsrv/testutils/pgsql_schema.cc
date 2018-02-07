@@ -56,7 +56,9 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
     }
 
     int retval = ::system(cmd.str().c_str());
-    ASSERT_EQ(0, retval) << "runPgSQLSchema failed:" << cmd.str();
+    if (retval) {
+        std::cerr << "runPgSQLSchema failed:" << cmd.str() << std::endl;
+    }
 }
 
 };

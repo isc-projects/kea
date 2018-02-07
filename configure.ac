@@ -133,15 +133,15 @@ AX_ISC_CPP11
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
 AC_COMPILE_IFELSE(
-	[AC_LANG_PROGRAM(
-		[#include <type_traits>
-		 class A {};
-		 class B : A {};]
-		[static_assert(std::is_base_of<A, B>::value, "");])],
-	[AC_MSG_RESULT(yes)
-	 AC_DEFINE([HAVE_IS_BASE_OF], [1],
-	 [Define to 1 if std::is_base_of is available])],
-	[AC_MSG_RESULT(no)])
+    [AC_LANG_PROGRAM(
+        [#include <type_traits>
+        class A {};
+        class B : A {};]
+        [static_assert(std::is_base_of<A, B>::value, "");])],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_IS_BASE_OF], [1],
+    [Define to 1 if std::is_base_of is available])],
+    [AC_MSG_RESULT(no)])
 
 dnl Determine if we are using GNU sed
 GNU_SED=no
@@ -407,7 +407,6 @@ case "$host" in
         [Define to 1 if getsockopt(IPV6_USE_MIN_MTU) does not work])
         ;;
 esac
-
 
 # Kea-shell is written in python. It can work with python 2.7 or any 3.x.
 # It may likely work with earlier versions, but 2.7 was the oldest one we tested
@@ -893,9 +892,9 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_ERROR([no gtest source but it was selected])
             fi
         else
-	    if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
-		GTEST_SOURCE=$GTEST_SOURCE/googletest
-	    fi
+            if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
+                GTEST_SOURCE=$GTEST_SOURCE/googletest
+            fi
             AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
                 [$GTEST_SOURCE/src/gtest_main.cc],
                 [have_gtest_source=yes],
@@ -905,7 +904,7 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-	GTEST_VERSION="`basename $GTEST_SOURCE`"
+        GTEST_VERSION="`basename $GTEST_SOURCE`"
     fi
 
     if test "$gtest_path" != "no" ; then
@@ -970,15 +969,15 @@ if test $enable_gtest != "no"; then
    CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [#include <boost/shared_ptr.hpp>
-	    #include <gtest/gtest.h>
-	    void foo() {
-	        boost::shared_ptr<int> bar;
-		ASSERT_TRUE(bar);
+            [#include <boost/shared_ptr.hpp>
+            #include <gtest/gtest.h>
+            void foo() {
+                boost::shared_ptr<int> bar;
+                ASSERT_TRUE(bar);
             }],
-	    [return 0;])],
-	[AC_MSG_RESULT(yes)],
-    	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
+            [return 0;])],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
@@ -989,21 +988,21 @@ if test $enable_gtest != "no"; then
    CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [#include <boost/algorithm/string.hpp>
-	    #include <gtest/gtest.h>
-	    #include <string>
-	    #include <vector>
-	    std::string nodiff(std::string text) {
-	        std::vector<std::string> lines;
-		boost::split(lines, text, boost::is_any_of("\n"));
-		using namespace testing::internal;
-		return (edit_distance::CreateUnifiedDiff(lines, lines));
-	    }],
-	    [return 0;])],
-	[AC_MSG_RESULT(yes)
-	 AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
-	 [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
-	[AC_MSG_RESULT(no)])
+            [#include <boost/algorithm/string.hpp>
+            #include <gtest/gtest.h>
+            #include <string>
+            #include <vector>
+            std::string nodiff(std::string text) {
+                std::vector<std::string> lines;
+                boost::split(lines, text, boost::is_any_of("\n"));
+                using namespace testing::internal;
+                return (edit_distance::CreateUnifiedDiff(lines, lines));
+            }],
+            [return 0;])],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
+        [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
+        [AC_MSG_RESULT(no)])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
@@ -1039,7 +1038,7 @@ AC_CHECK_FUNCS([pselect])
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
-	CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
+    CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
 fi
 
 #
@@ -1503,9 +1502,9 @@ if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
 Cassandra CQL:
-  CQL_VERSION:   ${CQL_VERSION}
-  CQL_CPPFLAGS:  ${CQL_CPPFLAGS}
-  CQL_LIBS:      ${CQL_LIBS}
+  CQL_VERSION:                  ${CQL_VERSION}
+  CQL_CPPFLAGS:                 ${CQL_CPPFLAGS}
+  CQL_LIBS:                     ${CQL_LIBS}
 END
 else
 cat >> config.report << END

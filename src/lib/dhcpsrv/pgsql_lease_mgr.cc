@@ -68,7 +68,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "get_lease4_addr",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname, state "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease4 "
       "WHERE address = $1"},
 
@@ -77,7 +78,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "get_lease4_clientid",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname, state "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease4 "
       "WHERE client_id = $1"},
 
@@ -86,7 +88,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "get_lease4_clientid_subid",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname, state "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease4 "
       "WHERE client_id = $1 AND subnet_id = $2"},
 
@@ -95,7 +98,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "get_lease4_hwaddr",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname, state "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease4 "
       "WHERE hwaddr = $1"},
 
@@ -104,7 +108,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "get_lease4_hwaddr_subid",
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname, state "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
 
@@ -121,12 +126,13 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
       "get_lease4_expire",
       "SELECT address, hwaddr, client_id, "
-          "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-          "fqdn_fwd, fqdn_rev, hostname, state "
-              "FROM lease4 "
-              "WHERE state != $1 AND expire < $2 "
-              "ORDER BY expire "
-              "LIMIT $3"},
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
+      "FROM lease4 "
+      "WHERE state != $1 AND expire < $2 "
+      "ORDER BY expire "
+      "LIMIT $3"},
 
     // GET_LEASE6_ADDR
     { 2, { OID_VARCHAR, OID_INT2 },
@@ -163,14 +169,14 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
       "get_lease6_expire",
       "SELECT address, duid, valid_lifetime, "
-          "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-          "lease_type, iaid, prefix_len, "
-          "fqdn_fwd, fqdn_rev, hostname, state "
-          "state "
-              "FROM lease6 "
-              "WHERE state != $1 AND expire < $2 "
-              "ORDER BY expire "
-              "LIMIT $3"},
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
+      "FROM lease6 "
+      "WHERE state != $1 AND expire < $2 "
+      "ORDER BY expire "
+      "LIMIT $3"},
 
     // GET_VERSION
     { 0, { OID_NONE },
@@ -193,7 +199,8 @@ PgSqlTaggedStatement tagged_statements[] = {
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state) "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "state) "
       "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"},
 
     // UPDATE_LEASE4
@@ -274,7 +281,6 @@ protected:
     //@}
 
 };
-
 
 /// @brief Supports exchanging IPv4 leases with PostgreSQL.
 class PgSqlLease4Exchange : public PgSqlLeaseExchange {
@@ -437,7 +443,9 @@ public:
                                          valid_lifetime_, 0, 0, cltt_,
                                          subnet_id_, fqdn_fwd_, fqdn_rev_,
                                          hostname_));
+
             result->state_ = state;
+
             return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -646,7 +654,9 @@ public:
                                         subnet_id_, fqdn_fwd_, fqdn_rev_,
                                         hostname_, hwaddr, prefix_len_));
             result->cltt_ = cltt_;
+
             result->state_ = state;
+
             return (result);
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -929,7 +939,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     }
 }
 
-
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
                              Lease4Ptr& result) const {
@@ -948,7 +957,6 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
         result = *collection.begin();
     }
 }
-
 
 void
 PgSqlLeaseMgr::getLease(StatementIndex stindex, PsqlBindArray& bind_array,
@@ -1247,7 +1255,6 @@ PgSqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     getLeaseCollection(statement_index, bind_array, expired_leases);
 }
 
-
 template<typename LeasePtr>
 void
 PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
@@ -1283,7 +1290,6 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex,
                   "that had the address " << lease->addr_.toText());
 }
 
-
 void
 PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
@@ -1296,9 +1302,9 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
+    std::string addr4_str = boost::lexical_cast<std::string>
                          (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    bind_array.add(addr4_str);
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease);
