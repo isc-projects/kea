@@ -439,22 +439,22 @@ Debian and Ubuntu:
           <para>The install step may require superuser privileges.</para>
         </note>
         <para>
-	  If required, run <command>ldconfig</command> as root with
-	  <filename>/usr/local/lib</filename> (or with <replaceable>prefix</replaceable>/lib if
-	  configured with --prefix) in
-	  <filename>/etc/ld.so.conf</filename> (or the relevant linker
-	  cache configuration file for your OS):
-	  <screen>$ <userinput>ldconfig</userinput></screen>
+          If required, run <command>ldconfig</command> as root with
+          <filename>/usr/local/lib</filename> (or with <replaceable>prefix</replaceable>/lib if
+          configured with --prefix) in
+          <filename>/etc/ld.so.conf</filename> (or the relevant linker
+          cache configuration file for your OS):
+          <screen>$ <userinput>ldconfig</userinput></screen>
         </para>
         <note>
           <para>
-	    If you do not run <command>ldconfig</command> where it is
-	    required, you may see errors like the following:
+            If you do not run <command>ldconfig</command> where it is
+            required, you may see errors like the following:
             <screen>
-	      program: error while loading shared libraries: libkea-something.so.1:
-	      cannot open shared object file: No such file or directory
-	    </screen>
-	  </para>
+              program: error while loading shared libraries: libkea-something.so.1:
+              cannot open shared object file: No such file or directory
+            </screen>
+          </para>
         </note>
       </section>
 
@@ -474,10 +474,10 @@ Debian and Ubuntu:
         <varlistentry>
           <term>JSON</term>
           <listitem>
-	    <simpara>JSON is the default configuration backend
-	    that allows Kea to read JSON configuration files from
-	    disk. It does not require any framework and thus is
-	    considered more lightweight. It allows dynamic on-line
+            <simpara>JSON is the default configuration backend
+            that allows Kea to read JSON configuration files from
+            disk. It does not require any framework and thus is
+            considered more lightweight. It allows dynamic on-line
             reconfiguration using Kea API.</simpara>
           </listitem>
         </varlistentry>
@@ -521,7 +521,7 @@ Debian and Ubuntu:
           "configure" step (see <xref linkend="configure"/>), the --with-dhcp-mysql switch
           should be specified:
           <screen><userinput>./configure [other-options] --with-dhcp-mysql</userinput></screen>
-	      If MySQL was not installed in the default location, the location of the MySQL
+              If MySQL was not installed in the default location, the location of the MySQL
           configuration program "mysql_config" should be included with the switch, i.e.
           <screen><userinput>./configure [other-options] --with-dhcp-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
         </para>
@@ -543,7 +543,7 @@ Debian and Ubuntu:
           "configure" step (see <xref linkend="configure"/>), the --with-dhcp-pgsql switch
           should be specified:
           <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
-	      If PostgreSQL was not installed in the default location, the location of the PostgreSQL
+              If PostgreSQL was not installed in the default location, the location of the PostgreSQL
           configuration program "pg_config" should be included with the switch, i.e.
           <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
         </para>
@@ -569,6 +569,7 @@ Debian and Ubuntu:
 $ <userinput>git clone https://github.com/datastax/cpp-driver</userinput>
 $ <userinput>cd cpp-driver</userinput>
 $ <userinput>mkdir build</userinput>
+$ <userinput>cd build</userinput>
 $ <userinput>cmake ..</userinput>
 $ <userinput>make</userinput>
 </screen>
