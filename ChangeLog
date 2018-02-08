@@ -1,3 +1,8 @@
+1356.	[func]		andreipavelQ,tomek
+	The logging configuration is now applied early, which helps
+	seeing errors in case the new configuration is faulty.
+	(github #41, git d77fbec5a003a69cab207aa741133015f2657878)
+
 1355.	[build]		andreipavelQ
 	--with-dhcp-mysql renamed to --with-mysql and
 	--with-dhcp-pgsql renamed to --with-pgsql. These names were
