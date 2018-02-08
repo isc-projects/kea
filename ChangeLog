@@ -1,3 +1,11 @@
+1358.	[build,bug]	fdupont
+	Cassandra build fixes for macOS.
+	(Trac #5494, git xxx)
+
+1357.	[bug]		rcgoodfellow
+	Fixed bug in kea-admon causing error on lease-dump.
+	(github #61, git xxx)
+
 1356.	[func]		andreipavelQ,tomek
 	The logging configuration is now applied early, which helps
 	seeing errors in case the new configuration is faulty.

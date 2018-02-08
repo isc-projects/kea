@@ -527,7 +527,7 @@ Debian and Ubuntu:
           "configure" step (see <xref linkend="configure"/>), the --with-mysql switch
           should be specified:
           <screen><userinput>./configure [other-options] --with-mysql</userinput></screen>
-	      If MySQL was not installed in the default location, the location of the MySQL
+              If MySQL was not installed in the default location, the location of the MySQL
           configuration program "mysql_config" should be included with the switch, i.e.
           <screen><userinput>./configure [other-options] --with-mysql=<replaceable>path-to-mysql_config</replaceable></userinput></screen>
         </para>
@@ -549,7 +549,7 @@ Debian and Ubuntu:
           "configure" step (see <xref linkend="configure"/>), the --with-pgsql switch
           should be specified:
           <screen><userinput>./configure [other-options] --with-pgsql</userinput></screen>
-	      If PostgreSQL was not installed in the default location, the location of the PostgreSQL
+              If PostgreSQL was not installed in the default location, the location of the PostgreSQL
           configuration program "pg_config" should be included with the switch, i.e.
           <screen><userinput>./configure [other-options] --with-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
         </para>
@@ -574,6 +574,7 @@ Debian and Ubuntu:
 $ <userinput>git clone https://github.com/datastax/cpp-driver</userinput>
 $ <userinput>cd cpp-driver</userinput>
 $ <userinput>mkdir build</userinput>
+$ <userinput>cd build</userinput>
 $ <userinput>cmake ..</userinput>
 $ <userinput>make</userinput>
 </screen>
