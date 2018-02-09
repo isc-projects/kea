@@ -26,9 +26,9 @@ Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
-    :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
-     subnet_id_(subnet_id), hostname_(hostname), fqdn_fwd_(fqdn_fwd),
-    fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
+    : addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
+      subnet_id_(subnet_id), hostname_(hostname), fqdn_fwd_(fqdn_fwd),
+      fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
 
 
