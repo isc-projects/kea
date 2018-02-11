@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,10 @@
 #include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/function.hpp>
 
 #include <string>
+#include <map>
 
 namespace isc {
 namespace dhcp {
@@ -77,6 +79,36 @@ public:
     /// is encapsulated in this method to avoid a "static initialization
     /// fiasco" if defined in an external static variable.
     static HostDataSourcePtr& getHostDataSourcePtr();
+
+    /// @brief Type of host data source factory
+    ///
+    /// A factory takes a parameter map and returns a pointer to a host
+    /// data source. In case of failure it must throw and not return NULL.
+    typedef boost::function<BaseHostDataSource*(const DatabaseConnection::ParameterMap&)> Factory;
+
+    /// @brief Register a host data source factory
+    ///
+    /// Associate the factory to a database type in the map.
+    ///
+    /// @param db_type database type
+    /// @param factory host data source factory
+    /// @return true if the factory was successfully added to the map, false
+    /// if it already exists.
+    static bool registerFactory(const std::string& db_type,
+                                const Factory& factory);
+
+    /// @brief Deregister a host data source factory
+    ///
+    /// Disassociate the factory to a database type in the map.
+    ///
+    /// @param db_type database type
+    /// @return true if the factory was successfully removed from the map,
+    /// false if it was not found.
+    static bool deregisterFactory(const std::string& db_type);
+
+private:
+    /// @brief Factory map
+    static std::map<std::string, Factory> map_;
 };
 
 

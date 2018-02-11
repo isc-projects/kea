@@ -91,6 +91,7 @@ libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp4o6_ipc_unittest.cc
 libdhcpsrv_unittests_SOURCES += duid_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += expiration_config_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += host_data_source_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservation_parser_unittest.cc
