@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -98,7 +98,8 @@ public:
     /// Host, where one instance is identified by different identifier types.
     ///
     /// @param host pointer to the new @ref Host being added.
-    virtual void add(const HostPtr& host) override;
+    /// @return true as addition is successful or throws.
+    virtual bool add(const HostPtr& host) override;
 
     /// @brief Retrieves a single @ref Host connected to an IPv4 subnet.
     ///

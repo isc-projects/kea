@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,9 +44,9 @@ CfgDbAccess::createManagers() const {
     LeaseMgrFactory::create(getLeaseDbAccessString());
 
     // Recreate host data source.
-    HostDataSourceFactory::destroy();
+    HostMgr::create();
     if (!host_db_access_.empty()) {
-        HostMgr::create(getHostDbAccessString());
+        HostMgr::addSource(getHostDbAccessString());
     }
 }
 

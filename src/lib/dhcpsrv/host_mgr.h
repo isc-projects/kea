@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,34 +33,36 @@ namespace dhcp {
 /// configuration, accessible through the @c CfgHosts object in the @c CfgMgr.
 /// The @c CfgHosts object holds all reservations specified in the DHCP server
 /// configuration file. If a particular reservation is not found in the
-/// @c CfgHosts object, the @c HostMgr will try to find it using the alternate
-/// host data storage. The alternate host data storage is usually a database
+/// @c CfgHosts object, the @c HostMgr will try to find it using alternate
+/// host data storages. An alternate host data storage is usually a database
 /// (e.g. SQL database), accessible through a dedicated host data source
 /// object (a.k.a. database backend). This datasource is responsible for
 /// managing the connection with the database and forming appropriate queries
 /// to retrieve (or update) the information about the reservations.
 ///
-/// The use of the alternate host data source is optional and usually requires
+/// The use of alternate host data sources is optional and usually requires
 /// additional configuration to be specified by the server administrator.
 /// For example, for the SQL database the user's credentials, database address,
 /// and database name are required. The @c HostMgr passes these parameters
 /// to an appropriate datasource which is responsible for opening a connection
 /// and maintaining it.
 ///
-/// It is possible to switch to a different alternate data source or disable
-/// the use of the alternate datasource, e.g. as a result of server's
+/// It is possible to switch to different alternate data sources or disable
+/// the use of alternate datasources, e.g. as a result of server's
 /// reconfiguration. However, the use of the primary host data source (i.e.
 /// reservations specified in the configuration file) can't be disabled.
-///
-/// @todo Implement alternate host data sources: MySQL, PostgreSQL, etc.
 class HostMgr : public boost::noncopyable, public BaseHostDataSource {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.
     ///
     /// If an instance of the @c HostMgr already exists, it will be replaced
-    /// by the new instance. Thus, any instances of the alternate host data
+    /// by the new instance. Thus, any instances of alternate host data
     /// sources will be dropped.
+    ///
+    static void create();
+
+    /// @brief Add an alternate host data source.
     ///
     /// @param access Host data source access parameters for the alternate
     /// host data source. It holds "keyword=value" pairs, separated by spaces.
@@ -68,7 +70,16 @@ public:
     /// However, the "type" parameter will be common and it will specify which
     /// data source is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    static void create(const std::string& access = "");
+    static void addSource(const std::string& access);
+
+    /// @brief Delete an alternate host data source.
+    ///
+    /// @param db_type_type database backend type.
+    /// @return true when found and removed, false when not found.
+    static bool delSource(const std::string& db_type);
+
+    /// @brief Delete all alternate host data source.
+    static void delAllSources();
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///
@@ -250,7 +261,8 @@ public:
     /// in use.
     ///
     /// @param host Pointer to the new @c Host object being added.
-    virtual void add(const HostPtr& host);
+    /// @return true if addition was successful.
+    virtual bool add(const HostPtr& host);
 
     /// @brief Return backend type
     ///
@@ -261,28 +273,33 @@ public:
         return (std::string("host_mgr"));
     }
 
-    /// @brief Returns pointer to the host data source
+    /// @brief Returns the host data source list.
     ///
-    /// May return NULL
-    /// @return pointer to the host data source (or NULL)
-    HostDataSourcePtr getHostDataSource() const {
-        return (alternate_source_);
+    /// @return reference to the host data source list.
+    HostDataSourceList& getHostDataSourceList() {
+        return (alternate_sources_);
     }
 
-    /// @brief Sets the alternate host data source.
+    /// @brief Returns the fist host data source.
+    ///
+    /// May return NULL if the host data source list is empty.
+    /// @return pointer to the first host data source (or NULL)
+    HostDataSourcePtr getHostDataSource() const;
+
+    /// @brief Sets alternate host data source list.
     ///
     /// Note: This should be used only for testing. Do not use
     /// in production. Normal control flow assumes that
-    /// HostMgr::create(...) is called and it instantiates
-    /// appropriate host data source. However, some tests
+    /// HostMgr::create() and HostMgr::add() is called and it instantiates
+    /// appropriate host data sources. However, some tests
     /// (e.g. host_cmds) implement their own very simple
     /// data source. It's not production ready by any means,
     /// so it does not belong in host_data_source_factory.cc.
     /// The testing nature of this method is reflected in its name.
     ///
-    /// @param source new source to be set (may be NULL)
-    void setTestHostDataSource(const HostDataSourcePtr& source) {
-        alternate_source_ = source;
+    /// @param sources new source list to be set
+    void setTestHostDataSourceList(const HostDataSourceList& sources) {
+        alternate_sources_ = sources;
     }
 
     /// @brief Attempts to delete a host by address.
@@ -327,10 +344,8 @@ private:
     /// @brief Private default constructor.
     HostMgr() { }
 
-    /// @brief Pointer to an alternate host data source.
-    ///
-    /// If this pointer is NULL, the source is not in use.
-    HostDataSourcePtr alternate_source_;
+    /// @brief List of alternate host data sources.
+    HostDataSourceList alternate_sources_;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.

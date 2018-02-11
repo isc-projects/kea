@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,8 +210,8 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     // If there non-matching HW address is specified, nothing should be
     // returned.
     hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
-                                           &hwaddrs_[1]->hwaddr_[0],
-                                           hwaddrs_[1]->hwaddr_.size());
+                                       &hwaddrs_[1]->hwaddr_[0],
+                                       hwaddrs_[1]->hwaddr_.size());
     ASSERT_TRUE(hosts.empty());
 
     // For the correct HW address, there should be two reservations.
@@ -225,7 +225,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 
     // Look for the first reservation.
     bool found = false;
-    for (int i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < 2; ++i) {
         if (hosts[0]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
             ASSERT_EQ(1, hosts[0]->getIPv4SubnetID());
             found = true;
@@ -238,7 +238,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 
     // Look for the second reservation.
     found = false;
-    for (int i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < 2; ++i) {
         if (hosts[1]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
             ASSERT_EQ(10, hosts[1]->getIPv4SubnetID());
             found = true;
@@ -425,7 +425,7 @@ MySQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(test::validMySQLConnectionString());
+        HostMgr::addSource(test::validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -438,8 +438,8 @@ MySQLHostMgrTest::SetUp() {
 
 void
 MySQLHostMgrTest::TearDown() {
-    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
-    HostDataSourceFactory::destroy();
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delSource("mysql");
     test::destroyMySQLSchema();
 }
 
@@ -502,7 +502,7 @@ PostgreSQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(test::validPgSQLConnectionString());
+        HostMgr::addSource(test::validPgSQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -515,8 +515,8 @@ PostgreSQLHostMgrTest::SetUp() {
 
 void
 PostgreSQLHostMgrTest::TearDown() {
-    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
-    HostDataSourceFactory::destroy();
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delSource("postgresql");
     test::destroyPgSQLSchema();
 }
 

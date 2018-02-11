@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -549,7 +549,7 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
     return (host);
 }
 
-void
+bool
 CfgHosts::add(const HostPtr& host) {
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_ADD_HOST)
         .arg(host ? host->toText() : "(no-host)");
@@ -569,6 +569,8 @@ CfgHosts::add(const HostPtr& host) {
     add4(host);
 
     add6(host);
+
+    return (true);
 }
 
 void
