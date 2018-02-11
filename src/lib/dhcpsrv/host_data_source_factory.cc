@@ -40,14 +40,9 @@ namespace dhcp {
 
 map<string, HostDataSourceFactory::Factory> HostDataSourceFactory::map_;
 
-HostDataSourcePtr&
-HostDataSourceFactory::getHostDataSourcePtr() {
-    static HostDataSourcePtr hostDataSourcePtr;
-    return (hostDataSourcePtr);
-}
-
 void
-HostDataSourceFactory::create(const string& dbaccess) {
+HostDataSourceFactory::add(HostDataSourceList& sources,
+                           const string& dbaccess) {
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
@@ -68,25 +63,30 @@ HostDataSourceFactory::create(const string& dbaccess) {
                   db_type << " is invalid");
     }
 
-    // Call the factory
-    getHostDataSourcePtr().reset(index->second(parameters));
+    // Call the factory and push the pointer on sources.
+    sources.push_back(boost::shared_ptr<BaseHostDataSource>(index->second(parameters)));
 
     // Check the factory did not return NULL.
-    if (!getHostDataSourcePtr()) {
+    if (!sources.back()) {
+        sources.pop_back();
         isc_throw(Unexpected, "Hosts database " << db_type <<
                   " factory returned NULL");
     }
 }
 
-void
-HostDataSourceFactory::destroy() {
-    // Destroy current host data source instance.  This is a no-op if no host
-    // data source is available.
-    if (getHostDataSourcePtr()) {
+bool
+HostDataSourceFactory::del(HostDataSourceList& sources,
+                           const string& db_type) {
+    for (auto it = sources.begin(); it != sources.end(); ++it) {
+        if ((*it)->getType() != db_type) {
+            continue;
+        }
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
-            .arg(getHostDataSourcePtr()->getType());
+            .arg(db_type);
+        sources.erase(it);
+        return (true);
     }
-    getHostDataSourcePtr().reset();
+    return (false);
 }
 
 bool

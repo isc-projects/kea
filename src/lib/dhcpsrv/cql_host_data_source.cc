@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -1820,11 +1820,13 @@ CqlHostDataSource::~CqlHostDataSource() {
     delete impl_;
 }
 
-void
+bool
 CqlHostDataSource::add(const HostPtr& host) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_ADD);
 
     impl_->add(host);
+
+    return (true);
 }
 
 ConstHostCollection
