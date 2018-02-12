@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -342,12 +342,11 @@ SrvConfig::toElement() const {
     // Set lease-database
     CfgLeaseDbAccess lease_db(*cfg_db_access_);
     dhcp->set("lease-database", lease_db.toElement());
-    // Set hosts-database
+    // Set hosts-databases
     CfgHostDbAccess host_db(*cfg_db_access_);
-    // @todo accept empty map
-    ConstElementPtr hosts_database = host_db.toElement();
-    if (hosts_database->size() > 0) {
-        dhcp->set("hosts-database", hosts_database);
+    ConstElementPtr hosts_databases = host_db.toElement();
+    if (hosts_databases->size() > 0) {
+        dhcp->set("hosts-databases", hosts_databases);
     }
     // Set host-reservation-identifiers
     ConstElementPtr host_ids;

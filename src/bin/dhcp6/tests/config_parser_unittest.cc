@@ -208,6 +208,29 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
+    // Configuration 7: two host databases
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"hosts-databases\": [ {"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest1\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      },{"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest2\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      }"
+    "    ]"
+    "}",
+
     // Last configuration for comments
     "{"
     "    \"comment\": \"A DHCPv6 server\","
@@ -6314,10 +6337,28 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
               "shared-network or the shared-network itself used rapid-commit true");
 }
 
+// This test checks multiple host data sources.
+TEST_F(Dhcp6ParserTest, hostsDatabases) {
+
+    string config = PARSER_CONFIGS[7];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Check database config
+    ConstCfgDbAccessPtr cfgdb =
+        CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+    ASSERT_TRUE(cfgdb);
+    const std::vector<std::string>& hal = cfgdb->getHostDbAccessStringList();
+    ASSERT_EQ(2, hal.size());
+    // Keywords are in alphabetical order
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal[0]);
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal[1]);
+}
+
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp6ParserTest, comments) {
 
-    string config = PARSER_CONFIGS[7];
+    string config = PARSER_CONFIGS[8];
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 

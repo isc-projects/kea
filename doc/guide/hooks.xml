@@ -1025,9 +1025,9 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           criteria). To use commands that change the reservation information
           (currently these are reservation-add and reservation-del, but this
           rule applies to other commands that may be implemented in the future),
-          hosts database must be specified (see hosts-database description in
-          <xref linkend="hosts-database-configuration4"/> and <xref linkend="hosts-database-configuration6"/>) and it must not operate in
-          read-only mode. If the hosts-database is not specified or is running
+          hosts database must be specified (see hosts-databases description in
+          <xref linkend="hosts-databases-configuration4"/> and <xref linkend="hosts-databases-configuration6"/>) and it must not operate in
+          read-only mode. If the hosts-databases are not specified or are running
           in read-only mode, the host_cmds library will load, but any attempts
           to use reservation-add or reservation-del will fail.
         </para>
@@ -1146,8 +1146,8 @@ Here is an example of complex IPv6 reservation:
 
         <para>
           As <command>reservation-add</command> is expected to store the host,
-          hosts-database parameter must be specified in your configuration and
-          the database must not run in read-only mode. In the future versions
+          hosts-databases parameter must be specified in your configuration and
+          databases must not run in read-only mode. In the future versions
           it will be possible to modify the reservations read from a
           configuration file. Please contact ISC if you are interested in this
           functionality.

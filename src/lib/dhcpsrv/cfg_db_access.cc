@@ -21,21 +21,31 @@ namespace isc {
 namespace dhcp {
 
 CfgDbAccess::CfgDbAccess()
-    : appended_parameters_(), lease_db_access_("type=memfile"),
-      host_db_access_() {
+    : appended_parameters_(), db_access_(2) {
+    db_access_[LEASE_DB] = "type=memfile";
 }
 
 std::string
 CfgDbAccess::getLeaseDbAccessString() const {
-    return (getAccessString(lease_db_access_));
+    return (getAccessString(db_access_[LEASE_DB]));
 }
 
 
 std::string
 CfgDbAccess::getHostDbAccessString() const {
-    return (getAccessString(host_db_access_));
+    return (getAccessString(db_access_[HOSTS_DB]));
 }
 
+std::vector<std::string>
+CfgDbAccess::getHostDbAccessStringList() const {
+    std::vector<std::string> ret;
+    for (size_t idx = HOSTS_DB; idx < db_access_.size(); ++idx) {
+        if (!db_access_[idx].empty()) {
+            ret.push_back(getAccessString(db_access_[idx]));
+        }
+    }
+    return (ret);
+}
 
 void
 CfgDbAccess::createManagers() const {
@@ -45,8 +55,10 @@ CfgDbAccess::createManagers() const {
 
     // Recreate host data source.
     HostMgr::create();
-    if (!host_db_access_.empty()) {
-        HostMgr::addSource(getHostDbAccessString());
+    auto host_db_access_list = getHostDbAccessStringList();
+    for (auto it = host_db_access_list.begin();
+         it != host_db_access_list.end(); ++it) {
+        HostMgr::addSource(*it);
     }
 }
 
