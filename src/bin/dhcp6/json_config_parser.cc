@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -535,6 +535,17 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
                 DbAccessParser parser(DbAccessParser::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            // For now only support empty or singleton, ignoring extra entries.
+            if (config_pair.first == "hosts-databases") {
+                if (config_pair.second->size() == 0) {
+                    continue;
+                }
+                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second->get(0));
                 continue;
             }
 
