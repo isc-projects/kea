@@ -525,14 +525,14 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                DbAccessParser parser(CfgDbAccess::LEASE_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                DbAccessParser parser(CfgDbAccess::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
@@ -540,12 +540,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
 
             // For now only support empty or singleton, ignoring extra entries.
             if (config_pair.first == "hosts-databases") {
-                if (config_pair.second->size() == 0) {
-                    continue;
-                }
-                DbAccessParser parser(DbAccessParser::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second->get(0));
+                for (size_t i = 0; i < config_pair.second->size(); ++i) {
+                    DbAccessParser parser(CfgDbAccess::HOSTS_DB + i);
+                    parser.parse(cfg_db_access, config_pair.second->get(i));
+                }
                 continue;
             }
 

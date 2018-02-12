@@ -529,7 +529,13 @@ If a timeout is given though, it should be an integer greater than zero.
     from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
-<section xml:id="hosts-database-configuration4">
+    <para>Version 1.4 extends the host storage to multiple storages. Operations
+    are performed on host storages in the configuration order with a special
+    case for addition: read-only storages must be configured after a
+    required read-write storage, or host reservation addition will
+    always fail.</para>
+
+<section xml:id="hosts-databases-configuration4">
   <title>DHCPv4 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp4/hosts-database
@@ -572,6 +578,16 @@ If a timeout is given though, it should be an integer greater than zero.
 </screen>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
+
+  <para>The multiple storage extension uses a similar syntax: a configuration
+  is placed into a "hosts-databases" list instead of into a "hosts-database"
+  entry as in:
+<screen>
+"Dhcp4": { "hosts-databases": [ { <userinput>"type": "mysql"</userinput>, ... }, ... ], ... }
+</screen>
+
+   </para>
+
 </section>
 
 <section xml:id="read-only-database-configuration4">
