@@ -1,13 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-  <chapter id="kea-lfc">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-lfc">
     <title>The LFC process</title>
 
-    <section id="kea-lfc-overview">
+    <section xml:id="kea-lfc-overview">
       <title>Overview</title>
       <para><command>kea-lfc</command> is a service process that removes
       redundant information from the files used to provide persistent storage
@@ -26,7 +29,7 @@
       </para>
     </section>
 
-    <section id="kea-lfc-usage">
+    <section xml:id="kea-lfc-usage">
       <title>Command Line Options</title>
       <para><command>kea-lfc</command> is run as follows:
 <screen>
@@ -54,7 +57,7 @@ kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o ou
 
         <itemizedlist>
           <listitem><simpara>
-            <command>previous</command> &mdash;
+            <command>previous</command> —
             When <command>kea-lfc</command> starts this
             is the result of any previous run of <command>kea-lfc</command>.
             When <command>kea-lfc</command> finishes it is the result of this run.
@@ -63,21 +66,21 @@ kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o ou
           </simpara></listitem>
 
           <listitem><simpara>
-            <command>input</command> &mdash;
+            <command>input</command> —
             Before the DHCP server invokes <command>kea-lfc</command> it will
             move the current lease file here and then call <command>kea-lfc</command>
             with this file.
           </simpara></listitem>
 
           <listitem><simpara>
-            <command>output</command> &mdash;
+            <command>output</command> —
             The temporary file <command>kea-lfc</command> should use to write the leases.
             Upon completion of writing this file, it will be moved to the finish file
            (see below).
           </simpara></listitem>
 
           <listitem><simpara>
-            <command>finish</command> &mdash;
+            <command>finish</command> —
             Another temporary file <command>kea-lfc</command> uses for bookkeeping.  When
             <command>kea-lfc</command> completes writing the outputfile it moves it to this
             file name.  After <command>kea-lfc</command> finishes deleting the other files
