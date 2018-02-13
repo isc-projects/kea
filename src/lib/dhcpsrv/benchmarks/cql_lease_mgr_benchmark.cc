@@ -18,6 +18,7 @@
 #include <config.h>
 
 #include <dhcpsrv/benchmarks/generic_lease_mgr_benchmark.h>
+#include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/cql_schema.h>
 
