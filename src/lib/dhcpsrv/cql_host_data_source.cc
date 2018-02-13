@@ -1401,7 +1401,6 @@ CqlHostDataSourceImpl::get4(const SubnetID& subnet_id, const asiolink::IOAddress
     where_values.add(&host_ipv4_subnet_id);
     where_values.add(&host_ipv4_address);
 
-
     // Run statement.
     ConstHostPtr result = getHost(CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_AND_ADDRESS,
                                   where_values);
@@ -1781,7 +1780,6 @@ CqlHostDataSourceImpl::insertHost(const HostPtr& host,
             host, subnet_id, reservation, option_space, option_descriptor,
             CqlHostExchange::INSERT_HOST, assigned_values);
 
-
         host_exchange->executeMutation(dbconn_, assigned_values,
                                        CqlHostExchange::INSERT_HOST);
     } catch (const StatementNotApplied& exception) {
@@ -1825,6 +1823,23 @@ CqlHostDataSource::add(const HostPtr& host) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_ADD);
 
     impl_->add(host);
+}
+
+bool
+CqlHostDataSource::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
+    isc_throw(NotImplemented, "CqlHostDataSource::del NotImplemented");
+}
+
+bool
+CqlHostDataSource::del4(const SubnetID& /*subnet_id*/, const Host::IdentifierType& /*type*/,
+                        const uint8_t* /*identifier_begin*/, const size_t /*identifier_len*/) {
+    isc_throw(NotImplemented, "CqlHostDataSource::del4 NotImplemented");
+}
+
+bool
+CqlHostDataSource::del6(const SubnetID& /*subnet_id*/, const Host::IdentifierType& /*type*/,
+                        const uint8_t* /*identifier_begin*/, const size_t /*identifier_len*/) {
+    isc_throw(NotImplemented, "CqlHostDataSource::del6 NotImplemented");
 }
 
 ConstHostCollection
@@ -1911,23 +1926,6 @@ CqlHostDataSource::get6(const SubnetID& subnet_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET6);
 
     return (impl_->get6(subnet_id, address));
-}
-
-bool
-CqlHostDataSource::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
-    isc_throw(NotImplemented, "CqlHostDataSource::del NotImplemented");
-}
-
-bool
-CqlHostDataSource::del4(const SubnetID& /*subnet_id*/, const Host::IdentifierType& /*type*/,
-                        const uint8_t* /*identifier_begin*/, const size_t /*identifier_len*/) {
-    isc_throw(NotImplemented, "CqlHostDataSource::del4 NotImplemented");
-}
-
-bool
-CqlHostDataSource::del6(const SubnetID& /*subnet_id*/, const Host::IdentifierType& /*type*/,
-                        const uint8_t* /*identifier_begin*/, const size_t /*identifier_len*/) {
-    isc_throw(NotImplemented, "CqlHostDataSource::del6 NotImplemented");
 }
 
 std::string

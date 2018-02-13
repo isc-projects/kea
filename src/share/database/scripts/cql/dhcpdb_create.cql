@@ -131,6 +131,8 @@ CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
     PRIMARY KEY ((hwaddr_source))
 );
 
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
+
 -- Hardware address obtained from raw sockets
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (1, 'HWADDR_SOURCE_RAW');
 
@@ -194,12 +196,17 @@ INSERT INTO schema_version (version, minor) VALUES (1, 0);
 -- Table `host_reservations`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS host_reservations (
+    id bigint,
     host_identifier blob,
     host_identifier_type int,
     host_ipv4_subnet_id int,
     host_ipv6_subnet_id int,
     host_ipv4_address int,
+    host_ipv4_next_server int,
+    host_ipv4_server_hostname text,
+    host_ipv4_boot_file_name text,
     hostname text,
+    user_context text,
     host_ipv4_client_classes text,
     host_ipv6_client_classes text,
     -- reservation
@@ -216,7 +223,8 @@ CREATE TABLE IF NOT EXISTS host_reservations (
     option_is_persistent boolean,
     option_client_class text,
     option_subnet_id int,
-    id bigint,
+    option_user_context text,
+    option_scope_id int,
     PRIMARY KEY ((id))
 );
 
@@ -228,8 +236,39 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ip
 CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
 CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
-TRUNCATE SCHEMA_VERSION;
+--
+-- Table structure for table host_identifier_type.
+--
+
+CREATE TABLE IF NOT EXISTS host_identifier_type (
+    type int,
+    name varchar,
+    PRIMARY KEY ((type))
+);
+
+-- Insert currently defined type names.
+INSERT INTO host_identifier_type (type, name) VALUES (0, 'hw-address');
+INSERT INTO host_identifier_type (type, name) VALUES (1, 'duid');
+INSERT INTO host_identifier_type (type, name) VALUES (2, 'circuit-id');
+INSERT INTO host_identifier_type (type, name) VALUES (3, 'client-id');
+INSERT INTO host_identifier_type (type, name) VALUES (4, 'flex-id');
+
+--
+-- Table structure for table dhcp_option_scope.
+--
+
+CREATE TABLE IF NOT EXISTS dhcp_option_scope (
+  scope_id int,
+  scope_name varchar,
+  PRIMARY KEY ((scope_name))
+);
+
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (0, 'global');
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (1, 'subnet');
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (2, 'client-class');
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (3, 'host');
+
+DELETE FROM schema_version WHERE version=1;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line concludes database upgrade to version 2.0
-

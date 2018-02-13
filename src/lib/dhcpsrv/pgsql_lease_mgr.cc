@@ -26,7 +26,7 @@ using namespace std;
 
 namespace {
 
-/// @todo TKM lease6 needs to accommodate hwaddr,hwtype, and hwaddr source
+/// @todo TKM lease6 needs to accommodate hwaddr, hwtype, and hwaddr source
 /// columns.  This is covered by tickets #3557, #4530, and PR#9.
 
 /// @brief Catalog of all the SQL statements currently supported.  Note
@@ -1057,6 +1057,16 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
 }
 
 Lease4Ptr
+PgSqlLeaseMgr::getLease4(const ClientId&, const HWAddr&, SubnetID) const {
+    /// This function is currently not implemented because allocation engine
+    /// searches for the lease using HW address or client identifier.
+    /// It never uses both parameters in the same time. We need to
+    /// consider if this function is needed at all.
+    isc_throw(NotImplemented, "The PgSqlLeaseMgr::getLease4 function was"
+              " called, but it is not implemented");
+}
+
+Lease4Ptr
 PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_SUBID_CLIENTID)
@@ -1077,16 +1087,6 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     getLease(GET_LEASE4_CLIENTID_SUBID, bind_array, result);
 
     return (result);
-}
-
-Lease4Ptr
-PgSqlLeaseMgr::getLease4(const ClientId&, const HWAddr&, SubnetID) const {
-    /// This function is currently not implemented because allocation engine
-    /// searches for the lease using HW address or client identifier.
-    /// It never uses both parameters in the same time. We need to
-    /// consider if this function is needed at all.
-    isc_throw(NotImplemented, "The PgSqlLeaseMgr::getLease4 function was"
-              " called, but it is not implemented");
 }
 
 Lease4Collection
@@ -1206,19 +1206,19 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 }
 
 void
-PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
-                                 const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED6)
-        .arg(max_leases);
-    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
-}
-
-void
 PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED4)
         .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
+}
+
+void
+PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                 const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED6)
+        .arg(max_leases);
+    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
 template<typename LeaseCollection>
