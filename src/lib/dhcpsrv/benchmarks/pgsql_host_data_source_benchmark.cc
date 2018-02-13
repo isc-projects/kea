@@ -76,83 +76,83 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, updateHosts)(benchmark::State& 
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll2)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllByHWAddrDuid)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        getAll2();
+        benchGetAllByHWAddrDuid();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll3)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        getAll3();
+        benchGetAll();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll1)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllv4Resv)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        getAll1();
+        getAllv4Resv();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4_3)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get4_3();
+        benchGet4BySubnetHWAddrDuid();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4_4)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4IdentifierSubnetId)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get4_4();
+        benchGet4IdentifierSubnetId();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4_2)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get4_2();
+        benchGet4SubnetIdv4Resrv();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6_3)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get6_3();
+        benchGet6SubnetIdDuidHWAddr();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6_4)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6IdentifierSubnetId)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get6_4();
+        benchGet6IdentifierSubnetId();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6_2_subnetid_address)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdAddr)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get6_2_subnetid_address();
+        benchGet6SubnetIdAddr();
     }
 }
 
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6_2_prefix_prefixlen)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6Prefix)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
-        get6_2_prefix_prefixlen();
+        benchGet6Prefix();
     }
 }
 
@@ -162,15 +162,15 @@ constexpr benchmark::TimeUnit UNIT = benchmark::kMicrosecond;
 
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, insertHosts)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, updateHosts)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAll2)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAll3)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAll1)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4_3)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4_4)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4_2)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6_3)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6_4)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6_2_subnetid_address)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6_2_prefix_prefixlen)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAllByHWAddrDuid)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAll)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAllv4Resv)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4IdentifierSubnetId)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6IdentifierSubnetId)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6SubnetIdAddr)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6Prefix)->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 }  // namespace

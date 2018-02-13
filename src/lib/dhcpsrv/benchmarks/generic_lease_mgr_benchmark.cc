@@ -53,7 +53,8 @@ GenericLeaseMgrBenchmark::setUp4(::benchmark::State& state, size_t const& lease_
 }
 
 void
-GenericLeaseMgrBenchmark::setUpWithInserts4(::benchmark::State& state, size_t const& lease_count) {
+GenericLeaseMgrBenchmark::setUpWithInserts4(::benchmark::State& state,
+                                            size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases4(lease_count);
@@ -70,7 +71,8 @@ GenericLeaseMgrBenchmark::setUp6(::benchmark::State& state, size_t const& lease_
 }
 
 void
-GenericLeaseMgrBenchmark::setUpWithInserts6(::benchmark::State& state, size_t const& lease_count) {
+GenericLeaseMgrBenchmark::setUpWithInserts6(::benchmark::State& state,
+                                            size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases6(lease_count);
@@ -150,13 +152,6 @@ GenericLeaseMgrBenchmark::benchGetExpiredLeases4() {
     Lease4Collection expired_leases;
     lmptr_->getExpiredLeases4(expired_leases, leases4_.size());
 }
-
-/*
- *  Calls that aren't measured:
- *      * deleteLease(const Lease4Ptr& lease);
- *      * deleteLease(const Lease6Ptr& lease);
- *      * deleteExpiredReclaimedLeases4(const uint32_t secs);
- */
 
 void
 GenericLeaseMgrBenchmark::prepareLeases6(size_t const& lease_count) {
