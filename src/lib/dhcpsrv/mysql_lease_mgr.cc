@@ -1910,19 +1910,19 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 }
 
 void
-MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
-                                 const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED6)
-        .arg(max_leases);
-    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
-}
-
-void
 MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED4)
         .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
+}
+
+void
+MySqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                 const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_EXPIRED6)
+        .arg(max_leases);
+    getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
 
 template<typename LeaseCollection>
@@ -2147,6 +2147,24 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
     return (deleted_leases);
 }
 
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      RECOUNT_LEASE4_STATS,
+                                                      false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      RECOUNT_LEASE6_STATS,
+                                                      true));
+    query->start();
+    return(query);
+}
+
 size_t
 MySqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
     isc_throw(NotImplemented, "wipeLeases4 is not implemented for MySQL backend");
@@ -2225,24 +2243,6 @@ MySqlLeaseMgr::getVersion() const {
     }
 
     return (std::make_pair(major, minor));
-}
-
-LeaseStatsQueryPtr
-MySqlLeaseMgr::startLeaseStatsQuery4() {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
-                                                      RECOUNT_LEASE4_STATS,
-                                                      false));
-    query->start();
-    return(query);
-}
-
-LeaseStatsQueryPtr
-MySqlLeaseMgr::startLeaseStatsQuery6() {
-    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
-                                                      RECOUNT_LEASE6_STATS,
-                                                      true));
-    query->start();
-    return(query);
 }
 
 void

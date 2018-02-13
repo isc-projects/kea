@@ -100,6 +100,109 @@ public:
     /// @param host pointer to the new @ref Host being added.
     virtual void add(const HostPtr& host) override;
 
+    /// @brief Attempts to delete a host by (subnet-id, address)
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identfier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not
+    ///     there.
+    /// @throw various exceptions in case of errors
+    virtual bool del(const SubnetID& subnet_id,
+                     const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet-id4, identifier-type,
+    /// identifier).
+    ///
+    /// This method supports v4 hosts only.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    ///     an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false if the host was not
+    ///     there.
+    /// @throw various exceptions in case of errors
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin,
+                      const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet-id6, identifier-type,
+    /// identifier).
+    ///
+    /// This method supports v6 hosts only.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    ///     an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false if the host was not
+    ///     there.
+    /// @throw various exceptions in case of errors
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin,
+                      const size_t identifier_len);
+
+    /// @brief Return all @ref Host objects for the specified @ref HWAddr or
+    /// @ref DUID.
+    ///
+    /// Returns all @ref Host objects which represent reservations
+    /// for the specified HW address or DUID. Note, that this method may
+    /// return multiple reservations because a particular client may have
+    /// reservations in multiple subnets and the same client may be identified
+    /// by HW address or DUID. The server is unable to verify that the specific
+    /// DUID and HW address belong to the same client, until the client sends
+    /// a DHCP message.
+    ///
+    /// Specifying both @ref HWAddr and @ref DUID is allowed for this method
+    /// and results in returning all objects that are associated with hardware
+    /// address OR duid. For example: if one @ref Host is associated with the
+    /// specified @ref HWAddr and another @ref Host is associated with the
+    /// specified @ref DUID, two hosts will be returned.
+    ///
+    /// @param hwaddr HW address of the client or NULL if no HW address
+    /// available.
+    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
+    ///
+    /// @return collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll(const HWAddrPtr& hwaddr,
+           const DuidPtr& duid = DuidPtr()) const override;
+
+    /// @brief Return all hosts connected to any subnet for which reservations
+    /// have been made using a specified identifier.
+    ///
+    /// This method returns all @ref Host objects which represent reservations
+    /// for a specified identifier. This method may return multiple hosts
+    /// because a particular client may have reservations in multiple subnets.
+    ///
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    ///     an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll(const Host::IdentifierType& identifier_type,
+           const uint8_t* identifier_begin,
+           const size_t identifier_len) const override;
+
+    /// @brief Returns a collection of hosts using the specified IPv4 address.
+    ///
+    /// This method may return multiple @ref Host objects if they are connected
+    /// to different subnets.
+    ///
+    /// @param address IPv4 address for which the @ref Host object is searched.
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll4(const asiolink::IOAddress& address) const override;
+
     /// @brief Retrieves a single @ref Host connected to an IPv4 subnet.
     ///
     /// Implementations of this method should guard against the case when
@@ -208,109 +311,6 @@ public:
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const override;
-
-    /// @brief Return all @ref Host objects for the specified @ref HWAddr or
-    /// @ref DUID.
-    ///
-    /// Returns all @ref Host objects which represent reservations
-    /// for the specified HW address or DUID. Note, that this method may
-    /// return multiple reservations because a particular client may have
-    /// reservations in multiple subnets and the same client may be identified
-    /// by HW address or DUID. The server is unable to verify that the specific
-    /// DUID and HW address belong to the same client, until the client sends
-    /// a DHCP message.
-    ///
-    /// Specifying both @ref HWAddr and @ref DUID is allowed for this method
-    /// and results in returning all objects that are associated with hardware
-    /// address OR duid. For example: if one @ref Host is associated with the
-    /// specified @ref HWAddr and another @ref Host is associated with the
-    /// specified @ref DUID, two hosts will be returned.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
-    ///
-    /// @return collection of const @ref Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr,
-           const DuidPtr& duid = DuidPtr()) const override;
-
-    /// @brief Return all hosts connected to any subnet for which reservations
-    /// have been made using a specified identifier.
-    ///
-    /// This method returns all @ref Host objects which represent reservations
-    /// for a specified identifier. This method may return multiple hosts
-    /// because a particular client may have reservations in multiple subnets.
-    ///
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    ///     an identifier.
-    /// @param identifier_len Identifier length.
-    ///
-    /// @return Collection of const @ref Host objects.
-    virtual ConstHostCollection
-    getAll(const Host::IdentifierType& identifier_type,
-           const uint8_t* identifier_begin,
-           const size_t identifier_len) const override;
-
-    /// @brief Returns a collection of hosts using the specified IPv4 address.
-    ///
-    /// This method may return multiple @ref Host objects if they are connected
-    /// to different subnets.
-    ///
-    /// @param address IPv4 address for which the @ref Host object is searched.
-    ///
-    /// @return Collection of const @ref Host objects.
-    virtual ConstHostCollection
-    getAll4(const asiolink::IOAddress& address) const override;
-
-    /// @brief Attempts to delete a host by (subnet-id, address)
-    ///
-    /// This method supports both v4 and v6.
-    ///
-    /// @param subnet_id subnet identfier.
-    /// @param addr specified address.
-    /// @return true if deletion was successful, false if the host was not
-    ///     there.
-    /// @throw various exceptions in case of errors
-    virtual bool del(const SubnetID& subnet_id,
-                     const asiolink::IOAddress& addr);
-
-    /// @brief Attempts to delete a host by (subnet-id4, identifier-type,
-    /// identifier).
-    ///
-    /// This method supports v4 hosts only.
-    ///
-    /// @param subnet_id IPv4 Subnet identifier.
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    ///     an identifier.
-    /// @param identifier_len Identifier length.
-    /// @return true if deletion was successful, false if the host was not
-    ///     there.
-    /// @throw various exceptions in case of errors
-    virtual bool del4(const SubnetID& subnet_id,
-                      const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin,
-                      const size_t identifier_len);
-
-    /// @brief Attempts to delete a host by (subnet-id6, identifier-type,
-    /// identifier).
-    ///
-    /// This method supports v6 hosts only.
-    ///
-    /// @param subnet_id IPv6 Subnet identifier.
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    ///     an identifier.
-    /// @param identifier_len Identifier length.
-    /// @return true if deletion was successful, false if the host was not
-    ///     there.
-    /// @throw various exceptions in case of errors
-    virtual bool del6(const SubnetID& subnet_id,
-                      const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin,
-                      const size_t identifier_len);
 
     /// @brief Returns textual description of the backend.
     ///
