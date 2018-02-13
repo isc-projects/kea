@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -25,37 +26,26 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <vector>
 
-using isc::asiolink::IOAddress;
-using isc::dhcp::test::createCqlSchema;
-using isc::dhcp::test::destroyCqlSchema;
-using isc::dhcp::test::validCqlConnectionString;
-
-using std::chrono::duration;
-using std::chrono::duration_cast;
-using std::chrono::high_resolution_clock;
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::setprecision;
-using std::string;
-using std::stringstream;
-using std::to_string;
-using std::vector;
+using namespace isc::asiolink;
+using namespace isc::dhcp::test;
+using namespace std;
+using namespace std::chrono;
 
 namespace isc {
 namespace dhcp {
 namespace bench {
 
-GenericLeaseMgrBenchmark::GenericLeaseMgrBenchmark() : lmptr_(NULL) {
+GenericLeaseMgrBenchmark::GenericLeaseMgrBenchmark()
+    : lmptr_(NULL) {
 }
 
 GenericLeaseMgrBenchmark::~GenericLeaseMgrBenchmark() {
 }
 
 void
-GenericLeaseMgrBenchmark::ReentrantSetUp4(::benchmark::State& state,
-                                              size_t const& lease_count) {
+GenericLeaseMgrBenchmark::setUp4(::benchmark::State& state, size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases4(lease_count);
@@ -63,8 +53,7 @@ GenericLeaseMgrBenchmark::ReentrantSetUp4(::benchmark::State& state,
 }
 
 void
-GenericLeaseMgrBenchmark::ReentrantSetUpWithInserts4(
-    ::benchmark::State& state, size_t const& lease_count) {
+GenericLeaseMgrBenchmark::setUpWithInserts4(::benchmark::State& state, size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases4(lease_count);
@@ -73,8 +62,7 @@ GenericLeaseMgrBenchmark::ReentrantSetUpWithInserts4(
 }
 
 void
-GenericLeaseMgrBenchmark::ReentrantSetUp6(::benchmark::State& state,
-                                              size_t const& lease_count) {
+GenericLeaseMgrBenchmark::setUp6(::benchmark::State& state, size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases6(lease_count);
@@ -82,8 +70,7 @@ GenericLeaseMgrBenchmark::ReentrantSetUp6(::benchmark::State& state,
 }
 
 void
-GenericLeaseMgrBenchmark::ReentrantSetUpWithInserts6(
-    ::benchmark::State& state, size_t const& lease_count) {
+GenericLeaseMgrBenchmark::setUpWithInserts6(::benchmark::State& state, size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases6(lease_count);
@@ -98,8 +85,7 @@ GenericLeaseMgrBenchmark::prepareLeases4(size_t const& lease_count) {
         Lease4Ptr lease(new Lease4());
         lease->addr_ = IOAddress(i);
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, i), HTYPE_ETHER));
-        lease->client_id_ =
-            ClientIdPtr(new ClientId(vector<uint8_t>(8, 2 * i)));
+        lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 2 * i)));
         lease->valid_lft_ = i;
         lease->cltt_ = i;
         lease->subnet_id_ = i;
@@ -247,12 +233,10 @@ GenericLeaseMgrBenchmark::benchGetExpiredLeases6() {
     lmptr_->getExpiredLeases6(expired_leases, leases6_.size());
 }
 
-/*
- *   Calls that aren't measured:
- *      * deleteLease(const Lease4Ptr& lease);
- *      * deleteLease(const Lease6Ptr& lease);
- *      * deleteExpiredReclaimedLeases6(const uint32_t secs);
- */
+/// @todo: Calls that aren't measured:
+/// - deleteLease(const Lease4Ptr& lease);
+/// - deleteLease(const Lease6Ptr& lease);
+/// - deleteExpiredReclaimedLeases6(const uint32_t secs);
 
 }  // namespace bench
 }  // namespace dhcp

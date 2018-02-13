@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -32,8 +33,11 @@ using std::endl;
 
 namespace {
 
+/// @brief Fixture class for benchmarking Cassandra host backend
 class CqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
 public:
+
+    /// @brief Before benchmark setup.
     void SetUp(::benchmark::State const&) override {
         destroyCqlSchema(false, true);
         createCqlSchema(false, true);
@@ -47,6 +51,7 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
+    /// @brief After benchmark clean-up
     void TearDown(::benchmark::State const&) override {
         try {
             hdsptr_->rollback();
@@ -60,26 +65,29 @@ public:
     }
 };
 
+// This benchmark measures insertion of new hosts.
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, insertHosts)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUp(state, host_count);
+        setUp(state, host_count);
         insertHosts();
     }
 }
 
+// This benchmark measures update of existing hosts.
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, updateHosts)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         updateHosts();
     }
 }
 
+// This benchmark 
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, getAll2)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         getAll2();
     }
 }
@@ -87,7 +95,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, getAll2)(benchmark::State& state)
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, getAll3)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         getAll3();
     }
 }
@@ -95,7 +103,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, getAll3)(benchmark::State& state)
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, getAll1)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         getAll1();
     }
 }
@@ -103,7 +111,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, getAll1)(benchmark::State& state)
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get4_3)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get4_3();
     }
 }
@@ -111,7 +119,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get4_3)(benchmark::State& state) 
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get4_4)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get4_4();
     }
 }
@@ -119,7 +127,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get4_4)(benchmark::State& state) 
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get4_2)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get4_2();
     }
 }
@@ -127,7 +135,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get4_2)(benchmark::State& state) 
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_3)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_3();
     }
 }
@@ -135,7 +143,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_3)(benchmark::State& state) 
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_4)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_4();
     }
 }
@@ -143,7 +151,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_4)(benchmark::State& state) 
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_2_subnetid_address)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_2_subnetid_address();
     }
 }
@@ -151,7 +159,7 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_2_subnetid_address)(benchmar
 BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6_2_prefix_prefixlen)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_2_prefix_prefixlen();
     }
 }

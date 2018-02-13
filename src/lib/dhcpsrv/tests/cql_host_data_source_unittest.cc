@@ -15,6 +15,7 @@
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/cql_schema.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -489,7 +490,7 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     destroyCqlSchema(false, true);
 
     // Create a host with a reservation.
-    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
@@ -571,16 +572,6 @@ TEST_F(CqlHostDataSourceTest, DISABLED_testMultipleHostsNoAddress4) {
 /// @todo: Uncomment this after #5506 is implemented.
 TEST_F(CqlHostDataSourceTest, DISABLED_testMultipleHosts6) {
     testMultipleHosts6();
-}
-
-TEST_F(CqlHostDataSourceTest, DISABLED_stressTest) {
-    // Run with 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4092, 8192,
-    // 16384 & 32768 hosts.
-    for (unsigned int i = 0X0001U; i < 0xfffdU; i <<= 1) {
-        initializeTest();
-        stressTest(i);
-        destroyTest();
-    }
 }
 
 }  // namespace

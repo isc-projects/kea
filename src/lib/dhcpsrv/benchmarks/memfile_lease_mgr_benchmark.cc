@@ -11,8 +11,9 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 
-using namespace isc::dhcp::test;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace isc::dhcp::bench;
 using isc::dhcp::LeaseMgrFactory;
 using isc::dhcp::bench::GenericLeaseMgrBenchmark;
 
@@ -145,7 +146,7 @@ public:
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, insertLeases4)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUp4(state, lease_count);
+        setUp4(state, lease_count);
         benchInsertLeases4();
     }
 }
@@ -154,7 +155,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, insertLeases4)(benchmark::State& st
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, updateLeases4)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchUpdateLeases4();
     }
 }
@@ -163,7 +164,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, updateLeases4)(benchmark::State& st
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_address)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_address();
     }
 }
@@ -172,7 +173,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_address)(benchmark::State
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_hwaddr)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_hwaddr();
     }
 }
@@ -182,7 +183,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_hwaddr)(benchmark::State&
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_hwaddr_subnetid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_hwaddr_subnetid();
     }
 }
@@ -191,7 +192,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_hwaddr_subnetid)(benchmar
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_clientid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_clientid();
     }
 }
@@ -201,7 +202,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_clientid)(benchmark::Stat
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_clientid_subnetid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_clientid_subnetid();
     }
 }
@@ -210,7 +211,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease4_clientid_subnetid)(benchm
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getExpiredLeases4)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetExpiredLeases4();
     }
 }
@@ -219,7 +220,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getExpiredLeases4)(benchmark::State
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, insertLeases6)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUp6(state, lease_count);
+        setUp6(state, lease_count);
         benchInsertLeases6();
     }
 }
@@ -228,7 +229,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, insertLeases6)(benchmark::State& st
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, updateLeases6)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchUpdateLeases6();
     }
 }
@@ -237,16 +238,16 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, updateLeases6)(benchmark::State& st
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease6_type_address)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetLease6_type_address();
     }
 }
 
-// Defines a benchmark that measures IPv6 leases retrieval by type,duid and iaid.
+// Defines a benchmark that measures IPv6 leases retrieval by type, duid and iaid.
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetLease6_type_duid_iaid();
     }
 }
@@ -257,7 +258,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
                   (benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetLease6_type_duid_iaid_subnetid();
     }
 }
@@ -266,31 +267,13 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetExpiredLeases6();
     }
 }
 
-/// @defgroup memfile_params Benchmark parameters that define boundary values
-///           for benchmarks.
-///
-/// @{
-
-/// @brief A minimum number of leases used in a benchmark
-constexpr size_t MIN_LEASE_COUNT = 512;
-/// @brief A maximum number of leases used in a benchmark
-constexpr size_t MAX_LEASE_COUNT = 0xfffd;
-/// @brief A time unit used - all results to be expressed in us (microseconds)
-constexpr benchmark::TimeUnit UNIT = benchmark::kMicrosecond;
-
-/// @}
-
-
-/// @defgroup memfile_benchmarks This set of macros define the actual memfile
-///           benchmarks to be used.
-///
-/// The range is defined as 512..65533. Google benchmark will pick a few specifc
-/// values: 512, 4096, 32768, 65533.
+/// The following macros define run parameters for previously defined
+/// memfile benchmarks.
 
 /// A benchmark that measures IPv4 leases insertion.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, insertLeases4)
@@ -346,7 +329,7 @@ BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid)
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
     ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
-/// A benchmark that measures expired IPv4 leases retrieval.
+/// A benchmark that measures expired IPv6 leases retrieval.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getExpiredLeases6)
     ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 

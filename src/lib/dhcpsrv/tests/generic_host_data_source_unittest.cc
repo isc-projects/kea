@@ -20,6 +20,7 @@
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/schema.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <gtest/gtest.h>
 #include <util/buffer.h>
 
@@ -46,240 +47,6 @@ GenericHostDataSourceTest::GenericHostDataSourceTest() : hdsptr_() {
 GenericHostDataSourceTest::~GenericHostDataSourceTest() {
     LibDHCP::clearRuntimeOptionDefs();
     hdsptr_.reset();
-}
-
-std::vector<uint8_t>
-GenericHostDataSourceTest::generateHWAddr(const bool new_identifier) {
-    /// @todo: Consider moving this somewhere to lib/testutils.
-
-    // Let's use something that is easily printable. That's convenient
-    // if you need to enter MySQL queries by hand.
-    static uint8_t hwaddr[] = {65, 66, 67, 68, 69, 70};
-
-    if (new_identifier) {
-        // Increase the address for the next time we use it.
-        // This is primitive, but will work for 65k unique
-        // addresses.
-        hwaddr[sizeof(hwaddr) - 1]++;
-        if (hwaddr[sizeof(hwaddr) - 1] == 0) {
-            hwaddr[sizeof(hwaddr) - 2]++;
-        }
-    }
-    return (std::vector<uint8_t>(hwaddr, hwaddr + sizeof(hwaddr)));
-}
-
-std::vector<uint8_t>
-GenericHostDataSourceTest::generateIdentifier(const bool new_identifier) {
-    /// @todo: Consider moving this somewhere to lib/testutils.
-
-    // Let's use something that is easily printable. That's convenient
-    // if you need to enter MySQL queries by hand.
-    static uint8_t ident[] = {65, 66, 67, 68, 69, 70, 71, 72, 73, 74};
-
-    if (new_identifier) {
-        // Increase the identifier for the next time we use it.
-        // This is primitive, but will work for 65k unique identifiers.
-        ident[sizeof(ident) - 1]++;
-        if (ident[sizeof(ident) - 1] == 0) {
-            ident[sizeof(ident) - 2]++;
-        }
-    }
-    return (std::vector<uint8_t>(ident, ident + sizeof(ident)));
-}
-
-HostPtr
-GenericHostDataSourceTest::initializeHost4(const std::string& address,
-                                           const Host::IdentifierType& id) {
-    std::vector<uint8_t> ident;
-    if (id == Host::IDENT_HWADDR) {
-        ident = generateHWAddr();
-    } else {
-        ident = generateIdentifier();
-    }
-
-    // Let's create ever increasing subnet-ids. Let's keep those different,
-    // so subnet4 != subnet6. Useful for catching cases if the code confuses
-    // subnet4 with subnet6.
-    static SubnetID subnet4 = 0;
-    static SubnetID subnet6 = 100;
-    ++subnet4;
-    ++subnet6;
-
-    IOAddress addr(address);
-    HostPtr host(new Host(&ident[0], ident.size(), id, subnet4, subnet6, addr));
-
-    return (host);
-}
-
-HostPtr
-GenericHostDataSourceTest::initializeHost6(std::string address,
-                                           Host::IdentifierType identifier,
-                                           bool prefix,
-                                           bool new_identifier) {
-    std::vector<uint8_t> ident;
-    switch (identifier) {
-    case Host::IDENT_HWADDR:
-        ident = generateHWAddr(new_identifier);
-        break;
-    case Host::IDENT_DUID:
-        ident = generateIdentifier(new_identifier);
-        break;
-    default:
-        ADD_FAILURE() << "Unknown IdType: " << identifier;
-        return HostPtr();
-    }
-
-    // Let's create ever increasing subnet-ids. Let's keep those different,
-    // so subnet4 != subnet6. Useful for catching cases if the code confuses
-    // subnet4 with subnet6.
-    static SubnetID subnet4 = 0;
-    static SubnetID subnet6 = 100;
-    subnet4++;
-    subnet6++;
-
-    HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
-                          IOAddress("0.0.0.0")));
-
-    if (!prefix) {
-        // Create IPv6 reservation (for an address)
-        IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), 128);
-        host->addReservation(resv);
-    } else {
-        // Create IPv6 reservation for a /64 prefix
-        IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(address), 64);
-        host->addReservation(resv);
-    }
-    return (host);
-}
-
-bool
-GenericHostDataSourceTest::reservationExists(const IPv6Resrv& resrv,
-                                             const IPv6ResrvRange& range) {
-    for (IPv6ResrvIterator it = range.first; it != range.second; ++it) {
-        if (resrv == it->second) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void
-GenericHostDataSourceTest::compareHwaddrs(const ConstHostPtr& host1,
-                                          const ConstHostPtr& host2,
-                                          bool expect_match) {
-    ASSERT_TRUE(host1);
-    ASSERT_TRUE(host2);
-
-    // Compare if both have or have not HWaddress set.
-    if ((host1->getHWAddress() && !host2->getHWAddress()) ||
-        (!host1->getHWAddress() && host2->getHWAddress())) {
-        // One host has hardware address set while the other has not.
-        // Let's see if it's a problem.
-        if (expect_match) {
-            ADD_FAILURE() << "Host comparison failed: host1 hwaddress="
-                          << host1->getHWAddress()
-                          << ", host2 hwaddress=" << host2->getHWAddress();
-        }
-        return;
-    }
-
-    // Now we know that either both or neither have hw address set.
-    // If host1 has it, we can proceed to value comparison.
-    if (host1->getHWAddress()) {
-        if (expect_match) {
-            // Compare the actual address if they match.
-            EXPECT_TRUE(*host1->getHWAddress() == *host2->getHWAddress());
-        } else {
-            EXPECT_FALSE(*host1->getHWAddress() == *host2->getHWAddress());
-        }
-        if (*host1->getHWAddress() != *host2->getHWAddress()) {
-            cout << host1->getHWAddress()->toText(true) << endl;
-            cout << host2->getHWAddress()->toText(true) << endl;
-        }
-    }
-}
-
-void
-GenericHostDataSourceTest::compareDuids(const ConstHostPtr& host1,
-                                        const ConstHostPtr& host2,
-                                        bool expect_match) {
-    ASSERT_TRUE(host1);
-    ASSERT_TRUE(host2);
-
-    // compare if both have or have not DUID set
-    if ((host1->getDuid() && !host2->getDuid()) ||
-        (!host1->getDuid() && host2->getDuid())) {
-        // One host has a DUID and the other doesn't.
-        // Let's see if it's a problem.
-        if (expect_match) {
-            ADD_FAILURE() << "DUID comparison failed: host1 duid="
-                          << host1->getDuid()
-                          << ", host2 duid=" << host2->getDuid();
-        }
-        return;
-    }
-
-    // Now we know that either both or neither have DUID set.
-    // If host1 has it, we can proceed to value comparison.
-    if (host1->getDuid()) {
-        if (expect_match) {
-            EXPECT_TRUE(*host1->getDuid() == *host2->getDuid());
-        } else {
-            EXPECT_FALSE(*host1->getDuid() == *host2->getDuid());
-        }
-        if (*host1->getDuid() != *host2->getDuid()) {
-            cout << host1->getDuid()->toText() << endl;
-            cout << host2->getDuid()->toText() << endl;
-        }
-    }
-}
-
-void
-GenericHostDataSourceTest::compareHosts(const ConstHostPtr& host1,
-                                        const ConstHostPtr& host2) {
-    // Let's compare HW addresses and expect match.
-    compareHwaddrs(host1, host2, true);
-
-    // Now compare DUIDs
-    compareDuids(host1, host2, true);
-
-    // Now check that the identifiers returned as vectors are the same
-    EXPECT_EQ(host1->getIdentifierType(), host2->getIdentifierType());
-    EXPECT_TRUE(host1->getIdentifier() == host2->getIdentifier());
-
-    // Check host parameters
-    EXPECT_EQ(host1->getIPv4SubnetID(), host2->getIPv4SubnetID());
-    EXPECT_EQ(host1->getIPv6SubnetID(), host2->getIPv6SubnetID());
-    EXPECT_EQ(host1->getIPv4Reservation(), host2->getIPv4Reservation());
-    EXPECT_EQ(host1->getHostname(), host2->getHostname());
-    EXPECT_EQ(host1->getNextServer(), host2->getNextServer());
-    EXPECT_EQ(host1->getServerHostname(), host2->getServerHostname());
-    EXPECT_EQ(host1->getBootFileName(), host2->getBootFileName());
-    ConstElementPtr ctx1 = host1->getContext();
-    ConstElementPtr ctx2 = host2->getContext();
-    if (ctx1) {
-        EXPECT_TRUE(ctx2);
-        if (ctx2) {
-            EXPECT_EQ(*ctx1, *ctx2);
-        }
-    } else {
-        EXPECT_FALSE(ctx2);
-    }
-
-    // Compare IPv6 reservations
-    compareReservations6(host1->getIPv6Reservations(),
-                         host2->getIPv6Reservations());
-
-    // Compare client classification details
-    compareClientClasses(host1->getClientClasses4(),
-                         host2->getClientClasses4());
-
-    compareClientClasses(host1->getClientClasses6(),
-                         host2->getClientClasses6());
-
-    // Compare DHCPv4 and DHCPv6 options.
-    compareOptions(host1->getCfgOption4(), host2->getCfgOption4());
-    compareOptions(host1->getCfgOption6(), host2->getCfgOption6());
 }
 
 bool
@@ -318,149 +85,6 @@ GenericHostDataSourceTest::DuidToHWAddr(const DuidPtr& duid) {
     return (HWAddrPtr(new HWAddr(duid->getDuid(), HTYPE_ETHER)));
 }
 
-void
-GenericHostDataSourceTest::compareReservations6(IPv6ResrvRange resrv1,
-                                                IPv6ResrvRange resrv2) {
-    // Compare number of reservations for both hosts
-    if (std::distance(resrv1.first, resrv1.second) !=
-        std::distance(resrv2.first, resrv2.second)) {
-        ADD_FAILURE() << "Reservation comparison failed, "
-                         "hosts got different number of reservations.";
-        return;
-    }
-
-    // Iterate over the range of reservations to find a match in the
-    // reference range.
-    for (IPv6ResrvIterator r1 = resrv1.first; r1 != resrv1.second; ++r1) {
-        IPv6ResrvIterator r2 = resrv2.first;
-        for (; r2 != resrv2.second; ++r2) {
-            // IPv6Resrv object implements equality operator.
-            if (r1->second == r2->second) {
-                break;
-            }
-        }
-        // If r2 iterator reached the end of the range it means that there
-        // is no match.
-        if (r2 == resrv2.second) {
-            ADD_FAILURE() << "No match found for reservation: "
-                          << resrv1.first->second.getPrefix().toText();
-        }
-    }
-
-    if (std::distance(resrv1.first, resrv1.second) > 0) {
-        for (; resrv1.first != resrv1.second; resrv1.first++) {
-            IPv6ResrvIterator iter = resrv2.first;
-            while (iter != resrv2.second) {
-                if ((resrv1.first->second.getType() ==
-                     iter->second.getType()) &&
-                    (resrv1.first->second.getPrefixLen() ==
-                     iter->second.getPrefixLen()) &&
-                    (resrv1.first->second.getPrefix() ==
-                     iter->second.getPrefix())) {
-                    break;
-                }
-                iter++;
-                if (iter == resrv2.second) {
-                    ADD_FAILURE() << "Reservation comparison failed, "
-                                     "no match for reservation: "
-                                  << resrv1.first->second.getPrefix().toText();
-                }
-            }
-        }
-    }
-}
-
-void
-GenericHostDataSourceTest::compareClientClasses(const ClientClasses& classes1,
-                                                const ClientClasses& classes2) {
-    EXPECT_TRUE(std::equal(classes1.begin(), classes1.end(), classes2.begin()));
-}
-
-void
-GenericHostDataSourceTest::compareOptions(const ConstCfgOptionPtr& cfg1,
-                                          const ConstCfgOptionPtr& cfg2) const {
-    ASSERT_TRUE(cfg1);
-    ASSERT_TRUE(cfg2);
-
-    // Combine option space names with vendor space names in a single list.
-    std::list<std::string> option_spaces = cfg2->getOptionSpaceNames();
-    std::list<std::string> vendor_spaces = cfg2->getVendorIdsSpaceNames();
-    option_spaces.insert(option_spaces.end(), vendor_spaces.begin(),
-                         vendor_spaces.end());
-
-    // Make sure that the number of option spaces is equal in both
-    // configurations.
-    EXPECT_EQ(option_spaces.size(), cfg1->getOptionSpaceNames().size());
-    EXPECT_EQ(vendor_spaces.size(), cfg1->getVendorIdsSpaceNames().size());
-
-    // Iterate over all option spaces existing in cfg2.
-    BOOST_FOREACH (std::string space, option_spaces) {
-        // Retrieve options belonging to the current option space.
-        OptionContainerPtr options1 = cfg1->getAll(space);
-        OptionContainerPtr options2 = cfg2->getAll(space);
-        ASSERT_TRUE(options1) << "failed for option space " << space;
-        ASSERT_TRUE(options2) << "failed for option space " << space;
-
-        // If number of options doesn't match, the test fails.
-        ASSERT_EQ(options1->size(), options2->size())
-            << "failed for option space " << space;
-
-        // Iterate over all options within this option space.
-        BOOST_FOREACH (OptionDescriptor desc1, *options1) {
-            OptionDescriptor desc2 = cfg2->get(space, desc1.option_->getType());
-            // Compare persistent flag.
-            EXPECT_EQ(desc1.persistent_, desc2.persistent_)
-                << "failed for option " << space << "."
-                << desc1.option_->getType();
-            // Compare formatted value.
-            EXPECT_EQ(desc1.formatted_value_, desc2.formatted_value_)
-                << "failed for option " << space << "."
-                << desc1.option_->getType();
-
-            // Compare user context.
-            ConstElementPtr ctx1 = desc1.getContext();
-            ConstElementPtr ctx2 = desc2.getContext();
-            if (ctx1) {
-                EXPECT_TRUE(ctx2);
-                if (ctx2) {
-                    EXPECT_EQ(*ctx1, *ctx2)
-                        << "failed for option " << space << "." << desc1.option_->getType();
-                }
-            } else {
-                EXPECT_FALSE(ctx2);
-            }
-
-            // Retrieve options.
-            Option* option1 = desc1.option_.get();
-            Option* option2 = desc2.option_.get();
-
-            // Options must be represented by the same C++ class derived from
-            // the Option class.
-            EXPECT_TRUE(typeid(*option1) == typeid(*option2))
-                << "Compared DHCP options, having option code "
-                << desc1.option_->getType() << " and belonging to the " << space
-                << " option space, are represented "
-                   "by different C++ classes: "
-                << typeid(*option1).name() << " vs " << typeid(*option2).name();
-
-            // Because we use different C++ classes to represent different
-            // options, the simplest way to make sure that the options are
-            // equal is to simply compare them in wire format.
-            OutputBuffer buf1(option1->len());
-            ASSERT_NO_THROW(option1->pack(buf1));
-            OutputBuffer buf2(option2->len());
-            ASSERT_NO_THROW(option2->pack(buf2));
-
-            ASSERT_EQ(buf1.getLength(), buf2.getLength())
-                << "failed for option " << space << "."
-                << desc1.option_->getType();
-            EXPECT_EQ(0,
-                      memcmp(buf1.getData(), buf2.getData(), buf1.getLength()))
-                << "failed for option " << space << "."
-                << desc1.option_->getType();
-        }
-    }
-}
 
 OptionDescriptor
 GenericHostDataSourceTest::createEmptyOption(const Option::Universe& universe,
@@ -569,7 +193,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
 
     // The database is initially opened in "read-write" mode. We can
     // insert some data to the database.
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     ASSERT_TRUE(host);
     ASSERT_NO_THROW(hdsptr_->add(host));
 
@@ -582,7 +206,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
         hdsptr_->get6(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
     ASSERT_TRUE(host_by_id);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
 
     // Close the database connection and reopen in "read-only" mode as
     // specified by the "VALID_READONLY_DB" parameter.
@@ -595,7 +219,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
 
     // Check that an attempt to insert new host would result in
     // exception.
-    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
     ASSERT_TRUE(host2);
     ASSERT_THROW(hdsptr_->add(host2), ReadOnlyDb);
     ASSERT_THROW(hdsptr_->commit(), ReadOnlyDb);
@@ -606,7 +230,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
         hdsptr_->get6(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
     ASSERT_TRUE(host_by_id);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
 }
 
 void
@@ -615,7 +239,7 @@ GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservation.
-    HostPtr host = initializeHost4("192.0.2.1", id);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
     ASSERT_TRUE(host);  // Make sure the host is generate properly.
     SubnetID subnet = host->getIPv4SubnetID();
 
@@ -631,7 +255,7 @@ GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
     ASSERT_TRUE(from_hds);
 
     // Finally, let's check if what we got makes any sense.
-    compareHosts(host, from_hds);
+    HostDataSourceUtils::compareHosts(host, from_hds);
 }
 
 void
@@ -640,10 +264,10 @@ GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = initializeHost4("192.0.2.1", id);
-    HostPtr host2 = initializeHost4("192.0.2.2", id);
-    HostPtr host3 = initializeHost4("192.0.2.3", id);
-    HostPtr host4 = initializeHost4("192.0.2.4", id);
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
+    HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", id);
+    HostPtr host3 = HostDataSourceUtils::initializeHost4("192.0.2.3", id);
+    HostPtr host4 = HostDataSourceUtils::initializeHost4("192.0.2.4", id);
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -669,10 +293,10 @@ GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     ASSERT_TRUE(from_hds4);
 
     // Then let's check that what we got seems correct.
-    compareHosts(host1, from_hds1);
-    compareHosts(host2, from_hds2);
-    compareHosts(host3, from_hds3);
-    compareHosts(host4, from_hds4);
+    HostDataSourceUtils::compareHosts(host1, from_hds1);
+    HostDataSourceUtils::compareHosts(host2, from_hds2);
+    HostDataSourceUtils::compareHosts(host3, from_hds3);
+    HostDataSourceUtils::compareHosts(host4, from_hds4);
 
     // Ok, finally let's check that getting by a different address
     // will not work.
@@ -685,8 +309,8 @@ GenericHostDataSourceTest::testGet4ByIdentifier(
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
-    HostPtr host1 = initializeHost4("192.0.2.1", identifier_type);
-    HostPtr host2 = initializeHost4("192.0.2.2", identifier_type);
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", identifier_type);
+    HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", identifier_type);
 
     // Sanity check: make sure the hosts have different identifiers..
     ASSERT_FALSE(host1->getIdentifier() == host2->getIdentifier());
@@ -709,8 +333,8 @@ GenericHostDataSourceTest::testGet4ByIdentifier(
     // Now let's check if we got what we expected.
     ASSERT_TRUE(from_hds1);
     ASSERT_TRUE(from_hds2);
-    compareHosts(host1, from_hds1);
-    compareHosts(host2, from_hds2);
+    HostDataSourceUtils::compareHosts(host1, from_hds1);
+    HostDataSourceUtils::compareHosts(host2, from_hds2);
 }
 
 void
@@ -719,7 +343,7 @@ GenericHostDataSourceTest::testHWAddrNotClientId() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host with HW address
-    HostPtr host = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
     ASSERT_TRUE(host->getHWAddress());
     ASSERT_FALSE(host->getDuid());
 
@@ -751,7 +375,7 @@ GenericHostDataSourceTest::testClientIdNotHWAddr() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host with client-id
-    HostPtr host = initializeHost4("192.0.2.1", Host::IDENT_DUID);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID);
     ASSERT_FALSE(host->getHWAddress());
     ASSERT_TRUE(host->getDuid());
 
@@ -792,7 +416,7 @@ GenericHostDataSourceTest::testHostname(std::string name, int num) {
     for (int i = 0; i < num; ++i) {
         addr = IOAddress::increase(addr);
 
-        HostPtr host = initializeHost4(addr.toText(), Host::IDENT_DUID);
+        HostPtr host = HostDataSourceUtils::initializeHost4(addr.toText(), Host::IDENT_DUID);
 
         stringstream hostname;
         hostname.str("");
@@ -832,7 +456,7 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservation.
-    HostPtr host = initializeHost4("192.0.2.1", Host::IDENT_DUID);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID);
     ASSERT_TRUE(host); // Make sure the host is generated properly.
     host->setContext(user_context);
     SubnetID subnet = host->getIPv4SubnetID();
@@ -845,10 +469,10 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
     ASSERT_TRUE(from_hds);
 
     // Finally, let's check if what we got makes any sense.
-    compareHosts(host, from_hds);
+    HostDataSourceUtils::compareHosts(host, from_hds);
 
     // Retry with IPv6
-    host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
     ASSERT_TRUE(host);
     ASSERT_TRUE(host->getHWAddress());
     host->setContext(user_context);
@@ -862,7 +486,7 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
                              host->getIdentifier().size());
     ASSERT_TRUE(from_hds);
 
-    compareHosts(host, from_hds);
+    HostDataSourceUtils::compareHosts(host, from_hds);
 }
 
 void
@@ -871,7 +495,7 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
-    HostPtr host = initializeHost4("192.0.2.1", id);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
     host->setIPv6SubnetID(0);
 
     for (int i = 0; i < subnets; ++i) {
@@ -942,14 +566,14 @@ GenericHostDataSourceTest::testGet6ByHWAddr() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
-    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_HWADDR, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", Host::IDENT_HWADDR, false);
 
     // Sanity check: make sure the hosts have different HW addresses.
     ASSERT_TRUE(host1->getHWAddress());
     ASSERT_TRUE(host2->getHWAddress());
 
-    compareHwaddrs(host1, host2, false);
+    HostDataSourceUtils::compareHwaddrs(host1, host2, false);
 
     // Try to add both of them to the host data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -969,8 +593,8 @@ GenericHostDataSourceTest::testGet6ByHWAddr() {
     // Now let's check if we got what we expected.
     ASSERT_TRUE(from_hds1);
     ASSERT_TRUE(from_hds2);
-    compareHosts(host1, from_hds1);
-    compareHosts(host2, from_hds2);
+    HostDataSourceUtils::compareHosts(host1, from_hds1);
+    HostDataSourceUtils::compareHosts(host2, from_hds2);
 }
 
 void
@@ -979,14 +603,14 @@ GenericHostDataSourceTest::testGet6ByClientId() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
-    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
 
     // Sanity check: make sure the hosts have different HW addresses.
     ASSERT_TRUE(host1->getDuid());
     ASSERT_TRUE(host2->getDuid());
 
-    compareDuids(host1, host2, false);
+    HostDataSourceUtils::compareDuids(host1, host2, false);
 
     // Try to add both of them to the host data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -1006,8 +630,8 @@ GenericHostDataSourceTest::testGet6ByClientId() {
     // Now let's check if we got what we expected.
     ASSERT_TRUE(from_hds1);
     ASSERT_TRUE(from_hds2);
-    compareHosts(host1, from_hds1);
-    compareHosts(host2, from_hds2);
+    HostDataSourceUtils::compareHosts(host1, from_hds1);
+    HostDataSourceUtils::compareHosts(host2, from_hds2);
 }
 
 void
@@ -1020,7 +644,7 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     for (int i = 0; i < subnets; ++i) {
         // Last boolean value set to false indicates that the same identifier
         // must be used for each generated host.
-        host = initializeHost6(current_address.toText(), id, true, false);
+        host = HostDataSourceUtils::initializeHost6(current_address.toText(), id, true, false);
 
         host->setIPv4SubnetID(i + 1000);
         host->setIPv6SubnetID(i + 1000);
@@ -1068,10 +692,10 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = initializeHost6("2001:db8::1", id, prefix);
-    HostPtr host2 = initializeHost6("2001:db8::2", id, prefix);
-    HostPtr host3 = initializeHost6("2001:db8::3", id, prefix);
-    HostPtr host4 = initializeHost6("2001:db8::4", id, prefix);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, prefix);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, prefix);
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, prefix);
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, prefix);
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -1095,10 +719,10 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     ASSERT_TRUE(from_hds4);
 
     // Then let's check that what we got seems correct.
-    compareHosts(host1, from_hds1);
-    compareHosts(host2, from_hds2);
-    compareHosts(host3, from_hds3);
-    compareHosts(host4, from_hds4);
+    HostDataSourceUtils::compareHosts(host1, from_hds1);
+    HostDataSourceUtils::compareHosts(host2, from_hds2);
+    HostDataSourceUtils::compareHosts(host3, from_hds3);
+    HostDataSourceUtils::compareHosts(host4, from_hds4);
 
     // Ok, finally let's check that getting by a different address
     // will not work.
@@ -1111,10 +735,10 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
-    HostPtr host2 = initializeHost6("2001:db8:2::", Host::IDENT_DUID, true);
-    HostPtr host3 = initializeHost6("2001:db8:3::", Host::IDENT_DUID, true);
-    HostPtr host4 = initializeHost6("2001:db8:4::", Host::IDENT_DUID, true);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8:2::", Host::IDENT_DUID, true);
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8:3::", Host::IDENT_DUID, true);
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8:4::", Host::IDENT_DUID, true);
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -1135,10 +759,10 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     ASSERT_TRUE(from_hds4);
 
     // Then let's check that what we got seems correct.
-    compareHosts(host1, from_hds1);
-    compareHosts(host2, from_hds2);
-    compareHosts(host3, from_hds3);
-    compareHosts(host4, from_hds4);
+    HostDataSourceUtils::compareHosts(host1, from_hds1);
+    HostDataSourceUtils::compareHosts(host2, from_hds2);
+    HostDataSourceUtils::compareHosts(host3, from_hds3);
+    HostDataSourceUtils::compareHosts(host4, from_hds4);
 }
 
 void
@@ -1147,7 +771,7 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameDUID() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -1162,7 +786,7 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameHWAddr() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -1177,7 +801,7 @@ GenericHostDataSourceTest::testAddDuplicate4() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations.
-    HostPtr host = initializeHost4("192.0.2.1", Host::IDENT_DUID);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID);
 
     // Add this reservation once.
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -1203,7 +827,7 @@ GenericHostDataSourceTest::testAddr6AndPrefix() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations with prefix reservation (prefix = true)
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
 
     // Create IPv6 reservation (for an address) and add it to the host
     IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), 128);
@@ -1221,7 +845,7 @@ GenericHostDataSourceTest::testAddr6AndPrefix() {
     ASSERT_TRUE(from_hds);
 
     // Check if reservations are the same
-    compareReservations6(host->getIPv6Reservations(),
+    HostDataSourceUtils::compareReservations6(host->getIPv6Reservations(),
                          from_hds->getIPv6Reservations());
 }
 
@@ -1231,7 +855,7 @@ GenericHostDataSourceTest::testMultipleReservations() {
     ASSERT_TRUE(hdsptr_);
     uint8_t len = 128;
 
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
 
     // Add some reservations
     IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
@@ -1252,7 +876,7 @@ GenericHostDataSourceTest::testMultipleReservations() {
     ASSERT_TRUE(from_hds);
 
     // Check if hosts are the same
-    compareHosts(host, from_hds);
+    HostDataSourceUtils::compareHosts(host, from_hds);
 }
 
 void
@@ -1261,8 +885,8 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
     ASSERT_TRUE(hdsptr_);
     uint8_t len = 128;
 
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
-    HostPtr host2 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
 
     // Add some reservations
     IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
@@ -1281,13 +905,13 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
     host2->addReservation(resv1);
 
     // Check if reservations are the same
-    compareReservations6(host1->getIPv6Reservations(),
-                         host2->getIPv6Reservations());
+    HostDataSourceUtils::compareReservations6(host1->getIPv6Reservations(),
+                                              host2->getIPv6Reservations());
 }
 
 void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
                                                          ConstElementPtr user_context) {
-    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY, user_context));
     // Insert host and the options into respective tables.
@@ -1299,23 +923,23 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     ConstHostCollection hosts_by_addr =
         hdsptr_->getAll4(host->getIPv4Reservation());
     ASSERT_EQ(1, hosts_by_addr.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_addr.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_addr.begin()));
 
     // get4(subnet_id, identifier_type, identifier, identifier_size)
     ConstHostPtr host_by_id =
         hdsptr_->get4(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
 
     // get4(subnet_id, address)
     ConstHostPtr host_by_addr =
         hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_addr));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_addr));
 }
 
 void GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
                                                          ConstElementPtr user_context) {
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP6_ONLY, user_context));
     // Insert host, options and IPv6 reservations into respective tables.
@@ -1327,16 +951,16 @@ void GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
     ConstHostPtr host_by_id =
         hdsptr_->get6(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_id));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
 
     // get6(address, prefix_len)
     ConstHostPtr host_by_addr = hdsptr_->get6(IOAddress("2001:db8::1"), 128);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, host_by_addr));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_addr));
 }
 
 void
 GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) {
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
 
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_AND_DHCP6));
@@ -1348,7 +972,7 @@ GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) {
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 }
 
 void
@@ -1356,7 +980,7 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     ASSERT_TRUE(hdsptr_);
 
     // Create the Host object.
-    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
 
     // Add v4 classes to the host.
     for (int i = 0; i < 4; ++i) {
@@ -1375,7 +999,7 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
     ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via:
     // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
@@ -1384,20 +1008,20 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
     // getAll4(const asiolink::IOAddress& address) const;
     hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
     // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
     //     const DuidPtr& duid = DuidPtr()) const;
     ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 
     // Fetch the host via
     // get4(const SubnetID& subnet_id, const Host::IdentifierType&
@@ -1407,13 +1031,13 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
         hdsptr_->get4(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 
     // Fetch the host via:
     // get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
     from_hds = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 }
 
 void
@@ -1421,7 +1045,7 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     ASSERT_TRUE(hdsptr_);
 
     // Create the Host object.
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
 
     // Add v6 classes to the host.
     for (int i = 0; i < 4; ++i) {
@@ -1440,7 +1064,7 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
     ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // getAll(const Host::IdentifierType& identifier_type,
     //        const uint8_t* identifier_begin,
@@ -1449,14 +1073,14 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // get6(const SubnetID& subnet_id, const DuidPtr& duid,
     //      const HWAddrPtr& hwaddr = HWAddrPtr()) const;
     ConstHostPtr from_hds =
         hdsptr_->get6(subnet_id, DuidPtr(), host->getHWAddress());
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 
     // Fetch the host via:
     // get6(const SubnetID& subnet_id, const Host::IdentifierType&
@@ -1466,13 +1090,13 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
         hdsptr_->get6(subnet_id, Host::IDENT_HWADDR, &host->getIdentifier()[0],
                       host->getIdentifier().size());
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 
     // Fetch the host via:
     // get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
     from_hds = hdsptr_->get6(IOAddress("2001:db8::1"), 128);
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 }
 
 void
@@ -1483,7 +1107,7 @@ GenericHostDataSourceTest::testMultipleClientClassesBoth() {
     ASSERT_TRUE(hdsptr_);
 
     // Create the Host object.
-    HostPtr host = initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, false);
 
     // Add v4 classes to the host.
     for (int i = 0; i < 4; ++i) {
@@ -1512,7 +1136,7 @@ GenericHostDataSourceTest::testMultipleClientClassesBoth() {
     ASSERT_TRUE(from_hds);
 
     // Verify they match.
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 }
 
 void
@@ -1520,7 +1144,7 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_TRUE(hdsptr_);
 
     // Create the Host object.
-    HostPtr host = initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
     // And assign values for DHCPv4 message fields.
     ASSERT_NO_THROW({
         host->setNextServer(IOAddress("10.1.1.1"));
@@ -1538,7 +1162,7 @@ GenericHostDataSourceTest::testMessageFields4() {
     // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
     ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via:
     // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
@@ -1547,20 +1171,20 @@ GenericHostDataSourceTest::testMessageFields4() {
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
     // getAll4(const asiolink::IOAddress& address) const;
     hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
     ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, *hosts_by_id.begin()));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
     // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
     //     const DuidPtr& duid = DuidPtr()) const;
     ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 
     // Fetch the host via
     // get4(const SubnetID& subnet_id, const Host::IdentifierType&
@@ -1570,13 +1194,13 @@ GenericHostDataSourceTest::testMessageFields4() {
         hdsptr_->get4(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 
     // Fetch the host via:
     // get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
     from_hds = hdsptr_->get4(subnet_id, IOAddress("192.0.2.5"));
     ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(compareHosts(host, from_hds));
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
 }
 
 void
@@ -1599,11 +1223,11 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
         ss >> n_host;
 
         const std::string prefix = std::string("2001:db8::") + n_host;
-        hosts.push_back(initializeHost6(prefix, Host::IDENT_HWADDR, false));
+        hosts.push_back(HostDataSourceUtils::initializeHost6(prefix, Host::IDENT_HWADDR, false));
         IPv6ResrvRange range = hosts.back()->getIPv6Reservations();
         ASSERT_EQ(1, std::distance(range.first, range.second));
-        EXPECT_TRUE(reservationExists(
-            IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress(prefix)), range));
+        EXPECT_TRUE(HostDataSourceUtils::reservationExists
+                    (IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress(prefix)), range));
     }
     const size_t hosts_size = hosts.size();
 
@@ -1638,7 +1262,7 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
         ConstHostPtr from_hds =
             hdsptr_->get6(range.first->second.getPrefix(), 128);
         ASSERT_TRUE(from_hds);
-        compareHosts(*it, from_hds);
+        HostDataSourceUtils::compareHosts(*it, from_hds);
     }
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
     s = static_cast<double>(end.tv_sec - start.tv_sec) +
@@ -1654,7 +1278,7 @@ void GenericHostDataSourceTest::testDeleteByAddr4() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v4 host...
-    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
     SubnetID subnet1 = host1->getIPv4SubnetID();
 
     // ... and add it to the data source.
@@ -1681,7 +1305,7 @@ void GenericHostDataSourceTest::testDeleteById4() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v4 host...
-    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
     SubnetID subnet1 = host1->getIPv4SubnetID();
 
     // ... and add it to the data source.
@@ -1718,7 +1342,7 @@ void GenericHostDataSourceTest::testDeleteById4Options() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v4 host...
-    HostPtr host1 = initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host1, true, DHCP4_ONLY));
     // Insert host and the options into respective tables.
@@ -1763,7 +1387,7 @@ void GenericHostDataSourceTest::testDeleteById6() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v6 host...
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     SubnetID subnet1 = host1->getIPv6SubnetID();
 
     // ... and add it to the data source.
@@ -1798,7 +1422,7 @@ void GenericHostDataSourceTest::testDeleteById6Options() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v6 host...
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     SubnetID subnet1 = host1->getIPv6SubnetID();
     ASSERT_NO_THROW(addTestOptions(host1, true, DHCP6_ONLY));
 
@@ -1847,7 +1471,7 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host with zero IPv4 address.
-    HostPtr host1 = initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host1->setIPv4SubnetID(1);
     host1->setIPv6SubnetID(0);
     // Add the host to the database.
@@ -1860,7 +1484,7 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     // Create another host with zero IPv4 address. Adding this host to the
     // database should be successful because zero addresses are not counted
     // in the unique index.
-    HostPtr host2 = initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
+    HostPtr host2 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host2->setIPv4SubnetID(1);
     host2->setIPv6SubnetID(0);
     ASSERT_NO_THROW(hdsptr_->add(host2));
@@ -1872,7 +1496,7 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     ASSERT_TRUE(hdsptr_);
 
     // Create first host.
-    HostPtr host1 = initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     host1->setIPv4SubnetID(0);
     host1->setIPv6SubnetID(1);
     // Add the host to the database.
@@ -1882,7 +1506,7 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     // duplication.
     ASSERT_THROW(hdsptr_->add(host1), DuplicateEntry);
 
-    HostPtr host2 = initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
     host2->setIPv4SubnetID(0);
     host2->setIPv6SubnetID(1);
     // Add the host to the database.

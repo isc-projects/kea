@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -28,8 +29,10 @@
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/testutils/schema.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
 
 using isc::asiolink::IOAddress;
+using isc::dhcp::test::HostDataSourceUtils;
 using std::cerr;
 using std::endl;
 
@@ -48,8 +51,8 @@ GenericHostDataSourceBenchmark::~GenericHostDataSourceBenchmark() {
 }
 
 void
-GenericHostDataSourceBenchmark::ReentrantSetUp(::benchmark::State& state,
-                                               size_t const& host_count) {
+GenericHostDataSourceBenchmark::setUp(::benchmark::State& state,
+                                      size_t const& host_count) {
     state.PauseTiming();
     SetUp(state);
     prepareHosts(host_count);
@@ -57,114 +60,13 @@ GenericHostDataSourceBenchmark::ReentrantSetUp(::benchmark::State& state,
 }
 
 void
-GenericHostDataSourceBenchmark::ReentrantSetUpWithInserts(::benchmark::State& state,
-                                                          size_t const& host_count) {
+GenericHostDataSourceBenchmark::setUpWithInserts(::benchmark::State& state,
+                                                 size_t const& host_count) {
     state.PauseTiming();
     SetUp(state);
     prepareHosts(host_count);
     insertHosts();
     state.ResumeTiming();
-}
-
-std::vector<uint8_t>
-GenericHostDataSourceBenchmark::generateHWAddr(const bool new_identifier) {
-    /// @todo: Consider moving this somewhere to lib/testutils.
-
-    // Let's use something that is easily printable. That's convenient
-    // if you need to enter MySQL queries by hand.
-    static uint8_t hwaddr[] = {65, 66, 67, 68, 69, 70};
-
-    if (new_identifier) {
-        // Increase the address for the next time we use it.
-        // This is primitive, but will work for 65k unique addresses.
-        hwaddr[sizeof(hwaddr) - 1]++;
-        if (hwaddr[sizeof(hwaddr) - 1] == 0) {
-            hwaddr[sizeof(hwaddr) - 2]++;
-        }
-    }
-    return std::vector<uint8_t>(hwaddr, hwaddr + sizeof(hwaddr));
-}
-
-std::vector<uint8_t>
-GenericHostDataSourceBenchmark::generateIdentifier(const bool new_identifier) {
-    /// @todo: Consider moving this somewhere to lib/testutils.
-
-    // Let's use something that is easily printable. That's convenient
-    // if you need to enter MySQL queries by hand.
-    static uint8_t ident[] = {65, 66, 67, 68, 69, 70, 71, 72, 73, 74};
-
-    if (new_identifier) {
-        // Increase the identifier for the next time we use it.
-        // This is primitive, but will work for 65k unique identifiers.
-        ident[sizeof(ident) - 1]++;
-        if (ident[sizeof(ident) - 1] == 0) {
-            ident[sizeof(ident) - 2]++;
-        }
-    }
-    return std::vector<uint8_t>(ident, ident + sizeof(ident));
-}
-
-HostPtr
-GenericHostDataSourceBenchmark::initializeHost4(const std::string& address,
-                                                const Host::IdentifierType& id) {
-    std::vector<uint8_t> ident;
-    if (id == Host::IDENT_HWADDR) {
-        ident = generateHWAddr();
-    } else {
-        ident = generateIdentifier();
-    }
-
-    // Let's create ever increasing subnet-ids. Let's keep those different,
-    // so subnet4 != subnet6. Useful for catching cases if the code confuses
-    // subnet4 with subnet6.
-    static SubnetID subnet4 = 0;
-    static SubnetID subnet6 = 100;
-    ++subnet4;
-    ++subnet6;
-
-    IOAddress addr(address);
-    HostPtr host(new Host(&ident[0], ident.size(), id, subnet4, subnet6, addr));
-
-    return host;
-}
-
-HostPtr
-GenericHostDataSourceBenchmark::initializeHost6(std::string address,
-                                                Host::IdentifierType identifier,
-                                                bool prefix, bool new_identifier) {
-    std::vector<uint8_t> ident;
-    switch (identifier) {
-    case Host::IDENT_HWADDR:
-        ident = generateHWAddr(new_identifier);
-        break;
-    case Host::IDENT_DUID:
-        ident = generateIdentifier(new_identifier);
-        break;
-    default:
-        return HostPtr();
-    }
-
-    // Let's create ever increasing subnet-ids. Let's keep those different,
-    // so subnet4 != subnet6. Useful for catching cases if the code confuses
-    // subnet4 with subnet6.
-    static SubnetID subnet4 = 0;
-    static SubnetID subnet6 = 100;
-    subnet4++;
-    subnet6++;
-
-    HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
-                          IOAddress("0.0.0.0")));
-
-    if (!prefix) {
-        // Create IPv6 reservation (for an address)
-        IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), 128);
-        host->addReservation(resv);
-    } else {
-        // Create IPv6 reservation for a /64 prefix
-        IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(address), 64);
-        host->addReservation(resv);
-    }
-    return host;
 }
 
 OptionDescriptor
@@ -202,35 +104,25 @@ GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host, const bool f
     if ((added_options == DHCP4_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
         // Add DHCPv4 options.
         CfgOptionPtr opts = host->getCfgOption4();
-        opts->add(createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                             true, formatted, "my-boot-file"),
-                  DHCP4_OPTION_SPACE);
+        opts->add(createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME, true, formatted,
+                                             "my-boot-file"), DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
-                                            false, formatted, 64),
-                  DHCP4_OPTION_SPACE);
-        opts->add(
-            createOption<OptionUint32>(Option::V4, 1, false, formatted, 312131),
-            "vendor-encapsulated-options");
-        opts->add(createAddressOption<Option4AddrLst>(254, false, formatted,
-                                                      "192.0.2.3"),
+                                            false, formatted, 64), DHCP4_OPTION_SPACE);
+        opts->add(createOption<OptionUint32>(Option::V4, 1, false, formatted, 312131),
+                  "vendor-encapsulated-options");
+        opts->add(createAddressOption<Option4AddrLst>(254, false, formatted, "192.0.2.3"),
                   DHCP4_OPTION_SPACE);
         opts->add(createEmptyOption(Option::V4, 1, true), "isc");
-        opts->add(createAddressOption<Option4AddrLst>(
-                      2, false, formatted, "10.0.0.5", "10.0.0.3", "10.0.3.4"),
-                  "isc");
+        opts->add(createAddressOption<Option4AddrLst>(2, false, formatted, "10.0.0.5",
+                                                      "10.0.0.3", "10.0.3.4"), "isc");
 
         // Add definitions for DHCPv4 non-standard options.
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "vendor-encapsulated-1", 1, "uint32")),
-                     "vendor-encapsulated-options");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-254", 254, "ipv4-address", true)),
-                     DHCP4_OPTION_SPACE);
-        defs.addItem(
-            OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")),
-            "isc");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "isc-2", 2, "ipv4-address", true)),
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("vendor-encapsulated-1", 1,
+                                         "uint32")), "vendor-encapsulated-options");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-254", 254, "ipv4-address",
+                                         true)), DHCP4_OPTION_SPACE);
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "ipv4-address", true)),
                      "isc");
     }
 
@@ -287,7 +179,7 @@ GenericHostDataSourceBenchmark::prepareHosts(size_t const& host_count) {
         ss >> n_host;
 
         const std::string prefix = std::string("2001:db8::") + n_host;
-        HostPtr host = initializeHost6(prefix, Host::IDENT_HWADDR, false);
+        HostPtr host = HostDataSourceUtils::initializeHost6(prefix, Host::IDENT_HWADDR, false);
         addTestOptions(host, false, DHCP4_AND_DHCP6);
         hosts_.push_back(host);
     }

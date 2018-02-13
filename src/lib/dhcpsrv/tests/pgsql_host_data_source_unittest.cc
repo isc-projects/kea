@@ -14,6 +14,7 @@
 #include <dhcpsrv/pgsql_host_data_source.h>
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/pgsql_schema.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_data_source_factory.h>
 
 #include <gtest/gtest.h>
@@ -517,7 +518,7 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
                  << " drop command failed :" << PQerrorMessage(conn);
 
     // Create a host with a reservation.
-    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
