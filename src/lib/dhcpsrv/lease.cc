@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,10 @@
 
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <boost/scoped_ptr.hpp>
 #include <sstream>
 #include <iostream>
+
 
 using namespace isc::util;
 using namespace isc::data;
@@ -48,6 +50,24 @@ Lease::typeToText(Lease::Type type) {
        return (tmp.str());
    }
    }
+}
+
+Lease::Type
+Lease::textToType(const std::string& text) {
+    if (text == "V4") {
+        return (TYPE_V4);
+
+    } else  if (text == "IA_NA") {
+        return (TYPE_NA);
+
+    } else if (text == "IA_TA") {
+        return (TYPE_TA);
+
+    } else if (text == "IA_PD") {
+        return (TYPE_PD);
+    }
+
+    isc_throw(BadValue, "unsupported lease type " << text);
 }
 
 std::string
@@ -93,6 +113,154 @@ Lease::hasIdenticalFqdn(const Lease& other) const {
     return (hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_);
+}
+
+void
+Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& element) {
+    if (!element) {
+        isc_throw(BadValue, "parsed lease data is null");
+    }
+
+    if (element->getType() != Element::map) {
+        isc_throw(BadValue, "parsed lease data is not a JSON map");
+    }
+
+
+    if (!lease) {
+        isc_throw(Unexpected, "pointer to parsed lease is null");
+    }
+
+    bool is_v6 = static_cast<bool>(boost::dynamic_pointer_cast<Lease6>(lease));
+
+    // IP address.
+    ConstElementPtr ip_address = element->get("ip-address");
+    if (!ip_address || (ip_address->getType() != Element::string)) {
+        isc_throw(BadValue, "ip-address not present in the parsed lease"
+                  " or it is not a string");
+    }
+
+    boost::scoped_ptr<asiolink::IOAddress> io_address;
+    try {
+        io_address.reset(new asiolink::IOAddress(ip_address->stringValue()));
+
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "invalid IP address " << ip_address->stringValue()
+                  << " in the parsed lease");
+    }
+
+    if (!is_v6 && !io_address->isV4()) {
+        isc_throw(BadValue, "address " << *io_address << " it not an IPv4 address");
+
+    } else if (is_v6 && !io_address->isV6()) {
+        isc_throw(BadValue, "address " << *io_address << " it not an IPv6 address");
+    }
+
+    lease->addr_ = *io_address;
+
+    // Subnet identifier.
+    ConstElementPtr subnet_id = element->get("subnet-id");
+    if (!subnet_id || (subnet_id->getType() != Element::integer)) {
+        isc_throw(BadValue, "subnet-id not present in the parsed lease"
+                  " or it is not a number");
+    }
+
+    if (subnet_id->intValue() <= 0) {
+        isc_throw(BadValue, "subnet-id " << subnet_id->intValue() << " is not"
+                            << " a positive integer");
+    }
+
+    lease->subnet_id_ = SubnetID(subnet_id->intValue());
+
+    // Hardware address.
+    ConstElementPtr hw_address = element->get("hw-address");
+    if (hw_address) {
+        if (hw_address->getType() != Element::string) {
+            isc_throw(BadValue, "hw-address is not a string in the parsed lease");
+
+        }
+
+        try {
+            HWAddr parsed_hw_address = HWAddr::fromText(hw_address->stringValue());
+            lease->hwaddr_.reset(new HWAddr(parsed_hw_address.hwaddr_, HTYPE_ETHER));
+
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "invalid hardware address "
+                      << hw_address->stringValue() << " in the parsed lease");
+        }
+
+    } else if (!is_v6) {
+        isc_throw(BadValue, "hw-address not present in the parsed lease");
+    }
+
+    // cltt
+    ConstElementPtr cltt = element->get("cltt");
+    if (!cltt || (cltt->getType() != Element::integer)) {
+        isc_throw(BadValue, "cltt is not present in the parsed lease"
+                  " or it is not a number");
+    }
+
+    if (cltt->intValue() <= 0) {
+        isc_throw(BadValue, "cltt " << cltt->intValue() << " is not a"
+                  " positive integer in the parsed lease");
+    }
+
+    lease->cltt_ = static_cast<time_t>(cltt->intValue());
+
+    // valid lifetime
+    ConstElementPtr valid_lifetime = element->get("valid-lft");
+    if (!valid_lifetime || (valid_lifetime->getType() != Element::integer)) {
+        isc_throw(BadValue, "valid-lft is not present in the parsed lease"
+                  " or it is not a number");
+    }
+
+    if (valid_lifetime->intValue() < 0) {
+        isc_throw(BadValue, "valid-lft " << valid_lifetime->intValue()
+                  << " is negative in the parsed lease");
+    }
+
+    lease->valid_lft_ = valid_lifetime->intValue();
+
+    // fqdn-fwd
+    ConstElementPtr fqdn_fwd = element->get("fqdn-fwd");
+    if (!fqdn_fwd || fqdn_fwd->getType() != Element::boolean) {
+        isc_throw(BadValue, "fqdn-fwd is not present in the parsed lease"
+                  " or it is not a boolean value");
+    }
+
+    lease->fqdn_fwd_ = fqdn_fwd->boolValue();
+
+    // fqdn-fwd
+    ConstElementPtr fqdn_rev = element->get("fqdn-rev");
+    if (!fqdn_rev || (fqdn_rev->getType() != Element::boolean)) {
+        isc_throw(BadValue, "fqdn-rev is not present in the parsed lease"
+                  " or it is not a boolean value");
+    }
+
+    lease->fqdn_rev_ = fqdn_rev->boolValue();
+
+    // hostname
+    ConstElementPtr hostname = element->get("hostname");
+    if (!hostname || (hostname->getType() != Element::string)) {
+        isc_throw(BadValue, "hostname is not present in the parsed lease"
+                  " or it is not a string value");
+    }
+
+    lease->hostname_ = hostname->stringValue();
+
+    // state
+    ConstElementPtr state = element->get("state");
+    if (!state || (state->getType() != Element::integer)) {
+        isc_throw(BadValue, "state is not present in the parsed lease"
+                  " or it is not a number");
+    }
+
+    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_EXPIRED_RECLAIMED)) {
+        isc_throw(BadValue, "state " << state->intValue()
+                  << " must be in range [0.."
+                  << Lease::STATE_EXPIRED_RECLAIMED << "]");
+    }
+
+    lease->state_ = state->intValue();
 }
 
 Lease4::Lease4(const Lease4& other)
@@ -243,6 +411,33 @@ Lease4::toElement() const {
     map->set("state", Element::create(static_cast<int>(state_)));
 
     return (map);
+}
+
+Lease4Ptr
+Lease4::fromElement(const ConstElementPtr& element) {
+    Lease4Ptr lease(new Lease4());
+
+    // Extract common lease properties into the lease.
+    fromElementCommon(boost::dynamic_pointer_cast<Lease>(lease), element);
+
+    // Client identifier is IPv4 specific.
+    ConstElementPtr client_id = element->get("client-id");
+    if (client_id) {
+        if (client_id->getType() != Element::string) {
+            isc_throw(BadValue, "client identifier is not a string in the"
+                      " parsed lease");
+        }
+
+        try {
+            lease->client_id_ = ClientId::fromText(client_id->stringValue());
+
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "invalid client identifier "
+                      << client_id->stringValue() << " in the parsed lease");
+        }
+    }
+
+    return (lease);
 }
 
 Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
@@ -417,6 +612,83 @@ Lease6::toElement() const {
     return (map);
 }
 
+Lease6Ptr
+Lease6::fromElement(const data::ConstElementPtr& element) {
+    Lease6Ptr lease(new Lease6());
+
+    // Extract common lease properties into the lease.
+    fromElementCommon(boost::dynamic_pointer_cast<Lease>(lease), element);
+
+    // lease type
+    ConstElementPtr lease_type = element->get("type");
+    if (!lease_type || (lease_type->getType() != Element::string)) {
+        isc_throw(BadValue, "type is not present in the parsed lease"
+                  " or it is not a string value");
+    }
+
+    lease->type_ = textToType(lease_type->stringValue());
+
+    // prefix length
+    ConstElementPtr prefix_len = element->get("prefix-len");
+    if (lease->type_ == Lease::TYPE_PD) {
+        if (!prefix_len || (prefix_len->getType() != Element::integer)) {
+            isc_throw(BadValue, "prefix-len is not present in the parsed lease"
+                      " or it is not a number");
+        }
+
+        if ((prefix_len->intValue() < 1) || (prefix_len->intValue() > 128)) {
+            isc_throw(BadValue, "prefix-len " << prefix_len->intValue()
+                      << " must be in range of [1..128]");
+        }
+
+        lease->prefixlen_ = static_cast<uint8_t>(prefix_len->intValue());
+    }
+
+    // IAID
+    ConstElementPtr iaid = element->get("iaid");
+    if (!iaid || (iaid->getType() != Element::integer)) {
+        isc_throw(BadValue, "iaid is not present in the parsed lease"
+                  " or it is not a number");
+    }
+
+    if (iaid->intValue() < 0) {
+        isc_throw(BadValue, "iaid " << iaid->intValue() << " must not be negative");
+    }
+
+    lease->iaid_ = static_cast<uint32_t>(iaid->intValue());
+
+    // DUID
+    ConstElementPtr duid = element->get("duid");
+    if (!duid || (duid->getType() != Element::string)) {
+        isc_throw(BadValue, "duid not present in the parsed lease"
+                  " or it is not a string");
+    }
+
+    try {
+        DUID parsed_duid = DUID::fromText(duid->stringValue());
+        lease->duid_.reset(new DUID(parsed_duid.getDuid()));
+
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "invalid DUID "
+                  << duid->stringValue() << " in the parsed lease");
+    }
+
+    // preferred lifetime
+    ConstElementPtr preferred_lft = element->get("preferred-lft");
+    if (!preferred_lft || (preferred_lft->getType() != Element::integer)) {
+        isc_throw(BadValue, "preferred-lft is not present in the parsed lease"
+                  " or is not a number");
+    }
+
+    if (preferred_lft->intValue() < 0) {
+        isc_throw(BadValue, "preferred-lft " << preferred_lft->intValue()
+                  << " must not be negative");
+    }
+
+    lease->preferred_lft_ = static_cast<uint32_t>(preferred_lft->intValue());
+
+    return (lease);
+}
 
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease) {
