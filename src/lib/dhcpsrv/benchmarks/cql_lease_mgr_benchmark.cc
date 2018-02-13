@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -20,18 +21,20 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/cql_schema.h>
 
-using isc::dhcp::LeaseMgrFactory;
-using isc::dhcp::bench::GenericLeaseMgrBenchmark;
-using isc::dhcp::test::createCqlSchema;
-using isc::dhcp::test::destroyCqlSchema;
-using isc::dhcp::test::validCqlConnectionString;
-using std::cerr;
-using std::endl;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace std;
+using namespace isc::dhcp::bench;
 
 namespace {
 
+/// @brief This is a fixture class used for benchmarking Cassandra lease backend
 class CqlLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
 public:
+
+    /// @brief Prepares the benchmark to run
+    ///
+    /// Destroys and then recreates CQL schema, initializes CQL LeaseMgr.
     void SetUp(::benchmark::State const&) override {
         destroyCqlSchema(false, true);
         createCqlSchema(false, true);
@@ -45,6 +48,7 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
+    /// @brief Cleans up after the benchmark.
     void TearDown(::benchmark::State const&) override {
         try {
             lmptr_->rollback();
@@ -58,135 +62,196 @@ public:
     }
 };
 
+// Defines a benchmark that measures IPv4 leases insertion.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, insertLeases4)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUp4(state, lease_count);
+        setUp4(state, lease_count);
         benchInsertLeases4();
     }
 }
 
+// Defines a benchmark that measures IPv4 leases update.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, updateLeases4)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchUpdateLeases4();
     }
 }
 
+// Defines a benchmark that measures IPv4 leases retrieval by address.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_address)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_address();
     }
 }
 
+// Defines a benchmark that measures IPv4 leases retrieval by hardware address.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_hwaddr)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_hwaddr();
     }
 }
 
+// Defines a benchmark that measures IPv4 leases retrieval by hardware address
+// and subnet-id.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_hwaddr_subnetid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_hwaddr_subnetid();
     }
 }
 
+// Defines a benchmark that measures IPv4 leases retrieval by client-id.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_clientid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_clientid();
     }
 }
 
+// Defines a benchmark that measures IPv4 leases retrieval by client-id and
+// subnet-id.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease4_clientid_subnetid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetLease4_clientid_subnetid();
     }
 }
 
+// Defines a benchmark that measures retrieval of expired IPv4 leases.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getExpiredLeases4)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts4(state, lease_count);
+        setUpWithInserts4(state, lease_count);
         benchGetExpiredLeases4();
     }
 }
 
+// Defines a benchmark that measures IPv6 leases insertion.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, insertLeases6)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUp6(state, lease_count);
+        setUp6(state, lease_count);
         benchInsertLeases6();
     }
 }
 
+// Defines a benchmark that measures IPv6 leases update.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, updateLeases6)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchUpdateLeases6();
     }
 }
 
+// Defines a benchmark that measures IPv6 leases retrieval by type and address.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_address)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetLease6_type_address();
     }
 }
 
+// Defines a benchmark that measures IPv6 leases retrieval by type, duid and iaid.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetLease6_type_duid_iaid();
     }
 }
 
-BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_type_duid_iaid_subnetid)(benchmark::State& state) {
+// Defines a benchmark that measures IPv6 leases retrieval by lease type, duid, iaid
+// and subnet-id.
+BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
+    (benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetLease6_type_duid_iaid_subnetid();
     }
 }
 
+// Defines a benchmark that measures retrieval of expired IPv6 leases.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts6(state, lease_count);
+        setUpWithInserts6(state, lease_count);
         benchGetExpiredLeases6();
     }
 }
 
-constexpr size_t MIN_LEASE_COUNT = 512;
-constexpr size_t MAX_LEASE_COUNT = 0xfffd;
-constexpr benchmark::TimeUnit UNIT = benchmark::kMicrosecond;
 
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, insertLeases4)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, updateLeases4)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_address)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_hwaddr)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_hwaddr_subnetid)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_clientid)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_clientid_subnetid)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getExpiredLeases4)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, insertLeases6)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, updateLeases6)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease6_type_address)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease6_type_type_duid_iaid_subnetid)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
-BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getExpiredLeases6)->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+/// The following macros define run parameters for previously defined
+/// Cassandra benchmarks.
+
+/// A benchmark that measures IPv4 leases insertion.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, insertLeases4)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv4 leases update.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, updateLeases4)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv4 lease retrieval by IP address.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_address)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv4 lease retrieval by hardware address.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_hwaddr)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv4 lease retrieval by hardware address and a
+/// subnet-id.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_hwaddr_subnetid)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv4 lease retrieval by client-id.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_clientid)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv4 lease retrieval by client-id and subnet-id.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease4_clientid_subnetid)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures expired IPv4 leases retrieval.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getExpiredLeases4)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv6 leases insertion.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, insertLeases6)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv6 leases update.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, updateLeases6)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv6 lease retrieval by lease type and IP address.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease6_type_address)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv6 lease retrieval by lease type, duid and iaid.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures IPv6 lease retrieval by lease type, duid, iaid and
+/// subnet-id.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
+/// A benchmark that measures expired IPv6 leases retrieval.
+BENCHMARK_REGISTER_F(CqlLeaseMgrBenchmark, getExpiredLeases6)
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 }  // namespace

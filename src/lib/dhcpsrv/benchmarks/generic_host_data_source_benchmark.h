@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -26,34 +27,56 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
+    /// @brief Base fixture class for benchmarking host bakcends.
 class GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
 public:
-    enum Universe { V4, V6 };
-    enum AddedOptions { DHCP4_ONLY, DHCP6_ONLY, DHCP4_AND_DHCP6 };
 
+    /// @brief Defines universe (IPv4 or IPv6)
+    enum Universe { V4, V6 };
+
+    /// @brief Defines what kind of options should be added for a host
+    enum AddedOptions {
+        DHCP4_ONLY,      ///< DHCPv4-only options
+        DHCP6_ONLY,      ///< DHCPv6-only options
+        DHCP4_AND_DHCP6  ///< Both DHCPv4 and DHCPv6 options
+    };
+
+    /// @brief Constructor
+    ///
+    /// Clears runtime option definitions.
     GenericHostDataSourceBenchmark();
+
+    /// @brief Destructor
+    ///
+    /// Clears runtime option definitions and clears hdsptr_ pointer.
     virtual ~GenericHostDataSourceBenchmark();
 
-    HostPtr initializeHost4(const std::string& address,
-                            const Host::IdentifierType& id);
-    HostPtr initializeHost6(std::string address,
-                            Host::IdentifierType id,
-                            bool prefix,
-                            bool new_identifier = true);
-    std::vector<uint8_t> generateHWAddr(const bool new_identifier = true);
-    std::vector<uint8_t> generateIdentifier(const bool new_identifier = true);
-
+    /// @brief Creates a generic option with specific parameters.
+    ///
+    /// @param universe (v4 or v6)
+    /// @param option_type code of the option
+    /// @param persist whether the option should always be included (yes) or not (no)
+    /// @return the option created wrapped in an option descriptor structure
     OptionDescriptor createEmptyOption(const Option::Universe& universe,
                                        const uint16_t option_type,
                                        const bool persist) const;
+
+    /// @brief Creates an option of specified type and avalue
+    ///
+    /// @tparam OptionType Option class to be instantiated
+    /// @tparam DataType type of parameter to be passed to OptionType constructor
+    /// @param universe (v4 or v6)
+    /// @param option_type code of the option
+    /// @param persist whether the option should always be included (yes) or not (no)
+    /// @param formatted whether the value passed to description should be converted to text
+    /// @return the option created wrapped in an option descriptor structure
     template <typename OptionType, typename DataType>
     OptionDescriptor createOption(const Option::Universe& universe,
                                   const uint16_t option_type,
                                   const bool persist,
                                   const bool formatted,
                                   const DataType& value) const {
-        boost::shared_ptr<OptionType> option(
-            new OptionType(universe, option_type, value));
+        boost::shared_ptr<Option> option(new OptionType(universe, option_type, value));
         std::ostringstream s;
         if (formatted) {
             // Using formatted option value. Convert option value to a
@@ -63,32 +86,23 @@ public:
         OptionDescriptor desc(option, persist, s.str());
         return desc;
     }
-    template <typename OptionType, typename DataType>
-    OptionDescriptor createOption(const uint16_t option_type,
-                                  const bool persist,
-                                  const bool formatted,
-                                  const DataType& value) const {
-        boost::shared_ptr<OptionType> option(
-            new OptionType(option_type, value));
 
-        std::ostringstream s;
-        if (formatted) {
-            // Using formatted option value. Convert option value to a
-            // textual format.
-            s << value;
-        }
-
-        OptionDescriptor desc(option, persist, s.str());
-        return desc;
-    }
+    /// @brief Creates an option with addresses
+    ///
+    /// @tparam OptionType specifies a class to be instantiated
+    /// @param option_type code of the option
+    /// @param formatted whether the value passed to description should be converted to text
+    /// @param address1 first address to be used (optional)
+    /// @param address2 second address to be used (optional)
+    /// @param address3 third address to be used (optional)
+    /// @return the option created wrapped in an option descriptor structure
     template <typename OptionType>
     OptionDescriptor
-    createAddressOption(const uint16_t option_type,
-                        const bool persist,
-                        const bool formatted,
-                        const std::string& address1 = "",
+    createAddressOption(const uint16_t option_type, const bool persist,
+                        const bool formatted, const std::string& address1 = "",
                         const std::string& address2 = "",
                         const std::string& address3 = "") const {
+
         std::ostringstream s;
         // First address.
         typename OptionType::AddressContainer addresses;
@@ -119,21 +133,34 @@ public:
             }
         }
 
-        boost::shared_ptr<OptionType> option(
-            new OptionType(option_type, addresses));
+        boost::shared_ptr<OptionType> option(new OptionType(option_type, addresses));
         OptionDescriptor desc(option, persist, s.str());
         return desc;
     }
+
+    /// @brief creates a vendor-option
+    ///
+    /// @param universe (v4 or v6)
+    /// @param persist whether the option should always be included
+    /// @param formatted whether the value passed to description should be
+    ///        converted to text
+    /// @param vendor_it 32-unsigned bit enterprise-id
+    /// @return the option created wrapped in an option descriptor structure
     OptionDescriptor createVendorOption(const Option::Universe& universe,
                                         const bool persist,
                                         const bool formatted,
                                         const uint32_t vendor_id) const;
-    void addTestOptions(const HostPtr& host,
-                        const bool formatted,
+
+    /// @brief Adds several v4 and/or v6 options to the host
+    ///
+    /// @param host host reservation to be extended with options
+    /// @param formatted whether to generate text representation
+    /// @param added_options v4, v6 or both
+    void addTestOptions(const HostPtr& host,const bool formatted,
                         const AddedOptions& added_options) const;
 
-    void ReentrantSetUp(::benchmark::State& state, size_t const& host_count);
-    void ReentrantSetUpWithInserts(::benchmark::State& state,
+    void setUp(::benchmark::State& state, size_t const& host_count);
+    void setUpWithInserts(::benchmark::State& state,
                                    size_t const& host_count);
     void prepareHosts(size_t const& lease_count);
     void insertHosts();

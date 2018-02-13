@@ -1634,12 +1634,17 @@ fi
 if test "$enable_gtest" != "no"; then
 cat >> config.report << END
 
-GTest:
+Google Test:
   GTEST_VERSION:   ${GTEST_VERSION}
   GTEST_INCLUDES:  ${GTEST_INCLUDES}
   GTEST_LDFLAGS:   ${GTEST_LDFLAGS}
   GTEST_LDADD:     ${GTEST_LDADD}
   GTEST_SOURCE:    ${GTEST_SOURCE}
+END
+else
+cat >> config.report << END
+Google Test:
+  no
 END
 fi
 
@@ -1652,6 +1657,11 @@ Google Benchmark:
   BENCHMARK_LDFLAGS:   ${BENCHMARK_LDFLAGS}
   BENCHMARK_LDADD:     ${BENCHMARK_LDADD}
   BENCHMARK_SOURCE:    ${BENCHMARK_SOURCE}
+END
+else
+cat >> config.report << END
+Google Benchmark:
+  no
 END
 fi
 

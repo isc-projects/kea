@@ -19,6 +19,7 @@
 #include <benchmark/benchmark.h>
 #include <log/logger_support.h>
 
+/// @brief A simple class that initializes logging.
 class Initializer {
 public:
     Initializer() {

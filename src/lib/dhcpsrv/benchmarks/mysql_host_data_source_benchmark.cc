@@ -63,7 +63,7 @@ public:
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, insertHosts)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUp(state, host_count);
+        setUp(state, host_count);
         insertHosts();
     }
 }
@@ -71,7 +71,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, insertHosts)(benchmark::State& 
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, updateHosts)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         updateHosts();
     }
 }
@@ -79,7 +79,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, updateHosts)(benchmark::State& 
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll2)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         getAll2();
     }
 }
@@ -87,7 +87,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll2)(benchmark::State& stat
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll3)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         getAll3();
     }
 }
@@ -95,7 +95,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll3)(benchmark::State& stat
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll1)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         getAll1();
     }
 }
@@ -103,7 +103,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll1)(benchmark::State& stat
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4_3)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get4_3();
     }
 }
@@ -111,7 +111,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4_3)(benchmark::State& state
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4_4)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get4_4();
     }
 }
@@ -119,7 +119,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4_4)(benchmark::State& state
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4_2)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get4_2();
     }
 }
@@ -127,7 +127,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4_2)(benchmark::State& state
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_3)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_3();
     }
 }
@@ -135,7 +135,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_3)(benchmark::State& state
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_4)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_4();
     }
 }
@@ -143,7 +143,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_4)(benchmark::State& state
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_2_subnetid_address)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_2_subnetid_address();
     }
 }
@@ -151,7 +151,7 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_2_subnetid_address)(benchm
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6_2_prefix_prefixlen)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
-        ReentrantSetUpWithInserts(state, host_count);
+        setUpWithInserts(state, host_count);
         get6_2_prefix_prefixlen();
     }
 }
