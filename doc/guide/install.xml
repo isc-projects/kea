@@ -266,7 +266,7 @@ Debian and Ubuntu:
           your code. Please consult
           <ulink url="https://help.github.com/articles/fork-a-repo/"/> for help on
           how to fork a Github repository.
-          The <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">Kea 
+          The <ulink url="kea.isc.org/docs/devel/">Kea
           Developer's Guide</ulink> contains more information about the process, as
           well as describing the requirements for contributed code to be accepted by ISC.
         </para>
@@ -318,8 +318,8 @@ Debian and Ubuntu:
             <term>--with-dhcp-mysql</term>
             <listitem>
               <simpara>
-                Build Kea with code to allow it to store leases (and access
-                host reservations) in a MySQL database.
+                Build Kea with code to allow it to store leases and
+                host reservations in a MySQL database.
               </simpara>
             </listitem>
           </varlistentry>
@@ -328,20 +328,42 @@ Debian and Ubuntu:
             <term>--with-dhcp-pgsql</term>
             <listitem>
               <simpara>
-                Build Kea with code to allow it to store leases (and access
-                host reservations) in a PostgreSQL database.
+                Build Kea with code to allow it to store leases and
+                host reservations in a PostgreSQL database.
               </simpara>
             </listitem>
           </varlistentry>
 
           <varlistentry>
-            <term>--with-gtest-source</term>
+            <term>--with-cql</term>
+            <listitem>
+              <simpara>
+                Build Kea with code to allow it to store leases and
+                host reservations in a Cassandra (CQL) database.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-gtest, --with-gtest-source</term>
             <listitem>
               <simpara>Enable the building of the C++ Unit Tests using the
                 Google Test framework. This option specifies the path to the
                 gtest source. (If the framework
                 is not installed on your system, it can be downloaded
-                from <ulink url="https://code.google.com/p/googletest"/>.)
+                from <ulink url="https://github.com/google/googletest"/>.)
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-benchmark, --with-benchmark-source</term>
+            <listitem>
+              <simpara>Enable the building of the database backend
+              benchmarks using the Google Benchmark framework. This
+              option specifies the path to the gtest source. (If the
+              framework is not installed on your system, it can be downloaded
+              from <ulink url="https://github.com/google/benchmark"/>.)
               </simpara>
             </listitem>
           </varlistentry>
