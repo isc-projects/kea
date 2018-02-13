@@ -159,24 +159,57 @@ public:
     void addTestOptions(const HostPtr& host,const bool formatted,
                         const AddedOptions& added_options) const;
 
+    /// @brief Sets up timers, creates and inserts hosts.
+    ///
+    /// @param state reference to the state of the benchmark
+    /// @param host_count number of hosts to be created
     void setUp(::benchmark::State& state, size_t const& host_count);
-    void setUpWithInserts(::benchmark::State& state,
-                                   size_t const& host_count);
-    void prepareHosts(size_t const& lease_count);
-    void insertHosts();
-    void updateHosts();
-    void getAll2();
-    void getAll3();
-    void getAll1();
-    void get4_3();
-    void get4_4();
-    void get4_2();
-    void get6_3();
-    void get6_4();
-    void get6_2_subnetid_address();
-    void get6_2_prefix_prefixlen();
 
+    /// @brief Sets up the benchmark with specified number of hosts
+    ///
+    /// @param state reference to the state of the benchmark
+    /// @param host_count number of hosts to be created
+    void setUpWithInserts(::benchmark::State& state, size_t const& host_count);
+
+    /// @brief Creates specified number of hosts and stores them in hosts_
+    ///
+    /// @param host_count number of hosts to be created
+    void prepareHosts(size_t const& lease_count);
+
+    /// @brief Inserts all hosts stored in hosts_ into the benchmarked host backend
+    void insertHosts();
+
+    /// @brief Updates all hosts stored in hosts_ in the benchmarked host backend
+    void updateHosts();
+
+    void benchGetAllByHWAddrDuid();
+
+    /// @brief Essential steps required to benchmark the
+    ///        getAll(identifier-type, identifier) call.
+    void benchGetAll();
+
+    /// @brief Essential stpes requires to benchmark host reservation retrieval
+    ///        using getAll(ipv4-reservation) call.
+    void getAllv4Resv();
+
+    void benchGet4BySubnetHWAddrDuid();
+
+    void benchGet4IdentifierSubnetId();
+
+    void benchGet4SubnetIdv4Resrv();
+
+    void benchGet6SubnetIdDuidHWAddr();
+
+    void benchGet6IdentifierSubnetId();
+
+    void benchGet6SubnetIdAddr();
+
+    void benchGet6Prefix();
+
+    /// Pointer to the host backend being benchmarked
     HostDataSourcePtr hdsptr_;
+
+    /// Store hosts being used during benchmark.
     HostCollection hosts_;
 };
 
