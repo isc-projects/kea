@@ -1,8 +1,5 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +24,10 @@
     </author>
   </refentryinfo>
 
+  <info>
+    <date>2014-07-01</date>
+  </info>
+
   <refmeta>
     <refentrytitle>kea-sockcreator</refentrytitle>
     <manvolnum>8</manvolnum>
@@ -46,7 +47,7 @@
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>kea-sockcreator</command>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -88,8 +89,4 @@
     </para>
   </refsect1>
 
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+</refentry>

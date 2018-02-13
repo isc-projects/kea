@@ -1,3 +1,29 @@
+1358.	[build,bug]	fdupont
+	Cassandra build fixes for macOS.
+	(Trac #5494, git xxx)
+
+1357.	[bug]		rcgoodfellow
+	Fixed bug in kea-admon causing error on lease-dump.
+	(github #61, git xxx)
+
+1356.	[func]		andreipavelQ,tomek
+	The logging configuration is now applied early, which helps
+	seeing errors in case the new configuration is faulty.
+	(github #41, git d77fbec5a003a69cab207aa741133015f2657878)
+
+1355.	[build]		andreipavelQ
+	--with-dhcp-mysql renamed to --with-mysql and
+	--with-dhcp-pgsql renamed to --with-pgsql. These names were
+	leftovers from old BIND10 times when Kea was part of bigger
+	solution that also provided DNS services. Kea is now a stand-alone
+	software, thus the -dhcp- doesn't make sense in those options any
+	more.
+	(github #40, git 318c9e3d3db9bb938ced27932d8401172529a2ff)
+
+1354.	[doc]		andreipavelQ
+	Documentation has been upgraded to DocBook 5.0.
+	(github #39, git 9b6705bd6c534128ec18820ff0cbdd72b7fce9e9)
+
 1353.	[func]		tomek
 	Lightweight 4over6 options reinstantiated. Definitions for DHCPv6
 	options 89 through 96 were added back. DHCPv4 v4 Parameters Option

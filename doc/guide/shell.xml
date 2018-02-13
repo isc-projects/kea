@@ -1,13 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2017;" >
-]>
-
-<chapter id="kea-shell">
+<!--
+ - Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-shell">
   <title>The Kea Shell</title>
 
-  <section id="shell-overview">
+  <section xml:id="shell-overview">
     <title>Overview</title>
     <para>Kea 1.2.0 introduced the Control Agent (CA, see <xref linkend="kea-ctrl-agent"/>) that
     provides a RESTful control interface over HTTP. That API is typically expected to be used by
@@ -21,7 +23,7 @@
     </para>
   </section>
 
-  <section id="shell-usage">
+  <section xml:id="shell-usage">
     <title>Shell Usage</title>
     <para><command>kea-shell</command> is run as follows:
 <screen>
@@ -124,7 +126,7 @@ $ <userinput>kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-command
 <screen>
 $ cat param.json
 "filename": "my-config-file.json"
-$ <userinput>cat param.json | kea-shell --host 192.0.2.1 config-write > result.json</userinput>
+$ <userinput>cat param.json | kea-shell --host 192.0.2.1 config-write &gt; result.json</userinput>
 </screen>
     </para>
 
