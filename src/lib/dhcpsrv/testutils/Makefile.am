@@ -14,8 +14,9 @@ noinst_LTLIBRARIES = libdhcpsrvtest.la
 
 libdhcpsrvtest_la_SOURCES  = config_result_check.cc config_result_check.h
 libdhcpsrvtest_la_SOURCES += dhcp4o6_test_ipc.cc dhcp4o6_test_ipc.h
-
+libdhcpsrvtest_la_SOURCES += host_data_source_utils.cc host_data_source_utils.h
 libdhcpsrvtest_la_SOURCES += schema.cc schema.h
+libdhcpsrvtest_la_SOURCES += lease_file_io.cc lease_file_io.h
 
 if HAVE_MYSQL
 libdhcpsrvtest_la_SOURCES += mysql_schema.cc mysql_schema.h
