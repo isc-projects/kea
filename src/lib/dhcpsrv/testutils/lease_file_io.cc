@@ -5,8 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
-#include <dhcpsrv/tests/lease_file_io.h>
+#include <dhcpsrv/testutils/lease_file_io.h>
 #include <fstream>
 #include <sstream>
 
