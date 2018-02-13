@@ -27,7 +27,7 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
-    /// @brief Base fixture class for benchmarking host bakcends.
+/// @brief Base fixture class for benchmarking host bakcends.
 class GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
 public:
 
@@ -188,22 +188,36 @@ public:
     ///        getAll(identifier-type, identifier) call.
     void benchGetAll();
 
-    /// @brief Essential stpes requires to benchmark host reservation retrieval
+    /// @brief Essential steps required to benchmark host reservation retrieval
     ///        using getAll(ipv4-reservation) call.
     void getAllv4Resv();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using getAll(hw-addr, duid) call.
     void benchGet4BySubnetHWAddrDuid();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using getAll(identifier-type, identifier, subnet-id) call.
     void benchGet4IdentifierSubnetId();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using getAll(v4-reservation) call.
     void benchGet4SubnetIdv4Resrv();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using get6(subnet-id, duid, hw-addr) call.
     void benchGet6SubnetIdDuidHWAddr();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using get6(identifier-type, identifier, subnet-id) call.
     void benchGet6IdentifierSubnetId();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using get6(ip-addr, subnet-id) call.
     void benchGet6SubnetIdAddr();
 
+    /// @brief Essential steps requires to benchmark host reservation retrieval
+    ///        using get6(prefix, len) call.
     void benchGet6Prefix();
 
     /// Pointer to the host backend being benchmarked

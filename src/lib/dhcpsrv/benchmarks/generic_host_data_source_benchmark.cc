@@ -130,32 +130,22 @@ GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host, const bool f
         // Add DHCPv6 options.
         CfgOptionPtr opts = host->getCfgOption6();
         opts->add(createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL, true,
-                                             formatted, "my-boot-file"),
-                  DHCP6_OPTION_SPACE);
-        opts->add(createOption<OptionUint32>(Option::V6,
-                                             D6O_INFORMATION_REFRESH_TIME,
-                                             false, formatted, 3600),
-                  DHCP6_OPTION_SPACE);
-        opts->add(createVendorOption(Option::V6, false, formatted, 2495),
-                  DHCP6_OPTION_SPACE);
-        opts->add(createAddressOption<Option6AddrLst>(1024, false, formatted,
-                                                      "2001:db8:1::1"),
+                                             formatted, "my-boot-file"), DHCP6_OPTION_SPACE);
+        opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME,
+                                             false, formatted, 3600), DHCP6_OPTION_SPACE);
+        opts->add(createVendorOption(Option::V6, false, formatted, 2495), DHCP6_OPTION_SPACE);
+        opts->add(createAddressOption<Option6AddrLst>(1024, false, formatted, "2001:db8:1::1"),
                   DHCP6_OPTION_SPACE);
         opts->add(createEmptyOption(Option::V6, 1, true), "isc2");
-        opts->add(createAddressOption<Option6AddrLst>(
-                      2, false, formatted, "3000::1", "3000::2", "3000::3"),
-                  "isc2");
+        opts->add(createAddressOption<Option6AddrLst>(2, false, formatted, "3000::1", "3000::2",
+                                                      "3000::3"), "isc2");
 
         // Add definitions for DHCPv6 non-standard options.
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-1024", 1024, "ipv6-address", true)),
-                     DHCP6_OPTION_SPACE);
-        defs.addItem(
-            OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")),
-            "isc2");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
-                         "option-2", 2, "ipv6-address", true)),
-                     "isc2");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1024", 1024, "ipv6-address",
+                                                              true)), DHCP6_OPTION_SPACE);
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")), "isc2");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2, "ipv6-address",
+                                                              true)), "isc2");
     }
 
     // Register created "runtime" option definitions. They will be used by a
@@ -226,9 +216,8 @@ void
 GenericHostDataSourceBenchmark::benchGet4BySubnetHWAddrDuid() {
     for (HostPtr host : hosts_) {
         std::vector<uint8_t> hwaddr = host->getIdentifier();
-        hdsptr_->get4(host->getIPv4SubnetID(),
-                      HWAddrPtr(new HWAddr(hwaddr, host->getIdentifierType())),
-                      host->getDuid());
+        hdsptr_->get4(host->getIPv4SubnetID(), HWAddrPtr(new HWAddr(hwaddr,
+                          host->getIdentifierType())), host->getDuid());
     }
 }
 

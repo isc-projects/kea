@@ -26,23 +26,6 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
-/// @defgroup memfile_params Benchmark parameters that define boundary values
-///           for benchmarks.
-///
-/// The range is defined as 512..65533. Google benchmark will pick a few specifc
-/// values: 512, 4096, 32768, 65533.
-
-/// @{
-
-/// @brief A minimum number of leases used in a benchmark
-constexpr size_t MIN_LEASE_COUNT = 512;
-/// @brief A maximum number of leases used in a benchmark
-constexpr size_t MAX_LEASE_COUNT = 0xfffd;
-/// @brief A time unit used - all results to be expressed in us (microseconds)
-constexpr benchmark::TimeUnit UNIT = benchmark::kMicrosecond;
-
-/// @}
-
 /// @brief A base class for a fixture for specific lease manager benchmarks
 class GenericLeaseMgrBenchmark : public benchmark::Fixture {
 public:

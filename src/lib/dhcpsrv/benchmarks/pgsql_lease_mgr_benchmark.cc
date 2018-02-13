@@ -18,17 +18,14 @@
 #include <config.h>
 
 #include <dhcpsrv/benchmarks/generic_lease_mgr_benchmark.h>
+#include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/pgsql_schema.h>
 
 using namespace isc::dhcp::bench;
-using isc::dhcp::LeaseMgrFactory;
-using isc::dhcp::bench::GenericLeaseMgrBenchmark;
-using isc::dhcp::test::createPgSQLSchema;
-using isc::dhcp::test::destroyPgSQLSchema;
-using isc::dhcp::test::validPgSQLConnectionString;
-using std::cerr;
-using std::endl;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace std;
 
 namespace {
 

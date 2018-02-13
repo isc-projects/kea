@@ -23,6 +23,7 @@ run_benchmarks_SOURCES  = run_benchmarks.cc
 run_benchmarks_SOURCES += generic_lease_mgr_benchmark.cc generic_lease_mgr_benchmark.h
 run_benchmarks_SOURCES += generic_host_data_source_benchmark.cc generic_host_data_source_benchmark.h
 run_benchmarks_SOURCES += memfile_lease_mgr_benchmark.cc
+run_benchmarks_SOURCES += parameters.h
 
 if HAVE_MYSQL
 run_benchmarks_SOURCES += mysql_lease_mgr_benchmark.cc

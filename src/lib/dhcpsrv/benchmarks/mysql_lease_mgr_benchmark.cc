@@ -17,14 +17,14 @@
 #include <config.h>
 
 #include <dhcpsrv/benchmarks/generic_lease_mgr_benchmark.h>
+#include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 
 using namespace isc::dhcp::bench;
 using namespace isc::dhcp::test;
+using namespace isc::dhcp;
 using namespace std;
-using isc::dhcp::LeaseMgrFactory;
-//using isc::dhcp::bench::GenericLeaseMgrBenchmark;
 
 namespace {
 
