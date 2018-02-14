@@ -7,9 +7,10 @@ text is also included below.
 
 -----------------------------------------------------------------------------
 
-The Cassandra backend code is distributed under the Apache License, Version 2.0.
-The text is available at http://www.apache.org/licenses/LICENSE-2.0. Full
-text is also included below in this file.
+The Cassandra backend code and support for Google benchmark is distributed under
+the Apache License, Version 2.0. The text is available at
+http://www.apache.org/licenses/LICENSE-2.0. Full text is also included below in
+this file. Both features are optional and are disabled by default.
 
 -----------------------------------------------------------------------------
 
