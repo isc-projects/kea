@@ -111,6 +111,9 @@ static constexpr cass_int32_t MAX_IDENTIFIER_TYPE = static_cast<cass_int32_t>(Ho
 
 /// @{
 /// @brief Invalid values in the Cassandra database
+static constexpr char NULL_DHCP4_SERVER_HOSTNAME[] = "";
+static constexpr char NULL_DHCP4_BOOT_FILE_NAME[] = "";
+static constexpr char NULL_USER_CONTEXT[] = "";
 static constexpr char NULL_RESERVED_IPV6_PREFIX_ADDRESS[] = "::";
 static constexpr cass_int32_t NULL_RESERVED_IPV6_PREFIX_LENGTH = 0;
 static constexpr cass_int32_t NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE = -1;
@@ -123,7 +126,8 @@ static constexpr char NULL_OPTION_SPACE[] = "";
 static constexpr cass_bool_t NULL_OPTION_IS_PERSISTENT = cass_false;
 static constexpr char NULL_OPTION_CLIENT_CLASS[] = "";
 static constexpr cass_int32_t NULL_OPTION_SUBNET_ID = -1;
-// static constexpr CassCollection* NULL_COLLECTION = NULL;
+static constexpr char NULL_OPTION_USER_CONTEXT[] = "";
+static constexpr cass_int32_t NULL_OPTION_SCOPE_ID = -1;
 /// @}
 
 /// @brief Invalid reservation used to check for an invalid IPv6Resrv formed
@@ -296,8 +300,20 @@ private:
     /// @brief Reserved IPv4 address
     cass_int32_t host_ipv4_address_;
 
+    /// @brief Next server address (siaddr).
+    cass_int32_t host_ipv4_next_server_;
+
+    /// @brief Server hostname (sname).
+    std::string host_ipv4_server_hostname_;
+
+    /// @brief Boot file name (file).
+    std::string host_ipv4_boot_file_name_;
+
     /// @brief Name reserved for the host
     std::string hostname_;
+
+    /// @brief User context
+    std::string user_context_;
 
     /// @brief A string holding comma separated list of IPv4 client classes
     std::string host_ipv4_client_classes_;
@@ -342,6 +358,12 @@ private:
 
     /// @brief Subnet identifier
     cass_int32_t option_subnet_id_;
+
+    /// @brief Buffer holding textual user context of an option.
+    std::string option_user_context_;
+
+    /// @brief Option scope id
+    cass_int32_t option_scope_id_;
 };  // CqlHostExchange
 
 constexpr StatementTag CqlHostExchange::INSERT_HOST;
@@ -363,7 +385,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -377,14 +403,16 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       ") VALUES ( "
       // id
       "?, "
       // host
-      "?, ?, ?, ?, ?, ?, ?, ?, "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
       // denormalized reservation, option
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "
      }},
@@ -398,7 +426,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -412,7 +444,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE host_identifier = ? "
       "AND host_identifier_type = ? "
@@ -428,7 +462,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -442,7 +480,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv4_address = ? "
       "ALLOW FILTERING "
@@ -457,7 +497,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -471,7 +515,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv4_subnet_id = ? "
       "AND host_identifier = ? "
@@ -488,7 +534,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -502,7 +552,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv6_subnet_id = ? "
       "AND host_identifier = ? "
@@ -519,7 +571,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -533,7 +589,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv4_subnet_id = ? "
       "AND host_ipv4_address = ? "
@@ -549,7 +607,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -563,7 +625,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE reserved_ipv6_prefix_address = ? "
       "AND reserved_ipv6_prefix_length = ? "
@@ -579,7 +643,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_subnet_id, "
       "host_ipv6_subnet_id, "
       "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
       "hostname, "
+      "user_context, "
       "host_ipv4_client_classes, "
       "host_ipv6_client_classes, "
       "reserved_ipv6_prefix_address, "
@@ -593,7 +661,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_space, "
       "option_is_persistent, "
       "option_client_class, "
-      "option_subnet_id "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv6_subnet_id = ? "
       "AND reserved_ipv6_prefix_address = ? "
@@ -605,12 +675,18 @@ StatementMap CqlHostExchange::tagged_statements_ = {
 CqlHostExchange::CqlHostExchange(CqlConnection& connection)
     : host_(NULL), connection_(connection), id_(0), host_identifier_type_(0),
       host_ipv4_subnet_id_(0), host_ipv6_subnet_id_(0), host_ipv4_address_(0),
+      host_ipv4_next_server_(0),
+      host_ipv4_server_hostname_(NULL_DHCP4_SERVER_HOSTNAME),
+      host_ipv4_boot_file_name_(NULL_DHCP4_BOOT_FILE_NAME),
+      user_context_(NULL_USER_CONTEXT),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
       iaid_(NULL_IAID), option_universe_(NULL_OPTION_UNIVERSE),
       option_code_(NULL_OPTION_CODE),
       option_is_persistent_(NULL_OPTION_IS_PERSISTENT),
-      option_subnet_id_(NULL_OPTION_SUBNET_ID) {
+      option_subnet_id_(NULL_OPTION_SUBNET_ID),
+      option_user_context_(NULL_OPTION_USER_CONTEXT),
+      option_scope_id_(NULL_OPTION_SCOPE_ID) {
 }
 
 CqlHostExchange::~CqlHostExchange() {
@@ -623,7 +699,6 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
 
     // id: blob
     data.add(&id_);
-
     // host_identifier: blob
     data.add(&host_identifier_);
     // host_identifier_type: int
@@ -634,8 +709,16 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&host_ipv6_subnet_id_);
     // host_ipv4_address: int
     data.add(&host_ipv4_address_);
+    // host_ipv4_next_server: int
+    data.add(&host_ipv4_next_server_);
+    // host_ipv4_server_hostname: text
+    data.add(&host_ipv4_server_hostname_);
+    // host_ipv4_boot_file_name: text
+    data.add(&host_ipv4_boot_file_name_);
     // hostname: text
     data.add(&hostname_);
+    // user_context: text
+    data.add(&user_context_);
     // host_ipv4_client_classes: text
     data.add(&host_ipv4_client_classes_);
     // host_ipv6_client_classes: text
@@ -651,7 +734,6 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     // iaid: int
     data.add(&iaid_);
     /// @}
-
     /// @brief Denormalized option columns
     /// @{
     // option_universe: int
@@ -670,6 +752,10 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&option_client_class_);
     // option_subnet_id: int
     data.add(&option_subnet_id_);
+    // option_user_context: text
+    data.add(&option_user_context_);
+    // option_scope_id: int
+    data.add(&option_scope_id_);
     /// @}
 }
 
@@ -714,12 +800,29 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         // host_ipv4_address: int
         host_ipv4_address_ = static_cast<cass_int32_t>(host->getIPv4Reservation().toUint32());
 
+        // host_ipv4_next_server: int
+        host_ipv4_next_server_ = static_cast<cass_int32_t>(host->getNextServer().toUint32());
+
+        // host_ipv4_server_hostname: text
+        host_ipv4_server_hostname_ = host->getServerHostname();
+
+        // host_ipv4_boot_file_name: text
+        host_ipv4_boot_file_name_ = host->getBootFileName();
+
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
             isc_throw(BadValue, "CqlHostExchange::createBindForMutation(): hostname "
                       << hostname_ << " of length " << hostname_.size()
                       << " is greater than allowed of " << HOSTNAME_MAX_LENGTH);
+        }
+
+        // user_context: text
+        ConstElementPtr ctx = host->getContext();
+        if (ctx) {
+            user_context_ = ctx->str();
+        } else {
+            user_context_ = NULL_USER_CONTEXT;
         }
 
         // host_ipv4_client_classes: text
@@ -773,6 +876,8 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             option_is_persistent_ = NULL_OPTION_IS_PERSISTENT;
             option_client_class_ = NULL_OPTION_CLIENT_CLASS;
             option_subnet_id_ = NULL_OPTION_SUBNET_ID;
+            option_user_context_ = NULL_OPTION_USER_CONTEXT;
+            option_scope_id_ = NULL_OPTION_SCOPE_ID;
         } else {
             // option_universe: int
             option_universe_ = option_descriptor.option_->getUniverse();
@@ -819,6 +924,18 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             } else {
                 option_subnet_id_ = 0;
             }
+
+            // option_user_context: text
+            ConstElementPtr ctx = option_descriptor.getContext();
+            if (ctx) {
+                option_user_context_ = ctx->str();
+            } else {
+                option_user_context_ = NULL_OPTION_USER_CONTEXT;
+            }
+
+            // option_scope_id: int
+            // Using fixed scope_id = 3, which associates an option with host.
+            option_scope_id_ = 3;
         }
 
         // id: bigint
@@ -834,7 +951,11 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             data.add(&host_ipv4_subnet_id_);
             data.add(&host_ipv6_subnet_id_);
             data.add(&host_ipv4_address_);
+            data.add(&host_ipv4_next_server_);
+            data.add(&host_ipv4_server_hostname_);
+            data.add(&host_ipv4_boot_file_name_);
             data.add(&hostname_);
+            data.add(&user_context_);
             data.add(&host_ipv4_client_classes_);
             data.add(&host_ipv6_client_classes_);
         }
@@ -854,6 +975,8 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         data.add(&option_is_persistent_);
         data.add(&option_client_class_);
         data.add(&option_subnet_id_);
+        data.add(&option_user_context_);
+        data.add(&option_scope_id_);
 
     } catch (const Exception& ex) {
         isc_throw(DbOperationError,
@@ -934,7 +1057,25 @@ CqlHostExchange::retrieve() {
     Host* host = new Host(host_identifier.data(), host_identifier.size(),
                           host_identifier_type, ipv4_subnet_id, ipv6_subnet_id,
                           ipv4_reservation, hostname_,
-                          host_ipv4_client_classes_, host_ipv6_client_classes_);
+                          host_ipv4_client_classes_, host_ipv6_client_classes_
+                          host_ipv4_next_server_, host_ipv4_server_hostname_,
+                          host_ipv4_boot_file_name_);
+
+    // Set the user context if there is one.
+    if (!user_context_.empty()) {
+        try {
+            ConstElementPtr ctx = Element::fromJSON(user_context_);
+            if (!ctx || (ctx->getType() != Element::map)) {
+                isc_throw(BadValue, "user context '" << user_context_
+                          << "' is not a JSON map");
+            }
+            host->setContext(ctx);
+        } catch (const isc::data::JSONError& ex) {
+            isc_throw(BadValue, "user context '" << user_context
+                      << "' is invalid JSON: " << ex.what());
+        }
+    }
+
     host->setHostId(id);
 
     const IPv6Resrv reservation = retrieveReservation();
@@ -1050,8 +1191,24 @@ CqlHostExchange::retrieveOption() const {
         }
     }
 
-    return (OptionWrapper(OptionDescriptorPtr(new OptionDescriptor(option, option_is_persistent_,
-                          option_formatted_value_)), option_space_));
+    OptionWrapper result(OptionDescriptorPtr(new OptionDescriptor(option, option_is_persistent_,
+                         option_formatted_value_)), option_space_);
+    // Set the user context if there is one into the option descriptor.
+    if (!option_user_context_.empty()) {
+        try {
+            ConstElementPtr ctx = Element::fromJSON(option_user_context_));
+            if (!ctx || (ctx->getType() != Element::map)) {
+                isc_throw(BadValue, "option user context '" << option_user_context_
+                          << "' is no a JSON map");
+            }
+            result.option_descriptor_->setContext(ctx);
+        } catch (const isc::data::JSONError& ex) {
+            isc_throw(BadValue, "option user context '" << option_user_context_
+                      << "' is invalid JSON: " << ex.what());
+        }
+    }
+
+    return result;
 }
 
 /// @brief Implementation of the @ref CqlHostDataSource.
