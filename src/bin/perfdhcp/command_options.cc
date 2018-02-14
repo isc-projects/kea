@@ -124,7 +124,7 @@ CommandOptions::reset() {
     mac_list_file_.clear();
     mac_list_.clear();
     num_request_.clear();
-    late_exit_delay_ = 0;
+    exit_wait_time_ = 0;
     period_ = 0;
     drop_time_set_ = 0;
     drop_time_.assign(dt, dt + 2);
@@ -217,8 +217,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:m:"
-                        "s:iBc1T:X:O:E:S:I:x:w:e:f:F:")) != -1) {
+    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
+                        "s:iBc1T:X:O:E:S:I:x:W:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -369,9 +369,9 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             loadMacs();
             break;
 
-        case 'm':
+        case 'W':
             // 'm' for moratorium
-            late_exit_delay_ = nonNegativeInteger("value of late exit delay: "
+            exit_wait_time_ = nonNegativeInteger("value of exist wait time: "
                                                   "-m<value> must not be a "
                                                   "negative integer");
             break;
@@ -1074,6 +1074,9 @@ CommandOptions::usage() const {
         "-T<template-file>: The name of a file containing the template to use\n"
         "    as a stream of hexadecimal digits.\n"
         "-v: Report the version number of this program.\n"
+        "-W<time>: Specifies exit-wait-time parameter, that makes perfdhcp wait\n"
+        "    for <time> us after an exit condition has been met to receive all\n"
+        "    packets without sending any new packets. Expressed in microseconds.\n"
         "-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
         "    the program.\n"
         "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"

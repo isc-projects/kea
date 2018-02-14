@@ -50,20 +50,27 @@ TestControl::hasLateExitCommenced() const {
 }
 
 bool
-TestControl::lateExit() const {
-    if (haveAllPacketsBeenReceived()) {
-        return true;
+TestControl::waitToExit() const {
+    static ptime exit_time = ptime(not_a_date_time);
+    CommandOptions& options = CommandOptions::instance();
+    uint32_t wait_time = options.getExitWaitTime();
+
+    // If we care and not all packets are in yet
+    if (wait_time && !haveAllPacketsBeenReceived()) {
+        const ptime now = microsec_clock::universal_time();
+
+        // Init the end time if it hasn't started yet
+        if (exit_time.is_not_a_date_time()) {
+            CommandOptions& options = CommandOptions::instance();
+            exit_time = now + time_duration(microseconds(wait_time));
+        }
+
+        // If we're not at end time yet, return true
+        return (now < exit_time);
     }
-    const ptime now = microsec_clock::universal_time();
-    if (late_exit_target_time_.is_not_a_date_time()) {
-        CommandOptions& options = CommandOptions::instance();
-        late_exit_target_time_ =
-            now + time_duration(microseconds(options.getLateExitDelay()));
-    }
-    if (late_exit_target_time_ <= now) {
-        return true;
-    }
-    return false;
+
+    // No need to wait, return false;
+    return (false);
 }
 
 bool
@@ -77,31 +84,21 @@ TestControl::haveAllPacketsBeenReceived() const {
         return false;
     }
 
-    const uint32_t& request_count_DO_SA = num_request[0];
-    uint32_t request_count_RA_RR;
+    uint32_t responses = 0;
+    uint32_t requests = num_request[0];
     if (num_request_size >= 2) {
-        request_count_RA_RR = num_request[1];
-    } else {
-        request_count_RA_RR = num_request[0];
+        requests += num_request[1];
     }
 
     if (ipversion == 4) {
-        if (stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) !=
-                request_count_DO_SA ||
-            stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_RA) !=
-                request_count_RA_RR) {
-            return false;
-        }
-    } else if (ipversion == 6) {
-        if (stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) !=
-                request_count_DO_SA ||
-            stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_RR) !=
-                request_count_RA_RR) {
-            return false;
-        }
+        responses = stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
+                    stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_RA);
+    } else {
+        responses = stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) +
+                    stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_RR);
     }
 
-    return true;
+    return (responses == requests);
 }
 
 TestControl::TestControlSocket::TestControlSocket(const int socket) :
@@ -258,7 +255,7 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "reached test-period." << std::endl;
         }
-        if (lateExit()) {
+        if (!waitToExit()) {
             return true;
         }
     }
@@ -296,7 +293,7 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached max requests limit." << std::endl;
         }
-        if (lateExit()) {
+        if (!waitToExit()) {
             return true;
         }
     }
@@ -334,7 +331,7 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum drops number." << std::endl;
         }
-        if (lateExit()) {
+        if (!waitToExit()) {
             return true;
         }
     }
@@ -381,7 +378,7 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum percentage of drops." << std::endl;
         }
-        if (lateExit()) {
+        if (!waitToExit()) {
             return true;
         }
     }

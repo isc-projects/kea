@@ -138,14 +138,14 @@ public:
 
     /// @brief Delay the exit by a fixed given time to catch up to all exchanges
     ///     that were already started.
-    bool lateExit() const;
+    /// @return true if need to wait, false = ok to exit now
+    bool waitToExit() const;
 
     /// @brief Check if the program is in that period where the program was
     ///     bound to exit, but was delayed by lateExit().
     bool hasLateExitCommenced() const;
 
-    /// @brief Delay the exit by a fixed given time to catch up to all exchanges
-    ///     that were already started.
+    /// @brief Checks if all expected packets were already received
     bool haveAllPacketsBeenReceived() const;
 
     /// \brief Socket wrapper structure.
