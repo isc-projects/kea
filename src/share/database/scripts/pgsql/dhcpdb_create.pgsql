@@ -35,7 +35,6 @@ CREATE TABLE lease4 (
     hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
-
 -- Create search indexes for lease4 table
 -- index by hwaddr and subnet_id
 CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
