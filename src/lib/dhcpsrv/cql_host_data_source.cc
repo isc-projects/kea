@@ -49,6 +49,7 @@
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::data;
 
 namespace {
 
@@ -1057,9 +1058,9 @@ CqlHostExchange::retrieve() {
     Host* host = new Host(host_identifier.data(), host_identifier.size(),
                           host_identifier_type, ipv4_subnet_id, ipv6_subnet_id,
                           ipv4_reservation, hostname_,
-                          host_ipv4_client_classes_, host_ipv6_client_classes_
-                          host_ipv4_next_server_, host_ipv4_server_hostname_,
-                          host_ipv4_boot_file_name_);
+                          host_ipv4_client_classes_, host_ipv6_client_classes_,
+                          static_cast<uint32_t>(host_ipv4_next_server_),
+                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_);
 
     // Set the user context if there is one.
     if (!user_context_.empty()) {
@@ -1071,7 +1072,7 @@ CqlHostExchange::retrieve() {
             }
             host->setContext(ctx);
         } catch (const isc::data::JSONError& ex) {
-            isc_throw(BadValue, "user context '" << user_context
+            isc_throw(BadValue, "user context '" << user_context_
                       << "' is invalid JSON: " << ex.what());
         }
     }
@@ -1196,7 +1197,7 @@ CqlHostExchange::retrieveOption() const {
     // Set the user context if there is one into the option descriptor.
     if (!option_user_context_.empty()) {
         try {
-            ConstElementPtr ctx = Element::fromJSON(option_user_context_));
+            ConstElementPtr ctx = Element::fromJSON(option_user_context_);
             if (!ctx || (ctx->getType() != Element::map)) {
                 isc_throw(BadValue, "option user context '" << option_user_context_
                           << "' is no a JSON map");
