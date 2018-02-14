@@ -42,6 +42,68 @@ namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
 
+ptime late_exit_target_time_ = ptime(not_a_date_time);
+
+bool
+TestControl::hasLateExitCommenced() const {
+    return !late_exit_target_time_.is_not_a_date_time();
+}
+
+bool
+TestControl::lateExit() const {
+    if (haveAllPacketsBeenReceived()) {
+        return true;
+    }
+    const ptime now = microsec_clock::universal_time();
+    if (late_exit_target_time_.is_not_a_date_time()) {
+        CommandOptions& options = CommandOptions::instance();
+        late_exit_target_time_ =
+            now + time_duration(microseconds(options.getLateExitDelay()));
+    }
+    if (late_exit_target_time_ <= now) {
+        return true;
+    }
+    return false;
+}
+
+bool
+TestControl::haveAllPacketsBeenReceived() const {
+    const CommandOptions& options = CommandOptions::instance();
+    const uint8_t& ipversion = options.getIpVersion();
+    const std::vector<int>& num_request = options.getNumRequests();
+    const size_t& num_request_size = num_request.size();
+
+    if (num_request_size == 0) {
+        return false;
+    }
+
+    const uint32_t& request_count_DO_SA = num_request[0];
+    uint32_t request_count_RA_RR;
+    if (num_request_size >= 2) {
+        request_count_RA_RR = num_request[1];
+    } else {
+        request_count_RA_RR = num_request[0];
+    }
+
+    if (ipversion == 4) {
+        if (stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) !=
+                request_count_DO_SA ||
+            stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_RA) !=
+                request_count_RA_RR) {
+            return false;
+        }
+    } else if (ipversion == 6) {
+        if (stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) !=
+                request_count_DO_SA ||
+            stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_RR) !=
+                request_count_RA_RR) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 TestControl::TestControlSocket::TestControlSocket(const int socket) :
     SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
     ifindex_(0), valid_(true) {
@@ -196,7 +258,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "reached test-period." << std::endl;
         }
-        return (true);
+        if (lateExit()) {
+            return true;
+        }
     }
 
     bool max_requests = false;
@@ -232,7 +296,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached max requests limit." << std::endl;
         }
-        return (true);
+        if (lateExit()) {
+            return true;
+        }
     }
 
     // Check if we reached maximum number of drops of OFFER/ADVERTISE packets.
@@ -268,7 +334,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum drops number." << std::endl;
         }
-        return (true);
+        if (lateExit()) {
+            return true;
+        }
     }
 
     // Check if we reached maximum drops percentage of OFFER/ADVERTISE packets.
@@ -313,7 +381,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum percentage of drops." << std::endl;
         }
-        return (true);
+        if (lateExit()) {
+            return true;
+        }
     }
     return (false);
 }
@@ -1485,8 +1555,10 @@ TestControl::run() {
             break;
         }
 
-        // Initiate new DHCP packet exchanges.
-        sendPackets(socket, packets_due);
+        if (!hasLateExitCommenced()) {
+            // Initiate new DHCP packet exchanges.
+            sendPackets(socket, packets_due);
+        }
 
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
@@ -2265,5 +2337,5 @@ TestControl::testDiags(const char diag) const {
     return (false);
 }
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc
