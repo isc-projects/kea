@@ -1,10 +1,15 @@
+1359.	[func]		razvan, andrei, tomek
+	Support for Google Benchmark has been added. To compile
+	benchmarking support, please use --with-benchmark option.
+	(Github 36, git tbd)
+
 1358.	[build,bug]	fdupont
 	Cassandra build fixes for macOS.
-	(Trac #5494, git xxx)
+	(Trac #5494, git cb0d735628aefd6bca2acc11b73d1f66b45d1c40)
 
 1357.	[bug]		rcgoodfellow
-	Fixed bug in kea-admon causing error on lease-dump.
-	(github #61, git xxx)
+	Fixed bug in kea-admin causing error on lease-dump.
+	(github #61, git 2c9454ec56edc8f3cff8a23329f53ced0d172280)
 
 1356.	[func]		andreipavelQ,tomek
 	The logging configuration is now applied early, which helps

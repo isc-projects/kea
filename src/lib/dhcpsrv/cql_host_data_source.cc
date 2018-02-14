@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -159,8 +160,7 @@ public:
     /// @param statement_tag prepared statement being executed; defaults to an
     ///     invalid statement
     virtual void
-    createBindForSelect(AnyArray& data,
-                        StatementTag statement_tag = NULL) override;
+    createBindForSelect(AnyArray& data, StatementTag statement_tag = NULL) override;
 
     /// @brief Binds @ref Host to data array to send data to the Cassandra
     ///     database.
