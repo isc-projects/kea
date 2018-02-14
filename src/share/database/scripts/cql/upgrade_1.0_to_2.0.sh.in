@@ -63,9 +63,9 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ip
 CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
 CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
---
--- Table structure for table host_identifier_type.
---
+-- -----------------------------------------------------
+-- Table \`host_identifier_type\`
+-- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS host_identifier_type (
     type int,
@@ -80,9 +80,9 @@ INSERT INTO host_identifier_type (type, name) VALUES (2, 'circuit-id');
 INSERT INTO host_identifier_type (type, name) VALUES (3, 'client-id');
 INSERT INTO host_identifier_type (type, name) VALUES (4, 'flex-id');
 
---
--- Table structure for table dhcp_option_scope.
---
+-- -----------------------------------------------------
+-- Table \`dhcp_option_scope\`
+-- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS dhcp_option_scope (
   scope_id int,

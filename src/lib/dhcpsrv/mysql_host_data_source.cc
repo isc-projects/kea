@@ -2716,7 +2716,7 @@ ConstHostCollection
 MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr,
                             const DuidPtr& duid) const {
 
-    if (duid){
+    if (duid) {
         return (getAll(Host::IDENT_DUID, &duid->getDuid()[0],
                        duid->getDuid().size()));
 
