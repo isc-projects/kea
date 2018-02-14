@@ -74,7 +74,8 @@
             <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">report</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-T <replaceable class="parameter">template-file</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-v</option></arg>
-            <arg choice="opt" rep="norepeat"><option>-W <replaceable class="parameter">wrapped</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-W <replaceable class="parameter">exit-wait-time</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-w <replaceable class="parameter">wrapped</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">diagnostic-selector</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-X <replaceable class="parameter">xid-offset</replaceable></option></arg>
             <arg choice="opt" rep="norepeat">server</arg>
@@ -481,6 +482,19 @@
                 <listitem>
                     <para>
                         Print the version of this program.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-W <replaceable class="parameter">exit-wait-time</replaceable></option></term>
+                <listitem>
+                  <para>
+                    Specifies exit-wait-time parameter, that makes perfdhcp wait
+                    for exit-wait-time us after an exit condition has been met
+                    to receive all packets without sending any new
+                    packets. Expressed in microseconds. If not specified, 0 is
+                    used (i.e. exit immediately after exit conditions are met).
                     </para>
                 </listitem>
             </varlistentry>
