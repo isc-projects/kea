@@ -1,8 +1,5 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +8,7 @@
 
 <refentry>
 
-  <refentryinfo>
+  <info>
     <productname>ISC Kea</productname>
     <date>Oct. 28, 2017</date>
     <edition>1.3.0</edition>
@@ -22,10 +19,8 @@
         Wlodek Wencel and Shawn Routhier.  That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
-        contributors, see AUTHORS file.</contrib>
-      <orgname>Internet Systems Consortium, Inc.</orgname>
-    </author>
-  </refentryinfo>
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
 
   <refmeta>
     <refentrytitle>kea-shell</refentrytitle>
@@ -46,16 +41,16 @@
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>kea-shell</command>
-      <arg><option>-h</option></arg>
-      <arg><option>-v</option></arg>
-      <arg><option>--host</option></arg>
-      <arg><option>--port</option></arg>
-      <arg><option>--path</option></arg>
-      <arg><option>--timeout</option></arg>
-      <arg><option>--service</option></arg>
-      <arg><option>command</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--host</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--port</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--path</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--timeout</option></arg>
+      <arg choice="opt" rep="norepeat"><option>--service</option></arg>
+      <arg choice="opt" rep="norepeat"><option>command</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -240,8 +235,4 @@
     </para>
   </refsect1>
 
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+</refentry>

@@ -1,12 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-
-  <chapter id="hooks-libraries">
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
     <title>Hooks Libraries</title>
-    <section id="hooks-libraries-introduction">
+    <section xml:id="hooks-libraries-introduction">
       <title>Introduction</title>
       <para>
       Although Kea offers a lot of flexibility, there may be cases where
@@ -35,8 +37,8 @@
       <para>
       The next section describes how to configure hooks libraries. If you
       are interested in writing your own hooks library, information can be
-      found in the <ulink url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
-      Developer's Guide</ulink>.
+      found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
+      Developer's Guide</link>.
       </para>
     </section> <!-- end Introduction -->
     <section>
@@ -110,7 +112,7 @@
 
       <para>
       Notes:
-        <itemizedlist mark='bullet'>
+        <itemizedlist mark="bullet">
           <listitem><para>
           The full path to each library should be given.
           </para></listitem>
@@ -164,12 +166,12 @@
 
       <para>Currently the following libraries are available or planned from ISC:
 
-        <table frame="all" id="hook-libs">
+        <table frame="all" xml:id="hook-libs">
           <title>List of available hooks libraries</title>
-          <tgroup cols='3'>
-          <colspec colname='name' />
-          <colspec colname='avail' />
-          <colspec colname='description' />
+          <tgroup cols="3">
+          <colspec colname="name"/>
+          <colspec colname="avail"/>
+          <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -286,8 +288,7 @@
         ISC hopes to see more hooks libraries become available as time
         progresses, both developed internally and externally. Since
         this list may evolve dynamically, we decided to keep it on a
-        wiki page, available at this link: <ulink
-        url="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</ulink>.
+        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</link>.
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
@@ -379,12 +380,10 @@ and may have the zero or more of the following entries:
         </para>
 
         <para>As with any other hooks libraries provided by ISC, internals of the
-        user_chk code are well documented. You can take a look at the  <ulink
-        url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</ulink>
+        user_chk code are well documented. You can take a look at the  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</link>
         that discusses how the code works internally. That, together with
-        our general entries in <ulink
-        url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
-        Framework section</ulink> should give you some pointers how to extend
+        our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
+        Framework section</link> should give you some pointers how to extend
         this library and perhaps even write your own from scratch.</para>
 
       </section>
@@ -421,7 +420,7 @@ and may have the zero or more of the following entries:
 path/base-name.CCYYMMDD.txt
 </screen>
           <para>
-          The &quot;path&quot; and &quot;base-name&quot; are supplied in the
+          The "path" and "base-name" are supplied in the
           configuration as described below see
           <xref linkend="forensic-log-configuration"/>.  The next part of the name is
           the date the log file was started, with four digits for year, two digits
@@ -456,7 +455,7 @@ address duration device-id {client-info} {relay-info}
             <listitem><para>
             duration - the lease lifetime expressed in days (if present),
             hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
-            denoted with the text &quot;infinite duration&quot;.
+            denoted with the text "infinite duration".
             </para></listitem>
             <listitem><para>
             device-id - the client's hardware address shown as numerical type
@@ -647,7 +646,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
 </screen>
         </para>
         </section>
-        <section id="forensic-log-configuration">
+        <section xml:id="forensic-log-configuration">
         <title>Configuring the Forensic Log Hooks</title>
           <para>
           To use this functionality the hook library must be included in the
@@ -655,7 +654,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           library is installed alongside the Kea libraries in
           <filename>[kea-install-dir]/lib</filename> where
           <filename>kea-install-dir</filename> is determined by the
-          &quot;--prefix&quot; option of the configure script.  It defaults to
+          "--prefix" option of the configure script.  It defaults to
           <filename>/usr/local</filename>.  Assuming the
           default value then, configuring kea-dhcp4 to load the legal_log
           library could be done with the following Kea4 configuration:
@@ -762,7 +761,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         </section>
       </section>
 
-      <section id="flex-id">
+      <section xml:id="flex-id">
         <title>flex_id: Flexible Identifiers for Host Reservations</title>
         <para>
           This section describes a hook application dedicated to generate
@@ -781,8 +780,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         support contract.</para>
 
         <para>The library allows for defining an expression, using notation
-        initially used for client classification only. See <xref
-        linkend="classification-using-expressions" /> for detailed description
+        initially used for client classification only. See <xref linkend="classification-using-expressions"/> for detailed description
         of the syntax available. One notable difference is that for client
         classification the expression currently has to evaluate to either true
         or false, while the flexible identifier expression is expected to
@@ -999,7 +997,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         </para>
       </section>
 
-      <section id="host-cmds">
+      <section xml:id="host-cmds">
         <title>host_cmds: Host Commands</title>
         <para>
           This section describes a hook application that offers a number of new
@@ -1028,8 +1026,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           (currently these are reservation-add and reservation-del, but this
           rule applies to other commands that may be implemented in the future),
           hosts database must be specified (see hosts-database description in
-          <xref linkend="hosts-database-configuration4"/> and <xref
-          linkend="hosts-database-configuration6"/>) and it must not operate in
+          <xref linkend="hosts-database-configuration4"/> and <xref linkend="hosts-database-configuration6"/>) and it must not operate in
           read-only mode. If the hosts-database is not specified or is running
           in read-only mode, the host_cmds library will load, but any attempts
           to use reservation-add or reservation-del will fail.
@@ -1038,8 +1035,8 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         <para>
           Additional host reservation commands are planned in the future. For
           a description of envisaged commands, see
-<ulink url="http://kea.isc.org/wiki/ControlAPIRequirements">Control API
-Requirements </ulink> document.</para>
+<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/ControlAPIRequirements">Control API
+Requirements </link> document.</para>
 
         <para>
           All commands are using JSON syntax. They can be issued either using
@@ -1070,8 +1067,7 @@ Requirements </ulink> document.</para>
           takes a set of arguments that vary depending on the nature of the host
           reservation. Any parameters allowed in the configuration file that
           pertain to host reservation are permitted here. For details regarding
-          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and <xref
-          linkend="host-reservation-v6"/>. There is one notable addition. A
+          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and <xref linkend="host-reservation-v6"/>. There is one notable addition. A
           <command>subnet-id</command> must be specified.  This parameter is
           mandatory, because reservations specified in the configuration file
           are always defined within a subnet, so the subnet they belong to is
@@ -1303,7 +1299,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
       <!-- === lease_cmds ================================================== -->
       <!-- ================================================================= -->
 
-      <section id="lease-cmds">
+      <section xml:id="lease-cmds">
         <title>lease_cmds: Lease Commands</title>
         <para>
           This section describes the hook library that offers a number of new
@@ -1438,7 +1434,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
 
 <command>lease6-add</command> can be also used to add leases for IPv6
 prefixes. In this case there are two parameters that must be
-specified: type (set to value of &quot;IA_PD&quot;) and a prefix
+specified: type (set to value of "IA_PD") and a prefix
 length. The actual prefix is set using ip-address field. For example,
 to configure a lease for prefix 2001:db8:abcd::/48, the following
 command can be used:
@@ -1873,7 +1869,7 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
       </section>
     </section>
 
-      <section id="subnet-cmds">
+      <section xml:id="subnet-cmds">
         <title>subnet_cmds: Subnet Commands</title>
         <para>
           This section describes a hook application that offers a number of new
@@ -1892,7 +1888,7 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
         support contract.</para>
 
         <para>The following commands are currently supported:
-        <itemizedlist mark='bullet'>
+        <itemizedlist mark="bullet">
           <listitem>
             <simpara><command>subnet4-list/subnet6-list</command>: lists all configured subnets
             </simpara>
@@ -2697,7 +2693,7 @@ both the command and the response.
 
 
 
-    <section id="user-context">
+    <section xml:id="user-context">
       <title>User contexts</title>
       <para>Hook libraries can have their own configuration parameters. That is
       convenient if the parameter applies to the whole library. However,
@@ -2736,4 +2732,4 @@ both the command and the response.
 
 
 
-   </chapter> <!-- hooks-libraries -->
+   </chapter>
