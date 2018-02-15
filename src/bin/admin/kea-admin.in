@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -627,7 +627,7 @@ mysql_dump() {
 ### Functions used for dump
 pgsql_dump() {
     # Check the lease type was given
-    if [ $dump_type -eq o ]; then
+    if [ $dump_type -eq 0 ]; then
         log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
         usage
         exit 1
@@ -697,11 +697,11 @@ cql_dump() {
     fi
 
     # Parse and display header.
-    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/\s*//g' | sed -e 's/|/,/g' > $dump_file
+    echo "$result" | head -n 2 | tail -n 1 | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' > $dump_file
 
     # Parse and display contents - done separately from header to allow sorting
-    # by address.
-    echo "$result" | tail -n +4 | head -n -2 | sed -e 's/\s*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
+    # by address. awk script replaces head -n -2 which is not portable.
+    echo "$result" | tail -n +4 | awk 'n>=2 { print a[n%2] } { a[n%2]=$0; n=n+1 }' | sed -e 's/[[:space:]]*//g' | sed -e 's/|/,/g' | sort -r >> $dump_file
 
     echo lease$dump_type successfully dumped to $dump_file
     exit 0

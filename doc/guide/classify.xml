@@ -1,10 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-<chapter id="classify">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="classify">
   <title>Client Classification</title>
 
   <section>
@@ -102,7 +105,7 @@
       </note>
   </section>
 
-  <section id="classification-using-host-reservations">
+  <section xml:id="classification-using-host-reservations">
     <title>Using Static Host Reservations In Classification</title>
     <para>Classes can be statically assigned to the clients using techniques described
     in <xref linkend="reservation4-client-classes"/> and
@@ -110,29 +113,29 @@
     </para>
   </section>
 
-  <section id="classification-using-vendor">
+  <section xml:id="classification-using-vendor">
     <title>Using Vendor Class Information In Classification</title>
       <para>
       The server checks whether an incoming DHCPv4 packet includes
       the vendor class identifier option (60) or an incoming DHCPv6 packet
       includes the vendor class option (16). If it does, the content of that
-      option is prepended with &quot;VENDOR_CLASS_&quot; and the result is interpreted
+      option is prepended with "VENDOR_CLASS_" and the result is interpreted
       as a class. For example, modern cable modems will send this option with
-      value &quot;docsis3.0&quot; and so the packet will belong to
-      class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      value "docsis3.0" and so the packet will belong to
+      class "VENDOR_CLASS_docsis3.0".
       </para>
   </section>
 
-  <section id="classification-using-expressions">
+  <section xml:id="classification-using-expressions">
     <title>Using Expressions In Classification</title>
       <para>
       The expression portion of classification contains operators and values.
       All values are currently strings and operators take a string or strings and
       return another string. When all the operations have completed
-      the result should be a value of &quot;true&quot; or &quot;false&quot;.
+      the result should be a value of "true" or "false".
       The packet belongs to
       the class (and the class name is added to the list of classes) if the result
-      is &quot;true&quot;. Expressions are written in standard format and can be nested.
+      is "true". Expressions are written in standard format and can be nested.
       </para>
 
       <para>
@@ -159,12 +162,12 @@
       </para>
 
       <para>
-        <table frame="all" id="classification-values-list">
+        <table frame="all" xml:id="classification-values-list">
           <title>List of Classification Values</title>
-          <tgroup cols='3'>
-          <colspec colname='name' />
-          <colspec colname='example' />
-          <colspec colname='description' />
+          <tgroup cols="3">
+          <colspec colname="name"/>
+          <colspec colname="example"/>
+          <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -199,7 +202,7 @@
               <entry>'123'</entry>
               <entry>A 32 bit unsigned integer value</entry>
             </row>
-            <row></row>
+            <row/>
             <row>
               <entry>Binary content of the option</entry>
               <entry>option[123].hex</entry>
@@ -437,9 +440,9 @@
       <itemizedlist>
 
       <listitem><para>
-      Hexadecimal strings are converted into a string as expected.  The starting &quot;0X&quot; or
-      &quot;0x&quot; is removed and if the string is an odd number of characters a
-      &quot;0&quot; is prepended to it.
+      Hexadecimal strings are converted into a string as expected.  The starting "0X" or
+      "0x" is removed and if the string is an odd number of characters a
+      "0" is prepended to it.
       </para></listitem>
 
       <listitem><para>
@@ -520,14 +523,14 @@
       <listitem><para>
       Vendor option means Vendor-Identifying Vendor-specific Information
       option in DHCPv4 (code 125, see
-      <ulink url="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</ulink>) and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</link>) and
       Vendor-specific Information Option in DHCPv6 (code 17, defined in
-      <ulink url="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
-      RFC 3315</ulink>). Vendor class option means Vendor-Identifying Vendor
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
+      RFC 3315</link>). Vendor class option means Vendor-Identifying Vendor
       Class Option in DHCPv4 (code 124, see
-      <ulink url="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</ulink>) in DHCPv4 and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</link>) in DHCPv4 and
       Class Option in DHCPv6 (code 16, see
-      <ulink url="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</ulink>).
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</link>).
       Vendor options may
       have sub-options that are referenced by their codes. Vendor class
       options do not have sub-options, but rather data chunks, which are
@@ -545,8 +548,8 @@
       accessed using option[60] expression.</para></listitem>
 
       <listitem><para>
-      <ulink url="http://tools.ietf.org/html/rfc3925">RFC3925</ulink> and
-      <ulink url="http://tools.ietf.org/html/rfc3315">RFC3315</ulink>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925">RFC3925</link> and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC3315</link>
       allow for multiple instances of vendor options
       to appear in a single message. The client classification code currently
       examines the first instance if more than one appear. For vendor.enterprise
@@ -558,12 +561,12 @@
       </itemizedlist>
 
       <para>
-        <table frame="all" id="classification-expressions-list">
+        <table frame="all" xml:id="classification-expressions-list">
           <title>List of Classification Expressions</title>
-          <tgroup cols='3'>
-          <colspec colname='name' />
-          <colspec colname='example' />
-          <colspec colname='description' />
+          <tgroup cols="3">
+          <colspec colname="name"/>
+          <colspec colname="example"/>
+          <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -641,11 +644,10 @@ concatenation of the strings</entry></row>
     The expression for each class is executed on each packet received.
     If the expressions are overly complex, the time taken to execute
     them may impact the performance of the server. If you need
-    complex or time consuming expressions you should write a <link
-    linkend='hooks-libraries'>hook</link> to perform the necessary work.
+    complex or time consuming expressions you should write a <link linkend="hooks-libraries">hook</link> to perform the necessary work.
   </para> </note>
 
-  <section id="classification-configuring">
+  <section xml:id="classification-configuring">
     <title>Configuring Classes</title>
       <para>
       A class contains three items: a name, a test expression and option data.
@@ -665,9 +667,9 @@ concatenation of the strings</entry></row>
       </para>
 
       <para>
-      In the following example the class named &quot;Client_foo&quot; is defined.
+      In the following example the class named "Client_foo" is defined.
       It is comprised of all clients whose client ids (option 61) start with the
-      string &quot;foo&quot;. Members of this class will be given 192.0.2.1 and
+      string "foo". Members of this class will be given 192.0.2.1 and
       192.0.2.2 as their domain name servers.
 
         <screen>
@@ -694,7 +696,7 @@ concatenation of the strings</entry></row>
 
       <para>
       This example shows a client class being defined for use by the DHCPv6 server.
-      In it the class named &quot;Client_enterprise&quot; is defined.  It is comprised
+      In it the class named "Client_enterprise" is defined.  It is comprised
       of all clients who's client identifiers start with the given hex string (which
       would indicate a DUID based on an enterprise id of 0xAABBCCDD). Members of this
       class will be given an 2001:db8:0::1 and 2001:db8:2::1 as their domain name servers.
@@ -721,7 +723,7 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
-  <section id="classification-subnets">
+  <section xml:id="classification-subnets">
     <title>Configuring Subnets With Class Information</title>
       <para>
         In certain cases it beneficial to restrict access to certain subnets
@@ -901,7 +903,7 @@ concatenation of the strings</entry></row>
 
       <para>
       When supplying options, options defined as part of the class definition
-      are considered &quot;class globals&quot;.  They will override any global options that
+      are considered "class globals".  They will override any global options that
       may be defined and in turn will be overridden by any options defined for an
       individual subnet.
       </para>
@@ -938,7 +940,7 @@ concatenation of the strings</entry></row>
      <para>
      In order to understand the logging statements one must understand a
      bit about how expressions are evaluated, for a more complete description
-     refer to the design document at <ulink url="http://kea.isc.org/wiki/KeaDesigns"/>.
+     refer to the design document at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/KeaDesigns">http://kea.isc.org/wiki/KeaDesigns</uri>.
      In brief there are two structures used during the evaluation of an expression:
      a list of tokens which represent the expressions and a value stack which
      represents the values being manipulated.
