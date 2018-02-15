@@ -260,7 +260,7 @@ INSERT INTO host_identifier_type (type, name) VALUES (4, 'flex-id');
 CREATE TABLE IF NOT EXISTS dhcp_option_scope (
   scope_id int,
   scope_name varchar,
-  PRIMARY KEY ((scope_name))
+  PRIMARY KEY ((scope_id))
 );
 
 INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (0, 'global');
