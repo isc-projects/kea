@@ -144,23 +144,23 @@ cql_lease4_dump_test() {
     assert_eq 0 $? "kea-admin lease-init cql failed, expected exit code: %d, actual: %d"
 
     # Insert the reference record.
-    # -1073741302 corresponds to 192.0.2.10
-    # -1073741301 corresponds to 192.0.2.11
-    # -1073741300 corresponds to 192.0.2.12
+    # 3221225994 corresponds to 192.0.2.10
+    # 3221225995 corresponds to 192.0.2.11
+    # 3221225996 corresponds to 192.0.2.12
     # 1430694930 corresponds to 2015-04-04 01:15:30
     # 1433464245 corresponds to 2015-05-05 02:30:45
     # 1436173267 corresponds to 2015-06-06 11:01:07
     insert_cql="\
 INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id,\
  fqdn_fwd, fqdn_rev, hostname, state)\
- VALUES(-1073741302,textAsBlob('20'),textAsBlob('30'),40,1430694930,50,true,true,\
+ VALUES(3221225994,textAsBlob('20'),textAsBlob('30'),40,1430694930,50,true,true,\
  'one.example.com', 0);\
 INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id,\
  fqdn_fwd, fqdn_rev, hostname, state)\
- VALUES(-1073741301,NULL,textAsBlob('123'),40,1433464245,50,true,true,'', 1);\
+ VALUES(3221225995,NULL,textAsBlob('123'),40,1433464245,50,true,true,'', 1);\
 INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id,\
  fqdn_fwd, fqdn_rev, hostname, state)\
- VALUES(-1073741300,textAsBlob('22'),NULL,40,1436173267,50,true,true,\
+ VALUES(3221225996,textAsBlob('22'),NULL,40,1436173267,50,true,true,\
  'three.example.com', 2);"
 
     cql_execute "$insert_cql"

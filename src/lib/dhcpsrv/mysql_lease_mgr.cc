@@ -197,7 +197,8 @@ tagged_statements = { {
     {MySqlLeaseMgr::INSERT_LEASE4,
                     "INSERT INTO lease4(address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
-                        "fqdn_fwd, fqdn_rev, hostname, state) "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state) "
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::INSERT_LEASE6,
                     "INSERT INTO lease6(address, duid, valid_lifetime, "
@@ -211,7 +212,8 @@ tagged_statements = { {
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
                         "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, "
-                        "hostname = ?, state = ? "
+                        "hostname = ?, "
+                        "state = ? "
                             "WHERE address = ?"},
     {MySqlLeaseMgr::UPDATE_LEASE6,
                     "UPDATE lease6 SET address = ?, duid = ?, "
@@ -471,6 +473,7 @@ public:
             bind_[9].is_unsigned = MLM_TRUE;
             // bind_[9].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
+
             // Add the error flags
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
@@ -623,7 +626,10 @@ public:
                                      client_id_buffer_, client_id_length_,
                                      valid_lifetime_, 0, 0, cltt, subnet_id_,
                                      fqdn_fwd_, fqdn_rev_, hostname));
+
+        // Set state.
         lease->state_ = state_;
+
         return (lease);
     }
 
@@ -648,8 +654,8 @@ private:
     // Note: Arrays are declared fixed length for speed of creation
     uint32_t        addr4_;             ///< IPv4 address
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
-    std::string     columns_[LEASE_COLUMNS];///< Column names
-    my_bool         error_[LEASE_COLUMNS];  ///< Error array
+    std::string     columns_[LEASE_COLUMNS]; ///< Column names
+    my_bool         error_[LEASE_COLUMNS]; ///< Error array
     std::vector<uint8_t> hwaddr_;       ///< Hardware address
     uint8_t         hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
                                         ///< Hardware address buffer
@@ -673,9 +679,7 @@ private:
                                         ///< Client hostname
     unsigned long   hostname_length_;   ///< Client hostname length
     uint32_t        state_;             ///< Lease state
-
 };
-
 
 
 /// @brief Exchange MySQL and Lease6 Data
@@ -698,7 +702,7 @@ class MySqlLease6Exchange : public MySqlLeaseExchange {
 public:
     /// @brief Constructor
     ///
-    /// The initialization of the variables here is nonly to satisfy cppcheck -
+    /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
     MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
                             iaid_(0), lease_type_(0), prefixlen_(0),
@@ -981,7 +985,7 @@ public:
         // code that explicitly sets is_null is there, but is commented out.
         memset(bind_, 0, sizeof(bind_));
 
-        // address:  varchar(39)
+        // address: varchar(39)
         // A Lease6_ address has a maximum of 39 characters.  The array is
         // one byte longer than this to guarantee that we can always null
         // terminate it whatever is returned.
@@ -1100,6 +1104,7 @@ public:
         bind_[15].is_unsigned = MLM_TRUE;
         // bind_[15].is_null = &MLM_FALSE; // commented out for performance
                                            // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
@@ -1202,11 +1207,11 @@ private:
     // schema.
     // Note: arrays are declared fixed length for speed of creation
     std::string     addr6_;             ///< String form of address
-    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];  ///< Character
+    char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1]; ///< Character
                                         ///< array form of V6 address
     unsigned long   addr6_length_;      ///< Length of the address
     MYSQL_BIND      bind_[LEASE_COLUMNS]; ///< Bind array
-    std::string     columns_[LEASE_COLUMNS];///< Column names
+    std::string     columns_[LEASE_COLUMNS]; ///< Column names
     std::vector<uint8_t> duid_;         ///< Client identification
     uint8_t         duid_buffer_[DUID::MAX_DUID_LEN]; ///< Buffer form of DUID
     unsigned long   duid_length_;       ///< Length of the DUID
@@ -1323,7 +1328,6 @@ public:
         conn_.checkError(status, statement_index_, "results storage failed");
     }
 
-
     /// @brief Fetches the next row in the result set
     ///
     /// Once the internal result set has been populated by invoking the
@@ -1403,7 +1407,6 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     exchange4_.reset(new MySqlLease4Exchange());
     exchange6_.reset(new MySqlLease6Exchange());
 }
-
 
 MySqlLeaseMgr::~MySqlLeaseMgr() {
     // There is no need to close the database in this destructor: it is
@@ -1562,7 +1565,6 @@ void MySqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     }
 }
 
-
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -1581,7 +1583,6 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
     }
 }
 
-
 void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
@@ -1599,7 +1600,6 @@ void MySqlLeaseMgr::getLease(StatementIndex stindex, MYSQL_BIND* bind,
         result = *collection.begin();
     }
 }
-
 
 // Basic lease access methods.  Obtain leases from the database using various
 // criteria.
@@ -1624,7 +1624,6 @@ MySqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
     return (result);
 }
-
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
@@ -1654,7 +1653,6 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
     return (result);
 }
-
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
@@ -1689,7 +1687,6 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
     return (result);
 }
-
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
@@ -1814,7 +1811,6 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
 
     return (result);
 }
-
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
@@ -1959,8 +1955,6 @@ MySqlLeaseMgr::getExpiredLeasesCommon(LeaseCollection& expired_leases,
     getLeaseCollection(statement_index, inbind, expired_leases);
 }
 
-
-
 // Update lease methods.  These comprise common code that handles the actual
 // update, and type-specific methods that set up the parameters for the prepared
 // statement depending on the type of lease.
@@ -1992,7 +1986,6 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
     }
 }
 
-
 void
 MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
@@ -2016,7 +2009,6 @@ MySqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Drop to common update code
     updateLeaseCommon(stindex, &bind[0], lease);
 }
-
 
 void
 MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
@@ -2170,12 +2162,10 @@ MySqlLeaseMgr::getName() const {
     return (name);
 }
 
-
 std::string
 MySqlLeaseMgr::getDescription() const {
     return (std::string("MySQL Database"));
 }
-
 
 std::pair<uint32_t, uint32_t>
 MySqlLeaseMgr::getVersion() const {
@@ -2252,7 +2242,6 @@ MySqlLeaseMgr::commit() {
         isc_throw(DbOperationError, "commit failed: " << mysql_error(conn_.mysql_));
     }
 }
-
 
 void
 MySqlLeaseMgr::rollback() {

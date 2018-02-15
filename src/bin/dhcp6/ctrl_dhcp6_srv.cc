@@ -580,8 +580,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             return (answer);
         }
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Failed to process configuration:"
-                                          + string(ex.what())));
+        return (isc::config::createAnswer(1, "Failed to process configuration:" +
+                                          string(ex.what())));
     }
 
     // Re-open lease and host database with new parameters.
@@ -591,8 +591,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->createManagers();
 
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Unable to open database: "
-                                          + std::string(ex.what())));
+        return (isc::config::createAnswer(1, "Unable to open database: " +
+                                          std::string(ex.what())));
     }
 
     // Regenerate server identifier if needed.

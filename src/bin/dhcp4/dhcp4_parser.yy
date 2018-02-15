@@ -81,6 +81,10 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  TCP_NODELAY "tcp-nodelay"
+  RECONNECT_WAIT_TIME "reconnect-wait-time"
+  REQUEST_TIMEOUT "request-timeout"
+  TCP_KEEPALIVE "tcp-keepalive"
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
 
@@ -470,7 +474,6 @@ match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
     ctx.stack_.back()->set("match-client-id", match);
 };
 
-
 interfaces_config: INTERFACES_CONFIG {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces-config", i);
@@ -582,6 +585,10 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | tcp_nodelay
+                  | reconnect_wait_time
+                  | request_timeout
+                  | tcp_keepalive
                   | contact_points
                   | keyspace
                   | unknown_map_entry
@@ -657,6 +664,26 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
+tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-nodelay", n);
+};
+
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
+request_timeout: REQUEST_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("request-timeout", n);
+};
+
+tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-keepalive", n);
+};
+
 contact_points: CONTACT_POINTS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -672,7 +699,6 @@ keyspace: KEYSPACE {
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
 };
-
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -1826,7 +1852,7 @@ replace_client_name: REPLACE_CLIENT_NAME {
 
 replace_client_name_value:
     WHEN_PRESENT {
-      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
       }
   | NEVER {
       $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));

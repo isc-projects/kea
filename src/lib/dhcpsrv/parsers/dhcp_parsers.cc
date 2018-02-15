@@ -849,7 +849,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         OptionDataListParser opts_parser(AF_INET6);
         opts_parser.parse(options_, option_data);
     }
-                    
+
     ConstElementPtr user_context = pd_pool_->get("user-context");
     if (user_context) {
         user_context_ = user_context;
@@ -1000,7 +1000,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
            << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
 
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(output.str());
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET6).arg(output.str());
 
     // Create a new subnet.
     Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
@@ -1155,9 +1155,9 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
 
     std::string sender_ip_str = getString(client_config, "sender-ip");
 
-    uint32_t sender_port = getUint32(client_config, "sender-port"); 
+    uint32_t sender_port = getUint32(client_config, "sender-port");
 
-    uint32_t max_queue_size = getUint32(client_config, "max-queue-size"); 
+    uint32_t max_queue_size = getUint32(client_config, "max-queue-size");
 
     dhcp_ddns::NameChangeProtocol ncr_protocol =
         getProtocol(client_config, "ncr-protocol");
@@ -1186,7 +1186,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     if (client_config->contains("qualifying-suffix")) {
             qualifying_suffix = getString(client_config, "qualifying-suffix");
             found_qualifying_suffix = true;
-    }   
+    }
 
     IOAddress sender_ip(0);
     if (sender_ip_str.empty()) {
