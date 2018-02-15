@@ -61,7 +61,7 @@ CREATE TABLE lease6 (
     hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
--- Create search indexes for lease4 table
+-- Create search indexes for lease6 table
 -- index by iaid, subnet_id, and duid
 CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
