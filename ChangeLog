@@ -1,7 +1,13 @@
+1360.	[func]		razvan, andrei
+	A new parameter exit-wait-time has been added to perfdhcp. It is
+	now possible to tell perfdhcp to wait certain amount of time after
+	exit conditions are met before actuallying terminating.
+	(github #55, git 0cd1178ae092fa0c2f122d0e16fb673b4074a6e6)
+
 1359.	[func]		razvan, andrei, tomek
 	Support for Google Benchmark has been added. To compile
 	benchmarking support, please use --with-benchmark option.
-	(Github 36, git tbd)
+	(Github #36, git d6819971410b460d7742c762844e2e75ba580944)
 
 1358.	[build,bug]	fdupont
 	Cassandra build fixes for macOS.
