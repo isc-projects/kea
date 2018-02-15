@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/testutils/memory_host_data_source.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -17,122 +18,51 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
-// @brief Names of test backends
-enum Names { FOOBAR, FOO, BAR };
-
-// @brief Convert a name to a string
-string toString(Names name) {
-    switch (name) {
-    case FOOBAR:
-        return ("foobar");
-    case FOO:
-        return ("foo");
-    default:
-        return ("bar");
-    }
+// @brief Register memFactory 
+bool registerFactory() {
+    return (HostDataSourceFactory::registerFactory("mem", memFactory));
 }
 
-// A host data source
-template <Names NAME>
-class FakeHostDataSource : public BaseHostDataSource {
+// @brief Derive mem1 class
+class Mem1HostDataSource : public MemHostDataSource {
 public:
-    // @brief Constructor
-    FakeHostDataSource(const DatabaseConnection::ParameterMap&) { }
-
-    virtual ~FakeHostDataSource() { }
-
-    // The base class is abstract so we need to define methods
-
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr&, const DuidPtr&) const {
-        return (ConstHostCollection());
-    }
-
-    virtual ConstHostCollection
-    getAll(const Host::IdentifierType&, const uint8_t*, const size_t) const {
-        return (ConstHostCollection());
-    }
-
-    virtual ConstHostCollection
-    getAll4(const asiolink::IOAddress&) const {
-        return (ConstHostCollection());
-    }
-
-    virtual ConstHostPtr
-    get4(const SubnetID&, const HWAddrPtr&, const DuidPtr&) const {
-        return (ConstHostPtr());
-    }
-
-    virtual ConstHostPtr
-    get4(const SubnetID&, const Host::IdentifierType&,
-         const uint8_t*, const size_t) const {
-        return (ConstHostPtr());
-    }
-
-    virtual ConstHostPtr
-    get4(const SubnetID&, const asiolink::IOAddress&) const {
-        return (ConstHostPtr());
-    }
-
-    virtual ConstHostPtr
-    get6(const SubnetID&, const DuidPtr&, const HWAddrPtr&) const {
-        return (ConstHostPtr());
-    }
-
-    virtual ConstHostPtr
-    get6(const SubnetID&, const Host::IdentifierType&,
-         const uint8_t*, const size_t) const {
-        return (ConstHostPtr());
-    }
-
-    virtual ConstHostPtr
-    get6(const asiolink::IOAddress&, const uint8_t) const {
-        return (ConstHostPtr());
-    }
-
-    virtual ConstHostPtr
-    get6(const SubnetID&, const asiolink::IOAddress&) const {
-        return (ConstHostPtr());
-    }
-
-    virtual bool add(const HostPtr&) {
-        return (false);
-    }
-
-    virtual bool del(const SubnetID&, const asiolink::IOAddress&) {
-        return (false);
-    }
-
-    virtual bool del4(const SubnetID&, const Host::IdentifierType&,
-                      const uint8_t*, const size_t) {
-        return (false);
-    }
-
-    virtual bool del6(const SubnetID&, const Host::IdentifierType&,
-                      const uint8_t*, const size_t) {
-        return (false);
-    }
-
     virtual string getType() const {
-        return (toString(NAME));
+        return ("mem1");
     }
 };
 
-// @brief Factory function template
-template <Names NAME>
+// @brief Factory of mem1
 BaseHostDataSource*
-factory(const DatabaseConnection::ParameterMap& parameters) {
-    return (new FakeHostDataSource<NAME>(parameters));
+mem1Factory(const DatabaseConnection::ParameterMap&) {
+    return (new Mem1HostDataSource());
 }
 
-// @brief Register factory template
-template <Names NAME>
-bool registerFactory() {
-    return (HostDataSourceFactory::registerFactory(toString(NAME),
-                                                   factory<NAME>));
+// @brief Register mem1Factory
+bool registerFactory1() {
+    return (HostDataSourceFactory::registerFactory("mem1", mem1Factory));
+}
+
+// @brief Derive mem2 class
+class Mem2HostDataSource : public MemHostDataSource {
+public:
+    virtual string getType() const {
+        return ("mem2");
+    }
+};
+
+// @brief Factory of mem2
+BaseHostDataSource*
+mem2Factory(const DatabaseConnection::ParameterMap&) {
+    return (new Mem2HostDataSource());
+}
+
+// @brief Register mem2Factory
+bool registerFactory2() {
+    return (HostDataSourceFactory::registerFactory("mem2", mem2Factory));
 }
 
 // @brief Factory function returning 0
@@ -150,9 +80,9 @@ private:
     // @brief Cleans up after the test.
     virtual void TearDown() {
         sources_.clear();
-        HostDataSourceFactory::deregisterFactory("foobar");
-        HostDataSourceFactory::deregisterFactory("foo");
-        HostDataSourceFactory::deregisterFactory("bar");
+        HostDataSourceFactory::deregisterFactory("mem");
+        HostDataSourceFactory::deregisterFactory("mem1");
+        HostDataSourceFactory::deregisterFactory("mem2");
     }
 public:
     HostDataSourceList sources_;
@@ -160,89 +90,89 @@ public:
 
 // Verify a factory can be registered and only once.
 TEST_F(HostDataSourceFactoryTest, registerFactory) {
-    EXPECT_TRUE(registerFactory<Names::FOOBAR>());
+    EXPECT_TRUE(registerFactory());
 
     // Only once
-    EXPECT_FALSE(registerFactory<Names::FOOBAR>());
+    EXPECT_FALSE(registerFactory());
 }
 
 // Verify a factory can be registered and deregistered
 TEST_F(HostDataSourceFactoryTest, deregisterFactory) {
     // Does not exist at the beginning
-    EXPECT_FALSE(HostDataSourceFactory::deregisterFactory("foobar"));
+    EXPECT_FALSE(HostDataSourceFactory::deregisterFactory("mem"));
 
     // Register and deregister
-    EXPECT_TRUE(registerFactory<Names::FOOBAR>());
-    EXPECT_TRUE(HostDataSourceFactory::deregisterFactory("foobar"));
+    EXPECT_TRUE(registerFactory());
+    EXPECT_TRUE(HostDataSourceFactory::deregisterFactory("mem"));
 
     // No longer exists
-    EXPECT_FALSE(HostDataSourceFactory::deregisterFactory("foobar"));
+    EXPECT_FALSE(HostDataSourceFactory::deregisterFactory("mem"));
 }
 
 // Verify a registered factory can be called
 TEST_F(HostDataSourceFactoryTest, add) {
-    EXPECT_TRUE(registerFactory<Names::FOOBAR>());
-    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=foobar"));
+    EXPECT_TRUE(registerFactory());
+    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem"));
     ASSERT_EQ(1, sources_.size());
-    EXPECT_EQ("foobar", sources_[0]->getType());
+    EXPECT_EQ("mem", sources_[0]->getType());
 }
 
 // Verify that type is required
 TEST_F(HostDataSourceFactoryTest, notype) {
-    EXPECT_THROW(HostDataSourceFactory::add(sources_, "tp=foobar"),
+    EXPECT_THROW(HostDataSourceFactory::add(sources_, "tp=mem"),
                  InvalidParameter);
-    EXPECT_THROW(HostDataSourceFactory::add(sources_, "type=foobar"),
+    EXPECT_THROW(HostDataSourceFactory::add(sources_, "type=mem"),
                  InvalidType);
 }
 
 // Verify that factory must not return NULL
 TEST_F(HostDataSourceFactoryTest, null) {
-    EXPECT_TRUE(HostDataSourceFactory::registerFactory("foobar", factory0));
-    EXPECT_THROW(HostDataSourceFactory::add(sources_, "type=foobar"),
+    EXPECT_TRUE(HostDataSourceFactory::registerFactory("mem", factory0));
+    EXPECT_THROW(HostDataSourceFactory::add(sources_, "type=mem"),
                  Unexpected);
 }
 
 // Verify del class method
 TEST_F(HostDataSourceFactoryTest, del) {
     // No sources at the beginning
-    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "foobar"));
+    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem"));
 
-    // Add foobar
-    EXPECT_TRUE(registerFactory<Names::FOOBAR>());
-    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=foobar"));
+    // Add mem
+    EXPECT_TRUE(registerFactory());
+    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem"));
     ASSERT_EQ(1, sources_.size());
 
     // Delete another
     EXPECT_FALSE(HostDataSourceFactory::del(sources_, "another"));
 
-    // Delete foobar
-    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "foobar"));
+    // Delete mem
+    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem"));
 
-    // No longer foobar in sources
-    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "foobar"));
+    // No longer mem in sources
+    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem"));
 }
 
 // Verify add and del class method on multiple backends
 TEST_F(HostDataSourceFactoryTest, multiple) {
     // Add foo twice
-    EXPECT_TRUE(registerFactory<Names::FOO>());
-    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=foo"));
-    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=foo"));
+    EXPECT_TRUE(registerFactory1());
+    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem1"));
+    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem1"));
 
-    // Add bar once
-    EXPECT_TRUE(registerFactory<Names::BAR>());
-    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=bar"));
+    // Add mem2 once
+    EXPECT_TRUE(registerFactory2());
+    EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem2"));
 
     // Delete them
-    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "foo"));
-    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "bar"));
-    // Second instance of foo
-    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "foo"));
+    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));
+    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem2"));
+    // Second instance of mem1
+    EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));
 
     // No more sources
     EXPECT_EQ(0, sources_.size());
-    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "foo"));
-    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "bar"));
+    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem1"));
+    EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem2"));
 }
 
 }; // end of anonymous namespace
