@@ -21,6 +21,8 @@ DROP TABLE IF EXISTS lease_hwaddr_source;
 DROP TABLE IF EXISTS lease_state;
 DROP TABLE IF EXISTS schema_version;
 DROP TABLE IF EXISTS host_reservations;
+DROP TABLE IF EXISTS dhcp4_options;
+DROP TABLE IF EXISTS dhcp6_options;
 
 DROP INDEX IF EXISTS lease4index1;
 DROP INDEX IF EXISTS lease4index2;
