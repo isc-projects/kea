@@ -8,10 +8,10 @@
 #include <string>
 #include <dhcpsrv/testutils/pgsql_schema.h>
 
-#include <gtest/gtest.h>
 #include <libpq-fe.h>
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdlib.h>
 
@@ -30,13 +30,11 @@ validPgSQLConnectionString() {
 }
 
 void destroyPgSQLSchema(bool show_err) {
-    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_drop.pgsql",
-                   show_err);
+    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_drop.pgsql", show_err);
 }
 
 void createPgSQLSchema(bool show_err) {
-    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_create.pgsql",
-                   show_err);
+    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_create.pgsql", show_err);
 }
 
 void runPgSQLScript(const std::string& path, const std::string& script_name,
@@ -61,6 +59,6 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
     }
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

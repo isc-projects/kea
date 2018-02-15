@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,13 +13,10 @@
 
 #include <stdlib.h>
 
-#include <gtest/gtest.h>
-
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
-
-using namespace std;
 
 namespace isc {
 namespace dhcp {
@@ -27,7 +24,7 @@ namespace test {
 
 const char* CQL_VALID_TYPE = "type=cql";
 
-string
+std::string
 validCqlConnectionString() {
     return (connectionString(CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
                              VALID_PASSWORD));
@@ -36,7 +33,7 @@ validCqlConnectionString() {
 bool
 softWipeEnabled() {
     const char* const env = getenv("KEA_TEST_CASSANDRA_WIPE");
-    if (env && (string(env) == string("soft"))) {
+    if (env && (std::string(env) == std::string("soft"))) {
         return (true);
     }
 
