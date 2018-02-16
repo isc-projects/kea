@@ -20,6 +20,10 @@
 #include <dhcpsrv/testutils/pgsql_schema.h>
 #endif
 
+#if defined HAVE_CQL
+#include <dhcpsrv/testutils/cql_schema.h>
+#endif
+
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -489,7 +493,6 @@ protected:
 
     /// @brief Rollback and drop PostgreSQL schema after the test.
     virtual void TearDown();
-
 };
 
 void
@@ -552,4 +555,80 @@ TEST_F(PostgreSQLHostMgrTest, get6ByPrefix) {
 
 #endif
 
-} // end of anonymous namespace
+
+// The following tests require Cassandra enabled.
+#if defined HAVE_CQL
+
+/// @brief Test fixture class for validating @c HostMgr using
+/// CQL as alternate host data source.
+class CQLHostMgrTest : public HostMgrTest {
+protected:
+
+    /// @brief Build CQL schema for a test.
+    virtual void SetUp();
+
+    /// @brief Rollback and drop CQL schema after the test.
+    virtual void TearDown();
+};
+
+void
+CQLHostMgrTest::SetUp() {
+    HostMgrTest::SetUp();
+
+    // Ensure schema is the correct one.
+    test::destroyCqlSchema(false, true);
+    test::createCqlSchema(false, true);
+
+    // Connect to the database
+    try {
+        HostMgr::create(test::validCqlConnectionString());
+    } catch (...) {
+        std::cerr << "*** ERROR: unable to open database. The test\n"
+            "*** environment is broken and must be fixed before\n"
+            "*** the CQL tests will run correctly.\n"
+            "*** The reason for the problem is described in the\n"
+            "*** accompanying exception output.\n";
+        throw;
+    }
+}
+
+void
+CQLHostMgrTest::TearDown() {
+    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
+    HostDataSourceFactory::destroy();
+    test::destroyCqlSchema(false, true);
+}
+
+// This test verifies that reservations for a particular client can
+// be retrieved from the configuration file and a database simultaneously.
+TEST_F(CQLHostMgrTest, getAll) {
+    testGetAll(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that IPv4 reservations for a particular client can
+// be retrieved from the configuration file and a database simultaneously.
+TEST_F(CQLHostMgrTest, getAll4) {
+    testGetAll4(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the IPv4 reservation can be retrieved from a
+// database.
+TEST_F(CQLHostMgrTest, get4) {
+    testGet4(HostMgr::instance());
+}
+
+// This test verifies that the IPv6 reservation can be retrieved from a
+// database.
+TEST_F(CQLHostMgrTest, get6) {
+    testGet6(HostMgr::instance());
+}
+
+// This test verifies that the IPv6 prefix reservation can be retrieved
+// from a configuration file and a database.
+TEST_F(CQLHostMgrTest, get6ByPrefix) {
+    testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
+}
+
+#endif
+
+}  // namespace

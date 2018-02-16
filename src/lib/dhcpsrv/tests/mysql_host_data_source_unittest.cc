@@ -36,11 +36,8 @@ namespace {
 
 class MySqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    MySqlHostDataSourceTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyMySQLSchema();
         createMySQLSchema();
@@ -60,19 +57,30 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
-    /// @brief Destructor
-    ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
-    /// the database.  Then reopen it and delete everything created by the test.
-    virtual ~MySqlHostDataSourceTest() {
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
         try {
             hdsptr_->rollback();
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         HostDataSourceFactory::destroy();
-        hdsptr_.reset();
         destroyMySQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    MySqlHostDataSourceTest() {
+        initializeTest();
+    }
+
+    /// @brief Destructor
+    ///
+    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
+    /// the database.  Then reopen it and delete everything created by the test.
+    virtual ~MySqlHostDataSourceTest() {
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -102,8 +110,10 @@ public:
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";
+
         MySqlConnection conn(params);
         conn.openDatabase();
+
         int status = mysql_query(conn.mysql_, query.c_str());
         if (status !=0) {
             isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
@@ -174,12 +184,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
     EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
 
     // Check that wrong specification of backend throws an exception.
-    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
@@ -219,8 +229,6 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     // Tidy up after the test
     destroyMySQLSchema();
 }
-
-
 
 /// @brief Check conversion functions
 ///
@@ -263,6 +271,7 @@ TEST(MySqlConnection, checkTimeConversion) {
     EXPECT_EQ(cltt, converted_cltt);
 }
 
+// This test verifies that database backend can operate in Read-Only mode.
 TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
     testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
@@ -556,6 +565,7 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     params["password"] = "keatest";
     MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
+
     int status = mysql_query(conn.mysql_,
                              "DROP TABLE IF EXISTS ipv6_reservations");
     ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
@@ -628,4 +638,4 @@ TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
 
-}; // Of anonymous namespace
+}  // namespace
