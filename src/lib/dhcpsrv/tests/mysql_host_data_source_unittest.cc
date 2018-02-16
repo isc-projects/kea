@@ -12,7 +12,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
