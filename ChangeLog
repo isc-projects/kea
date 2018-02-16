@@ -1,3 +1,8 @@
+1361.	[func]		tmark
+	Added support for automatically recalculating lease statistics
+	to the CQL backend.
+	(Trac 5487, git c807388d581ee1c3e479324f3c399f27feba1c96)
+
 1360.	[func]		razvan, andrei
 	A new parameter exit-wait-time has been added to perfdhcp. It is
 	now possible to tell perfdhcp to wait certain amount of time after
