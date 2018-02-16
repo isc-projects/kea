@@ -1811,7 +1811,9 @@ TEST_F(DORAPgSQLTest, multiStageBoot) {
 
 #ifdef HAVE_CQL
 
-/// @brief Test fixture class for the test utilizing Cassandra database backend.
+// Starting tests which require Cassandra backend availability. Those tests
+// will not be executed if Kea has been compiled without the
+// --with-cql.
 class DORACQLTest : public DORATest {
 public:
     /// @brief Constructor.
