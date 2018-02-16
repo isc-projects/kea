@@ -12,9 +12,10 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 
-using namespace isc::dhcp;
-using namespace isc::dhcp::test;
 using namespace isc::dhcp::bench;
+using namespace isc::dhcp::test;
+using namespace isc::dhcp;
+using namespace std;
 
 namespace {
 
@@ -29,12 +30,12 @@ public:
         : io4_(""), io6_("") {
     }
 
-    /// @brief Prepares the benchmark to run.
+    /// @brief Setup routine.
     ///
     /// Removes any files left over from earlier test, destroys any existing
-    /// lease manager, and then starts a new memfile mease manager.
+    /// lease manager, and then starts a new memfile lease manager.
     /// The state parameter is ignored.
-    void SetUp(::benchmark::State const& ) override {
+    void SetUp(::benchmark::State const&) override {
 
         io4_ = LeaseFileIO(getLeaseFilePath("leasefile4_0.csv"));
         io6_ = LeaseFileIO(getLeaseFilePath("leasefile6_0.csv"));
@@ -114,7 +115,7 @@ public:
         }
     }
 
-    /// @brief Cleanup after a benchmark
+    /// @brief Cleans up after the test.
     ///
     /// Rolls back any uncommitted operation (really a no-op for memfile as it
     /// does not support transactions), then destroys the lease manager
@@ -270,6 +271,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State
         benchGetExpiredLeases6();
     }
 }
+
 
 /// The following macros define run parameters for previously defined
 /// memfile benchmarks.

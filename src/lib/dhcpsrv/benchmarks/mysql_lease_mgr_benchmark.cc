@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -88,8 +89,7 @@ BENCHMARK_DEFINE_F(MySqlLeaseMgrBenchmark, getLease4_address)(benchmark::State& 
     }
 }
 
-// Defines a benchmark that measures IPv4 leases retrieval by hardware address
-// and subnet-id.
+// Defines a benchmark that measures IPv4 leases retrieval by hardware address.
 BENCHMARK_DEFINE_F(MySqlLeaseMgrBenchmark, getLease4_hwaddr)(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
@@ -175,7 +175,7 @@ BENCHMARK_DEFINE_F(MySqlLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark::
 // Defines a benchmark that measures IPv6 leases retrieval by lease type, duid, iaid
 // and subnet-id.
 BENCHMARK_DEFINE_F(MySqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
-    (benchmark::State& state) {
+                  (benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts6(state, lease_count);
@@ -192,9 +192,9 @@ BENCHMARK_DEFINE_F(MySqlLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State& 
     }
 }
 
+
 /// The following macros define run parameters for previously defined
 /// MySQL benchmarks.
-
 
 /// A benchmark that measures IPv4 leases insertion.
 BENCHMARK_REGISTER_F(MySqlLeaseMgrBenchmark, insertLeases4)
