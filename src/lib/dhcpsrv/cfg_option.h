@@ -84,7 +84,7 @@ public:
     OptionDescriptor(const OptionDescriptor& desc)
         : option_(desc.option_), persistent_(desc.persistent_),
           formatted_value_(desc.formatted_value_) {
-        setContext(desc.user_context_);
+        setContext(desc.getContext());
     };
 
     /// @brief Checks if the one descriptor is equal to another.
