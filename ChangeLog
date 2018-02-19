@@ -2,7 +2,7 @@
 	Both DHCPv4 and DHCPv6 servers can now listen on loopback
 	interfaces. This capability requires setting socket type to UDP in
 	DHCPv4. Note the feature has not been thoroughly tested.
-	(Trac #5390, git xxx)
+	(Trac #5390, git f38cbd73581a7a0f8634a63cb17f9b60407e3acc)
 
 1362.	[func]		fdupont
 	Extended forensic (aka legal) logging with database capability.
