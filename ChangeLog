@@ -1,6 +1,6 @@
 1362.	[func]		fdupont
 	Extended forensic (aka legal) logging with database capability.
-	(Trac #5420, git xxx)
+	(Trac #5420, git 94bd3cc313e9f2a982ef8f8adf0cf44024c76499)
 
 1361.	[func]		tmark
 	Added support for automatically recalculating lease statistics
