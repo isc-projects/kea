@@ -1651,7 +1651,7 @@ CqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
     // Get the data.
     Lease4Collection result;
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
-    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4, data, result);
+    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_SUBID, data, result);
 
     return (result);
 }
@@ -1666,7 +1666,7 @@ CqlLeaseMgr::getLeases4() const {
     // Get the data.
     Lease4Collection result;
     std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
-    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_SUBID, data, result);
+    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4, data, result);
 
     return (result);
 }
