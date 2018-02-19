@@ -626,8 +626,11 @@ public:
         std::string hostname(hostname_buffer_,
                              hostname_buffer_ + hostname_length_);
 
-        // Recreate the hardware address.
-        HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_, HTYPE_ETHER));
+        /// Set hardware address if it was set
+        HWAddrPtr hwaddr;
+        if (hwaddr_null_ == MLM_FALSE) {
+            hwaddr.reset(new HWAddr(hwaddr_buffer_, hwaddr_length_, HTYPE_ETHER));
+        }
 
         // note that T1 and T2 are not stored
         Lease4Ptr lease(new Lease4(addr4_, hwaddr,
@@ -1764,7 +1767,7 @@ MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLeases4() const {
-   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET4);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET4);
 
     Lease4Collection result;
     getLeaseCollection(GET_LEASE4, 0, result);
