@@ -143,7 +143,7 @@ struct MySqlHostDataSourceInit {
 };
 
 // Database backend will be registered at object initialization
-MySqlHostDataSourceInit mysql_init;
+MySqlHostDataSourceInit mysql_init_;
 #endif
 
 #ifdef HAVE_PGSQL
@@ -168,7 +168,7 @@ struct PgSqlHostDataSourceInit {
 };
 
 // Database backend will be registered at object initialization
-PgSqlHostDataSourceInit mysql_init;
+PgSqlHostDataSourceInit pgsql_init_;
 #endif
 
 #ifdef HAVE_CQL
@@ -193,7 +193,7 @@ struct CqlHostDataSourceInit {
 };
 
 // Database backend will be registered at object initialization
-CqlHostDataSourceInit mysql_init;
+CqlHostDataSourceInit cql_init_;
 #endif
 
 } // end of anonymous namespace
