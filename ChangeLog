@@ -1,3 +1,9 @@
+1363.	[func]		fdupont
+	Both DHCPv4 and DHCPv6 servers can now listen on loopback
+	interfaces. This capability requires setting socket type to UDP in
+	DHCPv4. Note the feature has not been thoroughly tested.
+	(Trac #5390, git xxx)
+
 1362.	[func]		fdupont
 	Extended forensic (aka legal) logging with database capability.
 	(Trac #5420, git 94bd3cc313e9f2a982ef8f8adf0cf44024c76499)
