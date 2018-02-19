@@ -641,10 +641,7 @@ CqlLease4Exchange::retrieve() {
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
-        HWAddrPtr hwaddr;
-        if (hwaddr_.size()) {
-            hwaddr.reset(new HWAddr(hwaddr_, HTYPE_ETHER));
-        }
+        HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
 
@@ -1067,8 +1064,7 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
 
         // hwaddr_source: int
         if (lease_->hwaddr_) {
-            hwaddr_source_ =
-                static_cast<cass_int32_t>(lease_->hwaddr_->source_);
+            hwaddr_source_ = static_cast<cass_int32_t>(lease_->hwaddr_->source_);
         } else {
             hwaddr_source_ = 0;
         }
@@ -1201,8 +1197,7 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
 
         // hwaddr_source: int
         if (lease_->hwaddr_) {
-            hwaddr_source_ =
-                static_cast<cass_int32_t>(lease_->hwaddr_->source_);
+            hwaddr_source_ = static_cast<cass_int32_t>(lease_->hwaddr_->source_);
         } else {
             hwaddr_source_ = 0;
         }
