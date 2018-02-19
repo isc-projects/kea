@@ -171,7 +171,7 @@ CfgOption::mergeInternal(const OptionSpaceContainer<OptionContainer,
             // If there is no such option in the destination container,
             // add one.
             if (std::distance(range.first, range.second) == 0) {
-                dest_container.addItem(OptionDescriptor(src_opt), *it);
+                dest_container.addItem(OptionDescriptor(*src_opt), *it);
             }
         }
     }
