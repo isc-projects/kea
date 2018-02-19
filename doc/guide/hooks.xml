@@ -7,6 +7,7 @@
 -->
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
+
     <title>Hooks Libraries</title>
     <section xml:id="hooks-libraries-introduction">
       <title>Introduction</title>
@@ -439,15 +440,20 @@ path/base-name.CCYYMMDD.txt
           (for new leases) and lease4_renew (for renewed leases) hooks.
           </para>
           <para>
-          An entry is a single string with no embedded end-of-line markers
-          and has the following sections:
+          An entry is a single string with no embedded end-of-line markers,
+          a prepended timestamp and has the following sections:
 <screen>
-address duration device-id {client-info} {relay-info}
+timestamp address duration device-id {client-info} {relay-info}
 </screen>
           </para>
           <para>
           Where:
           <itemizedlist>
+            <listitem><para>
+            timestamp - the current date and time the log entry was written
+            in "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone
+            name).
+            </para></listitem>
             <listitem><para>
             address - the leased IPv4 address given out and whether it was
             assigned or renewed.
@@ -477,10 +483,7 @@ address duration device-id {client-info} {relay-info}
           For instance (line breaks added for readability, they would not
           be present in the log file).
 <screen>
-Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with
-hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54
-connected via relay at address: 192.2.16.33, identified by circuit-id:
-68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
+2018-01-06 01:02:03 CET Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
 </screen>
         </para>
         <para>
@@ -493,7 +496,7 @@ connected via relay at address: 192.2.16.33, identified by circuit-id:
         <para>
         <command>lease4-add:</command>
 <screen>
-Administrator added a lease of address: *address* to a device with hardware address: *device-id*
+*timestamp* Administrator added a lease of address: *address* to a device with hardware address: *device-id*
 </screen>
         Dependent on the arguments of the add command, it may also include the
         client-id and duration.
@@ -501,13 +504,13 @@ Administrator added a lease of address: *address* to a device with hardware addr
         <para>
         Example:
 <screen>
-Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
+2018-01-06 01:02:03 CET Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
         <para>
         <command>lease4-update:</command>
 <screen>
-Administrator updated information on the lease of address: *address* to a device with hardware address: *device-id*
+*timestamp* Administrator updated information on the lease of address: *address* to a device with hardware address: *device-id*
 </screen>
         Dependent on the arguments of the update command, it may also include the
         client-id and lease duration.
@@ -515,27 +518,27 @@ Administrator updated information on the lease of address: *address* to a device
         <para>
         Example:
 <screen>
-Administrator updated information on the lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
+2018-01-06 01:02:03 CET Administrator updated information on the lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
 </screen>
         </para>
         <para>
         <command>lease4-del:</command>
         Deletes have two forms, one by address and one by identifier and identifier type:
 <screen>
-Administrator deleted the lease for address: *address*
+*timestamp* Administrator deleted the lease for address: *address*
 </screen>
         or
 <screen>
-Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
+*timestamp* Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
 </screen>
         Currently only a type of @b hw-address (hardware address) is supported.
         </para>
         <para>
         Examples:
 <screen>
-Administrator deleted the lease for address: 192.0.2.202
+2018-01-06 01:02:03 CET Administrator deleted the lease for address: 192.0.2.202
 
-Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
+2018-01-06 01:02:12 CET Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
 </screen>
         </para>
         </section>
@@ -548,15 +551,20 @@ Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c
           (for renewed leases) and lease6_rebind (for rebound leases).
           </para>
           <para>
-          An entry is a single string with no embedded end-of-line markers
-          and has the following sections:
+          An entry is a single string with no embedded end-of-line markers,
+          a prepended timestamp and has the following sections:
 <screen>
-address duration device-id {relay-info}*
+timestamp address duration device-id {relay-info}*
 </screen>
           </para>
           <para>
           Where:
           <itemizedlist>
+            <listitem><para>
+            timestamp - the current date and time the log entry was written
+            in "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone
+            name).
+            </para></listitem>
             <listitem><para>
             address - the leased IPv6 address or prefix given out and whether
             it was assigned or renewed.
@@ -585,11 +593,7 @@ address duration device-id {relay-info}*
           For instance (line breaks added for readability, they would not
           be present in the log file).
 <screen>
-Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with
-DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
-(from Raw Socket) connected via relay at address: fe80::abcd for client on
-link address: 3001::1, hop count: 1, identified by remote-id:
-01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+2018-01-06 01:02:03 PST Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1, hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
 </screen>
         </para>
         <para>
@@ -602,47 +606,47 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         <para>
         <command>lease6-add:</command>
 <screen>
-    Administrator added a lease of address: *address* to a device with DUID: *DUID*
+*timestamp* Administrator added a lease of address: *address* to a device with DUID: *DUID*
 </screen>
         Dependent on the arguments of the add command, it may also include the hardware address and duration.
         </para>
         <para>
         Example:
 <screen>
-Administrator added a lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
+2018-01-06 01:02:03 PST Administrator added a lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
         <para>
         <command>lease6-update:</command>
 <screen>
-Administrator updated information on the lease of address: *address* to a device with DUID: *DUID*
+*timestamp* Administrator updated information on the lease of address: *address* to a device with DUID: *DUID*
 </screen>
         Dependent on the arguments of the update command, it may also include the hardware address and lease duration.
         </para>
         <para>
         Example:
 <screen>
-Administrator updated information on the lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
+2018-01-06 01:02:03 PST Administrator updated information on the lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
 </screen>
         </para>
         <para>
         <command>lease6-del:</command>
         Deletes have two forms, one by address and one by identifier and identifier type:
 <screen>
-Administrator deleted the lease for address: *address*
+*timestamp* Administrator deleted the lease for address: *address*
 </screen>
         or
 <screen>
-Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
+*timestamp* Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
 </screen>
         Currently only a type of DUID is supported.
         </para>
         <para>
 Examples:
 <screen>
-Administrator deleted the lease for address: 2001:db8::3
+2018-01-06 01:02:03 PST Administrator deleted the lease for address: 2001:db8::3
 
-Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
+2018-01-06 01:02:11 PST Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
 </screen>
         </para>
         </section>
@@ -757,6 +761,60 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           <para>
             See <xref linkend="dhcp4-user-contexts"/> and <xref linkend="dhcp6-user-contexts"/>
             to learn more about user contexts in Kea configuration.
+          </para>
+        </section>
+
+        <section id="forensic-log-database">
+        <title>Database backend</title>
+          <para>
+          Log entries can be inserted into a database when Kea is configured
+          with database backend support: a table named 'logs' is used with a
+          timestamp (timeuuid for Cassandra CQL) generated by the database
+          software and a text log with the same format than for files
+          without the timestamp.
+          </para>
+          <para>
+          Please refer to <xref linkend="mysql-database"/> for MySQL,
+          to <xref linkend="pgsql-database"/> for PostgreSQL or
+          to <xref linkend="cql-database"/> for Cassandra CQL.
+          Scripts are in
+          <filename><replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts</filename> directory, for instance the PostgreSQL create schema
+          command is:
+<screen>
+$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts/pgsql/legldb_create.pgsql</userinput>
+Password for user <replaceable>user-name</replaceable>:
+START TRANSACTION
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+INSERT 0 1
+COMMIT
+$
+</screen>
+          </para>
+          <para>
+          Configuration parameters are extended by standard lease database
+          parameters as defined in <xref linkend="database-configuration4"/>.
+          The "type" parameter should be "mysql", "postgresql",  "cql" or
+          be "logfile". When it is absent or set to "logfile" files are
+          used.
+          </para>
+          <para>
+          This database feature is experimental and will be likely
+          improved, for instance to add an address / prefix index (currently
+          the only index is the timestamp). No specific tools is provided
+          to operate the database but standard tools are applicable,
+          for instance to dump the logs table from a CQL database:
+<screen>
+$ <userinput>echo 'SELECT dateOf(timeuuid), log FROM logs;' | cqlsh -k <replaceable>database-name</replaceable></userinput>
+
+ system.dateof(timeuuid)         | log
+---------------------------------+---------------------------------------
+ 2018-01-06 01:02:03.227000+0000 | Address: 192.2.1.100 has been renewed ...
+ ...
+(12 rows)
+$
+</screen>
           </para>
         </section>
       </section>
