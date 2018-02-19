@@ -162,8 +162,8 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
     });
 
     ASSERT_NO_THROW({
-        HostDataSourcePtr& host_data_source =
-            HostDataSourceFactory::getHostDataSourcePtr();
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
         EXPECT_EQ("mysql", host_data_source->getType());
     });
@@ -175,8 +175,8 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
     ASSERT_NO_THROW(HostMgr::instance());
 
     ASSERT_NO_THROW({
-        HostDataSourcePtr& host_data_source =
-            HostDataSourceFactory::getHostDataSourcePtr();
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
         EXPECT_EQ("mysql", host_data_source->getType());
     });
