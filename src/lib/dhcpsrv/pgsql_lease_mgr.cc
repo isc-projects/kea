@@ -686,10 +686,14 @@ public:
 
             getColumnValue(r, row , HWADDR_SOURCE_COL, hwaddr_source_);
 
-            HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_,
+            HWAddrPtr hwaddr;
+
+            if (hwaddr_length_) {
+                hwaddr.reset(new HWAddr(hwaddr_buffer_, hwaddr_length_,
                                         hwtype_));
 
-            hwaddr->source_ = hwaddr_source_;
+                hwaddr->source_ = hwaddr_source_;
+            }
 
             uint32_t state;
             getColumnValue(r, row , STATE_COL, state);
