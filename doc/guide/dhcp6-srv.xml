@@ -654,9 +654,9 @@ temporarily override a list of interface names and listen on all interfaces.
 }
   </screen>
 
-  <para>Usually loopback interfaces (e.g. the "lo" or "lo0" interface)
-  may not configured but if a loopback interface is explicitely configured
-  it is accepted. Note Kea requires a link-local address which does
+  <para>The loopback interfaces (i.e. the "lo" or "lo0" interface)
+  are not configured by default, unles explicitely mentioned in
+  the configration. Note Kea requires a link-local address which does
   not exist on all systems, or a specified unicast address as in:
   </para>
 

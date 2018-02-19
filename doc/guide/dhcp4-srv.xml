@@ -773,7 +773,7 @@ temporarily override a list of interface names and listen on all interfaces.
   </para>
 
   <para>Usually loopback interfaces (e.g. the "lo" or "lo0" interface)
-  may not configured but if a loopback interface is explicitely configured
+  may not be configured but if a loopback interface is explicitely configured
   and IP/UDP sockets are specified the loopback interface is accepted.
   </para>
 

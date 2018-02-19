@@ -209,12 +209,12 @@ TEST_F(CfgIfaceTest, explicitLoopbackV4) {
     ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
-    // No wildcard is no longer a constraint
+    // It is now allowed to use loopback, even with wildcard.
     EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
     cfg.closeSockets();
     ASSERT_FALSE(socketOpen("lo", "127.0.0.1"));
 
-    // Retry without UDP sockets
+    // Retry without UDP sockets (lo can be only used with udp sockets)
     cfg.reset();
     ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
@@ -227,7 +227,8 @@ TEST_F(CfgIfaceTest, explicitLoopbackV4) {
     ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
     ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
     cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
-    // Only loopback is no longer a constraint
+    // The logic used to require lo to be the only interface. That constraint
+    // was removed.
     EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
     cfg.closeSockets();
     EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
@@ -381,7 +382,8 @@ TEST_F(CfgIfaceTest, explicitLoopbackV6) {
     ASSERT_NO_THROW(cfg.use(AF_INET6, "*"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-    // No wildcard is no longer a constraint
+    // The logic used to require lo to be used only on its own, not with a
+    // wildcard. That constraint was removed.
     EXPECT_TRUE(socketOpen("lo", AF_INET6));
     cfg.closeSockets();
     ASSERT_FALSE(socketOpen("lo", AF_INET6));
@@ -391,7 +393,8 @@ TEST_F(CfgIfaceTest, explicitLoopbackV6) {
     ASSERT_NO_THROW(cfg.use(AF_INET6, "eth0"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-    // Only loopback is no longer a constraint
+    // The logic used to require lo to be used only on its own, not with a
+    // wildcard. That constraint was removed.
     EXPECT_TRUE(socketOpen("lo", AF_INET6));
     cfg.closeSockets();
     ASSERT_FALSE(socketOpen("lo", AF_INET6));
@@ -401,7 +404,8 @@ TEST_F(CfgIfaceTest, explicitLoopbackV6) {
     ASSERT_NO_THROW(cfg.use(AF_INET6, "eth0/2001:db8:1::1"));
     ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
     cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
-    // Only loopback is no longer a constraint
+    // The logic used to require lo to be used only on its own, not with a
+    // wildcard. That constraint was removed.
     EXPECT_TRUE(socketOpen("lo", AF_INET6));
     cfg.closeSockets();
     ASSERT_FALSE(socketOpen("lo", AF_INET6));
