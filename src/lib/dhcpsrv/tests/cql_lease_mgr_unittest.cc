@@ -366,6 +366,7 @@ TEST(CqlOpenTest, OpenDatabase) {
                << "*** before the CQL tests will run correctly.\n";
     }
 
+
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
@@ -381,6 +382,31 @@ TEST(CqlOpenTest, OpenDatabase) {
         LeaseMgrFactory::create(connectionString(
             INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
+
+    // Check that invalid login data does not cause an exception, CQL should use
+    // default values.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
+
+    // Check that invalid timeouts throw DbOperationError.
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_1)),
+                 DbOperationError);
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+                     CQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                     VALID_PASSWORD, INVALID_TIMEOUT_2)),
+                 DbOperationError);
+
+    // Check that CQL allows the hostname to not be specified.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        CQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Check that invalid login data does not cause an exception, CQL should use
     // default values.
@@ -699,17 +725,13 @@ TEST_F(CqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
     testDeleteExpiredReclaimedLeases4();
 }
 
-// Verifies that IPv4 lease statistics can be recalculated.
-/// @todo: uncomment this once stats recalculation is implemented
-/// for Cassandra (see #5487)
-TEST_F(CqlLeaseMgrTest, DISABLED_recountLeaseStats4) {
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
+TEST_F(CqlLeaseMgrTest, recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
-/// @todo: uncomment this once stats recalculation is implemented
-/// for Cassandra (see #5487)
-TEST_F(CqlLeaseMgrTest, DISABLED_recountLeaseStats6) {
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
+TEST_F(CqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
@@ -728,4 +750,3 @@ TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
 }
 
 }  // namespace
-

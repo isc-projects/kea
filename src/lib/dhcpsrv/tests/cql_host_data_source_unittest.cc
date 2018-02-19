@@ -1,8 +1,19 @@
 // Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Author: Andrei Pavel <andrei.pavel@qualitance.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//           http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <config.h>
 
@@ -15,6 +26,7 @@
 #include <dhcpsrv/tests/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/cql_schema.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -489,7 +501,7 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     destroyCqlSchema(false, true);
 
     // Create a host with a reservation.
-    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
@@ -509,6 +521,16 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
         hdsptr_->get4(host->getIPv4SubnetID(), host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size()),
         DbOperationError);
+}
+
+TEST_F(CqlHostDataSourceTest, DISABLED_stressTest) {
+    // Run with 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4092, 8192,
+    // 16384 & 32768 hosts.
+    for (unsigned int i = 0X0001U; i < 0xfffdU; i <<= 1) {
+        initializeTest();
+        stressTest(i);
+        destroyTest();
+    }
 }
 
 // This test checks that siaddr, sname, file fields can be retrieved

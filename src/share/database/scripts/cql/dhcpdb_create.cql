@@ -228,7 +228,7 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ip
 CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
 CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
-TRUNCATE SCHEMA_VERSION;
+DELETE FROM schema_version WHERE version=1;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line concludes database upgrade to version 2.0
