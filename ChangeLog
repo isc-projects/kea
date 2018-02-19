@@ -1,10 +1,14 @@
+1359.	[func]		fdupont
+	Extended forensic (aka legal) logging with database capability.
+	(Trac #5420, git xxx)
+
 1358.	[build,bug]	fdupont
 	Cassandra build fixes for macOS.
-	(Trac #5494, git xxx)
+	(Trac #5494, git 51fd66d364fab2da37fc12557b78bf9863df78d3)
 
 1357.	[bug]		rcgoodfellow
 	Fixed bug in kea-admon causing error on lease-dump.
-	(github #61, git xxx)
+	(github #61, git 2c9454ec56edc8f3cff8a23329f53ced0d172280)
 
 1356.	[func]		andreipavelQ,tomek
 	The logging configuration is now applied early, which helps
