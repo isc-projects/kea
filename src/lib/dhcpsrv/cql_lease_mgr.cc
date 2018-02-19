@@ -641,8 +641,10 @@ CqlLease4Exchange::retrieve() {
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
-        // Recreate the hardware address.
-        HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
+        HWAddrPtr hwaddr;
+        if (hwaddr_.size()) {
+            hwaddr.reset(new HWAddr(hwaddr_, HTYPE_ETHER));
+        }
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
 
