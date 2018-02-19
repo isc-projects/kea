@@ -616,7 +616,7 @@ public:
         time_t cltt = 0;
         MySqlConnection::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
-        if (client_id_null_==MLM_TRUE) {
+        if (client_id_null_ == MLM_TRUE) {
             // There's no client-id, so we pass client-id_length_ set to 0
             client_id_length_ = 0;
         }
