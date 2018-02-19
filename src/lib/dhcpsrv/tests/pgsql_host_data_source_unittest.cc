@@ -77,7 +77,7 @@ public:
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
+    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~PgSqlHostDataSourceTest() {
         destroyTest();

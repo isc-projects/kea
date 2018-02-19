@@ -627,7 +627,7 @@ private:
     PgSqlConnection conn_;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // PGSQL_LEASE_MGR_H
