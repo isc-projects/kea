@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1480,6 +1480,35 @@ TEST_F(IfaceMgrTest, openSockets4) {
     EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
 }
 
+// This test verifies that IPv4 sockets are open on the loopback interface
+// when the loopback is active and allowed.
+TEST_F(IfaceMgrTest, openSockets4Loopback) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    // Allow the loopback interface.
+    ifacemgr.setAllowLoopBack(true);
+
+    // Make the loopback interface active.
+    ifacemgr.getIface("lo")->inactive4_ = false;
+
+    // Use the custom packet filter object. This object mimics the socket
+    // opening operation - the real socket is not open.
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
+
+    // Expect that the sockets are open on all interfaces.
+    EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
+}
+
 // This test verifies that the socket is not open on the interface which is
 // down, but sockets are open on all other non-loopback interfaces.
 TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
@@ -1686,6 +1715,40 @@ TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
     EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
 #endif
+}
+
+// This test checks that the sockets are open on the loopback interface
+// when the loopback is active and allowed.
+TEST_F(IfaceMgrTest, openSockets6Loopback) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    // Allow the loopback interface.
+    ifacemgr.setAllowLoopBack(true);
+
+    // Make the loopback interface active.
+    ifacemgr.getIface("lo")->inactive6_ = false;
+
+    // The loopback interface has no link-local (as for Linux but not BSD)
+    // so add one.
+    ifacemgr.getIface("lo")->addUnicast(IOAddress("::1"));
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that the loopback interface has at least an open socket.
+    EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
+
+    // This socket should be bound to ::1
+    EXPECT_TRUE(ifacemgr.isBound("lo", "::1"));
 }
 
 // This test checks that socket is not open on the interface which doesn't
