@@ -42,6 +42,65 @@ namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
 
+ptime late_exit_target_time_ = ptime(not_a_date_time);
+
+bool
+TestControl::hasLateExitCommenced() const {
+    return !late_exit_target_time_.is_not_a_date_time();
+}
+
+bool
+TestControl::waitToExit() const {
+    static ptime exit_time = ptime(not_a_date_time);
+    CommandOptions& options = CommandOptions::instance();
+    uint32_t wait_time = options.getExitWaitTime();
+
+    // If we care and not all packets are in yet
+    if (wait_time && !haveAllPacketsBeenReceived()) {
+        const ptime now = microsec_clock::universal_time();
+
+        // Init the end time if it hasn't started yet
+        if (exit_time.is_not_a_date_time()) {
+            CommandOptions& options = CommandOptions::instance();
+            exit_time = now + time_duration(microseconds(wait_time));
+        }
+
+        // If we're not at end time yet, return true
+        return (now < exit_time);
+    }
+
+    // No need to wait, return false;
+    return (false);
+}
+
+bool
+TestControl::haveAllPacketsBeenReceived() const {
+    const CommandOptions& options = CommandOptions::instance();
+    const uint8_t& ipversion = options.getIpVersion();
+    const std::vector<int>& num_request = options.getNumRequests();
+    const size_t& num_request_size = num_request.size();
+
+    if (num_request_size == 0) {
+        return false;
+    }
+
+    uint32_t responses = 0;
+    uint32_t requests = num_request[0];
+    if (num_request_size >= 2) {
+        requests += num_request[1];
+    }
+
+    if (ipversion == 4) {
+        responses = stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
+                    stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_RA);
+    } else {
+        responses = stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) +
+                    stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_RR);
+    }
+
+    return (responses == requests);
+}
+
 TestControl::TestControlSocket::TestControlSocket(const int socket) :
     SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
     ifindex_(0), valid_(true) {
@@ -196,7 +255,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "reached test-period." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
 
     bool max_requests = false;
@@ -232,7 +293,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached max requests limit." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
 
     // Check if we reached maximum number of drops of OFFER/ADVERTISE packets.
@@ -268,7 +331,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum drops number." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
 
     // Check if we reached maximum drops percentage of OFFER/ADVERTISE packets.
@@ -313,7 +378,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum percentage of drops." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
     return (false);
 }
@@ -1485,8 +1552,10 @@ TestControl::run() {
             break;
         }
 
-        // Initiate new DHCP packet exchanges.
-        sendPackets(socket, packets_due);
+        if (!hasLateExitCommenced()) {
+            // Initiate new DHCP packet exchanges.
+            sendPackets(socket, packets_due);
+        }
 
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
@@ -2265,5 +2334,5 @@ TestControl::testDiags(const char diag) const {
     return (false);
 }
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc

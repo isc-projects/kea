@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -142,8 +143,7 @@ public:
     /// @brief Constructor
     ///
     /// Specifies table columns.
-    /// @param connection specifies the connection to conduct this exchange on
-    CqlHostExchange(CqlConnection& connection);
+    CqlHostExchange();
 
     /// @brief Virtual destructor.
     virtual ~CqlHostExchange();
@@ -159,8 +159,7 @@ public:
     /// @param statement_tag prepared statement being executed; defaults to an
     ///     invalid statement
     virtual void
-    createBindForSelect(AnyArray& data,
-                        StatementTag statement_tag = NULL) override;
+    createBindForSelect(AnyArray& data, StatementTag statement_tag = NULL) override;
 
     /// @brief Binds @ref Host to data array to send data to the Cassandra
     ///     database.
@@ -271,9 +270,6 @@ public:
 private:
     /// Pointer to Host object holding information being inserted into database.
     HostPtr host_;
-
-    /// @brief Connection to the Cassandra database
-    CqlConnection& connection_;
 
     /// @brief Primary key. Aggregates: host_identifier, host_identifier_type,
     /// reserved_ipv6_prefix_address, reserved_ipv6_prefix_length, option_code,
@@ -602,9 +598,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
 
 };
 
-CqlHostExchange::CqlHostExchange(CqlConnection& connection)
-    : host_(NULL), connection_(connection), id_(0), host_identifier_type_(0),
-      host_ipv4_subnet_id_(0), host_ipv6_subnet_id_(0), host_ipv4_address_(0),
+CqlHostExchange::CqlHostExchange()
+    : host_(NULL), id_(0), host_identifier_type_(0), host_ipv4_subnet_id_(0),
+      host_ipv6_subnet_id_(0), host_ipv4_address_(0),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
       iaid_(NULL_IAID), option_universe_(NULL_OPTION_UNIVERSE),
@@ -1733,7 +1729,7 @@ CqlHostDataSourceImpl::getHostCollection(StatementTag statement_tag,
                                          AnyArray& where_values) const {
 
     // Run statement.
-    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange(dbconn_));
+    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
     AnyArray collection = host_exchange->executeSelect(dbconn_, where_values,
                                                        statement_tag, false);
 
@@ -1774,7 +1770,7 @@ CqlHostDataSourceImpl::insertHost(const HostPtr& host,
                                   const OptionDescriptor& option_descriptor) {
     AnyArray assigned_values;
 
-    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange(dbconn_));
+    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
 
     try {
         host_exchange->createBindForMutation(

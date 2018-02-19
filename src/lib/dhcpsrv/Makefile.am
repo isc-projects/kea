@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-SUBDIRS = . testutils tests
+SUBDIRS = . testutils tests benchmarks
 
 dhcp_data_dir = @localstatedir@/@PACKAGE@
 kea_lfc_location = @prefix@/sbin/kea-lfc
@@ -17,7 +17,7 @@ if HAVE_PGSQL
 AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
 endif
 if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
+AM_CPPFLAGS += $(CQL_CPPFLAGS) $(CRYPTO_INCLUDES)
 endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
