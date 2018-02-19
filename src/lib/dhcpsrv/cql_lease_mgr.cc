@@ -1353,6 +1353,7 @@ CqlLease6Exchange::retrieve() {
         IOAddress addr(address_);
 
         DuidPtr duid(new DUID(duid_));
+
         HWAddrPtr hwaddr;
         if (hwaddr_.size()) {
             hwaddr.reset(new HWAddr(hwaddr_, hwtype_));
