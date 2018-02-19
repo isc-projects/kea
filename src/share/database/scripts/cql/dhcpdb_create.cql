@@ -1,4 +1,4 @@
--- Copyright (C) 2015-2017 Deutsche Telekom AG.
+-- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -151,6 +151,8 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
+
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
 
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in

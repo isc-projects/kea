@@ -330,7 +330,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease(const isc::asiolink::IOAddress& addr) override;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
     ///
@@ -361,7 +361,7 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+    virtual size_t wipeLeases4(const SubnetID& subnet_id) override;
 
     /// @brief Removed specified IPv6 leases.
     ///
@@ -372,7 +372,7 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+    virtual size_t wipeLeases6(const SubnetID& subnet_id) override;
 
     /// @brief Return backend type
     ///

@@ -322,6 +322,10 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     Daemon::configureLogger(args->get("Logging"),
                             CfgMgr::instance().getStagingCfg());
 
+    // Let's apply the new logging. We do it early, so we'll be able to print
+    // out what exactly is wrong with the new socnfig in case of problems.
+    CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
     // Now we configure the server proper.
     ConstElementPtr result = processConfig(dhcp6);
 
@@ -335,6 +339,11 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
 
         // Use new configuration.
         CfgMgr::instance().commit();
+    } else {
+        // Ok, we applied the logging from the upcoming configuration, but
+        // there were problems with the config. As such, we need to back off
+        // and revert to the previous logging configuration.
+        CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
     }
 
     return (result);

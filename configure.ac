@@ -600,6 +600,19 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+enable_benchmark="no"
+BENCHMARK_INCLUDES=
+
+AC_ARG_WITH([benchmark-source],
+            [AS_HELP_STRING([--with-benchmark-source=PATH],
+                            [location of the benchmark source])],
+            [enable_benchmark="yes" ; BENCHMARK_SOURCE="$withval"])
+
+AC_ARG_WITH([benchmark],
+            [AS_HELP_STRING([--with-benchmark=PATH],
+                            [specify a path to benchmark header files (PATH/include) and library (PATH/lib)])],
+        [benchmark_path="$withval"; enable_benchmark="yes"], [benchmark_path="no"])
+
 # Sets up for use of botan unless openssl is specified
 # sets variables CRYPTO_*
 AX_CRYPTO
@@ -608,8 +621,8 @@ AX_CRYPTO
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
 mysql_config="no"
-AC_ARG_WITH([dhcp-mysql],
-  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+AC_ARG_WITH([mysql],
+  AC_HELP_STRING([--with-mysql=PATH],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
@@ -621,7 +634,7 @@ fi
 
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
+        AC_MSG_ERROR([--with-mysql should point to a mysql_config program])
     fi
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
@@ -662,8 +675,8 @@ AC_CHECK_HEADERS(sys/filio.h,,,)
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
 pg_config="no"
-AC_ARG_WITH([dhcp-pgsql],
-  AC_HELP_STRING([--with-dhcp-pgsql=PATH],
+AC_ARG_WITH([pgsql],
+  AC_HELP_STRING([--with-pgsql=PATH],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
 
@@ -675,7 +688,7 @@ fi
 
 if test "$PG_CONFIG" != "" ; then
     if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
-        AC_MSG_ERROR([--with-dhcp-pgsql should point to a pg_config program])
+        AC_MSG_ERROR([--with-pgsql should point to a pg_config program])
     fi
 
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
@@ -959,6 +972,106 @@ AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
+
+#
+# Check availability of benchmark.
+#
+BENCHMARK_LDFLAGS=
+BENCHMARK_LDADD=
+DISTCHECK_BENCHMARK_CONFIGURE_FLAG=
+BENCHMARK_VERSION="unknown"
+
+if test "x$enable_benchmark" = "xyes" ; then
+
+    DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark=$benchmark_path"
+
+    if test -n "$with_benchmark_source" ; then
+
+        if test "x$BENCHMARK_SOURCE" = "xyes" ; then
+
+            AC_MSG_CHECKING([for benchmark source])
+            # If not specified, try some common paths.
+            BENCHMARK_SOURCE=
+            for d in /usr/src/benchmark /usr/local /usr/pkg /opt /opt/local ; do
+                if test -f $d/src/benchmark.cc; then
+                    BENCHMARK_SOURCE=$d
+                    AC_MSG_RESULT([$BENCHMARK_SOURCE])
+                    break
+                fi
+            done
+            if test -z $BENCHMARK_SOURCE ; then
+                AC_MSG_ERROR([no benchmark source but it was selected])
+            fi
+        else
+            if test ! -d $BENCHMARK_SOURCE/src; then
+                BENCHMARK_SOURCE=$BENCHMARK_SOURCE/benchmark
+            fi
+            AC_CHECK_FILES([$BENCHMARK_SOURCE/src/benchmark.cc],
+                [have_benchmark_source=yes],
+                [AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])])
+        fi
+        have_benchmark_source=yes
+        BENCHMARK_LDADD="\$(top_builddir)/ext/benchmark/libbenchmark.a"
+        DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark-source=$BENCHMARK_SOURCE"
+        BENCHMARK_INCLUDES="-I$BENCHMARK_SOURCE \
+                            -I$BENCHMARK_SOURCE/src \
+                            -I$BENCHMARK_SOURCE/include \
+                            -I$BENCHMARK_SOURCE/include/benchmark"
+        BENCHMARK_VERSION="$(basename $BENCHMARK_SOURCE)"
+    fi
+
+    if test "$benchmark_path" != "no" ; then
+        if test "$benchmark_path" != "yes"; then
+            BENCHMARK_PATHS=$benchmark_path
+            if test -x "${benchmark_path}/bin/benchmark-config" ; then
+                BENCHMARK_CONFIG="${benchmark_path}/bin/benchmark-config"
+            fi
+        else
+            AC_PATH_PROG([BENCHMARK_CONFIG], [benchmark-config])
+        fi
+        if test -x "${BENCHMARK_CONFIG}" ; then :
+            # using cppflags instead of cxxflags
+            BENCHMARK_INCLUDES=$(${BENCHMARK_CONFIG} --cppflags)
+            BENCHMARK_LDFLAGS=$(${BENCHMARK_CONFIG} --ldflags)
+            BENCHMARK_LDADD=$(${BENCHMARK_CONFIG} --libs)
+            BENCHMARK_VERSION=$(${BENCHMARK_CONFIG} --version)
+            BENCHMARK_FOUND="true"
+        else
+            AC_MSG_WARN([Unable to locate Google Benchmark benchmark-config.])
+            if test -z "${BENCHMARK_PATHS}" ; then
+                BENCHMARK_PATHS="/usr /usr/local"
+            fi
+            BENCHMARK_FOUND="false"
+        fi
+        if test "${BENCHMARK_FOUND}" != "true"; then
+            BENCHMARK_FOUND="false"
+            for dir in ${BENCHMARK_PATHS}; do
+                if test -f "$dir/include/benchmark/benchmark.h"; then
+                    if ! test -f "$dir/lib/libbenchmark.a"; then
+                        AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
+                        continue
+                    fi
+                    BENCHMARK_INCLUDES="-I$dir/include"
+                    BENCHMARK_LDFLAGS="-L$dir/lib"
+                    BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
+                    BENCHMARK_FOUND="true"
+                    break
+                fi
+            done
+        fi
+        if test "${BENCHMARK_FOUND}" != "true"; then
+            AC_MSG_ERROR([Cannot find benchmark in: $BENCHMARK_PATHS])
+        fi
+
+    fi
+fi
+AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
+AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
+AC_SUBST(DISTCHECK_BENCHMARK_CONFIGURE_FLAG)
+AC_SUBST(BENCHMARK_INCLUDES)
+AC_SUBST(BENCHMARK_LDFLAGS)
+AC_SUBST(BENCHMARK_LDADD)
+AC_SUBST(BENCHMARK_SOURCE)
 
 #
 # Some Googletest versions bug with C++11 compilers
@@ -1272,6 +1385,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dhcp_ddns/Makefile
                  src/lib/dhcp_ddns/tests/Makefile
                  src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/benchmarks/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
                  src/lib/dhcpsrv/testutils/Makefile
@@ -1518,12 +1632,34 @@ fi
 if test "$enable_gtest" != "no"; then
 cat >> config.report << END
 
-GTest:
+Google Test:
   GTEST_VERSION:   ${GTEST_VERSION}
   GTEST_INCLUDES:  ${GTEST_INCLUDES}
   GTEST_LDFLAGS:   ${GTEST_LDFLAGS}
   GTEST_LDADD:     ${GTEST_LDADD}
   GTEST_SOURCE:    ${GTEST_SOURCE}
+END
+else
+cat >> config.report << END
+Google Test:
+  no
+END
+fi
+
+if test "$enable_benchmark" != "no"; then
+cat >> config.report << END
+
+Google Benchmark:
+  BENCHMARK_VERSION:   ${BENCHMARK_VERSION}
+  BENCHMARK_INCLUDES:  ${BENCHMARK_INCLUDES}
+  BENCHMARK_LDFLAGS:   ${BENCHMARK_LDFLAGS}
+  BENCHMARK_LDADD:     ${BENCHMARK_LDADD}
+  BENCHMARK_SOURCE:    ${BENCHMARK_SOURCE}
+END
+else
+cat >> config.report << END
+Google Benchmark:
+  no
 END
 fi
 
