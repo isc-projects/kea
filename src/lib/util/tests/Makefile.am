@@ -36,6 +36,7 @@ run_unittests_SOURCES += csv_file_unittest.cc
 run_unittests_SOURCES += fd_share_tests.cc
 run_unittests_SOURCES += fd_tests.cc
 run_unittests_SOURCES += filename_unittest.cc
+run_unittests_SOURCES += hash_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
 run_unittests_SOURCES += labeled_value_unittest.cc
