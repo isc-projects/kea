@@ -108,6 +108,69 @@ public:
         HostDataSourceFactory::create(validCqlConnectionString());
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
+
+    /// @brief Returns number of IPv4 options currently stored in DB.
+    virtual int countDBOptions4() {
+        int result = 0;
+
+        const CqlHostDataSource* cql_host_mgr = dynamic_cast<const CqlHostDataSource*>(&(*hdsptr_));
+        ConstHostCollection all = cql_host_mgr->getAllHosts();
+
+        for (ConstHostCollection::const_iterator it = all.begin();
+             it != all.end(); ++it) {
+            ConstCfgOptionPtr cfg_option4 = (*it)->getCfgOption4();
+            std::list<std::string> option_spaces4 = cfg_option4->getOptionSpaceNames();
+            std::list<std::string> vendor_spaces4 = cfg_option4->getVendorIdsSpaceNames();
+            option_spaces4.insert(option_spaces4.end(), vendor_spaces4.begin(),
+                                  vendor_spaces4.end());
+            for (const std::string& space : option_spaces4) {
+                OptionContainerPtr options = cfg_option4->getAll(space);
+                result += options->size();
+            }
+        }
+
+        return (result);
+    }
+
+    /// @brief Returns number of IPv6 options currently stored in DB.
+    virtual int countDBOptions6() {
+        int result = 0;
+
+        const CqlHostDataSource* cql_host_mgr = dynamic_cast<const CqlHostDataSource*>(&(*hdsptr_));
+        ConstHostCollection all = cql_host_mgr->getAllHosts();
+
+        for (ConstHostCollection::const_iterator it = all.begin();
+             it != all.end(); ++it) {
+            ConstCfgOptionPtr cfg_option6 = (*it)->getCfgOption6();
+            std::list<std::string> option_spaces6 = cfg_option6->getOptionSpaceNames();
+            std::list<std::string> vendor_spaces6 = cfg_option6->getVendorIdsSpaceNames();
+            option_spaces6.insert(option_spaces6.end(), vendor_spaces6.begin(),
+                                  vendor_spaces6.end());
+            for (const std::string& space : option_spaces6) {
+                OptionContainerPtr options = cfg_option6->getAll(space);
+                result += options->size();
+            }
+        }
+
+        return (result);
+    }
+
+    /// @brief Returns number of IPv6 reservations currently stored in DB.
+    virtual int countDBReservations6() {
+        int result = 0;
+
+        const CqlHostDataSource* cql_host_mgr = dynamic_cast<const CqlHostDataSource*>(&(*hdsptr_));
+        ConstHostCollection all = cql_host_mgr->getAllHosts();
+
+        for (ConstHostCollection::const_iterator it = all.begin();
+             it != all.end(); ++it) {
+            IPv6ResrvRange reservations = (*it)->getIPv6Reservations();
+                result += std::distance(reservations.first, reservations.second);
+        }
+
+        return (result);
+    }
+
 };
 
 /// @brief Check that database can be opened

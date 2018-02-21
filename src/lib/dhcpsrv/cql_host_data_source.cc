@@ -267,6 +267,11 @@ public:
     static constexpr StatementTag INSERT_HOST =
         "INSERT_HOST";
 
+    // Retrieves hosts informations, IPv6 reservations and both IPv4 and IPv6
+    // options associated with the hosts.
+    static constexpr StatementTag GET_HOST =
+        "GET_HOST";
+
     // Retrieves host information, IPv6 reservations and both IPv4 and IPv6
     // options associated with the host.
     static constexpr StatementTag GET_HOST_BY_HOST_ID =
@@ -410,6 +415,7 @@ private:
 };  // CqlHostExchange
 
 constexpr StatementTag CqlHostExchange::INSERT_HOST;
+constexpr StatementTag CqlHostExchange::GET_HOST;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_HOST_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_ADDRESS;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_AND_HOST_ID;
@@ -459,6 +465,39 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "
+     }},
+
+    {GET_HOST,
+     {GET_HOST,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
      }},
 
     {GET_HOST_BY_HOST_ID,
@@ -1436,6 +1475,12 @@ public:
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
 
+    /// @brief Implementation of @ref CqlHostDataSource::getAllHosts()
+    ///
+    /// See @ref CqlHostDataSource::getAllHosts() for parameter details.
+    virtual ConstHostCollection
+    getAllHosts() const;
+
     /// @brief Implementation of @ref CqlHostDataSource::getName()
     virtual std::string getName() const;
 
@@ -1905,6 +1950,18 @@ CqlHostDataSourceImpl::getAll4(const asiolink::IOAddress& address) const {
     return (result);
 }
 
+ConstHostCollection
+CqlHostDataSourceImpl::getAllHosts() const {
+
+    // Bind to array.
+    AnyArray where_values;
+
+    // Run statement.
+    ConstHostCollection result = getHostCollection(CqlHostExchange::GET_HOST, where_values);
+
+    return (result);
+}
+
 std::string
 CqlHostDataSourceImpl::getName() const {
     std::string name;
@@ -2225,6 +2282,11 @@ CqlHostDataSource::get6(const SubnetID& subnet_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET6);
 
     return (impl_->get6(subnet_id, address));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAllHosts() const {
+    return (impl_->getAllHosts());
 }
 
 std::string
