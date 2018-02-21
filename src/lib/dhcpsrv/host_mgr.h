@@ -170,6 +170,28 @@ public:
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr()) const;
 
+    /// @brief Returns any host connected to the IPv4 subnet.
+    ///
+    /// This method returns a single reservation for a particular host as
+    /// documented in the @c BaseHostDataSource::get4 even when the
+    /// reservation is marked as from negative caching. This allows to
+    /// overload negative caching with extra information in the user
+    /// context.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Const @c Host object for which reservation has been made using
+    /// the specified identifier.
+    virtual ConstHostPtr
+    get4Any(const SubnetID& subnet_id,
+            const Host::IdentifierType& identifier_type,
+            const uint8_t* identifier_begin,
+            const size_t identifier_len) const;
+
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// This method returns a single reservation for a particular host as
@@ -216,6 +238,28 @@ public:
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id, const DuidPtr& duid,
          const HWAddrPtr& hwaddr = HWAddrPtr()) const;
+
+    /// @brief Returns any host connected to the IPv6 subnet.
+    ///
+    /// This method returns a host connected to the IPv6 subnet as described
+    /// in the @c BaseHostDataSource::get6 even when the             
+    /// reservation is marked as from negative caching. This allows to
+    /// overload negative caching with extra information in the user
+    /// context.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Const @c Host object for which reservation has been made using
+    /// the specified identifier.
+    virtual ConstHostPtr
+    get6Any(const SubnetID& subnet_id,
+            const Host::IdentifierType& identifier_type,
+            const uint8_t* identifier_begin,
+            const size_t identifier_len) const;
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///

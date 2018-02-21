@@ -109,12 +109,20 @@ protected:
     /// from which it will be retrieved.
     void testGet4(BaseHostDataSource& data_source);
 
+    /// @brief This test verifies that it is possible to retrieve negative
+    /// cached reservation with and only with get4Any,
+    void testGet4Any();
+
     /// @brief This test verifies that it is possible to retrieve an IPv6
     /// reservation for the particular host using HostMgr.
     ///
     /// @param data_source Host data source to which reservation is inserted and
     /// from which it will be retrieved.
     void testGet6(BaseHostDataSource& data_source);
+
+    /// @brief This test verifies that it is possible to retrieve negative
+    /// cached reservation with and only with get6Any,
+    void testGet6Any();
 
     /// @brief This test verifies that it is possible to retrieve an IPv6
     /// prefix reservation for the particular host using HostMgr.
@@ -298,6 +306,53 @@ HostMgrTest::testGet4(BaseHostDataSource& data_source) {
 }
 
 void
+HostMgrTest::testGet4Any() {
+    // Initially, no host should be present.
+    ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                                 &duids_[0]->getDuid()[0],
+                                                 duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+    HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                &duids_[0]->getDuid()[0],
+                                duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    HostPtr new_host(new Host(duids_[0]->toText(), "duid", SubnetID(1),
+                              SubnetID(0), IOAddress("192.0.2.5")));
+    // Abuse of the server's configuration.
+    getCfgHosts()->add(new_host);
+                           
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+
+    // Set the negative cache flag on the host.
+    new_host->setNegative(true);
+
+    // Get4 can't get it.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    EXPECT_FALSE(host);
+
+    // But Get4Any can.
+    host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                       &duids_[0]->getDuid()[0],
+                                       duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+    EXPECT_TRUE(host->getNegative());
+}
+
+void
 HostMgrTest::testGet6(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
     ConstHostPtr host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
@@ -313,8 +368,62 @@ HostMgrTest::testGet6(BaseHostDataSource& data_source) {
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
     ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
+}
+
+void
+HostMgrTest::testGet6Any() {
+    // Initially, no host should be present.
+    ConstHostPtr host = HostMgr::instance().get6(SubnetID(2),
+                                                 Host::IDENT_HWADDR,
+                                                 &hwaddrs_[0]->hwaddr_[0],
+                                                 hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+    host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    HostPtr new_host(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                              SubnetID(1), SubnetID(2),
+                              IOAddress::IPV4_ZERO_ADDRESS()));
+    new_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::1"), 128));
+    // Abuse of the server's configuration.
+    getCfgHosts()->add(new_host);
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+
+    // Set the negative cache flag on the host.
+    new_host->setNegative(true);
+
+    // Get6 can't get it.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    EXPECT_FALSE(host);
+
+    // But Get4Any can.
+    host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+    EXPECT_TRUE(host->getNegative());
 }
 
 void
@@ -375,11 +484,21 @@ TEST_F(HostMgrTest, get4) {
     testGet4(*getCfgHosts());
 }
 
+// This test verifies handling of negative caching by get4/get4Any.
+TEST_F(HostMgrTest, get4Any) {
+    testGet4Any();
+}
+
 // This test verifies that it is possible to retrieve IPv6 reservations for
 // the particular host using HostMgr. The reservation is specified in the
 // server's configuration.
 TEST_F(HostMgrTest, get6) {
     testGet6(*getCfgHosts());
+}
+
+// This test verifies handling of negative caching by get4/get4Any.
+TEST_F(HostMgrTest, get6Any) {
+    testGet6Any();
 }
 
 // This test verifies that it is possible to retrieve the reservation of the
