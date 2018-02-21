@@ -312,6 +312,14 @@ public:
     get6(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const override;
 
+    /// @brief Returns a collection of all the hosts.
+    ///
+    /// This method may return multiple @ref Host objects.
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAllHosts() const;
+
     /// @brief Returns textual description of the backend.
     ///
     /// @return Description of the backend.
