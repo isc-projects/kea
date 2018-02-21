@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -669,6 +669,7 @@ TEST_F(HostTest, setValues) {
     ASSERT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     ASSERT_EQ("some-host.example.org", host->getHostname());
     ASSERT_FALSE(host->getContext());
+    ASSERT_FALSE(host->getNegative());
 
     host->setIPv4SubnetID(SubnetID(123));
     host->setIPv6SubnetID(SubnetID(234));
@@ -679,6 +680,7 @@ TEST_F(HostTest, setValues) {
     host->setBootFileName("bootfile.efi");
     std::string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
+    host->setNegative(true);
 
     EXPECT_EQ(123, host->getIPv4SubnetID());
     EXPECT_EQ(234, host->getIPv6SubnetID());
@@ -689,6 +691,7 @@ TEST_F(HostTest, setValues) {
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
     ASSERT_TRUE(host->getContext());
     EXPECT_EQ(user_context, host->getContext()->str());
+    EXPECT_TRUE(host->getNegative());
 
     // Remove IPv4 reservation.
     host->removeIPv4Reservation();
@@ -981,6 +984,7 @@ TEST_F(HostTest, toText) {
     host->setHostname("");
     host->removeIPv4Reservation();
     host->setIPv4SubnetID(0);
+    host->setNegative(true);
 
     EXPECT_EQ("hwaddr=010203040506 ipv6_subnet_id=2"
               " hostname=(empty) ipv4_reservation=(no)"
@@ -990,7 +994,8 @@ TEST_F(HostTest, toText) {
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
-              " ipv6_reservation3=2001:db8:1:2::/64",
+              " ipv6_reservation3=2001:db8:1:2::/64"
+              " negative cached",
               host->toText());
 
     // Create host identified by DUID, instead of HWADDR, with a very
@@ -1139,6 +1144,8 @@ TEST_F(HostTest, unparse) {
     // Add some classes.
     host->addClientClass4("modem");
     host->addClientClass4("router");
+    // Set invisible negative cache.
+    host->setNegative(true);
 
     EXPECT_EQ("{ "
               "\"boot-file-name\": \"\", "

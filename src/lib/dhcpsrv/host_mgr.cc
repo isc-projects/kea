@@ -133,6 +133,9 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
             host = (*it)->get4(subnet_id, hwaddr, DuidPtr());
         }
     }
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
+    }
     return (host);
 }
 
@@ -168,6 +171,9 @@ HostMgr::get4(const SubnetID& subnet_id,
                 .arg((*it)->getType())
                 .arg(host->toText());
                      
+            if (host->getNegative()) {
+                return (ConstHostPtr());
+            }
             return (host);
         }
     }
@@ -193,6 +199,9 @@ HostMgr::get4(const SubnetID& subnet_id,
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
         host = (*it)->get4(subnet_id, address);
+    }
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
     }
     return (host);
 }
@@ -220,6 +229,9 @@ HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
             host = (*it)->get6(subnet_id, DuidPtr(), hwaddr);
         }
     }
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
+    }
     return (host);
 }
 
@@ -236,6 +248,9 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
         host = (*it)->get6(prefix, prefix_len);
+    }
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
     }
     return (host);
 }
@@ -272,6 +287,10 @@ HostMgr::get6(const SubnetID& subnet_id,
                                                    identifier_len))
                     .arg((*it)->getType())
                     .arg(host->toText());
+
+                if (host->getNegative()) {
+                    return (ConstHostPtr());
+                }
                 return (host);
         }
     }
@@ -299,6 +318,9 @@ HostMgr::get6(const SubnetID& subnet_id,
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
         host = (*it)->get6(subnet_id, addr);
+    }
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
     }
     return (host);
 }
