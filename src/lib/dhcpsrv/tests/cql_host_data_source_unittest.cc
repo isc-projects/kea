@@ -556,46 +556,39 @@ TEST_F(CqlHostDataSourceTest, messageFields) {
 }
 
 // Check that delete(subnet-id, addr4) works.
-/// @todo: Uncomment this after #5506 is implemented.
-TEST_F(CqlHostDataSourceTest, DISABLED_deleteByAddr4) {
+TEST_F(CqlHostDataSourceTest, deleteByAddr4) {
     testDeleteByAddr4();
 }
 
 // Check that delete(subnet4-id, identifier-type, identifier) works.
-/// @todo: Uncomment this after #5506 is implemented.
-TEST_F(CqlHostDataSourceTest, DISABLED_deleteById4) {
+TEST_F(CqlHostDataSourceTest, deleteById4) {
     testDeleteById4();
 }
 
 // Check that delete(subnet4-id, identifier-type, identifier) works,
 // even when options are present.
-/// @todo: Uncomment this after #5506 is implemented.
-TEST_F(CqlHostDataSourceTest, DISABLED_deleteById4Options) {
+TEST_F(CqlHostDataSourceTest, deleteById4Options) {
     testDeleteById4Options();
 }
 
 // Check that delete(subnet6-id, identifier-type, identifier) works.
-/// @todo: Uncomment this after #5506 is implemented.
-TEST_F(CqlHostDataSourceTest, DISABLED_deleteById6) {
+TEST_F(CqlHostDataSourceTest, deleteById6) {
     testDeleteById6();
 }
 
 // Check that delete(subnet6-id, identifier-type, identifier) works,
 // even when options are present.
-/// @todo: Uncomment this after #5506 is implemented.
-TEST_F(CqlHostDataSourceTest, DISABLED_deleteById6Options) {
+TEST_F(CqlHostDataSourceTest, deleteById6Options) {
     testDeleteById6Options();
 }
 
 // Tests that multiple reservations without IPv4 addresses can be
 // specified within a subnet.
-/// @todo: Uncomment this after #5506 is implemented.
 TEST_F(CqlHostDataSourceTest, testMultipleHostsNoAddress4) {
     testMultipleHostsNoAddress4();
 }
 
 // Tests that multiple hosts can be specified within an IPv6 subnet.
-/// @todo: Uncomment this after #5506 is implemented.
 TEST_F(CqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }

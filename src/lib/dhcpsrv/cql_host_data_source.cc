@@ -167,6 +167,21 @@ public:
     virtual void
     createBindForSelect(AnyArray& data, StatementTag statement_tag = NULL) override;
 
+    /// @brief Sets the exchange members with data of @ref Host.
+    ///
+    /// Fills in the members of the exchange with data from @ref Host object.
+    ///
+    /// @param host @ref Host object being modified in the Cassandra database
+    /// @param subnet_id identifier of the subnet to which the host belongs
+    /// @param reservation IPv6 reservation belonging to the host
+    /// @param option_space option space
+    /// @param option_descriptor structure used to hold option information
+    void prepareExchange(const HostPtr& host,
+                         const OptionalValue<SubnetID>& subnet_id,
+                         const IPv6Resrv* const reservation,
+                         const std::string& option_space,
+                         const OptionDescriptor& option_descriptor);
+
     /// @brief Binds @ref Host to data array to send data to the Cassandra
     ///     database.
     ///
@@ -187,6 +202,27 @@ public:
                                const OptionDescriptor& option_descriptor,
                                StatementTag statement_tag,
                                AnyArray& data);
+
+    /// @brief Binds @ref Host to data array to send data to the Cassandra
+    ///     database.
+    ///
+    /// Fills in the bind array for sending data stored in the @ref Host object
+    /// to the database.
+    ///
+    /// @param host @ref Host object being deleted from the Cassandra database
+    /// @param subnet_id identifier of the subnet to which the host belongs
+    /// @param reservation IPv6 reservation belonging to the host
+    /// @param option_space option space
+    /// @param option_descriptor structure used to hold option information
+    /// @param statement_tag tag of the statement being executed
+    /// @param data array being filled with data from to the Host object
+    void createBindForDelete(const HostPtr& host,
+                             const OptionalValue<SubnetID>& subnet_id,
+                             const IPv6Resrv* const reservation,
+                             const std::string& option_space,
+                             const OptionDescriptor& option_descriptor,
+                             StatementTag statement_tag,
+                             AnyArray& data);
 
     /// @brief Create unique hash for storage in table id.
     ///
@@ -228,11 +264,13 @@ public:
     /// @brief Statement tags definitions
     /// @{
     // Inserts all parameters belonging to any reservation from a single host.
-    static constexpr StatementTag INSERT_HOST = "INSERT_HOST";
+    static constexpr StatementTag INSERT_HOST =
+        "INSERT_HOST";
 
     // Retrieves host information, IPv6 reservations and both IPv4 and IPv6
     // options associated with the host.
-    static constexpr StatementTag GET_HOST_BY_HOST_ID = "GET_HOST_BY_HOST_ID";
+    static constexpr StatementTag GET_HOST_BY_HOST_ID =
+        "GET_HOST_BY_HOST_ID";
 
     // Retrieves host information along with the IPv4 options associated
     // with it.
@@ -268,6 +306,10 @@ public:
     // identifier and IPv6 reservation.
     static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS =
         "GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS";
+
+    // Deletes a host reservation.
+    static constexpr StatementTag DELETE_HOST =
+        "DELETE_HOST";
     /// @}
 
     /// @brief Cassandra statements
@@ -375,6 +417,7 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_HOST_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_PREFIX;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS;
+constexpr StatementTag CqlHostExchange::DELETE_HOST;
 
 StatementMap CqlHostExchange::tagged_statements_ = {
     {INSERT_HOST,
@@ -671,6 +714,11 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "ALLOW FILTERING "
      }},
 
+    {DELETE_HOST,
+     {DELETE_HOST,
+      "DELETE FROM host_reservations WHERE id = ? "
+      "IF EXISTS "
+     }}
 };
 
 CqlHostExchange::CqlHostExchange(CqlConnection& connection)
@@ -761,12 +809,11 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
 }
 
 void
-CqlHostExchange::createBindForMutation(const HostPtr& host,
-                                       const OptionalValue<SubnetID>& subnet_id,
-                                       const IPv6Resrv* const reservation,
-                                       const std::string& option_space,
-                                       const OptionDescriptor& option_descriptor,
-                                       StatementTag statement_tag, AnyArray& data) {
+CqlHostExchange::prepareExchange(const HostPtr& host,
+                                 const OptionalValue<SubnetID>& subnet_id,
+                                 const IPv6Resrv* const reservation,
+                                 const std::string& option_space,
+                                 const OptionDescriptor& option_descriptor) {
 
     // Store host object to ensure it remains valid.
     host_ = host;
@@ -780,7 +827,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         HostIdentifier host_identifier = host->getIdentifier();
         host_identifier_ = CassBlob(host_identifier.begin(), host_identifier.end());
         if (host_identifier_.size() > DUID::MAX_DUID_LEN) {
-            isc_throw(BadValue, "CqlHostExchange::createBindForMutation(): host identifier "
+            isc_throw(BadValue, "CqlHostExchange::prepareExchange(): host identifier "
                       << host_identifier_.data() << " of length " << host_identifier_.size()
                       << " is greater than allowed of " << DUID::MAX_DUID_LEN);
         }
@@ -788,7 +835,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         // host_identifier_type: tinyint
         host_identifier_type_ = static_cast<cass_int32_t>(host->getIdentifierType());
         if (host_identifier_type_ > MAX_IDENTIFIER_TYPE) {
-            isc_throw(BadValue, "CqlHostExchange::createBindForMutation(): invalid "
+            isc_throw(BadValue, "CqlHostExchange::prepareExchange(): invalid "
                       "host identifier type returned: " << host_identifier_type_);
         }
 
@@ -813,7 +860,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
-            isc_throw(BadValue, "CqlHostExchange::createBindForMutation(): hostname "
+            isc_throw(BadValue, "CqlHostExchange::prepareExchange(): hostname "
                       << hostname_ << " of length " << hostname_.size()
                       << " is greater than allowed of " << HOSTNAME_MAX_LENGTH);
         }
@@ -829,7 +876,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         // host_ipv4_client_classes: text
         host_ipv4_client_classes_ = host->getClientClasses4().toText(",");
         if (host_ipv4_client_classes_.size() > CLIENT_CLASSES_MAX_LENGTH) {
-            isc_throw(BadValue, "CqlHostExchange::createBindForMutation(): "
+            isc_throw(BadValue, "CqlHostExchange::prepareExchange(): "
                       "IPv4 client classes " << host_ipv4_client_classes_ << " of length "
                       << host_ipv4_client_classes_.size() << " is greater than allowed of "
                       << CLIENT_CLASSES_MAX_LENGTH);
@@ -838,7 +885,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         // host_ipv6_client_classes: text
         host_ipv6_client_classes_ = host->getClientClasses6().toText(",");
         if (host_ipv6_client_classes_.size() > CLIENT_CLASSES_MAX_LENGTH) {
-            isc_throw(BadValue, "CqlHostExchange::createBindForMutation(): "
+            isc_throw(BadValue, "CqlHostExchange::prepareExchange(): "
                       "IPv6 client classes " << host_ipv6_client_classes_ << " of length "
                       << host_ipv6_client_classes_.size() << " is greater than allowed of "
                       << CLIENT_CLASSES_MAX_LENGTH);
@@ -941,7 +988,24 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
 
         // id: bigint
         id_ = hashIntoId();
+    } catch (const Exception& ex) {
+        isc_throw(DbOperationError,
+                  "CqlHostExchange::prepareExchange(): "
+                  "could not copy data from host "
+                  << host->getHostname() << ", reason: " << ex.what());
+    }
+}
 
+void
+CqlHostExchange::createBindForMutation(const HostPtr& host,
+                                       const OptionalValue<SubnetID>& subnet_id,
+                                       const IPv6Resrv* const reservation,
+                                       const std::string& option_space,
+                                       const OptionDescriptor& option_descriptor,
+                                       StatementTag statement_tag, AnyArray& data) {
+    prepareExchange(host, subnet_id, reservation, option_space, option_descriptor);
+
+    try {
         // Add all parameters to bind array.
         data.clear();
 
@@ -987,6 +1051,31 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
     }
 }
 
+void
+CqlHostExchange::createBindForDelete(const HostPtr& host,
+                                     const OptionalValue<SubnetID>& subnet_id,
+                                     const IPv6Resrv* const reservation,
+                                     const std::string& option_space,
+                                     const OptionDescriptor& option_descriptor,
+                                     StatementTag statement_tag, AnyArray& data) {
+    prepareExchange(host, subnet_id, reservation, option_space, option_descriptor);
+
+    try {
+        // Add all parameters to bind array.
+        data.clear();
+
+        if (statement_tag == CqlHostExchange::DELETE_HOST) {
+            data.add(&id_);
+        }
+
+    } catch (const Exception& ex) {
+        isc_throw(DbOperationError,
+                  "CqlHostExchange::createBindForDelete(): "
+                  "could not create bind array from host "
+                  << host->getHostname() << ", reason: " << ex.what());
+    }
+}
+
 uint64_t
 md5Hash(const std::string& input) {
 
@@ -1015,6 +1104,8 @@ CqlHostExchange::hashIntoId() const {
 
     // Get key.
     std::stringstream key_stream;
+    key_stream << std::setw(3 * DUID::MAX_DUID_LEN - 1) << std::setfill('-')
+               << DUID(host_identifier_).toText();
     key_stream << std::setw(10) << std::setfill('-') << host_ipv4_subnet_id_;
     key_stream << std::setw(10) << std::setfill('-') << host_ipv6_subnet_id_;
     key_stream << std::setw(V4ADDRESS_TEXT_MAX_LEN) << std::setfill('-')
@@ -1227,12 +1318,13 @@ public:
     /// @brief Destructor.
     virtual ~CqlHostDataSourceImpl();
 
-    /// @brief Implementation of @ref CqlHostDataSource::add()
+    /// @brief Implementation of @ref CqlHostDataSource::add() and del()
     ///
     /// See @ref CqlHostDataSource::add() for parameter details.
     ///
-    /// @param host host to be added
-    virtual void add(const HostPtr& host);
+    /// @param host host to be added or deleted
+    /// @param insert insert or delete the host
+    virtual bool insertOrDelete(const HostPtr& host, bool insert);
 
     /// @brief Implementation of @ref CqlHostDataSource::get4()
     ///
@@ -1351,25 +1443,28 @@ public:
     virtual VersionPair getVersion() const;
 
 protected:
-    /// @brief Adds any options found in the @ref Host object to a separate
+    /// @brief Adds/deletes any options found in the @ref Host object to/from a separate
     ///     table entry.
     ///
+    /// @param insert insert or delete a host with options
     /// @param host @ref Host object from which options are retrieved and
-    ///     inserted into the Cassandra database
+    ///     inserted/deleted into/from the Cassandra database
     /// @param reservation reservation for the current denormalized table entry
     /// @param option_spaces list of option spaces to search for
     /// @param cfg_option option configuration used to match option spaces in
     ///     order to obtain actual options
-    virtual void insertHostWithOptions(const HostPtr& host,
+    virtual bool insertOrDeleteHostWithOptions(bool insert,
+        const HostPtr& host,
         const IPv6Resrv* const reservation = NULL,
         const std::list<std::string>& option_spaces = std::list<std::string>(),
         const ConstCfgOptionPtr cfg_option = ConstCfgOptionPtr());
 
-    /// @brief Adds any reservations found in the @ref Host object to a separate
+    /// @brief Adds/deletes any reservations found in the @ref Host object to/from a separate
     ///     table entry.
     ///
+    /// @param insert insert or deletes a host with reservations
     /// @param host @ref Host object from which reservations are retrieved and
-    ///     inserted into the Cassandra database
+    ///     inserted/deleted into/from the Cassandra database
     /// @param reservation reservation for the current denormalized table entry
     /// @param option_spaces4 list of option spaces for universe Option::V4 to search in
     /// @param cfg_option4 option configuration for universe Option::V4 used to
@@ -1378,13 +1473,13 @@ protected:
     ///     search in
     /// @param cfg_option6 option configuration for universe Option::V6 used to
     ///     match option spaces in order to obtain actual options
-    virtual void
-    insertHostWithReservations(const HostPtr& host,
-                               const IPv6Resrv* const reservation,
-                               const std::list<std::string>& option_spaces4,
-                               const ConstCfgOptionPtr cfg_option4,
-                               const std::list<std::string>& option_spaces6,
-                               const ConstCfgOptionPtr cfg_option6);
+    virtual bool insertOrDeleteHostWithReservations(bool insert,
+        const HostPtr& host,
+        const IPv6Resrv* const reservation,
+        const std::list<std::string>& option_spaces4,
+        const ConstCfgOptionPtr cfg_option4,
+        const std::list<std::string>& option_spaces6,
+        const ConstCfgOptionPtr cfg_option6);
 
     /// @brief Retrieves a single host.
     ///
@@ -1412,20 +1507,22 @@ protected:
     virtual ConstHostCollection getHostCollection(StatementTag statement_tag,
                                                   AnyArray& where_values) const;
 
-    /// @brief Inserts a single host.
+    /// @brief Inserts or deletes a single host.
     ///
     /// All information is available here. Calls @ref
     /// CqlExchange::executeMutation().
     ///
+    /// @param insert insert or delete a host
     /// @param host @ref Host object from which options are retrieved and
-    ///     inserted into the Cassandra database
+    ///     inserted/deleted into/from the Cassandra database
     /// @param subnet_id identifier of the subnet to which the host belongs
     /// @param reservation reservation for the current denormalized table entry
     /// @param option_space option space for the current denormalized table
     ///     entry's option
     /// @param option_descriptor option descriptor containing
     ///     information for the current denormalized table entry's option
-    virtual void insertHost(const HostPtr& host,
+    virtual bool insertOrDeleteHost(bool insert,
+        const HostPtr& host,
         const OptionalValue<SubnetID>& subnet_id = OptionalValue<SubnetID>(),
         const IPv6Resrv* const reservation = NULL,
         const std::string& option_space = NULL_OPTION_SPACE,
@@ -1508,8 +1605,8 @@ CqlHostDataSourceImpl::~CqlHostDataSourceImpl() {
     // closed in the destructor of the dbconn_ member variable.
 }
 
-void
-CqlHostDataSourceImpl::add(const HostPtr& host) {
+bool
+CqlHostDataSourceImpl::insertOrDelete(const HostPtr& host, bool insert) {
     // Get option space names and vendor space names and combine them within a
     // single list.
 
@@ -1527,20 +1624,24 @@ CqlHostDataSourceImpl::add(const HostPtr& host) {
     option_spaces6.insert(option_spaces6.end(), vendor_spaces6.begin(),
                           vendor_spaces6.end());
 
+    bool result = true;
+
     // For every IPv6 reservation, add each of their options to the
     // database.
     IPv6ResrvRange reservations = host->getIPv6Reservations();
     if (std::distance(reservations.first, reservations.second) > 0) {
-        for (IPv6ResrvIterator it = reservations.first; it != reservations.second; ++it) {
-            insertHostWithReservations(host, &it->second, option_spaces4, cfg_option4,
-                                       option_spaces6, cfg_option6);
+        for (IPv6ResrvIterator it = reservations.first; result && it != reservations.second; ++it) {
+            result = insertOrDeleteHostWithReservations(insert, host, &it->second, option_spaces4, cfg_option4,
+                                                        option_spaces6, cfg_option6);
         }
     } else {
         // If host has no reservation, add entries with null
         // reservation. Options could still be present.
-        insertHostWithReservations(host, NULL, option_spaces4, cfg_option4,
-                                   option_spaces6, cfg_option6);
+        result = insertOrDeleteHostWithReservations(insert, host, NULL, option_spaces4, cfg_option4,
+                                                    option_spaces6, cfg_option6);
     }
+
+    return (result);
 }
 
 ConstHostPtr
@@ -1821,50 +1922,66 @@ CqlHostDataSourceImpl::getVersion() const {
     return (version_exchange->retrieveVersion(dbconn_));
 }
 
-void
-CqlHostDataSourceImpl::insertHostWithOptions(const HostPtr& host,
-                                             const IPv6Resrv* const reservation,
-                                             const std::list<std::string>& option_spaces,
-                                             const ConstCfgOptionPtr cfg_option) {
+bool
+CqlHostDataSourceImpl::insertOrDeleteHostWithOptions(bool insert,
+                                                     const HostPtr& host,
+                                                     const IPv6Resrv* const reservation,
+                                                     const std::list<std::string>& option_spaces,
+                                                     const ConstCfgOptionPtr cfg_option) {
+    bool result = true;
+
     // For each option space retrieve all options and insert them into
     // the database.
     bool option_found = false;
     for (const std::string& space : option_spaces) {
+        if (!result) {
+            break;
+        }
         OptionContainerPtr options = cfg_option->getAll(space);
         if (options && !options->empty()) {
             for (const OptionDescriptor& option : *options) {
+                if (!result) {
+                    break;
+                }
                 option_found = true;
                 /// @todo: Assign actual value to subnet id.
-                insertHost(host, OptionalValue<SubnetID>(), reservation, space,
-                           option);
+                result = insertOrDeleteHost(insert, host, OptionalValue<SubnetID>(), reservation, space, option);
             }
         }
     }
-    if (!option_found) {
+    if (result && !option_found) {
         // @todo: Assign actual value to subnet id.
-        insertHost(host, OptionalValue<SubnetID>(), reservation);
+        result = insertOrDeleteHost(insert, host, OptionalValue<SubnetID>(), reservation);
     }
+
+    return (result);
 }
 
-void
-CqlHostDataSourceImpl::insertHostWithReservations(const HostPtr& host,
-                                                  const IPv6Resrv* const reservation,
-                                                  const std::list<std::string>& option_spaces4,
-                                                  const ConstCfgOptionPtr cfg_option4,
-                                                  const std::list<std::string>& option_spaces6,
-                                                  const ConstCfgOptionPtr cfg_option6) {
+bool
+CqlHostDataSourceImpl::insertOrDeleteHostWithReservations(bool insert,
+                                                          const HostPtr& host,
+                                                          const IPv6Resrv* const reservation,
+                                                          const std::list<std::string>& option_spaces4,
+                                                          const ConstCfgOptionPtr cfg_option4,
+                                                          const std::list<std::string>& option_spaces6,
+                                                          const ConstCfgOptionPtr cfg_option6) {
+    bool result = true;
+
     // If host has no reservation, add entries with null reservation.
     // Options could still be present.
-    if (cfg_option4 && !cfg_option4->empty()) {
-        insertHostWithOptions(host, reservation, option_spaces4, cfg_option4);
+    if (result && cfg_option4 && !cfg_option4->empty()) {
+        result = insertOrDeleteHostWithOptions(insert, host, reservation, option_spaces4, cfg_option4);
     }
-    if (cfg_option6 && !cfg_option6->empty()) {
-        insertHostWithOptions(host, reservation, option_spaces6, cfg_option6);
+    if (result && cfg_option6 && !cfg_option6->empty()) {
+        result = insertOrDeleteHostWithOptions(insert, host, reservation, option_spaces6, cfg_option6);
     }
-    if ((!cfg_option4 || cfg_option4->empty()) &&
+    if (result &&
+        (!cfg_option4 || cfg_option4->empty()) &&
         (!cfg_option6 || cfg_option6->empty())) {
-        insertHostWithOptions(host, reservation);
+        result = insertOrDeleteHostWithOptions(insert, host, reservation);
     }
+
+    return (result);
 }
 
 ConstHostPtr
@@ -1923,26 +2040,42 @@ CqlHostDataSourceImpl::getHostCollection(StatementTag statement_tag,
     return (result_collection);
 }
 
-void
-CqlHostDataSourceImpl::insertHost(const HostPtr& host,
-                                  const OptionalValue<SubnetID>& subnet_id,
-                                  const IPv6Resrv* const reservation,
-                                  const std::string& option_space,
-                                  const OptionDescriptor& option_descriptor) {
+bool
+CqlHostDataSourceImpl::insertOrDeleteHost(bool insert,
+                                          const HostPtr& host,
+                                          const OptionalValue<SubnetID>& subnet_id,
+                                          const IPv6Resrv* const reservation,
+                                          const std::string& option_space,
+                                          const OptionDescriptor& option_descriptor) {
     AnyArray assigned_values;
 
     std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange(dbconn_));
 
     try {
-        host_exchange->createBindForMutation(
-            host, subnet_id, reservation, option_space, option_descriptor,
-            CqlHostExchange::INSERT_HOST, assigned_values);
+        if (insert) {
+            host_exchange->createBindForMutation(
+                host, subnet_id, reservation, option_space, option_descriptor,
+                CqlHostExchange::INSERT_HOST, assigned_values);
 
-        host_exchange->executeMutation(dbconn_, assigned_values,
-                                       CqlHostExchange::INSERT_HOST);
+
+            host_exchange->executeMutation(dbconn_, assigned_values, CqlHostExchange::INSERT_HOST);
+        } else {
+            host_exchange->createBindForDelete(
+                host, subnet_id, reservation, option_space, option_descriptor,
+                CqlHostExchange::DELETE_HOST, assigned_values);
+
+
+            host_exchange->executeMutation(dbconn_, assigned_values, CqlHostExchange::DELETE_HOST);
+        }
     } catch (const StatementNotApplied& exception) {
-        isc_throw(DuplicateEntry, exception.what());
+        if (insert) {
+            isc_throw(DuplicateEntry, exception.what());
+        } else {
+            return (false);
+        }
     }
+
+    return (true);
 }
 
 void
@@ -1980,24 +2113,32 @@ void
 CqlHostDataSource::add(const HostPtr& host) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_ADD);
 
-    impl_->add(host);
+    impl_->insertOrDelete(host, true);
 }
 
 bool
-CqlHostDataSource::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/) {
-    isc_throw(NotImplemented, "CqlHostDataSource::del NotImplemented");
+CqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& address) {
+    HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, address));
+
+    return (impl_->insertOrDelete(host, false));
 }
 
 bool
-CqlHostDataSource::del4(const SubnetID& /*subnet_id*/, const Host::IdentifierType& /*type*/,
-                        const uint8_t* /*identifier_begin*/, const size_t /*identifier_len*/) {
-    isc_throw(NotImplemented, "CqlHostDataSource::del4 NotImplemented");
+CqlHostDataSource::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+                        const uint8_t* identifier_begin, const size_t identifier_len) {
+    HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(
+            subnet_id, identifier_type, identifier_begin, identifier_len));
+
+    return (impl_->insertOrDelete(host, false));
 }
 
 bool
-CqlHostDataSource::del6(const SubnetID& /*subnet_id*/, const Host::IdentifierType& /*type*/,
-                        const uint8_t* /*identifier_begin*/, const size_t /*identifier_len*/) {
-    isc_throw(NotImplemented, "CqlHostDataSource::del6 NotImplemented");
+CqlHostDataSource::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
+                        const uint8_t* identifier_begin, const size_t identifier_len) {
+    HostPtr host = boost::const_pointer_cast<Host>(impl_->get6(
+            subnet_id, identifier_type, identifier_begin, identifier_len));
+
+    return (impl_->insertOrDelete(host, false));
 }
 
 ConstHostCollection

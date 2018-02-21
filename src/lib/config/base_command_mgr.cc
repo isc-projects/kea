@@ -172,7 +172,7 @@ BaseCommandMgr::handleCommand(const std::string& cmd_name,
 }
 
 isc::data::ConstElementPtr
-BaseCommandMgr::listCommandsHandler(const std::string& name,
+BaseCommandMgr::listCommandsHandler(const std::string& /* name */,
                                     const isc::data::ConstElementPtr& ) {
     using namespace isc::data;
     ElementPtr commands = Element::createList();
