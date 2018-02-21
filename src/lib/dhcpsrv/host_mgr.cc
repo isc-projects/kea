@@ -140,10 +140,10 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
 }
 
 ConstHostPtr
-HostMgr::get4(const SubnetID& subnet_id,
-              const Host::IdentifierType& identifier_type,
-              const uint8_t* identifier_begin,
-              const size_t identifier_len) const {
+HostMgr::get4Any(const SubnetID& subnet_id,
+                 const Host::IdentifierType& identifier_type,
+                 const uint8_t* identifier_begin,
+                 const size_t identifier_len) const {
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
     if (host || alternate_sources_.empty()) {
@@ -170,10 +170,7 @@ HostMgr::get4(const SubnetID& subnet_id,
                                                identifier_len))
                 .arg((*it)->getType())
                 .arg(host->toText());
-                     
-            if (host->getNegative()) {
-                return (ConstHostPtr());
-            }
+
             return (host);
         }
     }
@@ -185,6 +182,19 @@ HostMgr::get4(const SubnetID& subnet_id,
     return (host);
 }
 
+ConstHostPtr
+HostMgr::get4(const SubnetID& subnet_id,
+              const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin,
+              const size_t identifier_len) const {
+    ConstHostPtr host = get4Any(subnet_id, identifier_type,
+                                identifier_begin, identifier_len);
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
+    }
+    return (host);
+}
+    
 ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id,
               const asiolink::IOAddress& address) const {
@@ -256,10 +266,10 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
 }
 
 ConstHostPtr
-HostMgr::get6(const SubnetID& subnet_id,
-              const Host::IdentifierType& identifier_type,
-              const uint8_t* identifier_begin,
-              const size_t identifier_len) const {
+HostMgr::get6Any(const SubnetID& subnet_id,
+                 const Host::IdentifierType& identifier_type,
+                 const uint8_t* identifier_begin,
+                 const size_t identifier_len) const {
     ConstHostPtr host = getCfgHosts()->get6(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
     if (host || alternate_sources_.empty()) {
@@ -288,9 +298,6 @@ HostMgr::get6(const SubnetID& subnet_id,
                     .arg((*it)->getType())
                     .arg(host->toText());
 
-                if (host->getNegative()) {
-                    return (ConstHostPtr());
-                }
                 return (host);
         }
     }
@@ -301,6 +308,19 @@ HostMgr::get6(const SubnetID& subnet_id,
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
 
+    return (host);
+}
+
+ConstHostPtr
+HostMgr::get6(const SubnetID& subnet_id,
+              const Host::IdentifierType& identifier_type,
+              const uint8_t* identifier_begin,
+              const size_t identifier_len) const {
+    ConstHostPtr host = get6Any(subnet_id, identifier_type,
+                                identifier_begin, identifier_len);
+    if (host && host->getNegative()) {
+        return (ConstHostPtr());
+    }
     return (host);
 }
 
