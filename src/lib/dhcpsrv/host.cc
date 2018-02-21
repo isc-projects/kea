@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,7 +92,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       dhcp6_client_classes_(dhcp6_client_classes),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
-      host_id_(0), cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
+      host_id_(0), cfg_option4_(new CfgOption()),
+      cfg_option6_(new CfgOption()), negative_(false) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -125,7 +126,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       dhcp6_client_classes_(dhcp6_client_classes),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
-      host_id_(0), cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
+      host_id_(0), cfg_option4_(new CfgOption()),
+      cfg_option6_(new CfgOption()), negative_(false) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
@@ -587,6 +589,11 @@ Host::toText() const {
         s << " dhcp6_class"
           << std::distance(dhcp6_client_classes_.begin(), cclass)
           << "=" << *cclass;
+    }
+
+    // Add negative cached.
+    if (negative_) {
+        s << " negative cached";
     }
 
     return (s.str());
