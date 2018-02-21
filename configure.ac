@@ -233,7 +233,7 @@ fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 CPPP="$CPP"
 # gcc 5 preprocessor requires -P for checking its output
-if test "$CXX_DUMP_VERSION" \> "5"; then
+if expr "$CXX_DUMP_VERSION" \> "5" > /dev/null; then
        CPPP="$CPP -P"
 fi
 
