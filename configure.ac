@@ -1531,6 +1531,15 @@ GTest:
 END
 fi
 
+if test "$FREERADIUS_INCLUDE" != ""; then
+cat >> config.report << END
+
+FreeRADIUS client:
+  FREERADIUS_INCLUDE: ${FREERADIUS_INCLUDE}
+  FREERADIUS_LIB:     ${FREERADIUS_LIB}
+END
+fi
+
 cat >> config.report << END
 
 Developer:
