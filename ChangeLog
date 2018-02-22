@@ -1,6 +1,6 @@
 1365.	[func]		fdupont
 	Added initial skeleton implementation for Radius hook library.
-	(Trac #5524, git xxx)
+	(Trac #5524, git 832aa23b89eab71875bcbdb1e955eb92fdc0e01a)
 
 1364.	[func]		fdupont
 	Implemented FNV hashing function. Cassandra backend no longer
