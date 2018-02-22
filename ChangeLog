@@ -1,7 +1,7 @@
 1364.	[func]		fdupont
 	Implemented FNV hashing function. Cassandra backend no longer
 	explicitly depends on OpenSSL.
-	(Trac #5502, git xxx)
+	(Trac #5502, git 71de75c3bb099f21fdef0d41806da281d6271287)
 
 1363.	[func]		fdupont
 	Both DHCPv4 and DHCPv6 servers can now listen on loopback
