@@ -74,7 +74,8 @@
             <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">report</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-T <replaceable class="parameter">template-file</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-v</option></arg>
-            <arg choice="opt" rep="norepeat"><option>-W <replaceable class="parameter">wrapped</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-W <replaceable class="parameter">exit-wait-time</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-w <replaceable class="parameter">wrapped</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">diagnostic-selector</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-X <replaceable class="parameter">xid-offset</replaceable></option></arg>
             <arg choice="opt" rep="norepeat">server</arg>
@@ -486,6 +487,19 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-W <replaceable class="parameter">exit-wait-time</replaceable></option></term>
+                <listitem>
+                  <para>
+                    Specifies exit-wait-time parameter, that makes perfdhcp wait
+                    for exit-wait-time us after an exit condition has been met
+                    to receive all packets without sending any new
+                    packets. Expressed in microseconds. If not specified, 0 is
+                    used (i.e. exit immediately after exit conditions are met).
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-w <replaceable class="parameter">wrapped</replaceable></option></term>
                 <listitem>
                     <para>
@@ -711,14 +725,18 @@
                     <term><option>-D <replaceable class="parameter">max-drop</replaceable></option></term>
                     <listitem>
                         <para>
-                            Abort the test if more than <replaceable class="parameter">max-drop</replaceable>
-                            requests have been dropped.  Use <option>-D
+                            Abort the test immediately if <replaceable
+                            class="parameter">max-drop</replaceable> requests
+                            have been dropped.  Use <option>-D
                             0</option> to abort if even a single
-                            request has been dropped.  If <replaceable class="parameter">max-drop</replaceable> includes
-                            the suffix '%', it specifies a maximum percentage
-                            of requests that may be dropped before abort.
-                            In this case, testing of the threshold begins after
-                            10 requests have been expected to be received.
+                            request has been dropped. <replaceable
+                            class="parameter">max-drop</replaceable> must be a
+                            positive integer. If <replaceable
+                            class="parameter">max-drop</replaceable> includes
+                            the suffix '%', it specifies a maximum percentage of
+                            requests that may be dropped before abort. In this
+                            case, testing of the threshold begins after 10
+                            requests have been expected to be received.
                         </para>
                     </listitem>
                 </varlistentry>
