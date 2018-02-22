@@ -1143,8 +1143,15 @@ CqlHostExchange::hashIntoId() const {
 
     // Get key.
     std::stringstream key_stream;
-    key_stream << std::setw(3 * DUID::MAX_DUID_LEN - 1) << std::setfill('-')
-               << DUID(host_identifier_).toText();
+    if (host_ipv4_address_) {
+        key_stream << std::setw(3 * DUID::MAX_DUID_LEN - 1) << std::setfill('-')
+                   << "-";
+        key_stream << std::setw(10) << std::setfill('-') << "-";
+    } else {
+        key_stream << std::setw(3 * DUID::MAX_DUID_LEN - 1) << std::setfill('-')
+                   << DUID(host_identifier_).toText();
+        key_stream << std::setw(10) << std::setfill('-') << host_identifier_type_;
+    }
     key_stream << std::setw(10) << std::setfill('-') << host_ipv4_subnet_id_;
     key_stream << std::setw(10) << std::setfill('-') << host_ipv6_subnet_id_;
     key_stream << std::setw(V4ADDRESS_TEXT_MAX_LEN) << std::setfill('-')
