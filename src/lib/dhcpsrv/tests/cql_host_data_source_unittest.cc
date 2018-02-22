@@ -596,7 +596,7 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     // pass but return no host because the (insert) transaction is expected
     // to be rolled back.
     ASSERT_THROW(hdsptr_->get4(host->getIPv4SubnetID(),
-	                           host->getIdentifierType(),
+                               host->getIdentifierType(),
                                &host->getIdentifier()[0],
                                host->getIdentifier().size()),
                                DbOperationError);
