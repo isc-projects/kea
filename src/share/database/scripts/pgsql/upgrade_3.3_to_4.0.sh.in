@@ -10,8 +10,8 @@ fi
 
 VERSION=`pgsql_version "$@"`
 
-if [ "$VERSION" != "3.2" ]; then
-    printf "This script upgrades 3.2 to 4.0. Reported version is $VERSION. Skipping upgrade.\n"
+if [ "$VERSION" != "3.3" ]; then
+    printf "This script upgrades 3.3 to 4.0. Reported version is $VERSION. Skipping upgrade.\n"
     exit 0
 fi
 
