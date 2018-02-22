@@ -108,7 +108,7 @@ We have received the following contributions:
    2018-01: Host reservations for Cassandra
    2018-01: Various changes (github 54)
    2018-02: Support for Google benchmark added (github 36)
-
+   2018-02: exit-wait-time param added to perfdhcp (github 55)
 
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac
@@ -140,6 +140,7 @@ We have received the following contributions:
    2018-02: Documentation upgraded to DocBook 5.0
    2018-02: --with-dhcp-XXX renamed to --with-XXX
    2018-02: Support for Google benchmark added (github 36)
+   2018-02: exit-wait-time param added to perfdhcp (github 55)
 
  - Vincent Legout
    2016-11: Fixed serveral spelling mistakes
