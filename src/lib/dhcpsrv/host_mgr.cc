@@ -65,7 +65,7 @@ HostMgr::getHostDataSource() const {
 }
 
 bool
-HostMgr::checkCacheSource() {
+HostMgr::checkCacheSource(bool logging) {
     if (getHostMgrPtr()->cache_ptr_) {
         return (true);
     }
@@ -77,6 +77,10 @@ HostMgr::checkCacheSource() {
         boost::dynamic_pointer_cast<CacheHostDataSource>(sources[0]);
     if (cache_ptr) {
         getHostMgrPtr()->cache_ptr_ = cache_ptr;
+        if (logging) {
+            LOG_INFO(hosts_logger, HOSTS_CFG_CACHE_HOST_DATA_SOURCE)
+                .arg(cache_ptr->getType());
+        }
         return (true);
     }
     return (false);

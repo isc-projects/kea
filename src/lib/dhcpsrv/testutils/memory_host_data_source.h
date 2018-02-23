@@ -21,7 +21,7 @@ namespace test {
 /// It used vector<HostPtr> as a storage and iterates through all hosts when
 /// conducting operations. Most operations are skeleton methods that don't
 /// work, just several are implemented. Those are used in the tests.
-class MemHostDataSource : public BaseHostDataSource {
+class MemHostDataSource : public virtual BaseHostDataSource {
 public:
 
     /// @brief Destructor.

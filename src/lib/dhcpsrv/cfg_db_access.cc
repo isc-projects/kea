@@ -62,7 +62,7 @@ CfgDbAccess::createManagers() const {
     }
 
     // Check for a host cache.
-    HostMgr::checkCacheSource();
+    HostMgr::checkCacheSource(true);
 }
 
 std::string 
