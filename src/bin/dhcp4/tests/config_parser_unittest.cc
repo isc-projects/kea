@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,6 +129,28 @@ const char* PARSER_CONFIGS[] = {
     "        ],"
     "        \"subnet\": \"192.0.2.0/24\""
     "     } ]"
+    "}",
+
+    // Configuration 4: two host databases
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"hosts-databases\": [ {"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest1\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      },{"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest2\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      }"
+    "    ]"
     "}",
 
     // Last Configuration for comments
@@ -5757,10 +5779,28 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     EXPECT_TRUE(classes.empty());
 }
 
+// This test checks multiple host data sources.
+TEST_F(Dhcp4ParserTest, hostsDatabases) {
+
+    string config = PARSER_CONFIGS[4];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Check database config
+    ConstCfgDbAccessPtr cfgdb =
+        CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+    ASSERT_TRUE(cfgdb);
+    const std::vector<std::string>& hal = cfgdb->getHostDbAccessStringList();
+    ASSERT_EQ(2, hal.size());
+    // Keywords are in alphabetical order
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal[0]);
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal[1]);
+}
+
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
 
-    string config = PARSER_CONFIGS[4];
+    string config = PARSER_CONFIGS[5];
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 

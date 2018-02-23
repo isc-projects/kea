@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -221,7 +221,7 @@ public:
         /// Used while parsing Dhcp6/lease-database structures.
         LEASE_DATABASE,
 
-        /// Used while parsing Dhcp6/hosts-database structures.
+        /// Used while parsing Dhcp6/hosts-database[s] structures.
         HOSTS_DATABASE,
 
         /// Used while parsing Dhcp6/*-database/type.

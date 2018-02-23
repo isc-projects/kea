@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -546,6 +546,18 @@ public:
         return (host_id_);
     }
 
+    /// @brief Sets the negative cached flag.
+    ///
+    /// @param negative New valie for negative cache flag.
+    void setNegative(bool negative) {
+        negative_ = negative;
+    }
+
+    /// @brief Return the negative cache flag value.
+    bool getNegative() const {
+        return (negative_);
+    }
+
     /// @brief Unparses (converts to Element representation) IPv4 host
     ///
     /// @return Element representation of the host
@@ -604,6 +616,9 @@ private:
     CfgOptionPtr cfg_option4_;
     /// @brief Pointer to the DHCPv6 option data configuration for this host.
     CfgOptionPtr cfg_option6_;
+
+    /// @brief Negative cached flag.
+    bool negative_;
 };
 
 /// @brief Pointer to the @c Host object.

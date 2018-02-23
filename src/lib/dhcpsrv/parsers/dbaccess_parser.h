@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,12 +28,6 @@ namespace dhcp {
 class DbAccessParser: public isc::data::SimpleParser {
 public:
 
-    /// @brief Specifies the database type
-    typedef enum {
-        LEASE_DB = 1,
-        HOSTS_DB = 2
-    } DBType;
-
     /// @brief Keyword and associated value
     typedef std::pair<std::string, std::string> StringPair;
 
@@ -43,7 +37,7 @@ public:
     /// @brief Constructor
     ///
     /// @param db_type Specifies database type (lease or hosts)
-    explicit DbAccessParser(DBType db_type);
+    explicit DbAccessParser(size_t db_type);
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -98,7 +92,7 @@ private:
 
     std::map<std::string, std::string> values_; ///< Stored parameter values
 
-    DBType type_; ///< Database type (leases or hosts)
+    size_t type_; ///< Database type (leases or hosts)
 };
 
 };  // namespace dhcp

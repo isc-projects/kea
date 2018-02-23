@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -412,16 +412,25 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                DbAccessParser parser(CfgDbAccess::LEASE_DB);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                DbAccessParser parser(CfgDbAccess::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "hosts-databases") {
+                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                for (size_t i = 0; i < config_pair.second->size(); ++i) {
+                    DbAccessParser parser(CfgDbAccess::HOSTS_DB + i);
+                    parser.parse(cfg_db_access, config_pair.second->get(i));
+                }
                 continue;
             }
 

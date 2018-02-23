@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,10 @@
 #include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/function.hpp>
 
 #include <string>
+#include <map>
 
 namespace isc {
 namespace dhcp {
@@ -38,21 +40,18 @@ public:
 
 class HostDataSourceFactory {
 public:
-    /// @brief Create an instance of a host data source.
+    /// @brief Create and add an instance of a host data source.
     ///
     /// Each database backend has its own host data source type. This static
-    /// method sets the "current" host data source to be an object of the
-    /// appropriate type.  The actual host data source is returned by the
-    /// "instance" method.
-    ///
-    /// @note When called, the current host data source is <b>always</b> destroyed
-    ///       and a new one created - even if the parameters are the same.
+    /// method adds an object of the appropriate type to a list of
+    /// host data sources.
     ///
     /// dbaccess is a generic way of passing parameters. Parameters are passed
     /// in the "name=value" format, separated by spaces.  The data MUST include
     /// a keyword/value pair of the form "type=dbtype" giving the database
     /// type, e.q. "mysql" or "sqlite3".
     ///
+    /// @param sources host data source list.
     /// @param dbaccess Database access parameters.  These are in the form of
     ///        "keyword=value" pairs, separated by spaces. They are backend-
     ///        -end specific, although must include the "type" keyword which
@@ -62,21 +61,47 @@ public:
     ///        keyword.
     /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
-    static void create(const std::string& dbaccess);
+    static void add(HostDataSourceList& sources, const std::string& dbaccess);
 
-    /// @brief Destroy host data source
+    /// @brief Delete a host data source.
     ///
-    /// Destroys the current host data source object. This should have the effect
-    /// of closing the database connection.  The method is a no-op if no
-    /// host data source is available.
-    static void destroy();
+    /// Delete the first instance of a host data source of the given type.
+    /// This should have the effect of closing the database connection.
+    ///
+    /// @param sources host data source list.
+    /// @param db_type database backend type.
+    /// @return true when found and removed, false when not found.
+    static bool del(HostDataSourceList& sources, const std::string& db_type);
 
-    /// @brief Hold pointer to host data source instance
+    /// @brief Type of host data source factory
     ///
-    /// Holds a pointer to the singleton host data source.  The singleton
-    /// is encapsulated in this method to avoid a "static initialization
-    /// fiasco" if defined in an external static variable.
-    static HostDataSourcePtr& getHostDataSourcePtr();
+    /// A factory takes a parameter map and returns a pointer to a host
+    /// data source. In case of failure it must throw and not return NULL.
+    typedef boost::function<BaseHostDataSource*(const DatabaseConnection::ParameterMap&)> Factory;
+
+    /// @brief Register a host data source factory
+    ///
+    /// Associate the factory to a database type in the map.
+    ///
+    /// @param db_type database type
+    /// @param factory host data source factory
+    /// @return true if the factory was successfully added to the map, false
+    /// if it already exists.
+    static bool registerFactory(const std::string& db_type,
+                                const Factory& factory);
+
+    /// @brief Deregister a host data source factory
+    ///
+    /// Disassociate the factory to a database type in the map.
+    ///
+    /// @param db_type database type
+    /// @return true if the factory was successfully removed from the map,
+    /// false if it was not found.
+    static bool deregisterFactory(const std::string& db_type);
+
+private:
+    /// @brief Factory map
+    static std::map<std::string, Factory> map_;
 };
 
 

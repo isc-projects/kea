@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,21 +21,31 @@ namespace isc {
 namespace dhcp {
 
 CfgDbAccess::CfgDbAccess()
-    : appended_parameters_(), lease_db_access_("type=memfile"),
-      host_db_access_() {
+    : appended_parameters_(), db_access_(2) {
+    db_access_[LEASE_DB] = "type=memfile";
 }
 
 std::string
 CfgDbAccess::getLeaseDbAccessString() const {
-    return (getAccessString(lease_db_access_));
+    return (getAccessString(db_access_[LEASE_DB]));
 }
 
 
 std::string
 CfgDbAccess::getHostDbAccessString() const {
-    return (getAccessString(host_db_access_));
+    return (getAccessString(db_access_[HOSTS_DB]));
 }
 
+std::vector<std::string>
+CfgDbAccess::getHostDbAccessStringList() const {
+    std::vector<std::string> ret;
+    for (size_t idx = HOSTS_DB; idx < db_access_.size(); ++idx) {
+        if (!db_access_[idx].empty()) {
+            ret.push_back(getAccessString(db_access_[idx]));
+        }
+    }
+    return (ret);
+}
 
 void
 CfgDbAccess::createManagers() const {
@@ -44,10 +54,15 @@ CfgDbAccess::createManagers() const {
     LeaseMgrFactory::create(getLeaseDbAccessString());
 
     // Recreate host data source.
-    HostDataSourceFactory::destroy();
-    if (!host_db_access_.empty()) {
-        HostMgr::create(getHostDbAccessString());
+    HostMgr::create();
+    auto host_db_access_list = getHostDbAccessStringList();
+    for (auto it = host_db_access_list.begin();
+         it != host_db_access_list.end(); ++it) {
+        HostMgr::addSource(*it);
     }
+
+    // Check for a host cache.
+    HostMgr::checkCacheSource(true);
 }
 
 std::string 
