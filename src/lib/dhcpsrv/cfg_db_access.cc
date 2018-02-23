@@ -60,6 +60,9 @@ CfgDbAccess::createManagers() const {
          it != host_db_access_list.end(); ++it) {
         HostMgr::addSource(*it);
     }
+
+    // Check for a host cache.
+    HostMgr::checkCacheSource();
 }
 
 std::string 
