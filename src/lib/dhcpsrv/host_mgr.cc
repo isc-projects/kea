@@ -64,6 +64,24 @@ HostMgr::getHostDataSource() const {
     return (alternate_sources_[0]);
 }
 
+bool
+HostMgr::checkCacheSource() {
+    if (getHostMgrPtr()->cache_ptr_) {
+        return (true);
+    }
+    HostDataSourceList& sources = getHostMgrPtr()->alternate_sources_;
+    if (sources.empty()) {
+        return (false);
+    }
+    CacheHostDataSourcePtr cache_ptr =
+        boost::dynamic_pointer_cast<CacheHostDataSource>(sources[0]);
+    if (cache_ptr) {
+        getHostMgrPtr()->cache_ptr_ = cache_ptr;
+        return (true);
+    }
+    return (false);
+}
+
 HostMgr&
 HostMgr::instance() {
     boost::scoped_ptr<HostMgr>& host_mgr_ptr = getHostMgrPtr();
@@ -132,6 +150,9 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
         if (!host && hwaddr) {
             host = (*it)->get4(subnet_id, hwaddr, DuidPtr());
         }
+        if (host && cache_ptr_ && (it != alternate_sources_.begin())) {
+            cache(host);
+        }
     }
     if (host && host->getNegative()) {
         return (ConstHostPtr());
@@ -171,6 +192,9 @@ HostMgr::get4Any(const SubnetID& subnet_id,
                 .arg((*it)->getType())
                 .arg(host->toText());
 
+            if (cache_ptr_ && (it != alternate_sources_.begin())) {
+                cache(host);
+            }
             return (host);
         }
     }
@@ -179,6 +203,10 @@ HostMgr::get4Any(const SubnetID& subnet_id,
         .arg(subnet_id)
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
+    if (negative_caching_) {
+        cacheNegative(subnet_id, SubnetID(0),
+                      identifier_type, identifier_begin, identifier_len);
+    }
     return (host);
 }
 
@@ -209,6 +237,9 @@ HostMgr::get4(const SubnetID& subnet_id,
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
         host = (*it)->get4(subnet_id, address);
+        if (host && cache_ptr_ && (it != alternate_sources_.begin())) {
+            cache(host);
+        }
     }
     if (host && host->getNegative()) {
         return (ConstHostPtr());
@@ -238,6 +269,9 @@ HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
         if (!host && hwaddr) {
             host = (*it)->get6(subnet_id, DuidPtr(), hwaddr);
         }
+        if (host && cache_ptr_ && (it != alternate_sources_.begin())) {
+            cache(host);
+        }
     }
     if (host && host->getNegative()) {
         return (ConstHostPtr());
@@ -258,6 +292,9 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
         host = (*it)->get6(prefix, prefix_len);
+        if (host && cache_ptr_ && (it != alternate_sources_.begin())) {
+            cache(host);
+        }
     }
     if (host && host->getNegative()) {
         return (ConstHostPtr());
@@ -298,6 +335,9 @@ HostMgr::get6Any(const SubnetID& subnet_id,
                     .arg((*it)->getType())
                     .arg(host->toText());
 
+                if (cache_ptr_ && (it != alternate_sources_.begin())) {
+                    cache(host);
+                }
                 return (host);
         }
     }
@@ -307,6 +347,11 @@ HostMgr::get6Any(const SubnetID& subnet_id,
         .arg(subnet_id)
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
+
+    if (negative_caching_) {
+        cacheNegative(SubnetID(0), subnet_id,
+                      identifier_type, identifier_begin, identifier_len);
+    }
 
     return (host);
 }
@@ -338,6 +383,9 @@ HostMgr::get6(const SubnetID& subnet_id,
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
         host = (*it)->get6(subnet_id, addr);
+        if (host && cache_ptr_ && (it != alternate_sources_.begin())) {
+            cache(host);
+        }
     }
     if (host && host->getNegative()) {
         return (ConstHostPtr());
@@ -411,6 +459,35 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
         }
     }
     return (false);
+}
+
+void
+HostMgr::cache(ConstHostPtr host) const {
+    if (cache_ptr_) {
+        // Replace any existing value.
+        int overwrite = 0;
+        // Don't check the result as it does not matter?
+        cache_ptr_->insert(host, overwrite);
+    }
+}
+
+void
+HostMgr::cacheNegative(const SubnetID& ipv4_subnet_id,
+                       const SubnetID& ipv6_subnet_id,
+                       const Host::IdentifierType& identifier_type,
+                       const uint8_t* identifier_begin,
+                       const size_t identifier_len) const {
+    if (cache_ptr_ && negative_caching_) {
+        HostPtr host(new Host(identifier_begin, identifier_len,
+                              identifier_type,
+                              ipv4_subnet_id, ipv6_subnet_id,
+                              IOAddress::IPV4_ZERO_ADDRESS()));
+        host->setNegative(true);
+        // Don't replace any existing value.
+        int overwrite = -1;
+        // nor matter if it fails.
+        cache_ptr_->insert(host, overwrite);
+    }
 }
 
 } // end of isc::dhcp namespace

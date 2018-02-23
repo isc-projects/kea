@@ -10,6 +10,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/cache_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/noncopyable.hpp>
@@ -80,6 +81,12 @@ public:
 
     /// @brief Delete all alternate host data source.
     static void delAllSources();
+
+    /// @brief Check for the cache host data source.
+    ///
+    /// Checks if the first host data source implements
+    /// the cache abstract class and sets cache_ptr_.
+    static bool checkCacheSource();
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///
@@ -308,44 +315,6 @@ public:
     /// @return true if addition was successful.
     virtual bool add(const HostPtr& host);
 
-    /// @brief Return backend type
-    ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-    ///
-    /// @return Type of the backend.
-    virtual std::string getType() const {
-        return (std::string("host_mgr"));
-    }
-
-    /// @brief Returns the host data source list.
-    ///
-    /// @return reference to the host data source list.
-    HostDataSourceList& getHostDataSourceList() {
-        return (alternate_sources_);
-    }
-
-    /// @brief Returns the fist host data source.
-    ///
-    /// May return NULL if the host data source list is empty.
-    /// @return pointer to the first host data source (or NULL)
-    HostDataSourcePtr getHostDataSource() const;
-
-    /// @brief Sets alternate host data source list.
-    ///
-    /// Note: This should be used only for testing. Do not use
-    /// in production. Normal control flow assumes that
-    /// HostMgr::create() and HostMgr::add() is called and it instantiates
-    /// appropriate host data sources. However, some tests
-    /// (e.g. host_cmds) implement their own very simple
-    /// data source. It's not production ready by any means,
-    /// so it does not belong in host_data_source_factory.cc.
-    /// The testing nature of this method is reflected in its name.
-    ///
-    /// @param sources new source list to be set
-    void setTestHostDataSourceList(const HostDataSourceList& sources) {
-        alternate_sources_ = sources;
-    }
-
     /// @brief Attempts to delete a host by address.
     ///
     /// This method supports both v4 and v6.
@@ -383,13 +352,76 @@ public:
     del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len);
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("host_mgr"));
+    }
+
+    /// @brief Returns the host data source list.
+    ///
+    /// @return reference to the host data source list.
+    HostDataSourceList& getHostDataSourceList() {
+        return (alternate_sources_);
+    }
+
+    /// @brief Returns the first host data source.
+    ///
+    /// May return NULL if the host data source list is empty.
+    /// @return pointer to the first host data source (or NULL).
+    HostDataSourcePtr getHostDataSource() const;
+
+    /// @brief Returns the negative caching flag.
+    ///
+    /// @return the negative caching flag.
+    bool getNegativeCaching() const {
+        return (negative_caching_);
+    }
+
+    /// @brief Sets the negative caching flag.
+    ///
+    void setNegativeCaching(bool negative_caching) {
+        negative_caching_ = negative_caching;
+    }
+
+protected:
+    /// @brief The negative caching flag.
+    ///
+    /// When true and the first data source is a cache negative answers
+    /// to get[46] for aubnet and identifier are cached.
+    bool negative_caching_;
+
+    /// @brief Cache an answer.
+    ///
+    /// @param host Pointer to the missied host.
+    virtual void cache(ConstHostPtr host) const;
+
+    /// @brief Cache a negative answer.
+    ///
+    /// @param ipv4_subnet_id Identifier of the IPv4 subnet.
+    /// @param ipv6_subnet_id Identifier of the IPv6 subnet.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of the Identifier.
+    /// @param identifier_len Identifier length.
+    virtual void cacheNegative(const SubnetID& ipv4_subnet_id,
+                               const SubnetID& ipv6_subnet_id,
+                               const Host::IdentifierType& identifier_type,
+                               const uint8_t* identifier_begin,
+                               const size_t identifier_len) const;
+
 private:
 
     /// @brief Private default constructor.
-    HostMgr() { }
+    HostMgr() : negative_caching_(false) { }
 
     /// @brief List of alternate host data sources.
     HostDataSourceList alternate_sources_;
+
+    /// @brief Pointer to the cache.
+    CacheHostDataSourcePtr cache_ptr_;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.
