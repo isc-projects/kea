@@ -1934,7 +1934,7 @@ PgSqlHostDataSource::~PgSqlHostDataSource() {
     delete impl_;
 }
 
-void
+bool
 PgSqlHostDataSource::add(const HostPtr& host) {
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
@@ -1977,6 +1977,8 @@ PgSqlHostDataSource::add(const HostPtr& host) {
 
     // Everything went fine, so explicitly commit the transaction.
     transaction.commit();
+
+    return (true);
 }
 
 bool

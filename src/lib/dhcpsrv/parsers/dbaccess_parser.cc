@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ namespace dhcp {
 
 
 // Factory function to build the parser
-DbAccessParser::DbAccessParser(DBType db_type)
+DbAccessParser::DbAccessParser(size_t db_type)
     : values_(), type_(db_type) {
 }
 
@@ -110,7 +110,8 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
-        isc_throw(DhcpConfigError, (type_ == LEASE_DB ? "lease" : "host")
+        isc_throw(DhcpConfigError,
+                  (type_ == CfgDbAccess::LEASE_DB ? "lease" : "host")
                   << " database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed (" << database_config->getPosition() << ")");
@@ -167,10 +168,12 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     values_.swap(values_copy);
 
     // 5. Save the database access string in the Configuration Manager.
-    if (type_ == LEASE_DB) {
+    if (type_ == CfgDbAccess::LEASE_DB) {
         cfg_db->setLeaseDbAccessString(getDbAccessString());
-    } else if (type_ == HOSTS_DB) {
+    } else if (type_ == CfgDbAccess::HOSTS_DB) {
         cfg_db->setHostDbAccessString(getDbAccessString());
+    } else if (type_ > CfgDbAccess::HOSTS_DB) {
+        cfg_db->pushHostDbAccessString(getDbAccessString());
     }
 }
 

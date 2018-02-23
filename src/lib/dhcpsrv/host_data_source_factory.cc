@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,14 +38,11 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-HostDataSourcePtr&
-HostDataSourceFactory::getHostDataSourcePtr() {
-    static HostDataSourcePtr hostDataSourcePtr;
-    return (hostDataSourcePtr);
-}
+map<string, HostDataSourceFactory::Factory> HostDataSourceFactory::map_;
 
 void
-HostDataSourceFactory::create(const std::string& dbaccess) {
+HostDataSourceFactory::add(HostDataSourceList& sources,
+                           const string& dbaccess) {
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
@@ -57,62 +54,146 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
                   "contain the 'type' keyword");
     }
 
-    std::string db_type = it->second;
+    string db_type = it->second;
+    auto index = map_.find(db_type);
 
-#ifdef HAVE_MYSQL
-    if (db_type == "mysql") {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        getHostDataSourcePtr().reset(new MySqlHostDataSource(parameters));
-        return;
+    // No match?
+    if (index == map_.end()) {
+        isc_throw(InvalidType, "Hosts database access parameter 'type': " <<
+                  db_type << " is invalid");
     }
-#endif
 
-#ifdef HAVE_PGSQL
-    if (db_type == "postgresql") {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        getHostDataSourcePtr().reset(new PgSqlHostDataSource(parameters));
-        return;
+    // Call the factory and push the pointer on sources.
+    sources.push_back(boost::shared_ptr<BaseHostDataSource>(index->second(parameters)));
+
+    // Check the factory did not return NULL.
+    if (!sources.back()) {
+        sources.pop_back();
+        isc_throw(Unexpected, "Hosts database " << db_type <<
+                  " factory returned NULL");
     }
-#endif
-
-#ifdef HAVE_CQL
-    if (db_type == "cql") {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        getHostDataSourcePtr().reset(new CqlHostDataSource(parameters));
-        return;
-    }
-#endif
-
-    // Get here on no match.
-    isc_throw(InvalidType, "Hosts database access parameter 'type': " <<
-                           db_type << " is invalid");
 }
 
-void
-HostDataSourceFactory::destroy() {
-    // Destroy current host data source instance.  This is a no-op if no host
-    // data source is available.
-    if (getHostDataSourcePtr()) {
+bool
+HostDataSourceFactory::del(HostDataSourceList& sources,
+                           const string& db_type) {
+    for (auto it = sources.begin(); it != sources.end(); ++it) {
+        if ((*it)->getType() != db_type) {
+            continue;
+        }
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
-            .arg(getHostDataSourcePtr()->getType());
+            .arg(db_type);
+        sources.erase(it);
+        return (true);
     }
-    getHostDataSourcePtr().reset();
+    return (false);
 }
 
-#if 0
-BaseHostDataSource&
-HostDataSourceFactory::instance() {
-    BaseHostDataSource* hdsptr = getHostDataSourcePtr().get();
-    if (hdsptr == NULL) {
-        isc_throw(NoHostDataSourceManager,
-                "no current host data source instance is available");
+bool
+HostDataSourceFactory::registerFactory(const string& db_type,
+                                       const Factory& factory) {
+    if (map_.count(db_type)) {
+        return (false);
     }
-    return (*hdsptr);
+    map_.insert(pair<string, Factory>(db_type, factory));
+    return (true);
 }
-#endif
+
+bool
+HostDataSourceFactory::deregisterFactory(const string& db_type) {
+    auto index = map_.find(db_type);
+    if (index != map_.end()) {
+        map_.erase(index);
+        return (true);
+    } else {
+        return (false);
+    }
+}
 
 }  // namespace dhcp
 }  // namespace isc
+
+//
+// Register database backends
+//
+
+using namespace isc::dhcp;
+
+namespace {
+
+#ifdef HAVE_MYSQL
+struct MySqlHostDataSourceInit {
+    // Constructor registers
+    MySqlHostDataSourceInit() {
+        HostDataSourceFactory::registerFactory("mysql", factory);
+    }
+
+    // Destructor deregisters
+    ~MySqlHostDataSourceInit() {
+        HostDataSourceFactory::deregisterFactory("mysql");
+    }
+
+    // Factory class method
+    static BaseHostDataSource*
+    factory(const DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (new MySqlHostDataSource(parameters));
+    }
+};
+
+// Database backend will be registered at object initialization
+MySqlHostDataSourceInit mysql_init_;
+#endif
+
+#ifdef HAVE_PGSQL
+struct PgSqlHostDataSourceInit {
+    // Constructor registers
+    PgSqlHostDataSourceInit() {
+        HostDataSourceFactory::registerFactory("postgresql", factory);
+    }
+
+    // Destructor deregisters
+    ~PgSqlHostDataSourceInit() {
+        HostDataSourceFactory::deregisterFactory("postgresql");
+    }
+
+    // Factory class method
+    static BaseHostDataSource*
+    factory(const DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (new PgSqlHostDataSource(parameters));
+    }
+};
+
+// Database backend will be registered at object initialization
+PgSqlHostDataSourceInit pgsql_init_;
+#endif
+
+#ifdef HAVE_CQL
+struct CqlHostDataSourceInit {
+    // Constructor registers
+    CqlHostDataSourceInit() {
+        HostDataSourceFactory::registerFactory("cql", factory);
+    }
+
+    // Destructor deregisters
+    ~CqlHostDataSourceInit() {
+        HostDataSourceFactory::deregisterFactory("cql");
+    }
+
+    // Factory class method
+    static BaseHostDataSource*
+    factory(const DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (new CqlHostDataSource(parameters));
+    }
+};
+
+// Database backend will be registered at object initialization
+CqlHostDataSourceInit cql_init_;
+#endif
+
+} // end of anonymous namespace

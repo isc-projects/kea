@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ TEST(CfgDbAccessTest, defaults) {
     runToElementTest<CfgLeaseDbAccess>(expected, CfgLeaseDbAccess(cfg));
 
     EXPECT_TRUE(cfg.getHostDbAccessString().empty());
-    runToElementTest<CfgHostDbAccess>("{ }", CfgHostDbAccess(cfg));
+    runToElementTest<CfgHostDbAccess>("[ ]", CfgHostDbAccess(cfg));
 }
 
 // This test verifies that it is possible to set the lease database
@@ -65,7 +65,7 @@ TEST(CfgDbAccessTest, setHostDbAccessString) {
     EXPECT_EQ("type=mysql", cfg.getHostDbAccessString());
 
     // Check unparse
-    std::string expected = "{ \"type\": \"mysql\" }";
+    std::string expected = "[ { \"type\": \"mysql\" } ]";
     runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
 
     // Append additional parameter.
@@ -78,6 +78,39 @@ TEST(CfgDbAccessTest, setHostDbAccessString) {
     // If access string is empty, no parameters will be appended.
     ASSERT_NO_THROW(cfg.setHostDbAccessString(""));
     EXPECT_TRUE(cfg.getHostDbAccessString().empty());
+}
+
+// This test verifies that it is possible to set multiple host
+// database string.
+TEST(CfgDbAccessTest, pushHostDbAccessString) {
+    CfgDbAccess cfg;
+    ASSERT_NO_THROW(cfg.setHostDbAccessString("type=mysql"));
+    EXPECT_EQ("type=mysql", cfg.getHostDbAccessString());
+
+    // Push two other strings
+    ASSERT_NO_THROW(cfg.pushHostDbAccessString("type=foo"));
+    ASSERT_NO_THROW(cfg.pushHostDbAccessString("type=bar"));
+
+    // Check unparse
+    std::string expected = "[ { \"type\": \"mysql\" }, ";
+    expected += "{ \"type\": \"foo\" }, { \"type\": \"bar\" } ]";
+    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
+
+    // Check access strings
+    std::vector<std::string> hal = cfg.getHostDbAccessStringList();
+    ASSERT_EQ(3, hal.size());
+    EXPECT_EQ("type=mysql", hal[0]);
+    EXPECT_EQ("type=foo", hal[1]);
+    EXPECT_EQ("type=bar", hal[2]);
+
+    // Reset the first string so it will be ignored.
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(""));
+    expected = "[ { \"type\": \"foo\" }, { \"type\": \"bar\" } ]";
+    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
+    hal = cfg.getHostDbAccessStringList();
+    ASSERT_EQ(2, hal.size());
+    EXPECT_EQ("type=foo", hal[0]);
+    EXPECT_EQ("type=bar", hal[1]);
 }
 
 // Tests that lease manager can be created from a specified configuration.
@@ -129,8 +162,8 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
     });
 
     ASSERT_NO_THROW({
-        HostDataSourcePtr& host_data_source =
-            HostDataSourceFactory::getHostDataSourcePtr();
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
         EXPECT_EQ("mysql", host_data_source->getType());
     });
@@ -142,8 +175,8 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
     ASSERT_NO_THROW(HostMgr::instance());
 
     ASSERT_NO_THROW({
-        HostDataSourcePtr& host_data_source =
-            HostDataSourceFactory::getHostDataSourcePtr();
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
         EXPECT_EQ("mysql", host_data_source->getType());
     });

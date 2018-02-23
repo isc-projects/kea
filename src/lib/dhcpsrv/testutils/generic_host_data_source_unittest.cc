@@ -14,15 +14,16 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/db_exceptions.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
-#include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/schema.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
+#include <util/buffer.h>
 
 #include <boost/foreach.hpp>
-#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <gtest/gtest.h>
-#include <util/buffer.h>
 
 #include <chrono>
 #include <cstring>
@@ -195,7 +196,9 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     // insert some data to the database.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     ASSERT_TRUE(host);
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
@@ -210,12 +213,12 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
 
     // Close the database connection and reopen in "read-only" mode as
     // specified by the "VALID_READONLY_DB" parameter.
-    HostDataSourceFactory::destroy();
-    HostDataSourceFactory::create(connectionString(
+    HostMgr::create();
+    HostMgr::addSource(connectionString(
         valid_db_type, VALID_NAME, VALID_HOST, VALID_READONLY_USER,
         VALID_PASSWORD, VALID_READONLY_DB));
 
-    hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+    hdsptr_ = HostMgr::instance().getHostDataSource();
 
     // Check that an attempt to insert new host would result in
     // exception.
@@ -244,7 +247,9 @@ GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
     SubnetID subnet = host->getIPv4SubnetID();
 
     // Try to add it to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // This should not return anything
     ConstHostPtr from_hds = hdsptr_->get4(subnet, IOAddress("10.10.10.10"));
@@ -270,10 +275,15 @@ GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     HostPtr host4 = HostDataSourceUtils::initializeHost4("192.0.2.4", id);
 
     // ... and add them to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
-    ASSERT_NO_THROW(hdsptr_->add(host2));
-    ASSERT_NO_THROW(hdsptr_->add(host3));
-    ASSERT_NO_THROW(hdsptr_->add(host4));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host3));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host4));
+    EXPECT_TRUE(added);
 
     SubnetID subnet1 = host1->getIPv4SubnetID();
     SubnetID subnet2 = host2->getIPv4SubnetID();
@@ -316,8 +326,11 @@ GenericHostDataSourceTest::testGet4ByIdentifier(
     ASSERT_FALSE(host1->getIdentifier() == host2->getIdentifier());
 
     // Try to add both of them to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
-    ASSERT_NO_THROW(hdsptr_->add(host2));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
 
     SubnetID subnet1 = host1->getIPv4SubnetID();
     SubnetID subnet2 = host2->getIPv4SubnetID();
@@ -348,7 +361,9 @@ GenericHostDataSourceTest::testHWAddrNotClientId() {
     ASSERT_FALSE(host->getDuid());
 
     // Try to add it to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     SubnetID subnet = host->getIPv4SubnetID();
 
@@ -380,7 +395,9 @@ GenericHostDataSourceTest::testClientIdNotHWAddr() {
     ASSERT_TRUE(host->getDuid());
 
     // Try to add it to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     SubnetID subnet = host->getIPv4SubnetID();
 
@@ -433,7 +450,9 @@ GenericHostDataSourceTest::testHostname(std::string name, int num) {
     for (vector<HostPtr>::const_iterator it = hosts.begin(); it != hosts.end();
          ++it) {
         // Try to add both of the to the host data source.
-        ASSERT_NO_THROW(hdsptr_->add(*it));
+        bool added = false;
+        ASSERT_NO_THROW(added = hdsptr_->add(*it));
+        EXPECT_TRUE(added);
     }
 
     // And finally retrieve them one by one and check
@@ -462,7 +481,9 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
     SubnetID subnet = host->getIPv4SubnetID();
 
     // Try to add it to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Retrieve it.
     ConstHostPtr from_hds = hdsptr_->get4(subnet, IOAddress("192.0.2.1"));
@@ -479,7 +500,8 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
     host->setHostname("foo.example.com");
     subnet = host->getIPv6SubnetID();
 
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
     
     from_hds = hdsptr_->get6(subnet, Host::IDENT_HWADDR,
                              &host->getIdentifier()[0],
@@ -502,7 +524,9 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
         host->setIPv4SubnetID(i + 1000);
 
         // Check that the same host can have reservations in multiple subnets.
-        EXPECT_NO_THROW(hdsptr_->add(host));
+        bool added = false;
+        EXPECT_NO_THROW(added = hdsptr_->add(host));
+        EXPECT_TRUE(added);
     }
 
     // Now check that the reservations can be retrieved by IPv4 address from
@@ -576,8 +600,11 @@ GenericHostDataSourceTest::testGet6ByHWAddr() {
     HostDataSourceUtils::compareHwaddrs(host1, host2, false);
 
     // Try to add both of them to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
-    ASSERT_NO_THROW(hdsptr_->add(host2));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
 
     SubnetID subnet1 = host1->getIPv6SubnetID();
     SubnetID subnet2 = host2->getIPv6SubnetID();
@@ -613,8 +640,11 @@ GenericHostDataSourceTest::testGet6ByClientId() {
     HostDataSourceUtils::compareDuids(host1, host2, false);
 
     // Try to add both of them to the host data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
-    ASSERT_NO_THROW(hdsptr_->add(host2));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
 
     SubnetID subnet1 = host1->getIPv6SubnetID();
     SubnetID subnet2 = host2->getIPv6SubnetID();
@@ -650,7 +680,9 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
         host->setIPv6SubnetID(i + 1000);
 
         // Check that the same host can have reservations in multiple subnets.
-        EXPECT_NO_THROW(hdsptr_->add(host));
+        bool added = false;
+        EXPECT_NO_THROW(added = hdsptr_->add(host));
+        EXPECT_TRUE(added);
 
         // Increase address to make sure we don't assign the same address
         // in different subnets.
@@ -698,10 +730,15 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, prefix);
 
     // ... and add them to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
-    ASSERT_NO_THROW(hdsptr_->add(host2));
-    ASSERT_NO_THROW(hdsptr_->add(host3));
-    ASSERT_NO_THROW(hdsptr_->add(host4));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host3));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host4));
+    EXPECT_TRUE(added);
 
     // Are we talking about addresses or prefixes?
     uint8_t len = prefix ? 64 : 128;
@@ -741,10 +778,15 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8:4::", Host::IDENT_DUID, true);
 
     // ... and add them to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
-    ASSERT_NO_THROW(hdsptr_->add(host2));
-    ASSERT_NO_THROW(hdsptr_->add(host3));
-    ASSERT_NO_THROW(hdsptr_->add(host4));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host3));
+    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(added = hdsptr_->add(host4));
+    EXPECT_TRUE(added);
 
     // And then try to retrieve them back.
     ConstHostPtr from_hds1 = hdsptr_->get6(host1->getIPv6SubnetID(), IOAddress("2001:db8:1::"));
@@ -774,7 +816,9 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameDUID() {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
 
     // Add this reservation once.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Then try to add it again, it should throw an exception.
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
@@ -789,7 +833,9 @@ GenericHostDataSourceTest::testAddDuplicate6WithSameHWAddr() {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_HWADDR, true);
 
     // Add this reservation once.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Then try to add it again, it should throw an exception.
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
@@ -804,7 +850,9 @@ GenericHostDataSourceTest::testAddDuplicate4() {
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_DUID);
 
     // Add this reservation once.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Then try to add it again, it should throw an exception.
     ASSERT_THROW(hdsptr_->add(host), DuplicateEntry);
@@ -818,7 +866,8 @@ GenericHostDataSourceTest::testAddDuplicate4() {
     // Modify address to avoid its duplication and make sure
     // we can now add the host.
     ASSERT_NO_THROW(host->setIPv4Reservation(IOAddress("192.0.2.3")));
-    EXPECT_NO_THROW(hdsptr_->add(host));
+    EXPECT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 }
 
 void
@@ -834,7 +883,9 @@ GenericHostDataSourceTest::testAddr6AndPrefix() {
     host->addReservation(resv);
 
     // Add this reservation
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Get this host by DUID
     ConstHostPtr from_hds =
@@ -868,7 +919,9 @@ GenericHostDataSourceTest::testMultipleReservations() {
     host->addReservation(resv3);
     host->addReservation(resv4);
 
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     ConstHostPtr from_hds = hdsptr_->get6(IOAddress("2001:db8::1"), len);
 
@@ -915,7 +968,9 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY, user_context));
     // Insert host and the options into respective tables.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
@@ -943,7 +998,9 @@ void GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP6_ONLY, user_context));
     // Insert host, options and IPv6 reservations into respective tables.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
 
@@ -965,7 +1022,9 @@ GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) {
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_AND_DHCP6));
     // Insert host, options and IPv6 reservations into respective tables.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // getAll(identifier_type, identifier, identifier_size)
     ConstHostCollection hosts_by_id =
@@ -990,7 +1049,9 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     }
 
     // Add the host.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
@@ -1055,7 +1116,9 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     }
 
     // Add the host.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
@@ -1124,7 +1187,9 @@ GenericHostDataSourceTest::testMultipleClientClassesBoth() {
     }
 
     // Add the host.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
@@ -1153,7 +1218,9 @@ GenericHostDataSourceTest::testMessageFields4() {
     });
 
     // Add the host.
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host));
+    EXPECT_TRUE(added);
 
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
@@ -1282,7 +1349,9 @@ void GenericHostDataSourceTest::testDeleteByAddr4() {
     SubnetID subnet1 = host1->getIPv4SubnetID();
 
     // ... and add it to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // And then try to retrieve it back.
     ConstHostPtr before = hdsptr_->get4(subnet1, IOAddress("192.0.2.1"));
@@ -1309,7 +1378,9 @@ void GenericHostDataSourceTest::testDeleteById4() {
     SubnetID subnet1 = host1->getIPv4SubnetID();
 
     // ... and add it to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // And then try to retrieve it back.
     ConstHostPtr before = hdsptr_->get4(subnet1,
@@ -1350,7 +1421,9 @@ void GenericHostDataSourceTest::testDeleteById4Options() {
     SubnetID subnet1 = host1->getIPv4SubnetID();
 
     // ... and add it to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // There must be some options
     EXPECT_NE(0, countDBOptions4());
@@ -1391,7 +1464,9 @@ void GenericHostDataSourceTest::testDeleteById6() {
     SubnetID subnet1 = host1->getIPv6SubnetID();
 
     // ... and add it to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // And then try to retrieve it back.
     ConstHostPtr before = hdsptr_->get6(subnet1,
@@ -1427,7 +1502,9 @@ void GenericHostDataSourceTest::testDeleteById6Options() {
     ASSERT_NO_THROW(addTestOptions(host1, true, DHCP6_ONLY));
 
     // ... and add it to the data source.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // Check that the options are stored...
     EXPECT_NE(0, countDBOptions6());
@@ -1475,7 +1552,9 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     host1->setIPv4SubnetID(1);
     host1->setIPv6SubnetID(0);
     // Add the host to the database.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // An attempt to add this host again should fail due to client identifier
     // duplication.
@@ -1487,7 +1566,8 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     HostPtr host2 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host2->setIPv4SubnetID(1);
     host2->setIPv6SubnetID(0);
-    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
 }
 
 void
@@ -1500,7 +1580,9 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     host1->setIPv4SubnetID(0);
     host1->setIPv6SubnetID(1);
     // Add the host to the database.
-    ASSERT_NO_THROW(hdsptr_->add(host1));
+    bool added = false;
+    ASSERT_NO_THROW(added = hdsptr_->add(host1));
+    EXPECT_TRUE(added);
 
     // An attempt to add this host again should fail due to client identifier
     // duplication.
@@ -1510,7 +1592,8 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     host2->setIPv4SubnetID(0);
     host2->setIPv6SubnetID(1);
     // Add the host to the database.
-    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(added = hdsptr_->add(host2));
+    EXPECT_TRUE(added);
 }
 
 }  // namespace test
