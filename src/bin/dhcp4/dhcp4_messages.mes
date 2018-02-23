@@ -428,6 +428,11 @@ has been temporarily disabled. This affects all received DHCP packets. The
 service may be enabled by the "dhcp-enable" control command or automatically
 after a specified amount of time since receiving "dhcp-disable" command.
 
+% DHCP4_PACKET_DROP_0009 %1: Option 53 missing (no DHCP message type), is this a BOOTP packet?
+This debug message is issued when a packet is dropped because it did contain
+option 53 and thus has no DHCP message type. The most likely explanation is
+that it was BOOTP packet.
+
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
