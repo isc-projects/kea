@@ -86,7 +86,10 @@ public:
     ///
     /// Checks if the first host data source implements
     /// the cache abstract class and sets cache_ptr_.
-    static bool checkCacheSource();
+    ///
+    /// @param logging When true (not the default) emit an informational log.
+    /// @return true if the first host data source is a cache.
+    static bool checkCacheSource(bool logging = false);
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///

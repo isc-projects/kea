@@ -14,7 +14,7 @@ namespace dhcp {
 /// @brief Abstract interface extending base simple data source for host
 /// reservations to host cache.
 /// Only the insert() method is required to use the cache.
-class CacheHostDataSource : public BaseHostDataSource {
+class CacheHostDataSource : public virtual BaseHostDataSource {
 public:
 
     /// @brief Default destructor implementation.
