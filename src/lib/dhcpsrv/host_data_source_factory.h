@@ -77,7 +77,7 @@ public:
     ///
     /// A factory takes a parameter map and returns a pointer to a host
     /// data source. In case of failure it must throw and not return NULL.
-    typedef boost::function<BaseHostDataSource*(const DatabaseConnection::ParameterMap&)> Factory;
+    typedef boost::function<HostDataSourcePtr (const DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Register a host data source factory
     ///

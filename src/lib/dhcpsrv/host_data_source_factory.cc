@@ -134,11 +134,11 @@ struct MySqlHostDataSourceInit {
     }
 
     // Factory class method
-    static BaseHostDataSource*
+    static HostDataSourcePtr
     factory(const DatabaseConnection::ParameterMap& parameters) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (new MySqlHostDataSource(parameters));
+        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
     }
 };
 
@@ -159,11 +159,11 @@ struct PgSqlHostDataSourceInit {
     }
 
     // Factory class method
-    static BaseHostDataSource*
+    static HostDataSourcePtr
     factory(const DatabaseConnection::ParameterMap& parameters) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (new PgSqlHostDataSource(parameters));
+        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
     }
 };
 
@@ -184,11 +184,11 @@ struct CqlHostDataSourceInit {
     }
 
     // Factory class method
-    static BaseHostDataSource*
+    static HostDataSourcePtr
     factory(const DatabaseConnection::ParameterMap& parameters) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (new CqlHostDataSource(parameters));
+        return (HostDataSourcePtr(new CqlHostDataSource(parameters)));
     }
 };
 

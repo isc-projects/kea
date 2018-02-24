@@ -36,9 +36,9 @@ public:
 };
 
 // @brief Factory of mem1
-BaseHostDataSource*
+HostDataSourcePtr
 mem1Factory(const DatabaseConnection::ParameterMap&) {
-    return (new Mem1HostDataSource());
+    return (HostDataSourcePtr(new Mem1HostDataSource()));
 }
 
 // @brief Register mem1Factory
@@ -55,9 +55,9 @@ public:
 };
 
 // @brief Factory of mem2
-BaseHostDataSource*
+HostDataSourcePtr
 mem2Factory(const DatabaseConnection::ParameterMap&) {
-    return (new Mem2HostDataSource());
+    return (HostDataSourcePtr(new Mem2HostDataSource()));
 }
 
 // @brief Register mem2Factory
@@ -66,8 +66,8 @@ bool registerFactory2() {
 }
 
 // @brief Factory function returning 0
-BaseHostDataSource* factory0(const DatabaseConnection::ParameterMap&) {
-    return (0);
+HostDataSourcePtr factory0(const DatabaseConnection::ParameterMap&) {
+    return (HostDataSourcePtr());
 }
 
 // @brief Test fixture class
