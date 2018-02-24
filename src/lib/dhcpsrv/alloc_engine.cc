@@ -2512,15 +2512,17 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
-    if (host) {
-        for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
-             ++id) {
-            if (id->first == host->getIdentifierType()) {
-                return (id->second != host->getIdentifier());
+    if (ctx.subnet_ && (ctx.subnet_->getHostReservationMode() != Network::HR_DISABLED)) {
+        ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
+        if (host) {
+            for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
+                 ++id) {
+                if (id->first == host->getIdentifierType()) {
+                    return (id->second != host->getIdentifier());
+                }
             }
+            return (true);
         }
-        return (true);
     }
     return (false);
 }
@@ -2804,7 +2806,8 @@ AllocEngine::findReservation(ClientContext4& ctx) {
 
         // Only makes sense to get reservations if the client has access
         // to the class.
-        if (subnet->clientSupported(ctx.query_->getClasses())) {
+        if (subnet->clientSupported(ctx.query_->getClasses()) &&
+            (subnet->getHostReservationMode() != Network::HR_DISABLED)) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
             BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
