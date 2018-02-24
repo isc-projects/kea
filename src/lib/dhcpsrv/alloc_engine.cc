@@ -372,49 +372,6 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
-template<typename ContextType>
-void
-AllocEngine::findReservationInternal(ContextType& ctx,
-                                     const AllocEngine::HostGetFunc& host_get,
-                                     const bool ipv6_only) {
-    ctx.hosts_.clear();
-
-    auto subnet = ctx.subnet_;
-
-    // We can only search for the reservation if a subnet has been selected.
-    while (subnet) {
-
-        // Only makes sense to get reservations if the client has access
-        // to the class.
-        if (subnet->clientSupported(ctx.query_->getClasses())) {
-            // Iterate over configured identifiers in the order of preference
-            // and try to use each of them to search for the reservations.
-            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
-                // Attempt to find a host using a specified identifier.
-                ConstHostPtr host = host_get(subnet->getID(), id_pair.first,
-                                             &id_pair.second[0], id_pair.second.size());
-                // If we found matching host for this subnet.
-                if (host && (!ipv6_only || host->hasIPv6Reservation())) {
-                    ctx.hosts_[subnet->getID()] = host;
-                    break;
-                }
-            }
-
-        } else {
-            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_RESERVATIONS_SKIPPED)
-                .arg(ctx.query_->getLabel())
-                .arg(subnet->toText());
-
-        }
-
-        // We need to get to the next subnet if this is a shared network. If it
-        // is not (a plain subnet), getNextSubnet will return NULL and we're
-        // done here.
-        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
-    }
-}
-
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
@@ -536,9 +493,80 @@ AllocEngine::ClientContext6::currentHost() const {
 }
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
-    findReservationInternal(ctx, boost::bind(&HostMgr::get6,
-                                             &HostMgr::instance(),
-                                             _1, _2, _3, _4));
+    ctx.hosts_.clear();
+
+    // If there is no subnet, there is nothing to do.
+    if (!ctx.subnet_) {
+        return;
+    }
+
+    auto subnet = ctx.subnet_;
+
+    std::map<SubnetID, ConstHostPtr> host_map;
+    SharedNetwork6Ptr network;
+    subnet->getSharedNetwork(network);
+
+    // If the subnet belongs to a shared network it is usually going to be
+    // more efficient to make a query for all reservations for a particular
+    // client rather than a query for each subnet within this shared network.
+    // The only case when it is going to be less efficient is when there are
+    // more host identifier types in use than subnets within a shared network.
+    const bool use_single_query = network &&
+        (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
+
+    if (use_single_query) {
+        for (auto id_pair = ctx.host_identifiers_.begin();
+             id_pair != ctx.host_identifiers_.end();
+             ++id_pair) {
+            ConstHostCollection hosts = HostMgr::instance().getAll(id_pair->first,
+                                                                   &id_pair->second[0],
+                                                                   id_pair->second.size());
+            // Store the hosts in the temporary map, because some hosts may
+            // belong to subnets outside of the shared network. We'll need
+            // to eliminate them.
+            for (auto host = hosts.begin(); host != hosts.end(); ++host) {
+                if ((*host)->getIPv6SubnetID()) {
+                    host_map[(*host)->getIPv6SubnetID()] = *host;
+                }
+            }
+        }
+    }
+
+    // We can only search for the reservation if a subnet has been selected.
+    while (subnet) {
+
+        // Only makes sense to get reservations if the client has access
+        // to the class.
+        if (subnet->clientSupported(ctx.query_->getClasses())) {
+            // Iterate over configured identifiers in the order of preference
+            // and try to use each of them to search for the reservations.
+            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+                if (use_single_query) {
+                    if (host_map.count(subnet->getID()) > 0) {
+                        ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
+                    }
+
+                } else {
+                    // Attempt to find a host using a specified identifier.
+                    ConstHostPtr host = HostMgr::instance().get6(subnet->getID(),
+                                                                 id_pair.first,
+                                                                 &id_pair.second[0],
+                                                                 id_pair.second.size());
+                    // If we found matching host for this subnet.
+                    if (host) {
+                        ctx.hosts_[subnet->getID()] = host;
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        // We need to get to the next subnet if this is a shared network. If it
+        // is not (a plain subnet), getNextSubnet will return NULL and we're
+        // done here.
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
 }
 
 Lease6Collection
@@ -2732,9 +2760,80 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    findReservationInternal(ctx, boost::bind(&HostMgr::get4,
-                                             &HostMgr::instance(),
-                                             _1, _2, _3, _4));
+    ctx.hosts_.clear();
+
+    // If there is no subnet, there is nothing to do.
+    if (!ctx.subnet_) {
+        return;
+    }
+
+    auto subnet = ctx.subnet_;
+
+    std::map<SubnetID, ConstHostPtr> host_map;
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+
+    // If the subnet belongs to a shared network it is usually going to be
+    // more efficient to make a query for all reservations for a particular
+    // client rather than a query for each subnet within this shared network.
+    // The only case when it is going to be less efficient is when there are
+    // more host identifier types in use than subnets within a shared network.
+    const bool use_single_query = network &&
+        (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
+
+    if (use_single_query) {
+        for (auto id_pair = ctx.host_identifiers_.begin();
+             id_pair != ctx.host_identifiers_.end();
+             ++id_pair) {
+            ConstHostCollection hosts = HostMgr::instance().getAll(id_pair->first,
+                                                                   &id_pair->second[0],
+                                                                   id_pair->second.size());
+            // Store the hosts in the temporary map, because some hosts may
+            // belong to subnets outside of the shared network. We'll need
+            // to eliminate them.
+            for (auto host = hosts.begin(); host != hosts.end(); ++host) {
+                if ((*host)->getIPv4SubnetID() > 0) {
+                    host_map[(*host)->getIPv4SubnetID()] = *host;
+                }
+            }
+        }
+    }
+
+    // We can only search for the reservation if a subnet has been selected.
+    while (subnet) {
+
+        // Only makes sense to get reservations if the client has access
+        // to the class.
+        if (subnet->clientSupported(ctx.query_->getClasses())) {
+            // Iterate over configured identifiers in the order of preference
+            // and try to use each of them to search for the reservations.
+            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+                if (use_single_query) {
+                    if (host_map.count(subnet->getID()) > 0) {
+                        ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
+                        break;
+                    }
+
+                } else {
+                    // Attempt to find a host using a specified identifier.
+                    ConstHostPtr host = HostMgr::instance().get4(subnet->getID(),
+                                                                 id_pair.first,
+                                                                 &id_pair.second[0],
+                                                                 id_pair.second.size());
+                    // If we found matching host for this subnet.
+                    if (host) {
+                        ctx.hosts_[subnet->getID()] = host;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // We need to get to the next subnet if this is a shared network. If it
+        // is not (a plain subnet), getNextSubnet will return NULL and we're
+        // done here.
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
 }
 
 Lease4Ptr

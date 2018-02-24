@@ -18,12 +18,6 @@ reclaimed has a corresponding DNS entry it needs to be removed.
 This message indicates that removal of the DNS entry has failed.
 Nevertheless the lease will be reclaimed.
 
-% ALLOC_ENGINE_RESERVATIONS_SKIPPED %1 not using reservations in subnet %2 because client's classes do not match
-This debug message is issued when the allocation engine will not use host
-reservations in a given subnet because this subnet is not allowed for
-the given client due to client classification. The first argument includes
-client identification information. The second argument identifies a subnet.
-
 % ALLOC_ENGINE_V4_ALLOC_ERROR %1: error during attempt to allocate an IPv4 address: %2
 An error occurred during an attempt to allocate an IPv4 address, the
 reason for the failure being contained in the message.  The server will
