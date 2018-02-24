@@ -223,9 +223,9 @@ MemHostDataSource::size() const {
     return (store_.size());
 }
 
-BaseHostDataSource*
+HostDataSourcePtr
 memFactory(const DatabaseConnection::ParameterMap& /*parameters*/) {
-    return (new MemHostDataSource());
+    return (HostDataSourcePtr(new MemHostDataSource()));
 }
 
 } // namespace isc::dhcp::test
