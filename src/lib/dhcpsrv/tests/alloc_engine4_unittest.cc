@@ -745,6 +745,10 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolClassification) {
     // offer an address from the pool1.
     ctx.query_->addClass(ClientClass("cable-modem"));
 
+    // Restrict access to pool2 for this client, to make sure that the
+    // server doesn't accidentally get an address from this pool.
+    pool2_->allowClientClass("telephone");
+
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -986,6 +990,10 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     // offer an address from the pool1.
     ctx.query_->addClass(ClientClass("cable-modem"));
 
+    // Restrict access to pool2 for this client, to make sure that the
+    // server doesn't accidentally get an address from this pool.
+    pool2_->allowClientClass("telephone");
+
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -994,8 +1002,9 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     // Let's now remove the client from the cable-modem class and try
     // to renew the address. The engine should determine that the
     // client doesn't have access to the pool1 anymore and
-    // assign an address from unrestricted pool.
+    // assign an address from another pool.
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.query_->addClass(ClientClass("telephone"));
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
