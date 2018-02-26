@@ -3446,9 +3446,29 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     Lease4Ptr new_lease;
     AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
     Subnet4Ptr subnet = ctx.subnet_;
-    Subnet4Ptr original_subnet = subnet;
+
+    // Need to check if the subnet belongs to a shared network. If so,
+    // we might be able to find a better subnet for lease allocation,
+    // for which it is more likely that there are some leases available.
+    // If we stick to the selected subnet, we may end up walking over
+    // the entire subnet (or more subnets) to discover that the address
+    // pools have been exhausted. Using a subnet from which an address
+    // was assigned most recently is an optimization which increases
+    // the likelyhood of starting from the subnet which address pools
+    // are not exhausted.
     SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(network);
+    ctx.subnet_->getSharedNetwork(network);
+    if (network) {
+        // This would try to find a subnet with the same set of classes
+        // as the current subnet, but with the more recent "usage timestamp".
+        // This timestamp is only updated for the allocations made with an
+        // allocator (unreserved lease allocations), not the static
+        // allocations or requested addresses.
+        ctx.subnet_ = subnet = network->getPreferredSubnet(ctx.subnet_);
+    }
+
+    Subnet4Ptr original_subnet = subnet;
+
     uint64_t total_attempts = 0;
     while (subnet) {
 

@@ -194,6 +194,43 @@ public:
         // Got the next subnet, so return it.
         return (*subnet_it);
     }
+
+    /// @brief Attempts to find a subnet which is more likely to include available
+    /// leases than selected subnet.
+    ///
+    /// When allocating unreserved leases from a shared network it is important to
+    /// remember from which subnet within the shared network we have been recently
+    /// handing out leases. The allocation engine can use that information to start
+    /// trying allocation of the leases from that subnet rather than from the default
+    /// subnet selected for this client. Starting from the default subnet causes a
+    /// risk of having to walk over many subnets with exhausted address pools before
+    /// getting to the subnet with available leases. This method attempts to find
+    /// such subnet by inspecting "last allocation" timestamps. The one with most
+    /// recent timestamp is selected.
+    ///
+    /// The preferred subnet must also fulfil the condition of equal client classes
+    /// with the @c selected_subnet.
+    ///
+    /// @param subnets Container holding subnets belonging to this shared
+    /// network.
+    /// @param selected_subnet Pointer to a currently selected subnet.
+    ///
+    /// @return Pointer to a preferred subnet. It may be the same as @c selected_subnet
+    /// if no better subnet was found.
+    template<typename SubnetPtrType, typename SubnetCollectionType>
+    static SubnetPtrType getPreferredSubnet(const SubnetCollectionType& subnets,
+                                            const SubnetPtrType& selected_subnet) {
+
+        Subnet4Ptr preferred_subnet = selected_subnet;
+        for (auto s = subnets.begin(); s != subnets.end(); ++s) {
+            if (((*s)->getClientClasses() == selected_subnet->getClientClasses()) &&
+                ((*s)->getLastAllocatedTime() > selected_subnet->getLastAllocatedTime())) {
+                preferred_subnet = (*s);
+            }
+        }
+
+        return (preferred_subnet);
+    }
 };
 
 } // end of anonymous namespace
@@ -236,6 +273,11 @@ Subnet4Ptr
 SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
                               const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
+}
+
+Subnet4Ptr
+SharedNetwork4::getPreferredSubnet(const Subnet4Ptr& selected_subnet) const {
+    return (Impl::getPreferredSubnet<Subnet4Ptr>(subnets_, selected_subnet));
 }
 
 ElementPtr
@@ -290,8 +332,7 @@ SharedNetwork6::getSubnet(const SubnetID& subnet_id) const {
 Subnet6Ptr
 SharedNetwork6::getNextSubnet(const Subnet6Ptr& first_subnet,
                               const SubnetID& current_subnet) const {
-    return (Impl::getNextSubnet(subnets_, first_subnet,
-                                         current_subnet));
+    return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
 }
 
 ElementPtr

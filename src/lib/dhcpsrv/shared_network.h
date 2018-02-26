@@ -120,6 +120,28 @@ public:
     Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
                              const SubnetID& current_subnet) const;
 
+    /// @brief Attempts to find a subnet which is more likely to include available
+    /// leases than selected subnet.
+    ///
+    /// When allocating unreserved leases from a shared network it is important to
+    /// remember from which subnet within the shared network we have been recently
+    /// handing out leases. The allocation engine can use that information to start
+    /// trying allocation of the leases from that subnet rather than from the default
+    /// subnet selected for this client. Starting from the default subnet causes a
+    /// risk of having to walk over many subnets with exhausted address pools before
+    /// getting to the subnet with available leases. This method attempts to find
+    /// such subnet by inspecting "last allocation" timestamps. The one with most
+    /// recent timestamp is selected.
+    ///
+    /// The preferred subnet must also fulfil the condition of equal client classes
+    /// with the @c selected_subnet.
+    ///
+    /// @param selected_subnet Pointer to a currently selected subnet.
+    ///
+    /// @return Pointer to a preferred subnet. It may be the same as @c selected_subnet
+    /// if no better subnet was found.
+    Subnet4Ptr getPreferredSubnet(const Subnet4Ptr& selected_subnet) const;
+
     /// @brief Unparses shared network object.
     ///
     /// @return A pointer to unparsed shared network configuration.
