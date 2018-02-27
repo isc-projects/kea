@@ -183,6 +183,88 @@ TEST(SharedNetwork4Test, getNextSubnet) {
     }
 }
 
+// This test verifies that preferred subnet is returned based on the timestamp
+// when the subnet was last used and allowed client classes.
+TEST(SharedNetwork4Test, getPreferredSubnet) {
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+
+    // Create four subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                                   SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
+                                   SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("172.16.25.0"), 24, 10, 20, 30,
+                                   SubnetID(3)));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("172.16.28.0"), 24, 10, 20, 30,
+                                   SubnetID(4)));
+
+    // Associate first two subnets with classes.
+    subnet1->allowClientClass("class1");
+    subnet2->allowClientClass("class1");
+
+    std::vector<Subnet4Ptr> subnets;
+    subnets.push_back(subnet1);
+    subnets.push_back(subnet2);
+    subnets.push_back(subnet3);
+    subnets.push_back(subnet4);
+
+    // Subnets have unique IDs so they should successfully be added to the
+    // network.
+    for (auto i = 0; i < subnets.size(); ++i) {
+        ASSERT_NO_THROW(network->add(subnets[i]))
+            << "failed to add subnet with id " << subnets[i]->getID()
+            << " to shared network";
+    }
+
+    Subnet4Ptr preferred;
+
+    // Initially, for every subnet we sould get the same subnet as the preferred
+    // one, because none of them have been used.
+    for (auto i = 0; i < subnets.size(); ++i) {
+        preferred = network->getPreferredSubnet(subnets[i]);
+        EXPECT_EQ(subnets[i]->getID(), preferred->getID());
+    }
+
+    // Allocating an address from subnet2 updates the last allocated timestamp
+    // for this subnet, which makes this subnet preferred over subnet1.
+    subnet2->setLastAllocated(Lease::TYPE_V4, IOAddress("192.0.2.25"));
+    preferred = network->getPreferredSubnet(subnet1);
+    EXPECT_EQ(subnet2->getID(), preferred->getID());
+
+    // If selected is subnet2, the same is returned.
+    preferred = network->getPreferredSubnet(subnet2);
+    EXPECT_EQ(subnet2->getID(), preferred->getID());
+
+    // Even though the subnet1 has been most recently used, the preferred
+    // subnet is subnet3 in this case, because of the client class
+    // mismatch.
+    preferred = network->getPreferredSubnet(subnet3);
+    EXPECT_EQ(subnet3->getID(), preferred->getID());
+
+    // Same for subnet4.
+    preferred = network->getPreferredSubnet(subnet4);
+    EXPECT_EQ(subnet4->getID(), preferred->getID());
+
+    // Allocate an address from the subnet3. This makes it preferred to
+    // subnet4.
+    subnet3->setLastAllocated(Lease::TYPE_V4, IOAddress("172.16.25.23"));
+
+    // If the selected is subnet1, the preferred subnet is subnet2, because
+    // it has the same set of classes as subnet1. The subnet3 can't be
+    // preferred here because of the client class mismatch.
+    preferred = network->getPreferredSubnet(subnet1);
+    EXPECT_EQ(subnet2->getID(), preferred->getID());
+
+    // If we select subnet4, the preferred subnet is subnet3 because
+    // it was used more recently.
+    preferred = network->getPreferredSubnet(subnet4);
+    EXPECT_EQ(subnet3->getID(), preferred->getID());
+
+    // Repeat the test for subnet3 being a selected subnet.
+    preferred = network->getPreferredSubnet(subnet3);
+    EXPECT_EQ(subnet3->getID(), preferred->getID());
+}
+
 // This test verifies that unparsing shared network returns valid structure.
 TEST(SharedNetwork4Test, unparse) {
     SharedNetwork4Ptr network(new SharedNetwork4("frog"));
