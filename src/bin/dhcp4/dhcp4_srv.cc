@@ -1799,21 +1799,50 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         Lease4Ptr lease;
         Subnet4Ptr original_subnet = subnet;
-        Subnet4Ptr s = original_subnet;
-        while (s) {
-            if (client_id) {
-                lease = LeaseMgrFactory::instance().getLease4(*client_id, s->getID());
+
+        if (client_id) {
+            Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
+            if (!leases_client_id.empty()) {
+                Subnet4Ptr s = original_subnet;
+
+                while (s) {
+                    for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
+                        if ((*l)->subnet_id_ == s->getID()) {
+                            lease = *l;
+                            break;
+                        }
+                    }
+
+                    if (lease) {
+                        break;
+
+                    } else {
+                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                    }
+                }
             }
+        }
 
-            if (!lease && hwaddr) {
-                lease = LeaseMgrFactory::instance().getLease4(*hwaddr, s->getID());
-            }
+        if (!lease && hwaddr) {
+            Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
+            if (!leases_hwaddr.empty()) {
+                Subnet4Ptr s = original_subnet;
 
-            if (lease ) {
-                break;
+                while (s) {
+                    for (auto l = leases_hwaddr.begin(); l != leases_hwaddr.end(); ++l) {
+                        if ((*l)->subnet_id_ == s->getID()) {
+                            lease = *l;
+                            break;
+                        }
+                    }
 
-            } else {
-                s = s->getNextSubnet(original_subnet, query->getClasses());
+                    if (lease) {
+                        break;
+
+                    } else {
+                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                    }
+                }
             }
         }
 
