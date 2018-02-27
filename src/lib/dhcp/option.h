@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,13 @@ typedef boost::shared_ptr<Option> OptionPtr;
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 /// A pointer to an OptionCollection
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
+
+/// @brief Exception thrown during option unpacking
+class SkipRemainingOptionsError : public Exception {
+public:
+    SkipRemainingOptionsError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 class Option {
 public:

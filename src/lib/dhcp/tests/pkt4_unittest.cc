@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,12 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+#include <util/encode/hex.h>
+#include <pkt_captures.h>
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -1129,6 +1132,78 @@ TEST_F(Pkt4Test, getType) {
     // The method has to return something that is not NULL,
     // even if the packet doesn't have Message Type option.
     EXPECT_TRUE(pkt.getName());
+}
+
+// Verifies that when the VIVSO option 125 has length that is too
+// short (i.e. less than sizeof(uint8_t), unpack throws a
+// SkipRemainingOptionsError exception
+TEST_F(Pkt4Test, truncatedVendorLength) {
+    // Raw data for a valid DISCOVER packet. Its option 125 has a valid length
+    // of 133 (x85). Look for 303a7d: next two digits = 85
+    const char* good_discover =
+        "010106012d5d43cb000080000000000000000000000000000ace50017896845ef7af0"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000063825363350"
+        "10137070102030407067d3c0a646f63736973332e303a7d850000118b80010102057b"
+        "01010102010303010104010105010106010107010f0801100901030a01010b01180c0"
+        "1010d0201000e0201000f010110040000000211010113010114010015013f16010117"
+        "01011801041901041a01041b01201c01021d01081e01201f011020011021010222010"
+        "1230100240100250101260200ff2701012801d82b7c020345434d030b45434d3a4552"
+        "4f5554455208030020400418333936373739343234343335353037373031303134303"
+        "035050131061e534247365838322d382e362e302e302d47412d30312d3937312d4e4f"
+        "5348070432343030090a534247363738322d41430a144d6f746f726f6c6120436f727"
+        "06f726174696f6e3d0fff845ef7af000300017896845ef7af390205dc521b01048005"
+        "03f802067896845ef7af090b0000118b06010401020300ff";
+
+    // Same DISCOVER as above but with the option 125 length changed to 01.
+    const char* bad_discover =
+        "010106012d5d43cb000080000000000000000000000000000ace50017896845ef7af0"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000063825363350"
+        "10137070102030407067d3c0a646f63736973332e303a7d010000118b80010102057b"
+        "01010102010303010104010105010106010107010f0801100901030a01010b01180c0"
+        "1010d0201000e0201000f010110040000000211010113010114010015013f16010117"
+        "01011801041901041a01041b01201c01021d01081e01201f011020011021010222010"
+        "1230100240100250101260200ff2701012801d82b7c020345434d030b45434d3a4552"
+        "4f5554455208030020400418333936373739343234343335353037373031303134303"
+        "035050131061e534247365838322d382e362e302e302d47412d30312d3937312d4e4f"
+        "5348070432343030090a534247363738322d41430a144d6f746f726f6c6120436f727"
+        "06f726174696f6e3d0fff845ef7af000300017896845ef7af390205dc521b01048005"
+        "03f802067896845ef7af090b0000118b06010401020300ff";
+
+    // Build a good discover packet
+    Pkt4Ptr pkt = test::PktCaptures::discoverWithValidVIVSO();
+
+    // Unpacking should not throw
+    ASSERT_NO_THROW(pkt->unpack());
+    ASSERT_EQ(DHCPDISCOVER, pkt->getType());
+
+    // VIVSO option should be there
+    OptionPtr x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(x);
+    ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, x->getType());
+    OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
+    ASSERT_TRUE(vivso);
+    EXPECT_EQ(133+2, vivso->len()); // data + opt code + len
+
+    // Build a bad discover packet
+    pkt = test::PktCaptures::discoverWithTruncatedVIVSO();
+
+    // Unpack should throw Skip exception
+    ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
+    ASSERT_EQ(DHCPDISCOVER, pkt->getType());
+
+    // VIVSO option should not be there
+    x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_FALSE(x);
 }
 
 } // end of anonymous namespace
