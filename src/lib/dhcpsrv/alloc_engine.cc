@@ -2512,7 +2512,10 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    if (ctx.subnet_ && (ctx.subnet_->getHostReservationMode() != Network::HR_DISABLED)) {
+    if (ctx.subnet_ &&
+        ((ctx.subnet_->getHostReservationMode() == Network::HR_ALL) ||
+         ((ctx.subnet_->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
+          (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
         ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
         if (host) {
             for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
@@ -2552,7 +2555,10 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
     while (subnet) {
         auto host = ctx.hosts_.find(subnet->getID());
         if ((host != ctx.hosts_.end()) &&
-            !(host->second->getIPv4Reservation().isV4Zero())) {
+            !(host->second->getIPv4Reservation().isV4Zero()) &&
+            ((subnet->getHostReservationMode() == Network::HR_ALL) ||
+             ((subnet->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
+              (!subnet->inPool(Lease::TYPE_V4, host->second->getIPv4Reservation()))))) {
             ctx.subnet_ = subnet;
             return (true);
         }
