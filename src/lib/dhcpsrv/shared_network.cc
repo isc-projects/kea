@@ -214,17 +214,21 @@ public:
     /// @param subnets Container holding subnets belonging to this shared
     /// network.
     /// @param selected_subnet Pointer to a currently selected subnet.
+    /// @param lease_type Type of the lease for which preferred subnet should be
+    /// returned.
     ///
     /// @return Pointer to a preferred subnet. It may be the same as @c selected_subnet
     /// if no better subnet was found.
     template<typename SubnetPtrType, typename SubnetCollectionType>
     static SubnetPtrType getPreferredSubnet(const SubnetCollectionType& subnets,
-                                            const SubnetPtrType& selected_subnet) {
+                                            const SubnetPtrType& selected_subnet,
+                                            const Lease::Type& lease_type) {
 
-        Subnet4Ptr preferred_subnet = selected_subnet;
+        auto preferred_subnet = selected_subnet;
         for (auto s = subnets.begin(); s != subnets.end(); ++s) {
             if (((*s)->getClientClasses() == selected_subnet->getClientClasses()) &&
-                ((*s)->getLastAllocatedTime() > selected_subnet->getLastAllocatedTime())) {
+                ((*s)->getLastAllocatedTime(lease_type) >
+                 selected_subnet->getLastAllocatedTime(lease_type))) {
                 preferred_subnet = (*s);
             }
         }
@@ -277,7 +281,8 @@ SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
 
 Subnet4Ptr
 SharedNetwork4::getPreferredSubnet(const Subnet4Ptr& selected_subnet) const {
-    return (Impl::getPreferredSubnet<Subnet4Ptr>(subnets_, selected_subnet));
+    return (Impl::getPreferredSubnet<Subnet4Ptr>(subnets_, selected_subnet,
+                                                 Lease::TYPE_V4));
 }
 
 ElementPtr
@@ -333,6 +338,12 @@ Subnet6Ptr
 SharedNetwork6::getNextSubnet(const Subnet6Ptr& first_subnet,
                               const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
+}
+
+Subnet6Ptr
+SharedNetwork6::getPreferredSubnet(const Subnet6Ptr& selected_subnet,
+                                   const Lease::Type& lease_type) const {
+    return (Impl::getPreferredSubnet(subnets_, selected_subnet, lease_type));
 }
 
 ElementPtr
