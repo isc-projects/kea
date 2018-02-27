@@ -25,6 +25,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <map>
 
 namespace isc {
 namespace dhcp {
@@ -84,9 +85,14 @@ public:
 
     /// @brief Returns the timestamp when the @c setLastAllocated function
     /// was called.
-    boost::posix_time::ptime getLastAllocatedTime() const {
-        return (last_allocated_time_);
-    }
+    ///
+    /// @param lease_type Lease type for which last allocation timestamp should
+    /// be returned.
+    ///
+    /// @return Time when a lease of a specified type has been allocated from
+    /// this subnet. The negative infinity time is returned if a lease type is
+    /// not recognized (which is unlikely).
+    boost::posix_time::ptime getLastAllocatedTime(const Lease::Type& lease_type) const;
 
     /// @brief sets the last address that was tried from this pool
     ///
@@ -391,9 +397,9 @@ protected:
     /// See @ref last_allocated_ia_ for details.
     isc::asiolink::IOAddress last_allocated_pd_;
 
-    /// @brief Timestamp indicating when an address has been last allocated
-    /// from this subnet.
-    boost::posix_time::ptime last_allocated_time_;
+    /// @brief Timestamp indicating when a lease of a specified type has been
+    /// last allocated from this subnet.
+    std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;

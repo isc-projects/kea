@@ -761,8 +761,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     Subnet6Ptr original_subnet = ctx.subnet_;
     Subnet6Ptr subnet = ctx.subnet_;
-    SharedNetwork6Ptr network;
-    subnet->getSharedNetwork(network);
 
     Pool6Ptr pool;
 
@@ -869,7 +867,28 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     }
 
     uint64_t total_attempts = 0;
-    subnet = original_subnet;
+
+    // Need to check if the subnet belongs to a shared network. If so,
+    // we might be able to find a better subnet for lease allocation,
+    // for which it is more likely that there are some leases available.
+    // If we stick to the selected subnet, we may end up walking over
+    // the entire subnet (or more subnets) to discover that the pools
+    // have been exhausted. Using a subnet from which a lease was
+    // assigned most recently is an optimization which increases
+    // the likelyhood of starting from the subnet which pools are not
+    // exhausted.
+    SharedNetwork6Ptr network;
+    original_subnet->getSharedNetwork(network);
+    if (network) {
+        // This would try to find a subnet with the same set of classes
+        // as the current subnet, but with the more recent "usage timestamp".
+        // This timestamp is only updated for the allocations made with an
+        // allocator (unreserved lease allocations), not the static
+        // allocations or requested addresses.
+        original_subnet = network->getPreferredSubnet(original_subnet, ctx.currentIA().type_);
+    }
+
+    ctx.subnet_ = subnet = original_subnet;
 
     while (subnet) {
 
