@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,8 +53,12 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf) const {
 
 void OptionVendor::unpack(OptionBufferConstIter begin,
                           OptionBufferConstIter end) {
+
+    // We throw SkipRemainingOptionsError so callers can
+    // abandon further unpacking, if desired.
     if (distance(begin, end) < sizeof(uint32_t)) {
-        isc_throw(OutOfRange, "Truncated vendor-specific information option"
+        isc_throw(SkipRemainingOptionsError,
+                  "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));
     }
 
