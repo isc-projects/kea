@@ -409,6 +409,42 @@ const char* DORA_CONFIGS[] = {
         "    ]"
         "} ]"
     "}",
+
+// Configuration 12
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservation-mode\": \"all\","
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.65\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
+
+// Configuration 13
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservation-mode\": \"disabled\","
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.65\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -1452,6 +1488,69 @@ TEST_F(DORATest, reservationsWithConflicts) {
     resp = clientB.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     ASSERT_EQ(in_pool_addr, clientB.config_.lease_.addr_);
+}
+
+// This test verifies that the allocation engine ignores reservations when
+// reservation-mode is set to "disabled".
+TEST_F(DORATest, reservationModeDisabled) {
+    // Client has a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Set explicit HW address so as it matches the reservation in the
+    // configuration used below.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server. In this configuration the reservation mode is
+    // set to disabled. Thus, the server should ignore the reservation for
+    // this client.
+    configure(DORA_CONFIGS[13], *client.getServer());
+    // Client requests the 10.0.0.50 address and the server should assign it
+    // as it ignores the reservation in the current mode.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.50"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the requested IP address was assigned.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
+
+    // Reconfigure the server to respect the host reservations.
+    configure(DORA_CONFIGS[12], *client.getServer());
+
+    // The client requests the previously allocated address again, but the
+    // server should allocate the reserved address this time.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.50"))));
+    // Check that the reserved IP address has been assigned.
+    ASSERT_EQ("10.0.0.65", client.config_.lease_.addr_.toText());
+}
+
+// This test verifies that allocation engine assigns a reserved address to
+// the client which doesn't own this reservation. We want to avoid such
+// cases in the real deployments, but this is just a test that the allocation
+// engine skips checking if the reservation exists when it allocates an
+// address. In the real deployment the reservation simply wouldn't exist.
+TEST_F(DORATest, reservationModeDisabledAddressHijacking) {
+    // Client has a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Set MAC address which doesn't match the reservation configured.
+    client.setHWAddress("11:22:33:44:55:66");
+    // Configure DHCP server. In this configuration the reservation mode is
+    // set to disabled. Any client should be able to hijack the reserved
+    // address.
+    configure(DORA_CONFIGS[13], *client.getServer());
+    // Client requests the 10.0.0.65 address reserved for another client.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.65"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the address was hijacked.
+    ASSERT_EQ("10.0.0.65", client.config_.lease_.addr_.toText());
 }
 
 /// This test verifies that after a client completes its DORA exchange,

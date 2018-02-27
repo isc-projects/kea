@@ -2285,6 +2285,11 @@ TEST_F(AllocEngine4Test, findReservation) {
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
+    // It shouldn't be returned when HR_DISABLED mode is enabled.
+    subnet_->setHostReservationMode(Network::HR_DISABLED);
+    ASSERT_NO_THROW(engine.findReservation(ctx));
+    EXPECT_FALSE(ctx.currentHost());
+
     // Check the out of the pool reservation mode.
     subnet_->setHostReservationMode(Network::HR_OUT_OF_POOL);
     ASSERT_NO_THROW(engine.findReservation(ctx));
