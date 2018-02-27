@@ -536,8 +536,9 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
     while (subnet) {
 
         // Only makes sense to get reservations if the client has access
-        // to the class.
-        if (subnet->clientSupported(ctx.query_->getClasses())) {
+        // to the class and host reservations are enabled.
+        if (subnet->clientSupported(ctx.query_->getClasses()) &&
+            (subnet->getHostReservationMode() != Network::HR_DISABLED)) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
             BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
@@ -750,9 +751,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                   << Lease6::typeToText(ctx.currentIA().type_));
     }
 
-    // Check which host reservation mode is supported in this subnet.
-    Network::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
     Lease6Collection leases;
 
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
@@ -788,6 +786,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
 
         if (pool) {
+
+            // Check which host reservation mode is supported in this subnet.
+            Network::HRMode hr_mode = subnet->getHostReservationMode();
 
             /// @todo: We support only one hint for now
             Lease6Ptr lease =
@@ -892,6 +893,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             continue;
         }
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
+
+        Network::HRMode hr_mode = subnet->getHostReservationMode();
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
 
