@@ -203,12 +203,12 @@ public:
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection getLeases4() const;
+    virtual Lease4Collection getLeases4() const override;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -351,6 +351,26 @@ public:
     /// @return Number of leases deleted.
     virtual uint64_t
     deleteExpiredReclaimedLeases6(const uint32_t secs) override;
+
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
+
+    /// @brief Creates and runs the IPv6 lease stats query
+    ///
+    /// It creates an instance of a CqllLeaseStatsQuery and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the RECOUNT_LEASE_STATS6 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
 
     /// @brief Removes specified IPv4 leases.
     ///

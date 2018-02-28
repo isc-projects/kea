@@ -101,6 +101,26 @@ struct LeaseStatsRow {
           lease_state_(lease_state), state_count_(state_count) {
     }
 
+    /// @brief Less-than operator
+    bool operator< (const LeaseStatsRow &rhs) const {
+        if (subnet_id_ < rhs.subnet_id_) {
+            return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            lease_type_ < rhs.lease_type_) {
+                return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            lease_type_ == rhs.lease_type_ &&
+            lease_state_ < rhs.lease_state_) {      
+                return (true);
+        }
+
+        return (false);
+    }
+
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
     /// @brief The lease_type to which the count applies
@@ -114,7 +134,7 @@ struct LeaseStatsRow {
 /// @brief Base class for fulfilling a statistical lease data query
 ///
 /// LeaseMgr derivations implement this class such that it provides
-/// upto date statistical lease data organized as rows of LeaseStatsRow
+/// up to date statistical lease data organized as rows of LeaseStatsRow
 /// instances. The rows must be accessible in ascending order by subnet id.
 class LeaseStatsQuery {
 public:
@@ -140,8 +160,11 @@ public:
     virtual bool getNextRow(LeaseStatsRow& row);
 };
 
-/// @brief Defines a pointer to an LeaseStatsQuery.
+/// @brief Defines a pointer to a LeaseStatsQuery.
 typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
+
+/// @brief Defines a pointer to a LeaseStatsRow.
+typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
 
 /// @brief Abstract Lease Manager
 ///
@@ -433,7 +456,7 @@ public:
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with upto date IPv4 lease statistical data.  Each row of the
+    /// populated with up to date IPv4 lease statistical data.  Each row of the
     /// result set is an LeaseStatRow which ordered ascending by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
@@ -464,7 +487,7 @@ public:
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with upto date IPv6 lease statistical data.  Each row of the
+    /// populated with up to date IPv6 lease statistical data.  Each row of the
     /// result set is an LeaseStatRow which ordered ascending by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
