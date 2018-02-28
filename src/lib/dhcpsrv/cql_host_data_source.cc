@@ -28,13 +28,10 @@
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <util/buffer.h>
+#include <util/hash.h>
 #include <util/optional_value.h>
 #include <asiolink/io_address.h>
 
-/// @todo: With this include, Cassandra backend requires compilation with openssl.
-/// Kea supports two crypto libs: openssl and botan. The abstraction layer provided
-/// is via cryptolink.
-#include <openssl/md5.h>  // for MD5_DIGEST_LENGTH
 #include <stdint.h>       // for uint64_t
 
 #include <boost/algorithm/string/classification.hpp>  // for boost::is_any_of
@@ -143,8 +140,7 @@ public:
     /// @brief Constructor
     ///
     /// Specifies table columns.
-    /// @param connection specifies the connection to conduct this exchange on
-    CqlHostExchange(CqlConnection& connection);
+    CqlHostExchange();
 
     /// @brief Virtual destructor.
     virtual ~CqlHostExchange();
@@ -186,9 +182,8 @@ public:
     /// @brief Create unique hash for storage in table id.
     ///
     /// Hash function used for creating a pseudo-unique hash from member
-    /// values which uniquely determine an entry in the table. Uses OpenSSL's
-    /// MD5 implementation.
-    /// @todo: This must be generic and use cryptolink wrapper. See ticket #5502.
+    /// values which uniquely determine an entry in the table. Uses FNV-1a
+    /// on 64 bits.
     ///
     /// The primary key aggregates: host_ipv4_subnet_id, host_ipv6_subnet_id,
     /// host_ipv4_address, reserved_ipv6_prefix_address,
@@ -271,9 +266,6 @@ public:
 private:
     /// Pointer to Host object holding information being inserted into database.
     HostPtr host_;
-
-    /// @brief Connection to the Cassandra database
-    CqlConnection& connection_;
 
     /// @brief Primary key. Aggregates: host_identifier, host_identifier_type,
     /// reserved_ipv6_prefix_address, reserved_ipv6_prefix_length, option_code,
@@ -602,9 +594,9 @@ StatementMap CqlHostExchange::tagged_statements_ = {
 
 };
 
-CqlHostExchange::CqlHostExchange(CqlConnection& connection)
-    : host_(NULL), connection_(connection), id_(0), host_identifier_type_(0),
-      host_ipv4_subnet_id_(0), host_ipv6_subnet_id_(0), host_ipv4_address_(0),
+CqlHostExchange::CqlHostExchange()
+    : host_(NULL), id_(0), host_identifier_type_(0), host_ipv4_subnet_id_(0),
+      host_ipv6_subnet_id_(0), host_ipv4_address_(0),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
       iaid_(NULL_IAID), option_universe_(NULL_OPTION_UNIVERSE),
@@ -863,50 +855,25 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
     }
 }
 
-uint64_t
-md5Hash(const std::string& input) {
-
-    /// @todo: Convert this code to cryptolink calls and replace the
-    /// direct use fromn md5.
-
-    // Prepare structures for MD5().
-    const size_t word_size = MD5_DIGEST_LENGTH / sizeof(uint64_t);
-    uint64_t hash[word_size];
-    unsigned char* digest = reinterpret_cast<unsigned char*>(hash);
-    unsigned char* string = reinterpret_cast<unsigned char*>(const_cast<char*>(input.c_str()));
-    std::fill(hash, hash + word_size, 0);
-
-    // Get MD5 hash value.
-    MD5(string, input.size(), digest);
-
-    // Return the first part of the hash value which still retains all
-    // properties of the full hash value.
-    return (hash[0]);
-}
-
 cass_int64_t
 CqlHostExchange::hashIntoId() const {
-    // Allocates a fixed maximum length in the stringstream for each
-    // aggregated field to avoid collisions between distinct entries.
+    // Add a separator between aggregated field to avoid collisions
+    // between distinct entries.
 
     // Get key.
     std::stringstream key_stream;
-    key_stream << std::setw(10) << std::setfill('-') << host_ipv4_subnet_id_;
-    key_stream << std::setw(10) << std::setfill('-') << host_ipv6_subnet_id_;
-    key_stream << std::setw(V4ADDRESS_TEXT_MAX_LEN) << std::setfill('-')
-               << host_ipv4_address_;
-    key_stream << std::setw(V6ADDRESS_TEXT_MAX_LEN) << std::setfill('-')
-               << reserved_ipv6_prefix_address_;
-    key_stream << std::setw(4) << std::setfill('-')
-               << reserved_ipv6_prefix_length_;
-    key_stream << std::setw(4) << std::setfill('-') << option_code_;
-    key_stream << std::setw(OPTION_SPACE_MAX_LENGTH) << std::setfill('-')
-               << option_space_;
+    key_stream << host_ipv4_subnet_id_ << "-";
+    key_stream << host_ipv6_subnet_id_ << "-";
+    key_stream << host_ipv4_address_ << "-";
+    key_stream << reserved_ipv6_prefix_address_ << "/";
+    key_stream << reserved_ipv6_prefix_length_ << "-";
+    key_stream << option_code_ << "-";
+    key_stream << option_space_;
     const std::string key = key_stream.str();
 
-    const cass_int64_t md5 = static_cast<cass_int64_t>(md5Hash(key));
+    const cass_int64_t hash = static_cast<cass_int64_t>(Hash64::hash(key));
 
-    return (md5);
+    return (hash);
 }
 
 boost::any
@@ -1291,7 +1258,7 @@ private:
 
 /// @brief hash function for HostMap
 ///
-/// Returns a 64-bits key value. The key is generated with MD5 hash
+/// Returns a 64-bits key value. The key is generated with FNV-1a 64 bit
 /// algorithm.
 ///
 /// @param key being hashed
@@ -1302,21 +1269,16 @@ hash_value(const HostKey& key) {
     // Get key.
     std::stringstream key_stream;
     HostIdentifier host_identifier = std::get<HOST_IDENTIFIER>(key);
-    key_stream << std::setw(DUID::MAX_DUID_LEN) << std::setfill('0')
-               << DUID(host_identifier).toText();
-    key_stream << std::setw(2) << std::setfill('0')
-               << std::get<HOST_IDENTIFIER_TYPE>(key);
-    key_stream << std::setw(10) << std::setfill('0')
-               << std::get<IPv4_SUBNET_ID>(key);
-    key_stream << std::setw(10) << std::setfill('0')
-               << std::get<IPv6_SUBNET_ID>(key);
-    key_stream << std::setw(V4ADDRESS_TEXT_MAX_LEN) << std::setfill('0')
-               << std::get<IPv4_RESERVATION>(key);
+    key_stream << DUID(host_identifier).toText() << "-";
+    key_stream << std::get<HOST_IDENTIFIER_TYPE>(key) << "-";
+    key_stream << std::get<IPv4_SUBNET_ID>(key) << "-";
+    key_stream << std::get<IPv6_SUBNET_ID>(key) << "-";
+    key_stream << std::get<IPv4_RESERVATION>(key);
     const std::string key_string = key_stream.str();
 
-    const uint64_t md5 = md5Hash(key_string);
+    const uint64_t hash = Hash64::hash(key_string);
 
-    return (static_cast<std::size_t>(md5));
+    return (static_cast<std::size_t>(hash));
 }
 
 /// @brief equals operator for HostKey
@@ -1733,7 +1695,7 @@ CqlHostDataSourceImpl::getHostCollection(StatementTag statement_tag,
                                          AnyArray& where_values) const {
 
     // Run statement.
-    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange(dbconn_));
+    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
     AnyArray collection = host_exchange->executeSelect(dbconn_, where_values,
                                                        statement_tag, false);
 
@@ -1774,7 +1736,7 @@ CqlHostDataSourceImpl::insertHost(const HostPtr& host,
                                   const OptionDescriptor& option_descriptor) {
     AnyArray assigned_values;
 
-    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange(dbconn_));
+    std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
 
     try {
         host_exchange->createBindForMutation(
