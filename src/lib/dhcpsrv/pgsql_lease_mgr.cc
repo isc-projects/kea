@@ -820,9 +820,10 @@ protected:
     bool fetch_type_;
 };
 
-PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters,
+    DatabaseConnection::Callback db_lost_callback)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
-    exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
+    exchange6_(new PgSqlLease6Exchange()), conn_(parameters, db_lost_callback) {
     conn_.openDatabase();
     int i = 0;
     for( ; tagged_statements[i].text != NULL ; ++i) {

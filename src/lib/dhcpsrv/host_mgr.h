@@ -10,6 +10,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/noncopyable.hpp>
@@ -68,7 +69,11 @@ public:
     /// However, the "type" parameter will be common and it will specify which
     /// data source is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    static void create(const std::string& access = "");
+    ///
+    /// @param db_lost_callback function to invoke if connectivity to
+    /// the host database is lost.
+    static void create(const std::string& access = "",
+                       DatabaseConnection::Callback db_lost_callback = NULL);
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///

@@ -11,6 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
 
@@ -331,6 +332,15 @@ private:
     /// Shared pointer to the instance of timer @c TimerMgr is held here to
     /// make sure that the @c TimerMgr outlives instance of this class.
     TimerMgrPtr timer_mgr_;
+
+    /// @brief Attempts to reconnect the server to the DB backend managers
+    void dbReconnect();
+
+    /// @brief Callback DB backends should invoke upon loss of connectivity
+    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl);
+
+    /// @brief Pointer the current DB reconnect control values
+    ReconnectCtlPtr db_reconnect_ctl_;
 };
 
 }; // namespace isc::dhcp
