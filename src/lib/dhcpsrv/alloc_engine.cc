@@ -584,14 +584,20 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // Check if there are existing leases for that shared network and
         // DUID/IAID.
         Subnet6Ptr subnet = ctx.subnet_;
+        Lease6Collection all_leases =
+            LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
+                                                   *ctx.duid_,
+                                                   ctx.currentIA().iaid_);
+
+        // Iterate over the leases and eliminate those that are outside of
+        // our shared network.
         Lease6Collection leases;
         while (subnet) {
-            Lease6Collection leases_subnet =
-                LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
-                                                       *ctx.duid_,
-                                                       ctx.currentIA().iaid_,
-                                                       subnet->getID());
-            leases.insert(leases.end(), leases_subnet.begin(), leases_subnet.end());
+            for (auto l = all_leases.begin(); l != all_leases.end(); ++l) {
+                if ((*l)->subnet_id_ == subnet->getID()) {
+                    leases.push_back(*l);
+                }
+            }
 
             subnet = subnet->getNextSubnet(ctx.subnet_);
         }
