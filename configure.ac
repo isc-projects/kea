@@ -74,20 +74,24 @@ AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performi
 
 # Include premium configuration
 PREMIUM_DIR=
+DISTCHECK_PREMIUM_CONFIGURE_FLAG=
 AC_DEFUN([AX_PREMIUM],[])
 # m4_sinclude includes the file if it exists at autoreconf time
 m4_sinclude(premium/config.m4)
 m4_sinclude(premium/tier1.m4)
 m4_sinclude(premium/tier2.m4)
 AC_SUBST(PREMIUM_DIR)
+AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 AX_PREMIUM
 
 # Include contrib configuration
 # (currently only a provision copied from premium support)
 CONTRIB_DIR=
+DISTCHECK_CONTRIB_CONFIGURE_FLAG=
 AC_DEFUN([AX_CONTRIB],[])
 m4_sinclude(contrib/config.m4)
 AC_SUBST(CONTRIB_DIR)
+AC_SUBST(DISTCHECK_CONTRIB_CONFIGURE_FLAG)
 AX_CONTRIB
 
 # Libtool configuration
@@ -233,7 +237,7 @@ fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 CPPP="$CPP"
 # gcc 5 preprocessor requires -P for checking its output
-if test "$CXX_DUMP_VERSION" \> "5"; then
+if expr "$CXX_DUMP_VERSION" \> "5" > /dev/null; then
        CPPP="$CPP -P"
 fi
 
@@ -1660,6 +1664,15 @@ else
 cat >> config.report << END
 Google Benchmark:
   no
+END
+fi
+
+if test "$FREERADIUS_INCLUDE" != ""; then
+cat >> config.report << END
+
+FreeRADIUS client:
+  FREERADIUS_INCLUDE: ${FREERADIUS_INCLUDE}
+  FREERADIUS_LIB:     ${FREERADIUS_LIB}
 END
 fi
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #define MYSQL_CONNECTION_H
 
 #include <dhcpsrv/database_connection.h>
-#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/db_log.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
@@ -390,11 +390,11 @@ public:
             case CR_OUT_OF_MEMORY:
             case CR_CONNECTION_ERROR:
                 // We're exiting on fatal
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_FATAL_ERROR)
-                         .arg(what)
-                         .arg(text_statements_[static_cast<int>(index)])
-                         .arg(mysql_error(mysql_))
-                         .arg(mysql_errno(mysql_));
+                DB_LOG_ERROR(MYSQL_FATAL_ERROR)
+                    .arg(what)
+                    .arg(text_statements_[static_cast<int>(index)])
+                    .arg(mysql_error(mysql_))
+                    .arg(mysql_errno(mysql_));
                 exit (-1);
 
             default:
