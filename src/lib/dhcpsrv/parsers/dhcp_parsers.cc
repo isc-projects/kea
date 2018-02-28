@@ -1000,7 +1000,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
            << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
 
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(output.str());
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET6).arg(output.str());
 
     // Create a new subnet.
     Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,

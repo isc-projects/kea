@@ -1,7 +1,37 @@
+1365.	[func]		fdupont
+	Added initial skeleton implementation for Radius hook library.
+	(Trac #5524, git 832aa23b89eab71875bcbdb1e955eb92fdc0e01a)
+
+1364.	[func]		fdupont
+	Implemented FNV hashing function. Cassandra backend no longer
+	explicitly depends on OpenSSL.
+	(Trac #5502, git 71de75c3bb099f21fdef0d41806da281d6271287)
+
+1363.	[func]		fdupont
+	Both DHCPv4 and DHCPv6 servers can now listen on loopback
+	interfaces. This capability requires setting socket type to UDP in
+	DHCPv4. Note the feature has not been thoroughly tested.
+	(Trac #5390, git f38cbd73581a7a0f8634a63cb17f9b60407e3acc)
+
+1362.	[func]		fdupont
+	Extended forensic (aka legal) logging with database capability.
+	(Trac #5420, git 94bd3cc313e9f2a982ef8f8adf0cf44024c76499)
+
+1361.	[func]		tmark
+	Added support for automatically recalculating lease statistics
+	to the CQL backend.
+	(Trac 5487, git c807388d581ee1c3e479324f3c399f27feba1c96)
+
+1360.	[func]		razvan, andrei
+	A new parameter exit-wait-time has been added to perfdhcp. It is
+	now possible to tell perfdhcp to wait certain amount of time after
+	exit conditions are met before actuallying terminating.
+	(github #55, git 0cd1178ae092fa0c2f122d0e16fb673b4074a6e6)
+
 1359.	[func]		razvan, andrei, tomek
 	Support for Google Benchmark has been added. To compile
 	benchmarking support, please use --with-benchmark option.
-	(Github 36, git tbd)
+	(Github #36, git d6819971410b460d7742c762844e2e75ba580944)
 
 1358.	[build,bug]	fdupont
 	Cassandra build fixes for macOS.

@@ -1450,12 +1450,300 @@ CqlLease6Exchange::getExpiredLeases(const size_t &max_leases,
     }
 }
 
+/// @brief Base CQL derivation of the statistical lease data query
+///
+/// This class provides the functionality such as results storage and row
+/// fetching common to fulfilling the statistical lease data query.
+///
+class CqlLeaseStatsQuery : public LeaseStatsQuery {
+public:
+    /// @brief Constructor
+    ///
+    /// @param conn An open connection to the database housing the lease data
+    /// @param statement The lease data SQL prepared statement tag to execute
+    /// @param fetch_type Indicates whether or not lease_type should be
+    /// fetched from the result set (should be true for v6)
+    CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
+                         const bool fetch_type)
+        : conn_(conn), statement_(statement), fetch_type_(fetch_type),
+          cummulative_rows_(), next_row_(cummulative_rows_.begin()),
+          subnet_id_(0), lease_type_(0), lease_state_(0) {
+    }
+
+    /// @brief Destructor
+    virtual ~CqlLeaseStatsQuery() {};
+
+    /// @brief Creates the lease statistical data result set
+    ///
+    /// The result set is populated by executing a  prepared SQL query
+    /// against the database which sums the leases per lease state per
+    /// subnet id.  Positions internal row tracking to point to the
+    /// first row of the aggregate results.
+    void start();
+
+    /// @brief Executes protocol specific lease query SELECT statement
+    ///
+    /// Currently we do not have a good way for Cassandra to roll up the
+    /// lease counts per subnet, type, and state as we do the other back
+    /// ends.  This method executes the select statement which returns
+    /// a result set containing a row of data for every lease:
+    /// -v4 - subnet-id, lease-state
+    /// -v6 - subnet-id, lease-type, lease-state
+    ///
+    /// It then iterates over this result set, aggregating the data into a
+    /// a map of LeaseStatRows.
+    ///
+    /// If we didn't have to roll up the raw lease data first, we could
+    /// have derived this class from CqlExchange and used it's executeSelect
+    /// (from which this method borrows heavily). However, that would mean
+    /// copying all the raw lease  data into a collection returned by
+    /// executeSelect and then aggregating that into cummulative rows.
+    /// The way we are now we go turn the raw lease data directly into the
+    /// cummulative row map.
+    ///
+    /// @param connection connection used to communicate with the Cassandra
+    /// database
+    /// @param where_values array of bound objects used to filter the results
+    /// @param statement_tag prepared statement being executed
+    ///
+    /// @throw DbOperationError
+    void executeSelect(const CqlConnection& connection, const AnyArray& data,
+                       StatementTag statement_tag);
+
+    /// @brief Fetches the next row in the result set
+    ///
+    /// Once the internal result set has been populated by invoking the
+    /// the start() method, this method is used to iterate over the
+    /// result set rows. Once the last row has been fetched, subsequent
+    /// calls will return false.
+    ///
+    /// @param row Storage for the fetched row
+    ///
+    /// @return True if the fetch succeeded, false if there are no more
+    /// rows to fetch.
+    bool getNextRow(LeaseStatsRow& row);
+
+    /// @brief Create BIND array to receive C++ data.
+    ///
+    /// Used in executeSelect() to retrieve from database
+    ///
+    /// @param data array of bound objects representing data to be retrieved
+    /// @param statement_tag prepared statement being executed; defaults to an
+    ///     invalid index
+    virtual void
+    createBindForSelect(AnyArray& data, StatementTag statement_tag = NULL);
+
+    /// @brief Statement tags definitions
+    /// @{
+    // Return recalculated lease4 lease statistics
+    static constexpr StatementTag RECOUNT_LEASE4_STATS = "RECOUNT_LEASE4_STATS";
+    // Return recalculated lease6 lease statistics
+    static constexpr StatementTag RECOUNT_LEASE6_STATS = "RECOUNT_LEASE6_STATS";
+    /// @}
+
+    /// @brief Cassandra statements
+    static StatementMap tagged_statements_;
+
+private:
+    /// @brief Database connection to use to execute the query
+    CqlConnection& conn_;
+
+    /// @brief The query's prepared statement tag
+    StatementTag statement_;
+
+    /// @brief Indicates if query supplies lease type
+    bool fetch_type_;
+
+
+    /// @brief map containing the aggregated lease counts
+    std::map<LeaseStatsRow, int> cummulative_rows_;
+
+    /// @brief cursor pointing to the next row to read in aggregate map
+    std::map<LeaseStatsRow, int>::iterator next_row_;
+
+    /// @brief bind variable for retrieving subnet-id from a result set row
+    int subnet_id_;
+    /// @brief bind variable for retrieving lease-type from a result set row
+    int lease_type_;
+    /// @brief bind variable for retrieving lease-state from a result set row
+    int lease_state_;
+};
+
+constexpr StatementTag CqlLeaseStatsQuery::RECOUNT_LEASE4_STATS;
+constexpr StatementTag CqlLeaseStatsQuery::RECOUNT_LEASE6_STATS;
+
+StatementMap CqlLeaseStatsQuery::tagged_statements_{
+    // Return subnet_id and state of each v4 lease
+    {RECOUNT_LEASE4_STATS,
+        {RECOUNT_LEASE4_STATS,
+        "SELECT "
+        "subnet_id, state "
+        "FROM lease4 "
+    }},
+
+    // Return subnet_id, lease_type, and state of each v6 lease
+    {RECOUNT_LEASE6_STATS,
+        {RECOUNT_LEASE6_STATS,
+        "SELECT "
+        "subnet_id, lease_type, state "
+        "FROM lease6 "
+    }},
+};
+
+void
+CqlLeaseStatsQuery::start() {
+    AnyArray data; // there are no where clause parameters
+
+    // This gets a collection of data for ALL leases, and
+    // then rolls them up into cummulative_rows_
+    executeSelect(conn_, data, statement_);
+
+    // Set our row iterator to the beginning
+    next_row_ = cummulative_rows_.begin();
+}
+
+bool
+CqlLeaseStatsQuery::getNextRow(LeaseStatsRow& row) {
+    // If we're past the end, punt.
+    if (next_row_ == cummulative_rows_.end()) {
+        return (false);
+    }
+
+    // Start by copying from the map row key
+    row.subnet_id_ = next_row_->first.subnet_id_;
+    row.lease_type_ = next_row_->first.lease_type_;
+    row.lease_state_ = next_row_->first.lease_state_;
+
+    // Grab the count from the map value
+    row.state_count_ = next_row_->second;
+
+    // Point to the next row.
+    ++next_row_;
+    return (true);
+}
+
+void
+CqlLeaseStatsQuery::createBindForSelect(AnyArray& data, StatementTag) {
+    data.clear();
+    data.add(&subnet_id_);
+    if (fetch_type_) {
+        data.add(&lease_type_);
+    }
+
+    data.add(&lease_state_);
+}
+
+void
+CqlLeaseStatsQuery::executeSelect(const CqlConnection& connection, const AnyArray& data,
+                                  StatementTag statement_tag)  {
+    CassError rc;
+    CassStatement* statement = NULL;
+    CassFuture* future = NULL;
+    AnyArray local_data = data;
+
+    // Find the query statement first.
+    StatementMap::const_iterator it = connection.statements_.find(statement_tag);
+    if (it == connection.statements_.end()) {
+        isc_throw(DbOperationError,
+                  "CqlLeastStatsQuery::executeSelect(): Statement "
+                      << statement_tag << "has not been prepared.");
+    }
+
+    // Bind the data before the query is executed.
+    CqlTaggedStatement tagged_statement = it->second;
+    if (tagged_statement.is_raw_) {
+        // The entire query is the first element in data.
+        std::string* query = boost::any_cast<std::string*>(local_data.back());
+        local_data.pop_back();
+        statement = cass_statement_new(query->c_str(), local_data.size());
+    } else {
+        statement = cass_prepared_bind(tagged_statement.prepared_statement_);
+        if (!statement) {
+            isc_throw(DbOperationError,
+                      "CqlLeaseStatsQuery::executeSelect(): unable to bind statement "
+                          << tagged_statement.name_);
+        }
+    }
+
+    // Set specific level of consistency if we're told to do so.
+    if (connection.force_consistency_) {
+        rc = cass_statement_set_consistency(statement, connection.consistency_);
+        if (rc != CASS_OK) {
+            cass_statement_free(statement);
+            isc_throw(DbOperationError,
+                      "CqlLeaseStatsQuery::executeSelect(): unable to set statement "
+                      "consistency for statement "
+                          << tagged_statement.name_
+                          << ", Cassandra error code: " << cass_error_desc(rc));
+        }
+    }
+
+    CqlCommon::bindData(local_data, statement);
+
+    // Everything's ready. Call the actual statement.
+    future = cass_session_execute(connection.session_, statement);
+    if (!future) {
+        cass_statement_free(statement);
+        isc_throw(DbOperationError,
+                  "CqlLeaseStatsQuery::executeSelect(): no CassFuture for statement "
+                      << tagged_statement.name_);
+    }
+
+    // Wait for the statement execution to complete.
+    cass_future_wait(future);
+    const std::string error = connection.checkFutureError(
+        "CqlLeaseStatsQuery::executeSelect(): cass_session_execute() != CASS_OK",
+        future, statement_tag);
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK) {
+        cass_future_free(future);
+        cass_statement_free(statement);
+        isc_throw(DbOperationError, error);
+    }
+
+    // Get column values.
+    const CassResult* result_collection = cass_future_get_result(future);
+
+    // lease type is always NA for v4
+    if (!fetch_type_)  {
+        lease_type_ = Lease::TYPE_NA;
+    }
+
+    // Since we're currently forced to pull data for all leases, we
+    // iterate over them, aggregating them into cummulative LeaseStatsRows
+    AnyArray return_values;
+    CassIterator* rows = cass_iterator_from_result(result_collection);
+    while (cass_iterator_next(rows)) {
+        const CassRow* row = cass_iterator_get_row(rows);
+        createBindForSelect(return_values, statement_tag);
+        CqlCommon::getData(row, return_values);
+
+        LeaseStatsRow raw_row(subnet_id_, static_cast<Lease::Type>(lease_type_),
+                              lease_state_, 1);
+
+        auto cum_row = cummulative_rows_.find(raw_row);
+        if (cum_row != cummulative_rows_.end()) {
+            cummulative_rows_[raw_row] = cum_row->second + 1;
+        } else {
+            cummulative_rows_.insert(std::make_pair(raw_row, 1));
+        }
+    }
+
+    // Free resources.
+    cass_iterator_free(rows);
+    cass_result_free(result_collection);
+    cass_future_free(future);
+    cass_statement_free(statement);
+    return;
+}
+
 CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
     : LeaseMgr(), dbconn_(parameters) {
     dbconn_.openDatabase();
     dbconn_.prepareStatements(CqlLease4Exchange::tagged_statements_);
     dbconn_.prepareStatements(CqlLease6Exchange::tagged_statements_);
     dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
+    dbconn_.prepareStatements(CqlLeaseStatsQuery::tagged_statements_);
 }
 
 CqlLeaseMgr::~CqlLeaseMgr() {
@@ -1890,6 +2178,24 @@ CqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
         }
     }
     return (deleted);
+}
+
+LeaseStatsQueryPtr
+CqlLeaseMgr::startLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(
+        new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::RECOUNT_LEASE4_STATS,
+                               false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+CqlLeaseMgr::startLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(
+        new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::RECOUNT_LEASE6_STATS,
+                               true));
+    query->start();
+    return(query);
 }
 
 size_t

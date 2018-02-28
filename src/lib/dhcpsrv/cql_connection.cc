@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Deutsche Telekom AG.
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -20,7 +20,7 @@
 #include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_exchange.h>
 #include <dhcpsrv/db_exceptions.h>
-#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/db_log.h>
 
 #include <string>
 
@@ -69,7 +69,7 @@ CqlConnection::~CqlConnection() {
 
     if (rc != CASS_OK) {
         // We're closing the connection anyway. Let's not throw at this stage.
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_CQL_DEALLOC_ERROR).arg(error);
+        DB_LOG_ERROR(CQL_DEALLOC_ERROR).arg(error);
     }
 }
 
@@ -369,20 +369,17 @@ CqlConnection::setConsistency(bool force, CassConsistency consistency) {
 
 void
 CqlConnection::startTransaction() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_CONNECTION_BEGIN_TRANSACTION);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, CQL_CONNECTION_BEGIN_TRANSACTION);
 }
 
 void
 CqlConnection::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_CONNECTION_COMMIT);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, CQL_CONNECTION_COMMIT);
 }
 
 void
 CqlConnection::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_CONNECTION_ROLLBACK);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, CQL_CONNECTION_ROLLBACK);
 }
 
 const std::string
