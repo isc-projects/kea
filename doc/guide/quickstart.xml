@@ -1,12 +1,22 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
 ]>
 
-  <chapter id="quickstart">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0"
+         xml:id="quickstart">
+
+
     <title>Quick Start</title>
 
     <para>
@@ -15,34 +25,33 @@
         respective chapters in the Kea guide.
     </para>
 
-    <section id="quick-start">
+    <section xml:id="quick-start">
       <title>Quick Start Guide for DHCPv4 and DHCPv6 Services</title>
 
       <orderedlist>
 
         <listitem>
           <simpara>
-            Install required run-time and build dependencies. See <xref
-	    linkend="build-requirements"/> for details.
+            Install required run-time and build dependencies. See <xref linkend="build-requirements"/> for details.
           </simpara>
         </listitem>
 
         <listitem>
           <para>
-            Download Kea source tarball from <ulink url="https://www.isc.org/downloads/">ISC.org downloads page</ulink> or <ulink url="http://ftp.isc.org/isc/kea/">ISC ftp server</ulink>.
+            Download Kea source tarball from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/">ISC.org downloads page</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">ISC ftp server</link>.
           </para>
         </listitem>
 
         <listitem>
           <para>
             Extract the tarball. For example:
-            <screen>$ <userinput>tar xvzf kea-&__VERSION__;.tar.gz</userinput></screen>
+            <screen>$ <userinput>tar xvzf kea-&keaversion;.tar.gz</userinput></screen>
           </para>
         </listitem>
 
         <listitem>
           <para>Go into the source directory and run the configure script:
-            <screen>$ <userinput>cd kea-&__VERSION__;</userinput>
+            <screen>$ <userinput>cd kea-&keaversion;</userinput>
 $ <userinput>./configure [your extra parameters]</userinput></screen>
           </para>
         </listitem>
@@ -100,7 +109,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
             If the server has been started successfully, test that it is
             responding to DHCP queries and that the client
             receives a configuration from the server; for example, use
-            the <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>.
+            the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/DHCP/">ISC DHCP client</link>.
           </para>
         </listitem>
 
@@ -113,15 +122,15 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
       </orderedlist>
       <para>
         For instructions specific to your system, please read the
-        <ulink url="http://kea.isc.org/wiki/SystemSpecificNotes">system specific notes</ulink>,
-        available on the <ulink url="http://kea.isc.org/">Kea web site</ulink>.
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/SystemSpecificNotes">system specific notes</link>,
+        available on the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/">Kea web site</link>.
       </para>
 
       <para>The details of <command>keactrl</command> script usage can be found
       in <xref linkend="keactrl"/>.</para>
     </section>
 
-    <section id="quick-start-direct-run">
+    <section xml:id="quick-start-direct-run">
       <title>Running the Kea Servers Directly</title>
       <para>The Kea servers can be started directly, without the need to use the
       <command>keactrl</command>. To start the DHCPv4 server run the following

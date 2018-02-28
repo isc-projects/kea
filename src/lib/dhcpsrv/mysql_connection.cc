@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 
 #include <config.h>
 
-#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/db_log.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 
@@ -400,8 +400,7 @@ MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
 
 void
 MySqlConnection::startTransaction() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_START_TRANSACTION);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_START_TRANSACTION);
     // We create prepared statements for all other queries, but MySQL
     // don't support prepared statements for START TRANSACTION.
     int status = mysql_query(mysql_, "START TRANSACTION");
@@ -413,7 +412,7 @@ MySqlConnection::startTransaction() {
 
 void
 MySqlConnection::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_COMMIT);
     if (mysql_commit(mysql_) != 0) {
         isc_throw(DbOperationError, "commit failed: "
                   << mysql_error(mysql_));
@@ -422,7 +421,7 @@ MySqlConnection::commit() {
 
 void
 MySqlConnection::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
+    DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, MYSQL_ROLLBACK);
     if (mysql_rollback(mysql_) != 0) {
         isc_throw(DbOperationError, "rollback failed: "
                   << mysql_error(mysql_));

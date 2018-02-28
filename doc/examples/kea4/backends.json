@@ -32,7 +32,7 @@
 // parameters are type and name. If other parameters are not specified,
 // Kea will assume the database is available on localhost, that user and
 // password is not necessary to connect and that timeout is 5 seconds.
-// Kea must be compiled with --with-dhcp-mysql option to use this backend.
+// Kea must be compiled with --with-mysql option to use this backend.
 //  "lease-database": {
 //      "type": "mysql",
 //      "name": "keatest",
@@ -49,7 +49,7 @@
 // parameters are type and name. If other parameters are not specified,
 // Kea will assume the database is available on localhost, that user and
 // password is not necessary to connect and that timeout is 5 seconds.
-// Kea must be compiled with --with-dhcp-pgsql option to use this backend.
+// Kea must be compiled with --with-pgsql option to use this backend.
 //  "lease-database": {
 //      "type": "pgsql",
 //      "name": "keatest",

@@ -42,6 +42,9 @@
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsDatabaseConfig
  *
+ * @section performance Performance
+ * - @subpage benchmarks
+ *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
@@ -137,4 +140,3 @@
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
  */
-

@@ -9,7 +9,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/lease.h>
-#include <dhcpsrv/tests/lease_file_io.h>
+#include <dhcpsrv/testutils/lease_file_io.h>
 #include <gtest/gtest.h>
 #include <sstream>
 

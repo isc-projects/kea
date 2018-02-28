@@ -1,12 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
 
-  <chapter id="hooks-libraries">
     <title>Hooks Libraries</title>
-    <section id="hooks-libraries-introduction">
+    <section xml:id="hooks-libraries-introduction">
       <title>Introduction</title>
       <para>
       Although Kea offers a lot of flexibility, there may be cases where
@@ -35,8 +38,8 @@
       <para>
       The next section describes how to configure hooks libraries. If you
       are interested in writing your own hooks library, information can be
-      found in the <ulink url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
-      Developer's Guide</ulink>.
+      found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
+      Developer's Guide</link>.
       </para>
     </section> <!-- end Introduction -->
     <section>
@@ -110,7 +113,7 @@
 
       <para>
       Notes:
-        <itemizedlist mark='bullet'>
+        <itemizedlist mark="bullet">
           <listitem><para>
           The full path to each library should be given.
           </para></listitem>
@@ -164,12 +167,12 @@
 
       <para>Currently the following libraries are available or planned from ISC:
 
-        <table frame="all" id="hook-libs">
+        <table frame="all" xml:id="hook-libs">
           <title>List of available hooks libraries</title>
-          <tgroup cols='3'>
-          <colspec colname='name' />
-          <colspec colname='avail' />
-          <colspec colname='description' />
+          <tgroup cols="3">
+          <colspec colname="name"/>
+          <colspec colname="avail"/>
+          <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -286,8 +289,7 @@
         ISC hopes to see more hooks libraries become available as time
         progresses, both developed internally and externally. Since
         this list may evolve dynamically, we decided to keep it on a
-        wiki page, available at this link: <ulink
-        url="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</ulink>.
+        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</link>.
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
@@ -379,12 +381,10 @@ and may have the zero or more of the following entries:
         </para>
 
         <para>As with any other hooks libraries provided by ISC, internals of the
-        user_chk code are well documented. You can take a look at the  <ulink
-        url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</ulink>
+        user_chk code are well documented. You can take a look at the  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</link>
         that discusses how the code works internally. That, together with
-        our general entries in <ulink
-        url="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
-        Framework section</ulink> should give you some pointers how to extend
+        our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
+        Framework section</link> should give you some pointers how to extend
         this library and perhaps even write your own from scratch.</para>
 
       </section>
@@ -421,7 +421,7 @@ and may have the zero or more of the following entries:
 path/base-name.CCYYMMDD.txt
 </screen>
           <para>
-          The &quot;path&quot; and &quot;base-name&quot; are supplied in the
+          The "path" and "base-name" are supplied in the
           configuration as described below see
           <xref linkend="forensic-log-configuration"/>.  The next part of the name is
           the date the log file was started, with four digits for year, two digits
@@ -440,15 +440,20 @@ path/base-name.CCYYMMDD.txt
           (for new leases) and lease4_renew (for renewed leases) hooks.
           </para>
           <para>
-          An entry is a single string with no embedded end-of-line markers
-          and has the following sections:
+          An entry is a single string with no embedded end-of-line markers,
+          a prepended timestamp and has the following sections:
 <screen>
-address duration device-id {client-info} {relay-info}
+timestamp address duration device-id {client-info} {relay-info}
 </screen>
           </para>
           <para>
           Where:
           <itemizedlist>
+            <listitem><para>
+            timestamp - the current date and time the log entry was written
+            in "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone
+            name).
+            </para></listitem>
             <listitem><para>
             address - the leased IPv4 address given out and whether it was
             assigned or renewed.
@@ -456,7 +461,7 @@ address duration device-id {client-info} {relay-info}
             <listitem><para>
             duration - the lease lifetime expressed in days (if present),
             hours, minutes and seconds.  A lease lifetime of 0xFFFFFFFF will be
-            denoted with the text &quot;infinite duration&quot;.
+            denoted with the text "infinite duration".
             </para></listitem>
             <listitem><para>
             device-id - the client's hardware address shown as numerical type
@@ -478,10 +483,7 @@ address duration device-id {client-info} {relay-info}
           For instance (line breaks added for readability, they would not
           be present in the log file).
 <screen>
-Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with
-hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54
-connected via relay at address: 192.2.16.33, identified by circuit-id:
-68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
+2018-01-06 01:02:03 CET Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
 </screen>
         </para>
         <para>
@@ -494,7 +496,7 @@ connected via relay at address: 192.2.16.33, identified by circuit-id:
         <para>
         <command>lease4-add:</command>
 <screen>
-Administrator added a lease of address: *address* to a device with hardware address: *device-id*
+*timestamp* Administrator added a lease of address: *address* to a device with hardware address: *device-id*
 </screen>
         Dependent on the arguments of the add command, it may also include the
         client-id and duration.
@@ -502,13 +504,13 @@ Administrator added a lease of address: *address* to a device with hardware addr
         <para>
         Example:
 <screen>
-Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
+2018-01-06 01:02:03 CET Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
         <para>
         <command>lease4-update:</command>
 <screen>
-Administrator updated information on the lease of address: *address* to a device with hardware address: *device-id*
+*timestamp* Administrator updated information on the lease of address: *address* to a device with hardware address: *device-id*
 </screen>
         Dependent on the arguments of the update command, it may also include the
         client-id and lease duration.
@@ -516,27 +518,27 @@ Administrator updated information on the lease of address: *address* to a device
         <para>
         Example:
 <screen>
-Administrator updated information on the lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
+2018-01-06 01:02:03 CET Administrator updated information on the lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
 </screen>
         </para>
         <para>
         <command>lease4-del:</command>
         Deletes have two forms, one by address and one by identifier and identifier type:
 <screen>
-Administrator deleted the lease for address: *address*
+*timestamp* Administrator deleted the lease for address: *address*
 </screen>
         or
 <screen>
-Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
+*timestamp* Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
 </screen>
         Currently only a type of @b hw-address (hardware address) is supported.
         </para>
         <para>
         Examples:
 <screen>
-Administrator deleted the lease for address: 192.0.2.202
+2018-01-06 01:02:03 CET Administrator deleted the lease for address: 192.0.2.202
 
-Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
+2018-01-06 01:02:12 CET Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
 </screen>
         </para>
         </section>
@@ -549,15 +551,20 @@ Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c
           (for renewed leases) and lease6_rebind (for rebound leases).
           </para>
           <para>
-          An entry is a single string with no embedded end-of-line markers
-          and has the following sections:
+          An entry is a single string with no embedded end-of-line markers,
+          a prepended timestamp and has the following sections:
 <screen>
-address duration device-id {relay-info}*
+timestamp address duration device-id {relay-info}*
 </screen>
           </para>
           <para>
           Where:
           <itemizedlist>
+            <listitem><para>
+            timestamp - the current date and time the log entry was written
+            in "%Y-%m-%d %H:%M:%S %Z" strftime format ("%Z" is the time zone
+            name).
+            </para></listitem>
             <listitem><para>
             address - the leased IPv6 address or prefix given out and whether
             it was assigned or renewed.
@@ -586,11 +593,7 @@ address duration device-id {relay-info}*
           For instance (line breaks added for readability, they would not
           be present in the log file).
 <screen>
-Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with
-DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
-(from Raw Socket) connected via relay at address: fe80::abcd for client on
-link address: 3001::1, hop count: 1, identified by remote-id:
-01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+2018-01-06 01:02:03 PST Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1, hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
 </screen>
         </para>
         <para>
@@ -603,51 +606,51 @@ link address: 3001::1, hop count: 1, identified by remote-id:
         <para>
         <command>lease6-add:</command>
 <screen>
-    Administrator added a lease of address: *address* to a device with DUID: *DUID*
+*timestamp* Administrator added a lease of address: *address* to a device with DUID: *DUID*
 </screen>
         Dependent on the arguments of the add command, it may also include the hardware address and duration.
         </para>
         <para>
         Example:
 <screen>
-Administrator added a lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
+2018-01-06 01:02:03 PST Administrator added a lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
         <para>
         <command>lease6-update:</command>
 <screen>
-Administrator updated information on the lease of address: *address* to a device with DUID: *DUID*
+*timestamp* Administrator updated information on the lease of address: *address* to a device with DUID: *DUID*
 </screen>
         Dependent on the arguments of the update command, it may also include the hardware address and lease duration.
         </para>
         <para>
         Example:
 <screen>
-Administrator updated information on the lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
+2018-01-06 01:02:03 PST Administrator updated information on the lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
 </screen>
         </para>
         <para>
         <command>lease6-del:</command>
         Deletes have two forms, one by address and one by identifier and identifier type:
 <screen>
-Administrator deleted the lease for address: *address*
+*timestamp* Administrator deleted the lease for address: *address*
 </screen>
         or
 <screen>
-Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
+*timestamp* Administrator deleted a lease for a device identified by: *identifier-type* of *identifier*
 </screen>
         Currently only a type of DUID is supported.
         </para>
         <para>
 Examples:
 <screen>
-Administrator deleted the lease for address: 2001:db8::3
+2018-01-06 01:02:03 PST Administrator deleted the lease for address: 2001:db8::3
 
-Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
+2018-01-06 01:02:11 PST Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
 </screen>
         </para>
         </section>
-        <section id="forensic-log-configuration">
+        <section xml:id="forensic-log-configuration">
         <title>Configuring the Forensic Log Hooks</title>
           <para>
           To use this functionality the hook library must be included in the
@@ -655,7 +658,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           library is installed alongside the Kea libraries in
           <filename>[kea-install-dir]/lib</filename> where
           <filename>kea-install-dir</filename> is determined by the
-          &quot;--prefix&quot; option of the configure script.  It defaults to
+          "--prefix" option of the configure script.  It defaults to
           <filename>/usr/local</filename>.  Assuming the
           default value then, configuring kea-dhcp4 to load the legal_log
           library could be done with the following Kea4 configuration:
@@ -760,9 +763,63 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
             to learn more about user contexts in Kea configuration.
           </para>
         </section>
+
+        <section id="forensic-log-database">
+        <title>Database backend</title>
+          <para>
+          Log entries can be inserted into a database when Kea is configured
+          with database backend support: a table named 'logs' is used with a
+          timestamp (timeuuid for Cassandra CQL) generated by the database
+          software and a text log with the same format than for files
+          without the timestamp.
+          </para>
+          <para>
+          Please refer to <xref linkend="mysql-database"/> for MySQL,
+          to <xref linkend="pgsql-database"/> for PostgreSQL or
+          to <xref linkend="cql-database"/> for Cassandra CQL.
+          Scripts are in
+          <filename><replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts</filename> directory, for instance the PostgreSQL create schema
+          command is:
+<screen>
+$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts/pgsql/legldb_create.pgsql</userinput>
+Password for user <replaceable>user-name</replaceable>:
+START TRANSACTION
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+INSERT 0 1
+COMMIT
+$
+</screen>
+          </para>
+          <para>
+          Configuration parameters are extended by standard lease database
+          parameters as defined in <xref linkend="database-configuration4"/>.
+          The "type" parameter should be "mysql", "postgresql",  "cql" or
+          be "logfile". When it is absent or set to "logfile" files are
+          used.
+          </para>
+          <para>
+          This database feature is experimental and will be likely
+          improved, for instance to add an address / prefix index (currently
+          the only index is the timestamp). No specific tools is provided
+          to operate the database but standard tools are applicable,
+          for instance to dump the logs table from a CQL database:
+<screen>
+$ <userinput>echo 'SELECT dateOf(timeuuid), log FROM logs;' | cqlsh -k <replaceable>database-name</replaceable></userinput>
+
+ system.dateof(timeuuid)         | log
+---------------------------------+---------------------------------------
+ 2018-01-06 01:02:03.227000+0000 | Address: 192.2.1.100 has been renewed ...
+ ...
+(12 rows)
+$
+</screen>
+          </para>
+        </section>
       </section>
 
-      <section id="flex-id">
+      <section xml:id="flex-id">
         <title>flex_id: Flexible Identifiers for Host Reservations</title>
         <para>
           This section describes a hook application dedicated to generate
@@ -781,8 +838,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         support contract.</para>
 
         <para>The library allows for defining an expression, using notation
-        initially used for client classification only. See <xref
-        linkend="classification-using-expressions" /> for detailed description
+        initially used for client classification only. See <xref linkend="classification-using-expressions"/> for detailed description
         of the syntax available. One notable difference is that for client
         classification the expression currently has to evaluate to either true
         or false, while the flexible identifier expression is expected to
@@ -999,7 +1055,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         </para>
       </section>
 
-      <section id="host-cmds">
+      <section xml:id="host-cmds">
         <title>host_cmds: Host Commands</title>
         <para>
           This section describes a hook application that offers a number of new
@@ -1028,8 +1084,7 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
           (currently these are reservation-add and reservation-del, but this
           rule applies to other commands that may be implemented in the future),
           hosts database must be specified (see hosts-database description in
-          <xref linkend="hosts-database-configuration4"/> and <xref
-          linkend="hosts-database-configuration6"/>) and it must not operate in
+          <xref linkend="hosts-database-configuration4"/> and <xref linkend="hosts-database-configuration6"/>) and it must not operate in
           read-only mode. If the hosts-database is not specified or is running
           in read-only mode, the host_cmds library will load, but any attempts
           to use reservation-add or reservation-del will fail.
@@ -1038,8 +1093,8 @@ Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e
         <para>
           Additional host reservation commands are planned in the future. For
           a description of envisaged commands, see
-<ulink url="http://kea.isc.org/wiki/ControlAPIRequirements">Control API
-Requirements </ulink> document.</para>
+<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/ControlAPIRequirements">Control API
+Requirements </link> document.</para>
 
         <para>
           All commands are using JSON syntax. They can be issued either using
@@ -1070,8 +1125,7 @@ Requirements </ulink> document.</para>
           takes a set of arguments that vary depending on the nature of the host
           reservation. Any parameters allowed in the configuration file that
           pertain to host reservation are permitted here. For details regarding
-          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and <xref
-          linkend="host-reservation-v6"/>. There is one notable addition. A
+          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and <xref linkend="host-reservation-v6"/>. There is one notable addition. A
           <command>subnet-id</command> must be specified.  This parameter is
           mandatory, because reservations specified in the configuration file
           are always defined within a subnet, so the subnet they belong to is
@@ -1303,7 +1357,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
       <!-- === lease_cmds ================================================== -->
       <!-- ================================================================= -->
 
-      <section id="lease-cmds">
+      <section xml:id="lease-cmds">
         <title>lease_cmds: Lease Commands</title>
         <para>
           This section describes the hook library that offers a number of new
@@ -1438,7 +1492,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
 
 <command>lease6-add</command> can be also used to add leases for IPv6
 prefixes. In this case there are two parameters that must be
-specified: type (set to value of &quot;IA_PD&quot;) and a prefix
+specified: type (set to value of "IA_PD") and a prefix
 length. The actual prefix is set using ip-address field. For example,
 to configure a lease for prefix 2001:db8:abcd::/48, the following
 command can be used:
@@ -1873,7 +1927,7 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
       </section>
     </section>
 
-      <section id="subnet-cmds">
+      <section xml:id="subnet-cmds">
         <title>subnet_cmds: Subnet Commands</title>
         <para>
           This section describes a hook application that offers a number of new
@@ -1892,7 +1946,7 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
         support contract.</para>
 
         <para>The following commands are currently supported:
-        <itemizedlist mark='bullet'>
+        <itemizedlist mark="bullet">
           <listitem>
             <simpara><command>subnet4-list/subnet6-list</command>: lists all configured subnets
             </simpara>
@@ -2697,7 +2751,7 @@ both the command and the response.
 
 
 
-    <section id="user-context">
+    <section xml:id="user-context">
       <title>User contexts</title>
       <para>Hook libraries can have their own configuration parameters. That is
       convenient if the parameter applies to the whole library. However,
@@ -2736,4 +2790,4 @@ both the command and the response.
 
 
 
-   </chapter> <!-- hooks-libraries -->
+   </chapter>
