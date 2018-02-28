@@ -38,15 +38,15 @@ CfgDbAccess::getHostDbAccessString() const {
 
 
 void
-CfgDbAccess::createManagers() const {
+CfgDbAccess::createManagers(DatabaseConnection::Callback db_lost_callback) const {
     // Recreate lease manager.
     LeaseMgrFactory::destroy();
-    LeaseMgrFactory::create(getLeaseDbAccessString());
+    LeaseMgrFactory::create(getLeaseDbAccessString(), db_lost_callback);
 
     // Recreate host data source.
     HostDataSourceFactory::destroy();
     if (!host_db_access_.empty()) {
-        HostMgr::create(getHostDbAccessString());
+        HostMgr::create(getHostDbAccessString(), db_lost_callback);
     }
 }
 

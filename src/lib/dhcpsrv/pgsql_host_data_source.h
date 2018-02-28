@@ -53,11 +53,15 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
+    /// @param db_lost_callback function to invoke if connectivity to
+    /// to host database is lost.
+    ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+    PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters,
+                        DatabaseConnection::Callback db_lost_callback = NULL); 
 
     /// @brief Virtual destructor.
     /// Frees database resources and closes the database connection through

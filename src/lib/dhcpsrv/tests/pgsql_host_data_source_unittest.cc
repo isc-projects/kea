@@ -216,6 +216,35 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
 }
 
+/// @brief Flag used to detect calls to db_lost_callback function
+bool callback_called = false;
+
+/// @brief Callback function used in open database testing
+bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
+    return (callback_called = true);
+}
+
+/// @brief Make sure open failures do NOT invoke db lost callback
+/// The db lost callback should only be invoked after succesfully
+/// opening the DB and then subsequently losing it. Failing to
+/// open should be handled directly by the application layer.
+/// There is simply no good way to break the connection in a
+/// unit test environment.  So testing the callback invocation
+/// in a unit test is next to impossible. That has to be done
+/// as a system test.
+TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
+    // Schema needs to be created for the test to work.
+    destroyPgSQLSchema();
+    createPgSQLSchema();
+
+    callback_called = false;
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD),
+        db_lost_callback), DbOpenError);
+
+    EXPECT_FALSE(callback_called);
+    destroyPgSQLSchema();
+}
 
 // This test verifies that database backend can operate in Read-Only mode.
 TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {

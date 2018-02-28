@@ -56,6 +56,9 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     int64_t lfc_interval = 0;
     int64_t timeout = 0;
     int64_t port = 0;
+    int64_t max_reconnect_tries = 0;
+    int64_t reconnect_wait_time = 0;
+    
     // 2. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, database_config->mapValue()) {
         try {
@@ -74,10 +77,15 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(timeout);
 
-            } else if (param.first == "reconnect-wait-time") {
-                timeout = param.second->intValue();
+            } else if (param.first == "max-reconnect-tries") {
+                max_reconnect_tries = param.second->intValue();
                 values_copy[param.first] =
-                    boost::lexical_cast<std::string>(timeout);
+                    boost::lexical_cast<std::string>(max_reconnect_tries);
+
+            } else if (param.first == "reconnect-wait-time") {
+                reconnect_wait_time = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(reconnect_wait_time);
 
             } else if (param.first == "request-timeout") {
                 timeout = param.second->intValue();
@@ -157,6 +165,21 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
         isc_throw(DhcpConfigError, "port value: " << port
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint16_t>::max()
+                  << " (" << value->getPosition() << ")");
+    }
+
+    // Check that the max-reconnect-retries reasonable.
+    if (max_reconnect_tries < 0) {
+        ConstElementPtr value = database_config->get("max-reconnect-tries");
+        isc_throw(DhcpConfigError, "max-reconnect-tries cannot be less than zero: " 
+                  << " (" << value->getPosition() << ")");
+    }
+
+    // Check that the reconnect-wait-time reasonable.
+    if ((reconnect_wait_time < 0) ||
+        (port > std::numeric_limits<uint16_t>::max())) {
+        ConstElementPtr value = database_config->get("reconnect-wait-time");
+        isc_throw(DhcpConfigError, "reconnect-wait-time cannot be less than zero: " 
                   << " (" << value->getPosition() << ")");
     }
 

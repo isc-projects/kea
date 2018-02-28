@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,28 @@
 #include <dhcpsrv/database_connection.h>
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
+
 using namespace isc::dhcp;
+
+class DatabaseConnectionCallbackTest : public ::testing::Test {
+public:
+    DatabaseConnectionCallbackTest()
+        : db_reconnect_ctl_(0) {
+    }
+
+    bool dbLostCallback(ReconnectCtlPtr db_conn_retry) {
+        if (!db_conn_retry) {
+            isc_throw(isc::BadValue, "db_conn_retry should not null");
+        }
+
+        db_reconnect_ctl_ = db_conn_retry;
+        return (true);
+    }
+
+    ReconnectCtlPtr db_reconnect_ctl_;
+};
+
 
 
 /// @brief getParameter test
@@ -27,6 +48,43 @@ TEST(DatabaseConnectionTest, getParameter) {
     EXPECT_EQ("value2", datasrc.getParameter("param2"));
     EXPECT_THROW(datasrc.getParameter("param3"), isc::BadValue);
 }
+
+TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60");
+    DatabaseConnection datasrc(pmap);
+
+    bool ret;
+    ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
+    EXPECT_FALSE(ret);
+    EXPECT_FALSE(db_reconnect_ctl_);
+}
+
+TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60");
+    DatabaseConnection datasrc(pmap, boost::bind(&DatabaseConnectionCallbackTest
+                                                 ::dbLostCallback, this, _1));
+    bool ret;
+    ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
+    EXPECT_TRUE(ret);
+    ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60, db_reconnect_ctl_->retryInterval());
+
+    for (int i = 3; i > 1 ; --i) {
+        ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
+        ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
+    }
+
+    EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
+    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+}
+
 
 // This test checks that a database access string can be parsed correctly.
 TEST(DatabaseConnectionTest, parse) {

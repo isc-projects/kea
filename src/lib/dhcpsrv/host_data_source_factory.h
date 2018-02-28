@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,9 +29,10 @@ public:
 
 /// @brief Host Data Source Factory
 ///
-/// This class comprises nothing but static methods used to create a host data source object.
-/// It analyzes the database information passed to the creation function and instantiates
-/// an appropriate host data source object based on the type requested.
+/// This class comprises nothing but static methods used to create a host data
+/// source object. It analyzes the database information passed to the creation
+/// function and instantiates an appropriate host data source object based on
+/// the type requested.
 ///
 /// Strictly speaking these functions could be stand-alone functions.  However,
 /// it is convenient to encapsulate them in a class for naming purposes.
@@ -58,11 +59,15 @@ public:
     ///        -end specific, although must include the "type" keyword which
     ///        gives the backend in use.
     ///
+    /// @param db_lost_callback function to invoke if connectivity to host
+    /// data source is lost.
+    ///
     /// @throw isc::InvalidParameter dbaccess string does not contain the "type"
     ///        keyword.
     /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
-    static void create(const std::string& dbaccess);
+    static void create(const std::string& dbaccess,
+                       DatabaseConnection::Callback db_lost_callback = NULL);
 
     /// @brief Destroy host data source
     ///

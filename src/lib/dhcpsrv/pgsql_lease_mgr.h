@@ -51,11 +51,15 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
+    /// @param db_lost_callback function to invoke if connectivity to
+    /// to lease database is lost.
+    ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters,
+                  DatabaseConnection::Callback db_lost_callback = NULL);
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();
@@ -65,8 +69,7 @@ public:
 
     /// @brief Adds an IPv4 lease
     ///
-    /// @param lease lease to be added
-    ///
+    /// @param lease lease to be added ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///

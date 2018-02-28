@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -104,6 +104,42 @@ DatabaseConnection::configuredReadOnly() const {
     }
 
     return (readonly_value == "true");
+}
+
+ReconnectCtlPtr
+DatabaseConnection::makeReconnectCtl() const {
+    ReconnectCtlPtr retry;
+    unsigned int retries = 0;
+    unsigned int interval = 0;
+
+    // Assumes that parsing ensurse only valid values are present
+    std::string parm_str;
+    try {
+        parm_str = getParameter("max-reconnect-tries");
+        retries = boost::lexical_cast<unsigned int>(parm_str);
+    } catch (...) {
+        // Wasn't specified so  so we'll use default of 0;
+    }
+
+    try {
+        parm_str = getParameter("reconnect-wait-time");
+        interval = boost::lexical_cast<unsigned int>(parm_str);
+    } catch (...) {
+        // Wasn't specified so  so we'll use default of 0;
+    }
+
+    retry.reset(new ReconnectCtl(retries, interval));
+    return (retry);
+}
+
+bool
+DatabaseConnection::invokeDbLostCallback() const {
+    if (db_lost_callback_ != NULL) {
+        // Invoke the callback, passing in a new instance of ReconnectCtl
+        return (db_lost_callback_)(makeReconnectCtl());
+    }
+
+    return (false);
 }
 
 };
