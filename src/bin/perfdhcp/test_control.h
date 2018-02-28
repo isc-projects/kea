@@ -136,6 +136,18 @@ public:
     /// Packet template buffers list.
     typedef std::vector<TemplateBuffer> TemplateBufferCollection;
 
+    /// @brief Delay the exit by a fixed given time to catch up to all exchanges
+    ///     that were already started.
+    /// @return true if need to wait, false = ok to exit now
+    bool waitToExit() const;
+
+    /// @brief Check if the program is in that period where the program was
+    ///     bound to exit, but was delayed by lateExit().
+    bool hasLateExitCommenced() const;
+
+    /// @brief Checks if all expected packets were already received
+    bool haveAllPacketsBeenReceived() const;
+
     /// \brief Socket wrapper structure.
     ///
     /// This is the wrapper that holds descriptor of the socket
@@ -1136,7 +1148,7 @@ protected:
     static bool interrupted_;  ///< Is program interrupted.
 };
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc
 
 #endif // TEST_CONTROL_H
