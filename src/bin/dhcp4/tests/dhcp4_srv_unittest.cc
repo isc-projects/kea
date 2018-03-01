@@ -4022,8 +4022,6 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
 
     bin.clear();
     isc::util::encode::decodeHex(invalid_msg_type, bin);
-
-    std::cout << "bin[32]: " << (int)(bin[32]) << std::endl;
     pkt.reset(new Pkt4(&bin[0], bin.size()));
     pkt->unpack();
     ASSERT_EQ(0xff, pkt->getType());
