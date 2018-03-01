@@ -3999,7 +3999,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     ASSERT_EQ(DHCP_NOTYPE, pkt->getType());
     EXPECT_FALSE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(&bin[0], bin.size()))));
 
-    // Verify that we drop packets with types > DHCPLEASEQUERYDONE
+    // Verify that we drop packets with types >= DHCP_TYPES_EOF
     // Make Discover with type changed to 0xff
     std::vector<uint8_t> bin2;
     const char* invalid_msg_type =
@@ -4022,6 +4022,8 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
 
     bin.clear();
     isc::util::encode::decodeHex(invalid_msg_type, bin);
+
+    std::cout << "bin[32]: " << (int)(bin[32]) << std::endl;
     pkt.reset(new Pkt4(&bin[0], bin.size()));
     pkt->unpack();
     ASSERT_EQ(0xff, pkt->getType());
