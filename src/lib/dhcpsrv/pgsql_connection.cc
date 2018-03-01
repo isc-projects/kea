@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -292,12 +292,12 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         // misleadingly returned as fatal. However, a loss of connectivity
         // can lead to a NULL sqlstate with a status of PGRES_FATAL_ERROR.
         const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-        if  ((sqlstate == NULL) || 
+        if  ((sqlstate == NULL) ||
             ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
              (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
              (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
              (memcmp(sqlstate, "57", 2) == 0) ||  // Operator intervention
-             (memcmp(sqlstate, "58", 2) == 0))) {// System error
+             (memcmp(sqlstate, "58", 2) == 0))) { // System error
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_FATAL_ERROR)
                          .arg(statement.name)
                          .arg(PQerrorMessage(conn_))
@@ -306,13 +306,19 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
             if (!invokeDbLostCallback()) {
                 exit (-1);
             }
+
+            // We still need to throw so caller can error out of the current
+            // processing.
+            isc_throw(DbOperationError,
+                      "fatal database errror or connectivity lost");
         }
 
+        // Apparently it wasn't fatal, so we throw with a helpful message.
         const char* error_message = PQerrorMessage(conn_);
         isc_throw(DbOperationError, "Statement exec failed:" << " for: "
-                  << statement.name << ", status: " << s
-                  << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>") 
-                  <<  "], reason: " << error_message);
+                << statement.name << ", status: " << s
+                << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>")
+                <<  "], reason: " << error_message);
     }
 }
 
