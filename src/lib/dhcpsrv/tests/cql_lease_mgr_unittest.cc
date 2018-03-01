@@ -310,7 +310,7 @@ public:
 
         // This the returned leases should exclude reclaimed ones. So the number
         // of returned leases should be roughly half of the expired leases.
-        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0u));
         ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2u),
                   expired_leases.size());
 
