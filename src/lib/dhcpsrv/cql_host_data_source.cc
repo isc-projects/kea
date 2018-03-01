@@ -898,10 +898,10 @@ CqlHostExchange::retrieve() {
     asiolink::IOAddress ipv4_reservation =
         asiolink::IOAddress(static_cast<uint32_t>(host_ipv4_address_));
 
-    Host* host = new Host(host_identifier.data(), host_identifier.size(),
+    HostPtr host(new Host(host_identifier.data(), host_identifier.size(),
                           host_identifier_type, ipv4_subnet_id, ipv6_subnet_id,
                           ipv4_reservation, hostname_,
-                          host_ipv4_client_classes_, host_ipv6_client_classes_);
+                          host_ipv4_client_classes_, host_ipv6_client_classes_));
     host->setHostId(id);
 
     const IPv6Resrv reservation = retrieveReservation();
@@ -1702,7 +1702,7 @@ CqlHostDataSourceImpl::getHostCollection(StatementTag statement_tag,
     // Form HostPtr objects.
     HostCollection host_collection;
     for (boost::any& host : collection) {
-        host_collection.push_back(HostPtr(boost::any_cast<Host*>(host)));
+        host_collection.push_back(boost::any_cast<HostPtr>(host));
     }
 
     // Merge the denormalized table entries that belong to the same host

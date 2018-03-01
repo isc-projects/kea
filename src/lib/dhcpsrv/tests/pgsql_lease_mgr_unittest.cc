@@ -412,22 +412,22 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
-// Verifies that IPv4 lease statistics can be recalculated.
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
