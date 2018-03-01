@@ -2847,12 +2847,13 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
             break;
 
         case DHCP_NOTYPE:
-            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0009)
-                      .arg(query->getLabel());
+            LOG_INFO(bad_packet4_logger, DHCP4_PACKET_DROP_0009)
+                     .arg(query->getLabel());
             break;
+
         default:
             // If we receive a message with a non-existing type, we are logging it.
-            if (type > DHCPLEASEQUERYDONE) {
+            if (type >= DHCP_TYPES_EOF) {
                 LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
                           .arg(query->getLabel())
                           .arg(type);
