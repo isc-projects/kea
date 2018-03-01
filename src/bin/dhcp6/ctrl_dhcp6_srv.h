@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
 
@@ -317,6 +318,12 @@ private:
     /// deleted.
     void deleteExpiredReclaimedLeases(const uint32_t secs);
 
+    /// @brief Attempts to reconnect the server to the DB backend managers
+    void dbReconnect();
+
+    /// @brief Callback DB backends should invoke upon loss of connectivity
+    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl);
+
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
@@ -332,6 +339,8 @@ private:
     /// make sure that the @c TimerMgr outlives instance of this class.
     TimerMgrPtr timer_mgr_;
 
+    /// @brief Pointer the current DB reconnect control values
+    ReconnectCtlPtr db_reconnect_ctl_;
 };
 
 }; // namespace isc::dhcp

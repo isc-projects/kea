@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/database_connection.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
@@ -579,8 +580,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
-        cfg_db->createManagers();
-
+        cfg_db->createManagers(boost::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1));
     } catch (const std::exception& ex) {
         return (isc::config::createAnswer(1, "Unable to open database: "
                                           + std::string(ex.what())));
@@ -673,7 +673,8 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 }
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
-    : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
+    : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()),
+      db_reconnect_ctl_(NULL) {
     if (server_) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");
@@ -815,6 +816,81 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
 }
 
+void
+ControlledDhcpv6Srv::dbReconnect() {
+    bool reopened = false;
+
+    // Re-open lease and host database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
+        cfg_db->createManagers(boost::bind(&ControlledDhcpv6Srv::dbLostCallback, this, _1));
+        reopened = true;
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
+    }
+
+    if (reopened) {
+        // Cancel the timer.
+        if (TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
+            TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer"); }
+
+        // Set network state to service enabled
+        network_state_.enableService();
+
+        // Toss the reconnct control, we're done with it
+        db_reconnect_ctl_.reset();
+    } else {
+        if (!db_reconnect_ctl_->checkRetries()) {
+            LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED)
+            .arg(db_reconnect_ctl_->maxRetries());
+            shutdown();
+            return;
+        }
+
+        LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE)
+                .arg(db_reconnect_ctl_->maxRetries() - db_reconnect_ctl_->retriesLeft() + 1)
+                .arg(db_reconnect_ctl_->maxRetries())
+                .arg(db_reconnect_ctl_->retryInterval());
+
+        if (!TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
+            TimerMgr::instance()->registerTimer("Dhcp6DbReconnectTimer",
+                            boost::bind(&ControlledDhcpv6Srv::dbReconnect, this),
+                            db_reconnect_ctl_->retryInterval() * 1000,
+                            asiolink::IntervalTimer::ONE_SHOT);
+        }
+
+        TimerMgr::instance()->setup("Dhcp6DbReconnectTimer");
+    }
+}
+
+bool
+ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
+    // Disable service until we recover
+    network_state_.disableService();
+
+    if (!db_reconnect_ctl) {
+        // This shouldn't never happen
+        LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_NO_DB_CTL);
+        return (false);
+    }
+
+    // If reconnect isn't enabled, log it and return false
+    if (!db_reconnect_ctl->retriesLeft() ||
+        !db_reconnect_ctl->retryInterval()) {
+        LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
+            .arg(db_reconnect_ctl->retriesLeft())
+            .arg(db_reconnect_ctl->retryInterval());
+        return(false);
+    }
+
+    // Save the reconnect control
+    db_reconnect_ctl_ = db_reconnect_ctl;
+
+    // Invoke reconnect method
+    dbReconnect();
+
+    return(true);
+}
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

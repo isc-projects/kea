@@ -161,7 +161,7 @@ should be reported.
 This is an informational message indicating that connetivity to either the
 lease or host database or both and that automatic reconnect is not enabled.
 
-% DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED - Maximum number of Database reconnect attempts: %1, hasbeen exhausted without success, server is shutting down!
+% DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED - Maximum number of Database reconnect attempts: %1, has been exhausted without success, server is shutting down!
 This error indicates that the server is shutting after failing to reconnect to
 the lease and/or host database(s) after making the maximum configured number 
 of reconnect attempts.  Loss of connectivity is typically a network or database
