@@ -752,14 +752,14 @@ TEST_F(CqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 /// @todo: uncomment this once lease wipe is implemented
 /// for Cassandra (see #5485)
 TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 /// @todo: uncomment this once lease wipe is implemented
 /// for Cassandra (see #5485)
 TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
