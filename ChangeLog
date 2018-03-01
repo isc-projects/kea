@@ -1,3 +1,10 @@
+1366.	[func]		tmark
+	kea-dhcp4 now explicitly logs packets dropped due to a lack
+	message type as a log type DHCP4_PACKET_DROP_0009.  Prior
+	to this such packets were logged has having an unsupported
+	message type of 0.
+	(Trac #5553, git ff97e5ffb5f3478be71aae8130b6eff3208bd69a)
+
 1365.	[func]		fdupont
 	Added initial skeleton implementation for Radius hook library.
 	(Trac #5524, git 832aa23b89eab71875bcbdb1e955eb92fdc0e01a)
