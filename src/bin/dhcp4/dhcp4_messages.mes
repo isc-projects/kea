@@ -379,7 +379,7 @@ for the failure is appended as an argument of the log message.
 % DHCP4_PACKET_OPTIONS_SKIPPED An error upacking an option, caused subsequent options to be skipped: %1
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
-server will still attempt to service the packet
+server will still attempt to service the packet.
 
 % DHCP4_PACKET_DROP_0001 failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv4 server has received a packet that it is unable to
