@@ -148,11 +148,11 @@ HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
         .arg(duid ? duid->toText() : "(duid)");
     for (auto it = alternate_sources_.begin();
          !host && it != alternate_sources_.end(); ++it) {
-        if (duid) {
-            host = (*it)->get4(subnet_id, HWAddrPtr(), duid);
-        }
-        if (!host && hwaddr) {
+        if (hwaddr) {
             host = (*it)->get4(subnet_id, hwaddr, DuidPtr());
+        }
+        if (!host && duid) {
+            host = (*it)->get4(subnet_id, HWAddrPtr(), duid);
         }
         if (host && cache_ptr_ && (it != alternate_sources_.begin())) {
             cache(host);
