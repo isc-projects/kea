@@ -1970,6 +1970,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
             ++should_delete_num;
+
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
@@ -1977,9 +1978,8 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
                 " deleted: " << leases[i]->toText();
         }
     }
-
-    // Check that the number of leases deleted is correct.
-    EXPECT_EQ(deleted_num, should_delete_num);
+    // Check that the number of deleted leases is correct.
+    EXPECT_EQ(should_delete_num, deleted_num);
 
     // Make sure we can make another attempt, when there are no more leases
     // to be deleted.
