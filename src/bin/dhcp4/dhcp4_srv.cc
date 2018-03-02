@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2828,14 +2828,6 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         return (false);
     }
 
-    // If we receive a message with a non-existing type, we are logging it.
-    if (type > DHCPLEASEQUERYDONE) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
-            .arg(query->getLabel())
-            .arg(type);
-        return (false);
-    }
-
     // Once we know that the message type is within a range of defined DHCPv4
     // messages, we do a detailed check to make sure that the received message
     // is targeted at server. Note that we could have received some Offer
@@ -2844,16 +2836,37 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     // safe side. Also, we want to drop other messages which we don't support.
     // All these valid messages that we are not going to process are dropped
     // silently.
-    if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
-        (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
-        (type != DHCPINFORM)) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
-            .arg(query->getLabel())
-            .arg(type);
-        return (false);
+
+    switch(type) {
+        case DHCPDISCOVER:
+        case DHCPREQUEST:
+        case DHCPRELEASE:
+        case DHCPDECLINE:
+        case DHCPINFORM:
+            return (true);
+            break;
+
+        case DHCP_NOTYPE:
+            LOG_INFO(bad_packet4_logger, DHCP4_PACKET_DROP_0009)
+                     .arg(query->getLabel());
+            break;
+
+        default:
+            // If we receive a message with a non-existing type, we are logging it.
+            if (type >= DHCP_TYPES_EOF) {
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
+                          .arg(query->getLabel())
+                          .arg(type);
+            } else {
+                // Exists but we don't support it.
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
+                      .arg(query->getLabel())
+                      .arg(type);
+            }
+            break;
     }
 
-    return (true);
+    return (false);
 }
 
 bool
