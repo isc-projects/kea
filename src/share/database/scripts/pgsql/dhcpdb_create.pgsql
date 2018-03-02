@@ -536,7 +536,7 @@ UPDATE schema_version
 
 -- Upgrade to schema 3.3 begins here:
 
--- Change subnet ID columns type to BIGINT to match lease4/6 tables 
+-- Change subnet ID columns type to BIGINT to match lease4/6 tables
 ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
 ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
 
