@@ -136,6 +136,9 @@ public:
     /// The preferred subnet must also fulfil the condition of equal client classes
     /// with the @c selected_subnet.
     ///
+    /// @todo Need extensions to this logic when we support more than one client
+    /// class for a subnet.
+    ///
     /// @param selected_subnet Pointer to a currently selected subnet.
     ///
     /// @return Pointer to a preferred subnet. It may be the same as @c selected_subnet
