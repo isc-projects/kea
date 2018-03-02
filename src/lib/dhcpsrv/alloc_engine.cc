@@ -515,12 +515,10 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {
-        for (auto id_pair = ctx.host_identifiers_.begin();
-             id_pair != ctx.host_identifiers_.end();
-             ++id_pair) {
-            ConstHostCollection hosts = HostMgr::instance().getAll(id_pair->first,
-                                                                   &id_pair->second[0],
-                                                                   id_pair->second.size());
+        for (auto id_pair : ctx.host_identifiers_) {
+            ConstHostCollection hosts = HostMgr::instance().getAll(id_pair.first,
+                                                                   &id_pair.second[0],
+                                                                   id_pair.second.size());
             // Store the hosts in the temporary map, because some hosts may
             // belong to subnets outside of the shared network. We'll need
             // to eliminate them.
@@ -541,7 +539,7 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
             (subnet->getHostReservationMode() != Network::HR_DISABLED)) {
             // Iterate over configured identifiers in the order of preference
             // and try to use each of them to search for the reservations.
-            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+            for (auto id_pair : ctx.host_identifiers_) {
                 if (use_single_query) {
                     if (host_map.count(subnet->getID()) > 0) {
                         ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
@@ -593,9 +591,9 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // our shared network.
         Lease6Collection leases;
         while (subnet) {
-            for (auto l = all_leases.begin(); l != all_leases.end(); ++l) {
-                if ((*l)->subnet_id_ == subnet->getID()) {
-                    leases.push_back(*l);
+            for (auto l : all_leases) {
+                if ((l)->subnet_id_ == subnet->getID()) {
+                    leases.push_back(l);
                 }
             }
 
@@ -3506,7 +3504,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     // the entire subnet (or more subnets) to discover that the address
     // pools have been exhausted. Using a subnet from which an address
     // was assigned most recently is an optimization which increases
-    // the likelyhood of starting from the subnet which address pools
+    // the likelihood of starting from the subnet which address pools
     // are not exhausted.
     SharedNetwork4Ptr network;
     ctx.subnet_->getSharedNetwork(network);

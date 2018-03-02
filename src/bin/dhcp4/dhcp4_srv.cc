@@ -1800,11 +1800,23 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         Lease4Ptr lease;
         Subnet4Ptr original_subnet = subnet;
 
+        // We used to issue a separate query (two actually: one for client-id
+        // and another one for hw-addr for) each subnet in the shared network.
+        // That was horribly inefficient if the client didn't have any lease
+        // (or there were many subnets and the client happended to be in one
+        // of the last subnets).
+        //
+        // We now issue at most two queries: get all the leases for specific
+        // client-id and then get all leases for specific hw-address.
         if (client_id) {
+
+            // Get all the leases for this client-id
             Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
             if (!leases_client_id.empty()) {
                 Subnet4Ptr s = original_subnet;
 
+                // Among those returned try to find a lease that belongs to
+                // current shared network.
                 while (s) {
                     for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
                         if ((*l)->subnet_id_ == s->getID()) {
@@ -1823,11 +1835,16 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             }
         }
 
+        // If we haven't found a lease yet, try again by hardware-address.
+        // The logic is the same.
         if (!lease && hwaddr) {
+
+            // Get all leases for this particular hw-address.
             Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
             if (!leases_hwaddr.empty()) {
                 Subnet4Ptr s = original_subnet;
 
+                // Pick one that belongs to a subnet in this shared network.
                 while (s) {
                     for (auto l = leases_hwaddr.begin(); l != leases_hwaddr.end(); ++l) {
                         if ((*l)->subnet_id_ == s->getID()) {
