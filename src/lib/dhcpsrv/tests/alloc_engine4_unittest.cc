@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -745,6 +745,10 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolClassification) {
     // offer an address from the pool1.
     ctx.query_->addClass(ClientClass("cable-modem"));
 
+    // Restrict access to pool2 for this client, to make sure that the
+    // server doesn't accidentally get an address from this pool.
+    pool2_->allowClientClass("telephone");
+
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -986,6 +990,10 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     // offer an address from the pool1.
     ctx.query_->addClass(ClientClass("cable-modem"));
 
+    // Restrict access to pool2 for this client, to make sure that the
+    // server doesn't accidentally get an address from this pool.
+    pool2_->allowClientClass("telephone");
+
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -994,8 +1002,9 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     // Let's now remove the client from the cable-modem class and try
     // to renew the address. The engine should determine that the
     // client doesn't have access to the pool1 anymore and
-    // assign an address from unrestricted pool.
+    // assign an address from another pool.
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.query_->addClass(ClientClass("telephone"));
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);
     ASSERT_TRUE(lease);
@@ -2276,14 +2285,12 @@ TEST_F(AllocEngine4Test, findReservation) {
     EXPECT_TRUE(ctx.currentHost());
     EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
 
-    // Regardless of the host reservation mode, the host should be
-    // always returned when findReservation() is called.
+    // It shouldn't be returned when HR_DISABLED mode is enabled.
     subnet_->setHostReservationMode(Network::HR_DISABLED);
     ASSERT_NO_THROW(engine.findReservation(ctx));
-    EXPECT_TRUE(ctx.currentHost());
-    EXPECT_EQ(ctx.currentHost()->getIPv4Reservation(), host->getIPv4Reservation());
+    EXPECT_FALSE(ctx.currentHost());
 
-    // Check the third possible reservation mode.
+    // Check the out of the pool reservation mode.
     subnet_->setHostReservationMode(Network::HR_OUT_OF_POOL);
     ASSERT_NO_THROW(engine.findReservation(ctx));
     EXPECT_TRUE(ctx.currentHost());

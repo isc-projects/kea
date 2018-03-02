@@ -30,6 +30,13 @@ CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
 # Create for searching leases by subnet identifier and lease type.
 CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
 
+# The index by iaid_subnet_id_duid is not the best choice because there are
+# cases when we don't specify subnet identifier while searching leases. The
+# index will be universal if the subnet_id is the right most column in the
+# index.
+DROP INDEX lease6_by_iaid_subnet_id_duid on lease6;
+CREATE INDEX lease6_by_duid_iaid_subnet_id ON lease6 (duid, iaid, subnet_id);
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '6', minor = '0';
