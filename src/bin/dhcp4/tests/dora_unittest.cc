@@ -1569,7 +1569,7 @@ TEST_F(DORATest, reservationModeDisabled) {
 // cases in the real deployments, but this is just a test that the allocation
 // engine skips checking if the reservation exists when it allocates an
 // address. In the real deployment the reservation simply wouldn't exist.
-TEST_F(DORATest, reservationModeDisabledAddressHijacking) {
+TEST_F(DORATest, reservationIgnoredInDisabledMode) {
     // Client has a reservation.
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Set MAC address which doesn't match the reservation configured.
@@ -1633,7 +1633,7 @@ TEST_F(DORATest, reservationModeOutOfPool) {
 // This test verifies that the in-pool reservation can be assigned to
 // the client not owning this reservation when the reservation mode is
 // set to "out-of-pool".
-TEST_F(DORATest, reservationModeOutOfPoolAddressHijacking) {
+TEST_F(DORATest, reservationIgnoredInOutOfPoolMode) {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
     Dhcp4Client client(Dhcp4Client::SELECTING);
