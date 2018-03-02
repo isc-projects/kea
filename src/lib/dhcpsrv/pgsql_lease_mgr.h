@@ -69,7 +69,7 @@ public:
 
     /// @brief Adds an IPv4 lease
     ///
-    /// @param lease lease to be added ///
+    /// @param lease lease to be added
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///

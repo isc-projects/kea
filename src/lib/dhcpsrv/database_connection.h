@@ -68,7 +68,7 @@ public:
 /// @brief Warehouses DB reconnect control values
 ///
 /// When a DatabaseConnection loses connectivity to its backend, it
-/// creates an of this class based on its configuration parameters and
+/// creates an instance of this class based on its configuration parameters and
 /// passes the instance into connection's DB lost callback.  This allows
 /// the layer(s) above the connection to know how to proceed.
 ///
@@ -200,7 +200,7 @@ public:
 
     /// @brief Invokes the connection's lost connectivity callback
     ///
-    /// This function is may be called by derivations when the connectivity
+    /// This function may be called by derivations when the connectivity
     /// to their data server is lost.  If connectivity callback was specified,
     /// this function will instantiate a ReconnectCtl and pass it to the
     /// callback.

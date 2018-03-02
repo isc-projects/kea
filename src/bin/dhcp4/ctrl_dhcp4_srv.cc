@@ -816,7 +816,7 @@ ControlledDhcpv4Srv::dbReconnect() {
         // Set network state to service enabled
         network_state_.enableService();
 
-        // Toss the reconnct control, we're done with it
+        // Toss the reconnect control, we're done with it
         db_reconnect_ctl_.reset();
     } else {
         if (!db_reconnect_ctl_->checkRetries()) {
