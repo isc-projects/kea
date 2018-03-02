@@ -1,3 +1,8 @@
+1367.	[bug]		marcin
+	Multiple critical performance optimizations in the allocation
+	engine for shared networks.
+	(Trac #5437, git 9d8bcd39802795d48c737a05ef3de3634a28ca4e)
+
 1366.	[func]		tmark
 	kea-dhcp4 now explicitly logs packets dropped due to a lack
 	message type as a log type DHCP4_PACKET_DROP_0009.  Prior
