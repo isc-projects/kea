@@ -344,8 +344,8 @@ public:
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 3600;
         lease->cltt_ = 12345678;
-        lease->subnet_id_ = subnet_id;;
-        lease->fqdn_fwd_ = true;
+        lease->subnet_id_ = subnet_id;
+        lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
 

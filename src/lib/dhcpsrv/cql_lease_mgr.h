@@ -203,11 +203,15 @@ public:
     /// @param subnet_id subnet identifier.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
     virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
 
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
     virtual Lease4Collection getLeases4() const;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
@@ -275,12 +279,16 @@ public:
     /// @param type specifies lease type: (NA, TA or PD)
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
     virtual Lease6Collection getLeases6(SubnetID subnet_id,
                                         Lease::Type type) const;
 
     /// @brief Returns all IPv6 leases.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
     virtual Lease6Collection getLeases6() const;
 
     /// @brief Returns a collection of expired DHCPv6 leases.
