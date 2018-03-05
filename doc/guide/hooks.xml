@@ -1668,8 +1668,8 @@ An example result returned when the host was found:
 
         <section>
           <title>lease4-get-all, lease6-get-all commands</title>
-          <para><command>lease4-get-all</command> or
-          <command>lease6-get-all</command> is used to retrieve all
+          <para><command>lease4-get-all</command> and
+          <command>lease6-get-all</command> are used to retrieve all
           IPv4 or IPv6 leases or all leases for the specified set of
           subnets. All leases are returned when there are no arguments
           specified with the command as in the following example:
@@ -1682,7 +1682,8 @@ An example result returned when the host was found:
 
           <para>If the arguments are provided, it is expected that they contain
           "subnets" parameter, being a list of subnet identifiers for which the
-          leases should be returned, e.g.:
+          leases should be returned. For example, in order to retrieve all IPv6
+          leases belonging to the subnets with identifiers 1, 2, 3 and 4:
 <screen>
 {
     "command": "lease6-get-all",
@@ -1737,7 +1738,7 @@ An example result returned when the host was found:
           </para>
 
           <warning>
-            <para>The <command>lease4-get-command</command> or
+            <para>The <command>lease4-get-command</command> and
             <command>lease6-get-command</command> may result in very
             large responses. This may have negative impact on the DHCP server
             responsiveness while the response is generated and transmitted
