@@ -131,9 +131,9 @@ public:
     int
     leaseGetHandler(hooks::CalloutHandle& handle);
 
-    /// @brief lease4-get-all, lease6-get-all command handler
+    /// @brief lease4-get-all, lease6-get-all commands handler
     ///
-    /// This command attempts to retrieve all IPv4 or IPv6 leases,
+    /// These commands attempt to retrieve all IPv4 or IPv6 leases,
     /// or all IPv4 or all IPv6 leases belonging to the particular
     /// subnets. If no subnet identifiers are provided, it returns all
     /// IPv4 or IPv6 leases from the database.
