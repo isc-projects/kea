@@ -1,3 +1,12 @@
+1368.	[bug]		tmark
+	Fixed a bug which prevented inserting multiple host reservations
+	where IPv4 address was unspecified or when selected subnet identifier
+	was not specified (5416).  Corrected inconsistent data types for
+	subnet id columns in both Postgres and MySQL schemas.  Now both
+	schemas support upto MAX UINT32 in all subnet id columns. Exiting
+	databases may be updated without data migration.
+	(Trac 5416, 5522, git d1dd0f2e27ffa49515c17cf68d54f162359b6384)
+
 1367.	[bug]		marcin
 	Multiple critical performance optimizations in the allocation
 	engine for shared networks.
