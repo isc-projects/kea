@@ -22,31 +22,31 @@ if [ $1 == "--help" ]
 then
 	echo "--help"
 	echo "    print this help message"
-	echo "--cppflags"
+	echo "--cflags-only-other"
 	echo "    get cpp compilation flags"
-	echo "--includedir"
+	echo "--cflags-only-I"
 	echo "    get include path"
-	echo "--libdir"
+	echo "--libs"
 	echo "    get lib path"
-	echo "--version"
+	echo "--modversion"
 	echo "    get version"
 	exit 0
 fi
-if [ $1 == "--cppflags" ]
+if [ $1 == "--cflags-only-other" ]
 then
 	exit 0
 fi
-if [ $1 == "--includedir" ]
+if [ $1 == "--cflags-only-I" ]
 then
 	echo "${CPP_DRIVER_PATH}/include/"
 	exit 0
 fi
-if [ $1 == "--libdir" ]
+if [ $1 == "--libs" ]
 then
 	echo "${CPP_DRIVER_PATH}/build/"
 	exit 0
 fi
-if [ $1 == "--version" ]
+if [ $1 == "--modversion" ]
 then
 	MAJOR=`grep VERSION_MAJOR ${CPP_DRIVER_PATH}/include/cassandra.h | cut -d " " -f 3`
 	MINOR=`grep VERSION_MINOR ${CPP_DRIVER_PATH}/include/cassandra.h | cut -d " " -f 3`
