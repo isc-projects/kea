@@ -1,3 +1,76 @@
+1367.	[bug]		marcin
+	Multiple critical performance optimizations in the allocation
+	engine for shared networks.
+	(Trac #5437, git 9d8bcd39802795d48c737a05ef3de3634a28ca4e)
+
+1366.	[func]		tmark
+	kea-dhcp4 now explicitly logs packets dropped due to a lack
+	message type as a log type DHCP4_PACKET_DROP_0009.  Prior
+	to this such packets were logged has having an unsupported
+	message type of 0.
+	(Trac #5553, git ff97e5ffb5f3478be71aae8130b6eff3208bd69a)
+
+1365.	[func]		fdupont
+	Added initial skeleton implementation for Radius hook library.
+	(Trac #5524, git 832aa23b89eab71875bcbdb1e955eb92fdc0e01a)
+
+1364.	[func]		fdupont
+	Implemented FNV hashing function. Cassandra backend no longer
+	explicitly depends on OpenSSL.
+	(Trac #5502, git 71de75c3bb099f21fdef0d41806da281d6271287)
+
+1363.	[func]		fdupont
+	Both DHCPv4 and DHCPv6 servers can now listen on loopback
+	interfaces. This capability requires setting socket type to UDP in
+	DHCPv4. Note the feature has not been thoroughly tested.
+	(Trac #5390, git f38cbd73581a7a0f8634a63cb17f9b60407e3acc)
+
+1362.	[func]		fdupont
+	Extended forensic (aka legal) logging with database capability.
+	(Trac #5420, git 94bd3cc313e9f2a982ef8f8adf0cf44024c76499)
+
+1361.	[func]		tmark
+	Added support for automatically recalculating lease statistics
+	to the CQL backend.
+	(Trac #5487, git c807388d581ee1c3e479324f3c399f27feba1c96)
+
+1360.	[func]		razvan, andrei
+	A new parameter exit-wait-time has been added to perfdhcp. It is
+	now possible to tell perfdhcp to wait certain amount of time after
+	exit conditions are met before actuallying terminating.
+	(Github #55, git 0cd1178ae092fa0c2f122d0e16fb673b4074a6e6)
+
+1359.	[func]		razvan, andrei, tomek
+	Support for Google Benchmark has been added. To compile
+	benchmarking support, please use --with-benchmark option.
+	(Github #36, git d6819971410b460d7742c762844e2e75ba580944)
+
+1358.	[build,bug]	fdupont
+	Cassandra build fixes for macOS.
+	(Trac #5494, git cb0d735628aefd6bca2acc11b73d1f66b45d1c40)
+
+1357.	[bug]		rcgoodfellow
+	Fixed bug in kea-admin causing error on lease-dump.
+	(Github #61, git 2c9454ec56edc8f3cff8a23329f53ced0d172280)
+
+1356.	[func]		andreipavelQ,tomek
+	The logging configuration is now applied early, which helps
+	seeing errors in case the new configuration is faulty.
+	(Github #41, git d77fbec5a003a69cab207aa741133015f2657878)
+
+1355.	[build]		andreipavelQ
+	--with-dhcp-mysql renamed to --with-mysql and
+	--with-dhcp-pgsql renamed to --with-pgsql. These names were
+	leftovers from old BIND10 times when Kea was part of bigger
+	solution that also provided DNS services. Kea is now a stand-alone
+	software, thus the -dhcp- doesn't make sense in those options any
+	more.
+	(Github #40, git 318c9e3d3db9bb938ced27932d8401172529a2ff)
+
+1354.	[doc]		andreipavelQ
+	Documentation has been upgraded to DocBook 5.0.
+	(Github #39, git 9b6705bd6c534128ec18820ff0cbdd72b7fce9e9)
+
 1353.	[func]		tomek
 	Lightweight 4over6 options reinstantiated. Definitions for DHCPv6
 	options 89 through 96 were added back. DHCPv4 v4 Parameters Option

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1799,21 +1799,67 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         Lease4Ptr lease;
         Subnet4Ptr original_subnet = subnet;
-        Subnet4Ptr s = original_subnet;
-        while (s) {
-            if (client_id) {
-                lease = LeaseMgrFactory::instance().getLease4(*client_id, s->getID());
+
+        // We used to issue a separate query (two actually: one for client-id
+        // and another one for hw-addr for) each subnet in the shared network.
+        // That was horribly inefficient if the client didn't have any lease
+        // (or there were many subnets and the client happended to be in one
+        // of the last subnets).
+        //
+        // We now issue at most two queries: get all the leases for specific
+        // client-id and then get all leases for specific hw-address.
+        if (client_id) {
+
+            // Get all the leases for this client-id
+            Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
+            if (!leases_client_id.empty()) {
+                Subnet4Ptr s = original_subnet;
+
+                // Among those returned try to find a lease that belongs to
+                // current shared network.
+                while (s) {
+                    for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
+                        if ((*l)->subnet_id_ == s->getID()) {
+                            lease = *l;
+                            break;
+                        }
+                    }
+
+                    if (lease) {
+                        break;
+
+                    } else {
+                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                    }
+                }
             }
+        }
 
-            if (!lease && hwaddr) {
-                lease = LeaseMgrFactory::instance().getLease4(*hwaddr, s->getID());
-            }
+        // If we haven't found a lease yet, try again by hardware-address.
+        // The logic is the same.
+        if (!lease && hwaddr) {
 
-            if (lease ) {
-                break;
+            // Get all leases for this particular hw-address.
+            Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
+            if (!leases_hwaddr.empty()) {
+                Subnet4Ptr s = original_subnet;
 
-            } else {
-                s = s->getNextSubnet(original_subnet, query->getClasses());
+                // Pick one that belongs to a subnet in this shared network.
+                while (s) {
+                    for (auto l = leases_hwaddr.begin(); l != leases_hwaddr.end(); ++l) {
+                        if ((*l)->subnet_id_ == s->getID()) {
+                            lease = *l;
+                            break;
+                        }
+                    }
+
+                    if (lease) {
+                        break;
+
+                    } else {
+                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                    }
+                }
             }
         }
 
@@ -2828,14 +2874,6 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         return (false);
     }
 
-    // If we receive a message with a non-existing type, we are logging it.
-    if (type > DHCPLEASEQUERYDONE) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
-            .arg(query->getLabel())
-            .arg(type);
-        return (false);
-    }
-
     // Once we know that the message type is within a range of defined DHCPv4
     // messages, we do a detailed check to make sure that the received message
     // is targeted at server. Note that we could have received some Offer
@@ -2844,16 +2882,37 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     // safe side. Also, we want to drop other messages which we don't support.
     // All these valid messages that we are not going to process are dropped
     // silently.
-    if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
-        (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
-        (type != DHCPINFORM)) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
-            .arg(query->getLabel())
-            .arg(type);
-        return (false);
+
+    switch(type) {
+        case DHCPDISCOVER:
+        case DHCPREQUEST:
+        case DHCPRELEASE:
+        case DHCPDECLINE:
+        case DHCPINFORM:
+            return (true);
+            break;
+
+        case DHCP_NOTYPE:
+            LOG_INFO(bad_packet4_logger, DHCP4_PACKET_DROP_0009)
+                     .arg(query->getLabel());
+            break;
+
+        default:
+            // If we receive a message with a non-existing type, we are logging it.
+            if (type >= DHCP_TYPES_EOF) {
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
+                          .arg(query->getLabel())
+                          .arg(type);
+            } else {
+                // Exists but we don't support it.
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
+                      .arg(query->getLabel())
+                      .arg(type);
+            }
+            break;
     }
 
-    return (true);
+    return (false);
 }
 
 bool

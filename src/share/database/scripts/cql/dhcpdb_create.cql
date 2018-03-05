@@ -1,4 +1,4 @@
--- Copyright (C) 2015-2017 Deutsche Telekom AG.
+-- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -152,6 +152,8 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
+
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
 -- direct queries from the lease database management tools.
@@ -226,7 +228,7 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ip
 CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
 CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
 
-TRUNCATE SCHEMA_VERSION;
+DELETE FROM schema_version WHERE version=1;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line concludes database upgrade to version 2.0

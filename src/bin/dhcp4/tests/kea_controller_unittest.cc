@@ -641,7 +641,7 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
 
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
-// --with-dhcp-mysql.
+// --with-mysql.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the tests utilizing MySQL database

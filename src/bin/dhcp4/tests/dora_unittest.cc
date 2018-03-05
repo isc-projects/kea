@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,6 +107,22 @@ namespace {
 /// - Configuration 11:
 ///   - Simple configuration with a single subnet
 ///   - One in-pool reservation for a circuit-id of 'charter950'
+///
+/// - Configuration 12:
+///   - Simple configuration with a single subnet
+///   - One in-pool reservation for MAC address aa:bb:cc:dd:ee:ff
+///   - Host reservation mode set to ALL (fully enabled)
+///
+/// - Configuration 13:
+///   - Simple configuration with a single subnet as in #12
+///   - Host reservation mode set to "disabled" for testing that the
+///     reservations are ignored
+///
+/// - Configuration 14:
+///   - Simple configuration with a single subnet
+///   - Two host reservations, one out of the pool another one in pool
+///   - Host reservation mode set to "out-of-pool" to test that
+///     only out of pool reservations are honored.
 ///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
@@ -409,6 +425,64 @@ const char* DORA_CONFIGS[] = {
         "    ]"
         "} ]"
     "}",
+
+// Configuration 12
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservation-mode\": \"all\","
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.65\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
+
+// Configuration 13
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservation-mode\": \"disabled\","
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.65\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}",
+
+// Configuration 14
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservation-mode\": \"out-of-pool\","
+        "    \"reservations\": [ "
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"ip-address\": \"10.0.0.200\""
+        "       },"
+        "       {"
+        "         \"hw-address\": \"11:22:33:44:55:66\","
+        "         \"ip-address\": \"10.0.0.65\""
+        "       }"
+        "    ]"
+        "} ]"
+    "}"
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -1454,6 +1528,131 @@ TEST_F(DORATest, reservationsWithConflicts) {
     ASSERT_EQ(in_pool_addr, clientB.config_.lease_.addr_);
 }
 
+// This test verifies that the allocation engine ignores reservations when
+// reservation-mode is set to "disabled".
+TEST_F(DORATest, reservationModeDisabled) {
+    // Client has a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Set explicit HW address so as it matches the reservation in the
+    // configuration used below.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server. In this configuration the reservation mode is
+    // set to disabled. Thus, the server should ignore the reservation for
+    // this client.
+    configure(DORA_CONFIGS[13], *client.getServer());
+    // Client requests the 10.0.0.50 address and the server should assign it
+    // as it ignores the reservation in the current mode.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.50"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the requested IP address was assigned.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
+
+    // Reconfigure the server to respect the host reservations.
+    configure(DORA_CONFIGS[12], *client.getServer());
+
+    // The client requests the previously allocated address again, but the
+    // server should allocate the reserved address this time.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.50"))));
+    // Check that the reserved IP address has been assigned.
+    ASSERT_EQ("10.0.0.65", client.config_.lease_.addr_.toText());
+}
+
+// This test verifies that allocation engine assigns a reserved address to
+// the client which doesn't own this reservation. We want to avoid such
+// cases in the real deployments, but this is just a test that the allocation
+// engine skips checking if the reservation exists when it allocates an
+// address. In the real deployment the reservation simply wouldn't exist.
+TEST_F(DORATest, reservationIgnoredInDisabledMode) {
+    // Client has a reservation.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Set MAC address which doesn't match the reservation configured.
+    client.setHWAddress("11:22:33:44:55:66");
+    // Configure DHCP server. In this configuration the reservation mode is
+    // set to disabled. Any client should be able to hijack the reserved
+    // address.
+    configure(DORA_CONFIGS[13], *client.getServer());
+    // Client requests the 10.0.0.65 address reserved for another client.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.65"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Check that the address was hijacked.
+    ASSERT_EQ("10.0.0.65", client.config_.lease_.addr_.toText());
+}
+
+// This test verifies that in pool reservations are ignored when the
+// reservation mode is set to "out-of-pool".
+TEST_F(DORATest, reservationModeOutOfPool) {
+    // Create the first client for which we have a reservation out of the
+    // dynamic pool.
+    Dhcp4Client clientA(Dhcp4Client::SELECTING);
+    clientA.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure the server to respect out of the pool reservations.
+    configure(DORA_CONFIGS[14], *clientA.getServer());
+    // The client for which we have a reservation is doing 4-way exchange
+    // and requests a different address than reserved. The server should
+    // allocate the reserved address to this client.
+    ASSERT_NO_THROW(clientA.doDORA(boost::shared_ptr<
+                                   IOAddress>(new IOAddress("10.0.0.40"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(clientA.getContext().response_);
+    Pkt4Ptr resp = clientA.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check that the server allocated the reserved address.
+    ASSERT_EQ("10.0.0.200", clientA.config_.lease_.addr_.toText());
+
+    // Create another client which has a reservation within the pool.
+    // The server should ignore this reservation in the current mode.
+    Dhcp4Client clientB(clientA.getServer(), Dhcp4Client::SELECTING);
+    clientB.setHWAddress("11:22:33:44:55:66");
+    // This client is requesting a different address than reserved. The
+    // server should allocate this address to the client.
+    ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
+                                   IOAddress>(new IOAddress("10.0.0.40"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(clientB.getContext().response_);
+    resp = clientB.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check that the requested address was assigned.
+    ASSERT_EQ("10.0.0.40", clientB.config_.lease_.addr_.toText());
+}
+
+// This test verifies that the in-pool reservation can be assigned to
+// the client not owning this reservation when the reservation mode is
+// set to "out-of-pool".
+TEST_F(DORATest, reservationIgnoredInOutOfPoolMode) {
+    // Create the first client for which we have a reservation out of the
+    // dynamic pool.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setHWAddress("12:34:56:78:9A:BC");
+    // Configure the server to respect out of the pool reservations only.
+    configure(DORA_CONFIGS[14], *client.getServer());
+    // The client which doesn't have a reservation is trying to hijack
+    // the reserved address and it should succeed.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                   IOAddress>(new IOAddress("10.0.0.65"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check that the server allocated the requested address.
+    ASSERT_EQ("10.0.0.65", client.config_.lease_.addr_.toText());
+}
+
 /// This test verifies that after a client completes its DORA exchange,
 /// appropriate statistics are updated.
 TEST_F(DORATest, statisticsDORA) {
@@ -1745,7 +1944,7 @@ TEST_F(DORATest, changingCircuitId) {
 
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
-// --with-dhcp-mysql.
+// --with-mysql.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the test utilizing MySQL database backend.
@@ -1778,7 +1977,7 @@ TEST_F(DORAMySQLTest, multiStageBoot) {
 
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
-// --with-dhcp-pgsql.
+// --with-pgsql.
 #ifdef HAVE_PGSQL
 
 /// @brief Test fixture class for the test utilizing PostgreSQL database backend.
