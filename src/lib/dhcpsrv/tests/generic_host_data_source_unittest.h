@@ -312,6 +312,19 @@ public:
     /// @param id Identifier type.
     void testBasic4(const Host::IdentifierType& id);
 
+
+    /// @brief Test that Verifies that an IPv4 host reservation with
+    /// options can have a max value for dhcp4_subnet id
+    ///
+    /// Uses gtest macros to report failures.
+    void testMaxSubnetId4();
+
+    /// @brief Test that Verifies that an IPv6 host reservation with
+    /// options can have a max value for dhcp6_subnet id
+    ///
+    /// Uses gtest macros to report failures.
+    void testMaxSubnetId6();
+
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///
