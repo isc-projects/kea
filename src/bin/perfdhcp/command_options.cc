@@ -370,9 +370,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'W':
-            // 'm' for moratorium
             exit_wait_time_ = nonNegativeInteger("value of exist wait time: "
-                                                  "-m<value> must not be a "
+                                                  "-W<value> must not be a "
                                                   "negative integer");
             break;
 
@@ -989,7 +988,7 @@ CommandOptions::usage() const {
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
-        "         [-m<late-exit-delay>]\n"
+        "         [-W<late-exit-delay>]\n"
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"

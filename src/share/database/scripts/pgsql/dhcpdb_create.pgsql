@@ -35,7 +35,6 @@ CREATE TABLE lease4 (
     hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
-
 -- Create search indexes for lease4 table
 -- index by hwaddr and subnet_id
 CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
@@ -62,7 +61,7 @@ CREATE TABLE lease6 (
     hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
--- Create search indexes for lease4 table
+-- Create search indexes for lease6 table
 -- index by iaid, subnet_id, and duid
 CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
@@ -352,6 +351,10 @@ CREATE TABLE lease_hwaddr_source (
   name VARCHAR(40) DEFAULT NULL
 );
 
+-- In the event hardware address cannot be determined, we need to satisfy
+-- foreign key constraint between lease6 and lease_hardware_source.
+INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
+
 -- Hardware address obtained from raw sockets.
 INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
 
@@ -374,10 +377,6 @@ INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
 INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
 INSERT INTO lease_hwaddr_source VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
-
--- In the event hardware address cannot be determined, we need to satisfy
--- foreign key constraint between lease6 and lease_hardware_source.
-INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 -- Adding ORDER BY clause to sort by lease address.
 --
