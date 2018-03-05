@@ -23,7 +23,7 @@ $ make
 The benchmarks are built in @b src/lib/dhcpsrv/benchmarks directory.
 Note that the benchmarks are backend-specific, so please make sure you
 enable the backends you want to measure (See --with-mysql,
---with-pgsql --with-cql parameters for configure). Once the
+--with-pgsql, --with-cql parameters for configure). Once the
 benchmark is built, you can run specific benchmarks. Make sure you
 have the environment ready for use, i.e. the actual database backend
 is set up, the DB or keyspace is created. The setup is the same as for

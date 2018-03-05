@@ -223,6 +223,10 @@ leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
+% DHCPSRV_CQL_GET4 obtaining all IPv4 leases
+A debug message issued when the server is attempting to obtain all IPv4
+leases from the Cassandra database.
+
 % DHCPSRV_CQL_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the Cassandra database for the specified address.
@@ -265,6 +269,10 @@ leases from the Cassandra database for a client with the specified IAID
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the Cassandra database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+% DHCPSRV_CQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the Cassandra database.
 
 % DHCPSRV_CQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
 A debug message issued when the server is attempting to obtain an IPv4

@@ -8,6 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
@@ -15,6 +16,12 @@
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
+
+#include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <utility>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -24,6 +31,7 @@ using namespace std;
 
 namespace {
 
+
 /// @brief Test fixture class for testing PostgreSQL Lease Manager
 ///
 /// Opens the database prior to each test and closes it afterwards.
@@ -31,11 +39,8 @@ namespace {
 
 class PgSqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    PgSqlLeaseMgrTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyPgSQLSchema();
         createPgSQLSchema();
@@ -51,7 +56,26 @@ public:
                          "*** accompanying exception output.\n";
             throw;
         }
+
         lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    /// @brief Destroys the LM and the schema.
+    void destroyTest() {
+        try {
+            lmptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
+        LeaseMgrFactory::destroy();
+        destroyPgSQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    PgSqlLeaseMgrTest() {
+        initializeTest();
     }
 
     /// @brief Destructor
@@ -59,9 +83,7 @@ public:
     /// Rolls back all pending transactions.  The deletion of lmptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~PgSqlLeaseMgrTest() {
-        lmptr_->rollback();
-        LeaseMgrFactory::destroy();
-        destroyPgSQLSchema();
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -69,14 +91,13 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for Postgres backend as the v4 and v6 leases share
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
     /// the same database.
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validPgSQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
-
 };
 
 /// @brief Check that database can be opened
@@ -96,7 +117,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     // If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validPgSQLConnectionString());
-        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -159,6 +180,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
@@ -293,7 +315,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4) {
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+/// updateLease4() and deleteLease can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
     testLease4NullClientId();
@@ -397,8 +419,37 @@ TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
 }
 
+/// @brief DHCPv4 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(PgSqlLeaseMgrTest, testRecreateLease4) {
+    testRecreateLease4();
+}
+
+/// @brief DHCPv6 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(PgSqlLeaseMgrTest, testRecreateLease6) {
+    testRecreateLease6();
+}
+
+/// @brief Checks that null DUID is not allowed.
 TEST_F(PgSqlLeaseMgrTest, nullDuid) {
     testNullDuid();
+}
+
+/// @brief Tests whether memfile can store and retrieve hardware addresses
+TEST_F(PgSqlLeaseMgrTest, testLease6Mac) {
+    testLease6MAC();
+}
+
+/// @brief Tests whether memfile can store and retrieve hardware addresses
+TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSource) {
+    testLease6HWTypeAndSource();
 }
 
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
@@ -412,24 +463,29 @@ TEST_F(PgSqlLeaseMgrTest, getExpiredLeases6) {
     testGetExpiredLeases6();
 }
 
-// Verifies that IPv4 lease statistics can be recalculated.
+/// @brief Check that expired reclaimed DHCPv6 leases are removed.
+TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
+    testDeleteExpiredReclaimedLeases6();
+}
+
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// Tests that leases from specific subnet can be removed.
+// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// Tests that leases from specific subnet can be removed.
+// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
-}; // namespace
+}  // namespace
