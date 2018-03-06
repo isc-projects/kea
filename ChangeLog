@@ -1,3 +1,10 @@
+1370.	[func]		marcin
+	Implemented new hook points "dhcp4_srv_configured" and
+	"leases4_committed" in the DHCPv4 server. The latter supports
+	new next step status NEXT_STEP_PARK which causes the server
+	to "park" the client's DHCP packet.
+	(Trac #5457, git af43f07b0e227ccabcdf07a046a64cebb11bdccf)
+
 1369.	[bug]		fdupont
 	Fixed a bug in JSONfeed tool which did not correctly handle
 	strings and interpret their content.
