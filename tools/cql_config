@@ -38,7 +38,7 @@ then
 fi
 if [ $1 == "--cflags-only-I" ]
 then
-	echo "${CPP_DRIVER_PATH}/include/"
+	echo "-I${CPP_DRIVER_PATH}/include/"
 	exit 0
 fi
 if [ $1 == "--libs" ]

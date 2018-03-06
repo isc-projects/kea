@@ -782,7 +782,7 @@ if test "$CQL_CONFIG" != "" ; then
     fi
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` -I$CQL_INCLUDEDIR"
+    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
     CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
     CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
