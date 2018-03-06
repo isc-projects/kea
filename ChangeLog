@@ -1,7 +1,7 @@
 1369.	[bug]		fdupont
 	Fixed a bug in JSONfeed tool which did not correctly handle
 	strings and interpret their content.
-	(Trac #5513, git xxx)
+	(Trac #5513, git 231e923a85db7fb8305c7baa4d15f766fdf60942)
 
 1368.	[bug]		tmark
 	Fixed a bug which prevented inserting multiple host reservations
