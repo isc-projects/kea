@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define SERVER_HOOKS_H
 
 #include <exceptions/exceptions.h>
+#include <hooks/parking_lots.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -152,6 +153,25 @@ public:
     /// @return Pointer to the global ServerHooks object.
     static ServerHooksPtr getServerHooksPtr();
 
+    /// @brief Returns pointer to all parking lots.
+    ///
+    /// @return pointer to all parking lots.
+    ParkingLotsPtr getParkingLotsPtr() const;
+
+    /// @brief Returns pointer to the ParkingLot for the specified hook index.
+    ///
+    /// @param hook_index index of the hook point for which the parking lot
+    /// should be returned.
+    /// @return Pointer to the ParkingLot object.
+    ParkingLotPtr getParkingLotPtr(const int hook_index);
+
+    /// @brief Returns pointer to the ParkingLot for the specified hook name.
+    ///
+    /// @param hook_name name of the hook point for which the parking lot
+    /// should be returned.
+    /// @return Pointer to the ParkingLot object.
+    ParkingLotPtr getParkingLotPtr(const std::string& hook_name);
+
     /// @brief Generates hook point name for the given control command name.
     ///
     /// This function is called to generate the name of the hook point
@@ -216,6 +236,8 @@ private:
     /// simpler than using a multi-indexed container.)
     HookCollection  hooks_;                 ///< Hook name/index collection
     InverseHookCollection inverse_hooks_;   ///< Hook index/name collection
+
+    ParkingLotsPtr parking_lots_;
 };
 
 } // namespace util

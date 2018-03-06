@@ -1104,6 +1104,9 @@ public:
         /// @brief A pointer to an old lease that the client had before update.
         Lease4Ptr old_lease_;
 
+        /// @brief A pointer to a newly allocated lease.
+        Lease4Ptr new_lease_;
+
         /// @brief Holds a map of hosts belonging to the client within different
         /// subnets.
         ///
