@@ -43,6 +43,12 @@ typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 
 /// @brief Exception thrown during option unpacking
+/// This exception is thrown when an error has occurred, unpacking
+/// an option from a packet and we wish to abandon any any further
+/// unpacking efforts and allow the server to attempt to process
+/// the packet as it stands.  In other words, the option that failed
+/// is perhaps optional, and rather than drop the packet as unusable
+/// we wish to attempt to proces it.
 class SkipRemainingOptionsError : public Exception {
 public:
     SkipRemainingOptionsError (const char* file, size_t line, const char* what) :
