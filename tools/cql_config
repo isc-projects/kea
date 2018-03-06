@@ -34,7 +34,6 @@ then
 fi
 if [ $1 == "--cflags-only-other" ]
 then
-	echo "-L${CPP_DRIVER_PATH}/build/"
 	exit 0
 fi
 if [ $1 == "--cflags-only-I" ]
@@ -44,7 +43,7 @@ then
 fi
 if [ $1 == "--libs" ]
 then
-	echo "-lcassandra_static -luv -lpthread"
+	echo "-L${CPP_DRIVER_PATH}/build/ -lcassandra_static -luv -lpthread"
 	exit 0
 fi
 if [ $1 == "--modversion" ]
