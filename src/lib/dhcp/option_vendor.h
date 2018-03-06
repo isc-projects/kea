@@ -67,8 +67,10 @@ public:
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
     ///
-    /// @throw isc::SkipRemainingOptionsBuffer if provided buffer is
-    /// shorter than data size.
+    /// @throw isc::SkipRemainingOptionsBuffer if an error is encountered
+    /// unpacking the option.  This exception is thrown to indicate to the
+    /// caller that a: remaining options cannot be parsed and b: the packet
+    /// should be considered for processing anyway.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
 
     /// @brief Sets enterprise identifier

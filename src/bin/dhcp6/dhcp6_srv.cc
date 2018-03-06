@@ -596,6 +596,12 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
             query->unpack();
+        } catch (const SkipRemainingOptionsError& e) {
+            // An option failed to unpack but we are to attempt to process it
+            // anyway.  Log it and let's hope for the best.
+            LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_PACKET_OPTIONS_SKIPPED)
+                .arg(e.what());
         } catch (const std::exception &e) {
             // Failed to parse the packet.
             LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_DETAIL,

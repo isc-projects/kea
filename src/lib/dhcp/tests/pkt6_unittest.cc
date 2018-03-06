@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -410,14 +410,14 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     shorth.resize(orig.size() - 4);
     shorth[len_index] = 12;
     Pkt6Ptr too_short_header_pkt(new Pkt6(&shorth[0], shorth.size()));
-    EXPECT_THROW(too_short_header_pkt->unpack(), OutOfRange);
+    EXPECT_THROW(too_short_header_pkt->unpack(), SkipRemainingOptionsError);
 
     // Truncated option data is not accepted
     vector<uint8_t> shorto = orig;
     shorto.resize(orig.size() - 2);
     shorto[len_index] = 16;
     Pkt6Ptr too_short_option_pkt(new Pkt6(&shorto[0], shorto.size()));
-    EXPECT_THROW(too_short_option_pkt->unpack(), OutOfRange);
+    EXPECT_THROW(too_short_option_pkt->unpack(), SkipRemainingOptionsError);
 }
 
 // This test verifies that options can be added (addOption()), retrieved
@@ -1692,6 +1692,38 @@ TEST_F(Pkt6Test, getLabelEmptyClientId) {
     // Add empty client identifier option.
     pkt.addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID)));
     EXPECT_EQ("duid=[no info], tid=0x2312", pkt.getLabel());
+}
+
+// Verifies that when the VIVSO, 17, has length that is too
+// short (i.e. less than sizeof(uint8_t), unpack throws a
+// SkipRemainingOptionsError exception
+TEST_F(Pkt6Test, truncatedVendorLength) {
+
+    // Build a good discover packet
+    Pkt6Ptr pkt = test::PktCaptures::captureSolicitWithVIVSO();
+
+    // Unpacking should not throw
+    ASSERT_NO_THROW(pkt->unpack());
+    ASSERT_EQ(DHCPV6_SOLICIT, pkt->getType());
+
+    // VIVSO option should be there
+    OptionPtr x = pkt->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(x);
+    ASSERT_EQ(D6O_VENDOR_OPTS, x->getType());
+    OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
+    ASSERT_TRUE(vivso);
+    EXPECT_EQ(8, vivso->len()); // data + opt code + len
+
+    // Build a bad discover packet
+    pkt = test::PktCaptures::captureSolicitWithTruncatedVIVSO();
+
+    // Unpack should throw Skip exception
+    ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
+    ASSERT_EQ(DHCPV6_SOLICIT, pkt->getType());
+
+    // VIVSO option should not be there
+    x = pkt->getOption(D6O_VENDOR_OPTS);
+    ASSERT_FALSE(x);
 }
 
 }
