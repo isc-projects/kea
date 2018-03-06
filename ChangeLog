@@ -1,3 +1,8 @@
+1369.	[bug]		fdupont
+	Fixed a bug in JSONfeed tool which did not correctly handle
+	strings and interpret their content.
+	(Trac #5513, git xxx)
+
 1368.	[bug]		tmark
 	Fixed a bug which prevented inserting multiple host reservations
 	where IPv4 address was unspecified or when selected subnet identifier
@@ -5,7 +10,7 @@
 	subnet id columns in both Postgres and MySQL schemas.  Now both
 	schemas support upto MAX UINT32 in all subnet id columns. Exiting
 	databases may be updated without data migration.
-	(Trac 5416, 5522, git d1dd0f2e27ffa49515c17cf68d54f162359b6384)
+	(Trac #5416, #5522, git d1dd0f2e27ffa49515c17cf68d54f162359b6384)
 
 1367.	[bug]		marcin
 	Multiple critical performance optimizations in the allocation
