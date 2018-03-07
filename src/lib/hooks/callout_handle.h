@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <hooks/library_handle.h>
+#include <hooks/parking_lots.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
@@ -91,7 +92,8 @@ public:
     enum CalloutNextStep {
         NEXT_STEP_CONTINUE = 0, ///< continue normally
         NEXT_STEP_SKIP = 1,     ///< skip the next processing step
-        NEXT_STEP_DROP = 2      ///< drop the packet
+        NEXT_STEP_DROP = 2,     ///< drop the packet
+        NEXT_STEP_PARK = 3      ///< park the packet
     };
 
 
@@ -223,6 +225,11 @@ public:
     /// NEXT_STEP_DROP - tells the server to unconditionally drop the packet
     ///                  and do not process it further.
     ///
+    /// NEXT_STEP_PARK - tells the server to "park" the packet. The packet will
+    ///                  wait in the queue for being unparked, e.g. as a result
+    ///                  of completion of the asynchronous performed by the
+    ///                  hooks library operation.
+    ///
     /// This variable is interrogated by the server to see if the remaining
     /// callouts associated with the current hook should be bypassed.
     ///
@@ -337,7 +344,13 @@ public:
     /// @return Name of the current hook or the empty string if none.
     std::string getHookName() const;
 
+    /// @brief Returns pointer to the parking lot handle for this hook point.
+    ///
+    /// @return pointer to the parking lot handle
+    ParkingLotHandlePtr getParkingLotHandlePtr() const;
+
 private:
+
     /// @brief Check index
     ///
     /// Gets the current library index, throwing an exception if it is not set

@@ -171,4 +171,20 @@ TEST_F(JSONFeedTest, noOpeningSquareBracket) {
     testInvalidRead(json);
 }
 
+// This test verifies that a string is correctly handled
+TEST_F(JSONFeedTest, string) {
+    std::string json = "{ \"braces\": \"}}}}\" }";
+    ElementPtr expected = Element::createMap();
+    expected->set("braces", Element::create("}}}}"));
+    testRead(json, expected);
+}
+
+// This test verifies that a string with escapes is correctly handled
+TEST_F(JSONFeedTest, escape) {
+    std::string json = "{ \"escapes\": \"\\n\\t\\\"\\\\\" }";
+    ElementPtr expected = Element::createMap();
+    expected->set("escapes", Element::create("\n\t\"\\"));
+    testRead(json, expected);
+}
+
 } // end of anonymous namespace.

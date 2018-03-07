@@ -483,6 +483,8 @@ UPDATE schema_version
 
 -- Schema 3.0 specification ends here.
 
+-- Upgrade to schema 3.1 begins here:
+
 -- This is a placeholder for the changes between 3.0 and 3.1. We have added a
 -- missing 'client-id' host reservation type entry that had been accidentally
 -- omitted when the 2.0 -> 3.0 upgrade script was created.
@@ -493,7 +495,9 @@ INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 UPDATE schema_version
     SET version = '3', minor = '1';
 
--- Set 3.2 schema version.
+-- Schema 3.1 specification ends here.
+
+-- Upgrade to schema 3.2 begins here:
 
 -- Remove constraints which perform too restrictive checks on the inserted
 -- host reservations. We want to be able to insert host reservations which
@@ -528,7 +532,24 @@ CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
 UPDATE schema_version
     SET version = '3', minor = '2';
 
--- Set 4.0 schema version.
+-- Schema 3.2 specification ends here.
+
+-- Upgrade to schema 3.3 begins here:
+
+-- Change subnet ID columns type to BIGINT to match lease4/6 tables
+ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+-- Set 3.3 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '3';
+
+-- Schema 3.3 specification ends here.
+
+-- Upgrade to schema 4.0 begins here:
 
 -- Add a column holding hosts for user context.
 ALTER TABLE hosts ADD COLUMN user_context TEXT;
@@ -543,9 +564,18 @@ CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
 -- Create for searching leases by subnet identifier and lease type.
 CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
 
+-- The index by iaid_subnet_id_duid is not the best choice because there are
+-- cases when we don't specify subnet identifier while searching leases. The
+-- index will be universal if the subnet_id is the right most column in the
+-- index.
+DROP INDEX lease6_by_iaid_subnet_id_duid;
+CREATE INDEX lease6_by_duid_iaid_subnet_id ON lease6 (duid, iaid, subnet_id);
+
 -- Set 4.0 schema version.
 UPDATE schema_version
     SET version = '4', minor = '0';
+
+-- Schema 4.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

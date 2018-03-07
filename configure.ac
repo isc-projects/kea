@@ -27,6 +27,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 # Checks for programs.
 AC_PROG_CXX
@@ -57,6 +58,21 @@ if test "$sep" = "__NONE__"; then
         AC_MSG_ERROR([can't find a separator character in '+,;&' for the path_replacer shell script])
 fi
 AC_SUBST(SEP)
+
+# If cross compiling assume the message compiler executable was
+# magically already in place...
+if test "$cross_compiling" = "yes"; then
+        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
+	if test -x "${srcdir}/src/lib/log/compiler/message"; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN("you must install a message compiler in:")
+		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
+		AC_MSG_WARN("compiled for build ($build).")
+	fi
+fi
+AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -1449,13 +1465,15 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
                  src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
-                 src/share/database/scripts/mysql/upgrade_5.1_to_6.0.sh
+                 src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
+                 src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
                  src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
-                 src/share/database/scripts/pgsql/upgrade_3.2_to_4.0.sh
+                 src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
+                 src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])

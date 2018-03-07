@@ -503,6 +503,16 @@ UPDATE schema_version
 SET version = '5', minor = '1';
 # This line concludes database upgrade to version 5.1.
 
+# Make subnet_id column types consistent with lease table columns
+ALTER TABLE dhcp4_options MODIFY dhcp4_subnet_id INT UNSIGNED;
+ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '2';
+
+# This line concludes database upgrade to version 5.2.
+
 # Add user context into table holding hosts
 ALTER TABLE hosts ADD COLUMN user_context TEXT NULL;
 
@@ -515,6 +525,13 @@ CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
 
 # Create for searching leases by subnet identifier and lease type.
 CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
+
+# The index by iaid_subnet_id_duid is not the best choice because there are
+# cases when we don't specify subnet identifier while searching leases. The
+# index will be universal if the subnet_id is the right most column in the
+# index.
+DROP INDEX lease6_by_iaid_subnet_id_duid on lease6;
+CREATE INDEX lease6_by_duid_iaid_subnet_id ON lease6 (duid, iaid, subnet_id);
 
 # Update the schema version number
 UPDATE schema_version
