@@ -223,13 +223,13 @@ TEST_F(CqlHostDataSourceTest, basic4HWAddr) {
 
 // Verifies that IPv4 host reservation with options can have a max value
 // for  dhcp4_subnet id
-TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
+TEST_F(CqlHostDataSourceTest, maxSubnetId4) {
     testMaxSubnetId4();
 }
 
 // Verifies that IPv6 host reservation with options can have a max value
 // for  dhcp6_subnet id
-TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
+TEST_F(CqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
 }
 
