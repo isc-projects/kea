@@ -73,7 +73,6 @@ using namespace std;
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   KEYSPACE "keyspace"
-  RECONNECT_WAIT_TIME "reconnect-wait-time"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
@@ -669,11 +668,6 @@ contact_points: CONTACT_POINTS {
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
-};
-
-reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
 keyspace: KEYSPACE {

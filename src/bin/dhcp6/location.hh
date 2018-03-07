@@ -40,9 +40,9 @@
 
 # include "position.hh"
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp6_parser.yy" // location.cc:337
 namespace isc { namespace dhcp {
-#line 46 "location.hh" // location.cc:296
+#line 46 "location.hh" // location.cc:337
   /// Abstract a location.
   class location
   {
@@ -186,7 +186,7 @@ namespace isc { namespace dhcp {
     return ostr;
   }
 
-#line 14 "dhcp6_parser.yy" // location.cc:296
+#line 14 "dhcp6_parser.yy" // location.cc:337
 } } // isc::dhcp
-#line 192 "location.hh" // location.cc:296
+#line 192 "location.hh" // location.cc:337
 #endif // !YY_PARSER6_LOCATION_HH_INCLUDED
