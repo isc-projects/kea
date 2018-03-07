@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,6 +36,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <gtest/gtest.h>
 #include <stats/stats_mgr.h>
+#include <util/encode/hex.h>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -2460,7 +2461,7 @@ TEST_F(Dhcpv4SrvTest, option43LastResort) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -2551,7 +2552,7 @@ TEST_F(Dhcpv4SrvTest, option43BadRaw) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -2715,7 +2716,7 @@ TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -2810,7 +2811,7 @@ TEST_F(Dhcpv4SrvTest, option43RawClass) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -2922,7 +2923,7 @@ TEST_F(Dhcpv4SrvTest, option43Class) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -3056,7 +3057,7 @@ TEST_F(Dhcpv4SrvTest, option43ClassPriority) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -3196,7 +3197,7 @@ TEST_F(Dhcpv4SrvTest, option43Classes) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add a vendor-class-identifier (code 60)
     OptionPtr opt = offer->getOption(DHO_VENDOR_CLASS_IDENTIFIER);
     EXPECT_TRUE(opt);
@@ -3307,7 +3308,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
-    
+
     // Processing should add an option with code 234
     OptionPtr opt = offer->getOption(234);
     EXPECT_TRUE(opt);
@@ -3970,7 +3971,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
         DHCPLEASEUNKNOWN,
         DHCPLEASEACTIVE,
         DHCPBULKLEASEQUERY,
-        DHCPLEASEQUERYDONE
+        DHCPLEASEQUERYDONE,
     };
     size_t not_allowed_size = sizeof(not_allowed) / sizeof(not_allowed[0]);
     // Actually check that the server will drop these messages.
@@ -3979,6 +3980,54 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
                                                             1234))))
             << "Test failed for message type " << i;
     }
+
+    // Verify that we drop packets with no option 53
+    // Make a BOOTP packet (i.e. no option 53)
+    std::vector<uint8_t> bin;
+    const char* bootp_txt =
+        "01010601002529b629b600000000000000000000000000000ace5001944452fe711700"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000063825363521b010400"
+        "020418020600237453fc48090b0000118b06010401020300ff00000000000000000000"
+        "0000000000000000000000000000000000000000";
+
+    isc::util::encode::decodeHex(bootp_txt, bin);
+    Pkt4Ptr pkt(new Pkt4(&bin[0], bin.size()));
+    pkt->unpack();
+    ASSERT_EQ(DHCP_NOTYPE, pkt->getType());
+    EXPECT_FALSE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(&bin[0], bin.size()))));
+
+    // Verify that we drop packets with types >= DHCP_TYPES_EOF
+    // Make Discover with type changed to 0xff
+    std::vector<uint8_t> bin2;
+    const char* invalid_msg_type =
+        "010106015d05478d000000000000000000000000000000000afee20120e52ab8151400"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000638253633501ff3707"
+        "0102030407067d3c0a646f63736973332e303a7d7f0000118b7a010102057501010102"
+        "010303010104010105010106010107010f0801100901030a01010b01180c01010d0200"
+        "400e0200100f010110040000000211010014010015013f160101170101180104190104"
+        "1a01041b01201c01021d01081e01201f01102001102101022201012301002401002501"
+        "01260200ff2701012b59020345434d030b45434d3a45524f55544552040d3242523232"
+        "39553430303434430504312e3034060856312e33332e30330707322e332e3052320806"
+        "30303039354209094347333030304443520a074e657467656172fe01083d0fff2ab815"
+        "140003000120e52ab81514390205dc5219010420000002020620e52ab8151409090000"
+        "118b0401020300ff";
+
+    bin.clear();
+    isc::util::encode::decodeHex(invalid_msg_type, bin);
+    pkt.reset(new Pkt4(&bin[0], bin.size()));
+    pkt->unpack();
+    ASSERT_EQ(0xff, pkt->getType());
+    EXPECT_FALSE(srv.acceptMessageType(pkt));
 }
 
 // Test checks whether statistic is bumped up appropriately when Decline

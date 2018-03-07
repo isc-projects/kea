@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2447,6 +2447,10 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkPoolClassification) {
     // Assign cable-modem class and try again. This time, we should
     // offer an address from the pool1_.
     ctx4.query_->addClass(ClientClass("cable-modem"));
+
+    // Restrict access to pool2 for this client, to make sure that the
+    // server doesn't accidentally get a lease from this pool.
+    pool2_->allowClientClass("telephone");
 
     AllocEngine::findReservation(ctx4);
     ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx4)));

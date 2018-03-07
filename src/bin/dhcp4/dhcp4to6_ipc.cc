@@ -103,7 +103,7 @@ void Dhcp4to6Ipc::handler() {
     // From Dhcpv4Srv::run_one() processing and after
     Pkt4Ptr rsp;
 
-    ControlledDhcpv4Srv::getInstance()->processPacket(query, rsp);
+    ControlledDhcpv4Srv::getInstance()->processPacket(query, rsp, false);
 
     if (!rsp) {
         return;

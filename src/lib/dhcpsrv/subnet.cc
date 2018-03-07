@@ -56,12 +56,19 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
       prefix_len_(len),
       last_allocated_ia_(lastAddrInPrefix(prefix, len)),
       last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-      last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
+      last_allocated_pd_(lastAddrInPrefix(prefix, len)),
+      last_allocated_time_() {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
+
+    // Initialize timestamps for each lease type to negative infinity.
+    last_allocated_time_[Lease::TYPE_V4] = boost::posix_time::neg_infin;
+    last_allocated_time_[Lease::TYPE_NA] = boost::posix_time::neg_infin;
+    last_allocated_time_[Lease::TYPE_TA] = boost::posix_time::neg_infin;
+    last_allocated_time_[Lease::TYPE_PD] = boost::posix_time::neg_infin;
 }
 
 bool
@@ -89,6 +96,19 @@ isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
     }
 }
 
+boost::posix_time::ptime
+Subnet::getLastAllocatedTime(const Lease::Type& lease_type) const {
+    auto t = last_allocated_time_.find(lease_type);
+    if (t != last_allocated_time_.end()) {
+        return (t->second);
+    }
+
+    // This shouldn't happen, because we have initialized the structure
+    // for all lease types.
+    return (boost::posix_time::neg_infin);
+}
+
+
 void Subnet::setLastAllocated(Lease::Type type,
                               const isc::asiolink::IOAddress& addr) {
 
@@ -99,16 +119,19 @@ void Subnet::setLastAllocated(Lease::Type type,
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         last_allocated_ia_ = addr;
-        return;
+        break;
     case Lease::TYPE_TA:
         last_allocated_ta_ = addr;
-        return;
+        break;
     case Lease::TYPE_PD:
         last_allocated_pd_ = addr;
-        return;
+        break;
     default:
         isc_throw(BadValue, "Pool type " << type << " not supported");
     }
+
+    // Update the timestamp of last allocation.
+    last_allocated_time_[type] = boost::posix_time::microsec_clock::universal_time();
 }
 
 std::string
