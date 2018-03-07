@@ -430,6 +430,46 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"reconnect-wait-time\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("reconnect-wait-time", driver.loc_);
+    }
+}
+
+\"request-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_REQUEST_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("request-timeout", driver.loc_);
+    }
+}
+
+\"tcp-keepalive\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_TCP_KEEPALIVE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("tcp-keepalive", driver.loc_);
+    }
+}
+
+\"tcp-nodelay\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_TCP_NODELAY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("tcp-nodelay", driver.loc_);
+    }
+}
+
 \"contact-points\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
