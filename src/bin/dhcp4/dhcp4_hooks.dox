@@ -46,6 +46,23 @@ packet processing, but the exact order depends on the actual processing. Hook po
 that are not specific to packet processing (e.g. lease expiration) will be added
 to the end of this list.
 
+ @subsection dhcp4HooksDhcpv4SrvConfigured dhcp4_srv_configured
+ - @b Arguments:
+   - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
+   - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
+   - name: @b server_config, type: isc::dhcp::SrvConfigPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has completed
+   its (re)configuration. The server provides received and parsed configuration
+   structures to the hook library. It also provides a pointer to the IOService
+   object which is used by the server to run asynchronous operations. The hooks
+   libraries can use this IOService object to schedule asynchronous tasks which
+   are triggered by the DHCP server's main loop. The hook library should hold the
+   provided pointer until the library is unloaded.
+
+ - <b>Next step status</b>: Status codes retured by the callouts installed on
+   this hook point are ignored.
+
  @subsection dhcpv4HooksBuffer4Receive buffer4_receive
 
  - @b Arguments:
@@ -214,6 +231,37 @@ to the end of this list.
    the database as it is and the client will incorrectly assume that the server
    marked this lease as unavailable. If the client restarts its configuration,
    it will get the same (not declined) lease as a result.
+
+@subsection dhcpv4Leases4Committed leases4_committed
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has applied all
+   lease changes as a result of DHCP message processing. This includes
+   writing new lease into the database, releasing an old lease for this
+   client or declining a lease. This callout is executed only for the
+   DHCP client messages which may cause lease changes, i.e. DHCPREQUEST,
+   DHCPRELEASE and DHCPDECLINE. This callout is not executed for DHCPDISCOVER
+   and DHCPINFORM. If the callouts are executed as a result of DHCPREQUEST
+   message, it is possible that both leases collections hold leases to be
+   handled. This is the case when the new lease allocation replaces an existing
+   lease for the client. The "deleted_leases4" object will hold a previous
+   lease instance and the "leases4" object will hold the new lease for this
+   client. The callouts should be prepared to handle such situation. When
+   the callout is executed as a result DHCPRELEASE, the callout will typically
+   receive only one lease (being released) in the "deleted_leases4" object.
+   Both leases collections are always provided to the callouts,
+   even though they may sometimes be empty.
+
+ - <b>Next step status</b>: If any callout installed on the "leases4_committed"
+   sets the next step action to DROP the server will drop the processed query.
+   If it sets the next step action to PARK, the server will park the processed
+   packet (hold packet processing) until the hook libraries explicitly unpark
+   the packet after they are done performing asynchronous operations.
+
 
 @subsection dhcpv4HooksPkt4Send pkt4_send
 

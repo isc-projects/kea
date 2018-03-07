@@ -1,3 +1,36 @@
+1370.	[func]		marcin
+	Implemented new hook points "dhcp4_srv_configured" and
+	"leases4_committed" in the DHCPv4 server. The latter supports
+	new next step status NEXT_STEP_PARK which causes the server
+	to "park" the client's DHCP packet.
+	(Trac #5457, git af43f07b0e227ccabcdf07a046a64cebb11bdccf)
+
+1369.	[bug]		fdupont
+	Fixed a bug in JSONfeed tool which did not correctly handle
+	strings and interpret their content.
+	(Trac #5513, git 231e923a85db7fb8305c7baa4d15f766fdf60942)
+
+1368.	[bug]		tmark
+	Fixed a bug which prevented inserting multiple host reservations
+	where IPv4 address was unspecified or when selected subnet identifier
+	was not specified (5416).  Corrected inconsistent data types for
+	subnet id columns in both Postgres and MySQL schemas.  Now both
+	schemas support upto MAX UINT32 in all subnet id columns. Exiting
+	databases may be updated without data migration.
+	(Trac #5416, #5522, git d1dd0f2e27ffa49515c17cf68d54f162359b6384)
+
+1367.	[bug]		marcin
+	Multiple critical performance optimizations in the allocation
+	engine for shared networks.
+	(Trac #5437, git 9d8bcd39802795d48c737a05ef3de3634a28ca4e)
+
+1366.	[func]		tmark
+	kea-dhcp4 now explicitly logs packets dropped due to a lack
+	message type as a log type DHCP4_PACKET_DROP_0009.  Prior
+	to this such packets were logged has having an unsupported
+	message type of 0.
+	(Trac #5553, git ff97e5ffb5f3478be71aae8130b6eff3208bd69a)
+
 1365.	[func]		fdupont
 	Added initial skeleton implementation for Radius hook library.
 	(Trac #5524, git 832aa23b89eab71875bcbdb1e955eb92fdc0e01a)
@@ -20,13 +53,13 @@
 1361.	[func]		tmark
 	Added support for automatically recalculating lease statistics
 	to the CQL backend.
-	(Trac 5487, git c807388d581ee1c3e479324f3c399f27feba1c96)
+	(Trac #5487, git c807388d581ee1c3e479324f3c399f27feba1c96)
 
 1360.	[func]		razvan, andrei
 	A new parameter exit-wait-time has been added to perfdhcp. It is
 	now possible to tell perfdhcp to wait certain amount of time after
 	exit conditions are met before actuallying terminating.
-	(github #55, git 0cd1178ae092fa0c2f122d0e16fb673b4074a6e6)
+	(Github #55, git 0cd1178ae092fa0c2f122d0e16fb673b4074a6e6)
 
 1359.	[func]		razvan, andrei, tomek
 	Support for Google Benchmark has been added. To compile
@@ -39,12 +72,12 @@
 
 1357.	[bug]		rcgoodfellow
 	Fixed bug in kea-admin causing error on lease-dump.
-	(github #61, git 2c9454ec56edc8f3cff8a23329f53ced0d172280)
+	(Github #61, git 2c9454ec56edc8f3cff8a23329f53ced0d172280)
 
 1356.	[func]		andreipavelQ,tomek
 	The logging configuration is now applied early, which helps
 	seeing errors in case the new configuration is faulty.
-	(github #41, git d77fbec5a003a69cab207aa741133015f2657878)
+	(Github #41, git d77fbec5a003a69cab207aa741133015f2657878)
 
 1355.	[build]		andreipavelQ
 	--with-dhcp-mysql renamed to --with-mysql and
@@ -53,11 +86,11 @@
 	solution that also provided DNS services. Kea is now a stand-alone
 	software, thus the -dhcp- doesn't make sense in those options any
 	more.
-	(github #40, git 318c9e3d3db9bb938ced27932d8401172529a2ff)
+	(Github #40, git 318c9e3d3db9bb938ced27932d8401172529a2ff)
 
 1354.	[doc]		andreipavelQ
 	Documentation has been upgraded to DocBook 5.0.
-	(github #39, git 9b6705bd6c534128ec18820ff0cbdd72b7fce9e9)
+	(Github #39, git 9b6705bd6c534128ec18820ff0cbdd72b7fce9e9)
 
 1353.	[func]		tomek
 	Lightweight 4over6 options reinstantiated. Definitions for DHCPv6

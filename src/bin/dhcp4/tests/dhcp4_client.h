@@ -206,6 +206,15 @@ public:
     /// DHCPACK message is applied and can be obtained from the @c config_.
     void doRequest();
 
+    /// @brief Receives a response from the server.
+    ///
+    /// This method is useful to receive response from the server after
+    /// parking a packet. In this case, the packet is not received as a
+    /// result of initial exchange, e.g. @c doRequest. The test can call
+    /// this method to complete the transaction when it expects that the
+    /// packet has been unparked.
+    void receiveResponse();
+
     /// @brief Generates a hardware address used by the client.
     ///
     /// It assigns random values to the bytes of the hardware address.
