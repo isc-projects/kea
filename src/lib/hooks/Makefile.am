@@ -42,6 +42,7 @@ libkea_hooks_la_SOURCES += libinfo.cc libinfo.h
 libkea_hooks_la_SOURCES += library_handle.cc library_handle.h
 libkea_hooks_la_SOURCES += library_manager.cc library_manager.h
 libkea_hooks_la_SOURCES += library_manager_collection.cc library_manager_collection.h
+libkea_hooks_la_SOURCES += parking_lots.h
 libkea_hooks_la_SOURCES += pointer_converter.h
 libkea_hooks_la_SOURCES += server_hooks.cc server_hooks.h
 
