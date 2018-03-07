@@ -1782,13 +1782,11 @@ CqlHostDataSource::~CqlHostDataSource() {
     delete impl_;
 }
 
-bool
+void
 CqlHostDataSource::add(const HostPtr& host) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_ADD);
 
     impl_->add(host);
-
-    return (true);
 }
 
 ConstHostCollection

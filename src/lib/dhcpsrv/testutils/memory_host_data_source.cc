@@ -136,10 +136,9 @@ MemHostDataSource::get6(const SubnetID& subnet_id,
     return (ConstHostPtr());
 }
 
-bool
+void
 MemHostDataSource::add(const HostPtr& host) {
     store_.push_back(host);
-    return (true);
 }
 
 bool

@@ -247,8 +247,7 @@ public:
     /// is identified by HW address, another one by DUID.
     ///
     /// @param host Pointer to the new @c Host object being added.
-    /// @return true if addition was successful.
-    virtual bool add(const HostPtr& host) = 0;
+    virtual void add(const HostPtr& host) = 0;
 
     /// @brief Attempts to delete a host by (subnet-id, address)
     ///

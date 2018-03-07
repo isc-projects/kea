@@ -22,7 +22,7 @@ public:
 
     /// @brief Insert a host into the cache.
     ///
-    /// Does the same than @c add() but with a different purpose.
+    /// Similar to @c add() but with a different purpose.
     ///
     /// @param host Pointer to the new @c Host object being inserted.
     /// @param[in,out] overwrite -1 if accepting conflicts, 0 if removing
