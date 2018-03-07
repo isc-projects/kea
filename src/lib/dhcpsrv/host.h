@@ -548,7 +548,7 @@ public:
 
     /// @brief Sets the negative cached flag.
     ///
-    /// @param negative New valie for negative cache flag.
+    /// @param negative sets whether this is a negative cached host.
     void setNegative(bool negative) {
         negative_ = negative;
     }
@@ -618,6 +618,10 @@ private:
     CfgOptionPtr cfg_option6_;
 
     /// @brief Negative cached flag.
+    ///
+    /// This flag determines whether this object is a negative cache, i.e.
+    /// we queried other backends for specific host and there was no
+    /// entry for it.
     bool negative_;
 };
 

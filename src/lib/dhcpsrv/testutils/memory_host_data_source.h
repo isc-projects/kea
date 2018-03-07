@@ -31,6 +31,10 @@ public:
 
     /// @brief Return all hosts for the specified HW address or DUID.
     ///
+    /// This may return hosts from multiple subnets.
+    ///
+    /// Currently not implemented.
+    ///
     /// @param hwaddr HW address of the client or NULL if no HW address
     /// available.
     /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
@@ -40,6 +44,10 @@ public:
 
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
+    ///
+    /// This may return hosts from multiple subnets.
+    ///
+    /// Currently not implemented.
     ///
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of a buffer containing
@@ -53,12 +61,16 @@ public:
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
+    /// Currently not implemented.
+    ///
     /// @param address IPv4 address for which the @c Host object is searched.
     /// @return Empty collection of const @c Host objects.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
 
     /// @brief Returns a host connected to the IPv4 subnet.
+    ///
+    /// Currently not implemented.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param hwaddr HW address of the client or NULL if no HW address
@@ -96,6 +108,8 @@ public:
          const asiolink::IOAddress& address) const;
 
     /// @brief Returns a host connected to the IPv6 subnet.
+    ///
+    /// Currently not implemented.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param hwaddr HW address of the client or NULL if no HW address

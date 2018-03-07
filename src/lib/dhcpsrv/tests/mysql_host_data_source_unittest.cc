@@ -148,7 +148,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     destroyMySQLSchema();
     createMySQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
         HostMgr::create();
@@ -161,7 +161,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validMySQLConnectionString() + string(" ") +
@@ -176,7 +176,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host manager when
     // none is set throws an exception.
     EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 

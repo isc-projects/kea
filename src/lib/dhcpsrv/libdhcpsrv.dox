@@ -106,7 +106,8 @@ host reservations in the MySQL database is required to establish
 connection to the MySQL database and issue specific queries. A factory
 method creating an instance of a base host data source object must be
 registered (at global object initialization for built-in backends,
-dynamically for backends loaded at run-time). Note, that this instance is
+dynamically for backends loaded at run-time). See host_data_source_factory.cc
+for example code that registers MySQL and PostgreSQL. Note, that this instance is
 created as "alternate host data source" as opposed to the primary data
 source which returns host reservations specified in the configuration file.
 The primary data source is implemented internally in the

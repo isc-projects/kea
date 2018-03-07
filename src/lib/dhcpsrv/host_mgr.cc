@@ -171,6 +171,9 @@ HostMgr::get4Any(const SubnetID& subnet_id,
                  const size_t identifier_len) const {
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
+
+    // Found it the config file or there are no backends configured?
+    // Then we're done here.
     if (host || alternate_sources_.empty()) {
         return (host);
     }
@@ -181,6 +184,8 @@ HostMgr::get4Any(const SubnetID& subnet_id,
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
 
+    // Try to find a host in each configured backend. We return as soon
+    // as we find first hit.
     for (auto it = alternate_sources_.begin();
          it != alternate_sources_.end(); ++it) {
         host = (*it)->get4(subnet_id, identifier_type,

@@ -393,8 +393,9 @@ public:
 protected:
     /// @brief The negative caching flag.
     ///
-    /// When true and the first data source is a cache negative answers
-    /// to get[46] for aubnet and identifier are cached.
+    /// When true and the first cache source will be also
+    /// caching negative answers. This works for get[46]
+    /// for a subnet and an identifier.
     bool negative_caching_;
 
     /// @brief Cache an answer.

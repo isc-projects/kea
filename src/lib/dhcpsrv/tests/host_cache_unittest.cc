@@ -161,7 +161,7 @@ TEST_F(HostCacheTest, identifier4) {
     // Create a host reservation.
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1",
                                                         Host::IDENT_HWADDR);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
     const IOAddress& address = host->getIPv4Reservation();
 
     // Try to add it to the host data source.
@@ -215,7 +215,7 @@ TEST_F(HostCacheTest, identifier6) {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1",
                                                         Host::IDENT_DUID,
                                                         false);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
     
     // Get the address.
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
@@ -273,7 +273,7 @@ TEST_F(HostCacheTest, address4) {
     // Create a host reservation.
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1",
                                                         Host::IDENT_HWADDR);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
     const IOAddress& address = host->getIPv4Reservation();
 
     // Try to add it to the host data source.
@@ -325,7 +325,7 @@ TEST_F(HostCacheTest, address6) {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1",
                                                         Host::IDENT_DUID,
                                                         false);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
     
     // Get the address.
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
@@ -380,11 +380,10 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
     ASSERT_FALSE(HostMgr::instance().getNegativeCaching());
 
     // Create a host reservation.
-    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1",
-                                                        Host::IDENT_HWADDR);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    // We will not add it anywhere, just will use its values.
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
+    ASSERT_TRUE(host);
 
-    // Do not add it to the host data source.
 
     // Try to get it cached.
     ConstHostPtr got = HostMgr::instance().get4(host->getIPv4SubnetID(),
@@ -403,7 +402,8 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
     HostMgr::instance().setNegativeCaching(true);
     ASSERT_TRUE(HostMgr::instance().getNegativeCaching());
 
-    // Try it but it will be cached only the second time.
+    // Try it again. There is no such host, but this time negative cache is enabled,
+    // so this negative response will be added to the cache.
     got = HostMgr::instance().get4Any(host->getIPv4SubnetID(),
                                       host->getIdentifierType(),
                                       &host->getIdentifier()[0],
@@ -450,10 +450,11 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
+    // We will not add it anywhere, just will use its values.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1",
                                                         Host::IDENT_DUID,
                                                         false);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
 
     // Do not add it to the host data source.
 
@@ -521,9 +522,10 @@ TEST_F(HostCacheTest, negativeAddress4) {
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
+    // We will not add it anywhere, just will use its values.
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1",
                                                         Host::IDENT_HWADDR);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
     const IOAddress& address = host->getIPv4Reservation();
 
     // Do not add it to the host data source.
@@ -550,10 +552,11 @@ TEST_F(HostCacheTest, negativeAddress6) {
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
+    // We will not add it anywhere, just will use its values.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1",
                                                         Host::IDENT_DUID,
                                                         false);
-    ASSERT_TRUE(host);  // Make sure the host is generate properly.
+    ASSERT_TRUE(host);  // Make sure the host is generated properly.
     
     // Get the address.
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
