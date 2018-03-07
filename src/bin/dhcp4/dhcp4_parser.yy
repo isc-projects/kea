@@ -83,6 +83,10 @@ using namespace std;
   CONNECT_TIMEOUT "connect-timeout"
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
+  RECONNECT_WAIT_TIME "reconnect-wait-time"
+  REQUEST_TIMEOUT "request-timeout"
+  TCP_KEEPALIVE "tcp-keepalive"
+  TCP_NODELAY "tcp-nodelay"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -583,6 +587,10 @@ database_map_param: database_type
                   | readonly
                   | connect_timeout
                   | contact_points
+                  | reconnect_wait_time
+                  | request_timeout
+                  | tcp_keepalive
+                  | tcp_nodelay
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -656,6 +664,26 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("connect-timeout", n);
 };
+
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
+}
+
+request_timeout: REQUEST_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("request-timeout", n);
+}
+
+tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-keepalive", n);
+}
+
+tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-nodelay", n);
+}
 
 contact_points: CONTACT_POINTS {
     ctx.enter(ctx.NO_KEYWORD);
