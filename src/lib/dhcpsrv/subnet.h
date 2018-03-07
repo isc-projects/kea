@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +22,10 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index_container.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <map>
 
 namespace isc {
 namespace dhcp {
@@ -83,7 +85,18 @@ public:
     /// @return address/prefix that was last tried from this subnet
     isc::asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
-    /// @brief sets the last address that was tried from this subnet
+    /// @brief Returns the timestamp when the @c setLastAllocated function
+    /// was called.
+    ///
+    /// @param lease_type Lease type for which last allocation timestamp should
+    /// be returned.
+    ///
+    /// @return Time when a lease of a specified type has been allocated from
+    /// this subnet. The negative infinity time is returned if a lease type is
+    /// not recognized (which is unlikely).
+    boost::posix_time::ptime getLastAllocatedTime(const Lease::Type& lease_type) const;
+
+    /// @brief sets the last address that was tried from this pool
     ///
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
@@ -385,6 +398,10 @@ protected:
     ///
     /// See @ref last_allocated_ia_ for details.
     isc::asiolink::IOAddress last_allocated_pd_;
+
+    /// @brief Timestamp indicating when a lease of a specified type has been
+    /// last allocated from this subnet.
+    std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;

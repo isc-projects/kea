@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
@@ -25,6 +26,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <functional>
 #include <iostream>
 #include <queue>
 
@@ -259,7 +261,10 @@ public:
     ///
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response
-    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp);
+    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp,
+                       bool allow_packet_park = true);
+
 
     /// @brief Update DHCPv4 packet with address plus port information.
     ///
@@ -451,9 +456,11 @@ protected:
     /// Returns ACK message, NAK message, or NULL
     ///
     /// @param request a message received from client
+    /// @param [out] context pointer to the client context where allocated
+    /// and deleted leases are stored.
     ///
     /// @return ACK or NAK message
-    Pkt4Ptr processRequest(Pkt4Ptr& request);
+    Pkt4Ptr processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Processes incoming DHCPRELEASE messages.
     ///
@@ -461,7 +468,9 @@ protected:
     /// this function does not return anything.
     ///
     /// @param release message received from client
-    void processRelease(Pkt4Ptr& release);
+    /// @param [out] context pointer to the client context where released
+    /// lease is stored.
+    void processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Process incoming DHCPDECLINE messages.
     ///
@@ -470,7 +479,9 @@ protected:
     /// the client and if it does, calls @ref declineLease.
     ///
     /// @param decline message received from client
-    void processDecline(Pkt4Ptr& decline);
+    /// @param [out] context pointer to the client context where declined
+    /// lease is stored.
+    void processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Processes incoming DHCPINFORM messages.
     ///
@@ -655,7 +666,9 @@ private:
     ///
     /// @param lease lease to be declined
     /// @param decline client's message
-    void declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline);
+    /// @param context reference to a client context
+    void declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
+                      AllocEngine::ClientContext4Ptr& context);
 
 protected:
 
@@ -823,6 +836,21 @@ protected:
     ///
     /// @param query Pointer to the client message.
     void deferredUnpack(Pkt4Ptr& query);
+
+    /// @brief Executes pkt4_send callout.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param query Pointer to a query.
+    /// @param rsp Pointer to a response.
+    void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                              Pkt4Ptr& query, Pkt4Ptr& rsp);
+
+    /// @brief Executes buffer4_send callout and sends the response.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param rsp pointer to a response.
+    void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
+                                 Pkt4Ptr& rsp);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

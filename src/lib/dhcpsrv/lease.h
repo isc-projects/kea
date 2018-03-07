@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -412,6 +412,9 @@ typedef boost::shared_ptr<Lease4> Lease4Ptr;
 /// @brief A collection of IPv4 leases.
 typedef std::vector<Lease4Ptr> Lease4Collection;
 
+/// @brief A shared pointer to the collection of IPv4 leases.
+typedef boost::shared_ptr<Lease4Collection> Lease4CollectionPtr;
+
 /// @brief Structure that holds a lease for IPv6 address and/or prefix
 ///
 /// For performance reasons it is a simple structure, not a class. If we chose
@@ -547,6 +550,10 @@ typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 /// @brief A collection of IPv6 leases.
 typedef std::vector<Lease6Ptr> Lease6Collection;
+
+
+/// @brief A shared pointer to the collection of IPv6 leases.
+typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;
 
 /// @brief Stream output operator.
 ///

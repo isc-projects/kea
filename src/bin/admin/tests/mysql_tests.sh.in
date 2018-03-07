@@ -363,7 +363,7 @@ EOF
     assert_eq 0 $ERRCODE "select from host_identifier_type failed. (expected status code %d, returned %d)"
     assert_eq 5 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
     
-    #table: user_context columns to hosts, dhcp4_options and dhcp6_options (upgrade 5.1 -> 6.0)
+    #table: user_context columns to hosts, dhcp4_options and dhcp6_options (upgrade 5.2 -> 6.0)
     # verify that hosts table includes user_context
     qry="select user_context from hosts";
     count=`mysql_execute "${qry}"`

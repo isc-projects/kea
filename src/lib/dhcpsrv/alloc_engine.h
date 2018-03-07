@@ -755,28 +755,6 @@ public:
 
 private:
 
-    /// @brief Type of the function used by @ref findReservationInternal to
-    /// retrieve reservations by subnet identifier and host identifier.
-    typedef boost::function<ConstHostPtr(const SubnetID&,
-                                         const Host::IdentifierType&,
-                                         const uint8_t*, const size_t)> HostGetFunc;
-
-    /// @brief Common function for searching host reservations.
-    ///
-    /// This is a common function called by variants of @ref findReservation
-    /// functions.
-    ///
-    /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
-    /// @param host_get Pointer to the @ref HostMgr functions to be used
-    /// to retrieve reservation by subnet identifier and host identifier.
-    /// @param ipv6_only Boolean value indicating if only IPv6 reservations
-    /// should be retrieved.
-    /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
-    template<typename ContextType>
-    static void findReservationInternal(ContextType& ctx,
-                                        const HostGetFunc& host_get,
-                                        const bool ipv6_only = false);
-
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
     /// Creates a lease based on specified parameters and tries to insert it
@@ -1134,6 +1112,9 @@ public:
 
         /// @brief A pointer to an old lease that the client had before update.
         Lease4Ptr old_lease_;
+
+        /// @brief A pointer to a newly allocated lease.
+        Lease4Ptr new_lease_;
 
         /// @brief Holds a map of hosts belonging to the client within different
         /// subnets.

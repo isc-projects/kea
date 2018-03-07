@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,6 @@
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcpsrv/addr_utilities.h>
-#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -79,35 +78,42 @@ using namespace isc::log;
 using namespace isc::stats;
 using namespace std;
 
+namespace {
+
 /// Structure that holds registered hook indexes
 struct Dhcp4Hooks {
-    int hook_index_buffer4_receive_; ///< index for "buffer4_receive" hook point
-    int hook_index_pkt4_receive_;    ///< index for "pkt4_receive" hook point
-    int hook_index_subnet4_select_;  ///< index for "subnet4_select" hook point
-    int hook_index_lease4_release_;  ///< index for "lease4_release" hook point
-    int hook_index_pkt4_send_;       ///< index for "pkt4_send" hook point
-    int hook_index_buffer4_send_;    ///< index for "buffer4_send" hook point
-    int hook_index_lease4_decline_;  ///< index for "lease4_decline" hook point
-    int hook_index_host4_identifier_;///< index for "host4_identifier" hook point
+    int hook_index_buffer4_receive_;   ///< index for "buffer4_receive" hook point
+    int hook_index_pkt4_receive_;      ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_;    ///< index for "subnet4_select" hook point
+    int hook_index_leases4_committed_; ///< index for "leases4_committed" hook point
+    int hook_index_lease4_release_;    ///< index for "lease4_release" hook point
+    int hook_index_pkt4_send_;         ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;      ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_;    ///< index for "lease4_decline" hook point
+    int hook_index_host4_identifier_;  ///< index for "host4_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
-        hook_index_buffer4_receive_  = HooksManager::registerHook("buffer4_receive");
-        hook_index_pkt4_receive_     = HooksManager::registerHook("pkt4_receive");
-        hook_index_subnet4_select_   = HooksManager::registerHook("subnet4_select");
-        hook_index_pkt4_send_        = HooksManager::registerHook("pkt4_send");
-        hook_index_lease4_release_   = HooksManager::registerHook("lease4_release");
-        hook_index_buffer4_send_     = HooksManager::registerHook("buffer4_send");
-        hook_index_lease4_decline_   = HooksManager::registerHook("lease4_decline");
-        hook_index_host4_identifier_ = HooksManager::registerHook("host4_identifier");
+        hook_index_buffer4_receive_   = HooksManager::registerHook("buffer4_receive");
+        hook_index_pkt4_receive_      = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_    = HooksManager::registerHook("subnet4_select");
+        hook_index_leases4_committed_ = HooksManager::registerHook("leases4_committed");
+        hook_index_pkt4_send_         = HooksManager::registerHook("pkt4_send");
+        hook_index_lease4_release_    = HooksManager::registerHook("lease4_release");
+        hook_index_buffer4_send_      = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
+        hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
     }
 };
+
+} // end of anonymous namespace
 
 // Declare a Hooks object. As this is outside any function or method, it
 // will be instantiated (and the constructor run) when the module is loaded.
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
 Dhcp4Hooks Hooks;
+
 
 namespace isc {
 namespace dhcp {
@@ -838,72 +844,12 @@ Dhcpv4Srv::run_one() {
         return;
     }
 
-    try {
-        // Now all fields and options are constructed into output wire buffer.
-        // Option objects modification does not make sense anymore. Hooks
-        // can only manipulate wire buffer at this stage.
-        // Let's execute all callouts registered for buffer4_send
-        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Enable copying options from the packet within hook library.
-            ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("response4", rsp);
-
-            // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
-                                       *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
-            // stage means drop.
-            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
-                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                          DHCP4_HOOK_BUFFER_SEND_SKIP)
-                    .arg(rsp->getLabel());
-                return;
-            }
-
-            callout_handle->getArgument("response4", rsp);
-        }
-
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
-            .arg(rsp->getLabel())
-            .arg(rsp->getName())
-            .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->getLocalAddr().isV4Zero() ? "*" : rsp->getLocalAddr().toText())
-            .arg(rsp->getLocalPort())
-            .arg(rsp->getRemoteAddr())
-            .arg(rsp->getRemotePort())
-            .arg(rsp->getIface().empty() ? "to be determined from routing" :
-                 rsp->getIface());
-
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
-                  DHCP4_RESPONSE_DATA)
-            .arg(rsp->getLabel())
-            .arg(rsp->getName())
-            .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->toText());
-        sendPacket(rsp);
-
-        // Update statistics accordingly for sent packet.
-        processStatsSent(rsp);
-
-    } catch (const std::exception& e) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
-            .arg(rsp->getLabel())
-            .arg(e.what());
-    }
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+    processPacketBufferSend(callout_handle, rsp);
 }
 
 void
-Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
+Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     // Log reception of the packet. We need to increase it early, as any
     // failures in unpacking will cause the packet to be dropped. We
     // will increase type specific statistic further down the road.
@@ -1052,6 +998,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
     }
 
     updateDhcpV4AddressPlusPortPacket(query);
+
+    AllocEngine::ClientContext4Ptr ctx;
+
     try {
         switch (query->getType()) {
         case DHCPDISCOVER:
@@ -1062,15 +1011,15 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
             // Note that REQUEST is used for many things in DHCPv4: for
             // requesting new leases, renewing existing ones and even
             // for rebinding.
-            rsp = processRequest(query);
+            rsp = processRequest(query, ctx);
             break;
 
         case DHCPRELEASE:
-            processRelease(query);
+            processRelease(query, ctx);
             break;
 
         case DHCPDECLINE:
-            processDecline(query);
+            processDecline(query, ctx);
             break;
 
         case DHCPINFORM:
@@ -1102,6 +1051,84 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
                                                   static_cast<int64_t>(1));
     }
 
+    bool packet_park = false;
+
+    if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Clear skip flag if it was set in previous callouts
+        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+
+        // Also pass the corresponding query packet as argument
+        callout_handle->setArgument("query4", query);
+
+        Lease4CollectionPtr new_leases(new Lease4Collection());
+        if (ctx->new_lease_) {
+            new_leases->push_back(ctx->new_lease_);
+        }
+        callout_handle->setArgument("leases4", new_leases);
+
+        Lease4CollectionPtr deleted_leases(new Lease4Collection());
+        if (ctx->old_lease_) {
+            if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
+                deleted_leases->push_back(ctx->old_lease_);
+            }
+        }
+        callout_handle->setArgument("deleted_leases4", deleted_leases);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_leases4_committed_,
+                                   *callout_handle);
+
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_LEASES4_COMMITTED_DROP)
+                .arg(query->getLabel());
+            rsp.reset();
+
+        } else if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
+                   && allow_packet_park) {
+            packet_park = true;
+        }
+    }
+
+    if (!rsp) {
+        return;
+    }
+
+    // PARKING SPOT after leases4_committed hook point.
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+    if (packet_park) {
+        LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                  DHCP4_HOOK_LEASES4_COMMITTED_PARK)
+            .arg(query->getLabel());
+
+        // Park the packet. The function we bind here will be executed when the hook
+        // library unparks the packet.
+        HooksManager::park("leases4_committed", query,
+        [this, callout_handle, query, rsp]() mutable {
+            processPacketPktSend(callout_handle, query, rsp);
+            processPacketBufferSend(callout_handle, rsp);
+        });
+
+        // If we have parked the packet, let's reset the pointer to the
+        // response to indicate to the caller that it should return, as
+        // the packet processing will continue via the callback.
+        rsp.reset();
+
+    } else {
+        processPacketPktSend(callout_handle, query, rsp);
+    }
+}
+
+void
+Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                                Pkt4Ptr& query, Pkt4Ptr& rsp) {
     if (!rsp) {
         return;
     }
@@ -1111,7 +1138,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp) {
 
     // Execute all callouts registered for pkt4_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_send_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
@@ -1185,6 +1211,76 @@ void Dhcpv4Srv::updateDhcpV4AddressPlusPortPacket(Pkt4Ptr& query) {
                 }
             }
         }
+    }
+}
+
+void
+Dhcpv4Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
+                                   Pkt4Ptr& rsp) {
+    if (!rsp) {
+        return;
+    }
+
+    try {
+        // Now all fields and options are constructed into output wire buffer.
+        // Option objects modification does not make sense anymore. Hooks
+        // can only manipulate wire buffer at this stage.
+        // Let's execute all callouts registered for buffer4_send
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response4", rsp);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                          DHCP4_HOOK_BUFFER_SEND_SKIP)
+                    .arg(rsp->getLabel());
+                return;
+            }
+
+            callout_handle->getArgument("response4", rsp);
+        }
+
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->getLocalAddr().isV4Zero() ? "*" : rsp->getLocalAddr().toText())
+            .arg(rsp->getLocalPort())
+            .arg(rsp->getRemoteAddr())
+            .arg(rsp->getRemotePort())
+            .arg(rsp->getIface().empty() ? "to be determined from routing" :
+                 rsp->getIface());
+
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
+                  DHCP4_RESPONSE_DATA)
+            .arg(rsp->getLabel())
+            .arg(rsp->getName())
+            .arg(static_cast<int>(rsp->getType()))
+            .arg(rsp->toText());
+        sendPacket(rsp);
+
+        // Update statistics accordingly for sent packet.
+        processStatsSent(rsp);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_SEND_FAIL)
+            .arg(rsp->getLabel())
+            .arg(e.what());
     }
 }
 
@@ -1834,21 +1930,67 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         Lease4Ptr lease;
         Subnet4Ptr original_subnet = subnet;
-        Subnet4Ptr s = original_subnet;
-        while (s) {
-            if (client_id) {
-                lease = LeaseMgrFactory::instance().getLease4(*client_id, s->getID());
+
+        // We used to issue a separate query (two actually: one for client-id
+        // and another one for hw-addr for) each subnet in the shared network.
+        // That was horribly inefficient if the client didn't have any lease
+        // (or there were many subnets and the client happended to be in one
+        // of the last subnets).
+        //
+        // We now issue at most two queries: get all the leases for specific
+        // client-id and then get all leases for specific hw-address.
+        if (client_id) {
+
+            // Get all the leases for this client-id
+            Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
+            if (!leases_client_id.empty()) {
+                Subnet4Ptr s = original_subnet;
+
+                // Among those returned try to find a lease that belongs to
+                // current shared network.
+                while (s) {
+                    for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
+                        if ((*l)->subnet_id_ == s->getID()) {
+                            lease = *l;
+                            break;
+                        }
+                    }
+
+                    if (lease) {
+                        break;
+
+                    } else {
+                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                    }
+                }
             }
+        }
 
-            if (!lease && hwaddr) {
-                lease = LeaseMgrFactory::instance().getLease4(*hwaddr, s->getID());
-            }
+        // If we haven't found a lease yet, try again by hardware-address.
+        // The logic is the same.
+        if (!lease && hwaddr) {
 
-            if (lease ) {
-                break;
+            // Get all leases for this particular hw-address.
+            Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
+            if (!leases_hwaddr.empty()) {
+                Subnet4Ptr s = original_subnet;
 
-            } else {
-                s = s->getNextSubnet(original_subnet, query->getClasses());
+                // Pick one that belongs to a subnet in this shared network.
+                while (s) {
+                    for (auto l = leases_hwaddr.begin(); l != leases_hwaddr.end(); ++l) {
+                        if ((*l)->subnet_id_ == s->getID()) {
+                            lease = *l;
+                            break;
+                        }
+                    }
+
+                    if (lease) {
+                        break;
+
+                    } else {
+                        s = s->getNextSubnet(original_subnet, query->getClasses());
+                    }
+                }
             }
         }
 
@@ -2439,7 +2581,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 }
 
 Pkt4Ptr
-Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(request, MANDATORY);
 
@@ -2491,11 +2633,15 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     appendServerID(ex);
 
+    // Return the pointer to the context, which will be required by the
+    // leases4_comitted callouts.
+    context = ex.getContext();
+
     return (ex.getResponse());
 }
 
 void
-Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& context) {
     /// @todo Uncomment this (see ticket #3116)
     /// sanityCheck(release, MANDATORY);
 
@@ -2574,6 +2720,10 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
             if (success) {
+
+                context.reset(new AllocEngine::ClientContext4());
+                context->old_lease_ = lease;
+
                 // Release successful
                 LOG_INFO(lease4_logger, DHCP4_RELEASE)
                     .arg(release->getLabel())
@@ -2603,7 +2753,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 }
 
 void
-Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
+Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& context) {
 
     // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
     /// @todo Uncomment this (see ticket #3116)
@@ -2673,11 +2823,12 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
 
     // Ok, all is good. The client is reporting its own address. Let's
     // process it.
-    declineLease(lease, decline);
+    declineLease(lease, decline, context);
 }
 
 void
-Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
+Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
+                        AllocEngine::ClientContext4Ptr& context) {
 
     // Let's check if there are hooks installed for decline4 hook point.
     // If they are, let's pass the lease and client's packet. If the hook
@@ -2740,6 +2891,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline) {
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
 
     LeaseMgrFactory::instance().updateLease4(lease);
+
+    context.reset(new AllocEngine::ClientContext4());
+    context->new_lease_ = lease;
 
     LOG_INFO(lease4_logger, DHCP4_DECLINE_LEASE).arg(lease->addr_.toText())
         .arg(decline->getLabel()).arg(lease->valid_lft_);
@@ -2873,14 +3027,6 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         return (false);
     }
 
-    // If we receive a message with a non-existing type, we are logging it.
-    if (type > DHCPLEASEQUERYDONE) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
-            .arg(query->getLabel())
-            .arg(type);
-        return (false);
-    }
-
     // Once we know that the message type is within a range of defined DHCPv4
     // messages, we do a detailed check to make sure that the received message
     // is targeted at server. Note that we could have received some Offer
@@ -2889,16 +3035,37 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     // safe side. Also, we want to drop other messages which we don't support.
     // All these valid messages that we are not going to process are dropped
     // silently.
-    if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
-        (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
-        (type != DHCPINFORM)) {
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
-            .arg(query->getLabel())
-            .arg(type);
-        return (false);
+
+    switch(type) {
+        case DHCPDISCOVER:
+        case DHCPREQUEST:
+        case DHCPRELEASE:
+        case DHCPDECLINE:
+        case DHCPINFORM:
+            return (true);
+            break;
+
+        case DHCP_NOTYPE:
+            LOG_INFO(bad_packet4_logger, DHCP4_PACKET_DROP_0009)
+                     .arg(query->getLabel());
+            break;
+
+        default:
+            // If we receive a message with a non-existing type, we are logging it.
+            if (type >= DHCP_TYPES_EOF) {
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0005)
+                          .arg(query->getLabel())
+                          .arg(type);
+            } else {
+                // Exists but we don't support it.
+                LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_0006)
+                      .arg(query->getLabel())
+                      .arg(type);
+            }
+            break;
     }
 
-    return (true);
+    return (false);
 }
 
 bool

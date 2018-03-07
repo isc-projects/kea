@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -395,49 +395,6 @@ AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
     return (alloc->second);
 }
 
-template<typename ContextType>
-void
-AllocEngine::findReservationInternal(ContextType& ctx,
-                                     const AllocEngine::HostGetFunc& host_get,
-                                     const bool ipv6_only) {
-    ctx.hosts_.clear();
-
-    auto subnet = ctx.subnet_;
-
-    // We can only search for the reservation if a subnet has been selected.
-    while (subnet) {
-
-        // Only makes sense to get reservations if the client has access
-        // to the class.
-        if (subnet->clientSupported(ctx.query_->getClasses())) {
-            // Iterate over configured identifiers in the order of preference
-            // and try to use each of them to search for the reservations.
-            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
-                // Attempt to find a host using a specified identifier.
-                ConstHostPtr host = host_get(subnet->getID(), id_pair.first,
-                                             &id_pair.second[0], id_pair.second.size());
-                // If we found matching host for this subnet.
-                if (host && (!ipv6_only || host->hasIPv6Reservation())) {
-                    ctx.hosts_[subnet->getID()] = host;
-                    break;
-                }
-            }
-
-        } else {
-            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_RESERVATIONS_SKIPPED)
-                .arg(ctx.query_->getLabel())
-                .arg(subnet->toText());
-
-        }
-
-        // We need to get to the next subnet if this is a shared network. If it
-        // is not (a plain subnet), getNextSubnet will return NULL and we're
-        // done here.
-        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
-    }
-}
-
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
@@ -559,9 +516,79 @@ AllocEngine::ClientContext6::currentHost() const {
 }
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
-    findReservationInternal(ctx, boost::bind(&HostMgr::get6,
-                                             &HostMgr::instance(),
-                                             _1, _2, _3, _4));
+    ctx.hosts_.clear();
+
+    // If there is no subnet, there is nothing to do.
+    if (!ctx.subnet_) {
+        return;
+    }
+
+    auto subnet = ctx.subnet_;
+
+    std::map<SubnetID, ConstHostPtr> host_map;
+    SharedNetwork6Ptr network;
+    subnet->getSharedNetwork(network);
+
+    // If the subnet belongs to a shared network it is usually going to be
+    // more efficient to make a query for all reservations for a particular
+    // client rather than a query for each subnet within this shared network.
+    // The only case when it is going to be less efficient is when there are
+    // more host identifier types in use than subnets within a shared network.
+    const bool use_single_query = network &&
+        (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
+
+    if (use_single_query) {
+        for (auto id_pair : ctx.host_identifiers_) {
+            ConstHostCollection hosts = HostMgr::instance().getAll(id_pair.first,
+                                                                   &id_pair.second[0],
+                                                                   id_pair.second.size());
+            // Store the hosts in the temporary map, because some hosts may
+            // belong to subnets outside of the shared network. We'll need
+            // to eliminate them.
+            for (auto host = hosts.begin(); host != hosts.end(); ++host) {
+                if ((*host)->getIPv6SubnetID()) {
+                    host_map[(*host)->getIPv6SubnetID()] = *host;
+                }
+            }
+        }
+    }
+
+    // We can only search for the reservation if a subnet has been selected.
+    while (subnet) {
+
+        // Only makes sense to get reservations if the client has access
+        // to the class and host reservations are enabled.
+        if (subnet->clientSupported(ctx.query_->getClasses()) &&
+            (subnet->getHostReservationMode() != Network::HR_DISABLED)) {
+            // Iterate over configured identifiers in the order of preference
+            // and try to use each of them to search for the reservations.
+            for (auto id_pair : ctx.host_identifiers_) {
+                if (use_single_query) {
+                    if (host_map.count(subnet->getID()) > 0) {
+                        ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
+                    }
+
+                } else {
+                    // Attempt to find a host using a specified identifier.
+                    ConstHostPtr host = HostMgr::instance().get6(subnet->getID(),
+                                                                 id_pair.first,
+                                                                 &id_pair.second[0],
+                                                                 id_pair.second.size());
+                    // If we found matching host for this subnet.
+                    if (host) {
+                        ctx.hosts_[subnet->getID()] = host;
+                        break;
+                    }
+                }
+            }
+
+        }
+
+        // We need to get to the next subnet if this is a shared network. If it
+        // is not (a plain subnet), getNextSubnet will return NULL and we're
+        // done here.
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
 }
 
 Lease6Collection
@@ -578,14 +605,20 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // Check if there are existing leases for that shared network and
         // DUID/IAID.
         Subnet6Ptr subnet = ctx.subnet_;
+        Lease6Collection all_leases =
+            LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
+                                                   *ctx.duid_,
+                                                   ctx.currentIA().iaid_);
+
+        // Iterate over the leases and eliminate those that are outside of
+        // our shared network.
         Lease6Collection leases;
         while (subnet) {
-            Lease6Collection leases_subnet =
-                LeaseMgrFactory::instance().getLeases6(ctx.currentIA().type_,
-                                                       *ctx.duid_,
-                                                       ctx.currentIA().iaid_,
-                                                       subnet->getID());
-            leases.insert(leases.end(), leases_subnet.begin(), leases_subnet.end());
+            for (auto l : all_leases) {
+                if ((l)->subnet_id_ == subnet->getID()) {
+                    leases.push_back(l);
+                }
+            }
 
             subnet = subnet->getNextSubnet(ctx.subnet_);
         }
@@ -745,9 +778,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                   << Lease6::typeToText(ctx.currentIA().type_));
     }
 
-    // Check which host reservation mode is supported in this subnet.
-    Network::HRMode hr_mode = ctx.subnet_->getHostReservationMode();
-
     Lease6Collection leases;
 
     IOAddress hint = IOAddress::IPV6_ZERO_ADDRESS();
@@ -758,8 +788,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     Subnet6Ptr original_subnet = ctx.subnet_;
     Subnet6Ptr subnet = ctx.subnet_;
-    SharedNetwork6Ptr network;
-    subnet->getSharedNetwork(network);
 
     Pool6Ptr pool;
 
@@ -783,6 +811,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         }
 
         if (pool) {
+
+            // Check which host reservation mode is supported in this subnet.
+            Network::HRMode hr_mode = subnet->getHostReservationMode();
 
             /// @todo: We support only one hint for now
             Lease6Ptr lease =
@@ -863,7 +894,28 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
     }
 
     uint64_t total_attempts = 0;
-    subnet = original_subnet;
+
+    // Need to check if the subnet belongs to a shared network. If so,
+    // we might be able to find a better subnet for lease allocation,
+    // for which it is more likely that there are some leases available.
+    // If we stick to the selected subnet, we may end up walking over
+    // the entire subnet (or more subnets) to discover that the pools
+    // have been exhausted. Using a subnet from which a lease was
+    // assigned most recently is an optimization which increases
+    // the likelyhood of starting from the subnet which pools are not
+    // exhausted.
+    SharedNetwork6Ptr network;
+    original_subnet->getSharedNetwork(network);
+    if (network) {
+        // This would try to find a subnet with the same set of classes
+        // as the current subnet, but with the more recent "usage timestamp".
+        // This timestamp is only updated for the allocations made with an
+        // allocator (unreserved lease allocations), not the static
+        // allocations or requested addresses.
+        original_subnet = network->getPreferredSubnet(original_subnet, ctx.currentIA().type_);
+    }
+
+    ctx.subnet_ = subnet = original_subnet;
 
     while (subnet) {
 
@@ -887,6 +939,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             continue;
         }
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
+
+        Network::HRMode hr_mode = subnet->getHostReservationMode();
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
 
@@ -1437,9 +1491,9 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         }
 
         /// DROP status does not make sense here:
-	/// In general as the lease cannot be dropped the DROP action
-	/// has no object so SKIP is the right "cancel" status and
-	/// DROP should not be a synonym as it introduces ambiguity.
+        /// In general as the lease cannot be dropped the DROP action
+        /// has no object so SKIP is the right "cancel" status and
+        /// DROP should not be a synonym as it introduces ambiguity.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -2506,15 +2560,20 @@ namespace {
 /// @return true if the address is reserved for another client.
 bool
 addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx) {
-    ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
-    if (host) {
-        for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
-             ++id) {
-            if (id->first == host->getIdentifierType()) {
-                return (id->second != host->getIdentifier());
+    if (ctx.subnet_ &&
+        ((ctx.subnet_->getHostReservationMode() == Network::HR_ALL) ||
+         ((ctx.subnet_->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
+          (!ctx.subnet_->inPool(Lease::TYPE_V4, address))))) {
+        ConstHostPtr host = HostMgr::instance().get4(ctx.subnet_->getID(), address);
+        if (host) {
+            for (auto id = ctx.host_identifiers_.cbegin(); id != ctx.host_identifiers_.cend();
+                 ++id) {
+                if (id->first == host->getIdentifierType()) {
+                    return (id->second != host->getIdentifier());
+                }
             }
+            return (true);
         }
-        return (true);
     }
     return (false);
 }
@@ -2544,7 +2603,10 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
     while (subnet) {
         auto host = ctx.hosts_.find(subnet->getID());
         if ((host != ctx.hosts_.end()) &&
-            !(host->second->getIPv4Reservation().isV4Zero())) {
+            !(host->second->getIPv4Reservation().isV4Zero()) &&
+            ((subnet->getHostReservationMode() == Network::HR_ALL) ||
+             ((subnet->getHostReservationMode() == Network::HR_OUT_OF_POOL) &&
+              (!subnet->inPool(Lease::TYPE_V4, host->second->getIPv4Reservation()))))) {
             ctx.subnet_ = subnet;
             return (true);
         }
@@ -2578,40 +2640,58 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
     Subnet4Ptr original_subnet = ctx.subnet_;
     Subnet4Ptr subnet = ctx.subnet_;
 
-    SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(network);
+    // Client identifier is optional. If it is specified, use it to try to find
+    // client's lease.
+    if (ctx.clientid_) {
+        // Get all leases for this client identifier. When shared networks are
+        // in use it is more efficient to make a single query rather than
+        // multiple queries, one for each subnet.
+        Lease4Collection leases_client_id = lease_mgr.getLease4(*ctx.clientid_);
 
-    while (subnet) {
+        // Iterate over the subnets within the shared network to see if any client's
+        // lease belongs to them.
+        while (subnet) {
 
-        ClientIdPtr client_id;
-        if (subnet->getMatchClientId()) {
-            client_id = ctx.clientid_;
-        }
-
-        // If client identifier has been supplied, use it to lookup the lease. This
-        // search will return no lease if the client doesn't have any lease in the
-        // database or if the client didn't use client identifier to allocate the
-        // existing lease (this include cases when the server was explicitly
-        // configured to ignore client identifier).
-        if (client_id) {
-            client_lease = lease_mgr.getLease4(*client_id, subnet->getID());
-            if (client_lease) {
-                ctx.subnet_ = subnet;
-                return;
+            // If client identifier has been supplied and the server wasn't
+            // explicitly configured to ignore client identifiers for this subnet
+            // check if there is a lease within this subnet.
+            if (ctx.clientid_ && subnet->getMatchClientId()) {
+                for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
+                    if ((*l)->subnet_id_ == subnet->getID()) {
+                        // Lease found, so stick to this lease.
+                        client_lease = (*l);
+                        ctx.subnet_ = subnet;
+                        return;
+                    }
+                }
             }
+
+            // Haven't found any lease in this subnet, so let's try another subnet
+            // within the shared network.
+            subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
         }
+    }
 
-        // If no lease found using the client identifier, try the lookup using
-        // the HW address.
-        if (!client_lease && ctx.hwaddr_) {
+    // If no lease found using the client identifier, try the lookup using
+    // the HW address.
+    if (!client_lease && ctx.hwaddr_) {
 
-            // There may be cases when there is a lease for the same MAC address
-            // (even within the same subnet). Such situation may occur for PXE
-            // boot clients using the same MAC address but different client
-            // identifiers.
-            Lease4Collection client_leases = lease_mgr.getLease4(*ctx.hwaddr_);
-            for (Lease4Collection::const_iterator client_lease_it = client_leases.begin();
-                 client_lease_it != client_leases.end(); ++client_lease_it) {
+        // Rewind to the first subnet.
+        subnet = original_subnet;
+
+        // Get all leases for this HW address.
+        Lease4Collection leases_hw_address = lease_mgr.getLease4(*ctx.hwaddr_);
+
+        while (subnet) {
+            ClientIdPtr client_id;
+            if (subnet->getMatchClientId()) {
+                client_id = ctx.clientid_;
+            }
+
+            // Try to find the lease that matches current subnet and belongs to
+            // this client, so both HW address and client identifier match.
+            for (Lease4Collection::const_iterator client_lease_it = leases_hw_address.begin();
+                 client_lease_it != leases_hw_address.end(); ++client_lease_it) {
                 Lease4Ptr existing_lease = *client_lease_it;
                 if ((existing_lease->subnet_id_ == subnet->getID()) &&
                     existing_lease->belongsToClient(ctx.hwaddr_, client_id)) {
@@ -2623,11 +2703,11 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
                     return;
                 }
             }
-        }
 
-        // Haven't found any lease in this subnet, so let's try another subnet
-        // within the shared network.
-        subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
+            // Haven't found any lease in this subnet, so let's try another subnet
+            // within the shared network.
+            subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
+        }
     }
 }
 
@@ -2676,8 +2756,8 @@ AllocEngine::ClientContext4::ClientContext4()
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), hosts_(), conflicting_lease_(), query_(),
-      host_identifiers_() {
+      old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
+      query_(), host_identifiers_() {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -2692,8 +2772,8 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), hosts_(),
-      host_identifiers_() {
+      fake_allocation_(fake_allocation), old_lease_(), new_lease_(),
+      hosts_(), host_identifiers_() {
 
     // Initialize host identifiers.
     if (hwaddr) {
@@ -2718,8 +2798,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     // be later set to non NULL value if existing lease is found in the
     // database.
     ctx.old_lease_.reset();
-
-    Lease4Ptr new_lease;
+    ctx.new_lease_.reset();
 
     // Before we start allocation process, we need to make sure that the
     // selected subnet is allowed for this client. If not, we'll try to
@@ -2740,7 +2819,12 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             isc_throw(BadValue, "HWAddr must be defined");
         }
 
-        new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
+        if (ctx.fake_allocation_) {
+            return (discoverLease4(ctx));
+
+        } else {
+            ctx.new_lease_ = requestLease4(ctx);
+        }
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
@@ -2749,14 +2833,86 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             .arg(e.what());
     }
 
-    return (new_lease);
+    return (ctx.new_lease_);
 }
 
 void
 AllocEngine::findReservation(ClientContext4& ctx) {
-    findReservationInternal(ctx, boost::bind(&HostMgr::get4,
-                                             &HostMgr::instance(),
-                                             _1, _2, _3, _4));
+    ctx.hosts_.clear();
+
+    // If there is no subnet, there is nothing to do.
+    if (!ctx.subnet_) {
+        return;
+    }
+
+    auto subnet = ctx.subnet_;
+
+    std::map<SubnetID, ConstHostPtr> host_map;
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+
+    // If the subnet belongs to a shared network it is usually going to be
+    // more efficient to make a query for all reservations for a particular
+    // client rather than a query for each subnet within this shared network.
+    // The only case when it is going to be less efficient is when there are
+    // more host identifier types in use than subnets within a shared network.
+    const bool use_single_query = network &&
+        (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
+
+    if (use_single_query) {
+        for (auto id_pair = ctx.host_identifiers_.begin();
+             id_pair != ctx.host_identifiers_.end();
+             ++id_pair) {
+            ConstHostCollection hosts = HostMgr::instance().getAll(id_pair->first,
+                                                                   &id_pair->second[0],
+                                                                   id_pair->second.size());
+            // Store the hosts in the temporary map, because some hosts may
+            // belong to subnets outside of the shared network. We'll need
+            // to eliminate them.
+            for (auto host = hosts.begin(); host != hosts.end(); ++host) {
+                if ((*host)->getIPv4SubnetID() > 0) {
+                    host_map[(*host)->getIPv4SubnetID()] = *host;
+                }
+            }
+        }
+    }
+
+    // We can only search for the reservation if a subnet has been selected.
+    while (subnet) {
+
+        // Only makes sense to get reservations if the client has access
+        // to the class.
+        if (subnet->clientSupported(ctx.query_->getClasses()) &&
+            (subnet->getHostReservationMode() != Network::HR_DISABLED)) {
+            // Iterate over configured identifiers in the order of preference
+            // and try to use each of them to search for the reservations.
+            BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+                if (use_single_query) {
+                    if (host_map.count(subnet->getID()) > 0) {
+                        ctx.hosts_[subnet->getID()] = host_map[subnet->getID()];
+                        break;
+                    }
+
+                } else {
+                    // Attempt to find a host using a specified identifier.
+                    ConstHostPtr host = HostMgr::instance().get4(subnet->getID(),
+                                                                 id_pair.first,
+                                                                 &id_pair.second[0],
+                                                                 id_pair.second.size());
+                    // If we found matching host for this subnet.
+                    if (host) {
+                        ctx.hosts_[subnet->getID()] = host;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // We need to get to the next subnet if this is a shared network. If it
+        // is not (a plain subnet), getNextSubnet will return NULL and we're
+        // done here.
+        subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
 }
 
 Lease4Ptr
@@ -2866,6 +3022,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     if (!ctx.old_lease_ && client_lease) {
         ctx.old_lease_ = client_lease;
     }
+
     return (new_lease);
 }
 
@@ -3374,9 +3531,29 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
     Lease4Ptr new_lease;
     AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
     Subnet4Ptr subnet = ctx.subnet_;
-    Subnet4Ptr original_subnet = subnet;
+
+    // Need to check if the subnet belongs to a shared network. If so,
+    // we might be able to find a better subnet for lease allocation,
+    // for which it is more likely that there are some leases available.
+    // If we stick to the selected subnet, we may end up walking over
+    // the entire subnet (or more subnets) to discover that the address
+    // pools have been exhausted. Using a subnet from which an address
+    // was assigned most recently is an optimization which increases
+    // the likelihood of starting from the subnet which address pools
+    // are not exhausted.
     SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(network);
+    ctx.subnet_->getSharedNetwork(network);
+    if (network) {
+        // This would try to find a subnet with the same set of classes
+        // as the current subnet, but with the more recent "usage timestamp".
+        // This timestamp is only updated for the allocations made with an
+        // allocator (unreserved lease allocations), not the static
+        // allocations or requested addresses.
+        ctx.subnet_ = subnet = network->getPreferredSubnet(ctx.subnet_);
+    }
+
+    Subnet4Ptr original_subnet = subnet;
+
     uint64_t total_attempts = 0;
     while (subnet) {
 
