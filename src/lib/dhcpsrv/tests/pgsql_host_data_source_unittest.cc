@@ -148,7 +148,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
     createPgSQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
         HostMgr::create();
@@ -161,7 +161,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
@@ -175,7 +175,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host manager when
     // none is set throws an exception.
     EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 

@@ -51,7 +51,7 @@ public:
     /// a keyword/value pair of the form "type=dbtype" giving the database
     /// type, e.q. "mysql" or "sqlite3".
     ///
-    /// @param sources host data source list.
+    /// @param sources host data source list (new backend will be added here)
     /// @param dbaccess Database access parameters.  These are in the form of
     ///        "keyword=value" pairs, separated by spaces. They are backend-
     ///        -end specific, although must include the "type" keyword which

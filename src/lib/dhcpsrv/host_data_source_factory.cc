@@ -59,8 +59,8 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 
     // No match?
     if (index == map_.end()) {
-        isc_throw(InvalidType, "Hosts database access parameter 'type': " <<
-                  db_type << " is invalid");
+        isc_throw(InvalidType, "The type of host backend: '" <<
+                  db_type << "' is not currently supported");
     }
 
     // Call the factory and push the pointer on sources.
@@ -75,8 +75,7 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 }
 
 bool
-HostDataSourceFactory::del(HostDataSourceList& sources,
-                           const string& db_type) {
+HostDataSourceFactory::del(HostDataSourceList& sources, const string& db_type) {
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type) {
             continue;

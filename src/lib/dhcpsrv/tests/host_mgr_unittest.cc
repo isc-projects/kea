@@ -110,7 +110,7 @@ protected:
     void testGet4(BaseHostDataSource& data_source);
 
     /// @brief This test verifies that it is possible to retrieve negative
-    /// cached reservation with and only with get4Any,
+    /// cached reservation with and only with get4Any.
     void testGet4Any();
 
     /// @brief This test verifies that it is possible to retrieve an IPv6
@@ -121,7 +121,7 @@ protected:
     void testGet6(BaseHostDataSource& data_source);
 
     /// @brief This test verifies that it is possible to retrieve negative
-    /// cached reservation with and only with get6Any,
+    /// cached reservation with and only with get6Any.
     void testGet6Any();
 
     /// @brief This test verifies that it is possible to retrieve an IPv6
@@ -336,13 +336,13 @@ HostMgrTest::testGet4Any() {
     // Set the negative cache flag on the host.
     new_host->setNegative(true);
 
-    // Get4 can't get it.
+    // get4 is not supposed to get it.
     host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
     EXPECT_FALSE(host);
 
-    // But Get4Any can.
+    // But get4Any should.
     host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
                                        &duids_[0]->getDuid()[0],
                                        duids_[0]->getDuid().size());
@@ -409,13 +409,13 @@ HostMgrTest::testGet6Any() {
     // Set the negative cache flag on the host.
     new_host->setNegative(true);
 
-    // Get6 can't get it.
+    // get6 is not supposed to get it.
     host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
                                     &hwaddrs_[0]->hwaddr_[0],
                                     hwaddrs_[0]->hwaddr_.size());
     EXPECT_FALSE(host);
 
-    // But Get4Any can.
+    // But get6Any should.
     host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
                                        &hwaddrs_[0]->hwaddr_[0],
                                        hwaddrs_[0]->hwaddr_.size());

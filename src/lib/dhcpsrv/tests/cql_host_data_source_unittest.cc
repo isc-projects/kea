@@ -103,7 +103,7 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for CQL backend as the v4 and v6 leases share
+    /// Parameter is ignored for CQL backend as the v4 and v6 hosts share
     /// the same database.
     void reopen(Universe) {
         HostMgr::create();
@@ -116,7 +116,7 @@ public:
 ///
 /// This test checks if the CqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// CqlLeaseMgr test fixure set.  This test checks that the database can be
+/// CqlHostMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(CqlHostDataSource, OpenDatabase) {
@@ -124,7 +124,7 @@ TEST(CqlHostDataSource, OpenDatabase) {
     destroyCqlSchema(false, true);
     createCqlSchema(false, true);
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
         HostMgr::create();
@@ -137,7 +137,7 @@ TEST(CqlHostDataSource, OpenDatabase) {
                << "*** before the CQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         std::string connection_string = validCqlConnectionString() + std::string(" ") +
