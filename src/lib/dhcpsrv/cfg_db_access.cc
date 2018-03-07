@@ -38,7 +38,7 @@ CfgDbAccess::getHostDbAccessString() const {
 
 
 void
-CfgDbAccess::createManagers(DatabaseConnection::Callback db_lost_callback) const {
+CfgDbAccess::createManagers(DatabaseConnection::DbLostCallback db_lost_callback) const {
     // Recreate lease manager.
     LeaseMgrFactory::destroy();
     LeaseMgrFactory::create(getLeaseDbAccessString(), db_lost_callback);

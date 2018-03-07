@@ -71,7 +71,7 @@ public:
     /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
     static void create(const std::string& dbaccess, 
-                       DatabaseConnection::Callback db_lost_callback = NULL);
+                       DatabaseConnection::DbLostCallback db_lost_callback = NULL);
 
     /// @brief Destroy lease manager
     ///

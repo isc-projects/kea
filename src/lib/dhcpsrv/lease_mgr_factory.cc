@@ -42,7 +42,7 @@ LeaseMgrFactory::getLeaseMgrPtr() {
 
 void
 LeaseMgrFactory::create(const std::string& dbaccess,
-                        DatabaseConnection::Callback db_lost_callback) {
+                        DatabaseConnection::DbLostCallback db_lost_callback) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.

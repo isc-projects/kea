@@ -821,7 +821,7 @@ protected:
 };
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters,
-    DatabaseConnection::Callback db_lost_callback)
+    DatabaseConnection::DbLostCallback db_lost_callback)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
     exchange6_(new PgSqlLease6Exchange()), conn_(parameters, db_lost_callback) {
     conn_.openDatabase();

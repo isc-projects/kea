@@ -38,7 +38,7 @@ HostMgr::getHostMgrPtr() {
 
 void
 HostMgr::create(const std::string& access,
-                DatabaseConnection::Callback db_lost_callback) {
+                DatabaseConnection::DbLostCallback db_lost_callback) {
     getHostMgrPtr().reset(new HostMgr());
 
     if (!access.empty()) {

@@ -46,7 +46,7 @@ HostDataSourceFactory::getHostDataSourcePtr() {
 
 void
 HostDataSourceFactory::create(const std::string& dbaccess,
-                              DatabaseConnection::Callback db_lost_callback) {
+                              DatabaseConnection::DbLostCallback db_lost_callback) {
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
