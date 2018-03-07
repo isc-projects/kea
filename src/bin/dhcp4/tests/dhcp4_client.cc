@@ -407,6 +407,15 @@ Dhcp4Client::doRequest() {
 }
 
 void
+Dhcp4Client::receiveResponse() {
+    context_.response_ = receiveOneMsg();
+    // If the server has responded, store the configuration received.
+    if (context_.response_) {
+        applyConfiguration();
+    }
+}
+
+void
 Dhcp4Client::includeClientId(const std::string& clientid) {
     if (clientid.empty()) {
         clientid_.reset();
@@ -519,7 +528,14 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
     srv_->fakeReceive(msg_copy);
-    srv_->run();
+
+    try {
+        // Invoke run_one instead of run, because we want to avoid triggering
+        // IO service.
+        srv_->run_one();
+    } catch (...) {
+        // Suppress errors, as the DHCPv4 server does.
+    }
 }
 
 void

@@ -1468,9 +1468,9 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         }
 
         /// DROP status does not make sense here:
-	/// In general as the lease cannot be dropped the DROP action
-	/// has no object so SKIP is the right "cancel" status and
-	/// DROP should not be a synonym as it introduces ambiguity.
+        /// In general as the lease cannot be dropped the DROP action
+        /// has no object so SKIP is the right "cancel" status and
+        /// DROP should not be a synonym as it introduces ambiguity.
 
         // Let's use whatever callout returned. Hopefully it is the same lease
         // we handed to it.
@@ -2734,8 +2734,8 @@ AllocEngine::ClientContext4::ClientContext4()
       requested_address_(IOAddress::IPV4_ZERO_ADDRESS()),
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
-      old_lease_(), hosts_(), conflicting_lease_(), query_(),
-      host_identifiers_() {
+      old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
+      query_(), host_identifiers_() {
 }
 
 AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
@@ -2750,8 +2750,8 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), hosts_(),
-      host_identifiers_() {
+      fake_allocation_(fake_allocation), old_lease_(), new_lease_(),
+      hosts_(), host_identifiers_() {
 
     // Initialize host identifiers.
     if (hwaddr) {
@@ -2776,8 +2776,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
     // be later set to non NULL value if existing lease is found in the
     // database.
     ctx.old_lease_.reset();
-
-    Lease4Ptr new_lease;
+    ctx.new_lease_.reset();
 
     // Before we start allocation process, we need to make sure that the
     // selected subnet is allowed for this client. If not, we'll try to
@@ -2798,7 +2797,12 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             isc_throw(BadValue, "HWAddr must be defined");
         }
 
-        new_lease = ctx.fake_allocation_ ? discoverLease4(ctx) : requestLease4(ctx);
+        if (ctx.fake_allocation_) {
+            return (discoverLease4(ctx));
+
+        } else {
+            ctx.new_lease_ = requestLease4(ctx);
+        }
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
@@ -2807,7 +2811,7 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             .arg(e.what());
     }
 
-    return (new_lease);
+    return (ctx.new_lease_);
 }
 
 void
@@ -2992,6 +2996,7 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     if (!ctx.old_lease_ && client_lease) {
         ctx.old_lease_ = client_lease;
     }
+
     return (new_lease);
 }
 

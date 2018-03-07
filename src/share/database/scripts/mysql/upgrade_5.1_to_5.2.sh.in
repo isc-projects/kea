@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_version "$@"`
+
+if [ "$VERSION" != "5.1" ]; then
+    printf "This script upgrades 5.1 to 5.2. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+# Make subnet_id column types consistent with lease table columns
+ALTER TABLE dhcp4_options MODIFY dhcp4_subnet_id INT UNSIGNED;
+ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '2';
+# This line concludes database upgrade to version 5.2.
+
+EOF
+
+RESULT=$?
+
+exit $?

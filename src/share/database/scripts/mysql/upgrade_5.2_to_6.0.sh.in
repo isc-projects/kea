@@ -10,8 +10,8 @@ fi
 
 VERSION=`mysql_version "$@"`
 
-if [ "$VERSION" != "5.1" ]; then
-    printf "This script upgrades 5.1 to 6.0. Reported version is $VERSION. Skipping upgrade.\n"
+if [ "$VERSION" != "5.2" ]; then
+    printf "This script upgrades 5.2 to 6.0. Reported version is $VERSION. Skipping upgrade.\n"
     exit 0
 fi
 
