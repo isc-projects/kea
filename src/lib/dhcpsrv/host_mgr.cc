@@ -172,7 +172,7 @@ HostMgr::get4Any(const SubnetID& subnet_id,
     ConstHostPtr host = getCfgHosts()->get4(subnet_id, identifier_type,
                                             identifier_begin, identifier_len);
 
-    // Found it the config file or there are no backends configured?
+    // Found it in the config file or there are no backends configured?
     // Then we're done here.
     if (host || alternate_sources_.empty()) {
         return (host);
@@ -212,6 +212,7 @@ HostMgr::get4Any(const SubnetID& subnet_id,
         .arg(subnet_id)
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
+    // @todo: remove this
     if (negative_caching_) {
         cacheNegative(subnet_id, SubnetID(0),
                       identifier_type, identifier_begin, identifier_len);
@@ -357,6 +358,7 @@ HostMgr::get6Any(const SubnetID& subnet_id,
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
 
+    // @todo: remove this
     if (negative_caching_) {
         cacheNegative(SubnetID(0), subnet_id,
                       identifier_type, identifier_begin, identifier_len);

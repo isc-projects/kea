@@ -393,9 +393,9 @@ public:
 protected:
     /// @brief The negative caching flag.
     ///
-    /// When true and the first cache source will be also
-    /// caching negative answers. This works for get[46]
-    /// for a subnet and an identifier.
+    /// When true and the first backend is a cache
+    /// negative answers are inserted in the cache.
+    /// This works for get[46] for a subnet and an identifier.
     bool negative_caching_;
 
     /// @brief Cache an answer.
