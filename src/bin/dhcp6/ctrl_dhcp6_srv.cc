@@ -673,8 +673,7 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 }
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
-    : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()),
-      db_reconnect_ctl_(NULL) {
+    : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (server_) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");
@@ -817,7 +816,7 @@ ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
 }
 
 void
-ControlledDhcpv6Srv::dbReconnect() {
+ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     bool reopened = false;
 
     // Re-open lease and host database with new parameters.
@@ -838,24 +837,25 @@ ControlledDhcpv6Srv::dbReconnect() {
         network_state_.enableService();
 
         // Toss the reconnct control, we're done with it
-        db_reconnect_ctl_.reset();
+        db_reconnect_ctl.reset();
     } else {
-        if (!db_reconnect_ctl_->checkRetries()) {
+        if (!db_reconnect_ctl->checkRetries()) {
             LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED)
-            .arg(db_reconnect_ctl_->maxRetries());
+            .arg(db_reconnect_ctl->maxRetries());
             shutdown();
             return;
         }
 
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE)
-                .arg(db_reconnect_ctl_->maxRetries() - db_reconnect_ctl_->retriesLeft() + 1)
-                .arg(db_reconnect_ctl_->maxRetries())
-                .arg(db_reconnect_ctl_->retryInterval());
+                .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+                .arg(db_reconnect_ctl->maxRetries())
+                .arg(db_reconnect_ctl->retryInterval());
 
         if (!TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
             TimerMgr::instance()->registerTimer("Dhcp6DbReconnectTimer",
-                            boost::bind(&ControlledDhcpv6Srv::dbReconnect, this),
-                            db_reconnect_ctl_->retryInterval() * 1000,
+                            boost::bind(&ControlledDhcpv6Srv::dbReconnect, this,
+                            db_reconnect_ctl),
+                            db_reconnect_ctl->retryInterval() * 1000,
                             asiolink::IntervalTimer::ONE_SHOT);
         }
 
@@ -883,11 +883,8 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return(false);
     }
 
-    // Save the reconnect control
-    db_reconnect_ctl_ = db_reconnect_ctl;
-
     // Invoke reconnect method
-    dbReconnect();
+    dbReconnect(db_reconnect_ctl);
 
     return(true);
 }

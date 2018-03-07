@@ -141,8 +141,7 @@ public:
     typedef std::map<std::string, std::string> ParameterMap;
 
     /// @brief Defines a callback prototype for propogating events upward
-    /// typedef boost::function<bool (const ParameterMap& parameters)> Callback;
-    typedef boost::function<bool (ReconnectCtlPtr db_retry)> Callback;
+    typedef boost::function<bool (ReconnectCtlPtr db_retry)> DbLostCallback;
 
     /// @brief Constructor
     ///
@@ -151,7 +150,7 @@ public:
     /// @param db_lost_callback  Optional call back function to invoke if a
     ///        successfully open connection subsequently fails
     DatabaseConnection(const ParameterMap& parameters,
-        Callback db_lost_callback = NULL)
+        DbLostCallback db_lost_callback = NULL)
         :parameters_(parameters), db_lost_callback_(db_lost_callback) {
     }
 
@@ -221,7 +220,7 @@ private:
 protected:
 
     /// @brief Optional function to invoke if the connectivity is lost
-    Callback db_lost_callback_;
+    DbLostCallback db_lost_callback_;
 };
 
 }; // end of isc::dhcp namespace

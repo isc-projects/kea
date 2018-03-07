@@ -304,7 +304,7 @@ public:
     }
 
     PgSqlConnection(const ParameterMap& parameters, 
-                    Callback db_lost_callback)
+                    DbLostCallback db_lost_callback)
         : DatabaseConnection(parameters, db_lost_callback) {
     }
 
