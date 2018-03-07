@@ -604,15 +604,17 @@ $ <userinput>make</userinput>
         </para>
         <para>
           As of June 2016, cpp-driver does not include cql_config script
-          yet. Work is in progress to contribute such a script to the
-          cpp-driver project but, until that is complete,
-          intermediate steps that need to be conducted. A cql_config script is present in the
-          tools/ directory of the Kea sources. Before using it, please
-          edit cql_config_defines.sh in the same directory and change the
-          environment variable CPP_DRIVER_PATH to point to the directory,
-          where cpp-driver sources are located. (If the cpp-driver sources already
-          provide cql_config script please use that rather than the version
-          from Kea sources.)
+          yet. Work is in progress to contribute such a script to the cpp-driver
+          project but, until that is complete, intermediate steps that need to
+          be conducted. A cql_config script is present in the tools/ directory
+          of the Kea sources. Before using it, please create a
+          cql_config_defines.sh in the same directory (there is an example in
+          cql_config_define.sh.sample available, you may copy it over to
+          cql_config_defines.sh and edit path specified in it) and change the
+          environment variable CPP_DRIVER_PATH to point to the directory, where
+          cpp-driver sources are located. (If the cpp-driver sources already
+          provide cql_config script please use that rather than the version from
+          Kea sources.)
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
