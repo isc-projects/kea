@@ -130,8 +130,6 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
         isc_throw(Unexpected, "pointer to parsed lease is null");
     }
 
-    bool is_v6 = static_cast<bool>(boost::dynamic_pointer_cast<Lease6>(lease));
-
     // IP address.
     ConstElementPtr ip_address = element->get("ip-address");
     if (!ip_address || (ip_address->getType() != Element::string)) {
@@ -146,13 +144,6 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     } catch (const std::exception& ex) {
         isc_throw(BadValue, "invalid IP address " << ip_address->stringValue()
                   << " in the parsed lease");
-    }
-
-    if (!is_v6 && !io_address->isV4()) {
-        isc_throw(BadValue, "address " << *io_address << " it not an IPv4 address");
-
-    } else if (is_v6 && !io_address->isV6()) {
-        isc_throw(BadValue, "address " << *io_address << " it not an IPv6 address");
     }
 
     lease->addr_ = *io_address;
@@ -187,9 +178,6 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
             isc_throw(BadValue, "invalid hardware address "
                       << hw_address->stringValue() << " in the parsed lease");
         }
-
-    } else if (!is_v6) {
-        isc_throw(BadValue, "hw-address not present in the parsed lease");
     }
 
     // cltt
@@ -420,6 +408,17 @@ Lease4::fromElement(const ConstElementPtr& element) {
     // Extract common lease properties into the lease.
     fromElementCommon(boost::dynamic_pointer_cast<Lease>(lease), element);
 
+    // Validate ip-address, which must be an IPv4 address.
+    if (!lease->addr_.isV4()) {
+        isc_throw(BadValue, "address " << lease->addr_ << " it not an IPv4 address");
+    }
+
+    // Make sure the hw-addres is present.
+    if (!lease->hwaddr_) {
+        isc_throw(BadValue, "hw-address not present in the parsed lease");
+    }
+
+
     // Client identifier is IPv4 specific.
     ConstElementPtr client_id = element->get("client-id");
     if (client_id) {
@@ -618,6 +617,11 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
 
     // Extract common lease properties into the lease.
     fromElementCommon(boost::dynamic_pointer_cast<Lease>(lease), element);
+
+    // Validate ip-address, which must be an IPv6 address.
+    if (!lease->addr_.isV6()) {
+        isc_throw(BadValue, "address " << lease->addr_ << " it not an IPv6 address");
+    }
 
     // lease type
     ConstElementPtr lease_type = element->get("type");
