@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -168,6 +169,31 @@ public:
     }
 
     virtual ~NakedDhcpv4Srv() {
+    }
+
+    /// @brief Runs processing DHCPREQUEST.
+    ///
+    /// @param request a message received from client
+    /// @return DHCPACK or DHCPNAK message
+    Pkt4Ptr processRequest(Pkt4Ptr& request) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        return (processRequest(request, context));
+    }
+
+    /// @brief Runs processing DHCPRELEASE.
+    ///
+    /// @param release message received from client
+    void processRelease(Pkt4Ptr& release) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        processRelease(release, context);
+    }
+
+    /// @brief Runs processing DHCPDECLINE
+    ///
+    /// @param decline message received from client
+    void processDecline(Pkt4Ptr& decline) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        processDecline(decline, context);
     }
 
     /// @brief Dummy server identifier option used by various tests.

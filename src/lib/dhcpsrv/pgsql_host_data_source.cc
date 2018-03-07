@@ -1494,7 +1494,7 @@ TaggedStatementArray tagged_statements = { {
     // and client's identifier. Left joining the dhcp4_options table results in
     // multiple rows being returned for the same host.
     {3,
-     { OID_INT4, OID_INT2, OID_BYTEA },
+     { OID_INT8, OID_INT2, OID_BYTEA },
      "get_host_subid4_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -1514,7 +1514,7 @@ TaggedStatementArray tagged_statements = { {
     // associated with a host. The number of rows returned is a multiplication
     // of number of IPv6 reservations and DHCPv6 options.
     {3,
-     { OID_INT4, OID_INT2, OID_BYTEA },
+     { OID_INT8, OID_INT2, OID_BYTEA },
      "get_host_subid6_dhcpid",
      "SELECT h.host_id, h.dhcp_identifier, "
      "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -1538,7 +1538,7 @@ TaggedStatementArray tagged_statements = { {
     // results in multiple rows being returned for the host. The number of
     // rows depends on the number of options defined for the host.
     {2,
-     { OID_INT4, OID_INT8 },
+     { OID_INT8, OID_INT8 },
      "get_host_subid_addr",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -1588,7 +1588,7 @@ TaggedStatementArray tagged_statements = { {
     // The number of rows returned is multiplication of number of existing
     // IPv6 reservations and DHCPv6 options.
     {2,
-     { OID_INT4, OID_VARCHAR },
+     { OID_INT8, OID_VARCHAR },
      "get_host_subid6_addr",
      "SELECT h.host_id, h.dhcp_identifier, "
      "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -1618,7 +1618,7 @@ TaggedStatementArray tagged_statements = { {
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
     {12,
      { OID_BYTEA, OID_INT2,
-       OID_INT4, OID_INT4, OID_INT8, OID_VARCHAR,
+       OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR, OID_TEXT },
      "insert_host",
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
@@ -1666,7 +1666,7 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::DEL_HOST_ADDR4
     // Deletes a v4 host that matches (subnet-id, addr4)
     {2,
-     { OID_INT4, OID_INT8 },
+     { OID_INT8, OID_INT8 },
      "del_host_addr4",
      "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 AND ipv4_address = $2"
     },
@@ -1674,7 +1674,7 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID
     // Deletes a v4 host that matches (subnet4-id, identifier-type, identifier)
     {3,
-     { OID_INT4, OID_INT2, OID_BYTEA },
+     { OID_INT8, OID_INT2, OID_BYTEA },
      "del_host_subid4_id",
      "DELETE FROM hosts WHERE dhcp4_subnet_id = $1 "
      "AND dhcp_identifier_type = $2 "
@@ -1684,7 +1684,7 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID
     // Deletes a v6 host that matches (subnet6-id, identifier-type, identifier)
     {3,
-     { OID_INT4, OID_INT2, OID_BYTEA },
+     { OID_INT8, OID_INT2, OID_BYTEA },
      "del_host_subid6_id",
      "DELETE FROM hosts WHERE dhcp6_subnet_id = $1 "
      "AND dhcp_identifier_type = $2 "
