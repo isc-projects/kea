@@ -75,7 +75,8 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 }
 
 bool
-HostDataSourceFactory::del(HostDataSourceList& sources, const string& db_type) {
+HostDataSourceFactory::del(HostDataSourceList& sources,
+                           const string& db_type) {
     for (auto it = sources.begin(); it != sources.end(); ++it) {
         if ((*it)->getType() != db_type) {
             continue;
