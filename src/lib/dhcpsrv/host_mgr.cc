@@ -404,7 +404,7 @@ HostMgr::get6(const SubnetID& subnet_id,
     return (host);
 }
 
-bool
+void
 HostMgr::add(const HostPtr& host) {
     if (alternate_sources_.empty()) {
         isc_throw(NoHostDataSourceManager, "Unable to add new host because there is "
@@ -412,12 +412,12 @@ HostMgr::add(const HostPtr& host) {
     }
     for (auto it = alternate_sources_.begin();
          it != alternate_sources_.end(); ++it) {
-        if ((*it)->add(host)) {
-            return (true);
-        }
+        (*it)->add(host);
     }
-    // This should never happen as at least one backend implements addition.
-    return (false);
+    // If no backend throws it should be cached.
+    if (cache_ptr_) {
+        cache(host);
+    }
 }
 
 bool

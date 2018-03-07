@@ -155,8 +155,7 @@ public:
     /// @brief Adds a new host to the collection.
     ///
     /// @param host Pointer to the new @c Host object being added.
-    /// @return true if addition was successful.
-    virtual bool add(const HostPtr& host);
+    virtual void add(const HostPtr& host);
 
     /// @brief Attempts to delete a host by (subnet-id, address)
     ///

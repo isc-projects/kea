@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -247,10 +247,9 @@ public:
     ///  -# Address and Prefix Length must be unique (DuplicateEntry)
     ///
     /// @param host Pointer to the new @c Host object being added.
-    /// @return true as addition is successful or throws.
     /// @throw DuplicateEntry or DbOperationError dependent on the constraint
     /// violation
-    virtual bool add(const HostPtr& host);
+    virtual void add(const HostPtr& host);
 
     /// @brief Attempts to delete a host by (subnet-id, address)
     ///

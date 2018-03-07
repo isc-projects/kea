@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -318,10 +318,9 @@ public:
     ///
     /// @param host Pointer to the new @c Host object being added.
     ///
-    /// @return always return true as additions are successful or throw.
     /// @throw DuplicateHost If a host for a particular HW address or DUID
     /// has already been added to the IPv4 or IPv6 subnet.
-    virtual bool add(const HostPtr& host);
+    virtual void add(const HostPtr& host);
 
     /// @brief Attempts to delete a host by address.
     ///

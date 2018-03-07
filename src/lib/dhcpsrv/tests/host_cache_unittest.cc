@@ -37,7 +37,7 @@ public:
     virtual ~TestHostCache() { }
 
     /// Override add
-    bool add(const HostPtr& host) {
+    void add(const HostPtr& host) {
         isc_throw(NotImplemented,
                   "add is not implemented: " << host->toText());
     }
@@ -165,9 +165,7 @@ TEST_F(HostCacheTest, identifier4) {
     const IOAddress& address = host->getIPv4Reservation();
 
     // Try to add it to the host data source.
-    bool added = false;
-    ASSERT_NO_THROW(added = memptr_->add(host));
-    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(memptr_->add(host));
 
     // Try to get it cached.
     ConstHostPtr got = HostMgr::instance().get4(host->getIPv4SubnetID(),
@@ -224,9 +222,7 @@ TEST_F(HostCacheTest, identifier6) {
     ASSERT_EQ("2001:db8::1", address.toText());
 
     // Try to add it to the host data source.
-    bool added = false;
-    ASSERT_NO_THROW(added = memptr_->add(host));
-    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(memptr_->add(host));
 
     // Try to get it cached.
     ConstHostPtr got = HostMgr::instance().get6(host->getIPv6SubnetID(),
@@ -277,9 +273,7 @@ TEST_F(HostCacheTest, address4) {
     const IOAddress& address = host->getIPv4Reservation();
 
     // Try to add it to the host data source.
-    bool added = false;
-    ASSERT_NO_THROW(added = memptr_->add(host));
-    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(memptr_->add(host));
 
     // Try to get it cached.
     ConstHostPtr got = HostMgr::instance().get4(host->getIPv4SubnetID(),
@@ -334,9 +328,7 @@ TEST_F(HostCacheTest, address6) {
     ASSERT_EQ("2001:db8::1", address.toText());
 
     // Try to add it to the host data source.
-    bool added = false;
-    ASSERT_NO_THROW(added = memptr_->add(host));
-    EXPECT_TRUE(added);
+    ASSERT_NO_THROW(memptr_->add(host));
 
     // Try to get it cached.
     ConstHostPtr got = HostMgr::instance().get6(host->getIPv6SubnetID(),
