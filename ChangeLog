@@ -1,3 +1,8 @@
+1372.	[func]		tmark
+	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
+	reconnect to Postgresql backends if connectivity is lost.
+	(Trac #5477, git 8e62a058382b2245d418cfbf829776934c638e5e)
+
 1371.	[func]		marcin
 	Implemented leases parsing from JSON in libkea-dhcpsrv.
 	(Trac #5466, git 84c2a2084b0fb7c086fc6b9502f7ff58b708174e)
