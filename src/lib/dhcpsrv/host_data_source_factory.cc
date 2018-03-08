@@ -45,7 +45,8 @@ HostDataSourceFactory::getHostDataSourcePtr() {
 }
 
 void
-HostDataSourceFactory::create(const std::string& dbaccess) {
+HostDataSourceFactory::create(const std::string& dbaccess,
+                              DatabaseConnection::DbLostCallback db_lost_callback) {
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
@@ -72,7 +73,8 @@ HostDataSourceFactory::create(const std::string& dbaccess) {
     if (db_type == "postgresql") {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        getHostDataSourcePtr().reset(new PgSqlHostDataSource(parameters));
+        getHostDataSourcePtr().reset(new PgSqlHostDataSource(parameters,
+                                     db_lost_callback));
         return;
     }
 #endif
