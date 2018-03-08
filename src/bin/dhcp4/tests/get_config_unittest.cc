@@ -7123,7 +7123,7 @@ TEST_P(Dhcp4GetConfigTest, run) {
 class IntToString {
 public:
     std::string operator()(const testing::TestParamInfo<size_t>& n) {
-        return to_string(n.param);
+        return std::to_string(n.param);
     }
 };
 
