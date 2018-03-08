@@ -13,7 +13,7 @@
 
 using namespace isc::dhcp;
 
-/// @brief Test fixture for excersizing DbLostCallback invocation
+/// @brief Test fixture for exercising DbLostCallback invocation
 class DatabaseConnectionCallbackTest : public ::testing::Test {
 public:
     /// Constructor
@@ -27,7 +27,7 @@ public:
     /// parameters
     bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         if (!db_reconnect_ctl) {
-            isc_throw(isc::BadValue, "db_reconnect_ctl should not null");
+            isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
         }
 
         db_reconnect_ctl_ = db_reconnect_ctl;
