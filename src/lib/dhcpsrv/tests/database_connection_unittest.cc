@@ -67,7 +67,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     pmap[std::string("reconnect-wait-time")] = std::string("60");
     DatabaseConnection datasrc(pmap);
 
-    bool ret;
+    bool ret = false;
     ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
     EXPECT_FALSE(ret);
     EXPECT_FALSE(db_reconnect_ctl_);
