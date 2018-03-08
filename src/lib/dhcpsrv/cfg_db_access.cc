@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/db_type.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -21,27 +22,31 @@ namespace isc {
 namespace dhcp {
 
 CfgDbAccess::CfgDbAccess()
-    : appended_parameters_(), db_access_(2) {
-    db_access_[LEASE_DB] = "type=memfile";
+    : appended_parameters_(), lease_db_access_("type=memfile"),
+      host_db_access_() {
 }
 
 std::string
 CfgDbAccess::getLeaseDbAccessString() const {
-    return (getAccessString(db_access_[LEASE_DB]));
+    return (getAccessString(lease_db_access_));
 }
 
 
 std::string
 CfgDbAccess::getHostDbAccessString() const {
-    return (getAccessString(db_access_[HOSTS_DB]));
+    if (host_db_access_.empty()) {
+        return ("");
+    } else {
+        return (getAccessString(host_db_access_.front()));
+    }
 }
 
-std::vector<std::string>
+std::list<std::string>
 CfgDbAccess::getHostDbAccessStringList() const {
-    std::vector<std::string> ret;
-    for (size_t idx = HOSTS_DB; idx < db_access_.size(); ++idx) {
-        if (!db_access_[idx].empty()) {
-            ret.push_back(getAccessString(db_access_[idx]));
+    std::list<std::string> ret;
+    for (const std::string& dbaccess : host_db_access_) {
+        if (!dbaccess.empty()) {
+            ret.push_back(getAccessString(dbaccess));
         }
     }
     return (ret);
@@ -55,14 +60,13 @@ CfgDbAccess::createManagers() const {
 
     // Recreate host data source.
     HostMgr::create();
-    auto host_db_access_list = getHostDbAccessStringList();
-    for (auto it = host_db_access_list.begin();
-         it != host_db_access_list.end(); ++it) {
-        HostMgr::addSource(*it);
+    std::list<std::string> host_db_access_list = getHostDbAccessStringList();
+    for (std::string& hds : host_db_access_list) {
+        HostMgr::addBackend(hds);
     }
 
     // Check for a host cache.
-    HostMgr::checkCacheSource(true);
+    HostMgr::checkCacheBackend(true);
 }
 
 std::string 

@@ -212,7 +212,7 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
     // Close the database connection and reopen in "read-only" mode as
     // specified by the "VALID_READONLY_DB" parameter.
     HostMgr::create();
-    HostMgr::addSource(connectionString(
+    HostMgr::addBackend(connectionString(
         valid_db_type, VALID_NAME, VALID_HOST, VALID_READONLY_USER,
         VALID_PASSWORD, VALID_READONLY_DB));
 

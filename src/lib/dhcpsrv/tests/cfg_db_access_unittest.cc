@@ -76,20 +76,24 @@ TEST(CfgDbAccessTest, setHostDbAccessString) {
     runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
 
     // If access string is empty, no parameters will be appended.
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(""));
-    EXPECT_TRUE(cfg.getHostDbAccessString().empty());
+    CfgDbAccess cfg1;
+    ASSERT_NO_THROW(cfg1.setHostDbAccessString(""));
+    EXPECT_TRUE(cfg1.getHostDbAccessString().empty());
 }
 
 // This test verifies that it is possible to set multiple host
 // database string.
 TEST(CfgDbAccessTest, pushHostDbAccessString) {
+    // Push a string.
     CfgDbAccess cfg;
-    ASSERT_NO_THROW(cfg.setHostDbAccessString("type=mysql"));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString("type=foo"));
+
+    // Push another in front.
+    ASSERT_NO_THROW(cfg.setHostDbAccessString("type=mysql", true));
     EXPECT_EQ("type=mysql", cfg.getHostDbAccessString());
 
-    // Push two other strings
-    ASSERT_NO_THROW(cfg.pushHostDbAccessString("type=foo"));
-    ASSERT_NO_THROW(cfg.pushHostDbAccessString("type=bar"));
+    // Push a third string.
+    ASSERT_NO_THROW(cfg.setHostDbAccessString("type=bar"));
 
     // Check unparse
     std::string expected = "[ { \"type\": \"mysql\" }, ";
@@ -97,20 +101,27 @@ TEST(CfgDbAccessTest, pushHostDbAccessString) {
     runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
 
     // Check access strings
-    std::vector<std::string> hal = cfg.getHostDbAccessStringList();
+    std::list<std::string> hal = cfg.getHostDbAccessStringList();
     ASSERT_EQ(3, hal.size());
-    EXPECT_EQ("type=mysql", hal[0]);
-    EXPECT_EQ("type=foo", hal[1]);
-    EXPECT_EQ("type=bar", hal[2]);
+    std::list<std::string>::const_iterator it = hal.cbegin();
+    ASSERT_NE(hal.cend(), it);
+    EXPECT_EQ("type=mysql", *it);
+    ASSERT_NE(hal.cend(), ++it);
+    EXPECT_EQ("type=foo", *it);
+    ASSERT_NE(hal.cend(), ++it);
+    EXPECT_EQ("type=bar", *it);
 
-    // Reset the first string so it will be ignored.
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(""));
+    // Build a similar list with the first string empty so it will be ignored.
+    CfgDbAccess cfg1;
+    ASSERT_NO_THROW(cfg1.setHostDbAccessString(""));
+    ASSERT_NO_THROW(cfg1.setHostDbAccessString("type=foo"));
+    ASSERT_NO_THROW(cfg1.setHostDbAccessString("type=bar"));
     expected = "[ { \"type\": \"foo\" }, { \"type\": \"bar\" } ]";
-    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg));
-    hal = cfg.getHostDbAccessStringList();
+    runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg1));
+    hal = cfg1.getHostDbAccessStringList();
     ASSERT_EQ(2, hal.size());
-    EXPECT_EQ("type=foo", hal[0]);
-    EXPECT_EQ("type=bar", hal[1]);
+    EXPECT_EQ("type=foo", hal.front());
+    EXPECT_EQ("type=bar", hal.back());
 }
 
 // Tests that lease manager can be created from a specified configuration.

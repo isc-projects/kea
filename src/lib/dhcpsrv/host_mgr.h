@@ -63,33 +63,33 @@ public:
     ///
     static void create();
 
-    /// @brief Add an alternate host data source.
+    /// @brief Add an alternate host backend (aka host data source).
     ///
-    /// @param access Host data source access parameters for the alternate
-    /// host data source. It holds "keyword=value" pairs, separated by spaces.
-    /// The supported values are specific to the alternate data source in use.
+    /// @param access Host backend access parameters for the alternate
+    /// host backend. It holds "keyword=value" pairs, separated by spaces.
+    /// The supported values are specific to the alternate backend in use.
     /// However, the "type" parameter will be common and it will specify which
-    /// data source is to be used. Currently, no parameters are supported
+    /// backend is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    static void addSource(const std::string& access);
+    static void addBackend(const std::string& access);
 
-    /// @brief Delete an alternate host data source.
+    /// @brief Delete an alternate host backend (aka host data source).
     ///
     /// @param db_type_type database backend type.
     /// @return true when found and removed, false when not found.
-    static bool delSource(const std::string& db_type);
+    static bool delBackend(const std::string& db_type);
 
-    /// @brief Delete all alternate host data source.
-    static void delAllSources();
+    /// @brief Delete all alternate backends.
+    static void delAllBackends();
 
-    /// @brief Check for the cache host data source.
+    /// @brief Check for the cache host backend.
     ///
-    /// Checks if the first host data source implements
+    /// Checks if the first host backend implements
     /// the cache abstract class and sets cache_ptr_.
     ///
     /// @param logging When true (not the default) emit an informational log.
-    /// @return true if the first host data source is a cache.
-    static bool checkCacheSource(bool logging = false);
+    /// @return true if the first host backend is a cache.
+    static bool checkCacheBackend(bool logging = false);
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///
@@ -185,8 +185,7 @@ public:
     /// This method returns a single reservation for a particular host as
     /// documented in the @c BaseHostDataSource::get4 even when the
     /// reservation is marked as from negative caching. This allows to
-    /// overload negative caching with extra information in the user
-    /// context.
+    /// monitor negative caching.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
@@ -254,8 +253,7 @@ public:
     /// This method returns a host connected to the IPv6 subnet as described
     /// in the @c BaseHostDataSource::get6 even when the             
     /// reservation is marked as from negative caching. This allows to
-    /// overload negative caching with extra information in the user
-    /// context.
+    /// monitor negative caching.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.

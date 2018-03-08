@@ -37,7 +37,7 @@ public:
     /// @brief Constructor
     ///
     /// @param db_type Specifies database type (lease or hosts)
-    explicit DbAccessParser(size_t db_type);
+    explicit DbAccessParser(DBType db_type);
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -92,7 +92,7 @@ private:
 
     std::map<std::string, std::string> values_; ///< Stored parameter values
 
-    size_t type_; ///< Database type (leases or hosts)
+    DBType type_; ///< Database type (leases or hosts)
 };
 
 };  // namespace dhcp

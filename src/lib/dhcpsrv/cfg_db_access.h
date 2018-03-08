@@ -10,7 +10,7 @@
 #include <cc/cfg_to_element.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
-#include <vector>
+#include <list>
 
 namespace isc {
 namespace dhcp {
@@ -22,10 +22,6 @@ namespace dhcp {
 /// passed to the @ref isc::dhcp::LeaseMgrFactory::create function.
 class CfgDbAccess {
 public:
-    /// @brief Specifies the database types
-    static const size_t LEASE_DB = 0;
-    static const size_t HOSTS_DB = 1;
-
     /// @brief Constructor.
     CfgDbAccess();
 
@@ -48,7 +44,7 @@ public:
     ///
     /// @param lease_db_access New lease database access string.
     void setLeaseDbAccessString(const std::string& lease_db_access) {
-        db_access_[LEASE_DB] = lease_db_access;
+        lease_db_access_ = lease_db_access;
     }
 
     /// @brief Retrieves host database access string.
@@ -60,22 +56,21 @@ public:
     /// @brief Sets host database access string.
     ///
     /// @param host_db_access New host database access string.
-    void setHostDbAccessString(const std::string& host_db_access) {
-        db_access_[HOSTS_DB] = host_db_access;
+    /// @param front Add at front if true, at back if false (default).
+    void setHostDbAccessString(const std::string& host_db_access,
+                               bool front = false) {
+        if (front) {
+            host_db_access_.push_front(host_db_access);
+        } else {
+            host_db_access_.push_back(host_db_access);
+        }
     }
 
     /// @brief Retrieves host database access string.
     ///
     /// @return Database access strings with additional parameters
     /// specified with @ref CfgDbAccess::setAppendedParameters
-    std::vector<std::string> getHostDbAccessStringList() const;
-
-    /// @brief Pushes host database access string.
-    ///
-    /// @param db_access New host database access string.
-    void pushHostDbAccessString(const std::string& db_access) {
-        db_access_.push_back(db_access);
-    }
+    std::list<std::string> getHostDbAccessStringList() const;
 
     /// @brief Creates instance of lease manager and host data sources
     /// according to the configuration specified.
@@ -99,8 +94,11 @@ protected:
     /// strings.
     std::string appended_parameters_;
 
-    /// @brief Holds database access strings.
-    std::vector<std::string> db_access_;
+    /// @brief Holds lease database access string.
+    std::string lease_db_access_;
+
+    /// @brief Holds host database access strings.
+    std::list<std::string> host_db_access_;
 
 };
 
@@ -121,7 +119,7 @@ struct CfgLeaseDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
     ///
     /// @result a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {
-        return (CfgDbAccess::toElementDbAccessString(db_access_[LEASE_DB]));
+        return (CfgDbAccess::toElementDbAccessString(lease_db_access_));
     }
 };
 
@@ -136,9 +134,9 @@ struct CfgHostDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
     /// @result a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {
         isc::data::ElementPtr result = isc::data::Element::createList();
-        for (size_t idx = HOSTS_DB; idx < db_access_.size(); ++idx) {
+        for (const std::string& dbaccess : host_db_access_) {
             isc::data::ElementPtr entry =
-                CfgDbAccess::toElementDbAccessString(db_access_[idx]);
+                CfgDbAccess::toElementDbAccessString(dbaccess);
             if (entry->size() > 0) {
                 result->add(entry);
             }
