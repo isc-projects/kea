@@ -75,7 +75,7 @@ public:
 
     /// @brief Delete an alternate host backend (aka host data source).
     ///
-    /// @param db_type_type database backend type.
+    /// @param db_type database backend type.
     /// @return true when found and removed, false when not found.
     static bool delBackend(const std::string& db_type);
 

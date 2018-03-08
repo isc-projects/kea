@@ -432,12 +432,7 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
 
     // We can verify other overloads of get4() but the hwaddr/duid is
     // not implemented by the memory test backend and the negative cache
-    // entry has no IP reservation simply because it was not known when
-    // it is created. And there is no by address negative cache because
-    // it is not allowed to create a host object, even a fake one, without
-    // an identifier. Now for performance the by identifier negative cache
-    // is critical, for by address it is better to optimize the out-of-
-    // pools case...
+    // entry has no IP reservation when inserted by the host manager.
 }
 
 // Check negative cache feature for IPv6.
@@ -588,6 +583,387 @@ TEST_F(HostCacheTest, negativeAddress6) {
     ASSERT_FALSE(got);
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->adds_);
+}
+
+/// @brief Test one backend class.
+///
+/// This class has one entry which is returned to any lookup.
+class TestOneBackend : public BaseHostDataSource {
+public:
+
+    /// Constructor
+    TestOneBackend() : value_() { }
+
+    /// Destructor
+    virtual ~TestOneBackend() { }
+
+    ConstHostCollection getAll(const HWAddrPtr&, const DuidPtr&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getAll(const Host::IdentifierType&, const uint8_t*, 
+                               const size_t) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getAll4(const IOAddress&) const {
+        return (getCollection());
+    }
+
+    ConstHostPtr get4(const SubnetID&, const HWAddrPtr&,
+                      const DuidPtr&) const {
+        return (getOne());
+    }
+
+    ConstHostPtr get4(const SubnetID&, const Host::IdentifierType&,
+                      const uint8_t*, const size_t) const {
+        return (getOne());
+    }
+
+    ConstHostPtr get4(const SubnetID& subnet_id, const IOAddress&) const {
+        return (getOne());
+    }
+
+    ConstHostPtr get6(const SubnetID&, const DuidPtr&,
+                      const HWAddrPtr&) const {
+        return (getOne());
+    }
+
+    ConstHostPtr get6(const SubnetID&, const Host::IdentifierType&,
+                      const uint8_t*, const size_t) const {
+        return (getOne());
+    }
+
+    ConstHostPtr get6(const IOAddress&, const uint8_t) const {
+        return (getOne());
+    }
+
+    ConstHostPtr get6(const SubnetID& subnet_id, const IOAddress&) const {
+        return (getOne());
+    }
+
+    void add(const HostPtr&) {
+    }
+
+    bool del(const SubnetID&, const IOAddress&) {
+        return (false);
+    }
+
+    bool del4(const SubnetID&, const Host::IdentifierType&,
+              const uint8_t*, const size_t) {
+        return (false);
+    }
+
+    bool del6(const SubnetID&, const Host::IdentifierType&,
+              const uint8_t*, const size_t) {
+        return (false);
+    }
+
+    std::string getType() const {
+        return ("one");
+    }
+
+    /// Specific methods
+
+    /// @brief Set the entry
+    void setValue(const HostPtr& value) {
+        value_ = value;
+    }
+
+protected:
+    /// @brief Return collection
+    ConstHostCollection getCollection() const {
+        ConstHostCollection hosts;
+        hosts.push_back(value_);
+        return (hosts);
+    }
+
+    /// @brief Return one entry
+    ConstHostPtr getOne() const {
+        return(value_);
+    }
+
+    /// #brief The value
+    HostPtr value_;
+};
+
+/// @brief TestOneBackend pointer type
+typedef boost::shared_ptr<TestOneBackend> TestOneBackendPtr;
+
+/// @brief Test no cache class.
+///
+/// This class looks like a cache but throws when insert() is called.
+class TestNoCache : public MemHostDataSource, public CacheHostDataSource {
+public:
+
+    /// Destructor
+    virtual ~TestNoCache() { }
+
+    /// Override add
+    void add(const HostPtr& host) {
+        isc_throw(NotImplemented,
+                  "add is not implemented: " << host->toText());
+    }
+
+    /// Insert throws
+    bool insert(const ConstHostPtr& host, int& overwrite) {
+        isc_throw(NotImplemented,
+                  "insert is not implemented: " << host->toText()
+                  << " with overwrite: " << overwrite);
+    }
+
+    /// Remove throws
+    bool remove(const HostPtr& host) {
+        isc_throw(NotImplemented,
+                  "remove is not implemented: " << host->toText());
+    }
+
+    /// Flush
+    void flush(size_t count) {
+        isc_throw(NotImplemented, "flush is not implemented");
+    }
+
+    /// Size
+    size_t size() const {
+        return (0);
+    }
+
+    /// Capacity
+    size_t capacity() const {
+        return (0);
+    }
+
+    /// Type
+    string getType() const {
+        return ("nocache");
+    }
+};
+
+/// @brief TestNoCache pointer type
+typedef boost::shared_ptr<TestNoCache> TestNoCachePtr;
+
+/// @brief Test fixture for testing generic negative cache handling.
+class NegativeCacheTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    NegativeCacheTest() {
+        HostMgr::create();
+
+        // No cache.
+        ncptr_.reset(new TestNoCache());
+        auto nocacheFactory = [this](const DatabaseConnection::ParameterMap&) {
+            return (ncptr_);
+        };
+        HostDataSourceFactory::registerFactory("nocache", nocacheFactory);
+        HostMgr::addBackend("type=nocache");
+
+        // One backend.
+        obptr_.reset(new TestOneBackend());
+        auto oneFactory = [this](const DatabaseConnection::ParameterMap&) {
+            return (obptr_);
+        };
+        HostDataSourceFactory::registerFactory("one", oneFactory);
+        HostMgr::addBackend("type=one");
+    }
+
+    /// @brief Destructor.
+    virtual ~NegativeCacheTest() {
+        HostDataSourceFactory::deregisterFactory("one");
+        HostDataSourceFactory::deregisterFactory("nocache");
+    }
+
+    /// @brief Test one backend.
+    TestOneBackendPtr obptr_;
+
+    /// @brief Test no cache.
+    TestNoCachePtr ncptr_;
+
+    /// Test methods
+
+    /// @brief Set negative caching.
+    void setNegativeCaching() {
+        ASSERT_TRUE(HostMgr::instance().checkCacheBackend());
+        ASSERT_FALSE(HostMgr::instance().getNegativeCaching());
+        HostMgr::instance().setNegativeCaching(true);
+        ASSERT_TRUE(HostMgr::instance().getNegativeCaching());
+    }
+
+    void testGetAll();
+    void testGet4();
+    void testGet6();
+};
+
+/// Verify that getAll* methods ignore negative caching.
+void NegativeCacheTest::testGetAll() {
+    // Create a host reservation.
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1",
+                                                        Host::IDENT_HWADDR);
+    ASSERT_TRUE(host);
+    ASSERT_TRUE(host->getHWAddress());
+    ASSERT_EQ("192.0.2.1", host->getIPv4Reservation().toText());
+
+    // Make it a negative cached entry.
+    host->setNegative(true);
+    ASSERT_TRUE(host->getNegative());
+
+    // Set the backend with it.
+    obptr_->setValue(host);
+
+    // Verifies getAll* return a collection with it.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts =
+        HostMgr::instance().getAll(host->getHWAddress(), DuidPtr()));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ(host, hosts[0]);
+
+    ASSERT_NO_THROW(hosts =
+        HostMgr::instance().getAll(host->getIdentifierType(),
+                                   &host->getIdentifier()[0],
+                                   host->getIdentifier().size()));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ(host, hosts[0]);
+
+    ASSERT_NO_THROW(hosts =
+                    HostMgr::instance().getAll4(host->getIPv4Reservation()));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ(host, hosts[0]);
+}
+
+/// Verify that get4* methods handle negative caching.
+void NegativeCacheTest::testGet4() {
+    // Create a host reservation.
+    HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1",
+                                                        Host::IDENT_HWADDR);
+    ASSERT_TRUE(host);
+    ASSERT_TRUE(host->getHWAddress());
+    ASSERT_EQ("192.0.2.1", host->getIPv4Reservation().toText());
+
+    // Make it a negative cached entry.
+    host->setNegative(true);
+    ASSERT_TRUE(host->getNegative());
+
+    // Set the backend with it.
+    obptr_->setValue(host);
+
+    // Verifies get4 overloads return a null pointer.
+    ConstHostPtr got;
+    ASSERT_NO_THROW(got =
+        HostMgr::instance().get4(host->getIPv4SubnetID(),
+                                 host->getHWAddress(), DuidPtr()));
+    EXPECT_FALSE(got);
+
+    ASSERT_NO_THROW(got =
+        HostMgr::instance().get4(host->getIPv4SubnetID(),
+                                 host->getIdentifierType(),
+                                 &host->getIdentifier()[0],
+                                 host->getIdentifier().size()));
+    EXPECT_FALSE(got);
+
+    ASSERT_NO_THROW(got =
+                    HostMgr::instance().get4(host->getIPv4SubnetID(),
+                                             host->getIPv4Reservation()));
+    EXPECT_FALSE(got);
+
+    // Only getAny returns the negative cached entry.
+    ASSERT_NO_THROW(got =
+                    HostMgr::instance().get4Any(host->getIPv4SubnetID(),
+                                                host->getIdentifierType(),
+                                                &host->getIdentifier()[0],
+                                                host->getIdentifier().size()));
+    EXPECT_TRUE(got);
+    EXPECT_EQ(host, got);
+}
+
+/// Verify that get6* methods handle negative caching.
+void NegativeCacheTest::testGet6() {
+    // Create a host reservation.
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1",
+                                                        Host::IDENT_DUID,
+                                                        false);
+    ASSERT_TRUE(host);
+    ASSERT_TRUE(host->getDuid());
+
+    // Get the address.
+    IPv6ResrvRange resrvs = host->getIPv6Reservations();
+    ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
+    const IOAddress& address = resrvs.first->second.getPrefix();
+    ASSERT_EQ("2001:db8::1", address.toText());
+
+    // Make it a negative cached entry.
+    host->setNegative(true);
+    ASSERT_TRUE(host->getNegative());
+
+    // Set the backend with it.
+    obptr_->setValue(host);
+
+    // Verifies get6 overloads return a null pointer.
+    ConstHostPtr got;
+    ASSERT_NO_THROW(got =
+                    HostMgr::instance().get6(host->getIPv6SubnetID(),
+                                             host->getDuid(),
+                                             HWAddrPtr()));
+    EXPECT_FALSE(got);
+
+    ASSERT_NO_THROW(got =
+                    HostMgr::instance().get6(host->getIPv6SubnetID(),
+                                             host->getIdentifierType(),
+                                             &host->getIdentifier()[0],
+                                             host->getIdentifier().size()));
+    EXPECT_FALSE(got);
+
+    ASSERT_NO_THROW(got = HostMgr::instance().get6(address, 128));
+    EXPECT_FALSE(got);
+
+    ASSERT_NO_THROW(got =
+                    HostMgr::instance().get6(host->getIPv6SubnetID(),
+                                             address));
+    EXPECT_FALSE(got);
+
+    // Only getAny returns the negative cached entry.
+    ASSERT_NO_THROW(got =
+                    HostMgr::instance().get6Any(host->getIPv6SubnetID(),
+                                                host->getIdentifierType(),
+                                                &host->getIdentifier()[0],
+                                                host->getIdentifier().size()));
+    EXPECT_TRUE(got);
+    EXPECT_EQ(host, got);
+}
+
+/// Verify that getAll* methods ignore negative caching.
+TEST_F(NegativeCacheTest, getAll) {
+    testGetAll();
+}
+
+/// Verify that get4* methods handle negative caching.
+TEST_F(NegativeCacheTest, get4) {
+    testGet4();
+}
+
+/// Verify that get6* methods handle negative caching.
+TEST_F(NegativeCacheTest, get6) {
+    testGet6();
+}
+
+/// Verify that getAll* methods behavior does not change with
+/// host manager negative caching.
+TEST_F(NegativeCacheTest, getAllwithNegativeCaching) {
+    setNegativeCaching();
+    testGetAll();
+}
+
+/// Verify that get4* methods behavior does not change with
+/// host manager negative caching.
+TEST_F(NegativeCacheTest, get4withNegativeCaching) {
+    setNegativeCaching();
+    testGet4();
+}
+
+/// Verify that get6* methods behavior does not change with
+/// host manager negative caching.
+TEST_F(NegativeCacheTest, get6withNegativeCaching) {
+    setNegativeCaching();
+    testGet6();
 }
 
 }; // end of anonymous namespace
