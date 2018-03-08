@@ -56,7 +56,7 @@ public:
         // Connect to the database
         try {
             HostMgr::create();
-            HostMgr::addSource(validCqlConnectionString());
+            HostMgr::addBackend(validCqlConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test"
                          "*** environment is broken and must be fixed before"
@@ -77,7 +77,7 @@ public:
             // Rollback should never fail, as Cassandra doesn't support transactions
             // (commit and rollback are both no-op).
         }
-        HostMgr::delAllSources();
+        HostMgr::delAllBackends();
         hdsptr_.reset();
         destroyCqlSchema(false, true);
     }
@@ -107,7 +107,7 @@ public:
     /// the same database.
     void reopen(Universe) {
         HostMgr::create();
-        HostMgr::addSource(validCqlConnectionString());
+        HostMgr::addBackend(validCqlConnectionString());
         hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 };
@@ -128,8 +128,8 @@ TEST(CqlHostDataSource, OpenDatabase) {
     //  If it fails, print the error message.
     try {
         HostMgr::create();
-        EXPECT_NO_THROW(HostMgr::addSource(validCqlConnectionString()));
-        HostMgr::delSource("cql");
+        EXPECT_NO_THROW(HostMgr::addBackend(validCqlConnectionString()));
+        HostMgr::delBackend("cql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -143,8 +143,8 @@ TEST(CqlHostDataSource, OpenDatabase) {
         std::string connection_string = validCqlConnectionString() + std::string(" ") +
                                         std::string(VALID_TIMEOUT);
         HostMgr::create();
-        EXPECT_NO_THROW(HostMgr::addSource(connection_string));
-        HostMgr::delSource("cql");
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("cql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -159,34 +159,34 @@ TEST(CqlHostDataSource, OpenDatabase) {
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
                  NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
                  InvalidParameter);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
                  INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
                  InvalidType);
 
     // Check that invalid login data does not cause an exception, CQL should use
     // default values.
-    EXPECT_NO_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
 
     // Check that invalid timeouts throw DbOperationError.
-    EXPECT_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                  VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
                  DbOperationError);
-    EXPECT_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                  VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
                  DbOperationError);
 
     // Check that CQL allows the hostname to not be specified.
-    EXPECT_NO_THROW(HostMgr::addSource(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Tidy up after the test

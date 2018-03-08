@@ -350,6 +350,13 @@ HostMgrTest::testGet4Any() {
     EXPECT_EQ(1, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_TRUE(host->getNegative());
+
+    // To be sure. Note we use the CfgHosts source so only this
+    // get4 overload works.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    EXPECT_FALSE(host);
 }
 
 void
@@ -424,6 +431,13 @@ HostMgrTest::testGet6Any() {
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
     EXPECT_TRUE(host->getNegative());
+
+    // To be sure. Note we use the CfgHosts source so only this
+    // get6 overload works.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    EXPECT_FALSE(host);
 }
 
 void
@@ -544,7 +558,7 @@ MySQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::addSource(test::validMySQLConnectionString());
+        HostMgr::addBackend(test::validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -558,7 +572,7 @@ MySQLHostMgrTest::SetUp() {
 void
 MySQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
-    HostMgr::delSource("mysql");
+    HostMgr::delBackend("mysql");
     test::destroyMySQLSchema();
 }
 
@@ -621,7 +635,7 @@ PostgreSQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::addSource(test::validPgSQLConnectionString());
+        HostMgr::addBackend(test::validPgSQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -635,7 +649,7 @@ PostgreSQLHostMgrTest::SetUp() {
 void
 PostgreSQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
-    HostMgr::delSource("postgresql");
+    HostMgr::delBackend("postgresql");
     test::destroyPgSQLSchema();
 }
 

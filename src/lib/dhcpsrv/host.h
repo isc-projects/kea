@@ -548,12 +548,15 @@ public:
 
     /// @brief Sets the negative cached flag.
     ///
-    /// @param negative sets whether this is a negative cached host.
+    /// @param negative sets whether this is a negative cached host,
+    /// i.e. a fake host in the cache which indicates non-existence
+    /// and avoids to lookup in a slow backend.
     void setNegative(bool negative) {
         negative_ = negative;
     }
 
     /// @brief Return the negative cache flag value.
+    /// When true standard lookup methods return null host pointer instead.
     bool getNegative() const {
         return (negative_);
     }

@@ -105,4 +105,25 @@
 
   For details, see @ref isc::dhcp::CqlConnection::openDatabase().
 
+  @section dhcpdb-host Host Backends.
+
+  Host backends (known also as host data sources) are similar to lease
+  backends with a few differences:
+
+  - host backends are optional (so it is allowed to have none) because
+    the first source of host reservations is the server configuration,
+    others are alternate backends.
+
+  - there may be more than one host backend. In such a case for lookups
+    returning a collection all results are appended, for lookups returning
+    at most one entry the first found is returned. Add operation is submitted
+    to all alternate backends which can ignore it, add the entry or throw
+    if the new entry conflicts with an already existing one. Delete
+    operations are submitted in sequence to all alternate backends until
+    one finds the entry, deletes it and returns true.
+
+  - the first alternate backend can be a cache (host cache hook library
+    is a premium feature) which avoids to lookup slow databases.
+    For subnet ID and identifier negative caching is optionally supported.
+
   */

@@ -49,7 +49,7 @@ public:
         // Connect to the database
         try {
             HostMgr::create();
-            HostMgr::addSource(validMySQLConnectionString());
+            HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -72,7 +72,7 @@ public:
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
-        HostMgr::delAllSources();
+        HostMgr::delAllBackends();
         hdsptr_.reset();
         destroyMySQLSchema();
     }
@@ -86,7 +86,7 @@ public:
     /// the same database.
     void reopen(Universe) {
         HostMgr::create();
-        HostMgr::addSource(validMySQLConnectionString());
+        HostMgr::addBackend(validMySQLConnectionString());
         hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
@@ -152,8 +152,8 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     //  If it fails, print the error message.
     try {
         HostMgr::create();
-        EXPECT_NO_THROW(HostMgr::addSource(validMySQLConnectionString()));
-        HostMgr::delSource("mysql");
+        EXPECT_NO_THROW(HostMgr::addBackend(validMySQLConnectionString()));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -167,8 +167,8 @@ TEST(MySqlHostDataSource, OpenDatabase) {
         string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         HostMgr::create();
-        EXPECT_NO_THROW(HostMgr::addSource(connection_string));
-        HostMgr::delSource("mysql");
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -183,38 +183,38 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
-    EXPECT_THROW(HostMgr::addSource(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 

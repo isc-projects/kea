@@ -6348,11 +6348,11 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
     ConstCfgDbAccessPtr cfgdb =
         CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
     ASSERT_TRUE(cfgdb);
-    const std::vector<std::string>& hal = cfgdb->getHostDbAccessStringList();
+    const std::list<std::string>& hal = cfgdb->getHostDbAccessStringList();
     ASSERT_EQ(2, hal.size());
     // Keywords are in alphabetical order
-    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal[0]);
-    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal[1]);
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
 }
 
 // This test checks comments. Please keep it last.

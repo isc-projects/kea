@@ -96,6 +96,8 @@ HostDataSourceFactory::registerFactory(const string& db_type,
         return (false);
     }
     map_.insert(pair<string, Factory>(db_type, factory));
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_BACKEND_REGISTER)
+        .arg(db_type);
     return (true);
 }
 
@@ -104,6 +106,8 @@ HostDataSourceFactory::deregisterFactory(const string& db_type) {
     auto index = map_.find(db_type);
     if (index != map_.end()) {
         map_.erase(index);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_BACKEND_DEREGISTER)
+            .arg(db_type);
         return (true);
     } else {
         return (false);

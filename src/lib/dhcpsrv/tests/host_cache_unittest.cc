@@ -125,7 +125,7 @@ public:
             return (hcptr_);
         };
         HostDataSourceFactory::registerFactory("cache", cacheFactory);
-        HostMgr::addSource("type=cache");
+        HostMgr::addBackend("type=cache");
 
         // Host data source.
         memptr_.reset(new TestHostDataSource());
@@ -133,7 +133,7 @@ public:
             return (memptr_);
         };
         HostDataSourceFactory::registerFactory("test", testFactory);
-        HostMgr::addSource("type=test");
+        HostMgr::addBackend("type=test");
     }
 
     /// @brief Destructor.
@@ -153,7 +153,7 @@ public:
 TEST_F(HostCacheTest, identifier4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
@@ -204,7 +204,7 @@ TEST_F(HostCacheTest, identifier4) {
 TEST_F(HostCacheTest, identifier6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
@@ -261,7 +261,7 @@ TEST_F(HostCacheTest, identifier6) {
 TEST_F(HostCacheTest, address4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
@@ -310,7 +310,7 @@ TEST_F(HostCacheTest, address4) {
 TEST_F(HostCacheTest, address6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
@@ -365,7 +365,7 @@ TEST_F(HostCacheTest, address6) {
 TEST_F(HostCacheTest, negativeIdentifier4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
@@ -375,7 +375,6 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
     // We will not add it anywhere, just will use its values.
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", Host::IDENT_HWADDR);
     ASSERT_TRUE(host);
-
 
     // Try to get it cached.
     ConstHostPtr got = HostMgr::instance().get4(host->getIPv4SubnetID(),
@@ -396,10 +395,10 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
 
     // Try it again. There is no such host, but this time negative cache is enabled,
     // so this negative response will be added to the cache.
-    got = HostMgr::instance().get4Any(host->getIPv4SubnetID(),
-                                      host->getIdentifierType(),
-                                      &host->getIdentifier()[0],
-                                      host->getIdentifier().size());
+    got = HostMgr::instance().get4(host->getIPv4SubnetID(),
+                                   host->getIdentifierType(),
+                                   &host->getIdentifier()[0],
+                                   host->getIdentifier().size());
     ASSERT_FALSE(got);
     EXPECT_EQ(1, hcptr_->size());
     EXPECT_EQ(1, hcptr_->adds_);
@@ -430,13 +429,22 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
     EXPECT_EQ(1, hcptr_->size());
     EXPECT_EQ(1, hcptr_->adds_);
     EXPECT_EQ(0, hcptr_->inserts_);
+
+    // We can verify other overloads of get4() but the hwaddr/duid is
+    // not implemented by the memory test backend and the negative cache
+    // entry has no IP reservation simply because it was not known when
+    // it is created. And there is no by address negative cache because
+    // it is not allowed to create a host object, even a fake one, without
+    // an identifier. Now for performance the by identifier negative cache
+    // is critical, for by address it is better to optimize the out-of-
+    // pools case...
 }
 
 // Check negative cache feature for IPv6.
 TEST_F(HostCacheTest, negativeIdentifier6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
@@ -467,12 +475,22 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
     HostMgr::instance().setNegativeCaching(true);
     ASSERT_TRUE(HostMgr::instance().getNegativeCaching());
 
-    // Try it but it will be cached only the second time.
+    // Try it but it will be cached only when get6 (vs get6Any) is called.
     got = HostMgr::instance().get6Any(host->getIPv6SubnetID(),
                                       host->getIdentifierType(),
                                       &host->getIdentifier()[0],
                                       host->getIdentifier().size());
     ASSERT_FALSE(got);
+    EXPECT_EQ(0, hcptr_->size());
+    EXPECT_EQ(0, hcptr_->adds_);
+
+    got = HostMgr::instance().get6(host->getIPv6SubnetID(),
+                                   host->getIdentifierType(),
+                                   &host->getIdentifier()[0],
+                                   host->getIdentifier().size());
+    ASSERT_FALSE(got);
+
+    // There is a negative cached value now.
     EXPECT_EQ(1, hcptr_->size());
     EXPECT_EQ(1, hcptr_->adds_);
     got = HostMgr::instance().get6Any(host->getIPv6SubnetID(),
@@ -502,13 +520,15 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
     EXPECT_EQ(1, hcptr_->size());
     EXPECT_EQ(1, hcptr_->adds_);
     EXPECT_EQ(0, hcptr_->inserts_);
+
+    // No other tests, cf negativeIdentifier4 end comment.
 }
 
 // Check that negative caching by address is not done for IPv4.
 TEST_F(HostCacheTest, negativeAddress4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
@@ -538,7 +558,7 @@ TEST_F(HostCacheTest, negativeAddress4) {
 TEST_F(HostCacheTest, negativeAddress6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
-    EXPECT_TRUE(HostMgr::checkCacheSource());
+    EXPECT_TRUE(HostMgr::checkCacheBackend());
     EXPECT_EQ(0, hcptr_->size());
     EXPECT_EQ(0, hcptr_->adds_);
     ASSERT_TRUE(memptr_);

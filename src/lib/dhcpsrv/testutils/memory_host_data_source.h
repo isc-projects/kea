@@ -137,6 +137,8 @@ public:
 
     /// @brief Returns a host using the specified IPv6 prefix.
     ///
+    /// Currently not implemented.
+    ///
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     /// @return Const @c Host object using a specified HW address or DUID.
@@ -220,7 +222,10 @@ public:
         return (std::make_pair(0,0));
     }
 
+    /// Specific methods.
+
     /// @brief Returns store size.
+    ///
     /// @return number of hosts in the store.
     virtual size_t size() const;
 
