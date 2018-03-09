@@ -1699,7 +1699,7 @@ TEST_F(Pkt6Test, getLabelEmptyClientId) {
 // SkipRemainingOptionsError exception
 TEST_F(Pkt6Test, truncatedVendorLength) {
 
-    // Build a good discover packet
+    // Build a good Solicit packet
     Pkt6Ptr pkt = test::PktCaptures::captureSolicitWithVIVSO();
 
     // Unpacking should not throw
@@ -1714,7 +1714,7 @@ TEST_F(Pkt6Test, truncatedVendorLength) {
     ASSERT_TRUE(vivso);
     EXPECT_EQ(8, vivso->len()); // data + opt code + len
 
-    // Build a bad discover packet
+    // Build a bad Solicit packet
     pkt = test::PktCaptures::captureSolicitWithTruncatedVIVSO();
 
     // Unpack should throw Skip exception
