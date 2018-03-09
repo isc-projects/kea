@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -221,6 +221,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             ;
         }
         return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+    } catch (const SkipRemainingOptionsError& ex) {
+        // We need to throw this one as is.
+        throw ex;
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
     }
@@ -813,7 +816,7 @@ OptionPtr
 OptionDefinition::factoryFqdnList(Option::Universe u,
                                   OptionBufferConstIter begin,
                                   OptionBufferConstIter end) const {
-    
+
     const std::vector<uint8_t> data(begin, end);
     if (data.empty()) {
         isc_throw(InvalidOptionValue, "FQDN list option has invalid length of 0");
