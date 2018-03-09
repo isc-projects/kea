@@ -1,3 +1,11 @@
+1373.	[func]		[tmark]
+	When encountering errors unpacking vendor specific options,
+	both kea-dhcp4 and kea-dhcp6 will now log the error, skip 
+	unpacking any remaining options, and then attempt to process 
+	the packet as is.  Prior to this the servers would log the issue
+	and then drop the packet.
+	(Trac #5551,	git 59ef33ee17672c55cee4ec86ff59737b361a3c21)
+
 1372.	[func]		tmark
 	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
 	reconnect to Postgresql backends if connectivity is lost.
