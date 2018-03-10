@@ -115,8 +115,8 @@ PgSqlConnection::~PgSqlConnection() {
             PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
             if(PQresultStatus(r) != PGRES_COMMAND_OK) {
                 // Highly unlikely but we'll log it and go on.
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DEALLOC_ERROR)
-                          .arg(PQerrorMessage(conn_));
+                DB_LOG_ERROR(PGSQL_DEALLOC_ERROR)
+                    .arg(PQerrorMessage(conn_));
             }
         }
     }
@@ -298,10 +298,10 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
              (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
              (memcmp(sqlstate, "57", 2) == 0) ||  // Operator intervention
              (memcmp(sqlstate, "58", 2) == 0))) { // System error
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_FATAL_ERROR)
-                         .arg(statement.name)
-                         .arg(PQerrorMessage(conn_))
-                         .arg(sqlstate ? sqlstate : "<sqlstate null>");
+            DB_LOG_ERROR(PGSQL_FATAL_ERROR)
+                .arg(statement.name)
+                .arg(PQerrorMessage(conn_))
+                .arg(sqlstate ? sqlstate : "<sqlstate null>");
             // If there's no lost db callback, then exit
             if (!invokeDbLostCallback()) {
                 exit (-1);
