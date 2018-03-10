@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cql_lib="cassandra"
+
 if test `uname -s` = "Darwin"; then
 	DIR=$(stat -f %N $0 | xargs dirname)
 else
@@ -20,6 +22,8 @@ then
 fi
 if [ $1 == "--help" ]
 then
+	echo "cql_config 'option' ['library']"
+	echo "options:"
 	echo "--help"
 	echo "    print this help message"
 	echo "--cflags-only-other"
@@ -30,7 +34,23 @@ then
 	echo "    get lib path"
 	echo "--modversion"
 	echo "    get version"
+	echo "libraries:"
+	echo "    cassandra"
+	echo "    cassandra_static"
 	exit 0
+else if [ $# -ne 2 ]
+	then
+		echo "run: \`$0 --help\` for more help"
+		exit 0
+	else if [ $2 != "cassandra" ] && [ $2 != "cassandra_static" ]
+		then
+			echo "library $2 not supported"
+			echo "run: \`$0 --help\` for more help"
+			exit 0
+		else
+			cql_lib=$2
+		fi
+	fi
 fi
 if [ $1 == "--cflags-only-other" ]
 then
@@ -43,7 +63,7 @@ then
 fi
 if [ $1 == "--libs" ]
 then
-	echo "-L${CPP_DRIVER_PATH}/build/ -lcassandra_static -luv -lpthread"
+	echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -luv -pthread"
 	exit 0
 fi
 if [ $1 == "--modversion" ]
