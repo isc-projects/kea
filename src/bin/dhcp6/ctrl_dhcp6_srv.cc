@@ -32,6 +32,23 @@ using namespace std;
 
 namespace {
 
+/// Structure that holds registered hook indexes.
+struct CtrlDhcp6Hooks {
+    int hooks_index_dhcp6_srv_configured_;
+
+    /// Constructor that registers hook points for the DHCPv6 server.
+    CtrlDhcp6Hooks() {
+        hooks_index_dhcp6_srv_configured_ = HooksManager::registerHook("dhcp6_srv_configured");
+    }
+
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+CtrlDhcp6Hooks Hooks;
+
 // Name of the file holding server identifier.
 static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 
@@ -660,6 +677,25 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // Finally, we can commit runtime option definitions in libdhcp++. This is
     // exception free.
     LibDHCP::commitRuntimeOptionDefs();
+
+    // This hook point notifies hooks libraries that the configuration of the
+    // DHCPv6 server has completed. It provides the hook library with the pointer
+    // to the common IO service object, new server configuration in the JSON
+    // format and with the pointer to the configuration storage where the
+    // parsed configuration is stored.
+    if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp6_srv_configured_)) {
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+        callout_handle->setArgument("io_context", srv->getIOService());
+        callout_handle->setArgument("json_config", config);
+        callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
+
+        HooksManager::callCallouts(Hooks.hooks_index_dhcp6_srv_configured_,
+                                   *callout_handle);
+
+        // Ignore status code as none of them would have an effect on further
+        // operation.
+    }
 
     return (answer);
 }
