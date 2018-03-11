@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -198,6 +198,13 @@ public:
     isc::data::ConstElementPtr
     getParameter(const std::string& name);
 
+    /// @brief Returns names of configuration parameters for the library.
+    ///
+    /// This method returns a vector of strings reflecting names of
+    /// configuration parameters specified in the configuration file.
+    ///
+    std::vector<std::string> getParameterNames();
+
 private:
     /// @brief Copy constructor
     ///
@@ -217,6 +224,11 @@ private:
     ///
     /// @param Unused - should be the object to copy.
     LibraryHandle& operator=(const LibraryHandle&);
+
+    /// @brief Get configuration parameter common code.
+    ///
+    /// @return configuration parameters.
+    isc::data::ConstElementPtr getParameters();
 
     /// Back pointer to the collection object for the library
     CalloutManager* callout_manager_;
