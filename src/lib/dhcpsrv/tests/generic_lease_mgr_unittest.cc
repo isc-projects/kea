@@ -64,7 +64,6 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
         /// a template
         leasetype6_.push_back(LEASETYPE6[i]);
     }
-
 }
 
 GenericLeaseMgrTest::~GenericLeaseMgrTest() {
@@ -1083,7 +1082,6 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
                                               leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
 
-
 }
 
 void
@@ -1175,7 +1173,7 @@ GenericLeaseMgrTest::testGetLease4ClientIdSize() {
         leases[1]->client_id_.reset(new ClientId(clientid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
-        ASSERT_TRUE(returned.size() == 1);
+        ASSERT_EQ(returned.size(), 1u);
         detailCompareLease(leases[1], *returned.begin());
         (void) lmptr_->deleteLease(leases[1]->addr_);
     }
@@ -1973,7 +1971,6 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
             ++should_delete_num;
-
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
@@ -1981,6 +1978,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
                 " deleted: " << leases[i]->toText();
         }
     }
+
     // Check that the number of leases deleted is correct.
     EXPECT_EQ(deleted_num, should_delete_num);
 

@@ -36,8 +36,8 @@ constexpr benchmark::TimeUnit UNIT = benchmark::kMicrosecond;
 
 /// @}
 
-};
-};
-};
+}
+}
+}
 
 #endif
