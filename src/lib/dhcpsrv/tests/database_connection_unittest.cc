@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,35 @@
 #include <dhcpsrv/database_connection.h>
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
+
 using namespace isc::dhcp;
+
+/// @brief Test fixture for exercising DbLostCallback invocation
+class DatabaseConnectionCallbackTest : public ::testing::Test {
+public:
+    /// Constructor
+    DatabaseConnectionCallbackTest()
+        : db_reconnect_ctl_(0) {
+    }
+
+    /// @brief Callback to register with a DatabaseConnection
+    ///
+    /// @param db_reconnect_ctl ReconnectCtl containing reconnect
+    /// parameters
+    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
+        if (!db_reconnect_ctl) {
+            isc_throw(isc::BadValue, "db_reconnect_ctl should not be null");
+        }
+
+        db_reconnect_ctl_ = db_reconnect_ctl;
+        return (true);
+    }
+
+    /// @brief Retainer for the control passed into the callback
+    ReconnectCtlPtr db_reconnect_ctl_;
+};
+
 
 
 /// @brief getParameter test
@@ -27,6 +55,65 @@ TEST(DatabaseConnectionTest, getParameter) {
     EXPECT_EQ("value2", datasrc.getParameter("param2"));
     EXPECT_THROW(datasrc.getParameter("param3"), isc::BadValue);
 }
+
+/// @brief NoDbLostCallback
+///
+/// This test verifies that DatabaseConnection::invokeDbLostCallback
+/// returns a false if there is connection has no registered
+/// DbLostCallback.
+TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60");
+    DatabaseConnection datasrc(pmap);
+
+    bool ret = false;
+    ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
+    EXPECT_FALSE(ret);
+    EXPECT_FALSE(db_reconnect_ctl_);
+}
+
+
+/// @brief NoDbLostCallback
+///
+/// This test verifies that DatabaseConnection::invokeDbLostCallback
+/// safely invokes the registered DbLostCallback.  It also tests
+/// operation of DbReconnectCtl retry accounting methods.
+TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
+    /// Create a Database configuration that includes the reconnect
+    /// control parameters.
+    DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("max-reconnect-tries")] = std::string("3");
+    pmap[std::string("reconnect-wait-time")] = std::string("60");
+
+    /// Create the connection with a DbLostCallback.
+    DatabaseConnection datasrc(pmap, boost::bind(&DatabaseConnectionCallbackTest
+                                                 ::dbLostCallback, this, _1));
+
+    /// We should be able to invoke the callback and glean
+    /// the correct reconnect contorl parameters from it.
+    bool ret;
+    ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
+    EXPECT_TRUE(ret);
+    ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60, db_reconnect_ctl_->retryInterval());
+
+    /// Verify that checkRetries() correctly decrements
+    /// down to zero, and that retriesLeft() returns
+    /// the correct value.
+    for (int i = 3; i > 1 ; --i) {
+        ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
+        ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
+    }
+
+    /// Retries are exhausted, verify that's reflected.
+    EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
+    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+}
+
 
 // This test checks that a database access string can be parsed correctly.
 TEST(DatabaseConnectionTest, parse) {

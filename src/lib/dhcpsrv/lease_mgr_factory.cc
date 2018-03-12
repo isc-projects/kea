@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,8 @@ LeaseMgrFactory::getLeaseMgrPtr() {
 }
 
 void
-LeaseMgrFactory::create(const std::string& dbaccess) {
+LeaseMgrFactory::create(const std::string& dbaccess,
+                        DatabaseConnection::DbLostCallback db_lost_callback) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
@@ -67,7 +68,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 #ifdef HAVE_PGSQL
     if (parameters[type] == string("postgresql")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters));
+        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters, db_lost_callback));
         return;
     }
 #endif
@@ -114,7 +115,6 @@ LeaseMgrFactory::instance() {
     }
     return (*lmptr);
 }
-
 
 }; // namespace dhcp
 }; // namespace isc
