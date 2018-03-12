@@ -74,6 +74,58 @@ public:
     /// @brief Default destructor implementation.
     virtual ~BaseHostDataSource() { }
 
+    /// @brief Adds a new host to the collection.
+    ///
+    /// The implementations of this method should guard against duplicate
+    /// reservations for the same host, where possible. For example, when the
+    /// reservation for the same HW address and subnet id is added twice, the
+    /// implementation should throw an exception. Note, that usually it is
+    /// impossible to guard against adding duplicated host, where one instance
+    /// is identified by HW address, another one by DUID.
+    ///
+    /// @param host Pointer to the new @c Host object being added.
+    virtual void add(const HostPtr& host) = 0;
+
+    /// @brief Attempts to delete a host by (subnet-id, address)
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) = 0;
+
+    /// @brief Attempts to delete a host by (subnet-id4, identifier, identifier-type)
+    ///
+    /// This method supports both v4 hosts only.
+    ///
+    /// @param subnet_id IPv4 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len) = 0;
+
+    /// @brief Attempts to delete a host by (subnet-id6, identifier, identifier-type)
+    ///
+    /// This method supports both v6 hosts only.
+    ///
+    /// @param subnet_id IPv6 Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len) = 0;
+
     /// @brief Return all hosts for the specified HW address or DUID.
     ///
     /// This method returns all @c Host objects which represent reservations
@@ -234,58 +286,6 @@ public:
     /// @return Const @c Host object using a specified IPv6 address/prefix.
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const = 0;
-
-    /// @brief Adds a new host to the collection.
-    ///
-    /// The implementations of this method should guard against duplicate
-    /// reservations for the same host, where possible. For example, when the
-    /// reservation for the same HW address and subnet id is added twice, the
-    /// implementation should throw an exception. Note, that usually it is
-    /// impossible to guard against adding duplicated host, where one instance
-    /// is identified by HW address, another one by DUID.
-    ///
-    /// @param host Pointer to the new @c Host object being added.
-    virtual void add(const HostPtr& host) = 0;
-
-    /// @brief Attempts to delete a host by (subnet-id, address)
-    ///
-    /// This method supports both v4 and v6.
-    ///
-    /// @param subnet_id subnet identifier.
-    /// @param addr specified address.
-    /// @return true if deletion was successful, false if the host was not there.
-    /// @throw various exceptions in case of errors
-    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) = 0;
-
-    /// @brief Attempts to delete a host by (subnet-id4, identifier, identifier-type)
-    ///
-    /// This method supports both v4 hosts only.
-    ///
-    /// @param subnet_id IPv4 Subnet identifier.
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    /// an identifier.
-    /// @param identifier_len Identifier length.
-    /// @return true if deletion was successful, false if the host was not there.
-    /// @throw various exceptions in case of errors
-    virtual bool del4(const SubnetID& subnet_id,
-                      const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin, const size_t identifier_len) = 0;
-
-    /// @brief Attempts to delete a host by (subnet-id6, identifier, identifier-type)
-    ///
-    /// This method supports both v6 hosts only.
-    ///
-    /// @param subnet_id IPv6 Subnet identifier.
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    /// an identifier.
-    /// @param identifier_len Identifier length.
-    /// @return true if deletion was successful, false if the host was not there.
-    /// @throw various exceptions in case of errors
-    virtual bool del6(const SubnetID& subnet_id,
-                      const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin, const size_t identifier_len) = 0;
 
     /// @brief Return backend type
     ///

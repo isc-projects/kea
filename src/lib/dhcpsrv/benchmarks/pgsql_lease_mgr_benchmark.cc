@@ -23,13 +23,13 @@
 #include <dhcpsrv/testutils/pgsql_schema.h>
 
 using namespace isc::dhcp::bench;
-using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::dhcp;
 using namespace std;
 
 namespace {
 
-/// @brief This is a fixture class used for benchmarking Postgres lease backend
+/// @brief This is a fixture class used for benchmarking PostgreSQL lease backend
 class PgSqlLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
 public:
     /// @brief Setup routine.
@@ -192,8 +192,9 @@ BENCHMARK_DEFINE_F(PgSqlLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State& 
     }
 }
 
+
 /// The following macros define run parameters for previously defined
-/// Postgres benchmarks.
+/// PostgreSQL benchmarks.
 
 /// A benchmark that measures IPv4 leases insertion.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, insertLeases4)
@@ -244,11 +245,13 @@ BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease6_type_address)
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease6_type_duid_iaid)
     ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
-/// A benchmark that measures IPv6 lease retrieval by lease type, duid and iaid.
+/// A benchmark that measures IPv6 lease retrieval by lease type, duid, iaid and
+/// subnet-id.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
     ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
-/// A benchmark that measures expired IPv4 leases retrieval.
+/// A benchmark that measures expired IPv6 leases retrieval.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getExpiredLeases6)
     ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+
 }  // namespace
