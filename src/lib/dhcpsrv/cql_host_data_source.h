@@ -314,7 +314,9 @@ public:
 
     /// @brief Returns a collection of all the hosts.
     ///
-    /// This method may return multiple @ref Host objects.
+    /// This method may return multiple @ref Host objects. It is only used in
+    /// testing. It may be very slow when running on a production server with
+    /// lots of hosts.
     ///
     /// @return Collection of const @ref Host objects.
     virtual ConstHostCollection

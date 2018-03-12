@@ -281,6 +281,7 @@ TEST(CqlConnection, checkTimeConversion) {
 }
 
 // This test verifies that database backend can operate in Read-Only mode.
+// We currently don't test Cassandra in read-only mode.
 TEST_F(CqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
     testReadOnlyDatabase(CQL_VALID_TYPE);
 }

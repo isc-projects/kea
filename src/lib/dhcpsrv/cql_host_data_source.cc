@@ -1339,7 +1339,7 @@ public:
     /// See @ref CqlHostDataSource::add() for parameter details.
     ///
     /// @param host host to be added or deleted
-    /// @param insert insert or delete the host
+    /// @param insert insert (true) or delete (false) the host
     virtual bool insertOrDelete(const HostPtr& host, bool insert);
 
     /// @brief Implementation of @ref CqlHostDataSource::get4()
@@ -1974,7 +1974,8 @@ CqlHostDataSourceImpl::insertOrDeleteHostWithOptions(bool insert,
                 }
                 option_found = true;
                 /// @todo: Assign actual value to subnet id.
-                result = insertOrDeleteHost(insert, host, OptionalValue<SubnetID>(), reservation, space, option);
+                result = insertOrDeleteHost(insert, host, OptionalValue<SubnetID>(), reservation,
+                                            space, option);
             }
         }
     }
@@ -2082,17 +2083,14 @@ CqlHostDataSourceImpl::insertOrDeleteHost(bool insert,
 
     try {
         if (insert) {
-            host_exchange->createBindForMutation(
-                host, subnet_id, reservation, option_space, option_descriptor,
-                CqlHostExchange::INSERT_HOST, assigned_values);
+            host_exchange->createBindForMutation(host, subnet_id, reservation, option_space,
+                option_descriptor, CqlHostExchange::INSERT_HOST, assigned_values);
 
 
             host_exchange->executeMutation(dbconn_, assigned_values, CqlHostExchange::INSERT_HOST);
         } else {
-            host_exchange->createBindForDelete(
-                host, subnet_id, reservation, option_space, option_descriptor,
-                CqlHostExchange::DELETE_HOST, assigned_values);
-
+            host_exchange->createBindForDelete(host, subnet_id, reservation, option_space,
+                option_descriptor, CqlHostExchange::DELETE_HOST, assigned_values);
 
             host_exchange->executeMutation(dbconn_, assigned_values, CqlHostExchange::DELETE_HOST);
         }
@@ -2155,8 +2153,8 @@ CqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& add
 bool
 CqlHostDataSource::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
                         const uint8_t* identifier_begin, const size_t identifier_len) {
-    HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(
-            subnet_id, identifier_type, identifier_begin, identifier_len));
+    HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, identifier_type,
+                                                               identifier_begin, identifier_len));
 
     return (impl_->insertOrDelete(host, false));
 }
@@ -2164,8 +2162,8 @@ CqlHostDataSource::del4(const SubnetID& subnet_id, const Host::IdentifierType& i
 bool
 CqlHostDataSource::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
                         const uint8_t* identifier_begin, const size_t identifier_len) {
-    HostPtr host = boost::const_pointer_cast<Host>(impl_->get6(
-            subnet_id, identifier_type, identifier_begin, identifier_len));
+    HostPtr host = boost::const_pointer_cast<Host>(impl_->get6(subnet_id, identifier_type,
+                                                               identifier_begin, identifier_len));
 
     return (impl_->insertOrDelete(host, false));
 }
