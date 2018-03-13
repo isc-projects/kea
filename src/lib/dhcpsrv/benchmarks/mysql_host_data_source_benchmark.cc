@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -20,7 +21,6 @@
 #include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
-
 #include <iostream>
 
 using namespace isc::dhcp::bench;
@@ -36,7 +36,7 @@ public:
 
     /// @brief Setup routine.
     ///
-    /// It cleans up schema and recreates tables, then instantiates LeaseMgr
+    /// It cleans up schema and recreates tables, then instantiates HostMgr
     void SetUp(::benchmark::State const&) override {
         destroyMySQLSchema(false);
         createMySQLSchema(false);

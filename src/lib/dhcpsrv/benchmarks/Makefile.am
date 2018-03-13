@@ -40,7 +40,7 @@ run_benchmarks_SOURCES += cql_lease_mgr_benchmark.cc
 run_benchmarks_SOURCES += cql_host_data_source_benchmark.cc
 endif
 
-run_benchmarks_CPPFLAGS  = $(AM_CPPFLAGS) $(BENCHMARK_INCLUDES) -Wno-error=overloaded-virtual
+run_benchmarks_CPPFLAGS  = $(AM_CPPFLAGS) $(BENCHMARK_INCLUDES) $(BENCHMARK_CPPFLAGS) -Wno-error=overloaded-virtual
 
 if HAVE_MYSQL
 run_benchmarks_CPPFLAGS += $(MYSQL_CPPFLAGS)
@@ -74,7 +74,6 @@ run_benchmarks_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest
 run_benchmarks_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 run_benchmarks_LDADD += $(BENCHMARK_LDADD)
 run_benchmarks_LDADD += $(LOG4CPLUS_LIBS)
 run_benchmarks_LDADD += $(CRYPTO_LIBS)

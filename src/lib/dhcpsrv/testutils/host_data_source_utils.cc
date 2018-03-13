@@ -101,8 +101,8 @@ HostDataSourceUtils::initializeHost6(std::string address,
     // subnet4 with subnet6.
     static SubnetID subnet4 = 0;
     static SubnetID subnet6 = 100;
-    subnet4++;
-    subnet6++;
+    ++subnet4;
+    ++subnet6;
 
     HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
                           IOAddress("0.0.0.0")));

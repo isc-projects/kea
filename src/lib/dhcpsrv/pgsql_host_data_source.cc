@@ -418,7 +418,6 @@ protected:
     HostPtr host_;
 };
 
-
 /// @brief Extends base exchange class with ability to retrieve DHCP options
 /// from the 'dhcp4_options' and 'dhcp6_options' tables.
 ///
@@ -1009,7 +1008,6 @@ private:
 
     /// @brief Reservation id for last processed row.
     uint64_t most_recent_reservation_id_;
-
 };
 
 /// @brief This class is used for storing IPv6 reservations in a PgSQL database.
@@ -1239,7 +1237,6 @@ private:
 };
 
 } // end of anonymous namespace
-
 
 namespace isc {
 namespace dhcp {
@@ -1764,7 +1761,6 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
     }
 
     return (last_id);
-
 }
 
 bool
@@ -1923,9 +1919,7 @@ PgSqlHostDataSourceImpl::checkReadOnly() const {
     }
 }
 
-
 /*********** PgSqlHostDataSource *********************/
-
 
 PgSqlHostDataSource::
 PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters,
@@ -2023,7 +2017,6 @@ PgSqlHostDataSource::del4(const SubnetID& subnet_id,
 
     return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
                                 bind_array));
-
 }
 
 bool
@@ -2044,7 +2037,6 @@ PgSqlHostDataSource::del6(const SubnetID& subnet_id,
 
     return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
                                 bind_array));
-
 }
 
 ConstHostCollection
@@ -2289,7 +2281,6 @@ PgSqlHostDataSource::commit() {
     impl_->checkReadOnly();
     impl_->conn_.commit();
 }
-
 
 void
 PgSqlHostDataSource::rollback() {

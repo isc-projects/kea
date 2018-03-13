@@ -36,11 +36,8 @@ namespace {
 
 class PgSqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    PgSqlHostDataSourceTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyPgSQLSchema();
         createPgSQLSchema();
@@ -60,20 +57,30 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
-    /// @brief Destructor
-    ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
-    /// close the database.  Then reopen it and delete everything created by
-    /// the test.
-    virtual ~PgSqlHostDataSourceTest() {
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
         try {
             hdsptr_->rollback();
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         HostDataSourceFactory::destroy();
-        hdsptr_.reset();
         destroyPgSQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    PgSqlHostDataSourceTest() {
+        initializeTest();
+    }
+
+    /// @brief Destructor
+    ///
+    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
+    /// the database.  Then reopen it and delete everything created by the test.
+    virtual ~PgSqlHostDataSourceTest() {
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -81,8 +88,8 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases
-    /// share the same database.
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
+    /// the same database.
     void reopen(Universe) {
         HostDataSourceFactory::destroy();
         HostDataSourceFactory::create(validPgSQLConnectionString());
@@ -113,20 +120,21 @@ public:
         }
 
         int numrows = PQntuples(r);
+
         return (numrows);
     }
 
-    /// @brief Returns number of IPv4 options in the DB table.
+    /// @brief Returns number of IPv4 options currently stored in DB.
     virtual int countDBOptions4() {
         return (countRowsInTable("dhcp4_options"));
     }
 
-    /// @brief Returns number of IPv4 options in the DB table.
+    /// @brief Returns number of IPv6 options currently stored in DB.
     virtual int countDBOptions6() {
         return (countRowsInTable("dhcp6_options"));
     }
 
-    /// @brief Returns number of IPv6 reservations in the DB table.
+    /// @brief Returns number of IPv6 reservations currently stored in DB.
     virtual int countDBReservations6() {
         return (countRowsInTable("ipv6_reservations"));
     }
@@ -174,12 +182,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
     EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
 
     // Check that wrong specification of backend throws an exception.
-    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
@@ -333,8 +341,8 @@ TEST_F(PgSqlHostDataSourceTest, hostnameFQDN100) {
     testHostname("foo.example.org", 100);
 }
 
-// Test verifies if a host without any hostname specified can be stored and
-// later retrieved.
+// Test verifies if a host without any hostname specified can be stored and later
+// retrieved.
 TEST_F(PgSqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
 }
@@ -626,4 +634,4 @@ TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
 
-}; // Of anonymous namespace
+}  // namespace
