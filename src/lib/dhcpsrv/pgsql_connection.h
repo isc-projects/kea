@@ -304,6 +304,11 @@ public:
         : DatabaseConnection(parameters) {
     }
 
+    PgSqlConnection(const ParameterMap& parameters, 
+                    DbLostCallback db_lost_callback)
+        : DatabaseConnection(parameters, db_lost_callback) {
+    }
+
     /// @brief Destructor
     virtual ~PgSqlConnection();
 
@@ -393,7 +398,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
     void checkStatementError(const PgSqlResult& r,
-                             PgSqlTaggedStatement& statement) const;
+                             PgSqlTaggedStatement& statement) const; 
 
     /// @brief PgSql connection handle
     ///

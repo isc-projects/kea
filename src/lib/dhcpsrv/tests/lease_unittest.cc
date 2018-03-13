@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,6 +48,47 @@ Lease4 createLease4(const std::string& hostname, const bool fqdn_fwd,
     lease.fqdn_fwd_ = fqdn_fwd;
     lease.fqdn_rev_ = fqdn_rev;
     return (lease);
+}
+
+/// @brief Tests that an exception is thrown when one of the lease
+/// parameters is missing or invalid during lease parsing.
+///
+/// If the tested parameter is mandatory the test first removes the
+/// specified parameter from the JSON structure and tries to re-create
+/// the lease, expecting an error.
+/// Next, the test sets invalid value for this parameter and also
+/// expected an error.
+///
+/// @tparam LeaseType @c Lease4 or @c Lease6.
+/// @tparam ValueType type of the invalid value to be used for the
+/// specified parameter.
+/// @param lease_as_json a string contains lease in a JSON format.
+/// @param parameter_name name of the lease parameter to be tested.
+/// @param invalid_value invalid parameter value.
+/// @param mandatory boolean value indicating if the parameter is
+/// mandatory.
+template<typename LeaseType, typename ValueType>
+void testInvalidElement(const std::string& lease_as_json,
+                        const std::string& parameter_name,
+                        ValueType invalid_value,
+                        const bool mandatory = true) {
+    ElementPtr lease;
+
+    // If the parameter is mandatory, check that the exception is
+    // thrown if it is missing.
+    if (mandatory) {
+        ASSERT_NO_THROW(lease = Element::fromJSON(lease_as_json));
+        lease->remove(parameter_name);
+        EXPECT_THROW(LeaseType::fromElement(lease), BadValue)
+            << "test failed for " << parameter_name;
+    }
+
+    // Set invalid value and expect an error.
+    ASSERT_NO_THROW(lease = Element::fromJSON(lease_as_json));
+    lease->set(parameter_name, Element::create(invalid_value));
+    EXPECT_THROW(LeaseType::fromElement(lease), BadValue)
+        << "test failed for " << parameter_name
+        << " and invalid value " << invalid_value;
 }
 
 /// @brief Fixture class used in Lease4 testing.
@@ -465,6 +506,78 @@ TEST_F(Lease4Test, toElement) {
         "}";
 
     runToElementTest<Lease4>(expected, lease);
+}
+
+// Verify that the Lease4 can be created from JSON.
+TEST_F(Lease4Test, fromElement) {
+    std::string json = "{"
+        "\"client-id\": \"17:34:e2:ff:09:92:54\","
+        "\"cltt\": 12345678,"
+        "\"fqdn-fwd\": true,"
+        "\"fqdn-rev\": true,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"ip-address\": \"192.0.2.3\","
+        "\"state\": 0,"
+        "\"subnet-id\": 789,"
+        "\"valid-lft\": 3600 "
+        "}";
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = Lease4::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ("192.0.2.3", lease->addr_.toText());
+    EXPECT_EQ(789, static_cast<uint32_t>(lease->subnet_id_));
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
+    ASSERT_TRUE(lease->client_id_);
+    EXPECT_EQ("17:34:e2:ff:09:92:54", lease->client_id_->toText());
+    EXPECT_EQ(12345678, lease->cltt_);
+    EXPECT_EQ(3600, lease->valid_lft_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("urania.example.org", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+}
+
+// Test that specifying invalid values for a lease or not specifying
+// mandatory lease parameters causes an error while parsing the lease.
+TEST_F(Lease4Test, fromElementInvalidValues) {
+    // Create valid configuration. We use it as a base from which we will
+    // be removing some of the parameters and some values will be selectively
+    // modified.
+    std::string json = "{"
+        "\"client-id\": \"17:34:e2:ff:09:92:54\","
+        "\"cltt\": 12345678,"
+        "\"fqdn-fwd\": true,"
+        "\"fqdn-rev\": true,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"ip-address\": \"192.0.2.3\","
+        "\"state\": 0,"
+        "\"subnet-id\": 789,"
+        "\"valid-lft\": 3600 "
+        "}";
+
+    // Test invalid parameter values and missing parameters.
+    testInvalidElement<Lease4>(json, "client-id", std::string("rock"), false);
+    testInvalidElement<Lease4>(json, "cltt", std::string("xyz"));
+    testInvalidElement<Lease4>(json, "cltt", -1, false);
+    testInvalidElement<Lease4>(json, "fqdn-fwd", 123);
+    testInvalidElement<Lease4>(json, "fqdn-rev", std::string("foo"));
+    testInvalidElement<Lease4, bool>(json, "hostname", true);
+    testInvalidElement<Lease4>(json, "hw-address", "01::00::");
+    testInvalidElement<Lease4>(json, "hw-address", 1234, false);
+    testInvalidElement<Lease4, long int>(json, "ip-address", 0xFF000201);
+    testInvalidElement<Lease4>(json, "ip-address", "2001:db8:1::1", false);
+    testInvalidElement<Lease4>(json, "state", std::string("xyz"));
+    testInvalidElement<Lease4>(json, "state", 1234, false);
+    testInvalidElement<Lease4>(json, "subnet-id", std::string("xyz"));
+    testInvalidElement<Lease4>(json, "subnet-id", -5, false);
+    testInvalidElement<Lease4>(json, "valid-lft", std::string("xyz"));
+    testInvalidElement<Lease4>(json, "valid-lft", -3, false);
 }
 
 // Verify that decline() method properly clears up specific fields.
@@ -1011,6 +1124,144 @@ TEST(Lease6Test, toElementPrefix) {
     lease.hwaddr_.reset();
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
+}
+
+// Verify that the IA_NA can be created from JSON.
+TEST(Lease6Test, fromElementNA) {
+    std::string json = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"2001:db8::1\","
+        "\"preferred-lft\": 400,"
+        "\"state\": 1,"
+        "\"subnet-id\": 5678,"
+        "\"type\": \"IA_NA\","
+        "\"valid-lft\": 800"
+        "}";
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = Lease6::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ("2001:db8::1", lease->addr_.toText());
+    EXPECT_EQ(5678, static_cast<uint32_t>(lease->subnet_id_));
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
+    EXPECT_EQ(12345678, lease->cltt_);
+    EXPECT_EQ(800, lease->valid_lft_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+    EXPECT_EQ("urania.example.org", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+
+    // IPv6 specific properties.
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(123456, lease->iaid_);
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
+    EXPECT_EQ(400, lease->preferred_lft_);
+}
+
+// Verify that the IA_NA can be created from JSON.
+TEST(Lease6Test, fromElementPD) {
+    std::string json = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"3000::\","
+        "\"preferred-lft\": 400,"
+        "\"prefix-len\": 32,"
+        "\"state\": 0,"
+        "\"subnet-id\": 1234,"
+        "\"type\": \"IA_PD\","
+        "\"valid-lft\": 600"
+        "}";
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = Lease6::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ("3000::", lease->addr_.toText());
+    EXPECT_EQ(1234, static_cast<uint32_t>(lease->subnet_id_));
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
+    EXPECT_EQ(12345678, lease->cltt_);
+    EXPECT_EQ(600, lease->valid_lft_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+    EXPECT_EQ("urania.example.org", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_DEFAULT , lease->state_);
+
+    // IPv6 specific properties.
+    EXPECT_EQ(Lease::TYPE_PD, lease->type_);
+    EXPECT_EQ(32, static_cast<int>(lease->prefixlen_));
+    EXPECT_EQ(123456, lease->iaid_);
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
+    EXPECT_EQ(400, lease->preferred_lft_);
+}
+
+// Test that specifying invalid values for a lease or not specifying
+// mandatory lease parameters causes an error while parsing the lease.
+TEST(Lease6Test, fromElementInvalidValues) {
+    // Create valid configuration. We use it as a base from which we will
+    // be removing some of the parameters and some values will be selectively
+    // modified.
+    std::string json = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.example.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"3000::\","
+        "\"preferred-lft\": 400,"
+        "\"prefix-len\": 32,"
+        "\"state\": 0,"
+        "\"subnet-id\": 1234,"
+        "\"type\": \"IA_PD\","
+        "\"valid-lft\": 600"
+        "}";
+
+    // Test invalid parameter values and missing parameters.
+    testInvalidElement<Lease6>(json, "cltt", std::string("xyz"));
+    testInvalidElement<Lease6>(json, "cltt", -1, false);
+    testInvalidElement<Lease6>(json, "duid", "01::00::");
+    testInvalidElement<Lease6>(json, "duid", 1234, false);
+    testInvalidElement<Lease6>(json, "fqdn-fwd", 123);
+    testInvalidElement<Lease6>(json, "fqdn-rev", std::string("foo"));
+    testInvalidElement<Lease6, bool>(json, "hostname", true);
+    testInvalidElement<Lease6>(json, "hw-address", "01::00::", false);
+    testInvalidElement<Lease6>(json, "hw-address", 1234, false);
+    testInvalidElement<Lease6>(json, "iaid", std::string("1234"));
+    testInvalidElement<Lease6>(json, "iaid", -1);
+    testInvalidElement<Lease6, long int>(json, "ip-address", 0xFF000201);
+    testInvalidElement<Lease6>(json, "ip-address", "192.0.2.0", false);
+    testInvalidElement<Lease6>(json, "preferred-lft", std::string("1234"));
+    testInvalidElement<Lease6>(json, "preferred-lft", -1, false);
+    testInvalidElement<Lease6>(json, "prefix-len", std::string("1234"));
+    testInvalidElement<Lease6>(json, "prefix-len", 130);
+    testInvalidElement<Lease6>(json, "state", std::string("xyz"));
+    testInvalidElement<Lease6>(json, "state", 1234, false);
+    testInvalidElement<Lease6>(json, "subnet-id", std::string("xyz"));
+    testInvalidElement<Lease6>(json, "subnet-id", -5, false);
+    testInvalidElement<Lease6>(json, "type", std::string("IA_XY"));
+    testInvalidElement<Lease6>(json, "type", -3, false);
+    testInvalidElement<Lease6>(json, "valid-lft", std::string("xyz"));
+    testInvalidElement<Lease6>(json, "valid-lft", -3, false);
 }
 
 // Verify that the lease states are correctly returned in the textual format.

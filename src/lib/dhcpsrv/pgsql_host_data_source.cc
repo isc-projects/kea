@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -417,7 +417,6 @@ protected:
     /// Hosts table.  This is used to retain scope.
     HostPtr host_;
 };
-
 
 /// @brief Extends base exchange class with ability to retrieve DHCP options
 /// from the 'dhcp4_options' and 'dhcp6_options' tables.
@@ -1009,7 +1008,6 @@ private:
 
     /// @brief Reservation id for last processed row.
     uint64_t most_recent_reservation_id_;
-
 };
 
 /// @brief This class is used for storing IPv6 reservations in a PgSQL database.
@@ -1240,7 +1238,6 @@ private:
 
 } // end of anonymous namespace
 
-
 namespace isc {
 namespace dhcp {
 
@@ -1284,7 +1281,8 @@ public:
     ///
     /// This constructor opens database connection and initializes prepared
     /// statements used in the queries.
-    PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters);
+    PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters,
+                            DatabaseConnection::DbLostCallback db_lost_callback);
 
     /// @brief Destructor.
     ~PgSqlHostDataSourceImpl();
@@ -1699,14 +1697,15 @@ TaggedStatementArray tagged_statements = { {
 }; // end anonymous namespace
 
 PgSqlHostDataSourceImpl::
-PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
+PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters,
+                        DatabaseConnection::DbLostCallback db_lost_callback)
     : host_exchange_(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY)),
       host_ipv6_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY)),
       host_ipv46_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new PgSqlIPv6ReservationExchange()),
       host_option_exchange_(new PgSqlOptionExchange()),
-      conn_(parameters),
+      conn_(parameters, db_lost_callback),
       is_readonly_(false) {
 
     // Open the database.
@@ -1762,7 +1761,6 @@ PgSqlHostDataSourceImpl::addStatement(StatementIndex stindex,
     }
 
     return (last_id);
-
 }
 
 bool
@@ -1921,13 +1919,12 @@ PgSqlHostDataSourceImpl::checkReadOnly() const {
     }
 }
 
-
 /*********** PgSqlHostDataSource *********************/
 
-
 PgSqlHostDataSource::
-PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters)
-    : impl_(new PgSqlHostDataSourceImpl(parameters)) {
+PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters,
+                    DatabaseConnection::DbLostCallback db_lost_callback)
+    : impl_(new PgSqlHostDataSourceImpl(parameters, db_lost_callback)) {
 }
 
 PgSqlHostDataSource::~PgSqlHostDataSource() {
@@ -2020,7 +2017,6 @@ PgSqlHostDataSource::del4(const SubnetID& subnet_id,
 
     return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
                                 bind_array));
-
 }
 
 bool
@@ -2041,7 +2037,6 @@ PgSqlHostDataSource::del6(const SubnetID& subnet_id,
 
     return (impl_->delStatement(PgSqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
                                 bind_array));
-
 }
 
 ConstHostCollection
@@ -2286,7 +2281,6 @@ PgSqlHostDataSource::commit() {
     impl_->checkReadOnly();
     impl_->conn_.commit();
 }
-
 
 void
 PgSqlHostDataSource::rollback() {

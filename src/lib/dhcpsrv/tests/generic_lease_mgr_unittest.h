@@ -15,7 +15,6 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-
 /// @brief typedefs to simplify lease statistic testing
 typedef std::map<std::string, int64_t> StatValMap;
 typedef std::pair<std::string, int64_t> StatValPair;
@@ -27,12 +26,8 @@ typedef std::vector<StatValMap> StatValMapList;
 /// All concrete LeaseMgr test classes should be derived from it.
 class GenericLeaseMgrTest : public ::testing::Test {
 public:
-
     /// @brief Universe (V4 or V6).
-    enum Universe {
-        V4,
-        V6
-    };
+    enum Universe { V4, V6 };
 
     /// @brief Default constructor.
     GenericLeaseMgrTest();

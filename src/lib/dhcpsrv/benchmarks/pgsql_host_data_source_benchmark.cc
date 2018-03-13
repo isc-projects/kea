@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -29,8 +30,13 @@ using namespace std;
 
 namespace {
 
+/// @brief This is a fixture class used for benchmarking PostgreSQL host backend
 class PgSqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
 public:
+
+    /// @brief Setup routine.
+    ///
+    /// It cleans up schema and recreates tables, then instantiates HostMgr
     void SetUp(::benchmark::State const&) override {
         destroyPgSQLSchema(false);
         createPgSQLSchema(false);
@@ -44,6 +50,7 @@ public:
         hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
     }
 
+    /// @brief Cleans up after the test.
     void TearDown(::benchmark::State const&) override {
         try {
             hdsptr_->rollback();
@@ -57,6 +64,8 @@ public:
     }
 };
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts insertion.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, insertHosts)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -65,6 +74,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, insertHosts)(benchmark::State& 
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts update.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, updateHosts)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -73,6 +84,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, updateHosts)(benchmark::State& 
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by getAll(hw-addr, duid) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllByHWAddrDuid)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -81,6 +94,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllByHWAddrDuid)(benchmark::
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -89,6 +104,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll)(benchmark::State& state
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by getAll(v4-reservation) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllv4Resv)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -97,6 +114,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllv4Resv)(benchmark::State&
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get4(subnet-id, hw-addr, duid) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -105,6 +124,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)(benchma
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get4(identifier-type, identifier, subnet-id) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4IdentifierSubnetId)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -113,6 +134,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4IdentifierSubnetId)(benchma
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get4(subnet-id, v4-reservation) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -121,6 +144,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)(benchmark:
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get6(subnet-id, duid, hw-addr) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -129,6 +154,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)(benchma
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get6(subnet-id, identifier-type, identifier) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6IdentifierSubnetId)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -137,6 +164,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6IdentifierSubnetId)(benchma
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get6(subnet-id, ip-address) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdAddr)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {
@@ -145,6 +174,8 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdAddr)(benchmark::St
     }
 }
 
+/// Defines steps necessary for conducting a benchmark that measures
+/// hosts retrieval by get6(ip-prefix, prefix-len) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6Prefix)(benchmark::State& state) {
     const size_t host_count = state.range(0);
     while (state.KeepRunning()) {

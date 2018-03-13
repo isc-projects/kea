@@ -83,6 +83,8 @@ using namespace std;
   CONNECT_TIMEOUT "connect-timeout"
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
+  MAX_RECONNECT_TRIES "max-reconnect-tries"
+  RECONNECT_WAIT_TIME "reconnect-wait-time"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -583,6 +585,8 @@ database_map_param: database_type
                   | readonly
                   | connect_timeout
                   | contact_points
+                  | max_reconnect_tries
+                  | reconnect_wait_time
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -673,6 +677,15 @@ keyspace: KEYSPACE {
     ctx.leave();
 };
 
+max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reconnect-tries", n);
+};
+
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
+};
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
