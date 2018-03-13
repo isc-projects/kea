@@ -114,7 +114,7 @@ struct LeaseStatsRow {
 
         if (subnet_id_ == rhs.subnet_id_ &&
             lease_type_ == rhs.lease_type_ &&
-            lease_state_ < rhs.lease_state_) {      
+            lease_state_ < rhs.lease_state_) {
                 return (true);
         }
 
@@ -165,6 +165,9 @@ typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 
 /// @brief Defines a pointer to a LeaseStatsRow.
 typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
+
+/// @brief Collection of the @c LeaseStatsRow objects.
+typedef std::vector<LeaseStatsRowPtr> LeaseStatsCollection;
 
 /// @brief Abstract Lease Manager
 ///

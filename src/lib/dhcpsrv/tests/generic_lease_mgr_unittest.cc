@@ -779,7 +779,6 @@ GenericLeaseMgrTest::testBasicLease4() {
     detailCompareLease(leases[3], l_returned);
 }
 
-
 void
 GenericLeaseMgrTest::testBasicLease6() {
     // Get the leases to be used for the test.
@@ -1315,7 +1314,6 @@ GenericLeaseMgrTest::testGetLeases6DuidSize() {
     // Don't bother to check DUIDs longer than the maximum - these cannot be
     // constructed, and that limitation is tested in the DUID/Client ID unit
     // tests.
-
 }
 
 void
@@ -1841,6 +1839,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
         int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1855,7 +1854,6 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
-
         } else {
             // Make sure remaining leases remain unexpired.
             leases[i]->cltt_ = current_time + 100;
@@ -1873,6 +1871,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     for (Lease6Collection::iterator lease = expired_leases.begin();
          lease != expired_leases.end(); ++lease) {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1892,6 +1891,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     for (Lease6Collection::iterator lease = expired_leases.begin();
          lease != expired_leases.end(); ++lease) {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1978,9 +1978,8 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
                 " deleted: " << leases[i]->toText();
         }
     }
-
-    // Check that the number of leases deleted is correct.
-    EXPECT_EQ(deleted_num, should_delete_num);
+    // Check that the number of deleted leases is correct.
+    EXPECT_EQ(should_delete_num, deleted_num);
 
     // Make sure we can make another attempt, when there are no more leases
     // to be deleted.

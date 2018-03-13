@@ -221,7 +221,7 @@ public:
     }
 
     // This is the CQL implementation for
-    // GenericLeaseMgrTest::testGetExpiredLeases4().
+    // GenericLeaseMgrTest::testGetExpiredLeases6().
     // The GenericLeaseMgrTest implementation checks for the order of expired
     // leases to be from the most expired to the least expired. Cassandra
     // doesn't support ORDER BY without imposing a EQ / IN restriction on the
@@ -283,8 +283,7 @@ public:
         }
 
         // Retrieve expired leases again. The limit of 0 means return all
-        // expired
-        // leases.
+        // expired leases.
         ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
 
         // The same leases should be returned.
@@ -316,7 +315,9 @@ public:
 
         // This the returned leases should exclude reclaimed ones. So the number
         // of returned leases should be roughly half of the expired leases.
-        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0u));
+        ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2u),
+                  expired_leases.size());
 
         // Make sure that returned leases are those that are not reclaimed, i.e.
         // those that have even index.
@@ -751,14 +752,14 @@ TEST_F(CqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 /// @todo: uncomment this once lease wipe is implemented
 /// for Cassandra (see #5485)
 TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 /// @todo: uncomment this once lease wipe is implemented
 /// for Cassandra (see #5485)
 TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {

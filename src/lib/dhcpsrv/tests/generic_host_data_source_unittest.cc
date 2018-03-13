@@ -288,7 +288,8 @@ GenericHostDataSourceTest::testMaxSubnetId4() {
     EXPECT_FALSE(host_by_id);
 }
 
-void GenericHostDataSourceTest::testMaxSubnetId6() {
+void
+GenericHostDataSourceTest::testMaxSubnetId6() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
