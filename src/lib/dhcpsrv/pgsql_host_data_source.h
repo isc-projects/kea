@@ -61,7 +61,7 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters,
-                        DatabaseConnection::DbLostCallback db_lost_callback = NULL); 
+                        DatabaseConnection::DbLostCallback db_lost_callback = 0);
 
     /// @brief Virtual destructor.
     /// Frees database resources and closes the database connection through
