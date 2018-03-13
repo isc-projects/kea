@@ -27,7 +27,7 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
-/// @brief Base fixture class for benchmarking host bakcends.
+/// @brief Base fixture class for benchmarking host backends.
 class GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
 public:
 
@@ -61,7 +61,7 @@ public:
                                        const uint16_t option_type,
                                        const bool persist) const;
 
-    /// @brief Creates an option of specified type and avalue
+    /// @brief Creates an option of specified type and value
     ///
     /// @tparam OptionType Option class to be instantiated
     /// @tparam DataType type of parameter to be passed to OptionType constructor
@@ -69,6 +69,7 @@ public:
     /// @param option_type code of the option
     /// @param persist whether the option should always be included (yes) or not (no)
     /// @param formatted whether the value passed to description should be converted to text
+    /// @param value option value
     /// @return the option created wrapped in an option descriptor structure
     template <typename OptionType, typename DataType>
     OptionDescriptor createOption(const Option::Universe& universe,
@@ -91,6 +92,7 @@ public:
     ///
     /// @tparam OptionType specifies a class to be instantiated
     /// @param option_type code of the option
+    /// @param persist whether the option should always be included (yes) or not (no)
     /// @param formatted whether the value passed to description should be converted to text
     /// @param address1 first address to be used (optional)
     /// @param address2 second address to be used (optional)
@@ -144,7 +146,7 @@ public:
     /// @param persist whether the option should always be included
     /// @param formatted whether the value passed to description should be
     ///        converted to text
-    /// @param vendor_it 32-unsigned bit enterprise-id
+    /// @param vendor_id 32-unsigned bit enterprise-id
     /// @return the option created wrapped in an option descriptor structure
     OptionDescriptor createVendorOption(const Option::Universe& universe,
                                         const bool persist,
@@ -174,7 +176,7 @@ public:
     /// @brief Creates specified number of hosts and stores them in hosts_
     ///
     /// @param host_count number of hosts to be created
-    void prepareHosts(size_t const& lease_count);
+    void prepareHosts(size_t const& host_count);
 
     /// @brief Inserts all hosts stored in hosts_ into the benchmarked host backend
     void insertHosts();

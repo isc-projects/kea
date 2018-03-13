@@ -23,6 +23,8 @@ DROP TABLE IF EXISTS schema_version;
 DROP TABLE IF EXISTS host_reservations;
 DROP TABLE IF EXISTS dhcp4_options;
 DROP TABLE IF EXISTS dhcp6_options;
+DROP TABLE IF EXISTS host_identifier_type;
+DROP TABLE IF EXISTS dhcp_option_scope;
 
 DROP INDEX IF EXISTS lease4index1;
 DROP INDEX IF EXISTS lease4index2;

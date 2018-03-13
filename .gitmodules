@@ -1,0 +1,3 @@
+[submodule "premium"]
+	path = premium
+	url = ssh://fdupont@repo.isc.org/proj/git/prod/kea-premium.git
