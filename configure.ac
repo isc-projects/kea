@@ -996,6 +996,7 @@ AC_SUBST(GTEST_SOURCE)
 #
 # Check availability of benchmark.
 #
+BENCHMARK_CPPFLAGS=
 BENCHMARK_LDFLAGS=
 BENCHMARK_LDADD=
 DISTCHECK_BENCHMARK_CONFIGURE_FLAG=
@@ -1031,7 +1032,8 @@ if test "x$enable_benchmark" = "xyes" ; then
                 [AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])])
         fi
         have_benchmark_source=yes
-        BENCHMARK_LDADD="\$(top_builddir)/ext/benchmark/libbenchmark.a"
+        BENCHMARK_CPPFLAGS=`cat \${BENCHMARK_SOURCE}/build/src/CMakeFiles/benchmark.dir/flags.make | grep CXX_DEFINES | cut -d "=" -f 2`
+        BENCHMARK_LDADD="\$(BENCHMARK_SOURCE)/build/src/libbenchmark.a"
         DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark-source=$BENCHMARK_SOURCE"
         BENCHMARK_INCLUDES="-I$BENCHMARK_SOURCE \
                             -I$BENCHMARK_SOURCE/src \
@@ -1043,42 +1045,24 @@ if test "x$enable_benchmark" = "xyes" ; then
     if test "$benchmark_path" != "no" ; then
         if test "$benchmark_path" != "yes"; then
             BENCHMARK_PATHS=$benchmark_path
-            if test -x "${benchmark_path}/bin/benchmark-config" ; then
-                BENCHMARK_CONFIG="${benchmark_path}/bin/benchmark-config"
-            fi
-        else
-            AC_PATH_PROG([BENCHMARK_CONFIG], [benchmark-config])
         fi
-        if test -x "${BENCHMARK_CONFIG}" ; then :
-            # using cppflags instead of cxxflags
-            BENCHMARK_INCLUDES=$(${BENCHMARK_CONFIG} --cppflags)
-            BENCHMARK_LDFLAGS=$(${BENCHMARK_CONFIG} --ldflags)
-            BENCHMARK_LDADD=$(${BENCHMARK_CONFIG} --libs)
-            BENCHMARK_VERSION=$(${BENCHMARK_CONFIG} --version)
-            BENCHMARK_FOUND="true"
-        else
-            AC_MSG_WARN([Unable to locate Google Benchmark benchmark-config.])
-            if test -z "${BENCHMARK_PATHS}" ; then
-                BENCHMARK_PATHS="/usr /usr/local"
-            fi
-            BENCHMARK_FOUND="false"
+        if test -z "${BENCHMARK_PATHS}" ; then
+            BENCHMARK_PATHS="/usr /usr/local"
         fi
-        if test "${BENCHMARK_FOUND}" != "true"; then
-            BENCHMARK_FOUND="false"
-            for dir in ${BENCHMARK_PATHS}; do
-                if test -f "$dir/include/benchmark/benchmark.h"; then
-                    if ! test -f "$dir/lib/libbenchmark.a"; then
-                        AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
-                        continue
-                    fi
-                    BENCHMARK_INCLUDES="-I$dir/include"
-                    BENCHMARK_LDFLAGS="-L$dir/lib"
-                    BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
-                    BENCHMARK_FOUND="true"
-                    break
+        BENCHMARK_FOUND="false"
+        for dir in ${BENCHMARK_PATHS}; do
+            if test -f "$dir/include/benchmark/benchmark.h"; then
+                if ! test -f "$dir/lib/libbenchmark.a"; then
+                    AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
+                    continue
                 fi
-            done
-        fi
+                BENCHMARK_INCLUDES="-I$dir/include"
+                BENCHMARK_LDFLAGS="-L$dir/lib"
+                BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
+                BENCHMARK_FOUND="true"
+                break
+            fi
+        done
         if test "${BENCHMARK_FOUND}" != "true"; then
             AC_MSG_ERROR([Cannot find benchmark in: $BENCHMARK_PATHS])
         fi
@@ -1088,6 +1072,7 @@ fi
 AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
 AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
 AC_SUBST(DISTCHECK_BENCHMARK_CONFIGURE_FLAG)
+AC_SUBST(BENCHMARK_CPPFLAGS)
 AC_SUBST(BENCHMARK_INCLUDES)
 AC_SUBST(BENCHMARK_LDFLAGS)
 AC_SUBST(BENCHMARK_LDADD)
@@ -1673,6 +1658,7 @@ cat >> config.report << END
 
 Google Benchmark:
   BENCHMARK_VERSION:   ${BENCHMARK_VERSION}
+  BENCHMARK_CPPFLAGS:  ${BENCHMARK_CPPFLAGS}
   BENCHMARK_INCLUDES:  ${BENCHMARK_INCLUDES}
   BENCHMARK_LDFLAGS:   ${BENCHMARK_LDFLAGS}
   BENCHMARK_LDADD:     ${BENCHMARK_LDADD}

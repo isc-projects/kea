@@ -114,10 +114,13 @@ PgSqlTransaction::commit() {
 PgSqlConnection::~PgSqlConnection() {
     if (conn_) {
         // Deallocate the prepared queries.
-        PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
-        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-            // Highly unlikely but we'll log it and go on.
-            DB_LOG_ERROR(PGSQL_DEALLOC_ERROR).arg(PQerrorMessage(conn_));
+        if (PQstatus(conn_) == CONNECTION_OK) {
+            PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
+            if(PQresultStatus(r) != PGRES_COMMAND_OK) {
+                // Highly unlikely but we'll log it and go on.
+                DB_LOG_ERROR(PGSQL_DEALLOC_ERROR)
+                    .arg(PQerrorMessage(conn_));
+            }
         }
     }
 }
@@ -289,9 +292,10 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
     if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
         // We're testing the first two chars of SQLSTATE, as this is the
         // error class. Note, there is a severity field, but it can be
-        // misleadingly returned as fatal.
+        // misleadingly returned as fatal. However, a loss of connectivity
+        // can lead to a NULL sqlstate with a status of PGRES_FATAL_ERROR.
         const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-        if ((sqlstate != NULL) &&
+        if  ((sqlstate == NULL) ||
             ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
              (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
              (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded
@@ -300,14 +304,24 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
             DB_LOG_ERROR(PGSQL_FATAL_ERROR)
                 .arg(statement.name)
                 .arg(PQerrorMessage(conn_))
-                .arg(sqlstate);
-            exit (-1);
+                .arg(sqlstate ? sqlstate : "<sqlstate null>");
+            // If there's no lost db callback, then exit
+            if (!invokeDbLostCallback()) {
+                exit (-1);
+            }
+
+            // We still need to throw so caller can error out of the current
+            // processing.
+            isc_throw(DbOperationError,
+                      "fatal database errror or connectivity lost");
         }
 
+        // Apparently it wasn't fatal, so we throw with a helpful message.
         const char* error_message = PQerrorMessage(conn_);
         isc_throw(DbOperationError, "Statement exec failed:" << " for: "
-                  << statement.name << ", reason: "
-                  << error_message);
+                << statement.name << ", status: " << s
+                << "sqlstate:[ " << (sqlstate ? sqlstate : "<null>")
+                <<  "], reason: " << error_message);
     }
 }
 

@@ -77,9 +77,8 @@ public:
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
-    /// close the database.  Then reopen it and delete everything created by
-    /// the test.
+    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
+    /// the database.  Then reopen it and delete everything created by the test.
     virtual ~PgSqlHostDataSourceTest() {
         destroyTest();
     }
@@ -89,8 +88,8 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases
-    /// share the same database.
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
+    /// the same database.
     void reopen(Universe) {
         HostDataSourceFactory::destroy();
         HostDataSourceFactory::create(validPgSQLConnectionString());
@@ -121,20 +120,21 @@ public:
         }
 
         int numrows = PQntuples(r);
+
         return (numrows);
     }
 
-    /// @brief Returns number of IPv4 options in the DB table.
+    /// @brief Returns number of IPv4 options currently stored in DB.
     virtual int countDBOptions4() {
         return (countRowsInTable("dhcp4_options"));
     }
 
-    /// @brief Returns number of IPv4 options in the DB table.
+    /// @brief Returns number of IPv6 options currently stored in DB.
     virtual int countDBOptions6() {
         return (countRowsInTable("dhcp6_options"));
     }
 
-    /// @brief Returns number of IPv6 reservations in the DB table.
+    /// @brief Returns number of IPv6 reservations currently stored in DB.
     virtual int countDBReservations6() {
         return (countRowsInTable("ipv6_reservations"));
     }
@@ -182,12 +182,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
     EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
 
     // Check that wrong specification of backend throws an exception.
-    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
@@ -225,6 +225,35 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
 }
 
+/// @brief Flag used to detect calls to db_lost_callback function
+bool callback_called = false;
+
+/// @brief Callback function used in open database testing
+bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
+    return (callback_called = true);
+}
+
+/// @brief Make sure open failures do NOT invoke db lost callback
+/// The db lost callback should only be invoked after succesfully
+/// opening the DB and then subsequently losing it. Failing to
+/// open should be handled directly by the application layer.
+/// There is simply no good way to break the connection in a
+/// unit test environment.  So testing the callback invocation
+/// in a unit test is next to impossible. That has to be done
+/// as a system test.
+TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
+    // Schema needs to be created for the test to work.
+    destroyPgSQLSchema();
+    createPgSQLSchema();
+
+    callback_called = false;
+    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD),
+        db_lost_callback), DbOpenError);
+
+    EXPECT_FALSE(callback_called);
+    destroyPgSQLSchema();
+}
 
 // This test verifies that database backend can operate in Read-Only mode.
 TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
@@ -312,8 +341,8 @@ TEST_F(PgSqlHostDataSourceTest, hostnameFQDN100) {
     testHostname("foo.example.org", 100);
 }
 
-// Test verifies if a host without any hostname specified can be stored and
-// later retrieved.
+// Test verifies if a host without any hostname specified can be stored and later
+// retrieved.
 TEST_F(PgSqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
 }
@@ -605,4 +634,4 @@ TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
 
-}; // Of anonymous namespace
+}  // namespace

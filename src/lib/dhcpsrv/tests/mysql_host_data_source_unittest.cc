@@ -77,7 +77,7 @@ public:
 
     /// @brief Destructor
     ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
+    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlHostDataSourceTest() {
         destroyTest();
@@ -110,8 +110,10 @@ public:
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";
+
         MySqlConnection conn(params);
         conn.openDatabase();
+
         int status = mysql_query(conn.mysql_, query.c_str());
         if (status !=0) {
             isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
@@ -129,7 +131,7 @@ public:
         return (countRowsInTable("dhcp4_options"));
     }
 
-    /// @brief Returns number of IPv4 options currently stored in DB.
+    /// @brief Returns number of IPv6 options currently stored in DB.
     virtual int countDBOptions6() {
         return (countRowsInTable("dhcp6_options"));
     }
@@ -182,12 +184,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
     EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
 
     // Check that wrong specification of backend throws an exception.
-    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
@@ -227,8 +229,6 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     // Tidy up after the test
     destroyMySQLSchema();
 }
-
-
 
 /// @brief Check conversion functions
 ///
@@ -271,6 +271,7 @@ TEST(MySqlConnection, checkTimeConversion) {
     EXPECT_EQ(cltt, converted_cltt);
 }
 
+// This test verifies that database backend can operate in Read-Only mode.
 TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
     testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
@@ -576,6 +577,7 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     params["password"] = "keatest";
     MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
+
     int status = mysql_query(conn.mysql_,
                              "DROP TABLE IF EXISTS ipv6_reservations");
     ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
@@ -648,4 +650,4 @@ TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
 
-}; // Of anonymous namespace
+}  // namespace

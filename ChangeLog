@@ -1,3 +1,32 @@
+1374.	[func]		razvan
+	Cassandra backend improvements: get all IPv4 leases, delete
+	hosts, ability to store fixed DHCPv4 fields (next-server,
+	server-hostname, boot-file-name) and user contexts in host
+	reservations. Also, the ability to store MAC address details
+        in DHCPv6 leases on PostgreSQL has been improved.
+	(Github #70, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
+	(Trac #5506, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
+	(Trac #5507, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
+	(Trac #5508, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
+	(Trac #4530, git 8cd0c1ae416be88baf69c2243e83a429d6d5c965)
+
+1373.	[func]		tmark
+	When encountering errors unpacking vendor specific options,
+	both kea-dhcp4 and kea-dhcp6 will now log the error, skip
+	unpacking any remaining options, and then attempt to process
+	the packet as is.  Prior to this the servers would log the issue
+	and then drop the packet.
+	(Trac #5551,	git 59ef33ee17672c55cee4ec86ff59737b361a3c21)
+
+1372.	[func]		tmark
+	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
+	reconnect to Postgresql backends if connectivity is lost.
+	(Trac #5477, git 8e62a058382b2245d418cfbf829776934c638e5e)
+
+1371.	[func]		marcin
+	Implemented leases parsing from JSON in libkea-dhcpsrv.
+	(Trac #5466, git 84c2a2084b0fb7c086fc6b9502f7ff58b708174e)
+
 1370.	[func]		marcin
 	Implemented new hook points "dhcp4_srv_configured" and
 	"leases4_committed" in the DHCPv4 server. The latter supports

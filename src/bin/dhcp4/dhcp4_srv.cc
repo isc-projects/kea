@@ -914,6 +914,12 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
             query->unpack();
+        } catch (const SkipRemainingOptionsError& e) {
+            // An option failed to unpack but we are to attempt to process it
+            // anyway.  Log it and let's hope for the best.
+            LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_PACKET_OPTIONS_SKIPPED)
+                .arg(e.what());
         } catch (const std::exception& e) {
             // Failed to parse the packet.
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
@@ -3319,7 +3325,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         opt = def->optionFactory(Option::V4, code, buf.cbegin(), buf.cend());
         query->addOption(opt);
     }
-}                          
+}
 
 void
 Dhcpv4Srv::startD2() {

@@ -8,6 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
@@ -16,6 +17,12 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <utility>
+
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -23,6 +30,7 @@ using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
+
 
 /// @brief Test fixture class for testing PostgreSQL Lease Manager
 ///
@@ -83,7 +91,7 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for Postgres backend as the v4 and v6 leases share
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
     /// the same database.
     void reopen(Universe) {
         LeaseMgrFactory::destroy();
@@ -178,9 +186,9 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Check for invalid timeouts
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-                     PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
-                     VALID_PASSWORD, INVALID_TIMEOUT_1)),
-                 DbInvalidTimeout);
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        DbInvalidTimeout);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
                      PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
                      VALID_PASSWORD, INVALID_TIMEOUT_2)),
@@ -194,6 +202,37 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Tidy up after the test
     destroyPgSQLSchema(true);
+}
+
+/// @brief Flag used to detect calls to db_lost_callback function
+bool callback_called = false;
+
+/// @brief Callback function used in open database testing
+bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
+    return (callback_called = true);
+}
+
+/// @brief Make sure open failures do NOT invoke db lost callback
+/// The db lost callback should only be invoked after succesfully
+/// opening the DB and then subsequently losing it. Failing to
+/// open should be handled directly by the application layer.
+/// There is simply no good way to break the connection in a
+/// unit test environment.  So testing the callback invocation
+/// in a unit test is next to impossible. That has to be done
+/// as a system test.
+TEST(PgSqlOpenTest, NoCallbackOnOpenFail) {
+    // Schema needs to be created for the test to work.
+    destroyPgSQLSchema();
+    createPgSQLSchema();
+
+    callback_called = false;
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD),
+        db_lost_callback),
+        DbOpenError);
+    EXPECT_FALSE(callback_called);
+
+    destroyPgSQLSchema();
 }
 
 /// @brief Check the getType() method
@@ -316,8 +355,7 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4) {
 
 /// @brief Basic Lease4 Checks
 ///
-/// Checks that the addLease, getLease4(by address),
-/// getLease4(hwaddr,subnet_id),
+/// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
 /// updateLease4() and deleteLease can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
@@ -422,8 +460,37 @@ TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
 }
 
+/// @brief DHCPv4 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(PgSqlLeaseMgrTest, testRecreateLease4) {
+    testRecreateLease4();
+}
+
+/// @brief DHCPv6 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(PgSqlLeaseMgrTest, testRecreateLease6) {
+    testRecreateLease6();
+}
+
+/// @brief Checks that null DUID is not allowed.
 TEST_F(PgSqlLeaseMgrTest, nullDuid) {
     testNullDuid();
+}
+
+/// @brief Tests whether Postgres can store and retrieve hardware addresses
+TEST_F(PgSqlLeaseMgrTest, testLease6Mac) {
+    testLease6MAC();
+}
+
+/// @brief Tests whether Postgres can store and retrieve hardware addresses
+TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSource) {
+    testLease6HWTypeAndSource();
 }
 
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
@@ -442,24 +509,24 @@ TEST_F(PgSqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
     testDeleteExpiredReclaimedLeases6();
 }
 
-// Verifies that IPv4 lease statistics can be recalculated.
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// Tests that leases from specific subnet can be removed.
+// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// Tests that leases from specific subnet can be removed.
+// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
-}; // namespace
+}  // namespace
