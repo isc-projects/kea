@@ -205,18 +205,20 @@ public:
     static constexpr StatementTag DELETE_LEASE4 = "DELETE_LEASE4";
     // Delete expired lease4s in certain state
     static constexpr StatementTag GET_LEASE4_EXPIRE = "GET_LEASE4_EXPIRE";
+    // Get lease4
+    static constexpr StatementTag GET_LEASE4 = "GET_LEASE4";
     // Get lease4 by address
     static constexpr StatementTag GET_LEASE4_ADDR = "GET_LEASE4_ADDR";
     // Get lease4 by client ID
     static constexpr StatementTag GET_LEASE4_CLIENTID = "GET_LEASE4_CLIENTID";
     // Get lease4 by client ID & subnet ID
-    static constexpr StatementTag GET_LEASE4_CLIENTID_SUBID =
-        "GET_LEASE4_CLIENTID_SUBID";
+    static constexpr StatementTag GET_LEASE4_CLIENTID_SUBID = "GET_LEASE4_CLIENTID_SUBID";
     // Get lease4 by HW address
     static constexpr StatementTag GET_LEASE4_HWADDR = "GET_LEASE4_HWADDR";
     // Get lease4 by HW address & subnet ID
-    static constexpr StatementTag GET_LEASE4_HWADDR_SUBID =
-        "GET_LEASE4_HWADDR_SUBID";
+    static constexpr StatementTag GET_LEASE4_HWADDR_SUBID = "GET_LEASE4_HWADDR_SUBID";
+    // Get lease4 by subnet ID
+    static constexpr StatementTag GET_LEASE4_SUBID = "GET_LEASE4_SUBID";
     /// @}
 
 private:
@@ -232,11 +234,13 @@ constexpr StatementTag CqlLease4Exchange::INSERT_LEASE4;
 constexpr StatementTag CqlLease4Exchange::UPDATE_LEASE4;
 constexpr StatementTag CqlLease4Exchange::DELETE_LEASE4;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_EXPIRE;
+constexpr StatementTag CqlLease4Exchange::GET_LEASE4;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_ADDR;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_CLIENTID;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_CLIENTID_SUBID;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR_SUBID;
+constexpr StatementTag CqlLease4Exchange::GET_LEASE4_SUBID;
 
 StatementMap CqlLease4Exchange::tagged_statements_{
 
@@ -285,6 +289,14 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "AND expire < ? "
       "LIMIT ? "
       "ALLOW FILTERING "}},
+
+     // Gets an IPv4 lease(s)
+     {GET_LEASE4,
+      {GET_LEASE4,
+       "SELECT "
+       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
+       "fqdn_fwd, fqdn_rev, hostname, state "
+       "FROM lease4 "}},
 
     // Gets an IPv4 lease with specified IPv4 address
     {GET_LEASE4_ADDR,
@@ -337,6 +349,15 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "AND subnet_id = ? "
       "ALLOW FILTERING "}},
 
+     // Gets an IPv4 lease(s) with specified subnet-id
+     {GET_LEASE4_SUBID,
+      {GET_LEASE4_SUBID,
+       "SELECT "
+       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
+       "fqdn_fwd, fqdn_rev, hostname, state "
+       "FROM lease4 "
+       "WHERE subnet_id = ? "
+       "ALLOW FILTERING "}}
 };
 
 CqlLease4Exchange::CqlLease4Exchange(const CqlConnection &connection)
@@ -624,7 +645,6 @@ CqlLease4Exchange::retrieve() {
         time_t cltt = 0;
         CqlExchange::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
 
-        // Recreate the hardware address.
         HWAddrPtr hwaddr(new HWAddr(hwaddr_, HTYPE_ETHER));
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
@@ -1048,8 +1068,7 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
 
         // hwaddr_source: int
         if (lease_->hwaddr_) {
-            hwaddr_source_ =
-                static_cast<cass_int32_t>(lease_->hwaddr_->source_);
+            hwaddr_source_ = static_cast<cass_int32_t>(lease_->hwaddr_->source_);
         } else {
             hwaddr_source_ = 0;
         }
@@ -1181,8 +1200,7 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
 
         // hwaddr_source: int
         if (lease_->hwaddr_) {
-            hwaddr_source_ =
-                static_cast<cass_int32_t>(lease_->hwaddr_->source_);
+            hwaddr_source_ = static_cast<cass_int32_t>(lease_->hwaddr_->source_);
         } else {
             hwaddr_source_ = 0;
         }
@@ -1350,6 +1368,7 @@ CqlLease6Exchange::retrieve() {
         IOAddress addr(address_);
 
         DuidPtr duid(new DUID(duid_));
+
         HWAddrPtr hwaddr;
         if (hwaddr_.size()) {
             hwaddr.reset(new HWAddr(hwaddr_, hwtype_));
@@ -1920,13 +1939,37 @@ CqlLeaseMgr::getLease4(const ClientId &clientid, SubnetID subnet_id) const {
 }
 
 Lease4Collection
-CqlLeaseMgr::getLeases4(SubnetID) const {
-    isc_throw(NotImplemented, "getLeases4(subnet_id) is not implemented");
+CqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SUBID4)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+
+    cass_int32_t subnet_id_data = static_cast<cass_int32_t>(subnet_id);
+    data.add(&subnet_id_data);
+
+    // Get the data.
+    Lease4Collection result;
+    std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
+    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_SUBID, data, result);
+
+    return (result);
 }
 
 Lease4Collection
 CqlLeaseMgr::getLeases4() const {
-    isc_throw(NotImplemented, "getLeases4() is not implemented");
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET4);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+
+    // Get the data.
+    Lease4Collection result;
+    std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
+    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4, data, result);
+
+    return (result);
 }
 
 Lease6Ptr

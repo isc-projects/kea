@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,10 @@ public:
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
     ///
-    /// @throw isc::OutOfRange if provided buffer is shorter than data size.
+    /// @throw isc::SkipRemainingOptionsBuffer if an error is encountered
+    /// unpacking the option.  This exception is thrown to indicate to the
+    /// caller that a: remaining options cannot be parsed and b: the packet
+    /// should be considered for processing anyway.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
 
     /// @brief Sets enterprise identifier

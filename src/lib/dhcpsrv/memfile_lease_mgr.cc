@@ -832,31 +832,6 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
 }
 
 void
-Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
-                                    const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED6)
-        .arg(max_leases);
-
-    // Obtain the index which segragates leases by state and time.
-    const Lease6StorageExpirationIndex& index = storage6_.get<ExpirationIndexTag>();
-
-    // Retrieve leases which are not reclaimed and which haven't expired. The
-    // 'less-than' operator will be used for both components of the index. So,
-    // for the 'state' 'false' is less than 'true'. Also the leases with
-    // expiration time lower than current time will be returned.
-    Lease6StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time(NULL)));
-
-    // Copy only the number of leases indicated by the max_leases parameter.
-    for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
-         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
-                                                 max_leases));
-         ++lease) {
-        expired_leases.push_back(Lease6Ptr(new Lease6(**lease)));
-    }
-}
-
-void
 Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                     const size_t max_leases) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED4)
@@ -878,6 +853,31 @@ Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                                  max_leases));
          ++lease) {
         expired_leases.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
+                                    const size_t max_leases) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_EXPIRED6)
+        .arg(max_leases);
+
+    // Obtain the index which segragates leases by state and time.
+    const Lease6StorageExpirationIndex& index = storage6_.get<ExpirationIndexTag>();
+
+    // Retrieve leases which are not reclaimed and which haven't expired. The
+    // 'less-than' operator will be used for both components of the index. So,
+    // for the 'state' 'false' is less than 'true'. Also the leases with
+    // expiration time lower than current time will be returned.
+    Lease6StorageExpirationIndex::const_iterator ub =
+        index.upper_bound(boost::make_tuple(false, time(NULL)));
+
+    // Copy only the number of leases indicated by the max_leases parameter.
+    for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
+         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
+                                                 max_leases));
+         ++lease) {
+        expired_leases.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 }
 

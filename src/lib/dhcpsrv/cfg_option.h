@@ -64,9 +64,12 @@ public:
     /// @param formatted_value option value in the textual format. Default
     /// value is empty indicating that the value is not set.
     OptionDescriptor(const OptionPtr& opt, bool persist,
-                     const std::string& formatted_value = "")
+                     const std::string& formatted_value = "",
+                     data::ConstElementPtr user_context = data::ConstElementPtr())
         : option_(opt), persistent_(persist),
-          formatted_value_(formatted_value) {};
+          formatted_value_(formatted_value) {
+        setContext(user_context);
+    };
 
     /// @brief Constructor
     ///
@@ -74,6 +77,15 @@ public:
     OptionDescriptor(bool persist)
         : option_(OptionPtr()), persistent_(persist),
           formatted_value_() {};
+
+    /// @brief Constructor.
+    ///
+    /// @param desc descriptor
+    OptionDescriptor(const OptionDescriptor& desc)
+        : option_(desc.option_), persistent_(desc.persistent_),
+          formatted_value_(desc.formatted_value_) {
+        setContext(desc.getContext());
+    };
 
     /// @brief Checks if the one descriptor is equal to another.
     ///

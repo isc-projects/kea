@@ -1922,4 +1922,4 @@ TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
     testWipeLeases6();
 }
 
-}; // end of anonymous namespace
+}  // namespace

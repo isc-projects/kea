@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2514,6 +2514,28 @@ TEST_F(Dhcpv6SrvTest, userContext) {
     ASSERT_TRUE(pools[0]);
     ASSERT_TRUE(pools[0]->getContext());
     EXPECT_EQ("{ \"type\": \"prefixes\" }", pools[0]->getContext()->str());
+}
+
+// Verifies that the server will still process a packet which fails to
+// parse with a SkipRemainingOptions exception
+TEST_F(Dhcpv6SrvTest, truncatedVIVSO) {
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a SOLICIT with a VIVSO whose length is too short
+    Pkt6Ptr sol = PktCaptures::captureSolicitWithTruncatedVIVSO();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Make sure we got an Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
 }
 
 

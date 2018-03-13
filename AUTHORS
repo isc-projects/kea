@@ -109,6 +109,8 @@ We have received the following contributions:
    2018-01: Various changes (github 54)
    2018-02: Support for Google benchmark added (github 36)
    2018-02: exit-wait-time param added to perfdhcp (github 55)
+   2018-03: Cassandra: host delete, fixed DHCPv4 fields, user contexts,
+            Postgres: hwaddress source, type storage (github 70)
 
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac

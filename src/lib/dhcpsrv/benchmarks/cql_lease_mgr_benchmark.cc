@@ -22,20 +22,19 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/cql_schema.h>
 
-using namespace isc::dhcp;
-using namespace isc::dhcp::test;
-using namespace std;
 using namespace isc::dhcp::bench;
+using namespace isc::dhcp::test;
+using namespace isc::dhcp;
+using namespace std;
 
 namespace {
 
 /// @brief This is a fixture class used for benchmarking Cassandra lease backend
 class CqlLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
 public:
-
-    /// @brief Prepares the benchmark to run
+    /// @brief Setup routine.
     ///
-    /// Destroys and then recreates CQL schema, initializes CQL LeaseMgr.
+    /// It cleans up schema and recreates tables, then instantiates LeaseMgr
     void SetUp(::benchmark::State const&) override {
         destroyCqlSchema(false, true);
         createCqlSchema(false, true);
@@ -49,7 +48,7 @@ public:
         lmptr_ = &(LeaseMgrFactory::instance());
     }
 
-    /// @brief Cleans up after the benchmark.
+    /// @brief Cleans up after the test.
     void TearDown(::benchmark::State const&) override {
         try {
             lmptr_->rollback();
@@ -176,7 +175,7 @@ BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark::St
 // Defines a benchmark that measures IPv6 leases retrieval by lease type, duid, iaid
 // and subnet-id.
 BENCHMARK_DEFINE_F(CqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
-    (benchmark::State& state) {
+                  (benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts6(state, lease_count);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,6 +70,8 @@ using namespace std;
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
   CONTACT_POINTS "contact-points"
+  MAX_RECONNECT_TRIES "max-reconnect-tries"
+  RECONNECT_WAIT_TIME "reconnect-wait-time"
   KEYSPACE "keyspace"
 
   PREFERRED_LIFETIME "preferred-lifetime"
@@ -553,6 +555,8 @@ database_map_param: database_type
                   | readonly
                   | connect_timeout
                   | contact_points
+                  | max_reconnect_tries
+                  | reconnect_wait_time
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -633,6 +637,16 @@ contact_points: CONTACT_POINTS {
     ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
+};
+
+max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reconnect-tries", n);
+};
+
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
 keyspace: KEYSPACE {
@@ -1910,7 +1924,7 @@ replace_client_name: REPLACE_CLIENT_NAME {
 
 replace_client_name_value:
     WHEN_PRESENT {
-      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
       }
   | NEVER {
       $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
