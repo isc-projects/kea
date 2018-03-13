@@ -75,7 +75,6 @@ using namespace std;
   TCP_KEEPALIVE "tcp-keepalive"
   CONTACT_POINTS "contact-points"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
-  RECONNECT_WAIT_TIME "reconnect-wait-time"
   KEYSPACE "keyspace"
 
   PREFERRED_LIFETIME "preferred-lifetime"
@@ -668,11 +667,6 @@ contact_points: CONTACT_POINTS {
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
-};
-
-reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
 keyspace: KEYSPACE {
