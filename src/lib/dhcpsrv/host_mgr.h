@@ -73,7 +73,7 @@ public:
     /// @param db_lost_callback function to invoke if connectivity to
     /// the host database is lost.
     static void create(const std::string& access = "",
-                       DatabaseConnection::DbLostCallback db_lost_callback = NULL);
+                       DatabaseConnection::DbLostCallback db_lost_callback = 0);
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///
