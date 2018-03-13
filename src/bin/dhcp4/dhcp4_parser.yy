@@ -89,6 +89,7 @@ using namespace std;
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
   SSL_CERT "ssl-cert"
+  MAX_RECONNECT_TRIES "max-reconnect-tries"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -592,6 +593,8 @@ database_map_param: database_type
                   | request_timeout
                   | tcp_keepalive
                   | contact_points
+                  | max_reconnect_tries
+                  | reconnect_wait_time
                   | keyspace
                   | ssl_cert
                   | protocol
@@ -718,6 +721,11 @@ keyspace: KEYSPACE {
     ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
+};
+
+max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reconnect-tries", n);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {

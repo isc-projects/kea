@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,7 @@ using namespace std;
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
   SSL_CERT "ssl-cert"
+  MAX_RECONNECT_TRIES "max-reconnect-tries"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -562,6 +563,8 @@ database_map_param: database_type
                   | request_timeout
                   | tcp_keepalive
                   | contact_points
+                  | max_reconnect_tries
+                  | reconnect_wait_time
                   | keyspace
                   | ssl_cert
                   | protocol
@@ -688,6 +691,11 @@ keyspace: KEYSPACE {
     ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
+};
+
+max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reconnect-tries", n);
 };
 
 mac_sources: MAC_SOURCES {

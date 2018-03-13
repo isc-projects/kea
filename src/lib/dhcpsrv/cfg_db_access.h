@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,8 @@
 #define CFG_DBACCESS_H
 
 #include <cc/cfg_to_element.h>
+#include <dhcpsrv/database_connection.h>
+
 #include <boost/shared_ptr.hpp>
 #include <string>
 
@@ -62,7 +64,11 @@ public:
 
     /// @brief Creates instance of lease manager and host data source
     /// according to the configuration specified.
-    void createManagers() const;
+    ///
+    /// @param db_lost_callback function to invoke if connectivity to
+    /// either the lease or host managers, once established, is subsequently
+    /// lost.
+    void createManagers(DatabaseConnection::DbLostCallback db_lost_callback = NULL) const;
 
     /// @brief Unparse an access string
     ///
