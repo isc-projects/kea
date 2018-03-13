@@ -37,14 +37,15 @@ HostMgr::getHostMgrPtr() {
 }
 
 void
-HostMgr::create(const std::string& access) {
+HostMgr::create(const std::string& access,
+                DatabaseConnection::DbLostCallback db_lost_callback) {
     getHostMgrPtr().reset(new HostMgr());
 
     if (!access.empty()) {
         // If the user specified parameters, let's pass them to the create
         // method. It will destroy any prior instances and will create
         // the new one.
-        HostDataSourceFactory::create(access);
+        HostDataSourceFactory::create(access, db_lost_callback);
     } else {
         // Ok, no parameters were specified. We should destroy the existing
         // instance.

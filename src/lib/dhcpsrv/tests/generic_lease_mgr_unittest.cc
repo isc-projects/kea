@@ -879,7 +879,7 @@ GenericLeaseMgrTest::testLease6MAC() {
     vector<Lease6Ptr> leases = createLeases6();
 
     HWAddrPtr hwaddr1(new HWAddr(vector<uint8_t>(6, 11), HTYPE_ETHER));
-    HWAddrPtr hwaddr2(new HWAddr(vector<uint8_t>(6, 22), HTYPE_ETHER));
+    HWAddrPtr hwaddr2(new HWAddr(vector<uint8_t>(6, 22), HTYPE_DOCSIS));
 
     leases[1]->hwaddr_ = hwaddr1;     // Add hardware address to leases 1 and 2
     leases[2]->hwaddr_ = hwaddr2;

@@ -1623,9 +1623,9 @@ if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
 Cassandra CQL:
-  CQL_VERSION:                  ${CQL_VERSION}
-  CQL_CPPFLAGS:                 ${CQL_CPPFLAGS}
-  CQL_LIBS:                     ${CQL_LIBS}
+  CQL_VERSION:     ${CQL_VERSION}
+  CQL_CPPFLAGS:    ${CQL_CPPFLAGS}
+  CQL_LIBS:        ${CQL_LIBS}
 END
 else
 cat >> config.report << END
