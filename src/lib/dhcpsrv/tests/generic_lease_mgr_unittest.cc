@@ -1080,7 +1080,6 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     EXPECT_THROW(returned = lmptr_->getLease4(*leases[1]->hwaddr_,
                                               leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
-
 }
 
 void
@@ -1971,6 +1970,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
             ++should_delete_num;
+
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
@@ -2515,7 +2515,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     subnet->addPool(pool);
     cfg->add(subnet);
 
-
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
     // Create the expected stats list.  At this point, the only stat
@@ -2586,7 +2585,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
 
-
 void
 GenericLeaseMgrTest::testRecountLeaseStats6() {
     using namespace stats;
@@ -2623,7 +2621,6 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
-
     // Create the expected stats list.  At this point, the only stat
     // that should be non-zero is total-nas/total-pds.
     for (int i = 0; i < num_subnets; ++i) {
@@ -2636,7 +2633,6 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
-
 
     // Recount stats.  We should have the same results.
     ASSERT_NO_THROW(lmptr_->recountLeaseStats4());
