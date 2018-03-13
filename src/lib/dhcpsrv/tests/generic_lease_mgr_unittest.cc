@@ -879,7 +879,7 @@ GenericLeaseMgrTest::testLease6MAC() {
     vector<Lease6Ptr> leases = createLeases6();
 
     HWAddrPtr hwaddr1(new HWAddr(vector<uint8_t>(6, 11), HTYPE_ETHER));
-    HWAddrPtr hwaddr2(new HWAddr(vector<uint8_t>(6, 22), HTYPE_ETHER));
+    HWAddrPtr hwaddr2(new HWAddr(vector<uint8_t>(6, 22), HTYPE_DOCSIS));
 
     leases[1]->hwaddr_ = hwaddr1;     // Add hardware address to leases 1 and 2
     leases[2]->hwaddr_ = hwaddr2;
@@ -1080,6 +1080,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     EXPECT_THROW(returned = lmptr_->getLease4(*leases[1]->hwaddr_,
                                               leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
+
 }
 
 void
@@ -1970,7 +1971,6 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
             ++should_delete_num;
-
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.

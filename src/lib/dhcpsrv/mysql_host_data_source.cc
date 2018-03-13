@@ -802,7 +802,6 @@ private:
     my_bool dhcp4_boot_file_name_null_;
 
     //@}
-
 };
 
 /// @brief Extends base exchange class with ability to retrieve DHCP options
@@ -1541,7 +1540,6 @@ private:
 
     /// @brief Reservation id for last processed row.
     uint32_t most_recent_reservation_id_;
-
 };
 
 /// @brief This class is used for storing IPv6 reservations in a MySQL database.
@@ -2078,7 +2076,6 @@ public:
     bool is_readonly_;
 };
 
-
 /// @brief Array of tagged statements.
 typedef boost::array<TaggedStatement, MySqlHostDataSourceImpl::NUM_STATEMENTS>
 TaggedStatementArray;
@@ -2552,7 +2549,6 @@ MySqlHostDataSourceImpl::checkReadOnly() const {
     }
 }
 
-
 MySqlHostDataSource::
 MySqlHostDataSource(const MySqlConnection::ParameterMap& parameters)
     : impl_(new MySqlHostDataSourceImpl(parameters)) {
@@ -2720,7 +2716,7 @@ ConstHostCollection
 MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr,
                             const DuidPtr& duid) const {
 
-    if (duid){
+    if (duid) {
         return (getAll(Host::IDENT_DUID, &duid->getDuid()[0],
                        duid->getDuid().size()));
 
@@ -2909,12 +2905,10 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
     inbind[0].length = &addr6_length;
     inbind[0].buffer_length = addr6_length;
 
-
     uint8_t tmp = prefix_len;
     inbind[1].buffer_type = MYSQL_TYPE_TINY;
     inbind[1].buffer = reinterpret_cast<char*>(&tmp);
     inbind[1].is_unsigned = MLM_TRUE;
-
 
     ConstHostCollection collection;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_PREFIX,
@@ -2964,7 +2958,6 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
 
     return (result);
 }
-
 
 // Miscellaneous database methods.
 
@@ -3041,14 +3034,12 @@ MySqlHostDataSource::commit() {
     impl_->conn_.commit();
 }
 
-
 void
 MySqlHostDataSource::rollback() {
     // If operating in read-only mode, throw exception.
     impl_->checkReadOnly();
     impl_->conn_.rollback();
 }
-
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

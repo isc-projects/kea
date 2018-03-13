@@ -108,5 +108,41 @@ DatabaseConnection::configuredReadOnly() const {
     return (readonly_value == "true");
 }
 
+ReconnectCtlPtr
+DatabaseConnection::makeReconnectCtl() const {
+    ReconnectCtlPtr retry;
+    unsigned int retries = 0;
+    unsigned int interval = 0;
+
+    // Assumes that parsing ensurse only valid values are present
+    std::string parm_str;
+    try {
+        parm_str = getParameter("max-reconnect-tries");
+        retries = boost::lexical_cast<unsigned int>(parm_str);
+    } catch (...) {
+        // Wasn't specified so  so we'll use default of 0;
+    }
+
+    try {
+        parm_str = getParameter("reconnect-wait-time");
+        interval = boost::lexical_cast<unsigned int>(parm_str);
+    } catch (...) {
+        // Wasn't specified so  so we'll use default of 0;
+    }
+
+    retry.reset(new ReconnectCtl(retries, interval));
+    return (retry);
+}
+
+bool
+DatabaseConnection::invokeDbLostCallback() const {
+    if (db_lost_callback_ != NULL) {
+        // Invoke the callback, passing in a new instance of ReconnectCtl
+        return (db_lost_callback_)(makeReconnectCtl());
+    }
+
+    return (false);
+}
+
 };
 };

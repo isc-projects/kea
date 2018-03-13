@@ -605,8 +605,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
-        cfg_db->createManagers();
-
+        cfg_db->createManagers(boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1));
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -838,6 +837,81 @@ ControlledDhcpv4Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
     server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
+}
+
+void
+ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+    bool reopened = false;
+
+    // Re-open lease and host database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
+        cfg_db->createManagers(boost::bind(&ControlledDhcpv4Srv::dbLostCallback, this, _1));
+        reopened = true;
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
+    }
+
+    if (reopened) {
+        // Cancel the timer.
+        if (TimerMgr::instance()->isTimerRegistered("Dhcp4DbReconnectTimer")) {
+            TimerMgr::instance()->cancel("Dhcp4DbReconnectTimer");
+        }
+
+        // Set network state to service enabled
+        network_state_.enableService();
+
+        // Toss the reconnect control, we're done with it
+        db_reconnect_ctl.reset();
+    } else {
+        if (!db_reconnect_ctl->checkRetries()) {
+            LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED)
+            .arg(db_reconnect_ctl->maxRetries());
+            shutdown();
+            return;
+        }
+
+        LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE)
+                .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+                .arg(db_reconnect_ctl->maxRetries())
+                .arg(db_reconnect_ctl->retryInterval());
+
+        if (!TimerMgr::instance()->isTimerRegistered("Dhcp4DbReconnectTimer")) {
+            TimerMgr::instance()->registerTimer("Dhcp4DbReconnectTimer",
+                            boost::bind(&ControlledDhcpv4Srv::dbReconnect, this,
+                                        db_reconnect_ctl),
+                            db_reconnect_ctl->retryInterval() * 1000,
+                            asiolink::IntervalTimer::ONE_SHOT);
+        }
+
+        TimerMgr::instance()->setup("Dhcp4DbReconnectTimer");
+    }
+}
+
+bool
+ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
+    // Disable service until we recover
+    network_state_.disableService();
+
+    if (!db_reconnect_ctl) {
+        // This shouldn't never happen
+        LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_NO_DB_CTL);
+        return (false);
+    }
+
+    // If reconnect isn't enabled, log it and return false
+    if (!db_reconnect_ctl->retriesLeft() ||
+        !db_reconnect_ctl->retryInterval()) {
+        LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
+            .arg(db_reconnect_ctl->retriesLeft())
+            .arg(db_reconnect_ctl->retryInterval());
+        return(false);
+    }
+
+    // Invoke reconnect method
+    dbReconnect(db_reconnect_ctl);
+
+    return(true);
 }
 
 }; // end of isc::dhcp namespace

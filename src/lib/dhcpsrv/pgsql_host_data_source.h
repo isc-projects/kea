@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,16 +53,97 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
+    /// @param db_lost_callback function to invoke if connectivity to
+    /// to host database is lost.
+    ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
     /// @throw isc::dhcp::DbOpenError Error opening the database
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+    PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters,
+                        DatabaseConnection::DbLostCallback db_lost_callback = NULL); 
 
     /// @brief Virtual destructor.
     /// Frees database resources and closes the database connection through
     /// the destruction of member impl_.
     virtual ~PgSqlHostDataSource();
+
+    /// @brief Adds a new host to the collection.
+    ///
+    /// The method will insert the given host and all of its children (v4
+    /// options, v6 options, and v6 reservations) into the database.  It
+    /// relies on constraints defined as part of the PostgreSQL schema to
+    /// defend against duplicate entries and to ensure referential
+    /// integrity.
+    ///
+    /// Violation of any of these constraints for a host will result in a
+    /// DuplicateEntry exception:
+    ///
+    /// -# IPV4_ADDRESS and DHCP4_SUBNET_ID combination must be unique
+    /// -# IPV6 ADDRESS and PREFIX_LEN combination must be unique
+    /// -# DHCP ID, DHCP ID TYPE, and DHCP4_SUBNET_ID combination must be unique
+    /// -# DHCP ID, DHCP ID TYPE, and DHCP6_SUBNET_ID combination must be unique
+    ///
+    /// In addition, violating the following referential constraints will
+    /// a DbOperationError exception:
+    ///
+    /// -# DHCP ID TYPE must be defined in the HOST_IDENTIFIER_TYPE table
+    /// -# For DHCP4 Options:
+    ///  -# HOST_ID must exist with HOSTS
+    ///  -# SCOPE_ID must be defined in DHCP_OPTION_SCOPE
+    /// -# For DHCP6 Options:
+    ///  -# HOST_ID must exist with HOSTS
+    ///  -# SCOPE_ID must be defined in DHCP_OPTION_SCOPE
+    /// -# For IPV6 Reservations:
+    ///  -# HOST_ID must exist with HOSTS
+    ///  -# Address and Prefix Length must be unique (DuplicateEntry)
+    ///
+    /// @param host Pointer to the new @c Host object being added.
+    /// @throw DuplicateEntry or DbOperationError dependent on the constraint
+    /// violation
+    virtual void add(const HostPtr& host);
+
+    /// @brief Attempts to delete a host by (subnet-id, address)
+    ///
+    /// This method supports both v4 and v6.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param addr specified address.
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
+
+    /// @brief Attempts to delete a host by (subnet4-id, identifier type, identifier)
+    ///
+    /// This method supports v4 hosts only.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del4(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete a host by (subnet6-id, identifier type, identifier)
+    ///
+    /// This method supports v6 hosts only.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return true if deletion was successful, false if the host was not there.
+    /// @throw various exceptions in case of errors
+    virtual bool del6(const SubnetID& subnet_id,
+                      const Host::IdentifierType& identifier_type,
+                      const uint8_t* identifier_begin, const size_t identifier_len);
 
     /// @brief Return all hosts for the specified HW address or DUID.
     ///
@@ -216,83 +297,6 @@ public:
     virtual ConstHostPtr
     get6(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
-    /// @brief Adds a new host to the collection.
-    ///
-    /// The method will insert the given host and all of its children (v4
-    /// options, v6 options, and v6 reservations) into the database.  It
-    /// relies on constraints defined as part of the PostgreSQL schema to
-    /// defend against duplicate entries and to ensure referential
-    /// integrity.
-    ///
-    /// Violation of any of these constraints for a host will result in a
-    /// DuplicateEntry exception:
-    ///
-    /// -# IPV4_ADDRESS and DHCP4_SUBNET_ID combination must be unique
-    /// -# IPV6 ADDRESS and PREFIX_LEN combination must be unique
-    /// -# DHCP ID, DHCP ID TYPE, and DHCP4_SUBNET_ID combination must be unique
-    /// -# DHCP ID, DHCP ID TYPE, and DHCP6_SUBNET_ID combination must be unique
-    ///
-    /// In addition, violating the following referential constraints will
-    /// a DbOperationError exception:
-    ///
-    /// -# DHCP ID TYPE must be defined in the HOST_IDENTIFIER_TYPE table
-    /// -# For DHCP4 Options:
-    ///  -# HOST_ID must exist with HOSTS
-    ///  -# SCOPE_ID must be defined in DHCP_OPTION_SCOPE
-    /// -# For DHCP6 Options:
-    ///  -# HOST_ID must exist with HOSTS
-    ///  -# SCOPE_ID must be defined in DHCP_OPTION_SCOPE
-    /// -# For IPV6 Reservations:
-    ///  -# HOST_ID must exist with HOSTS
-    ///  -# Address and Prefix Length must be unique (DuplicateEntry)
-    ///
-    /// @param host Pointer to the new @c Host object being added.
-    /// @throw DuplicateEntry or DbOperationError dependent on the constraint
-    /// violation
-    virtual void add(const HostPtr& host);
-
-    /// @brief Attempts to delete a host by (subnet-id, address)
-    ///
-    /// This method supports both v4 and v6.
-    ///
-    /// @param subnet_id subnet identifier.
-    /// @param addr specified address.
-    /// @return true if deletion was successful, false if the host was not there.
-    /// @throw various exceptions in case of errors
-    virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
-
-    /// @brief Attempts to delete a host by (subnet4-id, identifier type, identifier)
-    ///
-    /// This method supports v4 hosts only.
-    ///
-    /// @param subnet_id subnet identifier.
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    /// an identifier.
-    /// @param identifier_len Identifier length.
-    ///
-    /// @return true if deletion was successful, false if the host was not there.
-    /// @throw various exceptions in case of errors
-    virtual bool del4(const SubnetID& subnet_id,
-                      const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin, const size_t identifier_len);
-
-    /// @brief Attempts to delete a host by (subnet6-id, identifier type, identifier)
-    ///
-    /// This method supports v6 hosts only.
-    ///
-    /// @param subnet_id subnet identifier.
-    /// @param identifier_type Identifier type.
-    /// @param identifier_begin Pointer to a beginning of a buffer containing
-    /// an identifier.
-    /// @param identifier_len Identifier length.
-    ///
-    /// @return true if deletion was successful, false if the host was not there.
-    /// @throw various exceptions in case of errors
-    virtual bool del6(const SubnetID& subnet_id,
-                      const Host::IdentifierType& identifier_type,
-                      const uint8_t* identifier_begin, const size_t identifier_len);
-
     /// @brief Return backend type
     ///
     /// Returns the type of database as the string "postgresql".  This is
@@ -336,7 +340,6 @@ public:
     virtual void rollback();
 
 private:
-
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.
     PgSqlHostDataSourceImpl* impl_;
 };
