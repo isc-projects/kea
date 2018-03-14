@@ -606,7 +606,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1));
+        cfg_db->createManagers();
+	// boost::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1));
     } catch (const std::exception& ex) {
         return (isc::config::createAnswer(1, "Unable to open database: "
                                           + std::string(ex.what())));
@@ -867,7 +868,8 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     // Re-open lease and host database with new parameters.
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv6Srv::dbLostCallback, this, _1));
+        cfg_db->createManagers();
+	// boost::bind(&ControlledDhcpv6Srv::dbLostCallback, this, _1));
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());

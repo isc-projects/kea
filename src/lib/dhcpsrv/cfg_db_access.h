@@ -76,11 +76,7 @@ public:
 
     /// @brief Creates instance of lease manager and host data sources
     /// according to the configuration specified.
-    ///
-    /// @param db_lost_callback function to invoke if connectivity to
-    /// either the lease or host managers, once established, is subsequently
-    /// lost.
-    void createManagers(DatabaseConnection::DbLostCallback db_lost_callback = NULL) const;
+    void createManagers() const;
 
     /// @brief Unparse an access string
     ///
