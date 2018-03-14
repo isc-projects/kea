@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7123,7 +7123,9 @@ TEST_P(Dhcp4GetConfigTest, run) {
 class IntToString {
 public:
     std::string operator()(const testing::TestParamInfo<size_t>& n) {
-        return std::to_string(n.param);
+        std::ostringstream ss;
+        ss << static_cast<size_t>(n.param);
+        return (ss.str());
     }
 };
 
