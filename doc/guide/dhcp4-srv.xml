@@ -460,19 +460,13 @@ be followed by a comma and another object definition.</para>
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"host": "<replaceable>remote-host-name</replaceable>"</userinput>, ... }, ... }
 </screen>
-  For Cassandra, multiple contact points can be provided:
-<screen>
-"Dhcp4": { "lease-database": { <userinput>"contact-points": "<replaceable>remote-host-name[, ...] </replaceable>"</userinput>, ... }, ... }
-</screen>
+
   The usual state of affairs will be to have the database on the same machine as
   the DHCPv4 server.  In this case, set the value to the empty string:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
-  For Cassandra:
-<screen>
-"Dhcp4": { "lease-database": { <userinput>"contact-points": ""</userinput>, ... }, ... }
-</screen>
+
   Should the database use a port different than default, it may be
   specified as well:
 <screen>
@@ -487,16 +481,6 @@ The default value of five seconds should be more than adequate for local connect
 If a timeout is given though, it should be an integer greater than zero.
   </para>
 
-  <para>
-    Note that host parameter is used by MySQL and PostgreSQL
-    backends. Cassandra has a concept of contact points that could be
-    used to contact the cluster, instead of a single IP or
-    hostname. It takes a list of comma separated IP addresses. This may be specified as:
-<screen>
-"Dhcp4": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
-</screen>
-  </para>
-
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -508,6 +492,83 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
+<section xml:id="cassandra-database-configuration4">
+  <title>Cassandra specific parameters</title>
+  <para>
+    Cassandra backend is configured slightly differently. Cassandra has a
+    concept of contact points that could be used to contact the cluster,
+    instead of a single IP or hostname. It takes a list of comma separated IP
+    addresses. This may be specified as:
+    <screen>
+"Dhcp4": {
+    "lease-database": {
+        "type": "cql",
+        <userinput>"contact-points": "<replaceable>ip-address1, ip-address2 [,...]</replaceable>"</userinput>,
+        ...
+    },
+    ...
+}</screen>
+  </para>
+
+  <para>
+    Cassandra also supports a number of optional parameters:
+    <itemizedlist>
+
+      <listitem><simpara>
+        <command>reconnect-wait-time</command> - governs how long Kea waits
+        before attempting to reconnect. Expressed in milliseconds. The default
+        is 2000 [ms].
+      </simpara></listitem>
+
+      <listitem><simpara>
+        <command>connect-timeout</command> - sets the timeout for connecting to
+        a node. Expressed in milliseconds. The default is 5000 [ms].
+      </simpara></listitem>
+
+      <listitem><simpara>
+        <command>request-timeout</command> - this parameter sets the timeout for
+        waiting for a response from a node. Expressed in milliseconds. The
+        default is 12000 [ms].
+      </simpara></listitem>
+
+      <listitem><simpara>
+        <command>tcp-keepalive</command> - This parameter governs the TCP
+        keep-alive mechanism. Expressed in seconds of delay. If the parameter
+        is not present, the mechanism is disabled.
+      </simpara></listitem>
+
+      <listitem><simpara>
+        <command>tcp-nodelay</command> - This parameter enables/disabled Nagle's
+        algorithm on connections. The default is true.
+      </simpara></listitem>
+
+    </itemizedlist>
+  </para>
+
+  <para>
+    For example, a complex Cassandra configuration with most parameters specified
+    could look as follows:
+<screen>
+"Dhcp4": {
+  "lease-database": {
+      "type": "cql",
+      "keyspace": "keatest",
+      "contact-points": "192.0.2.1, 192.0.2.2, 192.0.2.3",
+      "port": 9042,
+      "reconnect-wait-time": 2000,
+      "connect-timeout": 5000,
+      "request-timeout": 12000,
+      "tcp-keepalive": 1,
+      "tcp-nodelay": true
+    },
+    ...
+}</screen>
+
+Similar parameters can be specified for hosts database.
+  </para>
+</section>
+
 </section>
 
 <section xml:id="hosts4-storage">
@@ -572,6 +633,10 @@ If a timeout is given though, it should be an integer greater than zero.
 </screen>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
+
+  <para>For additional Cassandra specific parameters, see <xref
+  linkend="cassandra-database-configuration4"/>.</para>
+
 </section>
 
 <section xml:id="read-only-database-configuration4">
