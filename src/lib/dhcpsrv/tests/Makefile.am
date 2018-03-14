@@ -91,6 +91,8 @@ libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp4o6_ipc_unittest.cc
 libdhcpsrv_unittests_SOURCES += duid_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += expiration_config_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += host_cache_unittest.cc
+libdhcpsrv_unittests_SOURCES += host_data_source_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_unittest.cc
 libdhcpsrv_unittests_SOURCES += host_reservation_parser_unittest.cc
@@ -103,7 +105,6 @@ libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += logging_unittest.cc
 libdhcpsrv_unittests_SOURCES += logging_info_unittest.cc
 libdhcpsrv_unittests_SOURCES += generic_lease_mgr_unittest.cc generic_lease_mgr_unittest.h
-libdhcpsrv_unittests_SOURCES += generic_host_data_source_unittest.cc generic_host_data_source_unittest.h
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 if HAVE_MYSQL

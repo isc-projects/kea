@@ -22,8 +22,9 @@
 #include <dhcpsrv/cql_host_data_source.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/testutils/cql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
@@ -54,7 +55,8 @@ public:
 
         // Connect to the database
         try {
-            HostDataSourceFactory::create(validCqlConnectionString());
+            HostMgr::create();
+            HostMgr::addBackend(validCqlConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test"
                          "*** environment is broken and must be fixed before"
@@ -64,7 +66,7 @@ public:
             throw;
         }
 
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief Destroys the HDS and the schema.
@@ -75,7 +77,8 @@ public:
             // Rollback should never fail, as Cassandra doesn't support transactions
             // (commit and rollback are both no-op).
         }
-        HostDataSourceFactory::destroy();
+        HostMgr::delAllBackends();
+        hdsptr_.reset();
         destroyCqlSchema(false, true);
     }
 
@@ -100,12 +103,12 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for CQL backend as the v4 and v6 leases share
+    /// Parameter is ignored for CQL backend as the v4 and v6 hosts share
     /// the same database.
     void reopen(Universe) {
-        HostDataSourceFactory::destroy();
-        HostDataSourceFactory::create(validCqlConnectionString());
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        HostMgr::create();
+        HostMgr::addBackend(validCqlConnectionString());
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 };
 
@@ -113,7 +116,7 @@ public:
 ///
 /// This test checks if the CqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// CqlLeaseMgr test fixure set.  This test checks that the database can be
+/// CqlHostMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(CqlHostDataSource, OpenDatabase) {
@@ -121,12 +124,12 @@ TEST(CqlHostDataSource, OpenDatabase) {
     destroyCqlSchema(false, true);
     createCqlSchema(false, true);
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        HostDataSourceFactory::create(validCqlConnectionString());
-        EXPECT_NO_THROW((void)HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(validCqlConnectionString()));
+        HostMgr::delBackend("cql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -134,14 +137,14 @@ TEST(CqlHostDataSource, OpenDatabase) {
                << "*** before the CQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         std::string connection_string = validCqlConnectionString() + std::string(" ") +
                                         std::string(VALID_TIMEOUT);
-        HostDataSourceFactory::create(connection_string);
-        EXPECT_NO_THROW((void)HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("cql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -151,39 +154,39 @@ TEST(CqlHostDataSource, OpenDatabase) {
 
     // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
-    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
+    EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
                  NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
                  InvalidParameter);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
                  INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
                  InvalidType);
 
     // Check that invalid login data does not cause an exception, CQL should use
     // default values.
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)));
 
     // Check that invalid timeouts throw DbOperationError.
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                  VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
                  DbOperationError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                  VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
                  DbOperationError);
 
     // Check that CQL allows the hostname to not be specified.
-    EXPECT_NO_THROW(HostDataSourceFactory::create(connectionString(CQL_VALID_TYPE,
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(CQL_VALID_TYPE,
                     NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)));
 
     // Tidy up after the test

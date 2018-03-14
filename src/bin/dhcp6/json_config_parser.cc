@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/db_type.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/timer_mgr.h>
@@ -525,16 +526,26 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                DbAccessParser parser(DBType::LEASE_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                DbAccessParser parser(DBType::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "hosts-databases") {
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                DbAccessParser parser(DBType::HOSTS_DB);
+                auto list = config_pair.second->listValue();
+                for (auto it : list) {
+                    parser.parse(cfg_db_access, it);
+                }
                 continue;
             }
 

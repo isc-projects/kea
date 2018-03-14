@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,8 @@
 #include <dhcpsrv/host.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
+
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -309,6 +311,9 @@ public:
 
 /// @brief HostDataSource pointer
 typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
+
+/// @brief HostDataSource list
+typedef std::vector<HostDataSourcePtr> HostDataSourceList;
 
 }
 }

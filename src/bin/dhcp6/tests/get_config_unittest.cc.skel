@@ -125,7 +125,7 @@ outputFormatted(const std::string& config) {
     }
 }
 
-};
+} // namespace
 
 namespace isc {
 namespace dhcp {
@@ -156,9 +156,9 @@ extractConfig(const std::string& config) {
     ++extract_count;
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 namespace {
 

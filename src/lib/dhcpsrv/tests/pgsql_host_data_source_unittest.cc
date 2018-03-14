@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,9 +12,10 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/pgsql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
 
 #include <gtest/gtest.h>
@@ -47,7 +48,8 @@ public:
 
         // Connect to the database
         try {
-            HostDataSourceFactory::create(validPgSQLConnectionString());
+            HostMgr::create();
+            HostMgr::addBackend(validPgSQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -57,7 +59,7 @@ public:
             throw;
         }
 
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief Destructor
@@ -71,7 +73,7 @@ public:
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
-        HostDataSourceFactory::destroy();
+        HostMgr::delAllBackends();
         hdsptr_.reset();
         destroyPgSQLSchema();
     }
@@ -84,9 +86,9 @@ public:
     /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases
     /// share the same database.
     void reopen(Universe) {
-        HostDataSourceFactory::destroy();
-        HostDataSourceFactory::create(validPgSQLConnectionString());
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        HostMgr::create();
+        HostMgr::addBackend(validPgSQLConnectionString());
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief returns number of rows in a table
@@ -146,12 +148,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
     createPgSQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        HostDataSourceFactory::create(validPgSQLConnectionString());
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(validPgSQLConnectionString()));
+        HostMgr::delBackend("postgresql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -159,14 +161,13 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
-        HostDataSourceFactory::create(connection_string);
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("postgresql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -174,42 +175,42 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host manager when
     // none is set throws an exception.
-    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
+    EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on LeaseMgrFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
 
     // Check for missing parameters
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 

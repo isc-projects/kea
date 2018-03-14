@@ -9,6 +9,7 @@
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/db_type.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
@@ -118,7 +119,8 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
-        isc_throw(DhcpConfigError, (type_ == LEASE_DB ? "lease" : "host")
+        isc_throw(DhcpConfigError,
+                  (type_ == DBType::LEASE_DB ? "lease" : "host")
                   << " database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed (" << database_config->getPosition() << ")");
@@ -190,10 +192,10 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     values_.swap(values_copy);
 
     // 5. Save the database access string in the Configuration Manager.
-    if (type_ == LEASE_DB) {
+    if (type_ == DBType::LEASE_DB) {
         cfg_db->setLeaseDbAccessString(getDbAccessString());
-    } else if (type_ == HOSTS_DB) {
-        cfg_db->setHostDbAccessString(getDbAccessString());
+    } else if (type_ == DBType::HOSTS_DB) {
+        cfg_db->setHostDbAccessString(getDbAccessString(), false);
     }
 }
 
