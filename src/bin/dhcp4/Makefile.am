@@ -31,7 +31,7 @@ EXTRA_DIST += dhcp4_parser.yy
 if GENERATE_DOCS
 kea-dhcp4.8: kea-dhcp4.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp4.xml
 
 else
