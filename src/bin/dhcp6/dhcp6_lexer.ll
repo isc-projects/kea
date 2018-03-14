@@ -1096,7 +1096,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-
 \"debuglevel\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -1513,7 +1512,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_STRING("Control-agent", driver.loc_);
     }
 }
-
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
