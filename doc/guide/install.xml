@@ -612,9 +612,7 @@ $ <userinput>make</userinput>
           cql_config_define.sh.sample available, you may copy it over to
           cql_config_defines.sh and edit path specified in it) and change the
           environment variable CPP_DRIVER_PATH to point to the directory, where
-          cpp-driver sources are located. (If the cpp-driver sources already
-          provide cql_config script please use that rather than the version from
-          Kea sources.)
+          cpp-driver sources are located.
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
