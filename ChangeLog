@@ -1,3 +1,7 @@
+1374.	[doc]		tomek
+	New parameters for Cassandra are now documented.
+	(Trac #5484, git 56e7026ea2bfab99dbfa1a047dc920ec2f743540)
+
 1374.	[func]		razvan
 	Cassandra backend improvements: get all IPv4 leases, delete
 	hosts, ability to store fixed DHCPv4 fields (next-server,
