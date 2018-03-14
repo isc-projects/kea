@@ -503,6 +503,7 @@ If a timeout is given though, it should be an integer greater than zero.
     <screen>
 "Dhcp4": {
     "lease-database": {
+        "type": "cql",
         <userinput>"contact-points": "<replaceable>ip-address1, ip-address2 [,...]</replaceable>"</userinput>,
         ...
     },

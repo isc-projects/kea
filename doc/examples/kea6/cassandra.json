@@ -39,8 +39,9 @@
       "request-timeout": 12000,
 
       // This parameter governs the TCP keep-alive mechanism. Expressed
-      // in seconds of delay. The default is disabled.
-      "tcp-keepalive": 1,
+      // in seconds of delay. The default is disabled. In this example it is
+      // set to 20 minutes.
+      "tcp-keepalive": 1200,
 
       // This parameter enables/disables Nagle's algorithm on connections.
       // The default is true.
