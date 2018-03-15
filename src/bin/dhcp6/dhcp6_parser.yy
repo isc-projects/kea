@@ -73,6 +73,9 @@ using namespace std;
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   KEYSPACE "keyspace"
+  REQUEST_TIMEOUT "request-timeout"
+  TCP_KEEPALIVE "tcp-keepalive"
+  TCP_NODELAY "tcp-nodelay"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -557,6 +560,9 @@ database_map_param: database_type
                   | contact_points
                   | max_reconnect_tries
                   | reconnect_wait_time
+                  | request_timeout
+                  | tcp_keepalive
+                  | tcp_nodelay
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -631,6 +637,26 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
+request_timeout: REQUEST_TIMEOUT COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("request-timeout", n);
+};
+
+tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-keepalive", n);
+};
+
+tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-nodelay", n);
+};
+
 contact_points: CONTACT_POINTS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -642,11 +668,6 @@ contact_points: CONTACT_POINTS {
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
-};
-
-reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("reconnect-wait-time", n);
 };
 
 keyspace: KEYSPACE {
@@ -1017,7 +1038,7 @@ shared_network: LCURLY_BRACKET {
     ctx.stack_.push_back(m);
 } shared_network_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
-}
+};
 
 shared_network_params: shared_network_param
                      | shared_network_params COMMA shared_network_param
@@ -2102,17 +2123,17 @@ output: OUTPUT {
 flush: FLUSH COLON BOOLEAN {
     ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush", flush);
-}
+};
 
 maxsize: MAXSIZE COLON INTEGER {
     ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxsize", maxsize);
-}
+};
 
 maxver: MAXVER COLON INTEGER {
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
-}
+};
 
 %%
 
