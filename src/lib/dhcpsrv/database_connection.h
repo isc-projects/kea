@@ -150,7 +150,7 @@ public:
     /// @param db_lost_callback  Optional call back function to invoke if a
     ///        successfully open connection subsequently fails
     DatabaseConnection(const ParameterMap& parameters,
-        DbLostCallback db_lost_callback = NULL)
+        DbLostCallback db_lost_callback = 0)
         :parameters_(parameters), db_lost_callback_(db_lost_callback) {
     }
 
