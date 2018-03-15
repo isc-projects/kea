@@ -771,7 +771,7 @@ AC_ARG_WITH([cql],
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    CQL_CONFIG="/usr/bin/pkg-config"
+    CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
 fi
