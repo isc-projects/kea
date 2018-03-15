@@ -503,6 +503,13 @@ If a timeout is given though, it should be an integer greater than zero.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 </section>
+
+<section xml:id="cassandra-database-configuration6">
+    <title>Cassandra specific parameters</title>
+<para>The parameters are the same for DHCPv4 and DHCPv6. See <xref
+linkend="cassandra-database-configuration4"/> for details.</para>
+</section>
+
 </section>
 
 <section xml:id="hosts6-storage">
@@ -565,6 +572,10 @@ If a timeout is given though, it should be an integer greater than zero.
 </screen>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
+
+  <para>
+    For additional Cassandra specific parameters, see <xref
+    linkend="cassandra-database-configuration4" />.</para>
 </section>
 
 <section xml:id="read-only-database-configuration6">
