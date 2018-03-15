@@ -196,10 +196,10 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     }
 
     // Check that request_timeout value makes sense.
-    if ((request-timeout < 0) ||
-        (request-timeout > std::numeric_limits<uint32_t>::max())) {
+    if ((request_timeout < 0) ||
+        (request_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("request-timeout");
-        isc_throw(DhcpConfigError, "request-timeout " << request-timeout
+        isc_throw(DhcpConfigError, "request-timeout " << request_timeout
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }
