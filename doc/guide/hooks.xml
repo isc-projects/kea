@@ -2608,11 +2608,8 @@ applies to subnets within the network.
     <section>
         <title>network4-del, network6-del commands</title>
         <para>
-          These commands are used to delete existing shared networks. Each
-          subnet within the network being removed will be demoted to a plain
-          subnet. If you want to completely remove the subnets, please use
-          <command>subnet4-del</command> or <command>subnet6-del</command>
-          commands. Both commands take exactly one parameter 'name' that
+          These commands are used to delete existing shared
+          networks. Both commands take exactly one parameter 'name' that
           specifies the name of the network to be removed. An example invocation
           of <command>network4-del</command> command looks as follows:
 <screen>
@@ -2630,7 +2627,7 @@ the following:
     "arguments": {
         "shared-networks": [
             {
-                "name": "floor1"
+                "name": "floor13"
             }
         ]
     },
@@ -2640,6 +2637,30 @@ the following:
 The <command>network6-del</command> command uses exactly the same syntax for
 both the command and the response.
         </para>
+
+        <para>If there are any subnets belonging to the shared network
+        being deleted, they will be demoted to a plain subnet. There
+        is an optional parameter called
+        <command>subnets-action</command> that, if specified, takes
+        one of two possible values: <command>keep</command> (which is
+        the default) and <command>delete</command>. It controls
+        whether the subnets be demoted to plain subnets or removed. An
+        example usage in network6-del command that deletes the shared
+        network and all subnets in it could looks like as follows:
+<screen>
+{
+    "command": "network4-del",
+    "arguments": {
+        "name": "floor13",
+        "subnets-action": "delete"
+    }
+}
+</screen>
+        </para>
+
+        <para>Alternatively, if you want to completely remove the
+        subnets, you may use <command>subnet4-del</command> or
+        <command>subnet6-del</command> commands.</para>
 
     </section>
     <section>
