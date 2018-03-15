@@ -36,7 +36,7 @@ unsigned int comment_start_line = 0;
 
 using namespace isc::dhcp;
 
-};
+}
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
@@ -575,23 +575,13 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"connect-timeout\" {
+\"tcp-nodelay\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_CONNECT_TIMEOUT(driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_TCP_NODELAY(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("connect-timeout", driver.loc_);
-    }
-}
-
-\"keyspace\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_KEYSPACE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("keyspace", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-nodelay", driver.loc_);
     }
 }
 
@@ -625,13 +615,23 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"tcp-nodelay\" {
+\"connect-timeout\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_TCP_NODELAY(driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_CONNECT_TIMEOUT(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("tcp-nodelay", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("connect-timeout", driver.loc_);
+    }
+}
+
+\"keyspace\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_KEYSPACE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("keyspace", driver.loc_);
     }
 }
 
@@ -652,16 +652,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_MAX_RECONNECT_TRIES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("max-reconnect-tries", driver.loc_);
-    }
-}
-
-\"reconnect-wait-time\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reconnect-wait-time", driver.loc_);
     }
 }
 
@@ -1106,7 +1096,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-
 \"debuglevel\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -1298,7 +1287,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_STRING("hooks-libraries", driver.loc_);
     }
 }
-
 
 \"parameters\" {
     switch(driver.ctx_) {
@@ -1524,7 +1512,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_STRING("Control-agent", driver.loc_);
     }
 }
-
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

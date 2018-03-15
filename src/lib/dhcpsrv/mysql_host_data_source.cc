@@ -2218,7 +2218,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context, "
@@ -2269,11 +2268,11 @@ TaggedStatementArray tagged_statements = { {
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
 
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
-     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type = ? "
      "AND dhcp_identifier = ?"},
 
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
-     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
+     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type = ? "
      "AND dhcp_identifier = ?"}
 
     }

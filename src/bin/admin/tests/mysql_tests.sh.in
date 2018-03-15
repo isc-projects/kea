@@ -189,7 +189,7 @@ mysql_upgrade_test() {
     mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
 
     # Sanity check - verify that it reports version 1.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir) 
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 

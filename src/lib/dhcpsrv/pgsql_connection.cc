@@ -98,7 +98,10 @@ PgSqlTransaction::PgSqlTransaction(PgSqlConnection& conn)
 PgSqlTransaction::~PgSqlTransaction() {
     // If commit() wasn't explicitly called, rollback.
     if (!committed_) {
-        conn_.rollback();
+        try {
+            conn_.rollback();
+        } catch (...) {
+        }
     }
 }
 

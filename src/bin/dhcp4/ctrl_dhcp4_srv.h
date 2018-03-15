@@ -124,7 +124,7 @@ private:
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
-    /// This static callback method is called from IfaceMgr::receive6() method,
+    /// This static callback method is called from IfaceMgr::receive4() method,
     /// when there is a new command or configuration sent over control socket
     /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);

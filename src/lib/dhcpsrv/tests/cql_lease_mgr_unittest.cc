@@ -718,12 +718,12 @@ TEST_F(CqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether CQL can store and retrieve hardware addresses
 TEST_F(CqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether CQL can store and retrieve hardware addresses
 TEST_F(CqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }

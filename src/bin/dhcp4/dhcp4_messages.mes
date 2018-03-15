@@ -225,7 +225,7 @@ the message.
 
 % DHCP4_DHCP4O6_RECEIVING receiving DHCPv4o6 packet from DHCPv6 server
 This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication socket.
+from the DHCPv4 server over inter-process communication socket.
 
 % DHCP4_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
 A debug message including the detailed data about the packet being

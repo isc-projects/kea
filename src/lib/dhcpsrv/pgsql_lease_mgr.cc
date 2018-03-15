@@ -1360,9 +1360,9 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
+    std::string addr4_str = boost::lexical_cast<std::string>
                          (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    bind_array.add(addr4_str);
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease);
