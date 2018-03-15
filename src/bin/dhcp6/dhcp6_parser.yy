@@ -1036,7 +1036,7 @@ shared_network: LCURLY_BRACKET {
     ctx.stack_.push_back(m);
 } shared_network_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
-}
+};
 
 shared_network_params: shared_network_param
                      | shared_network_params COMMA shared_network_param
@@ -2121,17 +2121,17 @@ output: OUTPUT {
 flush: FLUSH COLON BOOLEAN {
     ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush", flush);
-}
+};
 
 maxsize: MAXSIZE COLON INTEGER {
     ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxsize", maxsize);
-}
+};
 
 maxver: MAXVER COLON INTEGER {
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
-}
+};
 
 %%
 
