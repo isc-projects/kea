@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -537,7 +537,7 @@ outbound_interface: OUTBOUND_INTERFACE {
 } COLON outbound_interface_value {
     ctx.stack_.back()->set("outbound-interface", $4);
     ctx.leave();
-}
+};
 
 outbound_interface_value: SAME_AS_INBOUND {
     $$ = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(@1)));
@@ -754,7 +754,7 @@ client_id : CLIENT_ID {
 flex_id: FLEX_ID {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(flex_id);
-}
+};
 
 hooks_libraries: HOOKS_LIBRARIES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -1099,7 +1099,7 @@ shared_network: LCURLY_BRACKET {
     ctx.stack_.push_back(m);
 } shared_network_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
-}
+};
 
 shared_network_params: shared_network_param
                      | shared_network_params COMMA shared_network_param
@@ -2064,17 +2064,17 @@ output: OUTPUT {
 flush: FLUSH COLON BOOLEAN {
     ElementPtr flush(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("flush", flush);
-}
+};
 
 maxsize: MAXSIZE COLON INTEGER {
     ElementPtr maxsize(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxsize", maxsize);
-}
+};
 
 maxver: MAXVER COLON INTEGER {
     ElementPtr maxver(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("maxver", maxver);
-}
+};
 
 %%
 

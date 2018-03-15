@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -487,16 +487,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_MAX_RECONNECT_TRIES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("max-reconnect-tries", driver.loc_);
-    }
-}
-
-\"reconnect-wait-time\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::LEASE_DATABASE:
-    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("reconnect-wait-time", driver.loc_);
     }
 }
 

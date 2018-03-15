@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -655,16 +655,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"reconnect-wait-time\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reconnect-wait-time", driver.loc_);
-    }
-}
-
 \"preferred-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -1106,7 +1096,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-
 \"debuglevel\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -1523,7 +1512,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_STRING("Control-agent", driver.loc_);
     }
 }
-
 
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.

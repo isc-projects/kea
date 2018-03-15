@@ -15,7 +15,7 @@
       <para><command>kea-lfc</command> is a service process that removes
       redundant information from the files used to provide persistent storage
       for the memfile data base backend. This service is written to run as a
-      stand alone process.  
+      stand alone process.
       </para>
       <para>While <command>kea-lfc</command> can be started externally, there is
       usually no need to do this.  <command>kea-lfc</command> is run on a periodic

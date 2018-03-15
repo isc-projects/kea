@@ -480,12 +480,12 @@ TEST_F(MySqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether MySQL can store and retrieve hardware addresses
 TEST_F(MySqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether MySQL can store and retrieve hardware addresses
 TEST_F(MySqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
