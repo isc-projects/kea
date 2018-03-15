@@ -542,7 +542,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // Check if we can still write to the lease file.
     std::vector<uint8_t> hwaddr_vec(6);
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
-    Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr, 0, 0,
+    Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr,
+                                   static_cast<const uint8_t*>(0), 0,
                                    100, 50, 60, 0, 1));
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
