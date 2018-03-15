@@ -1,3 +1,8 @@
+1375.	[doc]		tomek
+	New parameter subnets-action for network4-del and network6-del
+	commands is now documented.
+	(Trac #5441, git 8b2ffabb3d1ba709f319df2b34d0804ee824446b)
+
 1374.	[doc]		tomek
 	New parameters for Cassandra are now documented.
 	(Trac #5484, git 56e7026ea2bfab99dbfa1a047dc920ec2f743540)
