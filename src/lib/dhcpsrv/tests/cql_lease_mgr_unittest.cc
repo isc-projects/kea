@@ -359,8 +359,10 @@ TEST(CqlOpenTest, OpenDatabase) {
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
+        // CQL specifies the timeout values in ms, not seconds. Therefore
+        // we need to add extra 000 to the "connect-timeout=10" string.
         string connection_string = validCqlConnectionString() + string(" ") +
-                                   string(VALID_TIMEOUT);
+            string(VALID_TIMEOUT) + "000";
         LeaseMgrFactory::create(connection_string);
         EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
