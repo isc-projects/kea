@@ -59,7 +59,7 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters,
-                  DatabaseConnection::DbLostCallback db_lost_callback = NULL);
+                  DatabaseConnection::DbLostCallback db_lost_callback = 0);
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();
