@@ -205,14 +205,14 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     /// @throw NotImplemented because this method is currently not implemented for
     /// this backend.
-    virtual Lease4Collection getLeases4(SubnetID subnet_id) const;
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const override;
 
     /// @brief Returns all IPv4 leases.
     ///
     /// @return Lease collection (may be empty if no IPv4 lease found).
     /// @throw NotImplemented because this method is currently not implemented for
     /// this backend.
-    virtual Lease4Collection getLeases4() const;
+    virtual Lease4Collection getLeases4() const override;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -286,7 +286,7 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     /// @throw NotImplemented because this method is currently not implemented for
     /// this backend.
-    virtual Lease6Collection getLeases6() const;
+    virtual Lease6Collection getLeases6() const override;
 
     /// @brief Returns a collection of expired DHCPv6 leases.
     ///
