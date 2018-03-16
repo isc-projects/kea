@@ -1719,7 +1719,7 @@ CqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID &duid, uint32_t iaid,
 }
 
 Lease6Collection
-CqlLeaseMgr::getLeases6(SubnetID, Lease::Type) const {
+CqlLeaseMgr::getLeases6(SubnetID) const {
     isc_throw(NotImplemented, "getLeases6(subnet_id) is not implemented");
 }
 

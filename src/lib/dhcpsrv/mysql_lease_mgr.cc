@@ -189,7 +189,7 @@ tagged_statements = { {
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
-    {MySqlLeaseMgr::GET_LEASE6_SUBID_TYPE,
+    {MySqlLeaseMgr::GET_LEASE6_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
@@ -197,7 +197,7 @@ tagged_statements = { {
                         "hwaddr, hwtype, hwaddr_source, "
                         "state "
                             "FROM lease6 "
-                            "WHERE subnet_id = ? and lease_type = ?"},
+                            "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -1927,14 +1927,12 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(SubnetID subnet_id, Lease::Type type) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_SUBID_TYPE6)
-        .arg(subnet_id)
-        .arg(Lease::typeToText(type));
+MySqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID6)
+        .arg(subnet_id);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[2];
+    MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
     // Subnet ID
@@ -1942,14 +1940,9 @@ MySqlLeaseMgr::getLeases6(SubnetID subnet_id, Lease::Type type) const {
     inbind[0].buffer = reinterpret_cast<char*>(&subnet_id);
     inbind[0].is_unsigned = MLM_TRUE;
 
-    // LEASE_TYPE
-    inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&type);
-    inbind[1].is_unsigned = MLM_TRUE;
-
     // ... and get the data
     Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_SUBID_TYPE, inbind, result);
+    getLeaseCollection(GET_LEASE6_SUBID, inbind, result);
 
     return (result);
 }

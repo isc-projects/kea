@@ -832,10 +832,9 @@ Memfile_LeaseMgr::getLeases6(Lease::Type type,
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLeases6(SubnetID subnet_id, Lease::Type type) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID_TYPE6)
-        .arg(subnet_id)
-        .arg(Lease::typeToText(type));
+Memfile_LeaseMgr::getLeases6(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_SUBID6)
+        .arg(subnet_id);
 
     Lease6Collection collection;
     const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
@@ -844,10 +843,7 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id, Lease::Type type) const {
         idx.equal_range(subnet_id);
 
     for (auto lease = l.first; lease != l.second; ++lease) {
-        // Filter out the leases which lease type doesn't match.
-        if ((*lease)->type_ == type) {
-            collection.push_back(Lease6Ptr(new Lease6(**lease)));
-        }
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 
     return (collection);
