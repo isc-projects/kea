@@ -482,66 +482,50 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
         // be returned.
         if (cmd_args_) {
             ConstElementPtr subnets = cmd_args_->get("subnets");
-            if (subnets) {
-                if (subnets->getType() != Element::list) {
-                    isc_throw(BadValue, "'subnets' parameter must be a list");
-                }
-
-                const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
-                for (auto subnet_id = subnet_ids.begin(); subnet_id != subnet_ids.end();
-                     ++subnet_id) {
-                    if ((*subnet_id)->getType() != Element::integer) {
-                        isc_throw(BadValue, "listed subnet identifiers must be numbers");
-                    }
-
-                    if (v4) {
-                        Lease4Collection leases =
-                            LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
-                        for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                            ElementPtr lease_json = (*lease)->toElement();
-                            leases_json->add(lease_json);
-                        }
-                    } else {
-                        Lease6Collection leases =
-                            LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue(),
-                                                                   Lease::TYPE_NA);
-                        for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                            ElementPtr lease_json = (*lease)->toElement();
-                            leases_json->add(lease_json);
-                        }
-
-                        leases = LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue(),
-                                                                   Lease::TYPE_TA);
-                        for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                            ElementPtr lease_json = (*lease)->toElement();
-                            leases_json->add(lease_json);
-                        }
-
-                        leases = LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue(),
-                                                                   Lease::TYPE_PD);
-                        for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                            ElementPtr lease_json = (*lease)->toElement();
-                            leases_json->add(lease_json);
-                        }                           
-                    }
-                }
-
-            } else {
+            if (!subnets) {
                 isc_throw(BadValue, "'subnets' parameter not specified");
+            }
+            if (subnets->getType() != Element::list) {
+                isc_throw(BadValue, "'subnets' parameter must be a list");
+            }
+
+            const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
+            for (auto subnet_id = subnet_ids.begin();
+                 subnet_id != subnet_ids.end();
+                 ++subnet_id) {
+                if ((*subnet_id)->getType() != Element::integer) {
+                    isc_throw(BadValue, "listed subnet identifiers must be numbers");
+                }
+
+                if (v4) {
+                    Lease4Collection leases =
+                        LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
+                    for (auto lease : leases) {
+                        ElementPtr lease_json = lease->toElement();
+                        leases_json->add(lease_json);
+                    }
+                } else {
+                    Lease6Collection leases =
+                        LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
+                    for (auto lease : leases) {
+                        ElementPtr lease_json = lease->toElement();
+                        leases_json->add(lease_json);
+                    }
+                }
             }
 
         } else {
             // There is no 'subnets' argument so let's return all leases.
             if (v4) {
                 Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
-                for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                    ElementPtr lease_json = (*lease)->toElement();
+                for (auto lease : leases) {
+                    ElementPtr lease_json = lease->toElement();
                     leases_json->add(lease_json);
                 }
             } else {
                 Lease6Collection leases = LeaseMgrFactory::instance().getLeases6();
-                for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                    ElementPtr lease_json = (*lease)->toElement();
+                for (auto lease : leases) {
+                    ElementPtr lease_json = lease->toElement();
                     leases_json->add(lease_json);
                 }
             }

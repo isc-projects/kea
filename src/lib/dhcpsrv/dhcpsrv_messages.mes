@@ -514,10 +514,9 @@ lease from the memory file database for a client with the specified IAID
 A debug message issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the memory file database.
 
-% DHCPSRV_MEMFILE_GET_SUBID_TYPE6 obtaining IPv6 leases for subnet ID %1 and type %2
+% DHCPSRV_MEMFILE_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv6
-leases for a given subnet identifier and lease type from the memory file
-database.
+leases for a given subnet identifier from the memory file database.
 
 % DHCPSRV_MEMFILE_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
 A debug message issued when the server is attempting to obtain an IPv4
@@ -752,9 +751,9 @@ lease from the MySQL database for a client with the specified IAID
 A debug message issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the MySQL database.
 
-% DHCPSRV_MYSQL_GET_SUBID_TYPE6 obtaining IPv6 leases for subnet ID %1 and type %2
+% DHCPSRV_MYSQL_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv6
-leases for a given subnet identifier and lease type from the MySQL database.
+leases for a given subnet identifier from the MySQL database.
 
 % DHCPSRV_MYSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
 A debug message issued when the server is attempting to obtain an IPv4
@@ -922,10 +921,9 @@ lease from the PostgreSQL database for a client with the specified IAID
 A debug message issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the PostgreSQL database.
 
-% DHCPSRV_PGSQL_GET_SUBID_TYPE6 obtaining IPv6 leases for subnet ID %1 and type %2
+% DHCPSRV_PGSQL_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv6
-leases for a given subnet identifier and lease type from the PostgreSQL
-database.
+leases for a given subnet identifier from the PostgreSQL database.
 
 % DHCPSRV_PGSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
 A debug message issued when the server is attempting to obtain an IPv4

@@ -271,15 +271,12 @@ public:
                                         uint32_t iaid,
                                         SubnetID subnet_id) const;
 
-    /// @brief Returns all IPv6 leases for the particular subnet identifier
-    /// and lease type.
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
-    /// @param type specifies lease type: (NA, TA or PD)
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(SubnetID subnet_id,
-                                        Lease::Type type) const;
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
 
     /// @brief Returns all IPv6 leases.
     ///

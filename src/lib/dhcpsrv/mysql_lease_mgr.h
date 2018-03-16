@@ -268,15 +268,12 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
 
-    /// @brief Returns all IPv6 leases for the particular subnet identifier
-    /// and lease type.
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
-    /// @param type specifies lease type: (NA, TA or PD)
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(SubnetID subnet_id,
-                                        Lease::Type type) const;
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
 
     /// @brief Returns all IPv6 leases.
     ///
@@ -455,7 +452,7 @@ public:
         GET_LEASE6_ADDR,             // Get lease6 by address
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
-        GET_LEASE6_SUBID_TYPE,       // Get IPv6 leases by subnet ID and type
+        GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
         GET_VERSION,                 // Obtain version number
         INSERT_LEASE4,               // Add entry to lease4 table
