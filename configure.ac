@@ -1414,6 +1414,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
                  src/bin/lfc/Makefile
                  src/bin/lfc/tests/Makefile
+                 src/bin/netconf/Makefile
+                 src/bin/netconf/tests/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
