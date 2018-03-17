@@ -43,11 +43,11 @@ public:
     }
 
     /// Insert
-    bool insert(const ConstHostPtr& host, int& overwrite) {
-        if (overwrite < 0) {
-            ++adds_;
-        } else {
+    size_t insert(const ConstHostPtr& host, bool overwrite) {
+        if (overwrite) {
             ++inserts_;
+        } else {
+            ++adds_;
         }
         HostPtr host_copy(new Host(*host));
         store_.push_back(host_copy);
@@ -706,7 +706,7 @@ public:
     }
 
     /// Insert throws
-    bool insert(const ConstHostPtr& host, int& overwrite) {
+    size_t insert(const ConstHostPtr& host, bool overwrite) {
         isc_throw(NotImplemented,
                   "insert is not implemented: " << host->toText()
                   << " with overwrite: " << overwrite);

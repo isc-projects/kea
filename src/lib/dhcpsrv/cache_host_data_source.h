@@ -25,15 +25,18 @@ public:
     /// Similar to @c add() but with a different purpose.
     ///
     /// @param host Pointer to the new @c Host object being inserted.
-    /// @param[in,out] overwrite -1 if accepting conflicts, 0 if removing
-    /// conflicting entries, set to the number of removed entries.
-    /// @return true when succeeded.
-    virtual bool insert(const ConstHostPtr& host, int& overwrite) = 0;
+    /// @param] overwrite false if doing nothing in case of conflicts
+    /// (and returning 1), true if removing conflicting entries
+    /// (and returning their number).
+    /// @return number of conflicts limited to one if overwrite is false.
+    virtual size_t insert(const ConstHostPtr& host, bool overwrite) = 0;
 
     /// @brief Remove a host from the cache.
     ///
     /// Does the same than @c del, @c del4 or @c del6 but with
     /// a more uniform interface and a different purpose.
+    ///
+    /// @note A pointer to a copy does not remove the object.
     ///
     /// @param host Pointer to the existing @c Host object being removed.
     /// @return true when found and removed.
