@@ -40,7 +40,7 @@ public:
     ///
     /// @param host Pointer to the existing @c Host object being removed.
     /// @return true when found and removed.
-    virtual bool remove(const ConstHostPtr& host) = 0;
+    virtual bool remove(const HostPtr& host) = 0;
 
     /// @brief Flush entries.
     ///
