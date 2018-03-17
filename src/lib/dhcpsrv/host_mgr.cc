@@ -467,9 +467,8 @@ HostMgr::cache(ConstHostPtr host) const {
             return;
         }
         // Replace any existing value.
-        int overwrite = 0;
         // Don't check the result as it does not matter?
-        cache_ptr_->insert(host, overwrite);
+        cache_ptr_->insert(host, true);
     }
 }
 
@@ -486,9 +485,8 @@ HostMgr::cacheNegative(const SubnetID& ipv4_subnet_id,
                               IOAddress::IPV4_ZERO_ADDRESS()));
         host->setNegative(true);
         // Don't replace any existing value.
-        int overwrite = -1;
         // nor matter if it fails.
-        cache_ptr_->insert(host, overwrite);
+        cache_ptr_->insert(host, false);
     }
 }
 
