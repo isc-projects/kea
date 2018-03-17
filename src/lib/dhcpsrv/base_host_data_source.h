@@ -261,7 +261,7 @@ public:
 
     /// @brief Attempts to delete a host by (subnet-id4, identifier, identifier-type)
     ///
-    /// This method supports both v4 hosts only.
+    /// This method supports v4 hosts only.
     ///
     /// @param subnet_id IPv4 Subnet identifier.
     /// @param identifier_type Identifier type.
@@ -276,7 +276,7 @@ public:
 
     /// @brief Attempts to delete a host by (subnet-id6, identifier, identifier-type)
     ///
-    /// This method supports both v6 hosts only.
+    /// This method supports v6 hosts only.
     ///
     /// @param subnet_id IPv6 Subnet identifier.
     /// @param identifier_type Identifier type.
