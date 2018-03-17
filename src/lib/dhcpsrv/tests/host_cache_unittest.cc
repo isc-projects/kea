@@ -55,7 +55,7 @@ public:
     }
 
     /// Remove
-    bool remove(const HostPtr& host) {
+    bool remove(const ConstHostPtr& host) {
         for (auto h = store_.begin(); h != store_.end(); ++h) {
             if (*h == host) {
                 store_.erase(h);
@@ -713,7 +713,7 @@ public:
     }
 
     /// Remove throws
-    bool remove(const HostPtr& host) {
+    bool remove(const ConstHostPtr& host) {
         isc_throw(NotImplemented,
                   "remove is not implemented: " << host->toText());
     }
