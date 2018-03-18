@@ -51,7 +51,7 @@ public:
         }
         HostPtr host_copy(new Host(*host));
         store_.push_back(host_copy);
-        return (true);
+        return (0);
     }
 
     /// Remove
