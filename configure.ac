@@ -861,6 +861,58 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
+sysrepo_config="no"
+AC_ARG_WITH([sysrepo],
+  AC_HELP_STRING([--with-sysrepo=PATH],
+    [path to the Sysrepo 'sysrepo_config' script]),
+    [sysrepo_config="$withval"])
+
+if test "${sysrepo_config}" = "yes" ; then
+    SYSREPO_CONFIG="$PKG_CONFIG"
+elif test "${sysrepo_config}" != "no" ; then
+    SYSREPO_CONFIG="${sysrepo_config}"
+fi
+
+if test "SYSREPO_CONFIG" != "" ; then
+    if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
+        AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
+    fi
+
+    SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I sysrepo`
+    SYSREPO_CPPFLAGS="`$SYSREPO_CONFIG --cflags-only-other sysrepo` $SYSREPO_INCLUDEDIR"
+    SYSREPO_LIBS="`$SYSREPO_CONFIG --libs sysrepo`"
+    SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion sysrepo`
+
+    AC_SUBST(SYSREPO_CPPFLAGS)
+    AC_SUBST(SYSREPO_LIBS)
+
+    # Check that a simple program using CQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
+    LIBS="$SYSREPO_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <sysrepo.h>],
+                              [sr_conn_ctx_t *connection = NULL;
+                              sr_session_ctx_t *session = NULL;
+                              sr_connect("configure_test", SR_CONN_DEFAULT, &connection);
+                              sr_disconnect(connection);])],
+            [AC_MSG_RESULT([checking for Sysrepo headers and library... yes])],
+            [AC_MSG_RESULT([checking for Sysrepo headers and library... no])
+             AC_MSG_ERROR([Needs Sysrepo library])]
+    )
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that CQL is present in the config.h file
+    AC_DEFINE([HAVE_SYSREPO], [1], [SYSREPO is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_SYSREPO, test "$SYSREPO_CONFIG" != "")
+
 # Check for log4cplus
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
 log4cplus_path="yes"
@@ -1703,6 +1755,22 @@ Cassandra CQL:
 END
 fi
 
+if test "$SYSREPO_CPPFLAGS" != "" ; then
+cat >> config.report << END
+
+Sysrepo:
+  SYSREPO_VERSION:     ${SYSREPO_VERSION}
+  SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
+  SYSREPO_LIBS:        ${SYSREPO_LIBS}
+END
+else
+cat >> config.report << END
+
+Sysrepo:
+  no
+END
+fi
+
 if test "$enable_gtest" != "no"; then
 cat >> config.report << END
 
@@ -1715,6 +1783,7 @@ Google Test:
 END
 else
 cat >> config.report << END
+
 Google Test:
   no
 END

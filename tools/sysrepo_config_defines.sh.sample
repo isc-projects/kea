@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# This auxiliary script is considered temporary in nature. It will not be
+# necessary once the DataStax cpp-driver project accepts proper cql_config
+# script.
+
+# This variable should point to the directory where sysrepo is compiled.
+# You can download sysrepo sources from https://github.com/sysrepo/sysrepo.git
+SYSREPO_PATH="/please/specify/path/to/sysrepo/in/sysrepo_config_defines.sh"
+export SYSREPO_PATH
