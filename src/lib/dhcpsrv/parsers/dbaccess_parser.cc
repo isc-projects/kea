@@ -206,7 +206,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     // Check that tcp_keepalive value makes sense.
     if ((tcp_keepalive < 0) ||
         (tcp_keepalive > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("tcp_keepalive");
+        ConstElementPtr value = database_config->get("tcp-keepalive");
         isc_throw(DhcpConfigError, "tcp-keepalive " << tcp_keepalive
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
