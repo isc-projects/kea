@@ -829,7 +829,7 @@ if test "$CQL_CONFIG" != "" ; then
     fi
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
+    CQL_CPPFLAGS="$CQL_INCLUDEDIR `$CQL_CONFIG --cflags-only-other $cql_lib`"
     CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
     CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
@@ -878,15 +878,15 @@ if test "SYSREPO_CONFIG" != "" ; then
         AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
     fi
 
-    SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I sysrepo`
-    SYSREPO_CPPFLAGS="`$SYSREPO_CONFIG --cflags-only-other sysrepo` $SYSREPO_INCLUDEDIR"
-    SYSREPO_LIBS="`$SYSREPO_CONFIG --libs sysrepo`"
-    SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion sysrepo`
+    SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libsysrepo`
+    SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
+    SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
+    SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
 
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
 
-    # Check that a simple program using CQL functions can compile and link.
+    # Check that a simple program using Sysrepo functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
     LIBS_SAVED="$LIBS"
 
@@ -894,7 +894,9 @@ if test "SYSREPO_CONFIG" != "" ; then
     LIBS="$SYSREPO_LIBS $LIBS"
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <sysrepo.h>],
+            [AC_LANG_PROGRAM([extern "C" {
+                              #include <sysrepo.h>
+                              }],
                               [sr_conn_ctx_t *connection = NULL;
                               sr_session_ctx_t *session = NULL;
                               sr_connect("configure_test", SR_CONN_DEFAULT, &connection);
@@ -906,7 +908,7 @@ if test "SYSREPO_CONFIG" != "" ; then
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
-    # Note that CQL is present in the config.h file
+    # Note that Sysrepo is present in the config.h file
     AC_DEFINE([HAVE_SYSREPO], [1], [SYSREPO is present])
 fi
 
