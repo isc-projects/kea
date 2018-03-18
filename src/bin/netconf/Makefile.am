@@ -4,7 +4,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(NETCONF_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -46,12 +46,12 @@ BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 
 noinst_LTLIBRARIES = libnetconf.la
 
-libnetconf_la_SOURCES  = 
-libnetconf_la_SOURCES += agent.cc agent.h
+libnetconf_la_SOURCES  = agent.cc agent.h
 libnetconf_la_SOURCES += translator.cc translator.h
 libnetconf_la_SOURCES += netconf_log.cc netconf_log.h
 
 nodist_libnetconf_la_SOURCES = netconf_messages.h netconf_messages.cc
+
 EXTRA_DIST += netconf_messages.mes
 
 sbin_PROGRAMS = kea-netconf
