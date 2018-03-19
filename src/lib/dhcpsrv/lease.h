@@ -255,6 +255,11 @@ struct Lease4 : public Lease {
     ///       Compare with the DUID in the Lease6 structure.
     ClientIdPtr client_id_;
 
+    /// @brief draft-ietf-dhc-dhcp4o6-saddr-opt
+    ///
+    /// client softwire source address
+    asiolink::IOAddress sw_4o6_src_address_;
+
     /// @brief Constructor
     ///
     /// @param addr IPv4 address.
@@ -275,7 +280,8 @@ struct Lease4 : public Lease {
            const bool fqdn_fwd = false, const bool fqdn_rev = false,
            const std::string& hostname = "")
         : Lease(addr, t1, t2, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
-                hostname, hwaddr) {
+                hostname, hwaddr),
+                sw_4o6_src_address_(isc::asiolink::IOAddress::IPV6_ZERO_ADDRESS()) {
         if (clientid_len) {
             client_id_.reset(new ClientId(clientid, clientid_len));
         }
@@ -310,7 +316,8 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0U, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()) {
+    Lease4() : Lease(0U, 0, 0, 0, 0, 0, false, false, "", HWAddrPtr()),
+      sw_4o6_src_address_(isc::asiolink::IOAddress::IPV6_ZERO_ADDRESS()) {
     }
 
     /// @brief Copy constructor

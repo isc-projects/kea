@@ -39,14 +39,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Macro to return directly from caller function
-#define KEA_CASS_CHECK(cass_error)   \
-    {                                \
-        if (cass_error != CASS_OK) { \
-            return cass_error;       \
-        }                            \
-    }
-
 /// @brief a helper structure with a function call operator that returns
 ///        key value in a format expected by std::hash.
 struct ExchangeDataTypeHash {

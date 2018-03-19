@@ -170,7 +170,13 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             .arg(query_->getLabel())
             .arg(joined_classes);
     }
-};
+    OptionCustomPtr saddrOption = boost::dynamic_pointer_cast<
+        OptionCustom>(query_->getOption(DHO_S46_SADDR));
+    if (saddrOption) {
+        context_->sw_4o6_src_address_ = saddrOption->readAddress();
+    } else {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_NO_SADDR_OPTION);
+    }
 
 void
 Dhcpv4Exchange::initResponse() {
@@ -283,6 +289,10 @@ Dhcpv4Exchange::copyDefaultOptions() {
     OptionPtr subnet_sel = query_->getOption(DHO_SUBNET_SELECTION);
     if (subnet_sel) {
         resp_->addOption(subnet_sel);
+    }
+    OptionPtr saddr_option = query_->getOption(DHO_S46_SADDR);
+    if (saddr_option) {
+        resp_->addOption(saddr_option);
     }
 }
 

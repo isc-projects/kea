@@ -261,6 +261,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
     { "v4-captive-portal", DHO_V4_CAPTIVE_PORTAL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "option-6rd", DHO_6RD, OPT_RECORD_TYPE, true, RECORD_DEF(OPT_6RD_RECORDS), "" },
+    { "4o6-saddr", DHO_S46_SADDR, OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaining options.
@@ -268,7 +269,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
 
 /// Number of option definitions defined.
 const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
-    sizeof(STANDARD_V4_OPTION_DEFINITIONS) / sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
+    sizeof(STANDARD_V4_OPTION_DEFINITIONS) /
+    sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
 
 /// Last resort definitions (only option 43 for now, these definitions
 /// are applied in deferred unpacking when none is found).
@@ -277,7 +279,9 @@ const OptionDefParams LAST_RESORT_V4_OPTION_DEFINITIONS[] = {
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" }
 };
 
-const int LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE = 1;
+const int LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE =
+    sizeof(LAST_RESORT_V4_OPTION_DEFINITIONS) /
+    sizeof(LAST_RESORT_V4_OPTION_DEFINITIONS[0]);
 
 /// Start Definition of DHCPv6 options
 
@@ -421,7 +425,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "v6-access-domain", D6O_V6_ACCESS_DOMAIN, OPT_FQDN_TYPE, false,
       NO_RECORD_DEF, "" },
     { "sip-ua-cs-list", D6O_SIP_UA_CS_LIST, OPT_FQDN_TYPE, true,
-      NO_RECORD_DEF, "" },      
+      NO_RECORD_DEF, "" },
     { "bootfile-url", D6O_BOOTFILE_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
@@ -458,6 +462,8 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
         MAPE_V6_OPTION_SPACE },
     { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
         MAPT_V6_OPTION_SPACE },
+    { "4o6-bind-prefix", D60_S46_BIND_IPV6_PREFIX, OPT_IPV6_PREFIX_TYPE, false,
+        NO_RECORD_DEF, "" },
     { "s46-cont-lw", D6O_S46_CONT_LW, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
         LW_V6_OPTION_SPACE }
 

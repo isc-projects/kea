@@ -1130,6 +1130,11 @@ public:
         /// which is in conflict with this allocation.
         Lease4Ptr conflicting_lease_;
 
+        /// @brief draft-ietf-dhc-dhcp4o6-saddr-opt
+        ///
+        /// client softwire source address
+        asiolink::IOAddress sw_4o6_src_address_;
+
         /// @brief A pointer to the client's message.
         ///
         /// This is used in logging to retrieve the client's and the

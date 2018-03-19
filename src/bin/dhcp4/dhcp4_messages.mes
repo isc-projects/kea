@@ -235,6 +235,10 @@ information. The second and third argument contains the packet name
 and type respectively. The fourth argument contains detailed packet
 information.
 
+% DHCP4_DHCP4O6_NO_SADDR_OPTION DHCPv4o6 packet contains no OPTION_DHCP4O6_S46_SADDR
+Upon parsing the DHCPv4oDHCPv6 message received from the DHCPv6 server,
+OPTION_DHCP4O6_SADDR is not found.
+
 % DHCP4_DYNAMIC_RECONFIGURATION initiate server reconfiguration using file: %1, after receiving SIGHUP signal
 This is the info message logged when the DHCPv4 server starts reconfiguration
 as a result of receiving SIGHUP signal.

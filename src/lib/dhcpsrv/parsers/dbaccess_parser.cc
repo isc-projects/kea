@@ -196,17 +196,17 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     }
 
     // Check that request_timeout value makes sense.
-    if ((request-timeout < 0) ||
-        (request-timeout > std::numeric_limits<uint32_t>::max())) {
+    if ((request_timeout < 0) ||
+        (request_timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("request-timeout");
-        isc_throw(DhcpConfigError, "request-timeout " << request-timeout
+        isc_throw(DhcpConfigError, "request-timeout " << request_timeout
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }
     // Check that tcp_keepalive value makes sense.
     if ((tcp_keepalive < 0) ||
         (tcp_keepalive > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("tcp_keepalive");
+        ConstElementPtr value = database_config->get("tcp-keepalive");
         isc_throw(DhcpConfigError, "tcp-keepalive " << tcp_keepalive
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");

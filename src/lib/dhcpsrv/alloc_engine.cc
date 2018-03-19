@@ -2757,6 +2757,7 @@ AllocEngine::ClientContext4::ClientContext4()
       fwd_dns_update_(false), rev_dns_update_(false),
       hostname_(""), callout_handle_(), fake_allocation_(false),
       old_lease_(), new_lease_(), hosts_(), conflicting_lease_(),
+      sw_4o6_src_address_(IOAddress::IPV6_ZERO_ADDRESS()),
       query_(), host_identifiers_() {
 }
 
@@ -2772,8 +2773,9 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
       requested_address_(requested_addr),
       fwd_dns_update_(fwd_dns_update), rev_dns_update_(rev_dns_update),
       hostname_(hostname), callout_handle_(),
-      fake_allocation_(fake_allocation), old_lease_(), new_lease_(),
-      hosts_(), host_identifiers_() {
+      fake_allocation_(fake_allocation), old_lease_(), new_lease_(), hosts_(),
+      sw_4o6_src_address_(IOAddress::IPV6_ZERO_ADDRESS()),
+      host_identifiers_() {
 
     // Initialize host identifiers.
     if (hwaddr) {
@@ -3240,6 +3242,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+    lease->sw_4o6_src_address_ = ctx.sw_4o6_src_address_;
 
     // Let's execute all callouts registered for lease4_select
     if (ctx.callout_handle_ &&
@@ -3626,6 +3629,7 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+    lease->sw_4o6_src_address_ = ctx.sw_4o6_src_address_;
 }
 
 bool

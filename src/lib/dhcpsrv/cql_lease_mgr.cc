@@ -228,6 +228,8 @@ private:
     cass_int64_t address_;
     // Client identification
     CassBlob client_id_;
+    /// @brief IPv6 address
+    std::string sw_4o6_src_address_;
 };  // CqlLease4Exchange
 
 constexpr StatementTag CqlLease4Exchange::INSERT_LEASE4;
@@ -248,10 +250,11 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {INSERT_LEASE4,
      {INSERT_LEASE4,
       "INSERT INTO lease4( "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       ") VALUES ( "
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "}},
 
@@ -259,6 +262,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {UPDATE_LEASE4,
      {UPDATE_LEASE4,
       "UPDATE lease4 SET "
+      "sw_4o6_src_address = ?, "
       "hwaddr = ?, "
       "client_id = ?, "
       "subnet_id = ?, "
@@ -282,6 +286,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {GET_LEASE4_EXPIRE,
      {GET_LEASE4_EXPIRE,
       "SELECT "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
@@ -294,6 +299,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4,
       {GET_LEASE4,
        "SELECT "
+       "sw_4o6_src_address, "
        "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
        "fqdn_fwd, fqdn_rev, hostname, state "
        "FROM lease4 "}},
@@ -302,6 +308,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {GET_LEASE4_ADDR,
      {GET_LEASE4_ADDR,
       "SELECT "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
@@ -311,6 +318,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {GET_LEASE4_CLIENTID,
      {GET_LEASE4_CLIENTID,
       "SELECT "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
@@ -321,6 +329,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {GET_LEASE4_CLIENTID_SUBID,
      {GET_LEASE4_CLIENTID_SUBID,
       "SELECT "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
@@ -332,6 +341,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {GET_LEASE4_HWADDR,
      {GET_LEASE4_HWADDR,
       "SELECT "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
@@ -342,6 +352,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
     {GET_LEASE4_HWADDR_SUBID,
      {GET_LEASE4_HWADDR_SUBID,
       "SELECT "
+      "sw_4o6_src_address, "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
       "fqdn_fwd, fqdn_rev, hostname, state "
       "FROM lease4 "
@@ -353,6 +364,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_SUBID,
       {GET_LEASE4_SUBID,
        "SELECT "
+       "sw_4o6_src_address, "
        "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
        "fqdn_fwd, fqdn_rev, hostname, state "
        "FROM lease4 "
@@ -433,11 +445,21 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         }
         hostname_ = lease_->hostname_;
 
+        // sw_4o6_src_address: varchar
+        sw_4o6_src_address_ = lease_->sw_4o6_src_address_.toText();
+        if (sw_4o6_src_address_.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue, "address " << sw_4o6_src_address_ << " of length "
+                      << sw_4o6_src_address_.size()
+                      << " exceeds maximum allowed length of "
+                      << ADDRESS6_TEXT_MAX_LEN);
+        }
+
         // state: int
         state_ = static_cast<cass_int32_t>(lease_->state_);
 
         // Start with a fresh array.
         data.clear();
+        data.add(&sw_4o6_src_address_);
         data.add(&address_);
         data.add(&hwaddr_);
         data.add(&client_id_);
@@ -526,11 +548,21 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         }
         hostname_ = lease_->hostname_;
 
+        // sw_4o6_src_address: varchar
+        sw_4o6_src_address_ = lease_->sw_4o6_src_address_.toText();
+        if (sw_4o6_src_address_.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue, "address " << sw_4o6_src_address_ << " of length "
+                      << sw_4o6_src_address_.size()
+                      << " exceeds maximum allowed length of "
+                      << ADDRESS6_TEXT_MAX_LEN);
+        }
+
         // state: int
         state_ = static_cast<cass_int32_t>(lease_->state_);
 
         // Start with a fresh array.
         data.clear();
+        data.add(&sw_4o6_src_address_);
         data.add(&hwaddr_);
         data.add(&client_id_);
         data.add(&subnet_id_);
@@ -578,7 +610,11 @@ CqlLease4Exchange::createBindForSelect(AnyArray &data, StatementTag /* unused */
     // Start with a fresh array.
     data.clear();
 
-    // address: blob
+
+    // sw_4o6_src_address: varchar
+    data.add(&sw_4o6_src_address_);
+
+    // address: bigint
     data.add(&address_);
 
     // hwaddr: blob
@@ -647,6 +683,15 @@ CqlLease4Exchange::retrieve() {
                                     client_id_.size(), valid_lifetime_, 0, 0,
                                     cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname_));
+
+        if (sw_4o6_src_address_.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue, "address " << sw_4o6_src_address_
+                      << " of length " << sw_4o6_src_address_.size()
+                      << " exceeds maximum allowed length of "
+                      << ADDRESS6_TEXT_MAX_LEN);
+        }
+
+        result->sw_4o6_src_address_ = IOAddress(sw_4o6_src_address_);
 
         result->state_ = state_;
 
