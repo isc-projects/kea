@@ -177,6 +177,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     } else {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_NO_SADDR_OPTION);
     }
+}
 
 void
 Dhcpv4Exchange::initResponse() {
