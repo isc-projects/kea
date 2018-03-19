@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS lease4 (
     fqdn_rev boolean,
     hostname varchar,
     state int,
+    sw_4o6_src_address varchar,
     PRIMARY KEY ((address))
 );
 

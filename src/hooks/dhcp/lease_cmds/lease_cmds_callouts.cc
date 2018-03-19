@@ -8,6 +8,8 @@
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
 
+#include <config.h>
+
 #include <lease_cmds.h>
 #include <lease_cmds_log.h>
 #include <cc/command_interpreter.h>

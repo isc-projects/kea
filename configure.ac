@@ -1648,6 +1648,7 @@ Google Test:
 END
 else
 cat >> config.report << END
+
 Google Test:
   no
 END
@@ -1666,6 +1667,7 @@ Google Benchmark:
 END
 else
 cat >> config.report << END
+
 Google Benchmark:
   no
 END
