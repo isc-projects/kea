@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,8 +45,7 @@ HostDataSourceFactory::getHostDataSourcePtr() {
 }
 
 void
-HostDataSourceFactory::create(const std::string& dbaccess,
-                              DatabaseConnection::DbLostCallback db_lost_callback) {
+HostDataSourceFactory::create(const std::string& dbaccess) {
     // Parse the access string and create a redacted string for logging.
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
@@ -73,8 +72,7 @@ HostDataSourceFactory::create(const std::string& dbaccess,
     if (db_type == "postgresql") {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
-        getHostDataSourcePtr().reset(new PgSqlHostDataSource(parameters,
-                                     db_lost_callback));
+        getHostDataSourcePtr().reset(new PgSqlHostDataSource(parameters));
         return;
     }
 #endif
@@ -103,18 +101,6 @@ HostDataSourceFactory::destroy() {
     }
     getHostDataSourcePtr().reset();
 }
-
-#if 0
-BaseHostDataSource&
-HostDataSourceFactory::instance() {
-    BaseHostDataSource* hdsptr = getHostDataSourcePtr().get();
-    if (hdsptr == NULL) {
-        isc_throw(NoHostDataSourceManager,
-                "no current host data source instance is available");
-    }
-    return (*hdsptr);
-}
-#endif
 
 }  // namespace dhcp
 }  // namespace isc

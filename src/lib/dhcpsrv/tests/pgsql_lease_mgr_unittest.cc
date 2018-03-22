@@ -216,9 +216,9 @@ TEST(PgSqlOpenTest, NoCallbackOnOpenFail) {
     createPgSQLSchema();
 
     callback_called = false;
+    DatabaseConnection::db_lost_callback = db_lost_callback;
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD),
-        db_lost_callback),
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_FALSE(callback_called);
 

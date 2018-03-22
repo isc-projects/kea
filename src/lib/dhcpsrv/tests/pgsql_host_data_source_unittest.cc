@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -247,9 +247,10 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
     createPgSQLSchema();
 
     callback_called = false;
+    DatabaseConnection::db_lost_callback = db_lost_callback;
     EXPECT_THROW(HostDataSourceFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD),
-        db_lost_callback), DbOpenError);
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+                 DbOpenError);
 
     EXPECT_FALSE(callback_called);
     destroyPgSQLSchema();
