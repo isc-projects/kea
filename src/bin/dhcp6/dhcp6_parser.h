@@ -40,7 +40,7 @@
 #ifndef YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 # define YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp6_parser.yy" // lalr1.cc:392
+#line 17 "dhcp6_parser.yy" // lalr1.cc:377
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp6_parser.h" // lalr1.cc:392
+#line 56 "dhcp6_parser.h" // lalr1.cc:377
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER6_DEBUG */
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:392
+#line 14 "dhcp6_parser.yy" // lalr1.cc:377
 namespace isc { namespace dhcp {
-#line 141 "dhcp6_parser.h" // lalr1.cc:392
+#line 141 "dhcp6_parser.h" // lalr1.cc:377
 
 
 
@@ -2820,9 +2820,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:392
+#line 14 "dhcp6_parser.yy" // lalr1.cc:377
 } } // isc::dhcp
-#line 2826 "dhcp6_parser.h" // lalr1.cc:392
+#line 2826 "dhcp6_parser.h" // lalr1.cc:377
 
 
 
