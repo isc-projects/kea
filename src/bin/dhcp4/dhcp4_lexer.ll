@@ -490,16 +490,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"reconnect-wait-time\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::LEASE_DATABASE:
-    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("reconnect-wait-time", driver.loc_);
-    }
-}
-
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
