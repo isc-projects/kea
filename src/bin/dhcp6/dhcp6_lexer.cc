@@ -691,8 +691,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 /* %% [3.0] code to copy yytext_ptr to yytext[] goes here, if %array \ */\
 	(yy_c_buf_p) = yy_cp;
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
-#define YY_NUM_RULES 168
-#define YY_END_OF_BUFFER 169
+#define YY_NUM_RULES 167
+#define YY_END_OF_BUFFER 168
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -702,153 +702,153 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[1336] =
     {   0,
-      161,  161,    0,    0,    0,    0,    0,    0,    0,    0,
-      169,  167,   10,   11,  167,    1,  161,  158,  161,  161,
-      167,  160,  159,  167,  167,  167,  167,  167,  154,  155,
-      167,  167,  167,  156,  157,    5,    5,    5,  167,  167,
-      167,   10,   11,    0,    0,  150,    0,    0,    0,    0,
+      160,  160,    0,    0,    0,    0,    0,    0,    0,    0,
+      168,  166,   10,   11,  166,    1,  160,  157,  160,  160,
+      166,  159,  158,  166,  166,  166,  166,  166,  153,  154,
+      166,  166,  166,  155,  156,    5,    5,    5,  166,  166,
+      166,   10,   11,    0,    0,  149,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    1,  161,
-      161,    0,  160,  161,    3,    2,    6,    0,  161,    0,
+        0,    0,    0,    0,    0,    0,    0,    0,    1,  160,
+      160,    0,  159,  160,    3,    2,    6,    0,  160,    0,
         0,    0,    0,    0,    0,    4,    0,    0,    9,    0,
 
-      151,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,  153,    0,    0,    0,
+      150,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,  152,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    2,    0,    0,    0,    0,    0,    0,
-        0,    8,    0,    0,    0,    0,  129,    0,    0,  130,
-        0,    0,    0,    0,    0,    0,    0,    0,  152,    0,
+        0,    8,    0,    0,    0,    0,  128,    0,    0,  129,
+        0,    0,    0,    0,    0,    0,    0,    0,  151,    0,
 
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    0,   87,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,   86,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,  166,  164,    0,  163,  162,    0,    0,    0,
-        0,    0,    0,    0,  128,    0,    0,   27,    0,   26,
+        0,    0,  165,  163,    0,  162,  161,    0,    0,    0,
+        0,    0,    0,    0,  127,    0,    0,   27,    0,   26,
 
-        0,    0,   93,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,   92,    0,    0,    0,    0,    0,    0,    0,
        46,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,   91,    0,
+        0,    0,    0,    0,    0,    0,    0,    0,   90,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,  165,  162,    0,
+        0,    0,    0,    0,    0,    0,    0,  164,  161,    0,
         0,    0,    0,    0,    0,    0,    0,   28,    0,    0,
 
-       30,    0,    0,    0,    0,    0,   94,    0,    0,    0,
-        0,    0,   72,    0,    0,    0,    0,    0,    0,  113,
+       30,    0,    0,    0,    0,    0,   93,    0,    0,    0,
+        0,    0,   71,    0,    0,    0,    0,    0,    0,  112,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
        49,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,   71,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,   81,    0,   50,    0,    0,    0,    0,    0,
+        0,   70,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,   80,    0,   50,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-      109,  133,   42,    0,   47,    0,    0,    0,    0,    0,
+      108,  132,   42,    0,   47,    0,    0,    0,    0,    0,
 
-        0,  147,   35,    0,   32,    0,   31,    0,    0,    0,
-      121,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,    0,  102,
-        0,    0,    0,    0,    0,    0,    0,  132,    0,    0,
+        0,  146,   35,    0,   32,    0,   31,    0,    0,    0,
+      120,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,  101,
+        0,    0,    0,    0,    0,    0,    0,  131,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,   44,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,   74,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,  122,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,  117,    0,    0,
+        0,    0,    0,    0,   73,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,  121,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,  116,    0,    0,
         0,    0,    0,    0,    7,   33,    0,    0,    0,    0,
 
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-      104,    0,    0,    0,    0,    0,  101,    0,    0,    0,
-        0,    0,    0,    0,    0,   76,    0,    0,    0,    0,
+      103,    0,    0,    0,    0,    0,  100,    0,    0,    0,
+        0,    0,    0,    0,    0,   75,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,   84,    0,    0,    0,
-        0,    0,    0,    0,    0,   98,    0,    0,    0,    0,
-        0,   83,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,   83,    0,    0,    0,
+        0,    0,    0,    0,    0,   97,    0,    0,    0,    0,
+        0,   82,    0,    0,    0,    0,    0,    0,    0,    0,
 
-        0,    0,    0,    0,    0,    0,    0,  116,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,  115,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,  126,   99,    0,    0,    0,    0,  103,   43,
+        0,    0,  125,   98,    0,    0,    0,    0,  102,   43,
         0,    0,    0,    0,    0,    0,    0,    0,    0,   51,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,   67,    0,    0,    0,    0,
-        0,    0,  148,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,   90,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    0,  115,    0,
+        0,    0,    0,    0,    0,   66,    0,    0,    0,    0,
+        0,    0,  147,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,   89,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,    0,  114,    0,
 
         0,    0,    0,    0,   54,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,   48,
-       75,    0,    0,    0,  112,    0,    0,    0,   41,    0,
+       74,    0,    0,    0,  111,    0,    0,    0,   41,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,  106,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,  105,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,  146,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,  145,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-       85,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+       84,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
 
         0,    0,    0,    0,   38,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,   16,    0,  127,   14,    0,    0,
+        0,    0,    0,    0,   16,    0,  126,   14,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,  118,  105,    0,    0,
+        0,    0,    0,    0,    0,    0,  117,  104,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,  114,  131,    0,   37,    0,  123,    0,    0,
-        0,    0,    0,    0,    0,   20,    0,    0,   69,    0,
-        0,    0,    0,  125,   45,    0,   77,    0,    0,    0,
+        0,    0,  113,  130,    0,   37,    0,  122,    0,    0,
+        0,    0,    0,    0,    0,   20,    0,    0,   68,    0,
+        0,    0,    0,  124,   45,    0,   76,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
 
-        0,    0,   73,    0,    0,    0,    0,    0,    0,    0,
-        0,  120,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,   95,    0,    0,    0,
-        0,   70,   92,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,   64,    0,    0,    0,    0,   17,
-       15,    0,  145,  144,    0,   58,    0,    0,    0,    0,
-        0,   29,    0,  108,    0,    0,    0,    0,    0,    0,
-      142,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,   86,    0,  111,    0,   52,    0,    0,    0,    0,
-       19,    0,    0,    0,    0,    0,   88,   65,    0,    0,
+        0,    0,   72,    0,    0,    0,    0,    0,    0,    0,
+        0,  119,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,   94,    0,    0,    0,
+        0,   69,   91,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,   63,    0,    0,    0,    0,   17,
+       15,    0,  144,  143,    0,   58,    0,    0,    0,    0,
+        0,   29,    0,  107,    0,    0,    0,    0,    0,    0,
+      141,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,   85,    0,  110,    0,   52,    0,    0,    0,    0,
+       19,    0,    0,    0,    0,    0,   87,   64,    0,    0,
 
-      119,    0,    0,    0,    0,  110,    0,    0,    0,   82,
-        0,  149,    0,    0,    0,    0,    0,    0,    0,   80,
-        0,  134,    0,    0,    0,    0,    0,    0,    0,    0,
+      118,    0,    0,    0,    0,  109,    0,    0,    0,   81,
+        0,  148,    0,    0,    0,    0,    0,    0,    0,   79,
+        0,  133,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,   57,    0,
-        0,    0,    0,  107,    0,   59,  143,    0,   12,    0,
+        0,    0,    0,  106,    0,   59,  142,    0,   12,    0,
         0,    0,    0,    0,    0,    0,   40,    0,   39,   18,
-        0,    0,    0,  100,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,   63,    0,    0,   53,
-        0,   78,    0,    0,    0,    0,    0,  124,    0,    0,
+        0,    0,    0,   99,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,   62,    0,    0,   53,
+        0,   77,    0,    0,    0,    0,    0,  123,    0,    0,
 
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,   56,    0,   68,    0,   34,    0,    0,    0,    0,
-        0,   25,    0,    0,    0,    0,  140,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,   89,    0,    0,    0,
+        0,   56,    0,   67,    0,   34,    0,    0,    0,    0,
+        0,   25,    0,    0,    0,    0,  139,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,   88,    0,    0,    0,
         0,    0,    0,    0,    0,   36,    0,    0,    0,    0,
         0,   13,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,  139,    0,    0,   22,   62,    0,
-        0,    0,    0,    0,   21,    0,   79,    0,    0,  138,
+        0,    0,    0,    0,  138,    0,    0,   22,   61,    0,
+        0,    0,    0,    0,   21,    0,   78,    0,    0,  137,
         0,   60,    0,    0,   55,    0,   24,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
 
         0,    0,    0,    0,    0,    0,    0,    0,   23,    0,
-       96,    0,    0,    0,    0,    0,  136,  141,   66,    0,
-        0,    0,  135,    0,    0,    0,    0,    0,    0,    0,
-       97,    0,    0,  137,    0
+       95,    0,    0,    0,    0,    0,  135,  140,   65,    0,
+        0,    0,  134,    0,    0,    0,    0,    0,    0,    0,
+       96,    0,    0,  136,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -1601,7 +1601,7 @@ static char *yy_last_accepting_cpos;
 extern int yy_flex_debug;
 int yy_flex_debug = 1;
 
-static const flex_int16_t yy_rule_linenum[168] =
+static const flex_int16_t yy_rule_linenum[167] =
     {   0,
       147,  149,  151,  156,  157,  162,  163,  164,  176,  179,
       184,  191,  200,  209,  218,  227,  236,  245,  254,  263,
@@ -1609,18 +1609,18 @@ static const flex_int16_t yy_rule_linenum[168] =
       367,  377,  387,  397,  407,  416,  425,  434,  443,  452,
       461,  470,  482,  491,  500,  509,  518,  528,  538,  548,
       558,  569,  579,  589,  599,  609,  619,  629,  639,  649,
-      659,  669,  680,  691,  702,  713,  722,  732,  741,  750,
-      766,  782,  791,  800,  809,  818,  827,  836,  845,  854,
-      863,  872,  894,  916,  925,  935,  945,  954,  964,  974,
-      983,  992, 1001, 1010, 1020, 1029, 1038, 1047, 1056, 1065,
+      659,  670,  681,  692,  703,  712,  722,  731,  740,  756,
+      772,  781,  790,  799,  808,  817,  826,  835,  844,  853,
+      862,  884,  906,  915,  925,  935,  944,  954,  964,  973,
+      982,  991, 1000, 1010, 1019, 1028, 1037, 1046, 1055, 1064,
 
-     1074, 1083, 1092, 1101, 1111, 1120, 1129, 1139, 1152, 1162,
-     1171, 1180, 1189, 1200, 1210, 1219, 1229, 1239, 1248, 1257,
-     1266, 1275, 1285, 1294, 1304, 1313, 1322, 1331, 1340, 1349,
-     1358, 1367, 1376, 1385, 1394, 1403, 1412, 1421, 1430, 1439,
-     1448, 1457, 1466, 1475, 1484, 1493, 1502, 1511, 1520, 1530,
-     1629, 1634, 1639, 1644, 1645, 1646, 1647, 1648, 1649, 1651,
-     1669, 1682, 1687, 1691, 1693, 1695, 1697
+     1073, 1082, 1091, 1101, 1110, 1119, 1129, 1142, 1152, 1161,
+     1170, 1179, 1190, 1200, 1209, 1219, 1229, 1238, 1247, 1256,
+     1265, 1275, 1284, 1294, 1303, 1312, 1321, 1330, 1339, 1348,
+     1357, 1366, 1375, 1384, 1393, 1402, 1411, 1420, 1429, 1438,
+     1447, 1456, 1465, 1474, 1483, 1492, 1501, 1510, 1520, 1619,
+     1624, 1629, 1634, 1635, 1636, 1637, 1638, 1639, 1641, 1659,
+     1672, 1677, 1681, 1683, 1685, 1687
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2084,13 +2084,13 @@ do_action:	/* This label is used only to access EOF actions. */
 			{
 			if ( yy_act == 0 )
 				fprintf( stderr, "--scanner backing up\n" );
-			else if ( yy_act < 168 )
+			else if ( yy_act < 167 )
 				fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
 				         (long)yy_rule_linenum[yy_act], yytext );
-			else if ( yy_act == 168 )
+			else if ( yy_act == 167 )
 				fprintf( stderr, "--accepting default rule (\"%s\")\n",
 				         yytext );
-			else if ( yy_act == 169 )
+			else if ( yy_act == 168 )
 				fprintf( stderr, "--(end of buffer or a NUL)\n" );
 			else
 				fprintf( stderr, "--EOF (start condition %d)\n", YY_START );
@@ -2814,19 +2814,6 @@ YY_RULE_SETUP
 #line 659 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::LEASE_DATABASE:
-    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp6Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("reconnect-wait-time", driver.loc_);
-    }
-}
-	YY_BREAK
-case 62:
-YY_RULE_SETUP
-#line 669 "dhcp6_lexer.ll"
-{
-    switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
@@ -2836,9 +2823,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 63:
+case 62:
 YY_RULE_SETUP
-#line 680 "dhcp6_lexer.ll"
+#line 670 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2850,9 +2837,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 64:
+case 63:
 YY_RULE_SETUP
-#line 691 "dhcp6_lexer.ll"
+#line 681 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2864,9 +2851,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 65:
+case 64:
 YY_RULE_SETUP
-#line 702 "dhcp6_lexer.ll"
+#line 692 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2878,9 +2865,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 66:
+case 65:
 YY_RULE_SETUP
-#line 713 "dhcp6_lexer.ll"
+#line 703 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2890,9 +2877,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 67:
+case 66:
 YY_RULE_SETUP
-#line 722 "dhcp6_lexer.ll"
+#line 712 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2903,9 +2890,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 68:
+case 67:
 YY_RULE_SETUP
-#line 732 "dhcp6_lexer.ll"
+#line 722 "dhcp6_lexer.ll"
 {
     switch (driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2915,9 +2902,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 69:
+case 68:
 YY_RULE_SETUP
-#line 741 "dhcp6_lexer.ll"
+#line 731 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2927,9 +2914,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 70:
+case 69:
 YY_RULE_SETUP
-#line 750 "dhcp6_lexer.ll"
+#line 740 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -2946,9 +2933,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 71:
+case 70:
 YY_RULE_SETUP
-#line 766 "dhcp6_lexer.ll"
+#line 756 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
@@ -2965,9 +2952,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 72:
+case 71:
 YY_RULE_SETUP
-#line 782 "dhcp6_lexer.ll"
+#line 772 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
@@ -2977,9 +2964,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 73:
+case 72:
 YY_RULE_SETUP
-#line 791 "dhcp6_lexer.ll"
+#line 781 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
@@ -2989,9 +2976,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 74:
+case 73:
 YY_RULE_SETUP
-#line 800 "dhcp6_lexer.ll"
+#line 790 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3001,9 +2988,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 75:
+case 74:
 YY_RULE_SETUP
-#line 809 "dhcp6_lexer.ll"
+#line 799 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3013,9 +3000,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 76:
+case 75:
 YY_RULE_SETUP
-#line 818 "dhcp6_lexer.ll"
+#line 808 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
@@ -3025,9 +3012,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 77:
+case 76:
 YY_RULE_SETUP
-#line 827 "dhcp6_lexer.ll"
+#line 817 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
@@ -3037,9 +3024,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 78:
+case 77:
 YY_RULE_SETUP
-#line 836 "dhcp6_lexer.ll"
+#line 826 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
@@ -3049,9 +3036,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 79:
+case 78:
 YY_RULE_SETUP
-#line 845 "dhcp6_lexer.ll"
+#line 835 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
@@ -3061,9 +3048,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 80:
+case 79:
 YY_RULE_SETUP
-#line 854 "dhcp6_lexer.ll"
+#line 844 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::PD_POOLS:
@@ -3073,9 +3060,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 81:
+case 80:
 YY_RULE_SETUP
-#line 863 "dhcp6_lexer.ll"
+#line 853 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::POOLS:
@@ -3085,9 +3072,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 82:
+case 81:
 YY_RULE_SETUP
-#line 872 "dhcp6_lexer.ll"
+#line 862 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3110,9 +3097,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 83:
+case 82:
 YY_RULE_SETUP
-#line 894 "dhcp6_lexer.ll"
+#line 884 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3135,9 +3122,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 84:
+case 83:
 YY_RULE_SETUP
-#line 916 "dhcp6_lexer.ll"
+#line 906 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3147,9 +3134,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 85:
+case 84:
 YY_RULE_SETUP
-#line 925 "dhcp6_lexer.ll"
+#line 915 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3160,9 +3147,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 86:
+case 85:
 YY_RULE_SETUP
-#line 935 "dhcp6_lexer.ll"
+#line 925 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3173,9 +3160,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 87:
+case 86:
 YY_RULE_SETUP
-#line 945 "dhcp6_lexer.ll"
+#line 935 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3185,9 +3172,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 88:
+case 87:
 YY_RULE_SETUP
-#line 954 "dhcp6_lexer.ll"
+#line 944 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3198,9 +3185,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 89:
+case 88:
 YY_RULE_SETUP
-#line 964 "dhcp6_lexer.ll"
+#line 954 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3211,9 +3198,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 90:
+case 89:
 YY_RULE_SETUP
-#line 974 "dhcp6_lexer.ll"
+#line 964 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATION_MODE:
@@ -3223,9 +3210,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 91:
+case 90:
 YY_RULE_SETUP
-#line 983 "dhcp6_lexer.ll"
+#line 973 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATION_MODE:
@@ -3235,9 +3222,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 92:
+case 91:
 YY_RULE_SETUP
-#line 992 "dhcp6_lexer.ll"
+#line 982 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATION_MODE:
@@ -3247,9 +3234,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 93:
+case 92:
 YY_RULE_SETUP
-#line 1001 "dhcp6_lexer.ll"
+#line 991 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATION_MODE:
@@ -3259,9 +3246,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 94:
+case 93:
 YY_RULE_SETUP
-#line 1010 "dhcp6_lexer.ll"
+#line 1000 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -3272,9 +3259,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 95:
+case 94:
 YY_RULE_SETUP
-#line 1020 "dhcp6_lexer.ll"
+#line 1010 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3284,9 +3271,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 96:
+case 95:
 YY_RULE_SETUP
-#line 1029 "dhcp6_lexer.ll"
+#line 1019 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3296,9 +3283,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 97:
+case 96:
 YY_RULE_SETUP
-#line 1038 "dhcp6_lexer.ll"
+#line 1028 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3308,9 +3295,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 98:
+case 97:
 YY_RULE_SETUP
-#line 1047 "dhcp6_lexer.ll"
+#line 1037 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
@@ -3320,9 +3307,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 99:
+case 98:
 YY_RULE_SETUP
-#line 1056 "dhcp6_lexer.ll"
+#line 1046 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGING:
@@ -3332,9 +3319,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 100:
+case 99:
 YY_RULE_SETUP
-#line 1065 "dhcp6_lexer.ll"
+#line 1055 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -3344,9 +3331,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 101:
+case 100:
 YY_RULE_SETUP
-#line 1074 "dhcp6_lexer.ll"
+#line 1064 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
@@ -3356,9 +3343,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 102:
+case 101:
 YY_RULE_SETUP
-#line 1083 "dhcp6_lexer.ll"
+#line 1073 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
@@ -3368,9 +3355,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 103:
+case 102:
 YY_RULE_SETUP
-#line 1092 "dhcp6_lexer.ll"
+#line 1082 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
@@ -3380,9 +3367,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 104:
+case 103:
 YY_RULE_SETUP
-#line 1101 "dhcp6_lexer.ll"
+#line 1091 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OUTPUT_OPTIONS:
@@ -3392,9 +3379,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 105:
+case 104:
 YY_RULE_SETUP
-#line 1111 "dhcp6_lexer.ll"
+#line 1101 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -3404,9 +3391,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 106:
+case 105:
 YY_RULE_SETUP
-#line 1120 "dhcp6_lexer.ll"
+#line 1110 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -3416,9 +3403,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 107:
+case 106:
 YY_RULE_SETUP
-#line 1129 "dhcp6_lexer.ll"
+#line 1119 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3429,9 +3416,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 108:
+case 107:
 YY_RULE_SETUP
-#line 1139 "dhcp6_lexer.ll"
+#line 1129 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3445,9 +3432,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 109:
+case 108:
 YY_RULE_SETUP
-#line 1152 "dhcp6_lexer.ll"
+#line 1142 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
@@ -3458,9 +3445,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 110:
+case 109:
 YY_RULE_SETUP
-#line 1162 "dhcp6_lexer.ll"
+#line 1152 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3470,9 +3457,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 111:
+case 110:
 YY_RULE_SETUP
-#line 1171 "dhcp6_lexer.ll"
+#line 1161 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -3482,9 +3469,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 112:
+case 111:
 YY_RULE_SETUP
-#line 1180 "dhcp6_lexer.ll"
+#line 1170 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -3494,9 +3481,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 113:
+case 112:
 YY_RULE_SETUP
-#line 1189 "dhcp6_lexer.ll"
+#line 1179 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::MAC_SOURCES:
@@ -3508,9 +3495,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 114:
+case 113:
 YY_RULE_SETUP
-#line 1200 "dhcp6_lexer.ll"
+#line 1190 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
@@ -3521,9 +3508,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 115:
+case 114:
 YY_RULE_SETUP
-#line 1210 "dhcp6_lexer.ll"
+#line 1200 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -3533,9 +3520,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 116:
+case 115:
 YY_RULE_SETUP
-#line 1219 "dhcp6_lexer.ll"
+#line 1209 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
@@ -3546,9 +3533,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 117:
+case 116:
 YY_RULE_SETUP
-#line 1229 "dhcp6_lexer.ll"
+#line 1219 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -3559,9 +3546,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 118:
+case 117:
 YY_RULE_SETUP
-#line 1239 "dhcp6_lexer.ll"
+#line 1229 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
@@ -3571,9 +3558,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 119:
+case 118:
 YY_RULE_SETUP
-#line 1248 "dhcp6_lexer.ll"
+#line 1238 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -3583,9 +3570,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 120:
+case 119:
 YY_RULE_SETUP
-#line 1257 "dhcp6_lexer.ll"
+#line 1247 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -3595,9 +3582,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 121:
+case 120:
 YY_RULE_SETUP
-#line 1266 "dhcp6_lexer.ll"
+#line 1256 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -3607,9 +3594,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 122:
+case 121:
 YY_RULE_SETUP
-#line 1275 "dhcp6_lexer.ll"
+#line 1265 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -3620,9 +3607,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 123:
+case 122:
 YY_RULE_SETUP
-#line 1285 "dhcp6_lexer.ll"
+#line 1275 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RELAY:
@@ -3632,9 +3619,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 124:
+case 123:
 YY_RULE_SETUP
-#line 1294 "dhcp6_lexer.ll"
+#line 1284 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3644,9 +3631,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 125:
+case 124:
 YY_RULE_SETUP
-#line 1304 "dhcp6_lexer.ll"
+#line 1294 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
@@ -3656,9 +3643,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 126:
+case 125:
 YY_RULE_SETUP
-#line 1313 "dhcp6_lexer.ll"
+#line 1303 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
@@ -3668,9 +3655,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 127:
+case 126:
 YY_RULE_SETUP
-#line 1322 "dhcp6_lexer.ll"
+#line 1312 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3680,9 +3667,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 128:
+case 127:
 YY_RULE_SETUP
-#line 1331 "dhcp6_lexer.ll"
+#line 1321 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DUID_TYPE:
@@ -3692,9 +3679,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 129:
+case 128:
 YY_RULE_SETUP
-#line 1340 "dhcp6_lexer.ll"
+#line 1330 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DUID_TYPE:
@@ -3704,9 +3691,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 130:
+case 129:
 YY_RULE_SETUP
-#line 1349 "dhcp6_lexer.ll"
+#line 1339 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DUID_TYPE:
@@ -3716,9 +3703,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 131:
+case 130:
 YY_RULE_SETUP
-#line 1358 "dhcp6_lexer.ll"
+#line 1348 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -3728,9 +3715,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 132:
+case 131:
 YY_RULE_SETUP
-#line 1367 "dhcp6_lexer.ll"
+#line 1357 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -3740,9 +3727,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 133:
+case 132:
 YY_RULE_SETUP
-#line 1376 "dhcp6_lexer.ll"
+#line 1366 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -3752,9 +3739,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 134:
+case 133:
 YY_RULE_SETUP
-#line 1385 "dhcp6_lexer.ll"
+#line 1375 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -3764,9 +3751,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 135:
+case 134:
 YY_RULE_SETUP
-#line 1394 "dhcp6_lexer.ll"
+#line 1384 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3776,9 +3763,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 136:
+case 135:
 YY_RULE_SETUP
-#line 1403 "dhcp6_lexer.ll"
+#line 1393 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -3788,9 +3775,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 137:
+case 136:
 YY_RULE_SETUP
-#line 1412 "dhcp6_lexer.ll"
+#line 1402 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -3800,9 +3787,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 138:
+case 137:
 YY_RULE_SETUP
-#line 1421 "dhcp6_lexer.ll"
+#line 1411 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -3812,9 +3799,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 139:
+case 138:
 YY_RULE_SETUP
-#line 1430 "dhcp6_lexer.ll"
+#line 1420 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -3824,9 +3811,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 140:
+case 139:
 YY_RULE_SETUP
-#line 1439 "dhcp6_lexer.ll"
+#line 1429 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -3836,9 +3823,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 141:
+case 140:
 YY_RULE_SETUP
-#line 1448 "dhcp6_lexer.ll"
+#line 1438 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -3848,9 +3835,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 142:
+case 141:
 YY_RULE_SETUP
-#line 1457 "dhcp6_lexer.ll"
+#line 1447 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3860,9 +3847,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 143:
+case 142:
 YY_RULE_SETUP
-#line 1466 "dhcp6_lexer.ll"
+#line 1456 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3872,9 +3859,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 144:
+case 143:
 YY_RULE_SETUP
-#line 1475 "dhcp6_lexer.ll"
+#line 1465 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -3884,9 +3871,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 145:
+case 144:
 YY_RULE_SETUP
-#line 1484 "dhcp6_lexer.ll"
+#line 1474 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -3896,9 +3883,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 146:
+case 145:
 YY_RULE_SETUP
-#line 1493 "dhcp6_lexer.ll"
+#line 1483 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -3908,9 +3895,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 147:
+case 146:
 YY_RULE_SETUP
-#line 1502 "dhcp6_lexer.ll"
+#line 1492 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
@@ -3920,9 +3907,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 148:
+case 147:
 YY_RULE_SETUP
-#line 1511 "dhcp6_lexer.ll"
+#line 1501 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
@@ -3932,9 +3919,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 149:
+case 148:
 YY_RULE_SETUP
-#line 1520 "dhcp6_lexer.ll"
+#line 1510 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONFIG:
@@ -3944,9 +3931,9 @@ YY_RULE_SETUP
     }
 }
 	YY_BREAK
-case 150:
+case 149:
 YY_RULE_SETUP
-#line 1530 "dhcp6_lexer.ll"
+#line 1520 "dhcp6_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -4046,65 +4033,65 @@ YY_RULE_SETUP
     return isc::dhcp::Dhcp6Parser::make_STRING(decoded, driver.loc_);
 }
 	YY_BREAK
-case 151:
-/* rule 151 can match eol */
+case 150:
+/* rule 150 can match eol */
 YY_RULE_SETUP
-#line 1629 "dhcp6_lexer.ll"
+#line 1619 "dhcp6_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
 }
 	YY_BREAK
-case 152:
-/* rule 152 can match eol */
+case 151:
+/* rule 151 can match eol */
 YY_RULE_SETUP
-#line 1634 "dhcp6_lexer.ll"
+#line 1624 "dhcp6_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
 }
 	YY_BREAK
-case 153:
+case 152:
 YY_RULE_SETUP
-#line 1639 "dhcp6_lexer.ll"
+#line 1629 "dhcp6_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
 }
 	YY_BREAK
+case 153:
+YY_RULE_SETUP
+#line 1634 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
+	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 1644 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
+#line 1635 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 1645 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
+#line 1636 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 1646 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
+#line 1637 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 1647 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
+#line 1638 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 1648 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
+#line 1639 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 1649 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
-	YY_BREAK
-case 160:
-YY_RULE_SETUP
-#line 1651 "dhcp6_lexer.ll"
+#line 1641 "dhcp6_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -4123,9 +4110,9 @@ YY_RULE_SETUP
     return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
-case 161:
+case 160:
 YY_RULE_SETUP
-#line 1669 "dhcp6_lexer.ll"
+#line 1659 "dhcp6_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -4139,43 +4126,43 @@ YY_RULE_SETUP
     return isc::dhcp::Dhcp6Parser::make_FLOAT(fp, driver.loc_);
 }
 	YY_BREAK
-case 162:
+case 161:
 YY_RULE_SETUP
-#line 1682 "dhcp6_lexer.ll"
+#line 1672 "dhcp6_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", driver.loc_);
 }
 	YY_BREAK
-case 163:
+case 162:
 YY_RULE_SETUP
-#line 1687 "dhcp6_lexer.ll"
+#line 1677 "dhcp6_lexer.ll"
 {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
+case 163:
+YY_RULE_SETUP
+#line 1681 "dhcp6_lexer.ll"
+driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
+	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 1691 "dhcp6_lexer.ll"
-driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
+#line 1683 "dhcp6_lexer.ll"
+driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 1693 "dhcp6_lexer.ll"
-driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
+#line 1685 "dhcp6_lexer.ll"
+driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 1695 "dhcp6_lexer.ll"
-driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
-	YY_BREAK
-case 167:
-YY_RULE_SETUP
-#line 1697 "dhcp6_lexer.ll"
+#line 1687 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1699 "dhcp6_lexer.ll"
+#line 1689 "dhcp6_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(driver.loc_);
@@ -4199,12 +4186,12 @@ case YY_STATE_EOF(INITIAL):
     BEGIN(DIR_EXIT);
 }
 	YY_BREAK
-case 168:
+case 167:
 YY_RULE_SETUP
-#line 1722 "dhcp6_lexer.ll"
+#line 1712 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 4207 "dhcp6_lexer.cc"
+#line 4194 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -5309,7 +5296,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 1722 "dhcp6_lexer.ll"
+#line 1712 "dhcp6_lexer.ll"
 
 
 using namespace isc::dhcp;
