@@ -235,6 +235,11 @@ public:
         return (io_service_);
     }
 
+    /// @brief Returns pointer to the network state used by the server.
+    NetworkStatePtr& getNetworkState() {
+        return (network_state_);
+    }
+
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
@@ -877,7 +882,7 @@ protected:
 
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
-    NetworkState network_state_;
+    NetworkStatePtr network_state_;
 
 public:
     /// Class methods for DHCPv4-over-DHCPv6 handler
