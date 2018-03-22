@@ -111,38 +111,49 @@ DatabaseConnection::configuredReadOnly() const {
 ReconnectCtlPtr
 DatabaseConnection::makeReconnectCtl() const {
     ReconnectCtlPtr retry;
+    string name = "unknown";
     unsigned int retries = 0;
     unsigned int interval = 0;
 
     // Assumes that parsing ensurse only valid values are present
+    try {
+        name = getParameter("type");
+    } catch (...) {
+        // Wasn't specified so we'll use default of "unknown".
+    }
+
     std::string parm_str;
     try {
         parm_str = getParameter("max-reconnect-tries");
         retries = boost::lexical_cast<unsigned int>(parm_str);
     } catch (...) {
-        // Wasn't specified so  so we'll use default of 0;
+        // Wasn't specified so we'll use default of 0;
     }
 
     try {
         parm_str = getParameter("reconnect-wait-time");
         interval = boost::lexical_cast<unsigned int>(parm_str);
     } catch (...) {
-        // Wasn't specified so  so we'll use default of 0;
+        // Wasn't specified so we'll use default of 0;
     }
 
-    retry.reset(new ReconnectCtl(retries, interval));
+    retry.reset(new ReconnectCtl(name, retries, interval));
     return (retry);
 }
 
 bool
 DatabaseConnection::invokeDbLostCallback() const {
-    if (db_lost_callback_ != NULL) {
+    if (DatabaseConnection::db_lost_callback) {
         // Invoke the callback, passing in a new instance of ReconnectCtl
-        return (db_lost_callback_)(makeReconnectCtl());
+        return (DatabaseConnection::db_lost_callback)(makeReconnectCtl());
     }
 
     return (false);
 }
+
+
+DatabaseConnection::DbLostCallback
+DatabaseConnection::db_lost_callback = 0;
 
 };
 };
