@@ -473,6 +473,7 @@ Connection::isTransactionOngoing() const {
 void
 Connection::terminate(const boost::system::error_code& ec,
                       const std::string& parsing_error) {
+
     timer_.cancel();
     socket_.cancel();
 
@@ -558,6 +559,7 @@ Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
         } else {
             // Any other error should cause the transaction to terminate.
             terminate(ec);
+            return;
         }
     }
 
@@ -585,6 +587,7 @@ Connection::receiveCallback(const boost::system::error_code& ec, size_t length) 
         if ((ec.value() != boost::asio::error::try_again) &&
             (ec.value() != boost::asio::error::would_block)) {
             terminate(ec);
+            return;
 
         } else {
             // For EAGAIN and EWOULDBLOCK the length should be 0 anyway, but let's
