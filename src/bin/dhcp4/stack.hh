@@ -1,3 +1,4 @@
+// Generated 201803221856
 // A Bison parser, made by GNU Bison 3.0.4.
 
 // Stack handling for Bison parsers in C++
@@ -40,9 +41,9 @@
 
 # include <vector>
 
-#line 14 "dhcp4_parser.yy" // stack.hh:151
+#line 14 "dhcp4_parser.yy" // stack.hh:132
 namespace isc { namespace dhcp {
-#line 46 "stack.hh" // stack.hh:151
+#line 46 "stack.hh" // stack.hh:132
   template <class T, class S = std::vector<T> >
   class stack
   {
@@ -150,8 +151,8 @@ namespace isc { namespace dhcp {
     unsigned int range_;
   };
 
-#line 14 "dhcp4_parser.yy" // stack.hh:151
+#line 14 "dhcp4_parser.yy" // stack.hh:132
 } } // isc::dhcp
-#line 156 "stack.hh" // stack.hh:151
+#line 156 "stack.hh" // stack.hh:132
 
 #endif // !YY_PARSER4_STACK_HH_INCLUDED
