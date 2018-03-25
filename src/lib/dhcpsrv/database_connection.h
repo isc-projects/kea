@@ -75,17 +75,17 @@ public:
 class ReconnectCtl {
 public:
     /// @brief Constructor
-    /// @param backend_name name of the caller backend.
+    /// @param backend_type type of the caller backend.
     /// @param max_retries maximum number of reconnect attempts to make
     /// @param retry_interval amount of time to between reconnect attempts
-    ReconnectCtl(const std::string& backend_name, unsigned int max_retries,
+    ReconnectCtl(const std::string& backend_type, unsigned int max_retries,
                  unsigned int retry_interval)
-        : backend_name_(backend_name), max_retries_(max_retries),
+        : backend_type_(backend_type), max_retries_(max_retries),
           retries_left_(max_retries), retry_interval_(retry_interval) {}
 
-    /// @brief Returns the name of the caller backend.
-    std::string backendName() const {
-        return (backend_name_);
+    /// @brief Returns the type of the caller backend.
+    std::string backendType() const {
+        return (backend_type_);
     }
 
     /// @brief Decrements the number of retries remaining
@@ -112,8 +112,8 @@ public:
     }
 
 private:
-    /// @brief Caller backend name.
-    const std::string backend_name_;
+    /// @brief Caller backend type.
+    const std::string backend_type_;
 
     /// @brief Maximum number of retry attempts to make
     unsigned int max_retries_;
