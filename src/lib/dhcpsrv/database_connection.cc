@@ -111,13 +111,13 @@ DatabaseConnection::configuredReadOnly() const {
 ReconnectCtlPtr
 DatabaseConnection::makeReconnectCtl() const {
     ReconnectCtlPtr retry;
-    string name = "unknown";
+    string type = "unknown";
     unsigned int retries = 0;
     unsigned int interval = 0;
 
     // Assumes that parsing ensurse only valid values are present
     try {
-        name = getParameter("type");
+        type = getParameter("type");
     } catch (...) {
         // Wasn't specified so we'll use default of "unknown".
     }
@@ -137,7 +137,7 @@ DatabaseConnection::makeReconnectCtl() const {
         // Wasn't specified so we'll use default of 0;
     }
 
-    retry.reset(new ReconnectCtl(name, retries, interval));
+    retry.reset(new ReconnectCtl(type, retries, interval));
     return (retry);
 }
 

@@ -97,7 +97,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
     EXPECT_TRUE(ret);
     ASSERT_TRUE(db_reconnect_ctl_);
-    ASSERT_EQ("test", db_reconnect_ctl_->backendName());
+    ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
     ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(60, db_reconnect_ctl_->retryInterval());
