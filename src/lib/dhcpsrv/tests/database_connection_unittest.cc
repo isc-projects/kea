@@ -38,8 +38,6 @@ public:
     ReconnectCtlPtr db_reconnect_ctl_;
 };
 
-
-
 /// @brief getParameter test
 ///
 /// This test checks if the LeaseMgr can be instantiated and that it
@@ -63,6 +61,7 @@ TEST(DatabaseConnectionTest, getParameter) {
 /// DbLostCallback.
 TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60");
     DatabaseConnection datasrc(pmap);
@@ -73,8 +72,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     EXPECT_FALSE(db_reconnect_ctl_);
 }
 
-
-/// @brief NoDbLostCallback
+/// @brief dbLostCallback
 ///
 /// This test verifies that DatabaseConnection::invokeDbLostCallback
 /// safely invokes the registered DbLostCallback.  It also tests
@@ -83,12 +81,15 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     /// Create a Database configuration that includes the reconnect
     /// control parameters.
     DatabaseConnection::ParameterMap pmap;
+    pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60");
 
-    /// Create the connection with a DbLostCallback.
-    DatabaseConnection datasrc(pmap, boost::bind(&DatabaseConnectionCallbackTest
-                                                 ::dbLostCallback, this, _1));
+    /// Install the callback.
+    DatabaseConnection::db_lost_callback =
+        boost::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, _1);
+    /// Create the connection..
+    DatabaseConnection datasrc(pmap);
 
     /// We should be able to invoke the callback and glean
     /// the correct reconnect contorl parameters from it.
@@ -96,6 +97,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
     EXPECT_TRUE(ret);
     ASSERT_TRUE(db_reconnect_ctl_);
+    ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
     ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(60, db_reconnect_ctl_->retryInterval());
@@ -113,7 +115,6 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
     EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
 }
-
 
 // This test checks that a database access string can be parsed correctly.
 TEST(DatabaseConnectionTest, parse) {

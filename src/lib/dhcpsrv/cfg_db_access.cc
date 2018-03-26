@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,15 +38,15 @@ CfgDbAccess::getHostDbAccessString() const {
 
 
 void
-CfgDbAccess::createManagers(DatabaseConnection::DbLostCallback db_lost_callback) const {
+CfgDbAccess::createManagers() const {
     // Recreate lease manager.
     LeaseMgrFactory::destroy();
-    LeaseMgrFactory::create(getLeaseDbAccessString(), db_lost_callback);
+    LeaseMgrFactory::create(getLeaseDbAccessString());
 
     // Recreate host data source.
     HostDataSourceFactory::destroy();
     if (!host_db_access_.empty()) {
-        HostMgr::create(getHostDbAccessString(), db_lost_callback);
+        HostMgr::create(getHostDbAccessString());
     }
 }
 
