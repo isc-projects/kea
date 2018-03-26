@@ -50,8 +50,10 @@ static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libucl.so";
 static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/.libs/libpcl.so";
 
 // Library which tests objects parking.
+// Used only by hooks_manager_unittest.cc.
+#ifdef TEST_ASYNC_CALLOUT
 static const char* ASYNC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libacl.so";
-
+#endif
 
 } // anonymous namespace
 

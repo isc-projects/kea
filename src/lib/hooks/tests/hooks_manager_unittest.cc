@@ -11,6 +11,7 @@
 #include <hooks/server_hooks.h>
 
 #include <hooks/tests/common_test_class.h>
+#define TEST_ASYNC_CALLOUT
 #include <hooks/tests/test_libraries.h>
 #include <cc/data.h>
 
