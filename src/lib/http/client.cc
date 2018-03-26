@@ -515,7 +515,12 @@ void
 Connection::doSend() {
     SocketCallback socket_cb(boost::bind(&Connection::sendCallback, shared_from_this(),
                                          _1, _2));
-    socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
+    try {
+        socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
+
+    } catch (const std::exception& ex) {
+        terminate(boost::asio::error::not_connected);
+    }
 }
 
 void
@@ -523,8 +528,13 @@ Connection::doReceive() {
     TCPEndpoint endpoint;
     SocketCallback socket_cb(boost::bind(&Connection::receiveCallback, shared_from_this(),
                                          _1, _2));
-    socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,
-                         &endpoint, socket_cb);
+
+    try {
+        socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,
+                             &endpoint, socket_cb);
+    } catch (const std::exception& ex) {
+        terminate(boost::asio::error::not_connected);
+    }
 }
 
 void
