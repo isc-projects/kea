@@ -69,11 +69,7 @@ public:
     /// However, the "type" parameter will be common and it will specify which
     /// data source is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    ///
-    /// @param db_lost_callback function to invoke if connectivity to
-    /// the host database is lost.
-    static void create(const std::string& access = "",
-                       DatabaseConnection::DbLostCallback db_lost_callback = 0);
+    static void create(const std::string& access = "");
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///

@@ -1281,8 +1281,7 @@ public:
     ///
     /// This constructor opens database connection and initializes prepared
     /// statements used in the queries.
-    PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters,
-                            DatabaseConnection::DbLostCallback db_lost_callback);
+    PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
     ~PgSqlHostDataSourceImpl();
@@ -1697,15 +1696,14 @@ TaggedStatementArray tagged_statements = { {
 }; // end anonymous namespace
 
 PgSqlHostDataSourceImpl::
-PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters,
-                        DatabaseConnection::DbLostCallback db_lost_callback)
+PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
     : host_exchange_(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY)),
       host_ipv6_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::DHCP6_ONLY)),
       host_ipv46_exchange_(new PgSqlHostIPv6Exchange(PgSqlHostWithOptionsExchange::
                                                      DHCP4_AND_DHCP6)),
       host_ipv6_reservation_exchange_(new PgSqlIPv6ReservationExchange()),
       host_option_exchange_(new PgSqlOptionExchange()),
-      conn_(parameters, db_lost_callback),
+      conn_(parameters),
       is_readonly_(false) {
 
     // Open the database.
@@ -1922,9 +1920,8 @@ PgSqlHostDataSourceImpl::checkReadOnly() const {
 /*********** PgSqlHostDataSource *********************/
 
 PgSqlHostDataSource::
-PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters,
-                    DatabaseConnection::DbLostCallback db_lost_callback)
-    : impl_(new PgSqlHostDataSourceImpl(parameters, db_lost_callback)) {
+PgSqlHostDataSource(const PgSqlConnection::ParameterMap& parameters)
+    : impl_(new PgSqlHostDataSourceImpl(parameters)) {
 }
 
 PgSqlHostDataSource::~PgSqlHostDataSource() {

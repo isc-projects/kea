@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,23 +37,22 @@ HostMgr::getHostMgrPtr() {
 }
 
 void
-HostMgr::create(const std::string& access,
-                DatabaseConnection::DbLostCallback db_lost_callback) {
+HostMgr::create(const std::string& access) {
     getHostMgrPtr().reset(new HostMgr());
 
     if (!access.empty()) {
         // If the user specified parameters, let's pass them to the create
         // method. It will destroy any prior instances and will create
         // the new one.
-        HostDataSourceFactory::create(access, db_lost_callback);
+        HostDataSourceFactory::create(access);
     } else {
         // Ok, no parameters were specified. We should destroy the existing
         // instance.
         HostDataSourceFactory::destroy();
     }
 
-    // Now store the host data source pointer. It may be NULL. That's ok as
-    // NULL value indicates that there's no host data source configured.
+    // Now store the host data source pointer. It may be null. That's ok as
+    // null value indicates that there's no host data source configured.
     getHostMgrPtr()->alternate_source_ =
         HostDataSourceFactory::getHostDataSourcePtr();
 }

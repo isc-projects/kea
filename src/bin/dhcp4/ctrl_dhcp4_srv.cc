@@ -603,9 +603,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Re-open lease and host database with new parameters.
     try {
+        DatabaseConnection::db_lost_callback =
+            boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1));
+        cfg_db->createManagers();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -777,6 +779,10 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     try {
         cleanup();
 
+        // The closure captures either a shared pointer (memory leak)
+        // or a raw pointer (pointing to a deleted object).
+        DatabaseConnection::db_lost_callback = 0;
+
         timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
@@ -846,7 +852,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     // Re-open lease and host database with new parameters.
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv4Srv::dbLostCallback, this, _1));
+        cfg_db->createManagers();
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
