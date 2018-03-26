@@ -518,7 +518,7 @@ Connection::doSend() {
     try {
         socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
 
-    } catch (const std::exception& ex) {
+    } catch (...) {
         terminate(boost::asio::error::not_connected);
     }
 }
@@ -532,7 +532,7 @@ Connection::doReceive() {
     try {
         socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,
                              &endpoint, socket_cb);
-    } catch (const std::exception& ex) {
+    } catch (...) {
         terminate(boost::asio::error::not_connected);
     }
 }
