@@ -101,7 +101,7 @@ HttpConnection::doRead() {
         socket_.asyncReceive(static_cast<void*>(buf_.data()), buf_.size(),
                              0, &endpoint, cb);
 
-    } catch (const std::exception& ex) {
+    } catch (...) {
         stopThisConnection();
     }
 }
@@ -129,7 +129,7 @@ HttpConnection::doWrite() {
                 doRead();
             }
         }
-    } catch (const std::exception& ex) {
+    } catch (...) {
         stopThisConnection();
     }
 }
