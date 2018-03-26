@@ -93,7 +93,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
 
     /// We should be able to invoke the callback and glean
     /// the correct reconnect contorl parameters from it.
-    bool ret;
+    bool ret = false;
     ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
     EXPECT_TRUE(ret);
     ASSERT_TRUE(db_reconnect_ctl_);
