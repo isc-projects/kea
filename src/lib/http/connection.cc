@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,8 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
       request_(response_creator_->createNewHttpRequest()),
       parser_(new HttpRequestParser(*request_)),
       acceptor_callback_(callback),
-      buf_() {
+      buf_(),
+      output_buf_() {
     parser_->initModel();
 }
 
