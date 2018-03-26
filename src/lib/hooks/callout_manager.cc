@@ -70,6 +70,11 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     // process).
     int hook_index = server_hooks_.getIndex(name);
 
+    // New hooks can have been registered since the manager was constructed.
+    if (hook_index >= hook_vector_.size()) {
+        hook_vector_.resize(server_hooks_.getCount());
+    }
+
     // Iterate through the callout vector for the hook from start to end,
     // looking for the first entry where the library index is greater than
     // the present index.
