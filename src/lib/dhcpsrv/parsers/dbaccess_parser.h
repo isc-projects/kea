@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,12 +27,6 @@ namespace dhcp {
 /// depend on the database chosen.
 class DbAccessParser: public isc::data::SimpleParser {
 public:
-
-    /// @brief Specifies the database type
-    typedef enum {
-        LEASE_DB = 1,
-        HOSTS_DB = 2
-    } DBType;
 
     /// @brief Keyword and associated value
     typedef std::pair<std::string, std::string> StringPair;

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,7 +124,7 @@ outputFormatted(const std::string& config) {
     }
 }
 
-};
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -155,9 +155,9 @@ extractConfig(const std::string& config) {
     ++extract_count;
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 namespace {
 
