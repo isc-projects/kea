@@ -96,8 +96,12 @@ HostDataSourceFactory::registerFactory(const string& db_type,
         return (false);
     }
     map_.insert(pair<string, Factory>(db_type, factory));
+    // As registerFactory can be called before logging is established
+    // remove temporary this until a better solution is found.
+#if 0
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_BACKEND_REGISTER)
         .arg(db_type);
+#endif
     return (true);
 }
 
