@@ -6,13 +6,17 @@
 
 $NAMESPACE isc::dhcp
 
-% HOSTS_BACKEND_DEREGISTER deregistered backend type: %1
+% HOSTS_BACKEND_DEREGISTER deregistered host backend type: %1
 This debug message is issued when a backend factory was deregistered.
 It is no longer possible to use host backend of this type.
 
-% HOSTS_BACKEND_REGISTER registered backend type: %1
+% HOSTS_BACKEND_REGISTER registered host backend type: %1
 This debug message is issued when a backend factory was successfully
 registered. It is now possible to use host backend of this type.
+
+% HOSTS_BACKENDS_REGISTERED the following host backend types are available: %1
+This informational message lists all possible host backends that could
+be used in hosts-database[s].
 
 % HOSTS_CFG_ADD_HOST add the host for reservations: %1
 This debug message is issued when new host (with reservations) is added to

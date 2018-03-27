@@ -24,6 +24,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
@@ -296,6 +297,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
+
+    // Print the list of known backends.
+    HostDataSourceFactory::printRegistered();
 
     // Answer will hold the result.
     ConstElementPtr answer;

@@ -14,6 +14,7 @@
 #include <boost/function.hpp>
 
 #include <string>
+#include <vector>
 #include <map>
 
 namespace isc {
@@ -83,22 +84,35 @@ public:
     /// @brief Register a host data source factory
     ///
     /// Associate the factory to a database type in the map.
+    /// The no_log is to avoid logging before the logger is initialized
+    /// as when called at global object initialization.
     ///
     /// @param db_type database type
     /// @param factory host data source factory
+    /// @param no_log do not log (default false)
     /// @return true if the factory was successfully added to the map, false
     /// if it already exists.
     static bool registerFactory(const std::string& db_type,
-                                const Factory& factory);
+                                const Factory& factory, bool no_log = false);
 
     /// @brief Deregister a host data source factory
     ///
     /// Disassociate the factory to a database type in the map.
+    /// The no_log is to avoid logging during global object deinitialization.
     ///
     /// @param db_type database type
+    /// @param no_log do not log (default false)
     /// @return true if the factory was successfully removed from the map,
     /// false if it was not found.
-    static bool deregisterFactory(const std::string& db_type);
+    static bool deregisterFactory(const std::string& db_type,
+                                  bool no_log = false);
+
+    /// @brief Prints out all registered backends.
+    ///
+    /// We need a dedicated method for this, because we sometimes can't log
+    /// the backend type when doing early initialization for backends
+    /// initialized statically.
+    static void printRegistered();
 
 private:
     /// @brief Factory map

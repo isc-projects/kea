@@ -32,6 +32,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
 #include <util/encode/hex.h>
@@ -394,6 +395,9 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
+
+    // Print the list of known backends.
+    HostDataSourceFactory::printRegistered();
 
     // This is a way to convert ConstElementPtr to ElementPtr.
     // We need a config that can be edited, because we will insert
