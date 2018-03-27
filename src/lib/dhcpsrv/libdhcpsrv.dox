@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,10 +103,12 @@ database. This object must implement the \ref isc::dhcp::BaseHostDataSource
 interface and its implementation is specific to the type of storage
 holding the reservations. For example, the host data source managing
 host reservations in the MySQL database is required to establish
-connection to the MySQL database and issue specific queries. Once
-implemented, the \ref isc::dhcp::HostMgr::create method must be updated
-to create an instance of this datasource. Note, that this instance is
-created as "alternate host data source" as opposed to the primary data
+connection to the MySQL database and issue specific queries. A factory
+method creating an instance of a base host data source object must be
+registered (at global object initialization for built-in backends,
+dynamically for backends loaded at run-time). See host_data_source_factory.cc
+for example code that registers MySQL and PostgreSQL. Note, that this instance
+is created as "alternate host data source" as opposed to the primary data
 source which returns host reservations specified in the configuration file.
 The primary data source is implemented internally in the
 \ref isc::dhcp::HostMgr and uses the configuration data structures held by

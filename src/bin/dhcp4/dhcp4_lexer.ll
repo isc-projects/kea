@@ -294,6 +294,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"hosts-databases\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_HOSTS_DATABASES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("hosts-databases", driver.loc_);
+    }
+}
+
 \"readonly\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:

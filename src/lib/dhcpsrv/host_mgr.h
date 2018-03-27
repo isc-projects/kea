@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/cache_host_data_source.h>
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
@@ -34,42 +35,62 @@ namespace dhcp {
 /// configuration, accessible through the @c CfgHosts object in the @c CfgMgr.
 /// The @c CfgHosts object holds all reservations specified in the DHCP server
 /// configuration file. If a particular reservation is not found in the
-/// @c CfgHosts object, the @c HostMgr will try to find it using the alternate
-/// host data storage. The alternate host data storage is usually a database
+/// @c CfgHosts object, the @c HostMgr will try to find it using alternate
+/// host data storages. An alternate host data storage is usually a database
 /// (e.g. SQL database), accessible through a dedicated host data source
 /// object (a.k.a. database backend). This datasource is responsible for
 /// managing the connection with the database and forming appropriate queries
 /// to retrieve (or update) the information about the reservations.
 ///
-/// The use of the alternate host data source is optional and usually requires
+/// The use of alternate host data sources is optional and usually requires
 /// additional configuration to be specified by the server administrator.
 /// For example, for the SQL database the user's credentials, database address,
 /// and database name are required. The @c HostMgr passes these parameters
 /// to an appropriate datasource which is responsible for opening a connection
 /// and maintaining it.
 ///
-/// It is possible to switch to a different alternate data source or disable
-/// the use of the alternate datasource, e.g. as a result of server's
+/// It is possible to switch to different alternate data sources or disable
+/// the use of alternate datasources, e.g. as a result of server's
 /// reconfiguration. However, the use of the primary host data source (i.e.
 /// reservations specified in the configuration file) can't be disabled.
-///
-/// @todo Implement alternate host data sources: MySQL, PostgreSQL, etc.
 class HostMgr : public boost::noncopyable, public BaseHostDataSource {
 public:
 
     /// @brief Creates new instance of the @c HostMgr.
     ///
     /// If an instance of the @c HostMgr already exists, it will be replaced
-    /// by the new instance. Thus, any instances of the alternate host data
+    /// by the new instance. Thus, any instances of alternate host data
     /// sources will be dropped.
     ///
-    /// @param access Host data source access parameters for the alternate
-    /// host data source. It holds "keyword=value" pairs, separated by spaces.
-    /// The supported values are specific to the alternate data source in use.
+    static void create();
+
+    /// @brief Add an alternate host backend (aka host data source).
+    ///
+    /// @param access Host backend access parameters for the alternate
+    /// host backend. It holds "keyword=value" pairs, separated by spaces.
+    /// The supported values are specific to the alternate backend in use.
     /// However, the "type" parameter will be common and it will specify which
-    /// data source is to be used. Currently, no parameters are supported
+    /// backend is to be used. Currently, no parameters are supported
     /// and the parameter is ignored.
-    static void create(const std::string& access = "");
+    static void addBackend(const std::string& access);
+
+    /// @brief Delete an alternate host backend (aka host data source).
+    ///
+    /// @param db_type database backend type.
+    /// @return true when found and removed, false when not found.
+    static bool delBackend(const std::string& db_type);
+
+    /// @brief Delete all alternate backends.
+    static void delAllBackends();
+
+    /// @brief Check for the cache host backend.
+    ///
+    /// Checks if the first host backend implements
+    /// the cache abstract class and sets cache_ptr_.
+    ///
+    /// @param logging When true (not the default) emit an informational log.
+    /// @return true if the first host backend is a cache.
+    static bool checkCacheBackend(bool logging = false);
 
     /// @brief Returns a sole instance of the @c HostMgr.
     ///
@@ -160,6 +181,27 @@ public:
     get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
          const DuidPtr& duid = DuidPtr()) const;
 
+    /// @brief Returns any host connected to the IPv4 subnet.
+    ///
+    /// This method returns a single reservation for a particular host as
+    /// documented in the @c BaseHostDataSource::get4 even when the
+    /// reservation is marked as from negative caching. This allows to
+    /// monitor negative caching.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Const @c Host object for which reservation has been made using
+    /// the specified identifier.
+    virtual ConstHostPtr
+    get4Any(const SubnetID& subnet_id,
+            const Host::IdentifierType& identifier_type,
+            const uint8_t* identifier_begin,
+            const size_t identifier_len) const;
+
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// This method returns a single reservation for a particular host as
@@ -207,6 +249,27 @@ public:
     get6(const SubnetID& subnet_id, const DuidPtr& duid,
          const HWAddrPtr& hwaddr = HWAddrPtr()) const;
 
+    /// @brief Returns any host connected to the IPv6 subnet.
+    ///
+    /// This method returns a host connected to the IPv6 subnet as described
+    /// in the @c BaseHostDataSource::get6 even when the             
+    /// reservation is marked as from negative caching. This allows to
+    /// monitor negative caching.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of a buffer containing
+    /// an identifier.
+    /// @param identifier_len Identifier length.
+    ///
+    /// @return Const @c Host object for which reservation has been made using
+    /// the specified identifier.
+    virtual ConstHostPtr
+    get6Any(const SubnetID& subnet_id,
+            const Host::IdentifierType& identifier_type,
+            const uint8_t* identifier_begin,
+            const size_t identifier_len) const;
+
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
     /// This method returns a host connected to the IPv6 subnet as described
@@ -253,39 +316,6 @@ public:
     /// @param host Pointer to the new @c Host object being added.
     virtual void add(const HostPtr& host);
 
-    /// @brief Return backend type
-    ///
-    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
-    ///
-    /// @return Type of the backend.
-    virtual std::string getType() const {
-        return (std::string("host_mgr"));
-    }
-
-    /// @brief Returns pointer to the host data source
-    ///
-    /// May return NULL
-    /// @return pointer to the host data source (or NULL)
-    HostDataSourcePtr getHostDataSource() const {
-        return (alternate_source_);
-    }
-
-    /// @brief Sets the alternate host data source.
-    ///
-    /// Note: This should be used only for testing. Do not use
-    /// in production. Normal control flow assumes that
-    /// HostMgr::create(...) is called and it instantiates
-    /// appropriate host data source. However, some tests
-    /// (e.g. host_cmds) implement their own very simple
-    /// data source. It's not production ready by any means,
-    /// so it does not belong in host_data_source_factory.cc.
-    /// The testing nature of this method is reflected in its name.
-    ///
-    /// @param source new source to be set (may be NULL)
-    void setTestHostDataSource(const HostDataSourcePtr& source) {
-        alternate_source_ = source;
-    }
-
     /// @brief Attempts to delete a host by address.
     ///
     /// This method supports both v4 and v6.
@@ -323,15 +353,77 @@ public:
     del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_type,
          const uint8_t* identifier_begin, const size_t identifier_len);
 
+    /// @brief Return backend type
+    ///
+    /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
+    ///
+    /// @return Type of the backend.
+    virtual std::string getType() const {
+        return (std::string("host_mgr"));
+    }
+
+    /// @brief Returns the host data source list.
+    ///
+    /// @return reference to the host data source list.
+    HostDataSourceList& getHostDataSourceList() {
+        return (alternate_sources_);
+    }
+
+    /// @brief Returns the first host data source.
+    ///
+    /// May return NULL if the host data source list is empty.
+    /// @return pointer to the first host data source (or NULL).
+    HostDataSourcePtr getHostDataSource() const;
+
+    /// @brief Returns the negative caching flag.
+    ///
+    /// @return the negative caching flag.
+    bool getNegativeCaching() const {
+        return (negative_caching_);
+    }
+
+    /// @brief Sets the negative caching flag.
+    ///
+    void setNegativeCaching(bool negative_caching) {
+        negative_caching_ = negative_caching;
+    }
+
+protected:
+    /// @brief The negative caching flag.
+    ///
+    /// When true and the first backend is a cache
+    /// negative answers are inserted in the cache.
+    /// This works for get[46] for a subnet and an identifier.
+    bool negative_caching_;
+
+    /// @brief Cache an answer.
+    ///
+    /// @param host Pointer to the missied host.
+    virtual void cache(ConstHostPtr host) const;
+
+    /// @brief Cache a negative answer.
+    ///
+    /// @param ipv4_subnet_id Identifier of the IPv4 subnet.
+    /// @param ipv6_subnet_id Identifier of the IPv6 subnet.
+    /// @param identifier_type Identifier type.
+    /// @param identifier_begin Pointer to a beginning of the Identifier.
+    /// @param identifier_len Identifier length.
+    virtual void cacheNegative(const SubnetID& ipv4_subnet_id,
+                               const SubnetID& ipv6_subnet_id,
+                               const Host::IdentifierType& identifier_type,
+                               const uint8_t* identifier_begin,
+                               const size_t identifier_len) const;
+
 private:
 
     /// @brief Private default constructor.
-    HostMgr() { }
+    HostMgr() : negative_caching_(false) { }
 
-    /// @brief Pointer to an alternate host data source.
-    ///
-    /// If this pointer is NULL, the source is not in use.
-    HostDataSourcePtr alternate_source_;
+    /// @brief List of alternate host data sources.
+    HostDataSourceList alternate_sources_;
+
+    /// @brief Pointer to the cache.
+    CacheHostDataSourcePtr cache_ptr_;
 
     /// @brief Returns a pointer to the currently used instance of the
     /// @c HostMgr.

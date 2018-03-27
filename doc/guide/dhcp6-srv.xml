@@ -532,7 +532,13 @@ linkend="cassandra-database-configuration4"/> for details.</para>
     from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
-<section xml:id="hosts-database-configuration6">
+    <para>Version 1.4 extends the host storage to multiple storages. Operations
+    are performed on host storages in the configuration order with a special
+    case for addition: read-only storages must be configured after a
+    required read-write storage, or host reservation addition will
+    always fail.</para>
+
+<section xml:id="hosts-databases-configuration6">
   <title>DHCPv6 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
@@ -573,9 +579,18 @@ linkend="cassandra-database-configuration4"/> for details.</para>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 
+  <para>The multiple storage extension uses a similar syntax: a configuration
+  is placed into a "hosts-databases" list instead of into a "hosts-database"
+  entry as in:
+<screen>
+"Dhcp6": { "hosts-databases": [ { <userinput>"type": "mysql"</userinput>, ... }, ... ], ... }
+</screen>
+  </para>
+
   <para>
     For additional Cassandra specific parameters, see <xref
     linkend="cassandra-database-configuration4" />.</para>
+
 </section>
 
 <section xml:id="read-only-database-configuration6">

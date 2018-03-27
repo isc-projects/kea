@@ -56,6 +56,7 @@ using namespace std;
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
+  HOSTS_DATABASES "hosts-databases"
   TYPE "type"
   MEMFILE "memfile"
   MYSQL "mysql"
@@ -430,6 +431,7 @@ global_param: preferred_lifetime
             | interfaces_config
             | lease_database
             | hosts_database
+            | hosts_databases
             | mac_sources
             | relay_supplied_options
             | host_reservation_identifiers
@@ -541,6 +543,34 @@ hosts_database: HOSTS_DATABASE {
     ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+hosts_databases: HOSTS_DATABASES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("hosts-databases", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.HOSTS_DATABASE);
+} COLON LSQUARE_BRACKET database_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+database_list: %empty
+             | not_empty_database_list
+             ;
+
+not_empty_database_list: database
+                       | not_empty_database_list COMMA database
+                       ;
+
+database: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} database_map_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.stack_.pop_back();
 };
 
 database_map_params: database_map_param
