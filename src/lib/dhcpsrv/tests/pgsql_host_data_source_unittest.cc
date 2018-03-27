@@ -250,7 +250,8 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
 
     callback_called = false;
     DatabaseConnection::db_lost_callback = db_lost_callback;
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    HostMgr::create();
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
                  DbOpenError);
 
