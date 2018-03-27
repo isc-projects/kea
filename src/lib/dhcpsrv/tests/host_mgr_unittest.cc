@@ -714,7 +714,7 @@ CQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(test::validCqlConnectionString());
+        HostMgr::addBackend(test::validCqlConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -727,8 +727,8 @@ CQLHostMgrTest::SetUp() {
 
 void
 CQLHostMgrTest::TearDown() {
-    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
-    HostDataSourceFactory::destroy();
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delBackend("cql");
     test::destroyCqlSchema(false, true);
 }
 
