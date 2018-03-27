@@ -9,6 +9,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/hosts_log.h>
+#include <log/logger_support.h>
 
 #ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_host_data_source.h>
@@ -81,7 +82,7 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
         if ((*it)->getType() != db_type) {
             continue;
         }
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
+        LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_CFG_CLOSE_HOST_DATA_SOURCE)
             .arg(db_type);
         sources.erase(it);
         return (true);
@@ -91,31 +92,49 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
 
 bool
 HostDataSourceFactory::registerFactory(const string& db_type,
-                                       const Factory& factory) {
+                                       const Factory& factory,
+                                       bool no_log) {
     if (map_.count(db_type)) {
         return (false);
     }
     map_.insert(pair<string, Factory>(db_type, factory));
-    // As registerFactory can be called before logging is established
-    // remove temporary this until a better solution is found.
-#if 0
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_BACKEND_REGISTER)
-        .arg(db_type);
-#endif
+
+    // We are dealing here with static logger initialization fiasco.
+    // registerFactory may be called from constructors of static global
+    // objects for built in backends. The logging is not initialized yet,
+    // so the LOG_DEBUG would throw.
+    if (!no_log) {
+        LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE, HOSTS_BACKEND_REGISTER)
+            .arg(db_type);
+    }
     return (true);
 }
 
 bool
-HostDataSourceFactory::deregisterFactory(const string& db_type) {
+HostDataSourceFactory::deregisterFactory(const string& db_type, bool no_log) {
     auto index = map_.find(db_type);
     if (index != map_.end()) {
         map_.erase(index);
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, HOSTS_BACKEND_DEREGISTER)
-            .arg(db_type);
+        if (!no_log) {
+            LOG_DEBUG(hosts_logger, DHCPSRV_DBG_TRACE,
+                      HOSTS_BACKEND_DEREGISTER)
+                .arg(db_type);
+        }
         return (true);
     } else {
         return (false);
     }
+}
+
+void
+HostDataSourceFactory::printRegistered() {
+    std::stringstream txt;
+
+    for (auto x : map_) {
+        txt << x.first << " ";
+    }
+
+    LOG_INFO(hosts_logger, HOSTS_BACKENDS_REGISTERED).arg(txt.str());
 }
 
 }  // namespace dhcp
@@ -133,18 +152,18 @@ namespace {
 struct MySqlHostDataSourceInit {
     // Constructor registers
     MySqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("mysql", factory);
+        HostDataSourceFactory::registerFactory("mysql", factory, true);
     }
 
     // Destructor deregisters
     ~MySqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("mysql");
+        HostDataSourceFactory::deregisterFactory("mysql", true);
     }
 
     // Factory class method
     static HostDataSourcePtr
     factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB)
+        LOG_INFO(hosts_logger, DHCPSRV_MYSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
         return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
     }
@@ -158,18 +177,18 @@ MySqlHostDataSourceInit mysql_init_;
 struct PgSqlHostDataSourceInit {
     // Constructor registers
     PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("postgresql", factory);
+        HostDataSourceFactory::registerFactory("postgresql", factory, true);
     }
 
     // Destructor deregisters
     ~PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("postgresql");
+        HostDataSourceFactory::deregisterFactory("postgresql", true);
     }
 
     // Factory class method
     static HostDataSourcePtr
     factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB)
+        LOG_INFO(hosts_logger, DHCPSRV_PGSQL_HOST_DB)
             .arg(DatabaseConnection::redactedAccessString(parameters));
         return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
     }
@@ -183,12 +202,12 @@ PgSqlHostDataSourceInit pgsql_init_;
 struct CqlHostDataSourceInit {
     // Constructor registers
     CqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("cql", factory);
+        HostDataSourceFactory::registerFactory("cql", factory, true);
     }
 
     // Destructor deregisters
     ~CqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("cql");
+        HostDataSourceFactory::deregisterFactory("cql", true);
     }
 
     // Factory class method
@@ -205,4 +224,3 @@ CqlHostDataSourceInit cql_init_;
 #endif
 
 } // end of anonymous namespace
-
