@@ -114,7 +114,7 @@ public:
         user_context_ = ctx;
     }
 
-    /// @Checks whether this pool supports client that belongs to
+    /// @brief Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
     /// @param client_classes list of all classes the client belongs to
