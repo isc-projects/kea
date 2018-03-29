@@ -1,3 +1,9 @@
+1376.	[func, bug]	marcin
+	The network_state argument is provided to the callouts in
+	the dhcp4_srv_configured hook point. Also, fixed a couple
+	of minor bugs in the HTTP client classes.
+	(Trac #5470, git 93e2b2198c3163afb81d51fdf5ec547602a12415)
+
 1375.	[doc]		tomek
 	New parameter subnets-action for network4-del and network6-del
 	commands is now documented.
