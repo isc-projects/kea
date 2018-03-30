@@ -127,7 +127,8 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
-    /// @return result of the operation (includes lease details, if found)
+    /// @return result of the operation (includes lease details, if found),
+    /// 1 if an error occurs, 3 if lease not found.
     int
     leaseGetHandler(hooks::CalloutHandle& handle);
 
@@ -153,7 +154,8 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
-    /// @return result of the operation.
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
     int
     leaseGetAllHandler(hooks::CalloutHandle& handle);
 

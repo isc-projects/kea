@@ -69,7 +69,7 @@ int lease6_get(CalloutHandle& handle) {
 /// @param handle Callout handle used to retrieve a command and
 /// provide a response.
 /// @return 0 if this callout has been invoked successfully,
-/// 1 if an error occurs, 2 if empty.
+/// 1 if an error occurs, 3 if no leases are returned.
 int lease4_get_all(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
     return (lease_cmds.leaseGetAllHandler(handle));
@@ -80,7 +80,7 @@ int lease4_get_all(CalloutHandle& handle) {
 /// @param handle Callout handle used to retrieve a command and
 /// provide a response.
 /// @return 0 if this callout has been invoked successfully,
-/// 1 if an error occurs, 2 if empty.
+/// 1 if an error occurs, 3 if no leases are returned.
 int lease6_get_all(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
     return (lease_cmds.leaseGetAllHandler(handle));
