@@ -930,6 +930,18 @@ TEST_F(MemfileLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
+    startBackend(V6);
+    testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6) {
+    startBackend(V6);
+    testGetLeases6();
+}
+
 /// @brief Basic Lease6 Checks
 ///
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an

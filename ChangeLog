@@ -1,3 +1,7 @@
+1377.	[func]		fdupont
+	Implemented lease6-get-all command in lease_cmds hooks library.
+	(Trac #5469, git xxx)
+
 1376.	[func, bug]	marcin
 	The network_state argument is provided to the callouts in
 	the dhcp4_srv_configured hook point. Also, fixed a couple

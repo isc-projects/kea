@@ -127,17 +127,19 @@ public:
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
-    /// @return result of the operation (includes lease details, if found)
+    /// @return result of the operation (includes lease details, if found),
+    /// 1 if an error occurs, 3 if lease not found.
     int
     leaseGetHandler(hooks::CalloutHandle& handle);
 
-    /// @brief lease4-get-all command handler
+    /// @brief lease4-get-all, lease6-get-all commands handler
     ///
-    /// This command attempts to retrieve all IPv4 leases or all IPv4 leases
-    /// belonging to the particular subnets. If no subnet identifiers are
-    /// provided, it returns all IPv4 leases from the database.
+    /// These commands attempt to retrieve all IPv4 or IPv6 leases,
+    /// or all IPv4 or all IPv6 leases belonging to the particular
+    /// subnets. If no subnet identifiers are provided, it returns all
+    /// IPv4 or IPv6 leases from the database.
     ///
-    /// Example command for query by (subnet-ids):
+    /// Example command for IPv4 query by (subnet-ids):
     /// {
     ///     "command": "lease4-get-all",
     ///     "arguments": {
@@ -145,16 +147,17 @@ public:
     ///     }
     /// }
     ///
-    /// Example command for retrieving all leases:
+    /// Example command for retrieving all IPv6 leases:
     /// {
-    ///     "command": "lease4-get-all",
+    ///     "command": "lease6-get-all",
     /// }
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
-    /// @return result of the operation.
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
     int
-    lease4GetAllHandler(hooks::CalloutHandle& handle);
+    leaseGetAllHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///

@@ -133,6 +133,15 @@ PgSqlTaggedStatement tagged_statements[] = {
       "ORDER BY expire "
       "LIMIT $3"},
 
+    // GET_LEASE6
+    { 0, { OID_NONE },
+      "get_lease6",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "state "
+      "FROM lease6"},
+
     // GET_LEASE6_ADDR
     { 2, { OID_VARCHAR, OID_INT2 },
       "get_lease6_addr",
@@ -166,6 +175,16 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+
+    // GET_LEASE6_SUBID
+    { 1, { OID_INT8 },
+      "get_lease6_subid",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "state "
+      "FROM lease6 "
+      "WHERE subnet_id = $1"},
 
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -1266,6 +1285,38 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     // ... and get the data
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID6)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // SUBNET_ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
+
+    // ... and get the data
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_SUBID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET6);
+
+    // Provide empty binding array because our query has no parameters in
+    // WHERE clause.
+    PsqlBindArray bind_array;
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6, bind_array, result);
 
     return (result);
 }

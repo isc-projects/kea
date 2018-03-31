@@ -130,17 +130,18 @@ public:
     int
     leaseGetHandler(CalloutHandle& handle);
 
-    /// @brief lease4-get-all command handler
+    /// @brief lease4-get-all, lease6-get-all commands handler
     ///
-    /// This command attempts to retrieve all IPv4 leases or all IPv4 leases
-    /// belonging to the particular subnets. If no subnet identifiers are
-    /// provided, it returns all IPv4 leases from the database.
+    /// These commands attempt to retrieve all IPv4 or IPv6 leases,
+    /// or all IPv4 or all IPv6 leases belonging to the particular
+    /// subnets. If no subnet identifiers are provided, it returns all
+    /// IPv4 or IPv6 leases from the database.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
     /// @return 0 upon success, non-zero otherwise.
     int
-    lease4GetAllHandler(CalloutHandle& handle);
+    leaseGetAllHandler(CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///
@@ -471,9 +472,11 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
 }
 
 int
-LeaseCmdsImpl::lease4GetAllHandler(CalloutHandle& handle) {
+LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
+    bool v4 = true;
     try {
         extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-all");
 
         ElementPtr leases_json = Element::createList();
 
@@ -481,47 +484,67 @@ LeaseCmdsImpl::lease4GetAllHandler(CalloutHandle& handle) {
         // be returned.
         if (cmd_args_) {
             ConstElementPtr subnets = cmd_args_->get("subnets");
-            if (subnets) {
-                if (subnets->getType() != Element::list) {
-                    isc_throw(BadValue, "'subnets' parameter must be a list");
+            if (!subnets) {
+                isc_throw(BadValue, "'subnets' parameter not specified");
+            }
+            if (subnets->getType() != Element::list) {
+                isc_throw(BadValue, "'subnets' parameter must be a list");
+            }
+
+            const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
+            for (auto subnet_id = subnet_ids.begin();
+                 subnet_id != subnet_ids.end();
+                 ++subnet_id) {
+                if ((*subnet_id)->getType() != Element::integer) {
+                    isc_throw(BadValue, "listed subnet identifiers must be numbers");
                 }
 
-                const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
-                for (auto subnet_id = subnet_ids.begin(); subnet_id != subnet_ids.end();
-                     ++subnet_id) {
-                    if ((*subnet_id)->getType() != Element::integer) {
-                        isc_throw(BadValue, "listed subnet identifiers must be numbers");
-                    }
-
+                if (v4) {
                     Lease4Collection leases =
                         LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
-                    for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                        ElementPtr lease_json = (*lease)->toElement();
+                    for (auto lease : leases) {
+                        ElementPtr lease_json = lease->toElement();
+                        leases_json->add(lease_json);
+                    }
+                } else {
+                    Lease6Collection leases =
+                        LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
+                    for (auto lease : leases) {
+                        ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
                 }
-
-            } else {
-                isc_throw(BadValue, "'subnets' parameter not specified");
             }
 
         } else {
             // There is no 'subnets' argument so let's return all leases.
-            Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
-            for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                ElementPtr lease_json = (*lease)->toElement();
-                leases_json->add(lease_json);
+            if (v4) {
+                Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
+                for (auto lease : leases) {
+                    ElementPtr lease_json = lease->toElement();
+                    leases_json->add(lease_json);
+                }
+            } else {
+                Lease6Collection leases = LeaseMgrFactory::instance().getLeases6();
+                for (auto lease : leases) {
+                    ElementPtr lease_json = lease->toElement();
+                    leases_json->add(lease_json);
+                }
             }
         }
 
         std::ostringstream s;
-        s << leases_json->size() << " IPv4 lease(s) found.";
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found.";
         ElementPtr args = Element::createMap();
         args->set("leases", leases_json);
-        ConstElementPtr response = createAnswer((leases_json->size() == 0 ? CONTROL_RESULT_EMPTY :
-                                                 CONTROL_RESULT_SUCCESS), s.str(), args);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
         setResponse(handle, response);
-
 
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
@@ -798,8 +821,8 @@ LeaseCmds::leaseGetHandler(CalloutHandle& handle) {
 }
 
 int
-LeaseCmds::lease4GetAllHandler(hooks::CalloutHandle& handle) {
-    return (impl_->lease4GetAllHandler(handle));
+LeaseCmds::leaseGetAllHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetAllHandler(handle));
 }
 
 int
