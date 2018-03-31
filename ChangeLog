@@ -1,6 +1,6 @@
 1377.	[func]		fdupont
 	Implemented lease6-get-all command in lease_cmds hooks library.
-	(Trac #5469, git xxx)
+	(Trac #5469, git a0bb7188df47a0f8020ff57739c5a6ab5f7e9828)
 
 1376.	[func, bug]	marcin
 	The network_state argument is provided to the callouts in
