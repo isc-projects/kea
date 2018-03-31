@@ -14,6 +14,11 @@
 namespace isc {
 namespace log {
 
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0)
+extern log4cplus::tstring tstrEmpty;
+extern log4cplus::tstring tstrDebug;
+#endif /* LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0) */
+
 /// \brief Implementation aspects of logging levels
 ///
 /// This extends the log4cplus level set to allow 100 debug levels.
@@ -107,7 +112,11 @@ typedef log4cplus::tstring LogLevelString;
     /// \param level Extended logging level
     ///
     /// \return Equivalent string.
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0)
+    static LogLevelString const & logLevelToString(log4cplus::LogLevel level);
+#else
     static LogLevelString logLevelToString(log4cplus::LogLevel level);
+#endif /* LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2,0,0) */
 
     /// \brief Initialize extended logging levels
     ///

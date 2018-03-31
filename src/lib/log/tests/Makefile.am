@@ -21,7 +21,9 @@ BUILT_SOURCES = log_test_messages.h log_test_messages.cc
 log_test_messages.h log_test_messages.cc: s-messages
 
 s-messages: log_test_messages.mes
-	$(AM_V_GEN) $(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
+	-$(AM_V_GEN) $(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
+	[ -e log_test_messages.h ] || mv log_test_messages.h.def log_test_messages.h
+	[ -e log_test_messages.cc ] || mv log_test_messages.cc.def log_test_messages.cc
 	touch $@
 
 CLEANFILES += log_test_messages.h log_test_messages.cc s-messages

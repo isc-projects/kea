@@ -32,7 +32,9 @@ endif
 lfc_messages.h lfc_messages.cc: s-messages
 
 s-messages: lfc_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/lfc/lfc_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/lfc/lfc_messages.mes
+	[ -e lfc_messages.h ] || mv lfc_messages.h.def lfc_messages.h
+	[ -e lfc_messages.cc ] || mv lfc_messages.cc.def lfc_messages.cc
 	touch $@
 
 BUILT_SOURCES = lfc_messages.h lfc_messages.cc

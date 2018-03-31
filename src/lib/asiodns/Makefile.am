@@ -11,7 +11,9 @@ CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc s-messages
 asiodns_messages.h asiodns_messages.cc: s-messages
 
 s-messages: asiodns_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
+	[ -e asiodns_messages.h ] || mv asiodns_messages.h.def asiodns_messages.h
+	[ -e asiodns_messages.cc ] || mv asiodns_messages.cc.def asiodns_messages.cc
 	touch $@
 
 BUILT_SOURCES = asiodns_messages.h asiodns_messages.cc

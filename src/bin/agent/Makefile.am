@@ -33,7 +33,9 @@ endif
 ca_messages.h ca_messages.cc: s-messages
 
 s-messages: ca_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ca_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ca_messages.mes
+	[ -e ca_messages.h ] || mv ca_messages.h.def ca_messages.h
+	[ -e ca_messages.cc ] || mv ca_messages.cc.def ca_messages.cc
 	touch $@
 
 BUILT_SOURCES = ca_messages.h ca_messages.cc

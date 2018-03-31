@@ -7,7 +7,9 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 # Define rule to build logging source files from message file
 user_chk_messages.h user_chk_messages.cc: s-messages
 s-messages: user_chk_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+	[ -e user_chk_messages.h ] || mv user_chk_messages.h.def user_chk_messages.h
+	[ -e user_chk_messages.cc ] || mv user_chk_messages.cc.def user_chk_messages.cc
 	touch $@
 
 # Tell automake that the message files are built as part of the build process

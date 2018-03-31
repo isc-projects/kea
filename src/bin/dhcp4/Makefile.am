@@ -45,7 +45,9 @@ endif
 dhcp4_messages.h dhcp4_messages.cc: s-messages
 
 s-messages: dhcp4_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
+	[ -e dhcp4_messages.h ] || mv dhcp4_messages.h.def dhcp4_messages.h
+	[ -e dhcp4_messages.cc ] || mv dhcp4_messages.cc.def dhcp4_messages.cc
 	touch $@
 
 BUILT_SOURCES = dhcp4_messages.h dhcp4_messages.cc

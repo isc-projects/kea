@@ -47,7 +47,9 @@ EXTRA_DIST += lexer.ll parser.yy
 eval_messages.h eval_messages.cc: s-messages
 
 s-messages: eval_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/eval/eval_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/eval/eval_messages.mes
+	[ -e eval_messages.h ] || mv eval_messages.h.def eval_messages.h
+	[ -e eval_messages.cc ] || mv eval_messages.cc.def eval_messages.cc
 	touch $@
 
 # Tell Automake that the eval_messages.{cc,h} source files are created in the

@@ -7,7 +7,9 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 # Define rule to build logging source files from message file
 lease_cmds_messages.h lease_cmds_messages.cc: s-messages
 s-messages: lease_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
+	-$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
+	[ -e lease_cmds_messages.h ] || mv lease_cmds_messages.h.def lease_cmds_messages.h
+	[ -e lease_cmds_messages.cc ] || mv lease_cmds_messages.cc.def lease_cmds_messages.cc
 	touch $@
 
 # Tell automake that the message files are built as part of the build process
