@@ -242,6 +242,11 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     // process).
     int hook_index = server_hooks_.getIndex(name);
 
+    // New hooks can have been registered since the manager was constructed.
+    if (hook_index >= hook_vector_.size()) {
+        return (false);
+    }
+
     /// Construct a CalloutEntry matching the current library and the callout
     /// we want to remove.
     CalloutEntry target(current_library_, callout);
@@ -284,6 +289,11 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
     // Get the index associated with this hook (validating the name in the
     // process).
     int hook_index = server_hooks_.getIndex(name);
+
+    // New hooks can have been registered since the manager was constructed.
+    if (hook_index >= hook_vector_.size()) {
+        return (false);
+    }
 
     /// Construct a CalloutEntry matching the current library (the callout
     /// pointer is NULL as we are not checking that).
