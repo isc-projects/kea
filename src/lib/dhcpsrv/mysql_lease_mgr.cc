@@ -153,6 +153,14 @@ tagged_statements = { {
                             "WHERE state != ? AND expire < ? "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
+    {MySqlLeaseMgr::GET_LEASE6,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state "
+                            "FROM lease6"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -181,6 +189,15 @@ tagged_statements = { {
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_SUBID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state "
+                            "FROM lease6 "
+                            "WHERE subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -1896,6 +1913,37 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
     // ... and get the data
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, inbind, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_SUBID6)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Subnet ID
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_SUBID, inbind, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6() const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET6);
+
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6, 0, result);
 
     return (result);
 }

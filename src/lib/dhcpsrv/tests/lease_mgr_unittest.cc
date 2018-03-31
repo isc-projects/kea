@@ -178,6 +178,22 @@ public:
         return (leases6_);
     }
 
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID) const {
+        return (Lease6Collection());
+    }
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const {
+        return (Lease6Collection());
+    }
+
 
     /// @brief Returns expired DHCPv6 leases.
     ///
