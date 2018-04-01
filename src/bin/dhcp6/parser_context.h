@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -269,9 +269,6 @@ public:
 
         /// Used while parsing Dhcp6/subnet6/pd-pools structures.
         PD_POOLS,
-
-        /// Used while parsing Dhcp4/subnet6/pools/known_client structures.
-        KNOWN_CLIENTS,
 
         /// Used while parsing Dhcp6/reservations structures.
         RESERVATIONS,

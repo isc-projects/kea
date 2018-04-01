@@ -2387,57 +2387,6 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     EXPECT_FALSE(offer->getYiaddr().isV4Zero());
 }
 
-// Checks if the known-clients field is indeed used for pool selection.
-TEST_F(Dhcpv4SrvTest, clientPoolKnown) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
-
-    // This test configures 2 pools.
-    string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ "
-        "{   \"pools\": [ { "
-        "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "      \"known-clients\": \"only\" }, "
-        "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
-        "      \"known-clients\": \"never\" } ], "
-        "    \"subnet\": \"192.0.0.0/16\" } "
-        "],"
-        "\"valid-lifetime\": 4000 }";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-
-    CfgMgr::instance().commit();
-
-    // check if returned status is OK
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
-
-    // Create a simple packet
-    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
-    dis->setRemoteAddr(IOAddress("192.0.2.1"));
-    dis->setCiaddr(IOAddress("192.0.2.1"));
-    dis->setIface("eth0");
-    OptionPtr clientid = generateClientId();
-    dis->addOption(clientid);
-
-    // First pool requires reservation so the second will be used
-    Pkt4Ptr offer = srv.processDiscover(dis);
-    ASSERT_TRUE(offer);
-    EXPECT_EQ(DHCPOFFER, offer->getType());
-    EXPECT_EQ("192.0.3.1", offer->getYiaddr().toText());
-}
-
 // Verifies last resort option 43 is backward compatible
 TEST_F(Dhcpv4SrvTest, option43LastResort) {
     IfaceMgrTestConfig test_config(true);

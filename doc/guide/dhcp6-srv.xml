@@ -1951,15 +1951,6 @@ should include options from the isc option space:
       </para>
 
       <para>
-      In a similar way a pool can be constrained to serve only known clients,
-      i.e. clients which have a reservation, using
-      <command>"known-clients": "only"</command>, or only unknown clients
-      with <command>"known-clients": "never"</command>. One can assign
-      prefixes to registered clients without giving a different prefix per
-      reservations, forinstance when there is not enough available prefixes.
-      </para>
-
-      <para>
       The process of doing classification is conducted in five steps. The first step
       is to assess an incoming packet and assign it to zero or more classes.  The
       second step is to choose a subnet, possibly based on the class information.

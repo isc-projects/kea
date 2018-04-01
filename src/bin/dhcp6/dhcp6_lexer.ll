@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -363,7 +363,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"never\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::KNOWN_CLIENTS:
     case isc::dhcp::Parser6Context::REPLACE_CLIENT_NAME:
         return isc::dhcp::Dhcp6Parser::make_NEVER(driver.loc_);
     default:
@@ -822,25 +821,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_USER_CONTEXT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user-context", driver.loc_);
-    }
-}
-
-\"known-clients\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::POOLS:
-    case isc::dhcp::Parser6Context::PD_POOLS:
-        return isc::dhcp::Dhcp6Parser::make_KNOWN_CLIENTS(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("known-clients", driver.loc_);
-    }
-}
-
-\"only\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::KNOWN_CLIENTS:
-        return isc::dhcp::Dhcp6Parser::make_ONLY(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("only", driver.loc_);
     }
 }
 

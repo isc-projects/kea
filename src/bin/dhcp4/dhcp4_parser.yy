@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,9 +109,6 @@ using namespace std;
   POOLS "pools"
   POOL "pool"
   USER_CONTEXT "user-context"
-  KNOWN_CLIENTS "known-clients"
-  ONLY "only"
-  NEVER "never"
 
   SUBNET "subnet"
   INTERFACE "interface"
@@ -178,6 +175,7 @@ using namespace std;
   TCP "tcp"
   JSON "JSON"
   WHEN_PRESENT "when-present"
+  NEVER "never"
   ALWAYS "always"
   WHEN_NOT_PRESENT "when-not-present"
 
@@ -222,7 +220,6 @@ using namespace std;
 %type <ElementPtr> outbound_interface_value
 %type <ElementPtr> db_type
 %type <ElementPtr> hr_mode
-%type <ElementPtr> known_clients_value
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> replace_client_name_value
 
@@ -1349,7 +1346,6 @@ pool_param: pool_entry
           | client_class
           | eval_client_classes
           | user_context
-          | known_clients
           | unknown_map_entry
           ;
 
@@ -1367,18 +1363,6 @@ user_context: USER_CONTEXT {
     ctx.stack_.back()->set("user-context", $4);
     ctx.leave();
 };
-
-known_clients: KNOWN_CLIENTS {
-    ctx.enter(ctx.KNOWN_CLIENTS);
-} COLON known_clients_value {
-    ctx.stack_.back()->set("known-clients", $4);
-    ctx.leave();
-}
-
-known_clients_value:
-    ONLY { $$ = ElementPtr(new StringElement("only", ctx.loc2pos(@1))); }
-  | NEVER { $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1))); }
-;
 
 // --- end of pools definition -------------------------------
 

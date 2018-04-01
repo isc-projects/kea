@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -411,7 +411,6 @@ public:
     bool fqdn_rev_;           ///< Perform reverse update for a lease.
     LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
     ClientClasses cc_;        ///< client classes
-    bool known_client_;       ///< client has a reservation
 };
 
 /// @brief Used in Allocation Engine tests for IPv4
@@ -514,7 +513,6 @@ public:
     LeaseMgrFactory factory_;   ///< Pointer to LeaseMgr factory
     AllocEngine::ClientContext4 ctx_; ///< Context information passed to various
     ClientClasses cc_;          ///< Client classes
-    bool known_client_;         ///< client has a reservation
                                      ///< allocation engine functions.
 };
 

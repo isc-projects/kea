@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -401,19 +401,6 @@ PoolParser::parse(PoolStoragePtr pools,
             }
             pool->deferClientClass((*cclass)->stringValue());
         }
-    }
-
-    // Known-clients.
-    ConstElementPtr known_clients = pool_structure->get("known-clients");
-    if (known_clients) {
-        string kc = known_clients->stringValue();
-        if (kc == "only") {
-            pool->setKnownClients(Pool::SERVE_KNOWN);
-        } else if (kc == "never") {
-            pool->setKnownClients(Pool::SERVE_UNKNOWN);
-        } else
-            isc_throw(DhcpConfigError, "invalid known-clients value: " << kc
-                      << " (" << known_clients->getPosition() << ")");
     }
 }
 
@@ -904,11 +891,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         client_class_ = client_class;
     }
 
-    ConstElementPtr known_clients = pd_pool_->get("known-clients");
-    if (known_clients) {
-        known_clients_ = known_clients;
-    }
-
     ConstElementPtr class_list = pd_pool_->get("eval-client-classes");
 
     // Check the pool parameters. It will throw an exception if any
@@ -941,18 +923,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         }
     }
         
-    if (known_clients_) {
-        string kc = known_clients_->stringValue();
-        if (kc == "only") {
-            pool_->setKnownClients(Pool::SERVE_KNOWN);
-        } else if (kc == "never") {
-            pool_->setKnownClients(Pool::SERVE_UNKNOWN);
-        } else
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "invalid known-clients value: " << kc
-                      << " (" << known_clients_->getPosition() << ")");
-    }
-
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();

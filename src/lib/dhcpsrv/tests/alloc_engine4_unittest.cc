@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -326,8 +326,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
         alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
 
     for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_,
-                                                 known_client_, clientid_,
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
                                                  IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
     }
@@ -350,37 +349,10 @@ TEST_F(AllocEngine4Test, IterativeAllocator_class) {
     cc_.insert("bar");
 
     for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_,
-                                                 known_client_, clientid_,
+        IOAddress candidate = alloc->pickAddress(subnet_, cc_, clientid_,
                                                  IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_, known_client_));
-    }
-}
-
-// This test verifies that the allocator picks addresses that belong to the
-// pool using unknown clients
-TEST_F(AllocEngine4Test, IterativeAllocator_unknown) {
-    boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
-
-    // Restrict pool_ to known clients. Add a second pool for unknown clients.
-    pool_->setKnownClients(Pool::SERVE_KNOWN);
-    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.200"),
-                            IOAddress("192.0.2.209")));
-    pool->setKnownClients(Pool::SERVE_UNKNOWN);
-    subnet_->addPool(pool);
-
-    // Clients are unknown
-    known_client_ = false;
-
-    for (int i = 0; i < 1000; ++i) {
-        IOAddress candidate = alloc->pickAddress(subnet_, cc_,
-                                                 known_client_, clientid_,
-                                                 IOAddress("0.0.0.0"));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_, known_client_));
-        EXPECT_FALSE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_, !known_client_));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
     }
 }
 
@@ -410,7 +382,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
     std::set<IOAddress> generated_addrs;
     int cnt = 0;
     while (++cnt) {
-        IOAddress candidate = alloc.pickAddress(subnet_, cc_, known_client_, clientid_, IOAddress("0.0.0.0"));
+        IOAddress candidate = alloc.pickAddress(subnet_, cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
 
         // One way to easily verify that the iterative allocator really works is
@@ -741,49 +713,6 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkClassification) {
     EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 }
 
-// This test verifies that the server can offer an address from a
-// different subnet than orginally selected, when the address pool in
-// the first subnet requires host reservations.
-TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkPoolKnown) {
-
-    // Try to offer address from subnet1. There is one address available
-    // so it should be offerred.
-    AllocEngine::ClientContext4
-        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
-            false, false, "host.example.com.", true);
-    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
-    Lease4Ptr lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
-
-    // Apply restrictions on the pool1. This should be only assigned
-    // to clients which have a reservation.
-    pool1_->setKnownClients(Pool::SERVE_KNOWN);
-
-    // The allocation engine should determine that the pool1 is not
-    // available for the client without a reservation.
-    // Instead, it should offer an address from subnet2 that belongs
-    // to the same shared network.
-    ctx.subnet_ = subnet1_;
-    lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
-
-    // Add a host reservation and try again. This time, we should
-    // offer an address from the pool1.
-    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
-                          Host::IDENT_HWADDR, subnet1_->getID(),
-                          SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS(), "foo"));
-    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
-    CfgMgr::instance().commit();
-    AllocEngine::findReservation(ctx);
-
-    ctx.subnet_ = subnet1_;
-    lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_EQ("192.0.2.17", lease->addr_.toText());
-}
-
 // Test that reservations within shared network take precedence over the
 // existing leases regardless in which subnet belonging to a shared network
 // reservations belong.
@@ -1028,75 +957,6 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolClassification) {
     // to renew the address. The engine should determine that the
     // client doesn't have access to the pool1 anymore and
     // assign an address from unrestricted pool.
-    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
-    ctx.subnet_ = subnet1_;
-    lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
-}
-
-// This test verifies that the server can assign an address from a
-// different subnet than orginally selected, when the address pool in
-// the first subnet requires host reservations.
-TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkPoolKnown) {
-    // Try to offer address from subnet1. There is one address available
-    // so it should be offerred.
-    AllocEngine::ClientContext4
-        ctx(subnet1_, ClientIdPtr(), hwaddr_, IOAddress::IPV4_ZERO_ADDRESS(),
-            false, false, "host.example.com.", false);
-    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
-    Lease4Ptr lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
-
-    // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
-
-    // Apply restrictions on the pool1. This should be only assigned
-    // to clients which have a reservation.
-    pool1_->setKnownClients(Pool::SERVE_KNOWN);
-
-    // The allocation engine should determine that the pool1 is not
-    // available for the client without a reservation.
-    // Instead, it should assign an address from subnet2 that belongs
-    // to the same shared network.
-    ctx.subnet_ = subnet1_;
-    lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet2_->inPool(Lease::TYPE_V4, lease->addr_));
-
-    // Remove the lease so as we can start over.
-    LeaseMgrFactory::instance().deleteLease(lease->addr_);
-
-    // Add a host reservation and try again. This time, we should
-    // offer an address from the pool1.
-    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
-                          Host::IDENT_HWADDR, subnet1_->getID(),
-                          SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS(), "foo"));
-    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
-    CfgMgr::instance().commit();
-    AllocEngine::findReservation(ctx);
-
-    ctx.subnet_ = subnet1_;
-    lease = engine_.allocateLease4(ctx);
-    ASSERT_TRUE(lease);
-    EXPECT_TRUE(subnet1_->inPool(Lease::TYPE_V4, lease->addr_));
-
-    // Let's now remove the client host reservation and try
-    // to renew the address. The engine should determine that the
-    // client doesn't have access to the pool1 anymore and
-    // assign an address from unrestricted pool.
-#if 0
-    CfgMgr::instance().getStagingCfg()->getCfgHosts()->del4(SubnetID(0),
-                                                            Host::IDENT_HWADDR,
-                                                            &hwaddr_->hwaddr_[0],
-                                                            hwaddr_->hwaddr_.size());
-    CfgMgr::instance().commit();
-    AllocEngine::findReservation(ctx);
-#else
-    // del4 is not always implemented
-    ctx.hosts_.clear();
-#endif
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     ctx.subnet_ = subnet1_;
     lease = engine_.allocateLease4(ctx);

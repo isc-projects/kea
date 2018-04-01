@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -176,8 +176,6 @@ Parser6Context::contextName()
         return ("pools");
     case PD_POOLS:
         return ("pd-pools");
-    case KNOWN_CLIENTS:
-        return ("known-clients");
     case RESERVATIONS:
         return ("reservations");
     case RELAY:

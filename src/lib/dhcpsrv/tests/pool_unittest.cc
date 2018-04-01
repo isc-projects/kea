@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -215,33 +215,19 @@ TEST(Pool4Test, clientClass) {
 
     // No class restrictions defined, any client should be supported
     EXPECT_TRUE(pool->getClientClass().empty());
-    EXPECT_TRUE(pool->clientSupported(no_class, false));
-    EXPECT_TRUE(pool->clientSupported(foo_class, false));
-    EXPECT_TRUE(pool->clientSupported(bar_class, false));
-    EXPECT_TRUE(pool->clientSupported(three_classes, false));
+    EXPECT_TRUE(pool->clientSupported(no_class));
+    EXPECT_TRUE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(three_classes));
 
     // Let's allow only clients belonging to "bar" class.
     pool->allowClientClass("bar");
     EXPECT_EQ("bar", pool->getClientClass());
 
-    EXPECT_FALSE(pool->clientSupported(no_class, false));
-    EXPECT_FALSE(pool->clientSupported(foo_class, false));
-    EXPECT_TRUE(pool->clientSupported(bar_class, false));
-    EXPECT_TRUE(pool->clientSupported(three_classes, false));
-}
-
-// This test checks that handling for known-clients is valid.
-TEST(Pool4Test, knownClients) {
-    // Create a pool.
-    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
-                            IOAddress("192.0.2.255")));
-
-    // This pool serves everybody by default.
-    EXPECT_EQ(Pool::SERVE_BOTH, pool->getKnownClients());
-
-    // Set it to only known clients.
-    pool->setKnownClients(Pool::SERVE_KNOWN);
-    EXPECT_EQ(Pool::SERVE_KNOWN,pool->getKnownClients());
+    EXPECT_FALSE(pool->clientSupported(no_class));
+    EXPECT_FALSE(pool->clientSupported(foo_class));
+    EXPECT_TRUE(pool->clientSupported(bar_class));
+    EXPECT_TRUE(pool->clientSupported(three_classes));
 }
 
 // This test checks that handling for eval-client-classes is valid.
@@ -624,33 +610,19 @@ TEST(Pool6Test, clientClass) {
 
     // No class restrictions defined, any client should be supported
     EXPECT_TRUE(pool.getClientClass().empty());
-    EXPECT_TRUE(pool.clientSupported(no_class, false));
-    EXPECT_TRUE(pool.clientSupported(foo_class, false));
-    EXPECT_TRUE(pool.clientSupported(bar_class, false));
-    EXPECT_TRUE(pool.clientSupported(three_classes, false));
+    EXPECT_TRUE(pool.clientSupported(no_class));
+    EXPECT_TRUE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(three_classes));
 
     // Let's allow only clients belonging to "bar" class.
     pool.allowClientClass("bar");
     EXPECT_EQ("bar", pool.getClientClass());
 
-    EXPECT_FALSE(pool.clientSupported(no_class, false));
-    EXPECT_FALSE(pool.clientSupported(foo_class, false));
-    EXPECT_TRUE(pool.clientSupported(bar_class, false));
-    EXPECT_TRUE(pool.clientSupported(three_classes, false));
-}
-
-// This test checks that handling for known-clients is valid.
-TEST(Pool6Test, knownClients) {
-    // Create a pool.
-    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
-               IOAddress("2001:db8::2"));
-
-    // This pool serves everybody by default.
-    EXPECT_EQ(Pool::SERVE_BOTH, pool.getKnownClients());
-
-    // Set it to only known clients.
-    pool.setKnownClients(Pool::SERVE_KNOWN);
-    EXPECT_EQ(Pool::SERVE_KNOWN,pool.getKnownClients());
+    EXPECT_FALSE(pool.clientSupported(no_class));
+    EXPECT_FALSE(pool.clientSupported(foo_class));
+    EXPECT_TRUE(pool.clientSupported(bar_class));
+    EXPECT_TRUE(pool.clientSupported(three_classes));
 }
 
 // This test checks that handling for eval-client-classes is valid.
