@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -816,7 +816,6 @@ TEST(CfgSubnets4Test, unparsePool) {
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
     pool2->allowClientClass("bar");
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
     pool2->deferClientClass("foo");
 
     subnet->addPool(pool1);
@@ -849,7 +848,6 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\",\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"known-clients\": \"only\",\n"
         "            \"eval-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"

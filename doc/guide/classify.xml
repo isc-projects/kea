@@ -29,21 +29,58 @@
       </para>
 
       <para>
-      It is envisaged that client classification will be used for changing the
-      behavior of almost any part of the DHCP message processing, including the assignment of
-      leases from different pools, the assignment of different options (or different values of
-      the same options) etc. In the current release of the software however, there are
-      only four mechanisms that take
-      advantage of client classification: subnet selection, definition of DHCPv4 private (codes 224-254) and code 43 options, assignment of different
-      options and, for DHCPv4 cable modems, the setting of specific options for use with
-      the TFTP server address and the boot file field.
+      At the opposite some clients can be grouped into a client class for
+      instance to get a common option.
       </para>
 
       <para>
-      The process of doing classification is conducted in six steps:
+      An incoming packet can be associated with a client class in
+      serveral ways:
+      <itemizedlist>
+      <listitem><para>
+      Implicitely using a vendor class option or another builtin condition.
+      </para></listitem>
+      <listitem><para>
+      Using an expression which evaluates to true.
+      </para></listitem>
+      <listitem><para>
+      Using static host reservations, a shared network, a subnet, etc.
+      </para></listitem>
+      <listitem><para>
+      Using a hook.
+      </para></listitem>
+      </itemizedlist>
+      </para>
+
+      <para>
+      It is envisaged that client classification will be used for
+      changing the behavior of almost any part of the DHCP message
+      processing, including the assignment of leases from different
+      pools, the assignment of different options (or different values
+      of the same options) etc. In the current release of the software
+      however, there are only five mechanisms that take advantage of
+      client classification: subnet selection, pool selection,
+      definition of DHCPv4 private (codes 224-254) and code 43
+      options, assignment of different options and, for DHCPv4 cable
+      modems, the setting of specific options for use with the TFTP
+      server address and the boot file field.
+      </para>
+
+      <para>
+      The process of doing classification is conducted in several steps:
       <orderedlist>
       <listitem><para>
-      Assess an incoming packet and assign it to zero or more classes.
+      The ALL class is associated with the incoming packet.
+      </para></listitem>
+      <listitem><para>
+      Vendor class options are processed.
+      </para></listitem>
+      <listitem><para>
+      Classes with matching expressions and not marked for later
+      evaluation are processed in the order they are defined in the
+      configuration: the boolean expression is evaluated and when it
+      returns true ("match") the incoming packet is associated to the
+      class.
       </para></listitem>
       <listitem><para>
       If a private or code 43 DHCPv4 option is received, decoding it
@@ -51,17 +88,41 @@
       resort) definition.
       </para></listitem>
       <listitem><para>
-      Choose a subnet, possibly based on the class information.
+      Choose a subnet, possibly based on the class information when
+      some subnets are guarded. More exactly: When choosing a subnet,
+      the server will iterate over all of the subnets that are
+      feasible given the information found in the packet (client
+      address, relay address etc). It will use the first subnet it
+      finds that either doesn't have a class associated with it or
+      that has a class which matches one of the packet's classes.
       </para></listitem>
       <listitem><para>
-      Assign classes from host reservations
+      Host reservations are looked for. If an identifier from the incoming
+      packet matches a host reservation in the subnet or shared network,
+      the packet is associated with the KNOWN builtin class and all classes
+      of the host reservation.
       </para></listitem>
       <listitem><para>
-      Perform a second pass by evaluating match expressions of on-demand
-      classes.
+      Classes with matching expressions using directly or indirectly on
+      the KNOWN builtin class and not marked for only when required
+      evaluation are processed in the order they are defined in the
+      configuration: the boolean expression is evaluated and when it
+      returns true ("match") the incoming packet is associated to the
+      class.
       </para></listitem>
       <listitem><para>
-      Assign options, again possibly based on the class information.
+      If needed resources from pools are assigned, possibly based on the
+      class information when some pools are reserved to class members.
+      </para></listitem>
+      <listitem><para>
+      Process required evaluation in the order classes are required
+      which uses the reverse precedence of option data: first shared
+      network, after the subnet and to finish pools assigned resources
+      belongs too.
+      </para></listitem>
+      <listitem><para>
+      Assign options, again possibly based on the class information
+      in order classes were associated with the incoming packet.
       For DHCPv4 private and code 43 options this includes class local
       option definitions.
       </para></listitem>
@@ -76,36 +137,25 @@
       </note>
 
       <para>
-      When determining which options to include in the response the server will examine
-      the union of options from all of the assigned classes. In the case two or more
-      classes include the same option, the value from the first class examined will
-      be used.  When choosing a subnet, the server will iterate over all of the
-      subnets that are feasible given the information found in the packet (client address,
-      relay address etc). It will use the first subnet it finds that either doesn't
-      have a class associated with it or that has a class which matches one of
-      the packet's classes. In the future the processing order of the
-      various classes may be specified but for now it is being left unspecified and
-      may change in future releases.
+      When determining which options to include in the response the
+      server will examine the union of options from all of the
+      assigned classes. In the case two or more classes include the
+      same option, the value from the first class examined will be
+      used, and classes are examined in the order they were associated
+      so ALL is always the first class and matching required classes
+      are last.
       </para>
 
       <para>
-      As an example, imagine that an incoming packet matches two classes.
-      Class "foo" defines values for an NTP server
-      (option 42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while class
-      "bar" defines values for an NTP server and a POP3 server (option 70 in DHCPv4).
-      The server will examine the three options NTP, SMTP and POP3 and return any
-      of them that the client requested.  As the NTP server was defined twice the
-      server will choose only one of the values for the reply: the class from which the
-      value is obtained is unspecified.
-      </para>
-
-      <para>
-      There are two methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options. Information from these
-      options is extracted and a class name is constructed from it and added to
-      the class list for the packet. The second allows you to specify an expression
-      that is evaluated for each packet. If the result is true, the packet is
-      a member of the class.
+      As an example, imagine that an incoming packet matches two
+      classes.  Class "foo" defines values for an NTP server (option
+      42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while
+      class "bar" defines values for an NTP server and a POP3 server
+      (option 70 in DHCPv4).  The server will examine the three
+      options NTP, SMTP and POP3 and return any of them that the
+      client requested.  As the NTP server was defined twice the
+      server will choose only one of the values for the reply: the
+      class from which the value is obtained is unspecified.
       </para>
 
       <note>
@@ -116,52 +166,48 @@
       </note>
   </section>
 
-  <section id="classification-using-host-reservations">
-    <title>Using Static Host Reservations In Classification</title>
-    <para>Classes can be statically assigned to the clients using techniques described
-    in <xref linkend="reservation4-client-classes"/> and
-    <xref linkend="reservation6-client-classes"/>.
-    </para>
-  </section>
-
   <section id="classification-using-vendor">
-    <title>Using Vendor Class Information In Classification</title>
+    <title>Builtin Client Classes</title>
       <para>
-      The server checks whether an incoming DHCPv4 packet includes
-      the vendor class identifier option (60) or an incoming DHCPv6 packet
-      includes the vendor class option (16). If it does, the content of that
-      option is prepended with &quot;VENDOR_CLASS_&quot; and the result is interpreted
-      as a class. For example, modern cable modems will send this option with
-      value &quot;docsis3.0&quot; and so the packet will belong to
-      class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      Some classes are builtin so do not need to be defined. The main
+      example uses Vendor Class information: The server checks whether
+      an incoming DHCPv4 packet includes the vendor class identifier
+      option (60) or an incoming DHCPv6 packet includes the vendor
+      class option (16). If it does, the content of that option is
+      prepended with &quot;VENDOR_CLASS_&quot; and the result is
+      interpreted as a class. For example, modern cable modems will
+      send this option with value &quot;docsis3.0&quot; and so the
+      packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      </para>
+
+      <para>Other examples are the ALL class what all incoming packets
+      belongs to, and the KNOWN class. By convention builtin classes
+      names begin with all caps.
       </para>
   </section>
 
   <section id="classification-using-expressions">
     <title>Using Expressions In Classification</title>
       <para>
-      The expression portion of classification contains operators and values.
-      All values are currently strings and operators take a string or strings and
-      return another string. When all the operations have completed
-      the result should be a value of &quot;true&quot; or &quot;false&quot;.
-      The packet belongs to
-      the class (and the class name is added to the list of classes) if the result
-      is &quot;true&quot;. Expressions are written in standard format and can be nested.
+      The expression portion of classification contains operators and
+      values.  All values are currently strings and operators take a
+      string or strings and return another string. When all the
+      operations have completed the result should be a value of
+      &quot;true&quot; or &quot;false&quot;.  The packet belongs to
+      the class (and the class name is added to the list of classes)
+      if the result is &quot;true&quot;. Expressions are written in
+      standard format and can be nested.
       </para>
 
       <para>
-      When the eval-on-demand flag is set to true in a class definition,
-      the match expression is skipped during the first evaluation pass.
-      </para>
-
-      <para>
-      Expressions are pre-processed during the parsing of the configuration file
-      and converted to an internal representation. This allows certain types of
-      errors to be caught and logged during parsing.  Examples of these errors
-      include an incorrect number or types of arguments to an operator.  The
-      evaluation code will also check for this class of error and generally
-      throw an exception, though this should not occur in a normally functioning
-      system.
+      Expressions are pre-processed during the parsing of the
+      configuration file and converted to an internal
+      representation. This allows certain types of errors to be caught
+      and logged during parsing.  Examples of these errors include an
+      incorrect number or types of arguments to an operator.  The
+      evaluation code will also check for this class of error and
+      generally throw an exception, though this should not occur in a
+      normally functioning system.
       </para>
 
       <para>
@@ -175,6 +221,14 @@
       values are limited. The expectation is that additional operators and values
       will be added over time, however the basic mechanisms will
       remain the same.
+      </para>
+
+      <para>
+      Dependencies between classes are checked too: for instance forward
+      dependencies are rejected when the configuration is parsed:
+      an expression can only depends on already defined classes (including
+      builtin classes) and which are evaluated in a previous or the
+      same evaluation phase. This does not apply to the KNOWN class.
       </para>
 
       <para>
@@ -248,6 +302,20 @@
               <entry>'true'</entry>
               <entry>If the packet belongs to the given client class
               "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>Known client</entry>
+              <entry>known</entry>
+              <entry>member('KNOWN')</entry>
+              <entry>If there is a host reservation for the client
+              "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>Unknown client</entry>
+              <entry>unknown</entry>
+              <entry>not member('KNOWN')</entry>
+              <entry>If there is a hostreservation for the client
+              "false" else "true"</entry>
             </row>
             <row>
               <entry>DHCPv4 relay agent sub-option</entry>
@@ -504,7 +572,14 @@
       parser checks if client classes were already defined or are
       built-in, i.e., beginning by &quot;VENDOR_CLASS_&quot;,
       &quot;AFTER__&quot; (for the to come "after" hook) and
-      &quot;EXTERNAL_&quot;.
+      &quot;EXTERNAL_&quot; or equal to &quot;ALL&quot;, &quot;KNOWN&quot;,
+      etc.
+      </para>
+      <para>"known" and "unknown" are short hands for "member('KNOWN')" and
+      "not member('KNOWN')". Note the evaluation of any expression using
+      directly or indirectly the &quot;KNOWN&quot; class is deferred
+      after the host reservation lookup (i.e. when the &quot;KNOWN&quot;
+      belonging is determined).
       </para></listitem>
 
       <listitem><para>
@@ -783,6 +858,14 @@ concatenation of the strings</entry></row>
     ...
 }</screen>
       </para>
+  </section>
+
+  <section id="classification-using-host-reservations">
+    <title>Using Static Host Reservations In Classification</title>
+    <para>Classes can be statically assigned to the clients using techniques described
+    in <xref linkend="reservation4-client-classes"/> and
+    <xref linkend="reservation6-client-classes"/>.
+    </para>
   </section>
 
   <section id="classification-subnets">

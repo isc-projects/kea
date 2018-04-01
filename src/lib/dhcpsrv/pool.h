@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,13 +28,6 @@ namespace dhcp {
 class Pool {
 
 public:
-    /// @brief Value of known clients
-    typedef enum {
-        SERVE_BOTH = 0,   ///< the pool serves both known and unknown clients
-        SERVE_KNOWN = 1,  ///< the pool serves only known clients
-        SERVE_UNKNOWN = 2 ///< the pool never serves known clients
-    } KnownClients;
-
     /// @note:
     /// PoolType enum was removed. Please use Lease::Type instead
 
@@ -118,11 +111,8 @@ public:
     /// specified classes.
     ///
     /// @param client_classes list of all classes the client belongs to
-    /// @param known_client true if the client is known, i.e. has a
-    /// reservation
     /// @return true if client can be supported, false otherwise
-    bool clientSupported(const ClientClasses& client_classes,
-                         bool known_client) const;
+    bool clientSupported(const ClientClasses& client_classes) const;
 
     /// @brief Sets the supported class to  class class_name
     ///
@@ -137,16 +127,6 @@ public:
     /// @return client class @ref client_class_
     const ClientClass& getClientClass() const {
         return (client_class_);
-    }
-
-    /// @brief Returns the value of known clients
-    KnownClients getKnownClients() const {
-        return (known_clients_);
-    }
-
-    /// @brief Sets the value of known clients
-    void setKnownClients(KnownClients known_clients) {
-        known_clients_ = known_clients;
     }
 
     /// @brief Adds class class_name to classes to be evaluated later
@@ -251,9 +231,6 @@ protected:
     ///
     /// @ref Network::client_class_
     ClientClass client_class_;
-
-    /// @brief Value of known clients
-    KnownClients known_clients_;
 
     /// @brief On demand classes
     ///

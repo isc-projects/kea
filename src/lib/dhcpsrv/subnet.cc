@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -136,16 +136,15 @@ Subnet::getPoolCapacity(Lease::Type type) const {
 
 uint64_t
 Subnet::getPoolCapacity(Lease::Type type,
-                        const ClientClasses& client_classes,
-                        bool known_client) const {
+                        const ClientClasses& client_classes) const {
     switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
-        return sumPoolCapacity(pools_, client_classes, known_client);
+        return sumPoolCapacity(pools_, client_classes);
     case Lease::TYPE_TA:
-        return sumPoolCapacity(pools_ta_, client_classes, known_client);
+        return sumPoolCapacity(pools_ta_, client_classes);
     case Lease::TYPE_PD:
-        return sumPoolCapacity(pools_pd_, client_classes, known_client);
+        return sumPoolCapacity(pools_pd_, client_classes);
     default:
         isc_throw(BadValue, "Unsupported pool type: "
                   << static_cast<int>(type));
@@ -172,11 +171,10 @@ Subnet::sumPoolCapacity(const PoolCollection& pools) const {
 
 uint64_t
 Subnet::sumPoolCapacity(const PoolCollection& pools,
-                        const ClientClasses& client_classes,
-                        bool known_client) const {
+                        const ClientClasses& client_classes) const {
     uint64_t sum = 0;
     for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
-        if (!(*p)->clientSupported(client_classes, known_client)) {
+        if (!(*p)->clientSupported(client_classes)) {
             continue;
         }
         uint64_t x = (*p)->getCapacity();
@@ -372,7 +370,6 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 const PoolPtr Subnet::getPool(Lease::Type type,
                               const ClientClasses& client_classes,
-                              bool known_client,
                               const isc::asiolink::IOAddress& hint) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
@@ -389,7 +386,7 @@ const PoolPtr Subnet::getPool(Lease::Type type,
         if (ub != pools.begin()) {
             --ub;
             if ((*ub)->inRange(hint) &&
-                (*ub)->clientSupported(client_classes, known_client)) {
+                (*ub)->clientSupported(client_classes)) {
                 candidate = *ub;
             }
         }
@@ -482,8 +479,7 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 bool
 Subnet::inPool(Lease::Type type,
                const isc::asiolink::IOAddress& addr,
-               const ClientClasses& client_classes,
-               bool known_client) const {
+               const ClientClasses& client_classes) const {
 
     // Let's start with checking if it even belongs to that subnet.
     if ((type != Lease::TYPE_PD) && !inRange(addr)) {
@@ -494,7 +490,7 @@ Subnet::inPool(Lease::Type type,
 
     for (PoolCollection::const_iterator pool = pools.begin();
          pool != pools.end(); ++pool) {
-        if (!(*pool)->clientSupported(client_classes, known_client)) {
+        if (!(*pool)->clientSupported(client_classes)) {
             continue;
         }
         if ((*pool)->inRange(addr)) {

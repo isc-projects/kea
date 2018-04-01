@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,6 @@ Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
      capacity_(0), cfg_option_(new CfgOption()), client_class_(""),
-     known_clients_(SERVE_BOTH),
      last_allocated_(first), last_allocated_valid_(false) {
 }
 
@@ -27,32 +26,15 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
 }
 
-bool Pool::clientSupported(const ClientClasses& classes,
-                           bool known_client) const {
-    bool match = false;
+bool Pool::clientSupported(const ClientClasses& classes) const {
     if (client_class_.empty()) {
         // There is no class defined for this pool, so we do
         // support everyone.
-        match = true;
-    } else if (classes.contains(client_class_)) {
-        match = true;
-    }
-
-    if (!match) {
-        return (false);
-    }
-
-    switch (known_clients_) {
-    case SERVE_BOTH:
         return (true);
-    case SERVE_KNOWN:
-        return (known_client);
-    case SERVE_UNKNOWN:
-        return (!known_client);
-    default:
-        // Saninity check for an impossible condition
-        isc_throw(BadValue, "Invalid value of known clients");
+    } else if (classes.contains(client_class_)) {
+        return (true);
     }
+    return (false);
 }
 
 void Pool::allowClientClass(const ClientClass& class_name) {
@@ -128,13 +110,6 @@ Pool::toElement() const {
     const ClientClass& cclass = getClientClass();
     if (!cclass.empty()) {
         map->set("client-class", Element::create(cclass));
-    }
-
-    // Set known-clients
-    KnownClients kc = getKnownClients();
-    if (kc != SERVE_BOTH) {
-        map->set("known-clients",
-                 Element::create(kc == SERVE_KNOWN ? "only" : "never"));
     }
 
     // Set eval-client-classes

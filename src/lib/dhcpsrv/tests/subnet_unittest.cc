@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -235,74 +235,36 @@ TEST(Subnet4Test, pool4InSubnet4) {
     three_classes.insert("baz");
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
                                              IOAddress("192.1.2.201")));
     EXPECT_EQ(mypool, pool4);
 
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
                                              IOAddress("192.1.2.129")));
     EXPECT_EQ(mypool, pool2);
 
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
                                              IOAddress("192.1.2.64")));
     EXPECT_EQ(mypool, pool1);
 
     // Specify addresses which don't belong to any existing pools.
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, three_classes, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, three_classes,
                                              IOAddress("192.1.2.210")));
     EXPECT_FALSE(mypool);
 
     // Pool3 requires a member of bar
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class,
                                              IOAddress("192.1.2.195")));
     EXPECT_FALSE(mypool);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, foo_class, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, foo_class,
                                              IOAddress("192.1.2.195")));
     EXPECT_FALSE(mypool);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, bar_class, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, bar_class,
                                              IOAddress("192.1.2.195")));
     EXPECT_EQ(mypool, pool3);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, three_classes, false,
+    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, three_classes,
                                              IOAddress("192.1.2.195")));
     EXPECT_EQ(mypool, pool3);
-
-    // And now known clients
-    EXPECT_EQ(Pool::SERVE_BOTH, pool1->getKnownClients());
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
-    pool4->setKnownClients(Pool::SERVE_UNKNOWN);
-
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
-                                             IOAddress("192.1.2.64")));
-    EXPECT_EQ(mypool, pool1);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, true,
-                                             IOAddress("192.1.2.64")));
-    EXPECT_EQ(mypool, pool1);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
-                                             IOAddress("192.1.2.129")));
-    EXPECT_FALSE(mypool);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, true,
-                                             IOAddress("192.1.2.129")));
-    
-    EXPECT_EQ(mypool, pool2);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
-                                             IOAddress("192.1.2.195")));
-    EXPECT_FALSE(mypool);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, true,
-                                             IOAddress("192.1.2.195")));
-    EXPECT_FALSE(mypool);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, bar_class, false,
-                                             IOAddress("192.1.2.195")));
-    EXPECT_EQ(mypool, pool3);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, bar_class, true,
-                                             IOAddress("192.1.2.195")));
-    EXPECT_FALSE(mypool);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, false,
-                                             IOAddress("192.1.2.201")));
-    EXPECT_EQ(mypool, pool4);
-    ASSERT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4, no_class, true,
-                                             IOAddress("192.1.2.201")));
-    EXPECT_FALSE(mypool);
 }
 
 // Check if it's possible to get specified number of possible leases for
@@ -357,20 +319,10 @@ TEST(Subnet4Test, getCapacity) {
     pool3->allowClientClass("bar");
 
     // Pool3 requires a member of bar
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, no_class, false));
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, foo_class, false));
-    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class, false));
-    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, three_classes, false));
-
-    // And now known clients
-    EXPECT_EQ(Pool::SERVE_BOTH, pool1->getKnownClients());
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
-
-    EXPECT_EQ(132, subnet->getPoolCapacity(Lease::TYPE_V4, no_class, false));
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, no_class, true));
-    EXPECT_EQ(136, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class, false));
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class, true));
+    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, no_class));
+    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, foo_class));
+    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class));
+    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, three_classes));
 }
 
 // Checks that it is not allowed to add invalid pools.
@@ -551,29 +503,24 @@ TEST(Subnet4Test, inRangeinPool) {
 
     // This client does not belong to any class.
     isc::dhcp::ClientClasses no_class;
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), no_class, false));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), no_class));
 
     // This client belongs to foo only
     isc::dhcp::ClientClasses foo_class;
     foo_class.insert("foo");
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), foo_class, false));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), foo_class));
 
     // This client belongs to bar only. I like that client.
     isc::dhcp::ClientClasses bar_class;
     bar_class.insert("bar");
-    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), bar_class, false));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), bar_class));
 
     // This client belongs to foo, bar and baz classes.
     isc::dhcp::ClientClasses three_classes;
     three_classes.insert("foo");
     three_classes.insert("bar");
     three_classes.insert("baz");
-    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes, false));
-
-    // Add known clients
-    pool1->setKnownClients(Pool::SERVE_UNKNOWN);
-    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes, false));
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes, true));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4"), three_classes));
 }
 
 // This test checks if the toText() method returns text representation
@@ -796,31 +743,13 @@ TEST(Subnet6Test, Pool6getCapacity) {
 
     // Pool3 requires a member of bar
     EXPECT_EQ(uint64_t(4294967296ull + 65536),
-              subnet->getPoolCapacity(Lease::TYPE_NA, no_class, false));
+              subnet->getPoolCapacity(Lease::TYPE_NA, no_class));
     EXPECT_EQ(uint64_t(4294967296ull + 65536),
-              subnet->getPoolCapacity(Lease::TYPE_NA, foo_class, false));
+              subnet->getPoolCapacity(Lease::TYPE_NA, foo_class));
     EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
-              subnet->getPoolCapacity(Lease::TYPE_NA, bar_class, false));
+              subnet->getPoolCapacity(Lease::TYPE_NA, bar_class));
     EXPECT_EQ(uint64_t(4294967296ull + 4294967296ull + 65536),
-              subnet->getPoolCapacity(Lease::TYPE_NA, three_classes, false));
-
-    // Add known clients
-    pool2->setKnownClients(Pool::SERVE_KNOWN);
-    EXPECT_EQ(uint64_t(65536),
-              subnet->getPoolCapacity(Lease::TYPE_NA, no_class, false));
-    EXPECT_EQ(uint64_t(4294967296ull + 65536),
-              subnet->getPoolCapacity(Lease::TYPE_NA, no_class, true));
-
-    // This is 2^64 prefixes. We're overflown uint64_t.
-    PoolPtr pool4(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:4::"), 64));
-    subnet->addPool(pool4);
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
-              subnet->getPoolCapacity(Lease::TYPE_NA));
-
-    PoolPtr pool5(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:5::"), 64));
-    subnet->addPool(pool5);
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
-              subnet->getPoolCapacity(Lease::TYPE_NA));
+              subnet->getPoolCapacity(Lease::TYPE_NA, three_classes));
 }
 
 // Test checks whether the number of prefixes available in the pools are
@@ -912,45 +841,18 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     pool3->allowClientClass("bar");
 
     // Pool3 requires a member of bar
-    mypool = subnet->getPool(Lease::TYPE_NA, no_class, false,
+    mypool = subnet->getPool(Lease::TYPE_NA, no_class,
                              IOAddress("2001:db8:1:3::dead:beef"));    
     EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, foo_class, false,
+    mypool = subnet->getPool(Lease::TYPE_NA, foo_class,
                              IOAddress("2001:db8:1:3::dead:beef"));    
     EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, bar_class, false,
+    mypool = subnet->getPool(Lease::TYPE_NA, bar_class,
                              IOAddress("2001:db8:1:3::dead:beef"));    
     EXPECT_EQ(mypool, pool3);
-    mypool = subnet->getPool(Lease::TYPE_NA, three_classes, false,
+    mypool = subnet->getPool(Lease::TYPE_NA, three_classes,
                              IOAddress("2001:db8:1:3::dead:beef"));    
     EXPECT_EQ(mypool, pool3);
-
-    // Add know cients
-    pool3->setKnownClients(Pool::SERVE_UNKNOWN);
-    mypool = subnet->getPool(Lease::TYPE_NA, no_class, false,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, no_class, true,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, foo_class, false,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, foo_class, true,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, bar_class, false,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_EQ(mypool, pool3);
-    mypool = subnet->getPool(Lease::TYPE_NA, bar_class, true,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_FALSE(mypool);
-    mypool = subnet->getPool(Lease::TYPE_NA, three_classes, false,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_EQ(mypool, pool3);
-    mypool = subnet->getPool(Lease::TYPE_NA, three_classes, true,
-                             IOAddress("2001:db8:1:3::dead:beef"));    
-    EXPECT_FALSE(mypool);
 }
 
 // Check if Subnet6 supports different types of pools properly.
@@ -1406,29 +1308,24 @@ TEST(Subnet6Test, inRangeinPool) {
 
     // This client does not belong to any class.
     isc::dhcp::ClientClasses no_class;
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), no_class, false));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), no_class));
 
     // This client belongs to foo only
     isc::dhcp::ClientClasses foo_class;
     foo_class.insert("foo");
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), foo_class, false));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), foo_class));
 
     // This client belongs to bar only. I like that client.
     isc::dhcp::ClientClasses bar_class;
     bar_class.insert("bar");
-    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), bar_class, false));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), bar_class));
 
     // This client belongs to foo, bar and baz classes.
     isc::dhcp::ClientClasses three_classes;
     three_classes.insert("foo");
     three_classes.insert("bar");
     three_classes.insert("baz");
-    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes, false));
-
-    // Add known clients
-    pool1->setKnownClients(Pool::SERVE_KNOWN);
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes, false));
-    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes, true));
+    EXPECT_TRUE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18"), three_classes));
 }
 
 // This test verifies that inRange() and inPool() methods work properly

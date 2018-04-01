@@ -83,7 +83,6 @@ protected:
         ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param client_classes list of classes client belongs to
-        /// @param known_client client has a reservation
         /// @param duid Client's DUID
         /// @param hint client's hint
         ///
@@ -91,7 +90,6 @@ protected:
         virtual isc::asiolink::IOAddress
         pickAddress(const SubnetPtr& subnet,
                     const ClientClasses& client_classes,
-                    bool known_client,
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
@@ -134,14 +132,12 @@ protected:
         ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param client_classes list of classes client belongs to
-        /// @param known_client client has a reservation
         /// @param duid Client's DUID (ignored)
         /// @param hint client's hint (ignored)
         /// @return the next address
         virtual isc::asiolink::IOAddress
             pickAddress(const SubnetPtr& subnet,
                         const ClientClasses& client_classes,
-                        bool known_client,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
     protected:
@@ -191,14 +187,12 @@ protected:
         ///
         /// @param subnet an address will be picked from pool of that subnet
         /// @param client_classes list of classes client belongs to
-        /// @param known_client client has a reservation
         /// @param duid Client's DUID
         /// @param hint a hint (last address that was picked)
         /// @return selected address
         virtual isc::asiolink::IOAddress
             pickAddress(const SubnetPtr& subnet,
                         const ClientClasses& client_classes,
-                        bool known_client,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
     };
@@ -224,7 +218,6 @@ protected:
         virtual isc::asiolink::IOAddress
         pickAddress(const SubnetPtr& subnet,
                     const ClientClasses& client_classes,
-                    bool known_client,
                     const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint);
     };
