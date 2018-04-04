@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2075,7 +2075,7 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         response->setRemotePort(DHCP4_CLIENT_PORT);
 
     } else {
-        // draft-ietf-dhc-relay-port-10.txt section 5.1
+        // RFC 8357 section 5.1
         uint16_t relay_port = checkRelayPort(ex);
         response->setRemotePort(relay_port ? relay_port : DHCP4_SERVER_PORT);
     }

@@ -152,9 +152,8 @@ enum DHCPv6OptionType {
 // D6O_F_SERVER_STATE                     = 132, /* RFC8156 */
 // D6O_F_START_TIME_OF_STATE              = 133, /* RFC8156 */
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
-// not yet assigned but next free value
-   D6O_RELAY_SOURCE_PORT                  = 135, /* draft-ietf-dhc-relay-port-10.txt */
-   // 135-142 unassigned
+   D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
+   // 136-142 unassigned
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
 
 // The following are EXPERIMENTAL and may change when IANA assigns official
