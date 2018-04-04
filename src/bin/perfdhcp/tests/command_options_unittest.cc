@@ -342,17 +342,6 @@ TEST_F(CommandOptionsTest, Rate) {
     // Rate must not be 0
     EXPECT_THROW(process("perfdhcp -4 -r 0 -l ethx all"),
                  isc::InvalidParameter);
-#if 0
-    // -r must be specified to use -n, -p and -D
-    EXPECT_THROW(process("perfdhcp -6 -t 5 -l ethx all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -4 -n 150 -l ethx all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -6 -p 120 -l ethx all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -4 -D 1400 -l ethx all"),
-                 isc::InvalidParameter);
-#endif
 }
 
 TEST_F(CommandOptionsTest, RenewRate) {
