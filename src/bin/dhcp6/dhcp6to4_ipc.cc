@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,7 +79,7 @@ void Dhcp6to4Ipc::handler() {
     // Should we check it is a DHCPV6_DHCPV4_RESPONSE?
 
     // Handle relay port
-    uint16_t relay_port = Dhcpv6Srv::testRelaySourcePort(pkt);
+    uint16_t relay_port = Dhcpv6Srv::checkRelaySourcePort(pkt);
 
     // The received message has been unpacked by the receive() function. This
     // method could have modified the message so it's better to pack() it

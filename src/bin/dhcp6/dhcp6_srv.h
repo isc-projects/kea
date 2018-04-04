@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -762,7 +762,7 @@ public:
     ///
     /// @param query DHCPv6 message to be checked.
     /// @return the port to use to join the relay or 0 for the default.
-    static uint16_t testRelaySourcePort(const Pkt6Ptr& query);
+    static uint16_t checkRelaySourcePort(const Pkt6Ptr& query);
 
 private:
 

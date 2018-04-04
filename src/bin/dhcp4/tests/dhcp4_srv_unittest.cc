@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -255,12 +255,16 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     // Set hops value for the response.
     resp->setHops(req->getHops());
 
+    // Set the remote port to 67 as we know it will be updated.
+    resp->setRemotePort(67);
+
     // This function never throws.
     ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
-    // The query has been relayed, so the response must be sent to the port 67.
+    // The query has been relayed, so the response should be sent to the
+    // port 67, but here there is a relay port RAI so another value is used.
     EXPECT_EQ(1234, resp->getRemotePort());
     // Local address should be the address assigned to interface eth1.
     EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());

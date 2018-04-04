@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -764,7 +764,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         rsp->setRemotePort(DHCP6_CLIENT_PORT);
     } else {
         // Relayed traffic, send back to the relay agent
-        uint16_t relay_port = testRelaySourcePort(query);
+        uint16_t relay_port = checkRelaySourcePort(query);
         rsp->setRemotePort(relay_port ? relay_port : DHCP6_SERVER_PORT);
     }
 
@@ -3374,7 +3374,7 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
     }
 }
 
-uint16_t Dhcpv6Srv::testRelaySourcePort(const Pkt6Ptr& query) {
+uint16_t Dhcpv6Srv::checkRelaySourcePort(const Pkt6Ptr& query) {
 
     if (query->relay_info_.empty()) {
         // No relay agent
@@ -3383,7 +3383,7 @@ uint16_t Dhcpv6Srv::testRelaySourcePort(const Pkt6Ptr& query) {
 
     // Did the last relay agent add a relay-source-port?
     if (query->getRelayOption(D6O_RELAY_SOURCE_PORT, 0)) {
-        // draft-ietf-dhc-relay-port-10.txt section 5.2
+        // RFC 8357 section 5.2
         return (query->getRemotePort());
     }
 
