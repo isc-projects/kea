@@ -759,9 +759,9 @@ concatenation of the strings</entry></row>
     <title>Configuring Classes</title>
       <para>
       A class contains five items: a name, a test expression, option data,
-      option definition and eval on-demand flag.
+      option definition and only-if-required flag.
       The name must exist and must be unique amongst all classes. The test
-      expression, option data and definition, and eval on-demand flag are
+      expression, option data and definition, and only-if-required flag are
       optional.
       </para>
 
@@ -786,21 +786,21 @@ concatenation of the strings</entry></row>
       Usually the test expression is evaluated before subnet selection
       but in some cases it is useful to evaluate it later when the
       subnet, shared-network or pools are known but output option
-      processing not yet done. The eval-on-demand flag, false by default,
-      allows to defer and make only on-demand the evaluation of the
-      test expression.
+      processing not yet done. The only-if-required flag, false by default,
+      allows to perform the evaluation of the test expression only
+      when it was required, i.e. in a required-client-classes list.
       </para>
 
       <para>
-      The eval-client-classes list which is valid for shared-network,
+      The required-client-classes list which is valid for shared-network,
       subnet and pool scope specifies the classes which are evaluated
       in the second pass before output option processing.
       The list is built in the reversed precedence order of option
       data, i.e. an option data in a subnet takes precedence on one
-      in a shared-network but an on-demand class in a subnet is added
+      in a shared-network but required class in a subnet is added
       after one in a shared-network.
-      The mechanism is related to the eval-on-demand flag but it is
-      not required that the flag was set to true.
+      The mechanism is related to the only-if-required flag but it is
+      not mandatory that the flag was set to true.
       </para>
 
       <para>

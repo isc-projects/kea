@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -649,18 +649,18 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Assigns incoming packet to zero or more classes (late pass).
+    /// @brief Assigns incoming packet to zero or more classes (required pass).
     ///
-    /// @note This late classification evaluates all classes which
-    /// were marked for this deferred/on-demand pass. Classes are
-    /// collected in the reversed order than output option processing.
+    /// @note This required classification evaluates all classes which
+    /// were marked for required evaluation. Classes are collected so
+    /// evaluated in the reversed order than output option processing.
     ///
-    /// @note The eval-on-demand flag is related because it avoids
+    /// @note The only-if-required flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
     /// @param pkt packet to be classified
     /// @param ctx allocation context where to get informations
-    void lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+    void requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to get a MAC/hardware address using configured sources
     ///

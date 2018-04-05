@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace dhcp {
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
-    : name_(name), match_expr_(match_expr), on_demand_(false),
+    : name_(name), match_expr_(match_expr), required_(false),
       cfg_option_(cfg_option),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
@@ -38,7 +38,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      on_demand_(false), cfg_option_(new CfgOption()),
+      required_(false), cfg_option_(new CfgOption()),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     if (rhs.match_expr_) {
@@ -54,7 +54,7 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
 
-    on_demand_ = rhs.on_demand_;
+    required_ = rhs.required_;
     next_server_ = rhs.next_server_;
     sname_ = rhs.sname_;
     filename_ = rhs.filename_;
@@ -94,13 +94,13 @@ ClientClassDef::setTest(const std::string& test) {
 }
 
 bool
-ClientClassDef::getOnDemand() const {
-    return (on_demand_);
+ClientClassDef::getRequired() const {
+    return (required_);
 }
 
 void
-ClientClassDef::setOnDemand(bool on_demand) {
-    on_demand_ = on_demand;
+ClientClassDef::setRequired(bool required) {
+    required_ = required;
 }
 
 const CfgOptionDefPtr&
@@ -135,7 +135,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
         ((!cfg_option_def_ && !other.cfg_option_def_) ||
         (cfg_option_def_ && other.cfg_option_def_ &&
          (*cfg_option_def_ == *other.cfg_option_def_))) &&
-            (on_demand_ == other.on_demand_) &&
+            (required_ == other.required_) &&
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
             (filename_ == other.filename_));
@@ -151,9 +151,9 @@ ClientClassDef:: toElement() const {
     if (!test_.empty()) {
         result->set("test", Element::create(test_));
     }
-    // Set eval-on-demand
-    if (on_demand_) {
-        result->set("eval-on-demand", Element::create(on_demand_));
+    // Set only-if-required
+    if (required_) {
+        result->set("only-if-required", Element::create(required_));
     }
     // Set option-def (used only by DHCPv4)
     if (cfg_option_def_ && (family == AF_INET)) {
@@ -200,7 +200,7 @@ void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const std::string& test,
-                                bool on_demand,
+                                bool required,
                                 const CfgOptionPtr& cfg_option,
                                 CfgOptionDefPtr cfg_option_def,
                                 asiolink::IOAddress next_server,
@@ -208,7 +208,7 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
-    cclass->setOnDemand(on_demand);
+    cclass->setRequired(required);
     cclass->setCfgOptionDef(cfg_option_def);
     cclass->setNextServer(next_server);
     cclass->setSname(sname);

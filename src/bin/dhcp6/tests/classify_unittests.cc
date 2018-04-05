@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -302,8 +302,8 @@ TEST_F(ClassifyTest, matchClassification) {
     EXPECT_FALSE(opt3);
 }
 
-// Check that on-demand classes are not evaluated by classifyPacket
-TEST_F(ClassifyTest, onDemand) {
+// Check that only-if-required classes are not evaluated by classifyPacket
+TEST_F(ClassifyTest, required) {
     IfaceMgrTestConfig test_config(true);
 
     NakedDhcpv6Srv srv(0);
@@ -329,7 +329,7 @@ TEST_F(ClassifyTest, onDemand) {
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
-        "    \"eval-on-demand\": true, "
+        "    \"only-if-required\": true, "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
@@ -391,8 +391,8 @@ TEST_F(ClassifyTest, onDemand) {
     EXPECT_FALSE(opt3);
 }
 
-// Checks that when requested on-demand classes are still (but late) evaluated
-TEST_F(ClassifyTest, lateClassification) {
+// Checks that when only-if-required classes are still evaluated
+TEST_F(ClassifyTest, requiredClassification) {
     IfaceMgrTestConfig test_config(true);
 
     NakedDhcpv6Srv srv(0);
@@ -415,11 +415,11 @@ TEST_F(ClassifyTest, lateClassification) {
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"eval-client-classes\": [ \"router\" ], "
+        "    \"require-client-classes\": [ \"router\" ], "
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
-        "    \"eval-on-demand\": true, "
+        "    \"only-if-required\": true, "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
@@ -1221,7 +1221,7 @@ TEST_F(ClassifyTest, member) {
     EXPECT_FALSE(ipf3->readBoolean());
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedenceNone) {
     std::string config =
@@ -1240,7 +1240,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -1249,7 +1249,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -1258,7 +1258,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -1299,7 +1299,7 @@ TEST_F(ClassifyTest, precedenceNone) {
     EXPECT_FALSE(opt);
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedencePool) {
     std::string config =
@@ -1316,7 +1316,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -1325,7 +1325,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -1334,7 +1334,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -1349,7 +1349,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "        \"id\": 1,"
         "        \"pools\": [ { "
         "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
-        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "            \"require-client-classes\": [ \"for-pool\" ]"
         "        } ]"
         "    } ]"
         "} ],"
@@ -1382,7 +1382,7 @@ TEST_F(ClassifyTest, precedencePool) {
     EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedenceSubnet) {
     std::string config =
@@ -1399,7 +1399,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -1408,7 +1408,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -1417,7 +1417,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -1430,10 +1430,10 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
-        "        \"eval-client-classes\": [ \"for-subnet\" ],"
+        "        \"require-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
-        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "            \"require-client-classes\": [ \"for-pool\" ]"
         "        } ]"
         "    } ]"
         "} ],"
@@ -1466,7 +1466,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
     EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedenceNetwork) {
     std::string config =
@@ -1483,7 +1483,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -1492,7 +1492,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -1501,7 +1501,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -1511,14 +1511,14 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"eval-client-classes\": [ \"for-network\" ],"
+        "    \"require-client-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
-        "        \"eval-client-classes\": [ \"for-subnet\" ],"
+        "        \"require-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
-        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "            \"require-client-classes\": [ \"for-pool\" ]"
         "        } ]"
         "    } ]"
         "} ],"

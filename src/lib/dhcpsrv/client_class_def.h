@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,11 +82,11 @@ public:
     /// @param test the original expression to assign the class
     void setTest(const std::string& test);
 
-    /// @brief Fetches the on demand flag
-    bool getOnDemand() const;
+    /// @brief Fetches the only if required flag
+    bool getRequired() const;
 
-    /// @brief Sets the on demand flag
-    void setOnDemand(bool on_demand);
+    /// @brief Sets the only if required flag
+    void setRequired(bool required);
 
     /// @brief Fetches the class's option definitions
     const CfgOptionDefPtr& getCfgOptionDef() const;
@@ -188,11 +188,11 @@ private:
     /// this class.
     std::string test_;
 
-    /// @brief The on demand flag: when false (the defaul) membership
+    /// @brief The only if required flag: when false (the defaul) membership
     /// is determined during classification so is for instance
     /// available for subnet selection, when true membership is evaluated
-    /// only if asked for and is usable only for option configuration.
-    bool on_demand_;
+    /// only when required for and is usable only for option configuration.
+    bool required_;
 
     /// @brief The option definition configuration for this class
     CfgOptionDefPtr cfg_option_def_;
@@ -251,7 +251,7 @@ public:
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
-    /// @param on_demand Original value of the on demand flag
+    /// @param required Original value of the only if required flag
     /// @param options Collection of options members should be given
     /// @param defs Option definitions (optional)
     /// @param next_server next-server value for this class (optional)
@@ -262,7 +262,7 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const std::string& test, bool on_demand,
+                  const std::string& test, bool required,
                   const CfgOptionPtr& options,
                   CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,12 +59,12 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
-% DHCP4_CLASS_UNKNOWN on-demand class %1 has no definition
-This debug message informs that a class is listed for late evaluation but
+% DHCP4_CLASS_UNDEFINED required class %1 has no definition
+This debug message informs that a class is listed for required evaluation but
 has no definition.
 
-% DHCP4_CLASS_UNTESTABLE on-demand class %1 has no test expression
-This debug message informs that a class was listed for late evaluation but
+% DHCP4_CLASS_UNTESTABLE required class %1 has no test expression
+This debug message informs that a class was listed for required evaluation but
 its definition does not include a test expression to evaluate.
 
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2

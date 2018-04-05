@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"eval-client-classes\": []\n,"
+                "            \"required-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
@@ -73,7 +73,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"eval-client-classes\": []\n,"
+                "            \"required-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
@@ -194,7 +194,7 @@ public:
                 "            \"preferred-lifetime\": 300,"
                 "            \"valid-lifetime\": 400,"
                 "            \"client-class\": \"\","
-                "            \"eval-client-classes\": []\n,"
+                "            \"required-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"decline-probation-period\": 86400,"
                 "            \"dhcp4o6-port\": 0,"
@@ -210,7 +210,7 @@ public:
                 "            \"preferred-lifetime\": 30,"
                 "            \"valid-lifetime\": 40,"
                 "            \"client-class\": \"\","
-                "            \"eval-client-classes\": []\n,"
+                "            \"required-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"decline-probation-period\": 86400,"
                 "            \"dhcp4o6-port\": 0,"
@@ -283,7 +283,7 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     EXPECT_EQ("alpha", network->getClientClass());
 }
 
-// This test verifies that it's possible to specify eval-client-classes
+// This test verifies that it's possible to specify required-client-classes
 // on shared-network level.
 TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     std::string config = getWorkingConfig();
@@ -292,7 +292,7 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create("beta"));
-    config_element->set("eval-client-classes", class_list);
+    config_element->set("required-client-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -300,12 +300,12 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    const ClientClasses& classes = network->getOnDemandClasses();
+    const ClientClasses& classes = network->getRequiredClasses();
     EXPECT_EQ(2, classes.size());
     EXPECT_EQ("alpha, beta", classes.toText());
 }
 
-// This test verifies that bad eval-client-classes configs raise
+// This test verifies that bad required-client-classes configs raise
 // expected errors.
 TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     std::string config = getWorkingConfig();
@@ -315,7 +315,7 @@ TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create(1234));
-    config_element->set("eval-client-classes", class_list);
+    config_element->set("required-client-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;

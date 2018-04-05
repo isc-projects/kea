@@ -795,14 +795,14 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"eval-client-classes\" {
+\"required-client-classes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp4Parser::make_EVAL_CLIENT_CLASSES(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_REQUIRED_CLIENT_CLASSES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("eval-client-classes", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("required-client-classes", driver.loc_);
     }
 }
 
@@ -827,12 +827,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"eval-on-demand\" {
+\"only-if-required\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-        return isc::dhcp::Dhcp4Parser::make_EVAL_ON_DEMAND(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_ONLY_IF_REQUIRED(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("eval-on-demand", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("only-if-required", driver.loc_);
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,10 +142,10 @@ TEST(ClientClassDef, copyAndEquality) {
     EXPECT_TRUE(*cclass == *cclass2);
     EXPECT_FALSE(*cclass != *cclass2);
 
-    // Verify the on_demand flag is enough to make classes not equal.
-    EXPECT_FALSE(cclass->getOnDemand());
-    cclass2->setOnDemand(true);
-    EXPECT_TRUE(cclass2->getOnDemand());
+    // Verify the required flag is enough to make classes not equal.
+    EXPECT_FALSE(cclass->getRequired());
+    cclass2->setRequired(true);
+    EXPECT_TRUE(cclass2->getRequired());
     EXPECT_FALSE(*cclass == *cclass2);
     EXPECT_TRUE(*cclass != *cclass2);
 
@@ -346,7 +346,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
     // Let's checks that it doesn't return any nonsense
-    EXPECT_FALSE(cclass->getOnDemand());
+    EXPECT_FALSE(cclass->getRequired());
     EXPECT_FALSE(cclass->getCfgOptionDef());
     string empty;
     ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
@@ -369,7 +369,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     // Verify we can create a class with a name, expression, and no cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
-    cclass->setOnDemand(true);
+    cclass->setRequired(true);
 
     string sname = "This is a very long string that can be a server name";
     string filename = "this-is-a-slightly-longish-name-of-a-file.txt";
@@ -379,7 +379,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     cclass->setFilename(filename);
 
     // Let's checks that it doesn't return any nonsense
-    EXPECT_TRUE(cclass->getOnDemand());
+    EXPECT_TRUE(cclass->getRequired());
     EXPECT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
     EXPECT_EQ(sname, cclass->getSname());
     EXPECT_EQ(filename, cclass->getFilename());
@@ -397,7 +397,7 @@ TEST(ClientClassDef, unparseDef) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
     std::string test = "option[12].text == 'foo'";
     cclass->setTest(test);
-    cclass->setOnDemand(true);
+    cclass->setRequired(true);
     std::string next_server = "1.2.3.4";
     cclass->setNextServer(IOAddress(next_server));
     std::string sname = "my-server.example.com";
@@ -409,7 +409,7 @@ TEST(ClientClassDef, unparseDef) {
     std::string expected = "{\n"
         "\"name\": \"" + name + "\",\n"
         "\"test\": \"" + test + "\",\n"
-        "\"eval-on-demand\": true,\n"
+        "\"only-if-required\": true,\n"
         "\"next-server\": \"" + next_server + "\",\n"
         "\"server-hostname\": \"" + sname + "\",\n"
         "\"boot-file-name\": \"" + filename + "\",\n"

@@ -129,18 +129,18 @@ public:
         return (client_class_);
     }
 
-    /// @brief Adds class class_name to classes to be evaluated later
+    /// @brief Adds class class_name to classes required to be evaluated
     ///
-    /// @param class_name client class to be evaluated later
-    void deferClientClass(const ClientClass& class_name) {
-        if (!on_demand_classes_.contains(class_name)) {
-            on_demand_classes_.insert(class_name);
+    /// @param class_name client class required to be evaluated
+    void requireClientClass(const ClientClass& class_name) {
+        if (!required_classes_.contains(class_name)) {
+            required_classes_.insert(class_name);
         }
     }
 
-    /// @brief Returns classes which will be evaluated later
-    const ClientClasses& getOnDemandClasses() const {
-        return (on_demand_classes_);
+    /// @brief Returns classes which are required to be evaluated
+    const ClientClasses& getRequiredClasses() const {
+        return (required_classes_);
     }
 
     /// @brief returns the last address that was tried from this pool
@@ -232,10 +232,10 @@ protected:
     /// @ref Network::client_class_
     ClientClass client_class_;
 
-    /// @brief On demand classes
+    /// @brief Required classes
     ///
-    /// @ref isc::dhcp::Network::on_demand_classes
-    ClientClasses on_demand_classes_;
+    /// @ref isc::dhcp::Network::required_classes
+    ClientClasses required_classes_;
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;

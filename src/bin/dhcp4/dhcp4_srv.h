@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -803,17 +803,17 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
-    /// @brief Assigns incoming packet to zero or more classes (late pass).
+    /// @brief Assigns incoming packet to zero or more classes (required pass).
     ///
-    /// @note This late classification evaluates all classes which
-    /// were marked for this deferred/on-demand pass. Classes are
-    /// collected in the reversed order than output option processing.
+    /// @note This required classification evaluates all classes which
+    /// were marked for required evaluation. Classes are collected so
+    /// evaluated in the reversed order than output option processing.
     ///
-    /// @note The eval-on-demand flag is related because it avoids
+    /// @note The only-if-required flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
     /// @param ex The exchange holding needed informations.
-    void lateClassify(Dhcpv4Exchange& ex);
+    void requiredClassify(Dhcpv4Exchange& ex);
 
     /// @brief Perform deferred option unpacking.
     ///

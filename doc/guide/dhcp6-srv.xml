@@ -1955,8 +1955,8 @@ should include options from the isc option space:
       is to assess an incoming packet and assign it to zero or more classes.  The
       second step is to choose a subnet, possibly based on the class information.
       The third step is to assign classes from host reservations.
-      The forth step is to build the list of on-demand classes and perform
-      deferred evaluation for each class of the list.
+      The forth step is to build the list of required classes and perform
+      the evaluation for each class of the list.
       The last step is to assign options again possibly based on the class
       information.
       </para>
@@ -2041,23 +2041,23 @@ should include options from the isc option space:
         </para>
       </section>
 
-      <section id="dhcp6-on-demand-class">
-        <title>On-demand classification</title>
+      <section id="dhcp6-required-class">
+        <title>Required classification</title>
         <para>
         In some cases it is useful to limit the scope of class.
         Two devices are available to perform evaluation of test
-        expressions so assignment when it returns true only on-demand.
+        expressions so assignment when it was required.
         </para>
 
         <para>
-        The first one is the per-class <command>eval-on-demand</command>
+        The first one is the per-class <command>only-if-required</command>
         flag which is false by default. When it is set to
         <command>true</command> the test expression of the class is not
         evaluated at the reception of a new incoming ticket.
         </para>
 
         <para>
-        The second is the <command>eval-client-classes</command> which
+        The second is the <command>required-client-classes</command> which
         takes a list of class names and is valid in shared-network,
         subnet and pool scope. Classes in these lists are evaluated
         after resource assignment and before output option processing.
@@ -2073,7 +2073,7 @@ should include options from the isc option space:
        {<userinput>
            "name": "Client_foo",
            "test": "'' == ''",
-           "eval-on-demand": true</userinput>
+           "only-if-required": true</userinput>
        },
        ...
     ],
@@ -2085,7 +2085,7 @@ should include options from the isc option space:
                      "pool": "2001:db8:1::-2001:db8:1::ffff"
                  }
              ],
-            <userinput>"eval-client-classes": [ "Client_foo" ],</userinput>
+            <userinput>"required-client-classes": [ "Client_foo" ],</userinput>
             ...
         },
         ...

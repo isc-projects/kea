@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2487,7 +2487,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     assignLeases(solicit, response, ctx);
 
     setReservedClientClasses(solicit, ctx);
-    lateClassify(solicit, ctx);
+    requiredClassify(solicit, ctx);
 
     copyClientOptions(solicit, response);
     CfgOptionList co_list;
@@ -2522,7 +2522,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     assignLeases(request, reply, ctx);
 
     setReservedClientClasses(request, ctx);
-    lateClassify(request, ctx);
+    requiredClassify(request, ctx);
 
     copyClientOptions(request, reply);
     CfgOptionList co_list;
@@ -2553,7 +2553,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     extendLeases(renew, reply, ctx);
 
     setReservedClientClasses(renew, ctx);
-    lateClassify(renew, ctx);
+    requiredClassify(renew, ctx);
 
     copyClientOptions(renew, reply);
     CfgOptionList co_list;
@@ -2584,7 +2584,7 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
     extendLeases(rebind, reply, ctx);
 
     setReservedClientClasses(rebind, ctx);
-    lateClassify(rebind, ctx);
+    requiredClassify(rebind, ctx);
 
     copyClientOptions(rebind, reply);
     CfgOptionList co_list;
@@ -2609,7 +2609,7 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
     AllocEngine::ClientContext6 ctx;
     initContext(confirm, ctx);
     setReservedClientClasses(confirm, ctx);
-    lateClassify(confirm, ctx);
+    requiredClassify(confirm, ctx);
 
     // Get IA_NAs from the Confirm. If there are none, the message is
     // invalid and must be discarded. There is nothing more to do.
@@ -2703,7 +2703,7 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
     AllocEngine::ClientContext6 ctx;
     initContext(release, ctx);
     setReservedClientClasses(release, ctx);
-    lateClassify(release, ctx);
+    requiredClassify(release, ctx);
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
@@ -2733,7 +2733,7 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
     AllocEngine::ClientContext6 ctx;
     initContext(decline, ctx);
     setReservedClientClasses(decline, ctx);
-    lateClassify(decline, ctx);
+    requiredClassify(decline, ctx);
 
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(decline, reply);
@@ -3015,7 +3015,7 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
     AllocEngine::ClientContext6 ctx;
     initContext(inf_request, ctx);
     setReservedClientClasses(inf_request, ctx);
-    lateClassify(inf_request, ctx);
+    requiredClassify(inf_request, ctx);
 
     // Create a Reply packet, with the same trans-id as the client's.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, inf_request->getTransid()));
@@ -3102,8 +3102,8 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
         if (!expr_ptr) {
             continue;
         }
-        // Not the right time if on demand
-        if ((*it)->getOnDemand()) {
+        // Not the right time if only when required
+        if ((*it)->getRequired()) {
             continue;
         }
         // Evaluate the expression which can return false (no match),
@@ -3154,8 +3154,8 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
 }
 
 void
-Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
-    // First collect on-demand classes
+Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
+    // First collect required classes
     ClientClasses classes = pkt->getClasses(true);
     Subnet6Ptr subnet = ctx.subnet_;
 
@@ -3164,7 +3164,7 @@ Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
         SharedNetwork6Ptr network;
         subnet->getSharedNetwork(network);
         if (network) {
-            const ClientClasses& to_add = network->getOnDemandClasses();
+            const ClientClasses& to_add = network->getRequiredClasses();
             for (ClientClasses::const_iterator cclass = to_add.cbegin();
                  cclass != to_add.cend(); ++cclass) {
                 classes.insert(*cclass);
@@ -3172,7 +3172,7 @@ Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
         }
 
         // Followed by the subnet
-        const ClientClasses& to_add = subnet->getOnDemandClasses();
+        const ClientClasses& to_add = subnet->getRequiredClasses();
         for(ClientClasses::const_iterator cclass = to_add.cbegin();
             cclass != to_add.cend(); ++cclass) {
             classes.insert(*cclass);
@@ -3187,7 +3187,7 @@ Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
                                                 resource.first,
                                                 false);
             if (pool) {
-                const ClientClasses& to_add = pool->getOnDemandClasses();
+                const ClientClasses& to_add = pool->getRequiredClasses();
                 for (ClientClasses::const_iterator cclass = to_add.cbegin();
                      cclass != to_add.cend(); ++cclass) {
                     classes.insert(*cclass);
@@ -3206,7 +3206,7 @@ Dhcpv6Srv::lateClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
          cclass != classes.cend(); ++cclass) {
         const ClientClassDefPtr class_def = dict->findClass(*cclass);
         if (!class_def) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNKNOWN)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNDEFINED)
                 .arg(*cclass);
             continue;
         }

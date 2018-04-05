@@ -112,15 +112,15 @@ Pool::toElement() const {
         map->set("client-class", Element::create(cclass));
     }
 
-    // Set eval-client-classes
-    const ClientClasses& classes = getOnDemandClasses();
+    // Set required-client-classes
+    const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
         ElementPtr class_list =Element::createList();
         for (ClientClasses::const_iterator it = classes.cbegin();
              it != classes.cend(); ++it) {
             class_list->add(Element::create(*it));
         }
-        map->set("eval-client-classes", class_list);
+        map->set("required-client-classes", class_list);
     }
 
     return (map);

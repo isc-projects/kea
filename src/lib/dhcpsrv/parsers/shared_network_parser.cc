@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,9 +70,9 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
-        if (shared_network_data->contains("eval-client-classes")) {
+        if (shared_network_data->contains("required-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("eval-client-classes")->listValue();
+                shared_network_data->get("required-client-classes")->listValue();
             for (auto cclass = class_list.cbegin();
                  cclass != class_list.cend(); ++cclass) {
                 if (((*cclass)->getType() != Element::string) ||
@@ -80,7 +80,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
                     isc_throw(DhcpConfigError, "invalid class name ("
                               << (*cclass)->getPosition() << ")");
                 }
-                shared_network->deferClientClass((*cclass)->stringValue());
+                shared_network->requireClientClass((*cclass)->stringValue());
             }
         }
 
@@ -125,9 +125,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
-        if (shared_network_data->contains("eval-client-classes")) {
+        if (shared_network_data->contains("required-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("eval-client-classes")->listValue();
+                shared_network_data->get("required-client-classes")->listValue();
             for (auto cclass = class_list.cbegin();
                  cclass != class_list.cend(); ++cclass) {
                 if (((*cclass)->getType() != Element::string) ||
@@ -135,7 +135,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
                     isc_throw(DhcpConfigError, "invalid class name ("
                               << (*cclass)->getPosition() << ")");
                 }
-                shared_network->deferClientClass((*cclass)->stringValue());
+                shared_network->requireClientClass((*cclass)->stringValue());
             }
         }
 
