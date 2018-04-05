@@ -421,9 +421,9 @@ namespace isc { namespace dhcp {
         TOKEN_ALL = 328,
         TOKEN_HOST_RESERVATION_IDENTIFIERS = 329,
         TOKEN_CLIENT_CLASSES = 330,
-        TOKEN_EVAL_CLIENT_CLASSES = 331,
+        TOKEN_REQUIRED_CLIENT_CLASSES = 331,
         TOKEN_TEST = 332,
-        TOKEN_EVAL_ON_DEMAND = 333,
+        TOKEN_ONLY_IF_REQUIRED = 333,
         TOKEN_CLIENT_CLASS = 334,
         TOKEN_RESERVATIONS = 335,
         TOKEN_DUID = 336,
@@ -909,7 +909,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_EVAL_CLIENT_CLASSES (const location_type& l);
+    make_REQUIRED_CLIENT_CLASSES (const location_type& l);
 
     static inline
     symbol_type
@@ -917,7 +917,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_EVAL_ON_DEMAND (const location_type& l);
+    make_ONLY_IF_REQUIRED (const location_type& l);
 
     static inline
     symbol_type
@@ -2257,9 +2257,9 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_EVAL_CLIENT_CLASSES (const location_type& l)
+  Dhcp4Parser::make_REQUIRED_CLIENT_CLASSES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_EVAL_CLIENT_CLASSES, l);
+    return symbol_type (token::TOKEN_REQUIRED_CLIENT_CLASSES, l);
   }
 
   Dhcp4Parser::symbol_type
@@ -2269,9 +2269,9 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_EVAL_ON_DEMAND (const location_type& l)
+  Dhcp4Parser::make_ONLY_IF_REQUIRED (const location_type& l)
   {
-    return symbol_type (token::TOKEN_EVAL_ON_DEMAND, l);
+    return symbol_type (token::TOKEN_ONLY_IF_REQUIRED, l);
   }
 
   Dhcp4Parser::symbol_type
