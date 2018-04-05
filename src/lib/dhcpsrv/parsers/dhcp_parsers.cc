@@ -388,8 +388,8 @@ PoolParser::parse(PoolStoragePtr pools,
         }
     }
 
-    // Try setting up on demand client classes.
-    ConstElementPtr class_list = pool_structure->get("eval-client-classes");
+    // Try setting up required client classes.
+    ConstElementPtr class_list = pool_structure->get("required-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();
@@ -399,7 +399,7 @@ PoolParser::parse(PoolStoragePtr pools,
                 isc_throw(DhcpConfigError, "invalid class name ("
                           << (*cclass)->getPosition() << ")");
             }
-            pool->deferClientClass((*cclass)->stringValue());
+            pool->requireClientClass((*cclass)->stringValue());
         }
     }
 }
@@ -711,8 +711,8 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet4->allowClientClass(client_class);
     }
 
-    // Try setting up on demand client classes.
-    ConstElementPtr class_list = params->get("eval-client-classes");
+    // Try setting up required client classes.
+    ConstElementPtr class_list = params->get("required-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();
@@ -722,7 +722,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                 isc_throw(DhcpConfigError, "invalid class name ("
                           << (*cclass)->getPosition() << ")");
             }
-            subnet4->deferClientClass((*cclass)->stringValue());
+            subnet4->requireClientClass((*cclass)->stringValue());
         }
     }
 
@@ -891,7 +891,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         client_class_ = client_class;
     }
 
-    ConstElementPtr class_list = pd_pool_->get("eval-client-classes");
+    ConstElementPtr class_list = pd_pool_->get("required-client-classes");
 
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
@@ -932,7 +932,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
                 isc_throw(DhcpConfigError, "invalid class name ("
                           << (*cclass)->getPosition() << ")");
             }
-            pool_->deferClientClass((*cclass)->stringValue());
+            pool_->requireClientClass((*cclass)->stringValue());
         }
     }
 
@@ -1111,8 +1111,8 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet6->allowClientClass(client_class);
     }
 
-    // Try setting up on demand client classes.
-    ConstElementPtr class_list = params->get("eval-client-classes");
+    // Try setting up required client classes.
+    ConstElementPtr class_list = params->get("required-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();
@@ -1122,7 +1122,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                 isc_throw(DhcpConfigError, "invalid class name ("
                           << (*cclass)->getPosition() << ")");
             }
-            subnet6->deferClientClass((*cclass)->stringValue());
+            subnet6->requireClientClass((*cclass)->stringValue());
         }
     }
 

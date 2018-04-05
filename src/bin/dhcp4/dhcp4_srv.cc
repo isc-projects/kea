@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2340,8 +2340,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
         // Assign reserved classes.
         ex.setReservedClientClasses();
-        // Late classification
-        lateClassify(ex);
+        // Required classification
+        requiredClassify(ex);
 
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
@@ -2397,8 +2397,8 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
         // Assign reserved classes.
         ex.setReservedClientClasses();
-        // Late classification
-        lateClassify(ex);
+        // Required classification
+        requiredClassify(ex);
 
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
@@ -2683,7 +2683,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     Pkt4Ptr ack = ex.getResponse();
 
     ex.setReservedClientClasses();
-    lateClassify(ex);
+    requiredClassify(ex);
 
     buildCfgOptionList(ex);
     appendRequestedOptions(ex);
@@ -2986,8 +2986,8 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         if (!expr_ptr) {
             continue;
         }
-        // Not the right time if on demand
-        if ((*it)->getOnDemand()) {
+        // Not the right time if only when required
+        if ((*it)->getRequired()) {
             continue;
         }
         // Evaluate the expression which can return false (no match),
@@ -3017,8 +3017,8 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     }
 }
 
-void Dhcpv4Srv::lateClassify(Dhcpv4Exchange& ex) {
-    // First collect on-demand classes
+void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
+    // First collect required classes
     Pkt4Ptr query = ex.getQuery();
     ClientClasses classes = query->getClasses(true);
     Subnet4Ptr subnet = ex.getContext()->subnet_;
@@ -3028,7 +3028,7 @@ void Dhcpv4Srv::lateClassify(Dhcpv4Exchange& ex) {
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
         if (network) {
-            const ClientClasses& to_add = network->getOnDemandClasses();
+            const ClientClasses& to_add = network->getRequiredClasses();
             for (ClientClasses::const_iterator cclass = to_add.cbegin();
                  cclass != to_add.cend(); ++cclass) {
                 classes.insert(*cclass);
@@ -3036,7 +3036,7 @@ void Dhcpv4Srv::lateClassify(Dhcpv4Exchange& ex) {
         }
 
         // Followed by the subnet
-        const ClientClasses& to_add = subnet->getOnDemandClasses();
+        const ClientClasses& to_add = subnet->getRequiredClasses();
         for(ClientClasses::const_iterator cclass = to_add.cbegin();
             cclass != to_add.cend(); ++cclass) {
             classes.insert(*cclass);
@@ -3051,7 +3051,7 @@ void Dhcpv4Srv::lateClassify(Dhcpv4Exchange& ex) {
         if (!addr.isV4Zero()) {
             PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
             if (pool) {
-                const ClientClasses& to_add = pool->getOnDemandClasses();
+                const ClientClasses& to_add = pool->getRequiredClasses();
                 for (ClientClasses::const_iterator cclass = to_add.cbegin();
                      cclass != to_add.cend(); ++cclass) {
                     classes.insert(*cclass);
@@ -3070,7 +3070,7 @@ void Dhcpv4Srv::lateClassify(Dhcpv4Exchange& ex) {
          cclass != classes.cend(); ++cclass) {
         const ClientClassDefPtr class_def = dict->findClass(*cclass);
         if (!class_def) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNKNOWN)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNDEFINED)
                 .arg(*cclass);
             continue;
         }

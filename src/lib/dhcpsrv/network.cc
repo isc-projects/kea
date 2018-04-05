@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,15 +37,15 @@ Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
 }
 
 void
-Network::deferClientClass(const isc::dhcp::ClientClass& class_name) {
-    if (!on_demand_classes_.contains(class_name)) {
-        on_demand_classes_.insert(class_name);
+Network::requireClientClass(const isc::dhcp::ClientClass& class_name) {
+    if (!required_classes_.contains(class_name)) {
+        required_classes_.insert(class_name);
     }
 }
 
 const ClientClasses&
-Network::getOnDemandClasses() const {
-    return (on_demand_classes_);
+Network::getRequiredClasses() const {
+    return (required_classes_);
 }
 
 ElementPtr
@@ -70,15 +70,15 @@ Network::toElement() const {
         map->set("client-class", Element::create(cclass));
     }
 
-    // Set eval-client-classes
-    const ClientClasses& classes = getOnDemandClasses();
+    // Set required-client-classes
+    const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();
         for (ClientClasses::const_iterator it = classes.cbegin();
              it != classes.cend(); ++it) {
             class_list->add(Element::create(*it));
         }
-        map->set("eval-client-classes", class_list);
+        map->set("required-client-classes", class_list);
     }
 
     // Set renew-timer

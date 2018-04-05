@@ -739,8 +739,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setIface("lo");
     subnet2->setRelayInfo(IOAddress("10.0.0.1"));
     subnet3->setIface("eth1");
-    subnet3->deferClientClass("foo");
-    subnet3->deferClientClass("bar");
+    subnet3->requireClientClass("foo");
+    subnet3->requireClientClass("bar");
 
     cfg.add(subnet1);
     cfg.add(subnet2);
@@ -802,7 +802,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
-        "    \"eval-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"required-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
@@ -816,7 +816,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.10")));
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.64"), 26));
     pool2->allowClientClass("bar");
-    pool2->deferClientClass("foo");
+    pool2->requireClientClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -848,7 +848,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\",\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"eval-client-classes\": [ \"foo\" ]\n"
+        "            \"required-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

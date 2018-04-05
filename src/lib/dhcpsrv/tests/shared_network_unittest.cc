@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -195,7 +195,7 @@ TEST(SharedNetwork4Test, unparse) {
     network->setValid(200);
     network->setMatchClientId(false);
 
-    network->deferClientClass("foo");
+    network->requireClientClass("foo");
 
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
@@ -258,7 +258,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"valid-lifetime\": 30\n"
         "      }\n"
         "    ],\n"
-        "    \"eval-client-classes\": [ \"foo\" ],\n"
+        "    \"required-client-classes\": [ \"foo\" ],\n"
         "    \"valid-lifetime\": 200\n"
         "}\n";
 
@@ -482,7 +482,7 @@ TEST(SharedNetwork6Test, unparse) {
     network->setPreferred(200);
     network->setValid(300);
     network->setRapidCommit(true);
-    network->deferClientClass("foo");
+    network->requireClientClass("foo");
 
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
@@ -538,7 +538,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"valid-lifetime\": 40\n"
         "      }\n"
         "    ],\n"
-        "    \"eval-client-classes\": [ \"foo\" ],\n"
+        "    \"required-client-classes\": [ \"foo\" ],\n"
         "    \"valid-lifetime\": 300\n"
         "}\n";
 

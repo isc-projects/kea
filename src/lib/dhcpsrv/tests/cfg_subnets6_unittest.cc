@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -438,8 +438,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setIface("lo");
     subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
-    subnet3->deferClientClass("foo");
-    subnet3->deferClientClass("bar");
+    subnet3->requireClientClass("foo");
+    subnet3->requireClientClass("bar");
 
     cfg.add(subnet1);
     cfg.add(subnet2);
@@ -490,7 +490,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
-        "    \"eval-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"required-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
 }
@@ -507,7 +507,7 @@ TEST(CfgSubnets6Test, unparsePool) {
                              IOAddress("2001:db8:1::199")));
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
     pool2->allowClientClass("bar");
-    pool2->deferClientClass("foo");
+    pool2->requireClientClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -533,7 +533,7 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
         "            \"option-data\": [ ],\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"eval-client-classes\": [ \"foo\" ]\n"
+        "            \"required-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -554,7 +554,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
                                IOAddress("2001:db8:2::"), 48, 64));
     Pool6Ptr pdpool2(new Pool6(IOAddress("2001:db8:3::"), 48, 56,
                                IOAddress("2001:db8:3::"), 64));
-    pdpool1->deferClientClass("bar");
+    pdpool1->requireClientClass("bar");
     pdpool2->allowClientClass("bar");
 
     subnet->addPool(pdpool1);
@@ -580,7 +580,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
         "            \"option-data\": [ ],\n"
-        "            \"eval-client-classes\": [ \"bar\" ]\n"
+        "            \"required-client-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"

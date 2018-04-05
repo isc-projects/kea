@@ -230,33 +230,33 @@ TEST(Pool4Test, clientClass) {
     EXPECT_TRUE(pool->clientSupported(three_classes));
 }
 
-// This test checks that handling for eval-client-classes is valid.
-TEST(Pool4Test, onDemandClasses) {
+// This test checks that handling for required-client-classes is valid.
+TEST(Pool4Test, requiredClasses) {
     // Create a pool.
     Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
                             IOAddress("192.0.2.255")));
 
-    // This client starts with no deferred classes.
-    EXPECT_TRUE(pool->getOnDemandClasses().empty());
+    // This client starts with no required classes.
+    EXPECT_TRUE(pool->getRequiredClasses().empty());
 
     // Add the first class
-    pool->deferClientClass("router");
-    EXPECT_EQ(1, pool->getOnDemandClasses().size());
+    pool->requireClientClass("router");
+    EXPECT_EQ(1, pool->getRequiredClasses().size());
 
     // Add a second class
-    pool->deferClientClass("modem");
-    EXPECT_EQ(2, pool->getOnDemandClasses().size());
-    EXPECT_TRUE(pool->getOnDemandClasses().contains("router"));
-    EXPECT_TRUE(pool->getOnDemandClasses().contains("modem"));
-    EXPECT_FALSE(pool->getOnDemandClasses().contains("foo"));
+    pool->requireClientClass("modem");
+    EXPECT_EQ(2, pool->getRequiredClasses().size());
+    EXPECT_TRUE(pool->getRequiredClasses().contains("router"));
+    EXPECT_TRUE(pool->getRequiredClasses().contains("modem"));
+    EXPECT_FALSE(pool->getRequiredClasses().contains("foo"));
 
     // Check that it's ok to add the same class repeatedly
-    EXPECT_NO_THROW(pool->deferClientClass("foo"));
-    EXPECT_NO_THROW(pool->deferClientClass("foo"));
-    EXPECT_NO_THROW(pool->deferClientClass("foo"));
+    EXPECT_NO_THROW(pool->requireClientClass("foo"));
+    EXPECT_NO_THROW(pool->requireClientClass("foo"));
+    EXPECT_NO_THROW(pool->requireClientClass("foo"));
 
-    // Check that 'foo' is marked for late evaluation
-    EXPECT_TRUE(pool->getOnDemandClasses().contains("foo"));
+    // Check that 'foo' is marked for required evaluation
+    EXPECT_TRUE(pool->getRequiredClasses().contains("foo"));
 }
 
 // This test checks that handling for last allocated address/prefix is valid.
@@ -625,33 +625,33 @@ TEST(Pool6Test, clientClass) {
     EXPECT_TRUE(pool.clientSupported(three_classes));
 }
 
-// This test checks that handling for eval-client-classes is valid.
-TEST(Pool6Test, onDemandClasses) {
+// This test checks that handling for required-client-classes is valid.
+TEST(Pool6Test, requiredClasses) {
     // Create a pool.
     Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                IOAddress("2001:db8::2"));
 
-    // This client starts with no deferred classes.
-    EXPECT_TRUE(pool.getOnDemandClasses().empty());
+    // This client starts with no required classes.
+    EXPECT_TRUE(pool.getRequiredClasses().empty());
 
     // Add the first class
-    pool.deferClientClass("router");
-    EXPECT_EQ(1, pool.getOnDemandClasses().size());
+    pool.requireClientClass("router");
+    EXPECT_EQ(1, pool.getRequiredClasses().size());
 
     // Add a second class
-    pool.deferClientClass("modem");
-    EXPECT_EQ(2, pool.getOnDemandClasses().size());
-    EXPECT_TRUE(pool.getOnDemandClasses().contains("router"));
-    EXPECT_TRUE(pool.getOnDemandClasses().contains("modem"));
-    EXPECT_FALSE(pool.getOnDemandClasses().contains("foo"));
+    pool.requireClientClass("modem");
+    EXPECT_EQ(2, pool.getRequiredClasses().size());
+    EXPECT_TRUE(pool.getRequiredClasses().contains("router"));
+    EXPECT_TRUE(pool.getRequiredClasses().contains("modem"));
+    EXPECT_FALSE(pool.getRequiredClasses().contains("foo"));
 
     // Check that it's ok to add the same class repeatedly
-    EXPECT_NO_THROW(pool.deferClientClass("foo"));
-    EXPECT_NO_THROW(pool.deferClientClass("foo"));
-    EXPECT_NO_THROW(pool.deferClientClass("foo"));
+    EXPECT_NO_THROW(pool.requireClientClass("foo"));
+    EXPECT_NO_THROW(pool.requireClientClass("foo"));
+    EXPECT_NO_THROW(pool.requireClientClass("foo"));
 
-    // Check that 'foo' is marked for late evaluation
-    EXPECT_TRUE(pool.getOnDemandClasses().contains("foo"));
+    // Check that 'foo' is marked for required evaluation
+    EXPECT_TRUE(pool.getRequiredClasses().contains("foo"));
 }
 
 // This test checks that handling for last allocated address/prefix is valid.

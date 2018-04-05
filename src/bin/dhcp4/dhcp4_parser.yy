@@ -123,9 +123,9 @@ using namespace std;
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
   CLIENT_CLASSES "client-classes"
-  EVAL_CLIENT_CLASSES "eval-client-classes"
+  REQUIRED_CLIENT_CLASSES "required-client-classes"
   TEST "test"
-  EVAL_ON_DEMAND "eval-on-demand"
+  ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
 
   RESERVATIONS "reservations"
@@ -911,7 +911,7 @@ subnet4_param: valid_lifetime
              | id
              | rapid_commit
              | client_class
-             | eval_client_classes
+             | required_client_classes
              | reservations
              | reservation_mode
              | relay
@@ -982,9 +982,9 @@ client_class: CLIENT_CLASS {
     ctx.leave();
 };
 
-eval_client_classes: EVAL_CLIENT_CLASSES {
+required_client_classes: REQUIRED_CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("eval-client-classes", c);
+    ctx.stack_.back()->set("required-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list_strings {
@@ -1061,7 +1061,7 @@ shared_network_param: name
                     | relay
                     | reservation_mode
                     | client_class
-                    | eval_client_classes
+                    | required_client_classes
                     | valid_lifetime
                     | unknown_map_entry
                     ;
@@ -1344,7 +1344,7 @@ pool_params: pool_param
 pool_param: pool_entry
           | option_data_list
           | client_class
-          | eval_client_classes
+          | required_client_classes
           | user_context
           | unknown_map_entry
           ;
@@ -1575,7 +1575,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
-                  | eval_on_demand
+                  | only_if_required
                   | option_def_list
                   | option_data_list
                   | next_server
@@ -1594,9 +1594,9 @@ client_class_test: TEST {
     ctx.leave();
 };
 
-eval_on_demand: EVAL_ON_DEMAND COLON BOOLEAN {
+only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("eval-on-demand", b);
+    ctx.stack_.back()->set("only-if-required", b);
 };
 
 // --- end of client classes ---------------------------------

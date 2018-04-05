@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -132,10 +132,10 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         opts_parser.parse(options, option_data);
     }
 
-    // Let's try to parse the eval-on-demand flag
-    bool on_demand = false;
-    if (class_def_cfg->contains("eval-on-demand")) {
-        on_demand = getBoolean(class_def_cfg, "eval-on-demand");
+    // Let's try to parse the only-if-required flag
+    bool required = false;
+    if (class_def_cfg->contains("only-if-required")) {
+        required = getBoolean(class_def_cfg, "only-if-required");
     }
 
     // Let's try to parse the next-server field
@@ -193,7 +193,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Add the client class definition
     try {
-        class_dictionary->addClass(name, match_expr, test, on_demand, options,
+        class_dictionary->addClass(name, match_expr, test, required, options,
                                    defs, next_server, sname, filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()

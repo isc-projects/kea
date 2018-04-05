@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ namespace {
 ///     or member(<last two>), set boot-file-name to pxelinux.0
 ///
 /// - Configuration 3:
-///   - Used for late/on-demand classification
+///   - Used for required classification
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - the following classes defined:
@@ -185,19 +185,19 @@ const char* CONFIGS[] = {
         "{"
         "   \"name\": \"pxe1\","
         "   \"test\": \"option[93].hex == 0x0009\","
-        "   \"eval-on-demand\": true,"
+        "   \"only-if-required\": true,"
         "   \"next-server\": \"1.2.3.4\""
         "},"
         "{"
         "   \"name\": \"pxe2\","
         "   \"test\": \"option[93].hex == 0x0007\","
-        "   \"eval-on-demand\": true,"
+        "   \"only-if-required\": true,"
         "   \"server-hostname\": \"deneb\""
         "},"
         "{"
         "   \"name\": \"pxe3\","
         "   \"test\": \"option[93].hex == 0x0006\","
-        "   \"eval-on-demand\": false,"
+        "   \"only-if-required\": false,"
         "   \"boot-file-name\": \"pxelinux.0\""
         "},"
         "{"
@@ -209,7 +209,7 @@ const char* CONFIGS[] = {
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
-        "    \"eval-client-classes\": [ \"pxe2\" ]"
+        "    \"required-client-classes\": [ \"pxe2\" ]"
         " } ]"
     "}"
 
@@ -566,7 +566,7 @@ TEST_F(ClassifyTest, fixedFieldsInformNoClasses3) {
     testFixedFields(CONFIGS[3], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
 }
 
-// Class 'pxe1' is on-demand and not subject to late evaluation
+// Class 'pxe1' is only-if-required and not subject to required evaluation
 TEST_F(ClassifyTest, fixedFieldsDiscoverNextServer3) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
 
@@ -584,7 +584,7 @@ TEST_F(ClassifyTest, fixedFieldsInformNextServer3) {
 }
 
 
-// Class pxe2 is on-demand but the subnet requests its late evaluation
+// Class pxe2 is only-if-required but the subnet requires its evaluation
 TEST_F(ClassifyTest, fixedFieldsDiscoverHostname3) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
 
@@ -633,7 +633,7 @@ TEST_F(ClassifyTest, fixedFieldsInformFile32) {
     testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedenceNone) {
     std::string config =
@@ -650,7 +650,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -659,7 +659,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -668,7 +668,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -705,7 +705,7 @@ TEST_F(ClassifyTest, precedenceNone) {
     EXPECT_FALSE(opt);
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedencePool) {
     std::string config =
@@ -722,7 +722,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -731,7 +731,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -740,7 +740,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -754,7 +754,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "        \"id\": 1,"
         "        \"pools\": [ { "
         "            \"pool\": \"10.0.0.10-10.0.0.100\","
-        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "            \"required-client-classes\": [ \"for-pool\" ]"
         "         } ]"
         "    } ]"
         "} ]"
@@ -784,7 +784,7 @@ TEST_F(ClassifyTest, precedencePool) {
     EXPECT_EQ("10.0.0.1", addrs[0].toText());
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedenceSubnet) {
     std::string config =
@@ -801,7 +801,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -810,7 +810,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -819,7 +819,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -831,10 +831,10 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    \"subnet4\": [ { "
         "        \"subnet\": \"10.0.0.0/24\","
         "        \"id\": 1,"
-        "        \"eval-client-classes\": [ \"for-subnet\" ],"
+        "        \"required-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"10.0.0.10-10.0.0.100\","
-        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "            \"required-client-classes\": [ \"for-pool\" ]"
         "         } ]"
         "    } ]"
         "} ]"
@@ -864,7 +864,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
     EXPECT_EQ("10.0.0.2", addrs[0].toText());
 }
 
-// This test checks the precedence order in requested late evaluation.
+// This test checks the precedence order in required evaluation.
 // This order is: shared-network > subnet > pools
 TEST_F(ClassifyTest, precedenceNetwork) {
     std::string config =
@@ -881,7 +881,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -890,7 +890,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -899,7 +899,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('all')\","
-        "       \"eval-on-demand\": true,"
+        "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -908,14 +908,14 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "],"
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
-        "    \"eval-client-classes\": [ \"for-network\" ],"
+        "    \"required-client-classes\": [ \"for-network\" ],"
         "    \"subnet4\": [ { "
         "        \"subnet\": \"10.0.0.0/24\","
         "        \"id\": 1,"
-        "        \"eval-client-classes\": [ \"for-subnet\" ],"
+        "        \"required-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"10.0.0.10-10.0.0.100\","
-        "            \"eval-client-classes\": [ \"for-pool\" ]"
+        "            \"required-client-classes\": [ \"for-pool\" ]"
         "         } ]"
         "    } ]"
         "} ]"
