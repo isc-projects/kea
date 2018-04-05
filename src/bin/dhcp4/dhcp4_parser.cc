@@ -1863,7 +1863,7 @@ namespace isc { namespace dhcp {
 #line 985 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("eval-client-classes", c);
+    ctx.stack_.back()->set("required-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
@@ -2688,7 +2688,7 @@ namespace isc { namespace dhcp {
 #line 1597 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("eval-on-demand", b);
+    ctx.stack_.back()->set("only-if-required", b);
 }
 #line 2694 "dhcp4_parser.cc" // lalr1.cc:859
     break;
@@ -4213,37 +4213,38 @@ namespace isc { namespace dhcp {
   "\"subnet\"", "\"interface\"", "\"interface-id\"", "\"id\"",
   "\"rapid-commit\"", "\"reservation-mode\"", "\"disabled\"",
   "\"out-of-pool\"", "\"all\"", "\"host-reservation-identifiers\"",
-  "\"client-classes\"", "\"eval-client-classes\"", "\"test\"",
-  "\"eval-on-demand\"", "\"client-class\"", "\"reservations\"", "\"duid\"",
-  "\"hw-address\"", "\"circuit-id\"", "\"client-id\"", "\"hostname\"",
-  "\"flex-id\"", "\"relay\"", "\"ip-address\"", "\"hooks-libraries\"",
-  "\"library\"", "\"parameters\"", "\"expired-leases-processing\"",
-  "\"reclaim-timer-wait-time\"", "\"flush-reclaimed-timer-wait-time\"",
-  "\"hold-reclaimed-time\"", "\"max-reclaim-leases\"",
-  "\"max-reclaim-time\"", "\"unwarned-reclaim-cycles\"",
-  "\"dhcp4o6-port\"", "\"control-socket\"", "\"socket-type\"",
-  "\"socket-name\"", "\"dhcp-ddns\"", "\"enable-updates\"",
-  "\"qualifying-suffix\"", "\"server-ip\"", "\"server-port\"",
-  "\"sender-ip\"", "\"sender-port\"", "\"max-queue-size\"",
-  "\"ncr-protocol\"", "\"ncr-format\"", "\"always-include-fqdn\"",
-  "\"override-no-update\"", "\"override-client-update\"",
-  "\"replace-client-name\"", "\"generated-prefix\"", "\"tcp\"", "\"JSON\"",
-  "\"when-present\"", "\"never\"", "\"always\"", "\"when-not-present\"",
-  "\"Logging\"", "\"loggers\"", "\"output_options\"", "\"output\"",
-  "\"debuglevel\"", "\"severity\"", "\"flush\"", "\"maxsize\"",
-  "\"maxver\"", "\"Dhcp6\"", "\"DhcpDdns\"", "\"Control-agent\"",
-  "TOPLEVEL_JSON", "TOPLEVEL_DHCP4", "SUB_DHCP4", "SUB_INTERFACES4",
-  "SUB_SUBNET4", "SUB_POOL4", "SUB_RESERVATION", "SUB_OPTION_DEFS",
-  "SUB_OPTION_DEF", "SUB_OPTION_DATA", "SUB_HOOKS_LIBRARY",
-  "SUB_DHCP_DDNS", "\"constant string\"", "\"integer\"",
-  "\"floating point\"", "\"boolean\"", "$accept", "start", "$@1", "$@2",
-  "$@3", "$@4", "$@5", "$@6", "$@7", "$@8", "$@9", "$@10", "$@11", "$@12",
-  "value", "sub_json", "map2", "$@13", "map_value", "map_content",
-  "not_empty_map", "list_generic", "$@14", "list_content",
-  "not_empty_list", "list_strings", "$@15", "list_strings_content",
-  "not_empty_list_strings", "unknown_map_entry", "syntax_map", "$@16",
-  "global_objects", "global_object", "dhcp4_object", "$@17", "sub_dhcp4",
-  "$@18", "global_params", "global_param", "valid_lifetime", "renew_timer",
+  "\"client-classes\"", "\"required-client-classes\"", "\"test\"",
+  "\"only-if-required\"", "\"client-class\"", "\"reservations\"",
+  "\"duid\"", "\"hw-address\"", "\"circuit-id\"", "\"client-id\"",
+  "\"hostname\"", "\"flex-id\"", "\"relay\"", "\"ip-address\"",
+  "\"hooks-libraries\"", "\"library\"", "\"parameters\"",
+  "\"expired-leases-processing\"", "\"reclaim-timer-wait-time\"",
+  "\"flush-reclaimed-timer-wait-time\"", "\"hold-reclaimed-time\"",
+  "\"max-reclaim-leases\"", "\"max-reclaim-time\"",
+  "\"unwarned-reclaim-cycles\"", "\"dhcp4o6-port\"", "\"control-socket\"",
+  "\"socket-type\"", "\"socket-name\"", "\"dhcp-ddns\"",
+  "\"enable-updates\"", "\"qualifying-suffix\"", "\"server-ip\"",
+  "\"server-port\"", "\"sender-ip\"", "\"sender-port\"",
+  "\"max-queue-size\"", "\"ncr-protocol\"", "\"ncr-format\"",
+  "\"always-include-fqdn\"", "\"override-no-update\"",
+  "\"override-client-update\"", "\"replace-client-name\"",
+  "\"generated-prefix\"", "\"tcp\"", "\"JSON\"", "\"when-present\"",
+  "\"never\"", "\"always\"", "\"when-not-present\"", "\"Logging\"",
+  "\"loggers\"", "\"output_options\"", "\"output\"", "\"debuglevel\"",
+  "\"severity\"", "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"Dhcp6\"",
+  "\"DhcpDdns\"", "\"Control-agent\"", "TOPLEVEL_JSON", "TOPLEVEL_DHCP4",
+  "SUB_DHCP4", "SUB_INTERFACES4", "SUB_SUBNET4", "SUB_POOL4",
+  "SUB_RESERVATION", "SUB_OPTION_DEFS", "SUB_OPTION_DEF",
+  "SUB_OPTION_DATA", "SUB_HOOKS_LIBRARY", "SUB_DHCP_DDNS",
+  "\"constant string\"", "\"integer\"", "\"floating point\"",
+  "\"boolean\"", "$accept", "start", "$@1", "$@2", "$@3", "$@4", "$@5",
+  "$@6", "$@7", "$@8", "$@9", "$@10", "$@11", "$@12", "value", "sub_json",
+  "map2", "$@13", "map_value", "map_content", "not_empty_map",
+  "list_generic", "$@14", "list_content", "not_empty_list", "list_strings",
+  "$@15", "list_strings_content", "not_empty_list_strings",
+  "unknown_map_entry", "syntax_map", "$@16", "global_objects",
+  "global_object", "dhcp4_object", "$@17", "sub_dhcp4", "$@18",
+  "global_params", "global_param", "valid_lifetime", "renew_timer",
   "rebind_timer", "decline_probation_period", "echo_client_id",
   "match_client_id", "interfaces_config", "$@19",
   "interfaces_config_params", "interfaces_config_param", "sub_interfaces4",
@@ -4269,7 +4270,7 @@ namespace isc { namespace dhcp {
   "sub_subnet4", "$@42", "subnet4_params", "subnet4_param", "subnet",
   "$@43", "subnet_4o6_interface", "$@44", "subnet_4o6_interface_id",
   "$@45", "subnet_4o6_subnet", "$@46", "interface", "$@47", "interface_id",
-  "$@48", "client_class", "$@49", "eval_client_classes", "$@50",
+  "$@48", "client_class", "$@49", "required_client_classes", "$@50",
   "reservation_mode", "$@51", "hr_mode", "id", "rapid_commit",
   "shared_networks", "$@52", "shared_networks_content",
   "shared_networks_list", "shared_network", "$@53",
@@ -4300,7 +4301,7 @@ namespace isc { namespace dhcp {
   "$@86", "client_classes", "$@87", "client_classes_list",
   "client_class_entry", "$@88", "client_class_params",
   "not_empty_client_class_params", "client_class_param",
-  "client_class_name", "client_class_test", "$@89", "eval_on_demand",
+  "client_class_name", "client_class_test", "$@89", "only_if_required",
   "dhcp4o6_port", "control_socket", "$@90", "control_socket_params",
   "control_socket_param", "control_socket_type", "$@91",
   "control_socket_name", "$@92", "dhcp_ddns", "$@93", "sub_dhcp_ddns",
@@ -4415,7 +4416,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp4_parser.yy" // lalr1.cc:1167
 } } // isc::dhcp
-#line 4419 "dhcp4_parser.cc" // lalr1.cc:1167
+#line 4420 "dhcp4_parser.cc" // lalr1.cc:1167
 #line 1959 "dhcp4_parser.yy" // lalr1.cc:1168
 
 

@@ -1765,7 +1765,7 @@ namespace isc { namespace dhcp {
 #line 949 "dhcp6_parser.yy" // lalr1.cc:859
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("eval-client-classes", c);
+    ctx.stack_.back()->set("required-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
@@ -2648,7 +2648,7 @@ namespace isc { namespace dhcp {
 #line 1618 "dhcp6_parser.yy" // lalr1.cc:859
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("eval-on-demand", b);
+    ctx.stack_.back()->set("only-if-required", b);
 }
 #line 2654 "dhcp6_parser.cc" // lalr1.cc:859
     break;
@@ -4299,8 +4299,8 @@ namespace isc { namespace dhcp {
   "\"id\"", "\"rapid-commit\"", "\"reservation-mode\"", "\"disabled\"",
   "\"out-of-pool\"", "\"all\"", "\"shared-networks\"", "\"mac-sources\"",
   "\"relay-supplied-options\"", "\"host-reservation-identifiers\"",
-  "\"client-classes\"", "\"eval-client-classes\"", "\"test\"",
-  "\"eval-on-demand\"", "\"client-class\"", "\"reservations\"",
+  "\"client-classes\"", "\"required-client-classes\"", "\"test\"",
+  "\"only-if-required\"", "\"client-class\"", "\"reservations\"",
   "\"ip-addresses\"", "\"prefixes\"", "\"duid\"", "\"hw-address\"",
   "\"hostname\"", "\"flex-id\"", "\"relay\"", "\"ip-address\"",
   "\"hooks-libraries\"", "\"library\"", "\"parameters\"",
@@ -4356,7 +4356,7 @@ namespace isc { namespace dhcp {
   "subnet6_list_content", "not_empty_subnet6_list", "subnet6", "$@42",
   "sub_subnet6", "$@43", "subnet6_params", "subnet6_param", "subnet",
   "$@44", "interface", "$@45", "interface_id", "$@46", "client_class",
-  "$@47", "eval_client_classes", "$@48", "reservation_mode", "$@49",
+  "$@47", "required_client_classes", "$@48", "reservation_mode", "$@49",
   "hr_mode", "id", "rapid_commit", "shared_networks", "$@50",
   "shared_networks_content", "shared_networks_list", "shared_network",
   "$@51", "shared_network_params", "shared_network_param",
@@ -4388,7 +4388,7 @@ namespace isc { namespace dhcp {
   "relay_map", "$@85", "client_classes", "$@86", "client_classes_list",
   "client_class_entry", "$@87", "client_class_params",
   "not_empty_client_class_params", "client_class_param",
-  "client_class_name", "client_class_test", "$@88", "eval_on_demand",
+  "client_class_name", "client_class_test", "$@88", "only_if_required",
   "server_id", "$@89", "server_id_params", "server_id_param",
   "server_id_type", "$@90", "duid_type", "htype", "identifier", "$@91",
   "time", "enterprise_id", "dhcp4o6_port", "control_socket", "$@92",
