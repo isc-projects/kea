@@ -2826,12 +2826,93 @@ both the command and the response.
 
     </section> <!-- end of subnet commands -->
 
-    <section id="high-availability-library">
+    <section xml:id="high-availability-library">
       <title>libdhcp_ha: High Availability</title>
       <para>
-        This section will describe the <command>libdhcp_ha</command> hook library
-        being developed for the Kea 1.4.0 release.
+        High Availability (HA) of the DHCP service is provided by running multiple
+        cooperating server instances. If any of these instances crashes, a surviving
+        server instance can continue providing the reliable service to the clients. Many
+        DHCP servers implementations include "DHCP Failover" protocol, which most
+        significant features are: communication between the servers, partner
+        failure detection and leases synchronization between the servers.
+        Although it may be useful for some users to use a "standard" failover
+        protocol, it seems that most of the Kea users are simply interested in
+        "some working solution" which guarantees high availability of the DHCP
+        service. Therefore, Kea HA hook library derives major concepts from the
+        DHCP Failover protocol but uses its own solutions for communication,
+        configuration and its own state machine, which greatly simplifies its
+        implementation and generally better fits into Kea. This document purposely
+        uses the term "High Availability" rather than "Failover" to emphasize that
+        it is not the Failover protocol implementation.
       </para>
+      <para>
+        The following sections describe the configuration and operation of the Kea
+        HA hook library.
+      </para>
+
+      <section>
+        <title>Supported Configurations</title>
+        <para>The Kea HA hook library supports two configurations also known as HA
+        modes: load balancing and hot standby. In the load balancing mode, there
+        are two servers responding to the DHCP requests. The load balancing function
+        is implemented as described in RFC3074, with each server responding to
+        1/2 of received DHCP queries. When one of the servers allocates a lease
+        for a client, it notifies the partner server over the control channel
+        (RESTful API), so as the partner can save the lease information in its
+        own database. If the communication with the partner is unsuccessful,
+        the DHCP query is dropped and the response is not returned to the DHCP
+        client. If the lease update is successful, the response is returned to
+        the DHCP client by the server which has allocated the lease. By
+        exchanging the lease updates, both servers get a copy of all leases
+        allocated by the entire HA setup and any of the servers can be switched
+        to handle the entire DHCP traffic if its partner crashes.</para>
+
+        <para>In the load balancing configuration, one of the servers must be
+        designated as "primary" and the other server is designated as "secondary".
+        Functionally, there is no difference between the two during the normal
+        operation. This distniction is required when the two servers are
+        started at (nearly) the same time and have to synchronize their
+        lease databases. The primary server synchronizes the database first.
+        The secondary server waits for the primary server to complete the
+        lease database synchronization before it starts the synchronization.
+        </para>
+
+        <para>In the hot standby configuration one of the servers is designated as
+        "primary" and the second server is designated as "secondary". During the
+        normal operation, the primary server is the only one that responds to
+        the DHCP requests. The secodary server receives lease updates from the
+        primary over the control channel. However, it does not respond to any
+        DHCP queries as long as the primary is running or, more accurately,
+        until the secondary considers the primary to be offline. When the
+        secondary server detects the failure of the primary, it starts
+        responding to all DHCP queries.
+        </para>
+
+        <para>In the configurations described above, the primary, secondary and
+        standby are referred to as "active" servers, because they receive
+        lease updates and can automatically react to the partner's failures by
+        responding to the DHCP queries which would normally be handled by the
+        partner. The HA hook library supports another server type (role) -
+        backup server. The use of the backup servers is optional. They can be used
+        in both load balancing and hot standby setup, in addition to the active
+        servers. There is no limit on the number of backup servers in the HA
+        setup. However, the presence of the backup servers increases latency
+        of the DHCP responses, because not only do active servers send lease
+        updates to each other, but also to the backup servers.
+        </para>
+      </section>
+
+      <section>
+        <title>Server States</title>
+        <para>The DHCP server operating within an HA setup runs a state machine
+        and the state of the server can be retrieved by its peers using the
+        'ha-heartbeat' command sent over the RESTful API. If the partner server
+        doesn't respond to the 'ha-heartbeat' command longer than configured
+        amount of time, the communication is considered interrupted and the
+        server may (depending on the configuration) use additional measures to
+        verify if the partner is still operating.</para>
+      </section>
+
     </section> <!-- end of high-availability-library -->
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
@@ -2839,8 +2920,6 @@ both the command and the response.
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-host-cache.xml"/>
 
   </section>
-
-
 
     <section xml:id="user-context">
       <title>User contexts</title>
