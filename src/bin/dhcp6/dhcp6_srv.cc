@@ -3173,7 +3173,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
 
         // Followed by the subnet
         const ClientClasses& to_add = subnet->getRequiredClasses();
-        for(ClientClasses::const_iterator cclass = to_add.cbegin();
+        for (ClientClasses::const_iterator cclass = to_add.cbegin();
             cclass != to_add.cend(); ++cclass) {
             classes.insert(*cclass);
         }
