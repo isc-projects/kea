@@ -70,9 +70,9 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
-        if (shared_network_data->contains("required-client-classes")) {
+        if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("required-client-classes")->listValue();
+                shared_network_data->get("require-client-classes")->listValue();
             for (auto cclass = class_list.cbegin();
                  cclass != class_list.cend(); ++cclass) {
                 if (((*cclass)->getType() != Element::string) ||
@@ -125,9 +125,9 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
-        if (shared_network_data->contains("required-client-classes")) {
+        if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("required-client-classes")->listValue();
+                shared_network_data->get("require-client-classes")->listValue();
             for (auto cclass = class_list.cbegin();
                  cclass != class_list.cend(); ++cclass) {
                 if (((*cclass)->getType() != Element::string) ||

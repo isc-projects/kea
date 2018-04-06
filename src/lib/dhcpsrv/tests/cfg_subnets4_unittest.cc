@@ -802,7 +802,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
-        "    \"required-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
@@ -848,7 +848,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\",\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"required-client-classes\": [ \"foo\" ]\n"
+        "            \"require-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

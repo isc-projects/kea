@@ -116,7 +116,7 @@ using namespace std;
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
   CLIENT_CLASSES "client-classes"
-  REQUIRED_CLIENT_CLASSES "required-client-classes"
+  REQUIRE_CLIENT_CLASSES "require-client-classes"
   TEST "test"
   ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
@@ -906,7 +906,7 @@ subnet6_param: preferred_lifetime
              | id
              | rapid_commit
              | client_class
-             | required_client_classes
+             | require_client_classes
              | reservations
              | reservation_mode
              | relay
@@ -946,9 +946,9 @@ client_class: CLIENT_CLASS {
     ctx.leave();
 };
 
-required_client_classes: REQUIRED_CLIENT_CLASSES {
+require_client_classes: REQUIRE_CLIENT_CLASSES {
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("required-client-classes", c);
+    ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list_strings {
@@ -1023,7 +1023,7 @@ shared_network_param: name
                     | relay
                     | reservation_mode
                     | client_class
-                    | required_client_classes
+                    | require_client_classes
                     | preferred_lifetime
                     | rapid_commit
                     | valid_lifetime
@@ -1307,7 +1307,7 @@ pool_params: pool_param
 pool_param: pool_entry
           | option_data_list
           | client_class
-          | required_client_classes
+          | require_client_classes
           | user_context
           | unknown_map_entry
           ;
@@ -1383,7 +1383,7 @@ pd_pool_param: pd_prefix
              | pd_delegated_len
              | option_data_list
              | client_class
-             | required_client_classes
+             | require_client_classes
              | excluded_prefix
              | excluded_prefix_len
              | user_context

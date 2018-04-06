@@ -70,7 +70,7 @@ Network::toElement() const {
         map->set("client-class", Element::create(cclass));
     }
 
-    // Set required-client-classes
+    // Set require-client-classes
     const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();
@@ -78,7 +78,7 @@ Network::toElement() const {
              it != classes.cend(); ++it) {
             class_list->add(Element::create(*it));
         }
-        map->set("required-client-classes", class_list);
+        map->set("require-client-classes", class_list);
     }
 
     // Set renew-timer

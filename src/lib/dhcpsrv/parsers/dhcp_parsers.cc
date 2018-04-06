@@ -389,7 +389,7 @@ PoolParser::parse(PoolStoragePtr pools,
     }
 
     // Try setting up required client classes.
-    ConstElementPtr class_list = pool_structure->get("required-client-classes");
+    ConstElementPtr class_list = pool_structure->get("require-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();
@@ -712,7 +712,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     // Try setting up required client classes.
-    ConstElementPtr class_list = params->get("required-client-classes");
+    ConstElementPtr class_list = params->get("require-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();
@@ -891,7 +891,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         client_class_ = client_class;
     }
 
-    ConstElementPtr class_list = pd_pool_->get("required-client-classes");
+    ConstElementPtr class_list = pd_pool_->get("require-client-classes");
 
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
@@ -1112,7 +1112,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     }
 
     // Try setting up required client classes.
-    ConstElementPtr class_list = params->get("required-client-classes");
+    ConstElementPtr class_list = params->get("require-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
         for (auto cclass = classes.cbegin();

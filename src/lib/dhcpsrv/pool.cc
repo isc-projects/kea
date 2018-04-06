@@ -27,14 +27,7 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
 }
 
 bool Pool::clientSupported(const ClientClasses& classes) const {
-    if (client_class_.empty()) {
-        // There is no class defined for this pool, so we do
-        // support everyone.
-        return (true);
-    } else if (classes.contains(client_class_)) {
-        return (true);
-    }
-    return (false);
+    return (client_class_.empty() || classes.contains(client_class_));
 }
 
 void Pool::allowClientClass(const ClientClass& class_name) {
@@ -112,7 +105,7 @@ Pool::toElement() const {
         map->set("client-class", Element::create(cclass));
     }
 
-    // Set required-client-classes
+    // Set require-client-classes
     const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
         ElementPtr class_list =Element::createList();
@@ -120,7 +113,7 @@ Pool::toElement() const {
              it != classes.cend(); ++it) {
             class_list->add(Element::create(*it));
         }
-        map->set("required-client-classes", class_list);
+        map->set("require-client-classes", class_list);
     }
 
     return (map);

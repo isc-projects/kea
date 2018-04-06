@@ -52,7 +52,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"required-client-classes\": []\n,"
+                "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
@@ -73,7 +73,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"required-client-classes\": []\n,"
+                "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"4o6-interface\": \"\","
                 "            \"4o6-interface-id\": \"\","
@@ -194,7 +194,7 @@ public:
                 "            \"preferred-lifetime\": 300,"
                 "            \"valid-lifetime\": 400,"
                 "            \"client-class\": \"\","
-                "            \"required-client-classes\": []\n,"
+                "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"decline-probation-period\": 86400,"
                 "            \"dhcp4o6-port\": 0,"
@@ -210,7 +210,7 @@ public:
                 "            \"preferred-lifetime\": 30,"
                 "            \"valid-lifetime\": 40,"
                 "            \"client-class\": \"\","
-                "            \"required-client-classes\": []\n,"
+                "            \"require-client-classes\": []\n,"
                 "            \"reservation-mode\": \"all\","
                 "            \"decline-probation-period\": 86400,"
                 "            \"dhcp4o6-port\": 0,"
@@ -283,7 +283,7 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     EXPECT_EQ("alpha", network->getClientClass());
 }
 
-// This test verifies that it's possible to specify required-client-classes
+// This test verifies that it's possible to specify require-client-classes
 // on shared-network level.
 TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     std::string config = getWorkingConfig();
@@ -292,7 +292,7 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create("beta"));
-    config_element->set("required-client-classes", class_list);
+    config_element->set("require-client-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -305,7 +305,7 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     EXPECT_EQ("alpha, beta", classes.toText());
 }
 
-// This test verifies that bad required-client-classes configs raise
+// This test verifies that bad require-client-classes configs raise
 // expected errors.
 TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     std::string config = getWorkingConfig();
@@ -315,7 +315,7 @@ TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create(1234));
-    config_element->set("required-client-classes", class_list);
+    config_element->set("require-client-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
