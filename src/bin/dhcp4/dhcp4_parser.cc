@@ -1863,7 +1863,7 @@ namespace isc { namespace dhcp {
 #line 985 "dhcp4_parser.yy" // lalr1.cc:859
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("required-client-classes", c);
+    ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
@@ -4213,7 +4213,7 @@ namespace isc { namespace dhcp {
   "\"subnet\"", "\"interface\"", "\"interface-id\"", "\"id\"",
   "\"rapid-commit\"", "\"reservation-mode\"", "\"disabled\"",
   "\"out-of-pool\"", "\"all\"", "\"host-reservation-identifiers\"",
-  "\"client-classes\"", "\"required-client-classes\"", "\"test\"",
+  "\"client-classes\"", "\"require-client-classes\"", "\"test\"",
   "\"only-if-required\"", "\"client-class\"", "\"reservations\"",
   "\"duid\"", "\"hw-address\"", "\"circuit-id\"", "\"client-id\"",
   "\"hostname\"", "\"flex-id\"", "\"relay\"", "\"ip-address\"",
@@ -4270,7 +4270,7 @@ namespace isc { namespace dhcp {
   "sub_subnet4", "$@42", "subnet4_params", "subnet4_param", "subnet",
   "$@43", "subnet_4o6_interface", "$@44", "subnet_4o6_interface_id",
   "$@45", "subnet_4o6_subnet", "$@46", "interface", "$@47", "interface_id",
-  "$@48", "client_class", "$@49", "required_client_classes", "$@50",
+  "$@48", "client_class", "$@49", "require_client_classes", "$@50",
   "reservation_mode", "$@51", "hr_mode", "id", "rapid_commit",
   "shared_networks", "$@52", "shared_networks_content",
   "shared_networks_list", "shared_network", "$@53",
