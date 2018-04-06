@@ -704,10 +704,12 @@ leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
-% DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4). Server exiting now!
+% DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
 An error message indicating that communication with the MySQL database server
-has been lost.  When this occurs the server exits immediately with a non-zero
-exit code.  This is most likely due to a network issue.
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover connectivity.  If not the server wil exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the MySQL server has gone down.
 
 % DHCPSRV_MYSQL_GET4 obtaining all IPv4 leases
 A debug message issued when the server is attempting to obtain all IPv4
@@ -874,10 +876,12 @@ leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
-% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3). Server exiting now!
-An error message indicating that communication with the MySQL database server
-has been lost.  When this occurs the server exits immediately with a non-zero
-exit code.  This is most likely due to a network issue.
+% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
+An error message indicating that communication with the Postgresql database server
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover the connectivity.  If not the server wil exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the Postgresql server has gone down.
 
 % DHCPSRV_PGSQL_GET4 obtaining all IPv4 leases
 A debug message issued when the server is attempting to obtain all IPv4
