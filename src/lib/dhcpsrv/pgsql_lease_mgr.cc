@@ -139,6 +139,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
         "state "
       "FROM lease6"},
 
@@ -182,6 +183,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
         "state "
       "FROM lease6 "
       "WHERE subnet_id = $1"},
