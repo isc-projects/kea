@@ -2240,11 +2240,7 @@ MySqlLeaseMgr::getVersion() const {
 
     // Execute the prepared statement
     int status = mysql_stmt_execute(conn_.statements_[stindex]);
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to execute <"
-                  << conn_.text_statements_[stindex] << "> - reason: " <<
-                  mysql_error(conn_.mysql_));
-    }
+    checkError(status, stindex, "unable to execute statement");
 
     // Bind the output of the statement to the appropriate variables.
     MYSQL_BIND bind[2];
@@ -2261,19 +2257,13 @@ MySqlLeaseMgr::getVersion() const {
     bind[1].buffer_length = sizeof(minor);
 
     status = mysql_stmt_bind_result(conn_.statements_[stindex], bind);
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to bind result set: " <<
-                  mysql_error(conn_.mysql_));
-    }
+    checkError(status, stindex, "unable to bind result set");
 
     // Fetch the data and set up the "release" object to release associated
     // resources when this method exits then retrieve the data.
     MySqlFreeResult fetch_release(conn_.statements_[stindex]);
     status = mysql_stmt_fetch(conn_.statements_[stindex]);
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to obtain result set: " <<
-                  mysql_error(conn_.mysql_));
-    }
+    checkError(status, stindex, "unable to fetch result set");
 
     return (std::make_pair(major, minor));
 }

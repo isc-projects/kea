@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <stats/stats_mgr.h>
@@ -2798,6 +2799,66 @@ GenericLeaseMgrTest::testWipeLeases4() {
     EXPECT_EQ(0, lmptr_->wipeLeases4(1));
     EXPECT_EQ(0, lmptr_->wipeLeases4(22));
     EXPECT_EQ(0, lmptr_->wipeLeases4(333));
+}
+
+void
+LeaseMgrDbLostCallbackTest::SetUp() {
+    destroySchema();
+    createSchema();
+    isc::dhcp::LeaseMgrFactory::destroy();
+}
+
+void
+LeaseMgrDbLostCallbackTest::TearDown() {
+    destroySchema();
+    isc::dhcp::LeaseMgrFactory::destroy();
+}
+
+void
+LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
+    DatabaseConnection::db_lost_callback =
+        boost::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
+
+    callback_called_ = false;
+    ASSERT_THROW(LeaseMgrFactory::create(invalidConnectString()),
+                 DbOpenError);
+
+    EXPECT_FALSE(callback_called_);
+}
+
+void
+LeaseMgrDbLostCallbackTest::testDbLostCallback() {
+    // We should not find a socket open
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_EQ(-1, sql_socket);
+
+    DatabaseConnection::db_lost_callback =
+        boost::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
+
+    ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectString()));
+
+    // We should find a socket open and it should be for MySQL.
+    sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > 0);
+
+    callback_called_ = false;
+
+    // Verify we can execute a query.
+    LeaseMgr& lm = LeaseMgrFactory::instance();
+    pair<uint32_t, uint32_t> version;
+    ASSERT_NO_THROW(version = lm.getVersion());
+
+    // Now close the sql socket out from under backend client
+    errno = 0;
+
+    close(sql_socket);
+    ASSERT_EQ(0, errno) << "failed to close socket";
+
+    // A query should fail with DbOperationError.
+    ASSERT_THROW(version = lm.getVersion(), DbOperationError);
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_TRUE(callback_called_);
 }
 
 }; // namespace test
