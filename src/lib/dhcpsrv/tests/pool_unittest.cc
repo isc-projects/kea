@@ -230,7 +230,7 @@ TEST(Pool4Test, clientClass) {
     EXPECT_TRUE(pool->clientSupported(three_classes));
 }
 
-// This test checks that handling for required-client-classes is valid.
+// This test checks that handling for require-client-classes is valid.
 TEST(Pool4Test, requiredClasses) {
     // Create a pool.
     Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
@@ -625,7 +625,7 @@ TEST(Pool6Test, clientClass) {
     EXPECT_TRUE(pool.clientSupported(three_classes));
 }
 
-// This test checks that handling for required-client-classes is valid.
+// This test checks that handling for require-client-classes is valid.
 TEST(Pool6Test, requiredClasses) {
     // Create a pool.
     Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),

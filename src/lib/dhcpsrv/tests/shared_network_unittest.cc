@@ -258,7 +258,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"valid-lifetime\": 30\n"
         "      }\n"
         "    ],\n"
-        "    \"required-client-classes\": [ \"foo\" ],\n"
+        "    \"require-client-classes\": [ \"foo\" ],\n"
         "    \"valid-lifetime\": 200\n"
         "}\n";
 
@@ -538,7 +538,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"valid-lifetime\": 40\n"
         "      }\n"
         "    ],\n"
-        "    \"required-client-classes\": [ \"foo\" ],\n"
+        "    \"require-client-classes\": [ \"foo\" ],\n"
         "    \"valid-lifetime\": 300\n"
         "}\n";
 

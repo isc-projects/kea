@@ -2064,8 +2064,9 @@ It is merely echoed by the server
       the DHCP message processing, including the assignment of leases from different
       pools, the assignment of different options (or different values of the same
       options) etc. In the current release of the software however, there are
-      only three mechanisms that take advantage of client classification:
-      subnet selection, assignment of different options, and, for cable modems, there
+      only some mechanisms that take advantage of client classification:
+      private options and option 43 deferred unpacking, subnet selection,
+      pool selection, assignment of different options, and, for cable modems, there
       are specific options for use with the TFTP server address and the boot file field.
       </para>
 
@@ -2091,19 +2092,24 @@ It is merely echoed by the server
       </para>
 
       <para>
-      The process of doing classification is conducted in five steps. The first step
+      The process of doing classification is conducted in several steps. The first step
       is to assess an incoming packet and assign it to zero or more classes.  The
       second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign classes from host reservations.
-      The forth step is to build the list of required classes and perform
-      the evaluation for each class of the list.
+      The third step is to assign classes from host reservations and
+      evaluate class expressions depending on the "KNOWN" class.
+      After the list of required classes is built and each class of the list
+      has its expression evaluated: when it returns true the packet is added
+      as a member of the class.
       The last step is to assign options, again possibly based on the class
       information.
+      More complete and detailed description is available in
+      <xref linkend="classify"/>.
       </para>
 
       <para>
-      There are two methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options. Information from these
+      There are two main methods of doing classification. The first is automatic and relies
+      on examining the values in the vendor class options or existence of a
+      host reservation. Information from these
       options is extracted and a class name is constructed from it and added to
       the class list for the packet. The second allows you to specify an expression
       that is evaluated for each packet. If the result is true the packet is
@@ -2155,11 +2161,12 @@ It is merely echoed by the server
 
           <para>
             If there are multiple classes defined and an incoming packet is matched
-            to multiple classes, the class which is defined first is used.
+            to multiple classes, the class which is evaluated first is used.
           </para>
 
           <note><para>
-            In versions before 1.4 the alphabetical order was used.
+            In Kea versions prior to 1.4.0 the alphabetical order of class names was used.
+            Starting from Kea 1.4.0 the classes are ordered as specified in the configuration.
           </para></note>
 
         </section>
@@ -2260,13 +2267,15 @@ It is merely echoed by the server
         The first one is the per-class <command>only-if-required</command>
         flag which is false by default. When it is set to
         <command>true</command> the test expression of the class is not
-        evaluated at the reception of a new incoming ticket.
+        evaluated at the reception of a new incoming ticket but
+        later and only if the class evaluation is required.
         </para>
 
         <para>
-        The second is the <command>required-client-classes</command> which
+        The second is the <command>require-client-classes</command> which
         takes a list of class names and is valid in shared-network,
-        subnet and pool scope. Classes in these lists are evaluated
+        subnet and pool scope. Classes in these lists are marked as
+        required and evaluated
         after resource assignment and before output option processing.
         </para>
 
@@ -2279,7 +2288,7 @@ It is merely echoed by the server
     "client-classes": [
        {<userinput>
            "name": "Client_foo",
-           "test": "'' == ''",
+           "test": "member('ALL')",
            "only-if-required": true</userinput>
        },
        ...
@@ -2288,7 +2297,7 @@ It is merely echoed by the server
         {
             "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-            <userinput>"required-client-classes": [ "Client_foo" ],</userinput>
+            <userinput>"require-client-classes": [ "Client_foo" ],</userinput>
             ...
         },
         ...
@@ -2296,6 +2305,23 @@ It is merely echoed by the server
     ...
 }</screen>
          </para>
+
+         <para>
+         Required evaluation can be used to express complex dependencies
+         including for instance subnet membership, and to reverse the
+         precedence: if you set an option-data in a subnet it takes
+         precedence over an option-data in a class. When you move the
+         option-data to a (only-if) required class and require it in
+         the subnet a class evaluted or set before takes precedence.
+         </para>
+
+         <para>
+         Required evaluation is also available at shared-network and
+         pool levels. The order required classes are considered is
+         shared-network, subnet and pool, i.e. the opposite order
+         option-data are processed.
+         </para>
+
        </section>
     </section>
 
@@ -3392,7 +3418,7 @@ It is merely echoed by the server
       to configure the server to assign classes to a client based on the content
       of the options that this client sends to the server. Host reservations
       mechanisms also allow for statically assigning classes to the clients.
-      The definitions of these classes must exist in the Kea
+      The definitions of these classes should exist in the Kea
       configuration. The following configuration snippet shows how to specify
       that a client belongs to classes <command>reserved-class1</command>
       and <command>reserved-class2</command>. Those classes are associated with
@@ -3438,7 +3464,18 @@ It is merely echoed by the server
 </screen>
 
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions.</para>
+    with classification using expressions. The "KNOWN" builtin class is
+    added to the packet and any class depending on it directly or indirectly
+    and not only-if-required is evaluted.
+    </para>
+
+    <note>
+     <para>If you want to force the evaluation of a class expression after
+     the host reservation lookup, for instance because of a dependency on
+     "reserved-class1" from the previous example, you should add a
+     "member('KNOWN')" in the expression.</para>
+    </note>
+
     </section>
 
     <section id="reservations4-mysql-pgsql">

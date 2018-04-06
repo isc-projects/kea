@@ -131,8 +131,10 @@
 
       <note>
       <para>
-      Beginning with 1.4 client classes follow now the insertion order
-      (vs. alphabetical order in previous versions).
+      Beginning with Kea 1.4.0 release,  client classes follow the order
+      in which they are specified in the configuration
+      (vs. alphabetical order in previous versions), or for required
+      classes the order they are required.
       </para>
       </note>
 
@@ -184,6 +186,14 @@
       belongs to, and the KNOWN class. By convention builtin classes
       names begin with all caps.
       </para>
+
+      <para>Currently recognized builtin class names are ALL and KNOWN
+      and prefixes VENDOR_CLASS_, AFTER_ and EXTERNAL_. The AFTER_ prefix
+      is a provision for a not yet written hook, the EXTERNAL_ prefix
+      can be freely used: builtin classes are implicitly defined so
+      never raise warnings because they do not appear in the configuration.
+      </para>
+
   </section>
 
   <section id="classification-using-expressions">
@@ -788,11 +798,11 @@ concatenation of the strings</entry></row>
       subnet, shared-network or pools are known but output option
       processing not yet done. The only-if-required flag, false by default,
       allows to perform the evaluation of the test expression only
-      when it was required, i.e. in a required-client-classes list.
+      when it was required, i.e. in a require-client-classes list.
       </para>
 
       <para>
-      The required-client-classes list which is valid for shared-network,
+      The require-client-classes list which is valid for shared-network,
       subnet and pool scope specifies the classes which are evaluated
       in the second pass before output option processing.
       The list is built in the reversed precedence order of option

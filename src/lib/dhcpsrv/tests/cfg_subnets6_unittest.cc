@@ -490,7 +490,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
-        "    \"required-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
 }
@@ -533,7 +533,7 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
         "            \"option-data\": [ ],\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"required-client-classes\": [ \"foo\" ]\n"
+        "            \"require-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -580,7 +580,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
         "            \"option-data\": [ ],\n"
-        "            \"required-client-classes\": [ \"bar\" ]\n"
+        "            \"require-client-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"

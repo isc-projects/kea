@@ -277,7 +277,7 @@ protected:
     /// @brief Optional definition of a client class
     ///
     /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular network. The default value for this is an empty list,
+    /// this particular network. The default value for this is an empty string,
     /// which means that any client is allowed, regardless of its class.
     ClientClass client_class_;
 

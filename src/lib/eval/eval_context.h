@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,17 +41,19 @@ public:
         PARSER_STRING ///< expression is expected to evaluate to string
     } ParserType;
 
+    /// @brief Type of the check known function.
+    typedef std::function<bool(const ClientClass&)> CheckKnown;
 
     /// @brief Default constructor.
     ///
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
     /// by the parser to determine which option definitions set should be used
     /// to map option names to option codes.
-    /// @param check_known A closure called to check if a client class
+    /// @param check_known A function called to check if a client class
     /// used for membership is already known. If it is not the parser
     /// will fail: only backward or built-in references are accepted.
     EvalContext(const Option::Universe& option_universe,
-                std::function<bool(const ClientClass&)> check_known = acceptAll);
+                CheckKnown check_known = acceptAll);
 
     /// @brief destructor
     virtual ~EvalContext();
@@ -198,8 +200,8 @@ public:
     /// set should be used to map option name to option code.
     Option::Universe option_universe_;
 
-    /// @brief Closure to check if a client class is already known
-    std::function<bool(const ClientClass&)> check_known_;
+    /// @brief Function to check if a client class is already known
+    CheckKnown check_known_;
 
 };
 

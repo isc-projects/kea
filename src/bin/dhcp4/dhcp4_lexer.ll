@@ -795,14 +795,14 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"required-client-classes\" {
+\"require-client-classes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp4Parser::make_REQUIRED_CLIENT_CLASSES(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("required-client-classes", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("require-client-classes", driver.loc_);
     }
 }
 
