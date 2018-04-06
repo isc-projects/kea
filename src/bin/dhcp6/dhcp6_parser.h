@@ -415,7 +415,7 @@ namespace isc { namespace dhcp {
         TOKEN_RELAY_SUPPLIED_OPTIONS = 323,
         TOKEN_HOST_RESERVATION_IDENTIFIERS = 324,
         TOKEN_CLIENT_CLASSES = 325,
-        TOKEN_REQUIRED_CLIENT_CLASSES = 326,
+        TOKEN_REQUIRE_CLIENT_CLASSES = 326,
         TOKEN_TEST = 327,
         TOKEN_ONLY_IF_REQUIRED = 328,
         TOKEN_CLIENT_CLASS = 329,
@@ -893,7 +893,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_REQUIRED_CLIENT_CLASSES (const location_type& l);
+    make_REQUIRE_CLIENT_CLASSES (const location_type& l);
 
     static inline
     symbol_type
@@ -2248,9 +2248,9 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
-  Dhcp6Parser::make_REQUIRED_CLIENT_CLASSES (const location_type& l)
+  Dhcp6Parser::make_REQUIRE_CLIENT_CLASSES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_REQUIRED_CLIENT_CLASSES, l);
+    return symbol_type (token::TOKEN_REQUIRE_CLIENT_CLASSES, l);
   }
 
   Dhcp6Parser::symbol_type
