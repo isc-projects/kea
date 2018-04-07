@@ -873,11 +873,11 @@ namespace isc { namespace eval {
                   //
                   // This token will check if the packet is a member of
                   // the specified client class.
-                  // To avoid loops at evaluation only already known and
+                  // To avoid loops at evaluation only already defined and
                   // built-in classes are allowed.
                   std::string cc = yystack_[1].value.as< std::string > ();
-                  if (!ctx.isClientClassKnown(cc)) {
-                      error(yystack_[1].location, "Unknown client class '" + cc + "'");
+                  if (!ctx.isClientClassDefined(cc)) {
+                      error(yystack_[1].location, "Not defined client class '" + cc + "'");
                   }
                   TokenPtr member(new TokenMember(cc));
                   ctx.expression.push_back(member);

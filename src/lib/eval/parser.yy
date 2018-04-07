@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -219,11 +219,11 @@ bool_expr : "(" bool_expr ")"
                   //
                   // This token will check if the packet is a member of
                   // the specified client class.
-                  // To avoid loops at evaluation only already known and
+                  // To avoid loops at evaluation only already defined and
                   // built-in classes are allowed.
                   std::string cc = $3;
-                  if (!ctx.isClientClassKnown(cc)) {
-                      error(@3, "Unknown client class '" + cc + "'");
+                  if (!ctx.isClientClassDefined(cc)) {
+                      error(@3, "Not defined client class '" + cc + "'");
                   }
                   TokenPtr member(new TokenMember(cc));
                   ctx.expression.push_back(member);

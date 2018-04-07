@@ -24,7 +24,7 @@
   Parameters to the @ref isc::eval::EvalContext class constructor are
   the universe to choose between DHCPv4 and DHCPv6 for DHCP version
   dependent expressions, and a function used
-  by the parser to accept only already known or built-in client
+  by the parser to accept only already defined or built-in client
   class names in client class membership expressions. This function defaults
   to accept all client class names.
 

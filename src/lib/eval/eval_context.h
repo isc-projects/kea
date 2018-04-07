@@ -41,19 +41,19 @@ public:
         PARSER_STRING ///< expression is expected to evaluate to string
     } ParserType;
 
-    /// @brief Type of the check known function.
-    typedef std::function<bool(const ClientClass&)> CheckKnown;
+    /// @brief Type of the check defined function.
+    typedef std::function<bool(const ClientClass&)> CheckDefined;
 
     /// @brief Default constructor.
     ///
     /// @param option_universe Option universe: DHCPv4 or DHCPv6. This is used
     /// by the parser to determine which option definitions set should be used
     /// to map option names to option codes.
-    /// @param check_known A function called to check if a client class
-    /// used for membership is already known. If it is not the parser
+    /// @param check_defined A function called to check if a client class
+    /// used for membership is already defined. If it is not the parser
     /// will fail: only backward or built-in references are accepted.
     EvalContext(const Option::Universe& option_universe,
-                CheckKnown check_known = acceptAll);
+                CheckDefined check_defined = acceptAll);
 
     /// @brief destructor
     virtual ~EvalContext();
@@ -181,11 +181,11 @@ public:
         return (option_universe_);
     }
 
-    /// @brief Check if a client class is already known
+    /// @brief Check if a client class is already defined
     ///
     /// @param client_class the client class name to check
-    /// @return true if the client class is known, false if not
-    bool isClientClassKnown(const ClientClass& client_class);
+    /// @return true if the client class is defined, false if not
+    bool isClientClassDefined(const ClientClass& client_class);
 
  private:
     /// @brief Flag determining scanner debugging.
@@ -200,8 +200,8 @@ public:
     /// set should be used to map option name to option code.
     Option::Universe option_universe_;
 
-    /// @brief Function to check if a client class is already known
-    CheckKnown check_known_;
+    /// @brief Function to check if a client class is already defined.
+    CheckDefined check_defined_;
 
 };
 
