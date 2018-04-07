@@ -37,7 +37,7 @@ void
 ExpressionParser::parse(ExpressionPtr& expression,
                         ConstElementPtr expression_cfg,
                         uint16_t family,
-                        std::function<bool(const ClientClass&)> check_known) {
+                        EvalContext::CheckDefined check_defined) {
     if (expression_cfg->getType() != Element::string) {
         isc_throw(DhcpConfigError, "expression ["
             << expression_cfg->str() << "] must be a string, at ("
@@ -50,7 +50,7 @@ ExpressionParser::parse(ExpressionPtr& expression,
     expression_cfg->getValue(value);
     try {
         EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6,
-                             check_known);
+                             check_defined);
         eval_ctx.parseString(value);
         expression.reset(new Expression());
         *expression = eval_ctx.expression;
@@ -84,8 +84,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     if (test_cfg) {
         ExpressionParser parser;
         using std::placeholders::_1;
-        auto check_known = std::bind(isClientClassKnown, class_dictionary, _1);
-        parser.parse(match_expr, test_cfg, family, check_known);
+        auto check_defined =
+            std::bind(isClientClassDefined, class_dictionary, _1);
+        parser.parse(match_expr, test_cfg, family, check_defined);
         test = test_cfg->stringValue();
     }
 

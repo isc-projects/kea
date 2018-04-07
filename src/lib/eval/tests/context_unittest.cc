@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -409,14 +409,14 @@ public:
     /// expected.
     ///
     /// @param expr expression to be parsed
-    /// @param check_known closure checking if the client class is known
+    /// @param check_defined closure checking if the client class is defined
     /// @param exp_client_class expected client class name to be parsed
     /// @param exp_tokens expected number of tokens
     void testMember(const std::string& expr,
-                    std::function<bool(const ClientClass&)> check_known,
+                    EvalContext::CheckDefined check_defined,
                     const std::string& exp_client_class,
                     int exp_tokens) {
-        EvalContext eval(Option::V6, check_known);
+        EvalContext eval(Option::V6, check_defined);
 
         // parse the expression
         try {
@@ -1119,23 +1119,23 @@ TEST_F(EvalContextTest, relay6FieldError) {
                "<string>:1.8: Nest level invalid for DHCPv4 packets");
 }
 
-// Tests parsing of member with known class
+// Tests parsing of member with defined class
 TEST_F(EvalContextTest, member) {
-    auto check_known = [](const ClientClass& cc) { return (cc == "foo"); };
-    testMember("member('foo')", check_known, "foo", 1);
+    auto check_defined = [](const ClientClass& cc) { return (cc == "foo"); };
+    testMember("member('foo')", check_defined, "foo", 1);
 }
 
-// Test parsing of member with unknown class
+// Test parsing of member with not defined class
 TEST_F(EvalContextTest, memberError) {
-    auto check_known = [](const ClientClass& cc) { return (cc == "foo"); };
-    EvalContext eval(Option::V6, check_known);
+    auto check_defined = [](const ClientClass& cc) { return (cc == "foo"); };
+    EvalContext eval(Option::V6, check_defined);
     parsed_ = false;
     try {
         parsed_ = eval.parseString("member('bar')");
         FAIL() << "Expected EvalParseError but nothing was raised";
     }
     catch (const EvalParseError& ex) {
-        EXPECT_EQ("<string>:1.8-12: Unknown client class 'bar'",
+        EXPECT_EQ("<string>:1.8-12: Not defined client class 'bar'",
                   std::string(ex.what()));
         EXPECT_FALSE(parsed_);
     }

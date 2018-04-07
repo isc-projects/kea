@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,9 +17,9 @@
 #include <limits>
 
 EvalContext::EvalContext(const Option::Universe& option_universe,
-                         std::function<bool(const ClientClass&)> check_known)
+                         CheckDefined check_defined)
     : trace_scanning_(false), trace_parsing_(false),
-      option_universe_(option_universe), check_known_(check_known)
+      option_universe_(option_universe), check_defined_(check_defined)
 {
 }
 
@@ -190,8 +190,8 @@ EvalContext::fromUint32(const uint32_t integer) {
 }
 
 bool
-EvalContext::isClientClassKnown(const ClientClass& client_class) {
-    return (check_known_(client_class));
+EvalContext::isClientClassDefined(const ClientClass& client_class) {
+    return (check_defined_(client_class));
 }
 
 void

@@ -2970,6 +2970,9 @@ void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt) {
 }
 
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    // All packets belongs to ALL.
+    pkt->addClass("ALL");
+
     // First phase: built-in vendor class processing
     classifyByVendor(pkt);
 

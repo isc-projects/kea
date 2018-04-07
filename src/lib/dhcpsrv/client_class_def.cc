@@ -293,12 +293,24 @@ ClientClassDictionary::toElement() const {
 }
 
 std::list<std::string>
+builtinNames = {
+    "ALL", "KNOWN"
+};
+
+std::list<std::string>
 builtinPrefixes = {
     "VENDOR_CLASS_", "AFTER_", "EXTERNAL_"
 };
 
 bool
 isClientClassBuiltIn(const ClientClass& client_class) {
+    for (std::list<std::string>::const_iterator bn = builtinNames.cbegin();
+         bn != builtinNames.cend(); ++bn) {
+        if (client_class == *bn) {
+            return true;
+        }
+    }
+
     for (std::list<std::string>::const_iterator bt = builtinPrefixes.cbegin();
          bt != builtinPrefixes.cend(); ++bt) {
         if (client_class.size() <= bt->size()) {
@@ -314,9 +326,9 @@ isClientClassBuiltIn(const ClientClass& client_class) {
 }
 
 bool
-isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
-                   const ClientClass& client_class) {
-    // First check built-in prefixes
+isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                     const ClientClass& client_class) {
+    // First check built-in classes
     if (isClientClassBuiltIn(client_class)) {
         return (true);
     }
@@ -327,7 +339,7 @@ isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
         return (true);
     }
 
-    // Unknown...
+    // Not defined...
     return (false);
 }
 

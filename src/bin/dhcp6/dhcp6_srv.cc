@@ -3084,7 +3084,9 @@ void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt, std::string& classes) {
 }
 
 void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
-    string classes = "";
+    // All packets belongs to ALL
+    pkt->addClass("ALL");
+    string classes = "ALL ";
 
     // First phase: built-in vendor class processing
     classifyByVendor(pkt, classes);

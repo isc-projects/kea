@@ -340,6 +340,10 @@ private:
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
 
+/// @brief List of built-in client class names.
+/// i.e. ALL and KNOWN.
+extern std::list<std::string> builtinNames;
+
 /// @brief List of built-in client class prefixes
 /// i.e. VENDOR_CLASS_, AFTER_ and EXTERNAL_.
 extern std::list<std::string> builtinPrefixes;
@@ -351,14 +355,14 @@ extern std::list<std::string> builtinPrefixes;
 bool isClientClassBuiltIn(const ClientClass& client_class);
 
 
-/// @brief Check if a client class name is already known,
-/// i.e. beginning by a built-in prefix or in the dictionary,
+/// @brief Check if a client class name is already defined,
+/// i.e. is built-in or in the dictionary,
 ///
 /// @param class_dictionary A class dictionary where to look for.
 /// @param client_class A client class name to look for.
-/// @return true if known or built-in, false if not.
-bool isClientClassKnown(ClientClassDictionaryPtr& class_dictionary,
-                        const ClientClass& client_class);
+/// @return true if defined or built-in, false if not.
+bool isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                          const ClientClass& client_class);
 
 } // namespace isc::dhcp
 } // namespace isc
