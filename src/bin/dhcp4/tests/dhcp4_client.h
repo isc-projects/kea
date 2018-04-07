@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -369,11 +369,21 @@ public:
     /// @param opt additional option to be sent
     void addExtraOption(const OptionPtr& opt);
 
+    /// @brief Add a client class.
+    ///
+    /// @param client_class name of the class to be added.
+    void addClass(const ClientClass& client_class);
+
 private:
     /// @brief Appends extra options, previously added with addExtraOption()
     ///
     /// @brief Copies options from extra_options_ into outgoing message
     void appendExtraOptions();
+
+    /// @brief Appends extra classes, previously added with addClass()
+    ///
+    /// @brief Add client classes from classes_ to incoming message
+    void appendClasses();
 
     /// @brief Creates and adds Requested IP Address option to the client's
     /// query.
@@ -491,6 +501,9 @@ private:
 
     /// @brief Extra options the client will send.
     OptionCollection extra_options_;
+
+    /// @brief Extra classes to add to the query.
+    ClientClasses classes_;
 };
 
 } // end of namespace isc::dhcp::test

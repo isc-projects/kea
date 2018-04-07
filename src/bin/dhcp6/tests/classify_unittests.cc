@@ -46,6 +46,27 @@ namespace {
 ///     the 'foo' value.
 ///   - There is one subnet specified 2001:db8:1::/48 with pool of
 ///     IPv6 addresses.
+///
+/// - Configuration 1:
+///   - Used for complex membership (example taken from HA)
+///   - 1 subnet: 2001:db8:1::/48
+///   - 4 pools: 2001:db8:1:1::/64, 2001:db8:1:2::/64,
+///              2001:db8:1:3::/64 and 2001:db8:1:4::/64
+///   - 4 classes to compose:
+///      server1 and server2 for each HA server
+///      option 1234 'foo' aka telephones
+///      option 1234 'bar' aka computers
+///
+/// - Configuration 2:
+///   - Used for complex membership (example taken from HA) and pd-pools
+///   - 1 subnet: 2001:db8::/32
+///   - 4 pd-pools: 2001:db8:1::/48, 2001:db8:2::/48,
+///                 2001:db8:3::/48 and 2001:db8:4::/48
+///   - 4 classes to compose:
+///      server1 and server2 for each HA server
+///      option 1234 'foo' aka telephones
+///      option 1234 'bar' aka computers
+///
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -104,7 +125,128 @@ const char* CONFIGS[] = {
         "        \"client-classes\": [ \"reserved-class1\", \"reserved-class2\" ]"
         "    } ]"
         " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 1
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ "
+        "{"
+        "    \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\""
+        "} ],"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"server1\""
+        "},"
+        "{"
+        "   \"name\": \"server2\""
+        "},"
+        "{"
+        "   \"name\": \"telephones\","
+        "   \"test\": \"option[host-name].text == 'foo'\""
+        "},"
+        "{"
+        "   \"name\": \"computers\","
+        "   \"test\": \"option[host-name].text == 'bar'\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_telephones\","
+        "   \"test\": \"member('server1') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_computers\","
+        "   \"test\": \"member('server1') and member('computers')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_telephones\","
+        "   \"test\": \"member('server2') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_computers\","
+        "   \"test\": \"member('server2') and member('computers')\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"pools\": [ "
+        "        { \"pool\": \"2001:db8:1:1::/64\","
+        "          \"client-class\": \"server1_and_telephones\" },"
+        "        { \"pool\": \"2001:db8:1:2::/64\","
+        "          \"client-class\": \"server1_and_computers\" },"
+        "        { \"pool\": \"2001:db8:1:3::/64\","
+        "          \"client-class\": \"server2_and_telephones\" },"
+        "        { \"pool\": \"2001:db8:1:4::/64\","
+        "          \"client-class\": \"server2_and_computers\" } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ "
+        "{"
+        "    \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\""
+        "} ],"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"server1\""
+        "},"
+        "{"
+        "   \"name\": \"server2\""
+        "},"
+        "{"
+        "   \"name\": \"telephones\","
+        "   \"test\": \"option[host-name].text == 'foo'\""
+        "},"
+        "{"
+        "   \"name\": \"computers\","
+        "   \"test\": \"option[host-name].text == 'bar'\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_telephones\","
+        "   \"test\": \"member('server1') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_computers\","
+        "   \"test\": \"member('server1') and member('computers')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_telephones\","
+        "   \"test\": \"member('server2') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_computers\","
+        "   \"test\": \"member('server2') and member('computers')\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"subnet\": \"2001:db8::/32\", "
+        "    \"interface\": \"eth1\","
+        "    \"pools\": [ "
+        "        { \"pool\": \"2001:db8:1::/48\","
+        "          \"client-class\": \"server1_and_telephones\" },"
+        "        { \"pool\": \"2001:db8:2::/48\","
+        "          \"client-class\": \"server1_and_computers\" },"
+        "        { \"pool\": \"2001:db8:3::/48\","
+        "          \"client-class\": \"server2_and_telephones\" },"
+        "        { \"pool\": \"2001:db8:4::/48\","
+        "          \"client-class\": \"server2_and_computers\" } ]"
+        " } ],"
         "\"valid-lifetime\": 4000 }"
+
 };
 
 /// @brief Test fixture class for testing client classification by the
@@ -1549,6 +1691,34 @@ TEST_F(ClassifyTest, precedenceNetwork) {
     auto addrs = servers->getAddresses();
     ASSERT_EQ(1, addrs.size());
     EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
+}
+
+// This test checks the complex membership from HA with server1 telephone.
+TEST_F(ClassifyTest, server1Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the first pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:1::", lease_client.addr_.toText());
 }
 
 } // end of anonymous namespace
