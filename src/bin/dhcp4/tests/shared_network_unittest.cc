@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1205,6 +1205,41 @@ public:
         ASSERT_NO_FATAL_FAILURE(verifyAssignedStats());
     }
 
+    /// @brief Check precedence.
+    ///
+    /// @param config the configuration.
+    /// @param ns_address expected name server address.
+    void testPrecedence(const std::string& config, const std::string& ns_address) {
+        // Create client and set MAC address to the one that has a reservation.
+        Dhcp4Client client(Dhcp4Client::SELECTING);
+        client.setIfaceName("eth1");
+        client.setHWAddress("aa:bb:cc:dd:ee:ff");
+        // Request domain-name-servers.
+        client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+        // Create server configuration.
+        configure(config, *client.getServer());
+
+        // Perform a DORA.
+        doDORA(client, "192.0.2.28", "192.0.2.28");
+
+        // Check response.
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        EXPECT_EQ(DHCPACK, resp->getType());
+        EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
+
+        // Check domain-name-servers option.
+        OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+        ASSERT_TRUE(opt);
+        Option4AddrLstPtr servers =
+            boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+        ASSERT_TRUE(servers);
+        auto addrs = servers->getAddresses();
+        ASSERT_EQ(1, addrs.size());
+        EXPECT_EQ(ns_address, addrs[0].toText());
+    }
+
     /// @brief Destructor.
     virtual ~Dhcpv4SharedNetworkTest() {
         StatsMgr::instance().removeAll();
@@ -2091,34 +2126,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceGlobal) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    testPrecedence(config, "192.0.2.1");
 }
 
 // Verify option processing precedence
@@ -2173,34 +2181,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceClass) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.2", addrs[0].toText());
+    testPrecedence(config, "192.0.2.2");
 }
 
 // Verify option processing precedence
@@ -2265,35 +2246,8 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceClasses) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
     // Class order is the insert order
-    EXPECT_EQ("192.0.2.2", addrs[0].toText());
+    testPrecedence(config, "192.0.2.2");
 }
 
 // Verify option processing precedence
@@ -2354,34 +2308,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceNetwork) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.3", addrs[0].toText());
+    testPrecedence(config, "192.0.2.3");
 }
 
 // Verify option processing precedence
@@ -2448,34 +2375,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceSubnet) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.4", addrs[0].toText());
+    testPrecedence(config, "192.0.2.4");
 }
 
 // Verify option processing precedence
@@ -2548,34 +2448,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedencePool) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.5", addrs[0].toText());
+    testPrecedence(config, "192.0.2.5");
 }
 
 // Verify option processing precedence
@@ -2654,34 +2527,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceReservation) {
         "    ]"
         "}";
 
-    // Create client and set MAC address to the one that has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
-    client.setIfaceName("eth1");
-    client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    // Request domain-name-servers
-    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform a DORA
-    doDORA(client, "192.0.2.28", "192.0.2.28");
-
-    // Check response
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    EXPECT_EQ(DHCPACK, resp->getType());
-    EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option4AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("192.0.2.6", addrs[0].toText());
+    testPrecedence(config, "192.0.2.6");
 }
 
 } // end of anonymous namespace

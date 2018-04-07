@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -925,8 +925,8 @@ TEST_F(ClientClassDefListParserTest, dependentList) {
     EXPECT_EQ("three", cclass->getName());
 }
 
-// Verifies that forward dependencies will not parse.
-TEST_F(ClientClassDefListParserTest, dependentForwardError) {
+// Verifies that not defined dependencies will not parse.
+TEST_F(ClientClassDefListParserTest, dependentNotDefined) {
     std::string cfg_text =
         "[ \n"
         "   { \n"
@@ -936,6 +936,38 @@ TEST_F(ClientClassDefListParserTest, dependentForwardError) {
         "] \n";
 
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that forward dependencies will not parse.
+TEST_F(ClientClassDefListParserTest, dependentForwardError) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"foo\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that backward dependencies will parse.
+TEST_F(ClientClassDefListParserTest, dependentBackward) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"foo\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
 }
 
 } // end of anonymous namespace

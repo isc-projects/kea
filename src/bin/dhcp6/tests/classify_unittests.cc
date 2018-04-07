@@ -235,14 +235,18 @@ const char* CONFIGS[] = {
         "\"subnet6\": [ "
         "{   \"subnet\": \"2001:db8::/32\", "
         "    \"interface\": \"eth1\","
-        "    \"pools\": [ "
-        "        { \"pool\": \"2001:db8:1::/48\","
+        "    \"pd-pools\": [ "
+        "        { \"prefix\": \"2001:db8:1::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
         "          \"client-class\": \"server1_and_telephones\" },"
-        "        { \"pool\": \"2001:db8:2::/48\","
+        "        { \"prefix\": \"2001:db8:2::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
         "          \"client-class\": \"server1_and_computers\" },"
-        "        { \"pool\": \"2001:db8:3::/48\","
+        "        { \"prefix\": \"2001:db8:3::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
         "          \"client-class\": \"server2_and_telephones\" },"
-        "        { \"pool\": \"2001:db8:4::/48\","
+        "        { \"prefix\": \"2001:db8:4::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
         "          \"client-class\": \"server2_and_computers\" } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }"
@@ -1719,6 +1723,206 @@ TEST_F(ClassifyTest, server1Telephone) {
     ASSERT_EQ(1, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server1 computer.
+TEST_F(ClassifyTest, server1Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the second pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:2::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 telephone.
+TEST_F(ClassifyTest, server2Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the third pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:3::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 computer.
+TEST_F(ClassifyTest, server2Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the forth pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:4::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server1 telephone
+// with prefixes.
+TEST_F(ClassifyTest, pDserver1Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the first pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server1 computer
+// with prefix.
+TEST_F(ClassifyTest, pDserver1Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the second pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:2::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 telephone
+// with prefixes.
+TEST_F(ClassifyTest, pDserver2Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the third pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:3::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 computer
+// with prefix.
+TEST_F(ClassifyTest, pDserver2Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the forth pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:4::", lease_client.addr_.toText());
 }
 
 } // end of anonymous namespace

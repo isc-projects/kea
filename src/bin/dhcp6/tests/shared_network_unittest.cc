@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1452,6 +1452,41 @@ public:
         }
     }
 
+    /// @brief Check precedence.
+    ///
+    /// @param config the configuration.
+    /// @param ns_address expected name server address.
+    void testPrecedence(const std::string& config, const std::string& ns_address) {
+        // Create client and set DUID to the one that has a reservation.
+        Dhcp6Client client;
+        client.setInterface("eth1");
+        client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
+        client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+        // Request dns-servers.
+        client.requestOption(D6O_NAME_SERVERS);
+
+        // Create server configuration.
+        configure(config, *client.getServer());
+
+        // Perform SARR.
+        ASSERT_NO_THROW(client.doSARR());
+
+        // Check response.
+        EXPECT_EQ(1, client.getLeaseNum());
+        Pkt6Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+
+        // Check dns-servers option.
+        OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+        ASSERT_TRUE(opt);
+        Option6AddrLstPtr servers =
+            boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+        ASSERT_TRUE(servers);
+        auto addrs = servers->getAddresses();
+        ASSERT_EQ(1, addrs.size());
+        EXPECT_EQ(ns_address, addrs[0].toText());
+    }
+
     /// @brief Destructor.
     virtual ~Dhcpv6SharedNetworkTest() {
         StatsMgr::instance().removeAll();
@@ -2469,34 +2504,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceGlobal) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::1");
 }
 
 // Verify option processing precedence
@@ -2547,34 +2555,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceClass) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::2");
 }
 
 // Verify option processing precedence
@@ -2635,35 +2616,8 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceClasses) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
     // Class order is the insert order
-    EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::2");
 }
 
 // Verify option processing precedence
@@ -2720,34 +2674,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceNetworkClass) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::3");
 }
 
 // Verify option processing precedence
@@ -2810,34 +2737,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceSubnet) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("2001:db8:1::4", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::4");
 }
 
 // Verify option processing precedence
@@ -2906,34 +2806,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedencePool) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("2001:db8:1::5", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::5");
 }
 
 // Verify option processing precedence
@@ -3008,34 +2881,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
         "    ]"
         "}";
 
-    // Create client and set DUID to the one that has a reservation.
-    Dhcp6Client client;
-    client.setInterface("eth1");
-    client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
-    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
-    // Request dns-servers
-    client.requestOption(D6O_NAME_SERVERS);
-
-    // Create server configuration
-    configure(config, *client.getServer());
-
-    // Perform SARR
-    ASSERT_NO_THROW(client.doSARR());
-
-    // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    ASSERT_TRUE(opt);
-    Option6AddrLstPtr servers =
-        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
-    ASSERT_TRUE(servers);
-    auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    EXPECT_EQ("2001:db8:1::6", addrs[0].toText());
+    testPrecedence(config, "2001:db8:1::6");
 }
 
 } // end of anonymous namespace
