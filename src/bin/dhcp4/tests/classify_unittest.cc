@@ -64,6 +64,17 @@ namespace {
 ///     option[93].hex == 0x0007, set server-hostname to deneb
 ///     option[93].hex == 0x0006, set boot-file-name to pxelinux.0
 ///     option[93].hex == 0x0001, set boot-file-name to ipxe.efi
+///
+/// - Configuration 4:
+///   - Used for complex membership (example taken from HA)
+///   - 1 subnet: 10.0.0.0/24
+///   - 4 pools: 10.0.0.10-10.0.0.49, 10.0.0.60-10.0.0.99,
+///              10.0.0.110-10.0.0.149, 10.0.0.1.60-10.0.0.199
+///   - 4 classes to compose:
+///      server1 and server2 for each HA server
+///      option[93].hex == 0x0009 aka telephones
+///      option[93].hex == 0x0007 aka computers
+///
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -211,7 +222,58 @@ const char* CONFIGS[] = {
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"require-client-classes\": [ \"pxe2\" ]"
         " } ]"
-    "}"
+    "}",
+
+    // Configuration 4
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"server1\""
+        "},"
+        "{"
+        "   \"name\": \"server2\""
+        "},"
+        "{"
+        "   \"name\": \"telephones\","
+        "   \"test\": \"option[93].hex == 0x0009\""
+        "},"
+        "{"
+        "   \"name\": \"computers\","
+        "   \"test\": \"option[93].hex == 0x0007\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_telephones\","
+        "   \"test\": \"member('server1') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_computers\","
+        "   \"test\": \"member('server1') and member('computers')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_telephones\","
+        "   \"test\": \"member('server2') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_computers\","
+        "   \"test\": \"member('server2') and member('computers')\""
+        "} ],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ "
+        "        { \"pool\": \"10.0.0.10-10.0.0.49\","
+        "          \"client-class\": \"server1_and_telephones\" },"
+        "        { \"pool\": \"10.0.0.60-10.0.0.99\","
+        "          \"client-class\": \"server1_and_computers\" },"
+        "        { \"pool\": \"10.0.0.110-10.0.0.149\","
+        "          \"client-class\": \"server2_and_telephones\" },"
+        "        { \"pool\": \"10.0.0.160-10.0.0.199\","
+        "          \"client-class\": \"server2_and_computers\" } ]"
+        " } ]"
+    "}",
 
 };
 
@@ -631,6 +693,106 @@ TEST_F(ClassifyTest, fixedFieldsInformFile32) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0001));
 
     testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
+}
+
+// This test checks the complex membership from HA with server1 telephone.
+TEST_F(ClassifyTest, server1Telephone) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[4], *client.getServer());
+
+    // Add option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+    client.addExtraOption(pxe);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Get an address
+    client.doDORA();
+
+    // Check response.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the first pool.
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+}
+
+// This test checks the complex membership from HA with server1 computer.
+TEST_F(ClassifyTest, server1computer) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[4], *client.getServer());
+
+    // Add option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
+    client.addExtraOption(pxe);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Get an address
+    client.doDORA();
+
+    // Check response.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the second pool.
+    EXPECT_EQ("10.0.0.60", resp->getYiaddr().toText());
+}
+
+// This test checks the complex membership from HA with server2 telephone.
+TEST_F(ClassifyTest, server2Telephone) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[4], *client.getServer());
+
+    // Add option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+    client.addExtraOption(pxe);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Get an address
+    client.doDORA();
+
+    // Check response.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the third pool.
+    EXPECT_EQ("10.0.0.110", resp->getYiaddr().toText());
+}
+
+// This test checks the complex membership from HA with server2 computer.
+TEST_F(ClassifyTest, server2computer) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[4], *client.getServer());
+
+    // Add option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
+    client.addExtraOption(pxe);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Get an address
+    client.doDORA();
+
+    // Check response.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the forth pool.
+    EXPECT_EQ("10.0.0.160", resp->getYiaddr().toText());
 }
 
 // This test checks the precedence order in required evaluation.
