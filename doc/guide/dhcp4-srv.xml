@@ -2061,10 +2061,8 @@ It is merely echoed by the server
       In certain cases it is useful to differentiate between different types of
       clients and treat them accordingly. It is envisaged that client
       classification will be used for changing the behavior of almost any part of
-      the DHCP message processing, including the assignment of leases from different
-      pools, the assignment of different options (or different values of the same
-      options) etc. In the current release of the software however, there are
-      only some mechanisms that take advantage of client classification:
+      the DHCP message processing. In the current release of the software however,
+      there are  only some mechanisms that take advantage of client classification:
       private options and option 43 deferred unpacking, subnet selection,
       pool selection, assignment of different options, and, for cable modems, there
       are specific options for use with the TFTP server address and the boot file field.
@@ -2111,7 +2109,7 @@ It is merely echoed by the server
       on examining the values in the vendor class options or existence of a
       host reservation. Information from these
       options is extracted and a class name is constructed from it and added to
-      the class list for the packet. The second allows you to specify an expression
+      the class list for the packet. The second allows for specifying an expression
       that is evaluated for each packet. If the result is true the packet is
       a member of the class.
       </para>
@@ -2256,31 +2254,33 @@ It is merely echoed by the server
       </section>
 
       <section id="dhcp4-required-class">
-        <title>Required classification</title>
+        <title>Required Classification</title>
         <para>
-        In some cases it is useful to limit the scope of class.
-        Two devices are available to perform evaluation of test
-        expressions so assignment when it was required.
+        In some cases it is useful to limit the scope of a class to
+        a shared-network, subnet or pool. There are two parameters
+        which are used to limit the scope of the class by instructing
+        the server to perform evaluation of test expressions when
+        required.
         </para>
 
         <para>
         The first one is the per-class <command>only-if-required</command>
         flag which is false by default. When it is set to
         <command>true</command> the test expression of the class is not
-        evaluated at the reception of a new incoming ticket but
-        later and only if the class evaluation is required.
+        evaluated at the reception of the incoming packet but later and
+        only if the class evaluation is required.
         </para>
 
         <para>
         The second is the <command>require-client-classes</command> which
         takes a list of class names and is valid in shared-network,
         subnet and pool scope. Classes in these lists are marked as
-        required and evaluated
-        after resource assignment and before output option processing.
+        required and evaluated after selection of this specific
+        shared-network/subnet/pool and before output option processing.
         </para>
 
         <para>
-        In this example a class is assigned to the incoming packet
+        In this example, a class is assigned to the incoming packet
         when the specified subnet is used.
 
         <screen>
@@ -2307,17 +2307,17 @@ It is merely echoed by the server
          </para>
 
          <para>
-         Required evaluation can be used to express complex dependencies
-         including for instance subnet membership, and to reverse the
+         Required evaluation can be used to express complex dependencies,
+         for example, subnet membership. It can also be used to reverse the
          precedence: if you set an option-data in a subnet it takes
          precedence over an option-data in a class. When you move the
-         option-data to a (only-if) required class and require it in
-         the subnet a class evaluted or set before takes precedence.
+         option-data to a required class and require it in
+         the subnet, a class evaluted earlier may take precedence.
          </para>
 
          <para>
          Required evaluation is also available at shared-network and
-         pool levels. The order required classes are considered is
+         pool levels. The order in which required classes are considered is:
          shared-network, subnet and pool, i.e. the opposite order
          option-data are processed.
          </para>

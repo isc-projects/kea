@@ -29,8 +29,8 @@
       </para>
 
       <para>
-      At the opposite some clients can be grouped into a client class for
-      instance to get a common option.
+      Conversely, different clients can be grouped into a client class to get a
+      common option.
       </para>
 
       <para>
@@ -38,7 +38,7 @@
       serveral ways:
       <itemizedlist>
       <listitem><para>
-      Implicitely using a vendor class option or another builtin condition.
+      Implicitly, using a vendor class option or another builtin condition.
       </para></listitem>
       <listitem><para>
       Using an expression which evaluates to true.
@@ -55,10 +55,8 @@
       <para>
       It is envisaged that client classification will be used for
       changing the behavior of almost any part of the DHCP message
-      processing, including the assignment of leases from different
-      pools, the assignment of different options (or different values
-      of the same options) etc. In the current release of the software
-      however, there are only five mechanisms that take advantage of
+      processing. In the current release of the software however,
+      there are only five mechanisms that take advantage of
       client classification: subnet selection, pool selection,
       definition of DHCPv4 private (codes 224-254) and code 43
       options, assignment of different options and, for DHCPv4 cable
@@ -76,11 +74,11 @@
       Vendor class options are processed.
       </para></listitem>
       <listitem><para>
-      Classes with matching expressions and not marked for later
-      evaluation are processed in the order they are defined in the
-      configuration: the boolean expression is evaluated and when it
-      returns true ("match") the incoming packet is associated to the
-      class.
+      Classes with matching expressions and not marked for later ("on
+      request") evaluation are processed in the order they are defined
+      in the configuration: the boolean expression is evaluated and
+      when it returns true ("match") the incoming packet is associated
+      to the class.
       </para></listitem>
       <listitem><para>
       If a private or code 43 DHCPv4 option is received, decoding it
@@ -89,7 +87,7 @@
       </para></listitem>
       <listitem><para>
       Choose a subnet, possibly based on the class information when
-      some subnets are guarded. More exactly: When choosing a subnet,
+      some subnets are guarded. More precisely: when choosing a subnet,
       the server will iterate over all of the subnets that are
       feasible given the information found in the packet (client
       address, relay address etc). It will use the first subnet it
@@ -111,14 +109,13 @@
       class.
       </para></listitem>
       <listitem><para>
-      If needed resources from pools are assigned, possibly based on the
+      If needed, resources from pools are assigned, possibly based on the
       class information when some pools are reserved to class members.
       </para></listitem>
       <listitem><para>
-      Process required evaluation in the order classes are required
-      which uses the reverse precedence of option data: first shared
-      network, after the subnet and to finish pools assigned resources
-      belongs too.
+      Evaluate classes marked as "required" in the order in which they
+      are listed as required: first shared network, then the subnet
+      and to finally pools assigned resources belong too.
       </para></listitem>
       <listitem><para>
       Assign options, again possibly based on the class information
@@ -133,15 +130,15 @@
       <para>
       Beginning with Kea 1.4.0 release,  client classes follow the order
       in which they are specified in the configuration
-      (vs. alphabetical order in previous versions), or for required
-      classes the order they are required.
+      (vs. alphabetical order in previous releases). Required classes
+      follow the order in which they are required.
       </para>
       </note>
 
       <para>
-      When determining which options to include in the response the
+      When determining which options to include in the response, the
       server will examine the union of options from all of the
-      assigned classes. In the case two or more classes include the
+      assigned classes. In case when two or more classes include the
       same option, the value from the first class examined will be
       used, and classes are examined in the order they were associated
       so ALL is always the first class and matching required classes
@@ -182,16 +179,17 @@
       packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
 
-      <para>Other examples are the ALL class what all incoming packets
-      belongs to, and the KNOWN class. By convention builtin classes
-      names begin with all caps.
+      <para>Other examples are: the  ALL class which all incoming packets
+      belong to, and the KNOWN class assigned when host reservations exist
+      for the particular client. By convention, builtin classes' names
+      begin with all capital letters.
       </para>
 
       <para>Currently recognized builtin class names are ALL and KNOWN
       and prefixes VENDOR_CLASS_, AFTER_ and EXTERNAL_. The AFTER_ prefix
       is a provision for a not yet written hook, the EXTERNAL_ prefix
       can be freely used: builtin classes are implicitly defined so
-      never raise warnings because they do not appear in the configuration.
+      never raise warnings if they do not appear in the configuration.
       </para>
 
   </section>
@@ -236,7 +234,7 @@
       <para>
       Dependencies between classes are checked too: for instance forward
       dependencies are rejected when the configuration is parsed:
-      an expression can only depends on already defined classes (including
+      an expression can only depend on already defined classes (including
       builtin classes) and which are evaluated in a previous or the
       same evaluation phase. This does not apply to the KNOWN class.
       </para>
@@ -798,7 +796,8 @@ concatenation of the strings</entry></row>
       subnet, shared-network or pools are known but output option
       processing not yet done. The only-if-required flag, false by default,
       allows to perform the evaluation of the test expression only
-      when it was required, i.e. in a require-client-classes list.
+      when it was required, i.e. in a require-client-classes list of the
+      selected subnet, shared-network or pool.
       </para>
 
       <para>
