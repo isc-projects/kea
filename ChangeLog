@@ -2,9 +2,9 @@
 	Added support for generalized UDP Source Port for DHCP Relay
 	(RFC 8357) for DHCPv4, DHCPv6 and DHCPv4-over-DHCPv6. Note
 	this required changes to the inter-server protocol used by
-	our 4o6 implementation, and is therefore not backwardly
+	our 4o6 implementation, and is therefore not backward
 	compatible.
-	(Trac #5404, git xxx)
+	(Trac #5404, git 2a6049947ad4caaaa697dba8cb7669a09264f0bc)
 
 1381.	[bug]		marcin
 	Corrected a bug in the libkea-asiolink library which caused
