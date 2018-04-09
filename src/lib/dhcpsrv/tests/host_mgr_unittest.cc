@@ -548,6 +548,7 @@ public:
     /// appropriate schema and create a basic host manager to
     /// wipe out any prior instance
     virtual void SetUp() {
+        DatabaseConnection::db_lost_callback = 0;  
         destroySchema();
         createSchema();
         // Wipe out any pre-existing mgr
@@ -559,6 +560,7 @@ public:
     /// Invoked by gtest upon test exit, we destroy the schema
     /// we created.
     virtual void TearDown() {
+        DatabaseConnection::db_lost_callback = 0;  
         destroySchema();
     }
 
@@ -596,22 +598,25 @@ public:
 
 void
 HostMgrDbLostCallbackTest::testDbLostCallback() {
-
-    // We should not find a socket open
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_EQ(-1, sql_socket);
-
+    // Create the HostMgr.
     HostMgr::create();
 
+    // Set the connectivity lost callback.
     DatabaseConnection::db_lost_callback =
         boost::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, _1);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = test::findLastSocketFd();
+
+    // Connect to the host backend.
     ASSERT_NO_THROW(HostMgr::addBackend(validConnectString()));
 
-    // We should find a socket open and it should be for MySQL.
-    sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > 0);
+    // Find the SQL client socket.
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
+    // Clear the callback invocation marker.
     callback_called_ = false;
 
     // Verify we can execute a query.  We don't care about the answer.
@@ -619,17 +624,14 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
 
     // Now close the sql socket out from under backend client
-    errno = 0;
-
-    close(sql_socket);
-    ASSERT_EQ(0, errno) << "failed to close socket";
+    ASSERT_FALSE(close(sql_socket)) << "failed to close socket";
 
     // A query should fail with DbOperationError.
     ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
                  DbOperationError);
 
     // Our lost connectivity callback should have been invoked.
-    ASSERT_EQ(true, callback_called_);
+    EXPECT_TRUE(callback_called_);
 }
 
 // The following tests require MySQL enabled.

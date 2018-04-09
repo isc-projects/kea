@@ -2828,19 +2828,18 @@ LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
 
 void
 LeaseMgrDbLostCallbackTest::testDbLostCallback() {
-    // We should not find a socket open
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_EQ(-1, sql_socket);
-
+    // Set the connectivity lost callback.
     DatabaseConnection::db_lost_callback =
         boost::bind(&LeaseMgrDbLostCallbackTest::db_lost_callback, this, _1);
 
+    // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(validConnectString()));
 
-    // We should find a socket open and it should be for MySQL.
-    sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > 0);
+    // The most recently opened socket should be for our SQL client.
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > -1);
 
+    // Clear the callback invocation marker.
     callback_called_ = false;
 
     // Verify we can execute a query.
@@ -2849,10 +2848,7 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     ASSERT_NO_THROW(version = lm.getVersion());
 
     // Now close the sql socket out from under backend client
-    errno = 0;
-
-    close(sql_socket);
-    ASSERT_EQ(0, errno) << "failed to close socket";
+    ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbOperationError.
     ASSERT_THROW(version = lm.getVersion(), DbOperationError);

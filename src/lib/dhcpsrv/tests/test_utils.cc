@@ -90,7 +90,8 @@ int findLastSocketFd() {
         fstat(fd, &stats);
 
         if (errno == EBADF ) {
-            break;
+            // Skip any that aren't open
+            continue;
         }
 
         // it's a socket, remember it

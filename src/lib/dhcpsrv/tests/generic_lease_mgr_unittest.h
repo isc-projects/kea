@@ -415,6 +415,14 @@ public:
 
 class LeaseMgrDbLostCallbackTest : public ::testing::Test {
 public:
+    LeaseMgrDbLostCallbackTest() {
+        DatabaseConnection::db_lost_callback = 0;
+    }
+
+    virtual ~LeaseMgrDbLostCallbackTest() {
+        DatabaseConnection::db_lost_callback = 0;
+    }
+
     /// @brief Prepares the class for a test.
     ///
     /// Invoked by gtest prior test entry, we create the
