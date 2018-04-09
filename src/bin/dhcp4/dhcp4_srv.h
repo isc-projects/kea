@@ -719,6 +719,12 @@ protected:
     /// server's response.
     static void appendServerID(Dhcpv4Exchange& ex);
 
+    /// @brief Check if the relay port RAI sub-option was set in the query.
+    ///
+    /// @param ex The exchange holding the client's message
+    /// @return the port to use to join the relay or 0 for the default
+    static uint16_t checkRelayPort(const Dhcpv4Exchange& ex);
+
     /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
     ///
     /// This method sets the following parameters for the DHCPv4 message being

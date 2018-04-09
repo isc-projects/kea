@@ -211,10 +211,11 @@ Dhcpv4Exchange::initResponse4o6() {
     if (!query6->relay_info_.empty()) {
         resp6->copyRelayInfo(query6);
     }
-    // Copy interface and remote address
+    // Copy interface, and remote address and port
     resp6->setIface(query6->getIface());
     resp6->setIndex(query6->getIndex());
     resp6->setRemoteAddr(query6->getRemoteAddr());
+    resp6->setRemotePort(query6->getRemotePort());
     resp_.reset(new Pkt4o6(resp_, resp6));
 }
 
@@ -2206,6 +2207,19 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     }
 }
 
+uint16_t
+Dhcpv4Srv::checkRelayPort(const Dhcpv4Exchange& ex) {
+
+    // Look for a relay-port RAI sub-option in the query.
+    const Pkt4Ptr& query = ex.getQuery();
+    const OptionPtr& rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai && rai->getOption(RAI_OPTION_RELAY_PORT)) {
+        // Got the sub-option so use the remote port set by the relay.
+        return (query->getRemotePort());
+    }
+    return (0);
+}
+
 void
 Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     adjustRemoteAddr(ex);
@@ -2232,7 +2246,9 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         response->setRemotePort(DHCP4_CLIENT_PORT);
 
     } else {
-        response->setRemotePort(DHCP4_SERVER_PORT);
+        // RFC 8357 section 5.1
+        uint16_t relay_port = checkRelayPort(ex);
+        response->setRemotePort(relay_port ? relay_port : DHCP4_SERVER_PORT);
     }
 
     CfgIfacePtr cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();

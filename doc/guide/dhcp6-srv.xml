@@ -2718,6 +2718,8 @@ should include options from the isc option space:
       DHCPv4-over-DHCPv6 support is experimental and the details of
       the inter-process communication can change: both the
       DHCPv4 and DHCPv6 sides should be running the same version of Kea.
+      For instance the support of port relay (RFC 8357) introduced such
+      such incompatible change.
       </note>
       <para>
       There is only one specific parameter for the DHCPv6 side:
