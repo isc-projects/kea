@@ -3104,7 +3104,7 @@ both the command and the response.
         secondary and the backup server, with the only difference that
         the <command>this-server-name</command> should be set to
         <command>server2</command> and <command>server3</command>
-        on those servers respectively.</para>
+        on those servers respectively.
 <screen>
 {
 "Dhcp4": {
@@ -3182,6 +3182,7 @@ both the command and the response.
 
 }
 </screen>
+        </para>
 
         <para>Two hook libraries must be loaded to enable HA:
         <filename>libdhcp_lease_cmds.so</filename> and
@@ -3327,7 +3328,112 @@ both the command and the response.
         "192.0.3.200 - 192.0.3.250".
         </para>
 
-      </section>
+      </section> <!-- end of ha-load-balancing-config -->
+
+      <section xml:id="ha-hot-standby-config">
+        <title>Hot Standby Configuration</title>
+        <para>The following is the example configuration of the primary server
+        in the hot standby configuration:
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "hot-standby",
+                    "heartbeat-delay": 10,
+                    "max-response-delay": 10,
+                    "max-ack-delay": 5,
+                    "max-unacked-clients": 5,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary",
+                            "auto-failover": true
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "standby",
+                            "auto-failover": true
+                        },
+                        {
+                            "name": "server3",
+                            "url": "http://192.168.56.99:8080/",
+                            "role": "backup",
+                            "auto-failover": false
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.3.100 - 192.0.3.250",
+                    "client-class": "ha_server1"
+                }
+            ],
+
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": "192.0.3.1"
+                }
+            ],
+
+            "relay": { "ip-address": "10.1.2.3" }
+        }
+    ],
+
+    ...
+
+}
+
+}
+</screen>
+        </para>
+
+        <para>This configuration is very similar to the load balancing
+        configuration described <xref linkend="ha-load-balancing-config"/>,
+        with a few notable differences.</para>
+
+        <para>The <command>mode</command> is now set to <command>hot-standby</command>,
+        in which only one server is responding to the DHCP clients.
+        If the primary server is online, the primary server is responding to
+        all DHCP queries. The <command>standby</command> server takes over the
+        entire DHCP traffic when it discovers that the primary is unavailable.
+        </para>
+
+        <para>In this mode, the non-primary active server is called
+        <command>standby</command> and that's what the role of the second
+        active server is set to.</para>
+
+        <para>Finally, because there is always one server responding to the
+        DHCP queries, there is only one scope <command>ha_server1</command>
+        in use within pools definitions. In fact, the <command>client-class</command>
+        parameter could be removed from this configuration without harm,
+        because there are no conflicts in lease allocations by different
+        servers as they do not allocate leases concurrently. The
+        <command>client-class</command> is left in this example mostly for
+        demonstration purposes, to highlight the differences between the
+        hot standby and load balancing mode of operation.</para>
+      </section> <!-- end of ha-hot-standby-config -->
 
     </section> <!-- end of high-availability-library -->
 
