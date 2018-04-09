@@ -34,17 +34,17 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second);
 void
 detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second);
 
-/// @brief Function that finds the last open socket fd
+/// @brief Function that finds the last open socket descriptor
 ///
 /// This function is used to attempt lost connectivity
 /// with backends, notably MySQL and Postgresql.
 ///
-/// The theory being, that in a confined test environment
-/// the last such fd is the SQL client socket fd.  This allows
-/// us to the close that fd and simulate a loss of server
+/// The theory being, that in a confined test environment the last 
+/// such descriptor is the SQL client socket descriptor.  This allows
+/// us to the close that descriptor and simulate a loss of server
 /// connectivity.
 ///
-/// @return the fd of the last open socket or -1 if there
+/// @return the descriptor of the last open socket or -1 if there
 /// are none.
 int findLastSocketFd();
 
