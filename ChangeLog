@@ -1,3 +1,11 @@
+1382.	[func]		fdupont
+	Added support for generalized UDP Source Port for DHCP Relay
+	(RFC 8357) for DHCPv4, DHCPv6 and DHCPv4-over-DHCPv6. Note
+	this required changes to the inter-server protocol used by
+	our 4o6 implementation, and is therefore not backwardly
+	compatible.
+	(Trac #5404, git xxx)
+
 1381.	[bug]		marcin
 	Corrected a bug in the libkea-asiolink library which caused
 	the DHCP servers to crash while processing commands over

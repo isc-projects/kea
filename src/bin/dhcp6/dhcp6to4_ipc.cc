@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,6 +64,7 @@ void Dhcp6to4Ipc::handler() {
             LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_DHCP4O6_PACKET_RECEIVED)
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getRemoteAddr().toText())
+                .arg(pkt->getRemotePort())
                 .arg(pkt->getIface());
         }
     } catch (const std::exception& e) {
@@ -77,6 +78,9 @@ void Dhcp6to4Ipc::handler() {
 
     // Should we check it is a DHCPV6_DHCPV4_RESPONSE?
 
+    // Handle relay port
+    uint16_t relay_port = Dhcpv6Srv::checkRelaySourcePort(pkt);
+
     // The received message has been unpacked by the receive() function. This
     // method could have modified the message so it's better to pack() it
     // again because we'll be forwarding it to a client.
@@ -89,7 +93,7 @@ void Dhcp6to4Ipc::handler() {
     // getType() always returns the type of internal message.
     uint8_t msg_type = buf[0];
     if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
-        pkt->setRemotePort(DHCP6_SERVER_PORT);
+        pkt->setRemotePort(relay_port ? relay_port : DHCP6_SERVER_PORT);
     } else {
         pkt->setRemotePort(DHCP6_CLIENT_PORT);
     }

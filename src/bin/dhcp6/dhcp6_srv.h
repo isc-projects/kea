@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -757,6 +757,16 @@ protected:
     /// @param status status code option
     void setStatusCode(boost::shared_ptr<Option6IA>& container,
                        const OptionPtr& status);
+
+public:
+
+    /// Used for DHCPv4-over-DHCPv6 too.
+
+    /// @brief Check if the last relay added a relay-source-port option.
+    ///
+    /// @param query DHCPv6 message to be checked.
+    /// @return the port to use to join the relay or 0 for the default.
+    static uint16_t checkRelaySourcePort(const Pkt6Ptr& query);
 
 private:
 

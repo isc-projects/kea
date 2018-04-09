@@ -207,11 +207,11 @@ A malformed DHCPv4o6 packet was received.
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
-% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 on interface %5 encapsulating %6: %7 (type %8)
+% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)
 The arguments specify the client identification information (HW address
 and client identifier), DHCPv6 message name and type, source IPv6
-address and interface name, DHCPv4 client identification, message
-name and type.
+address and port, and interface name, DHCPv4 client identification,
+message name and type.
 
 % DHCP4_DHCP4O6_PACKET_SEND_FAIL %1: failed to send DHCPv4o6 packet: %2
 This error is output if the IPv4 DHCP server fails to send an
@@ -755,3 +755,10 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
+<<<<<<< HEAD
+=======
+
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication.
+>>>>>>> trac5404

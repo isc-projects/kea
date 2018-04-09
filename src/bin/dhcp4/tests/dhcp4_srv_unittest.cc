@@ -162,6 +162,9 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     req->setIface("eth1");
     req->setIndex(1);
 
+    // Set remote port (it will be used in the next test).
+    req->setRemotePort(1234);
+
     // Create the exchange using the req.
     Dhcpv4Exchange ex = createExchange(req);
 
@@ -203,6 +206,75 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
+}
+
+// This test verifies that the remote port is adjusted when
+// the query carries a relay port RAI sub-option.
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Create the instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
+    req->setGiaddr(IOAddress("192.0.1.1"));
+    req->setHops(2);
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.2.5"));
+    req->setLocalPort(1001);
+    req->setIface("eth1");
+    req->setIndex(1);
+
+    // Set remote port.
+    req->setRemotePort(1234);
+
+    // Add a RAI relay-port sub-option (the only difference with the previous test).
+    OptionDefinitionPtr rai_def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    ASSERT_TRUE(rai);
+    req->addOption(rai);
+    OptionPtr relay_port(new Option(Option::V4, RAI_OPTION_RELAY_PORT));
+    ASSERT_TRUE(relay_port);
+    rai->addOption(relay_port);
+
+    // Create the exchange using the req.
+    Dhcpv4Exchange ex = createExchange(req);
+
+    Pkt4Ptr resp = ex.getResponse();
+    resp->setYiaddr(IOAddress("192.0.1.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
+
+    // Set the remote port to 67 as we know it will be updated.
+    resp->setRemotePort(67);
+
+    // This function never throws.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+
+    // Now the destination address should be relay's address.
+    EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
+    // The query has been relayed, so the response should be sent to the
+    // port 67, but here there is a relay port RAI so another value is used.
+    EXPECT_EQ(1234, resp->getRemotePort());
+    // Local address should be the address assigned to interface eth1.
+    EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
+    // The local port is always DHCPv4 server port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    // We will send response over the same interface which was used to receive
+    // query.
+    EXPECT_EQ("eth1", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
 }
 
 // This test verifies that it is possible to configure the server to use
