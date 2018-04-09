@@ -188,10 +188,10 @@ private:
     /// this class.
     std::string test_;
 
-    /// @brief The only if required flag: when false (the defaul) membership
-    /// is determined during classification so is for instance
-    /// available for subnet selection, when true membership is evaluated
-    /// only when required for and is usable only for option configuration.
+    /// @brief The only-if-required flag: when false (the default) membership
+    /// is determined during classification so is available, of instance,
+    /// for subnet selection. When true, membership is evaluated
+    /// only when required and is usable only for option configuration.
     bool required_;
 
     /// @brief The option definition configuration for this class
