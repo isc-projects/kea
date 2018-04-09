@@ -69,12 +69,14 @@
 
         "control-sockets": {
             "dhcp4": {
+                "comment": "main server",
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             },
             "dhcp6": {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4"
+                "socket-name": "/path/to/the/unix/socket-v4",
+                "user-context": { "version": 3 }
             }
         },
 
@@ -147,6 +149,22 @@
         current renaming lays the ground for it.
       </simpara>
     </warning>
+
+    <para>
+      User contexts can store arbitrary data as long as it is valid JSON
+      syntax and its top level element is a map (i.e. the data must be
+      enclosed in curly brackets). Some hook libraries may expect specific
+      formatting, though.  Please consult specific hook library
+      documentation for details.
+    </para>
+
+    <para>
+      User contexts can be specified on either global scope, control
+      socket and loggers. One other useful usage is the ability to
+      store comments or descriptions: the parser translates a
+      "comment" entry into a user-context with the entry, this allows
+      to attach a comment inside the configuration itself.
+    </para>
 
     <para>
       Hooks libraries can be attached to the Control Agent just like to

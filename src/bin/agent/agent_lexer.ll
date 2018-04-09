@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -197,6 +197,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return AgentParser::make_HTTP_PORT(driver.loc_);
     default:
         return AgentParser::make_STRING("http-port", driver.loc_);
+    }
+}
+
+\"user-context\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+    case ParserContext::SERVER:
+    case ParserContext::LOGGERS:
+        return AgentParser::make_USER_CONTEXT(driver.loc_);
+    default:
+        return AgentParser::make_STRING("user-context", driver.loc_);
+    }
+}
+
+\"comment\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+    case ParserContext::SERVER:
+    case ParserContext::LOGGERS:
+        return AgentParser::make_COMMENT(driver.loc_);
+    default:
+        return AgentParser::make_STRING("comment", driver.loc_);
     }
 }
 
