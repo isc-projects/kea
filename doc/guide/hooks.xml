@@ -3475,6 +3475,99 @@ both the command and the response.
         </para>
       </section> <!-- end of ha-ctrl-agent-config -->
 
+      <section xml:id="ha-control-commands">
+        <title>Control Commands for High Availability</title>
+        <para>Even though the HA hook library is designed to automatically
+        resolve issues with DHCP service interruptions by redirecting the
+        DHCP traffic to a surviving server and synchronizing the lease
+        database when required, it may be useful for the administrator to
+        have control over the server behavior. In particular, it may be
+        useful be able to trigger lease database synchronization on demand.
+        It may also be useful to manually set the HA scopes that are being
+        served.</para>
+
+        <para>Note that the backup server can sometimes be used to handle
+        the DHCP traffic in case if both active servers are down. The backup
+        servers do not perform failover function automatically. Hence, in
+        order to use the backup server to respond to the DHCP queries,
+        the server administrator must enable this function manually.
+        </para>
+
+        <para>The following sections describe commands supported by the
+        HA hook library which are available for the administrator.
+        </para>
+
+        <section xml:id="ha-sync-command">
+          <title>ha-sync command</title>
+          <para>The <command>ha-sync</command> is issued to instruct the
+          server to synchronize the local lease database with the
+          selected peer. The database synchronization may be triggered for
+          both active and backup server type. The <command>ha-sync</command>
+          has the following structure (DHCPv4 server case):
+<screen>
+{
+    "command": "ha-sync",
+    "service": [ "dhcp4 "],
+    "arguments": {
+        "server-name": "server2",
+        "max-period": 60
+    }
+}
+</screen>
+          </para>
+
+          <para>
+            When the server receives this command it first disables the
+            DHCP service of the server from which it will be fetching leases,
+            i.e. sends <command>dhcp-disable</command> command to that server.
+            The <command>max-period</command> parameter specifies the maximum
+            duration (in seconds) for which the DHCP service should be disabled.
+            If the DHCP service is successfully disabled, the synchronizing
+            server will fetch leases from the remote server by issuing the
+            <command>lease4-get-all</command> command. When the lease database
+            synchronization is complete, the synchronizing server sends the
+            <command>dhcp-enable</command> to the peer to re-enable its
+            DHCP service.
+          </para>
+        </section> <!-- ha-sync-command -->
+
+        <section xml:id="ha-scopes-command">
+          <title>ha-scopes command</title>
+          <para>This command allows for modifying the HA scopes that the
+          server is serving. Consult <xref linkend="ha-load-balancing-config"/>
+          and <xref linkend="ha-hot-standby-config"/> to learn what scopes
+          are available for different HA modes of operation. The
+          <command>ha-scopes</command> command has the following structure
+          (DHCPv4 server case):
+<screen>
+{
+    "command": "ha-scopes",
+    "service": [ "dhcp4 "],
+    "arguments": {
+        "scopes": [ "ha_server1", "ha_server2" ]
+    }
+}
+</screen>
+          </para>
+
+          <para>This command configures the server to handle traffic from
+          both <command>ha_server1</command> and <command>ha_server2</command>
+          scopes. In order to disable all scopes specify an empty list:
+
+<screen>
+{
+    "command": "ha-scopes",
+    "service": [ "dhcp4 "],
+    "arguments": {
+        "scopes": [ ]
+    }
+}
+</screen>
+          </para>
+        </section> <!-- ha-scopes-command -->
+
+      </section> <!-- ha-control-commands -->
+
     </section> <!-- end of high-availability-library -->
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
