@@ -1,3 +1,8 @@
+1383.	[func]		tmark
+	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
+	reconnect to MySQL backends if connectivity is lost.
+	(Trac #5556, git b31da6f9a3545a2cac228eb17c59d72b6b4823f2)
+
 1382.	[func]		fdupont
 	Added support for generalized UDP Source Port for DHCP Relay
 	(RFC 8357) for DHCPv4, DHCPv6 and DHCPv4-over-DHCPv6. Note
