@@ -3219,7 +3219,8 @@ both the command and the response.
           a duration in seconds between the last heartbeat (or other command sent
           to the partner) and sending the next heartbeat. The heartbeats are sent
           periodically to gather the status of the partner and to verify whether
-          the partner is still operating.</para></listitem>
+          the partner is still operating. The default value of this parameter is
+          10.</para></listitem>
 
           <listitem><para><command>max-response-delay</command> - specifies a
           duration in seconds since the last successful communication with the
@@ -3231,6 +3232,7 @@ both the command and the response.
           may transition to the <command>partner-down</command> state (when
           <command>max-unacked-clients</command> is 0) or trigger failure
           detection procedure using the values of the two parameters below.
+          The default value of this parameter is 60.
           </para></listitem>
 
           <listitem><para><command>max-ack-delay</command> - is one of
@@ -3241,7 +3243,8 @@ both the command and the response.
           trying to communicate with the DHCP server. This parameter specifies the
           maximum time for the client to try to communicate with the DHCP server,
           after which this server assumes that the client failed to communicate
-          with the DHCP server (is "unacked").</para></listitem>
+          with the DHCP server (is "unacked"). The default value of this parameter
+          is 10.</para></listitem>
 
           <listitem><para><command>max-unacked-clients</command> - specifies
           how many "unacked" clients are allowed (see <command>max-ack-delay</command>)
@@ -3251,7 +3254,8 @@ both the command and the response.
           mechanism. In this case, the server which can't communicate with the
           partner over the control channel assumes that the partner server is
           down and transitions to the <command>partner-down</command> state
-          immediately.</para></listitem>
+          immediately. The default value of this parameter is 10.</para>
+          </listitem>
 
         </itemizedlist>
         </para>
