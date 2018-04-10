@@ -5,6 +5,7 @@
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
+
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
 
@@ -1422,11 +1423,11 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
             </listitem>
             <listitem>
               <para><command>lease4-wipe</command> - removes all leases from a
-              specific IPv4 subnet;</para>
+              specific IPv4 subnet or all subnets;</para>
             </listitem>
             <listitem>
               <para><command>lease6-wipe</command> - removes all leases from a
-              specific IPv6 subnet;</para>
+              specific IPv6 subnet or all subnets;</para>
             </listitem>
           </itemizedlist>
 
@@ -1792,8 +1793,8 @@ An example result returned when the host was found:
           </para>
 
           <warning>
-            <para>The <command>lease4-get-command</command> and
-            <command>lease6-get-command</command> may result in very
+            <para>The <command>lease4-get</command> and
+            <command>lease6-get</command> commands may result in very
             large responses. This may have negative impact on the DHCP server
             responsiveness while the response is generated and transmitted
             over the control channel, as the server imposes no restriction
@@ -1934,6 +1935,9 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           leases. Status code 1 (error) may be returned in case the
           parameters are incorrect or some other exception is
           encountered.</para>
+
+          <para>The subnet-id 0 has special meaning. It tells Kea to
+          delete leases from all configured subnets.</para>
 
           <para>Note: not all backends support this command.</para>
         </section>
