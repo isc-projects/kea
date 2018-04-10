@@ -646,6 +646,14 @@ AC_ARG_WITH([mysql],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-mysql],,
+    [mysql_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-mysql has been deprecated, please use --with-mysql])
+fi
+
 if test "${mysql_config}" = "yes" ; then
     MYSQL_CONFIG="/usr/bin/mysql_config"
 elif test "${mysql_config}" != "no" ; then
@@ -699,6 +707,14 @@ AC_ARG_WITH([pgsql],
   AC_HELP_STRING([--with-pgsql=PATH],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
+
+deprec_msg="no"
+AC_ARG_WITH([dhcp-pgsql],,
+    [pg_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-pgsql has been deprecated, please use --with-pgsql])
+fi
 
 if test "${pg_config}" = "yes" ; then
     PG_CONFIG="/usr/bin/pg_config"
