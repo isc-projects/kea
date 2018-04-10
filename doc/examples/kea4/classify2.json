@@ -104,7 +104,8 @@
             "hw-address": "1a:1b:1c:1d:1e:1f",
             "client-classes": [ "VoIP" ]
         } ],
-        "interface": "ethX"
+        "interface": "ethX",
+        "require-client-classes": [ "second_subnet" ]
     },
 
 // The following list defines a subnet with pools. For some pools
