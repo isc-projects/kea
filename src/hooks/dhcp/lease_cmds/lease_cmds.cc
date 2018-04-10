@@ -767,10 +767,28 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         SimpleParser parser;
         SubnetID id = parser.getUint32(cmd_args_, "subnet-id");
 
-        size_t num = LeaseMgrFactory::instance().wipeLeases4(id);
+        size_t num = 0; // number of leases deleted
+        stringstream ids; // a text with subnet-ids being wiped
+
+        if (id) {
+            // Wipe a single subnet
+            num = LeaseMgrFactory::instance().wipeLeases4(id);
+            ids << id;
+        } else {
+            // Wipe them all!
+            ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
+            ConstCfgSubnets4Ptr subnets = config->getCfgSubnets4();
+            const Subnet4Collection * subs = subnets->getAll();
+
+            // Go over all subnets and wipe leases in each of them.
+            for (auto sub : *subs) {
+                num += LeaseMgrFactory::instance().wipeLeases4(sub->getID());
+                ids << sub->getID() << " ";
+            }
+        }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv4 lease(s).";
+        tmp << "Deleted " << num << " IPv4 lease(s) from subnet(s) " << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
@@ -795,10 +813,28 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         SimpleParser parser;
         SubnetID id = parser.getUint32(cmd_args_, "subnet-id");
 
-        size_t num = LeaseMgrFactory::instance().wipeLeases6(id);
+        size_t num = 0; // number of leases deleted
+        stringstream ids; // a text with subnet-ids being wiped
+
+        if (id) {
+            // Wipe a single subnet.
+            num = LeaseMgrFactory::instance().wipeLeases6(id);
+            ids << id;
+       } else {
+            // Wipe them all!
+            ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
+            ConstCfgSubnets6Ptr subnets = config->getCfgSubnets6();
+            const Subnet6Collection * subs = subnets->getAll();
+
+            // Go over all subnets and wipe leases in each of them.
+            for (auto sub : *subs) {
+                num += LeaseMgrFactory::instance().wipeLeases6(sub->getID());
+                ids << sub->getID() << " ";
+            }
+        }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv6 lease(s).";
+        tmp << "Deleted " << num << " IPv6 lease(s) from subnet(s) " << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
