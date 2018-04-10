@@ -75,10 +75,10 @@
       </para></listitem>
       <listitem><para>
       Classes with matching expressions and not marked for later ("on
-      request") evaluation are processed in the order they are defined
-      in the configuration: the boolean expression is evaluated and
-      when it returns true ("match") the incoming packet is associated
-      to the class.
+      request" or depending on the KNOWN builtin class) evaluation are
+      processed in the order they are defined in the configuration:
+      the boolean expression is evaluated and when it returns true
+      ("match") the incoming packet is associated to the class.
       </para></listitem>
       <listitem><para>
       If a private or code 43 DHCPv4 option is received, decoding it
@@ -101,16 +101,17 @@
       of the host reservation.
       </para></listitem>
       <listitem><para>
-      Classes with matching expressions using directly or indirectly on
-      the KNOWN builtin class and not marked for only when required
+      Classes with matching expressions using directly or indirectly
+      the KNOWN builtin class and not marked for later ("on request")
       evaluation are processed in the order they are defined in the
       configuration: the boolean expression is evaluated and when it
       returns true ("match") the incoming packet is associated to the
       class.
       </para></listitem>
       <listitem><para>
-      If needed, resources from pools are assigned, possibly based on the
-      class information when some pools are reserved to class members.
+      If needed, addresses and prefixes from pools are assigned,
+      possibly based on the class information when some pools are
+      reserved to class members.
       </para></listitem>
       <listitem><para>
       Evaluate classes marked as "required" in the order in which they

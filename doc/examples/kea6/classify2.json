@@ -1,4 +1,4 @@
-// This is an example configuration file for the DHCPv4 server in Kea.
+// This is an example configuration file for the DHCPv6 server in Kea.
 // The purpose of this example is to showcase how clients can be classified.
 
 { "Dhcp6":
@@ -83,7 +83,8 @@
             "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
             "client-classes": [ "cable-modems" ]
         } ],
-        "interface": "ethX"
+        "interface": "ethX",
+        "require-client-classes": [ "second_subnet" ]
     },
 // The following subnet contains a pool with a class constraint: only
 // clients which belong to the class are allowed to use this pool.

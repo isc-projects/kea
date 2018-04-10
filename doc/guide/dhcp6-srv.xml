@@ -2107,7 +2107,7 @@ should include options from the isc option space:
          precedence: if you set an option-data in a subnet it takes
          precedence over an option-data in a class. When you move the
          option-data to a required class and require it in
-         the subnet, a class evaluted earlier may take precedence.
+         the subnet, a class evaluated earlier may take precedence.
          </para>
 
          <para>
@@ -2986,7 +2986,7 @@ should include options from the isc option space:
     <para>Static class assignments, as shown above, can be used in conjunction
     with classification using expressions. The "KNOWN" builtin class is
     added to the packet and any class depending on it directly or indirectly
-    and not only-if-required is evaluted.
+    and not only-if-required is evaluated.
     </para>
 
     <note>
