@@ -3435,6 +3435,46 @@ both the command and the response.
         hot standby and load balancing mode of operation.</para>
       </section> <!-- end of ha-hot-standby-config -->
 
+      <section xml:id="ha-ctrl-agent-config">
+        <title>Control Agent Configuration</title>
+        <para>The <xref linkend="kea-ctrl-agent"/> describes in detail the
+        Kea deamon which provides RESTful interface to control Kea servers.
+        The same functionality is used by High Availability hook library to
+        establish communication between the HA peers. Therefore, the HA
+        library requires that Control Agent is started for each DHCP
+        instance within HA setup. If the Control Agent is not started
+        the peers will not be able to communicate with the particular DHCP
+        server (even if the DHCP server itself is online) and may eventually
+        consider this server to be offline.
+        </para>
+
+        <para>The following is the example configuration for the CA running
+        on the same machine as the primary server. This configuration is
+        valid for both load balancing and hot standby cases presented in
+        previous sections.
+
+<screen>
+{
+"Control-agent": {
+    "http-host": "192.168.56.33",
+    "http-port": 8080,
+
+    "control-sockets": {
+        "dhcp4": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
+        },
+        "dhcp6": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
+        }
+    }
+}
+}
+</screen>
+        </para>
+      </section> <!-- end of ha-ctrl-agent-config -->
+
     </section> <!-- end of high-availability-library -->
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
