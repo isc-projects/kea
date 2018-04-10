@@ -413,6 +413,71 @@ public:
     LeaseMgr* lmptr_;
 };
 
+class LeaseMgrDbLostCallbackTest : public ::testing::Test {
+public:
+    LeaseMgrDbLostCallbackTest() {
+        DatabaseConnection::db_lost_callback = 0;
+    }
+
+    virtual ~LeaseMgrDbLostCallbackTest() {
+        DatabaseConnection::db_lost_callback = 0;
+    }
+
+    /// @brief Prepares the class for a test.
+    ///
+    /// Invoked by gtest prior test entry, we create the
+    /// appropriate schema and wipe out any residual lease manager
+    virtual void SetUp();
+
+    /// @brief Pre-text exit clean up
+    ///
+    /// Invoked by gtest upon test exit, we destroy the schema
+    /// we created and toss our lease manager.
+    virtual void TearDown();
+
+    /// @brief Abstract method for destroying the back end specific shcema
+    virtual void destroySchema() = 0;
+
+    /// @brief Abstract method for creating the back end specific shcema
+    virtual void createSchema() = 0;
+
+    /// @brief Abstract method which returns the back end specific connection
+    /// string
+    virtual std::string validConnectString() = 0;
+
+    /// @brief Abstract method which returns invalid back end specific connection
+    /// string
+    virtual std::string invalidConnectString() = 0;
+
+    /// @brief Verifies open failures do NOT invoke db lost callback
+    ///
+    /// The db lost callback should only be invoked after succesfully
+    /// opening the DB and then subsequently losing it. Failing to
+    /// open should be handled directly by the application layer.
+    void testNoCallbackOnOpenFailure();
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a lease manager with an back end that
+    /// supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    void testDbLostCallback();
+
+    /// @brief Callback function registered with the host manager
+    bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
+        return (callback_called_ = true);
+    }
+
+    /// @brief Flag used to detect calls to db_lost_callback function
+    bool callback_called_;
+
+};
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
