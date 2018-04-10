@@ -89,6 +89,10 @@ public:
     /// Store the pointer to the result set to being fetched.  Set row
     /// and column counts for convenience.
     ///
+    /// @param result - pointer to the Postgresql client layer result
+    /// If the value of is NULL, row and col values will be set to -1.
+    /// This allows PgSqlResult to be passed into statement error
+    /// checking.
     PgSqlResult(PGresult *result);
 
     /// @brief Destructor
@@ -378,22 +382,23 @@ public:
     /// execution succeeded, and in the event of failures, decide whether or
     /// not the failures are recoverable.
     ///
-    /// If the error is recoverable, the method will throw a DbOperationError.
-    /// In the error is deemed unrecoverable, such as a loss of connectivity
-    /// with the server, this method will log the error and call exit(-1);
+    /// If the error is recoverable, the function will throw a DbOperationError.
+    /// If the error is deemed unrecoverable, such as a loss of connectivity
+    /// with the server, the function will call invokeDbLostCallback(). If the
+    /// invocation returns false then either there is no callback registered
+    /// or the callback has elected not to attempt to reconnect, and exit(-1)
+    /// is called;
     ///
-    /// @todo Calling exit() is viewed as a short term solution for Kea 1.0.
-    /// Two tickets are likely to alter this behavior, first is #3639, which
-    /// calls for the ability to attempt to reconnect to the database. The
-    /// second ticket, #4087 which calls for the implementation of a generic,
-    /// FatalException class which will propagate outward.
+    /// If the invocation returns true, this indicates the calling layer will
+    /// attempt recovery, and the function throws a DbOperationError to allow
+    /// the caller to error handle the failed db access attempt.
     ///
     /// @param r result of the last PostgreSQL operation
     /// @param statement - tagged statement that was executed
     ///
     /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
     void checkStatementError(const PgSqlResult& r,
-                             PgSqlTaggedStatement& statement) const; 
+                             PgSqlTaggedStatement& statement) const;
 
     /// @brief PgSql connection handle
     ///

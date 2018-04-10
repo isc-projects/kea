@@ -536,4 +536,36 @@ TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
+/// @brief Test fixture class for validating @c LeaseMgr using
+/// MySQL as back end and MySQL connectivity loss.
+class MySQLLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
+public:
+    virtual void destroySchema() {
+        test::destroyMySQLSchema();
+    }
+
+    virtual void createSchema() {
+        test::createMySQLSchema();
+    }
+
+    virtual std::string validConnectString() {
+        return (test::validMySQLConnectionString());
+    }
+
+    virtual std::string invalidConnectString() {
+        return (connectionString(MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST,
+                        VALID_USER, VALID_PASSWORD));
+    }
+};
+
+// Verifies that db lost callback is not invoked on an open failure
+TEST_F(MySQLLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    testDbLostCallback();
+}
+
+// Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostCallback) {
+    testDbLostCallback();
+}
+
 }  // namespace

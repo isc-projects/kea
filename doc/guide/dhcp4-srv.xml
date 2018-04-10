@@ -480,7 +480,26 @@ be followed by a comma and another object definition.</para>
 The default value of five seconds should be more than adequate for local connections.
 If a timeout is given though, it should be an integer greater than zero.
   </para>
-
+  <para>
+The maxiumum number of times the server will automatically attempt to reconnect to
+the lease database after connectivity has been lost may be specified:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"max-reconnect-tries" : <replaceable>number-of-tries</replaceable></userinput>, ... }, ... }
+</screen>
+If the server is unable to reconnect to the database after making the maximum number
+of attempts the server will exit. A value of zero (the default) disables automatic
+recovery and the server will exit immediately upon detecting a loss of connectivity
+(MySQL and Postgres only).
+  </para>
+  <para>
+The number of seconds the server will wait in between attempts to reconnect to the
+lease database after connectivity has been lost may also be specified:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+</screen>
+A value of zero (the default) disables automatic recovery and the server will exit
+immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+    </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -627,6 +646,26 @@ Similar parameters can be specified for hosts database.
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
 </screen>
+  <para>
+The maxiumum number of times the server will automatically attempt to reconnect to
+the host database after connectivity has been lost may be specified:
+<screen>
+"Dhcp4": { "hosts-database": { <userinput>"max-reconnect-tries" : <replaceable>number-of-tries</replaceable></userinput>, ... }, ... }
+</screen>
+If the server is unable to reconnect to the database after making the maximum number
+of attempts the server will exit. A value of zero (the default) disables automatic
+recovery and the server will exit immediately upon detecting a loss of connectivity
+(MySQL and Postgres only).
+  </para>
+  <para>
+The number of seconds the server will wait in between attempts to reconnect to the
+host database after connectivity has been lost may also be specified:
+<screen>
+"Dhcp4": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+</screen>
+A value of zero (the default) disables automatic recovery and the server will exit
+immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+    </para>
 
   </para>
   <para>Finally, the credentials of the account under which the server will
