@@ -2679,11 +2679,43 @@ TEST_F(LeaseCmdsTest, Lease4Wipe) {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 2 IPv4 lease(s).";
+    string exp_rsp = "Deleted 2 IPv4 lease(s) from subnet(s) 44";
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    // Make sure the lease is really gone.
+    // Make sure the leases in subnet 44 are really gone.
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.2")));
+
+    // Make sure the leases from subnet 88 are still there.
+    EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.3.1")));
+    EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.3.2")));
+}
+
+// Checks that lease4-wipe can remove leases from all subnets
+// at once.
+TEST_F(LeaseCmdsTest, Lease4WipeAll) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88 ";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.2")));
+
+    // Make sure the leases from subnet 88 are gone, too.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.2")));
 }
 
 // Checks that lease4-wipe properly reports when no leases were deleted.
@@ -2700,7 +2732,25 @@ TEST_F(LeaseCmdsTest, Lease4WipeNoLeases) {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv4 lease(s).";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-wipe properly reports when no leases were deleted.
+TEST_F(LeaseCmdsTest, Lease4WipeNoLeasesAll) {
+
+    // Initialize lease manager (false = v4, false = no leases)
+    initLeaseMgr(false, false);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88 ";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
@@ -2734,13 +2784,45 @@ TEST_F(LeaseCmdsTest, Lease6Wipe) {
         "        \"subnet-id\": 66\n"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 2 IPv6 lease(s).";
+    string exp_rsp = "Deleted 2 IPv6 lease(s) from subnet(s) 66";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    // Make sure the lease is really gone.
+    // Make sure the leases in subnet 44 are really gone.
     EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+
+    // The leases in subnet 88 are supposed to be still there.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
+}
+
+// Checks that lease4-wipe can remove leases from all subnets
+TEST_F(LeaseCmdsTest, Lease6WipeAll) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create a lease)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99 ";
+
+    // The status expected is success. The lease should be deleted.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+
+    // The leases in subnet 88 are supposed to be still there.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
 }
 
 // Checks that lease4-wipe properly reports when no leases were deleted.
@@ -2757,7 +2839,25 @@ TEST_F(LeaseCmdsTest, Lease6WipeNoLeases) {
         "        \"subnet-id\": 66"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv6 lease(s).";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-wipe properly reports when no leases were deleted.
+TEST_F(LeaseCmdsTest, Lease6WipeNoLeasesAll) {
+
+    // Initialize lease manager (false = v4, false = no leases)
+    initLeaseMgr(true, false);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66 99 ";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
