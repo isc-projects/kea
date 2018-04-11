@@ -2223,6 +2223,8 @@ should include options from the isc option space:
       users from playing with their cable modems. For details on how to set up
       class restrictions on subnets, see <xref linkend="classification-subnets"/>.
       </para>
+
+      <para>
       When subnets belong to a shared network the classification applies
       to subnet selection but not to pools, e.g., a pool in a subnet
       limited to a particular class can still be used by clients which do not
