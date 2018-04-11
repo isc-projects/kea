@@ -1937,7 +1937,9 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           encountered.</para>
 
           <para>The subnet-id 0 has special meaning. It tells Kea to
-          delete leases from all configured subnets.</para>
+          delete leases from all configured subnets. Also, the
+          subnet-id parameter may be omitted. If not specified, leases
+          from all subnets are wiped.</para>
 
           <para>Note: not all backends support this command.</para>
         </section>
