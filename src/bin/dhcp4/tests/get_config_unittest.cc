@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6331,7 +6331,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            },\n"
 "            {\n"
 "                \"boot-file-name\": \"\",\n"
-"                \"name\": \"three\",\n"
+"                \"name\": \"two\",\n"
 "                \"next-server\": \"0.0.0.0\",\n"
 "                \"option-data\": [ ],\n"
 "                \"option-def\": [ ],\n"
@@ -6339,7 +6339,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            },\n"
 "            {\n"
 "                \"boot-file-name\": \"\",\n"
-"                \"name\": \"two\",\n"
+"                \"name\": \"three\",\n"
 "                \"next-server\": \"0.0.0.0\",\n"
 "                \"option-data\": [ ],\n"
 "                \"option-def\": [ ],\n"
@@ -6777,6 +6777,14 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"test\": \"'' == ''\"\n"
 "            },\n"
 "            {\n"
+"                \"boot-file-name\": \"\",\n"
+"                \"name\": \"none\",\n"
+"                \"next-server\": \"0.0.0.0\",\n"
+"                \"option-data\": [ ],\n"
+"                \"option-def\": [ ],\n"
+"                \"server-hostname\": \"\"\n"
+"            },\n"
+"            {\n"
 "                \"comment\": \"a comment\",\n"
 "                \"boot-file-name\": \"\",\n"
 "                \"name\": \"both\",\n"
@@ -6787,14 +6795,6 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"user-context\": {\n"
 "                    \"version\": 1\n"
 "                }\n"
-"            },\n"
-"            {\n"
-"                \"boot-file-name\": \"\",\n"
-"                \"name\": \"none\",\n"
-"                \"next-server\": \"0.0.0.0\",\n"
-"                \"option-data\": [ ],\n"
-"                \"option-def\": [ ],\n"
-"                \"server-hostname\": \"\"\n"
 "            }\n"
 "        ],\n"
 "        \"control-socket\": {\n"

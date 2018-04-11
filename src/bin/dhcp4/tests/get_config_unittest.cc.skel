@@ -347,7 +347,9 @@ TEST_P(Dhcp4GetConfigTest, run) {
 class IntToString {
 public:
     std::string operator()(const testing::TestParamInfo<size_t>& n) {
-        return to_string(n.param);
+        std::ostringstream ss;
+        ss << static_cast<size_t>(n.param);
+        return (ss.str());
     }
 };
 

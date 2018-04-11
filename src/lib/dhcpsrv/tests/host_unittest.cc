@@ -1169,6 +1169,7 @@ TEST_F(HostTest, unparse) {
               "}",
               host->toElement6()->str());
 
+    // Now the classes are in defined order (vs. alphabetical order).
     host->addClientClass6("hub");
     host->addClientClass6("device");
 
@@ -1184,7 +1185,7 @@ TEST_F(HostTest, unparse) {
               host->toElement4()->str());
 
     EXPECT_EQ("{ "
-              "\"client-classes\": [ \"device\", \"hub\" ], "
+              "\"client-classes\": [ \"hub\", \"device\" ], "
               "\"duid\": \"11:12:13:14:15\", "
               "\"hostname\": \"myhost\", "
               "\"ip-addresses\": [  ], "
