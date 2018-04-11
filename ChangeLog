@@ -1,3 +1,12 @@
+1384.	[func]		fdupont
+	Significant improvements to client classification introduced.
+	The order of classes evaluation has changed from alphabetical
+	to the order of appearance. New 'member' expression allows
+	combination of classes. The new 'only-if-required' and
+	'require-client-class' parameters controlling the scope of
+	a class have been introduced.
+	(Trac #5474, git xxx)
+
 1383.	[func]		tmark
 	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
 	reconnect to MySQL backends if connectivity is lost.
