@@ -5,7 +5,7 @@
 	combination of classes. The new 'only-if-required' and
 	'require-client-class' parameters controlling the scope of
 	a class have been introduced.
-	(Trac #5474, git xxx)
+	(Trac #5474, git 3f2d93f0731fc1858b20e831a7d1f090ea8841fe)
 
 1383.	[func]		tmark
 	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
