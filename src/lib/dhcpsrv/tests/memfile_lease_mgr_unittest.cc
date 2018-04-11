@@ -1935,4 +1935,10 @@ TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
     testWipeLeases6();
 }
 
+TEST_F(MemfileLeaseMgrTest, leaseStatsQuery4) {
+    startBackend(V4);
+    testLeaseStatsQuery4();
+}
+
+
 }  // namespace

@@ -2857,6 +2857,112 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     EXPECT_TRUE(callback_called_);
 }
 
+void
+GenericLeaseMgrTest::checkQueryAgainstRowSet(LeaseStatsQueryPtr query,
+                                             RowSet& expected_rows) {
+    ASSERT_TRUE(query) << "query is null";
+
+    int rows_matched = 0;
+    LeaseStatsRow row;
+    while (query->getNextRow(row)) {
+        auto found_row = expected_rows.find(row);
+        if (found_row == expected_rows.end()) {
+            ADD_FAILURE() << "query row not in expected set"
+                << " id: " << row.subnet_id_
+                << " type: " << row.lease_type_
+                << " state: " << row.lease_state_
+                << " count: " << row.state_count_;
+        } else {
+           ++rows_matched;
+        }
+    }
+
+    ASSERT_EQ(rows_matched, expected_rows.size()) << "rows mismatched";
+}
+
+void
+GenericLeaseMgrTest::testLeaseStatsQuery4() {
+    // Create three subnets.
+    int num_subnets = 3;
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+    Pool4Ptr pool;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    pool.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 2));
+    pool.reset(new Pool4(IOAddress("192.0.2.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 3));
+    pool.reset(new Pool4(IOAddress("192.0.3.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Now let's insert some leases into subnet 1.
+    // Two leases in  the default state, i.e. assigned.
+    // One lease in declined state.
+    // One lease in the expired state.
+    int subnet_id = 1;
+    makeLease4("192.0.1.1", subnet_id);
+    makeLease4("192.0.1.2", subnet_id, Lease::STATE_DECLINED);
+    makeLease4("192.0.1.3", subnet_id, Lease::STATE_EXPIRED_RECLAIMED);
+    makeLease4("192.0.1.4", subnet_id);
+
+    // Now let's add leases to subnet 2.
+    // One declined lease.
+    subnet_id = 2;
+    makeLease4("192.0.2.2", subnet_id, Lease::STATE_DECLINED);
+
+    // Now add leases to subnet 3
+    // Two leases in default state, i.e. assigned.
+    // One declined lease.
+    subnet_id = 3;
+    makeLease4("192.0.3.1", subnet_id);
+    makeLease4("192.0.3.2", subnet_id);
+    makeLease4("192.0.3.3", subnet_id, Lease::STATE_DECLINED);
+
+    LeaseStatsQueryPtr query;
+    RowSet expected_rows;
+
+    // Test a non-matching single subnet
+    ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(777));
+    checkQueryAgainstRowSet(query, expected_rows);
+
+    // Test a single subnet
+    // Add expected row for Subnet 2
+    expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 0));
+    expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DECLINED, 1));
+    // Start the query
+    ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(2));
+    // Verify contents
+    checkQueryAgainstRowSet(query, expected_rows);
+
+    // Test a range of subnets
+    // Add expected rows for Subnet 3
+    expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DEFAULT, 2));
+    expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DECLINED, 1));
+    // Start the query
+    ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(2,3));
+    // Verify contents
+    checkQueryAgainstRowSet(query, expected_rows);
+
+    // Test all subnets
+    // Add expected rows for Subnet 1
+    expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DEFAULT, 2));
+    expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DECLINED, 1));
+    // Start the query
+    ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
+    // Verify contents
+    checkQueryAgainstRowSet(query, expected_rows);
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
