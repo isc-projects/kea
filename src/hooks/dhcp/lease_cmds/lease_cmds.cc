@@ -759,21 +759,21 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
     try {
         extractCommand(handle);
 
-        // The subnet-id is a mandatory parameter.
-        if (!cmd_args_) {
-            isc_throw(isc::BadValue, "no parameters specified for lease4-wipe command");
-        }
-
         SimpleParser parser;
-        SubnetID id = parser.getUint32(cmd_args_, "subnet-id");
+        SubnetID id = 0;
 
         size_t num = 0; // number of leases deleted
         stringstream ids; // a text with subnet-ids being wiped
 
+        // The subnet-id parameter is now optional.
+        if (cmd_args_ && cmd_args_->contains("subnet-id")) {
+            id = parser.getUint32(cmd_args_, "subnet-id");
+        }
+
         if (id) {
             // Wipe a single subnet
             num = LeaseMgrFactory::instance().wipeLeases4(id);
-            ids << id;
+            ids << " " << id;
         } else {
             // Wipe them all!
             ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -783,12 +783,12 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             // Go over all subnets and wipe leases in each of them.
             for (auto sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases4(sub->getID());
-                ids << sub->getID() << " ";
+                ids << " " << sub->getID();
             }
         }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv4 lease(s) from subnet(s) " << ids.str();
+        tmp << "Deleted " << num << " IPv4 lease(s) from subnet(s)" << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
@@ -805,21 +805,27 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
     try {
         extractCommand(handle);
 
-        // The subnet-id is a mandatory parameter.
-        if (!cmd_args_) {
-            isc_throw(isc::BadValue, "no parameters specified for lease6-wipe command");
-        }
-
         SimpleParser parser;
-        SubnetID id = parser.getUint32(cmd_args_, "subnet-id");
+        SubnetID id = 0;
 
         size_t num = 0; // number of leases deleted
         stringstream ids; // a text with subnet-ids being wiped
 
+        /// @todo: consider extending the code with wipe-leases:
+        /// - of specific type (v6)
+        /// - from specific shared network
+        /// - from specific pool
+        /// see https://kea.isc.org/ticket/5543#comment:6 for background.
+
+        // The subnet-id parameter is now optional.
+        if (cmd_args_ && cmd_args_->contains("subnet-id")) {
+            id = parser.getUint32(cmd_args_, "subnet-id");
+        }
+
         if (id) {
             // Wipe a single subnet.
             num = LeaseMgrFactory::instance().wipeLeases6(id);
-            ids << id;
+            ids << " " << id;
        } else {
             // Wipe them all!
             ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
@@ -829,12 +835,12 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             // Go over all subnets and wipe leases in each of them.
             for (auto sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases6(sub->getID());
-                ids << sub->getID() << " ";
+                ids << " " << sub->getID();
             }
         }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv6 lease(s) from subnet(s) " << ids.str();
+        tmp << "Deleted " << num << " IPv6 lease(s) from subnet(s)" << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
