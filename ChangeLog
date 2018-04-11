@@ -1,3 +1,9 @@
+1385.	[func]		tomek
+	lease4-wipe and lease6-wipe are now able to wipe all leases
+	from all configured subnets if subnet-id specified is 0
+	or the subnet-id parameter is omitted.
+	(Trac #5543, git ecaf777dff4b8d1100c2a97c4fb1cf8f8e63566d)
+
 1384.	[func]		fdupont
 	Significant improvements to client classification introduced.
 	The order of classes evaluation has changed from alphabetical
@@ -8,7 +14,7 @@
 	(Trac #5474, git 3f2d93f0731fc1858b20e831a7d1f090ea8841fe)
 
 1383.	[func]		tmark
-	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
+	kea-dhcp4 and kea-dhcp6 can now be configured to attempt to
 	reconnect to MySQL backends if connectivity is lost.
 	(Trac #5556, git b31da6f9a3545a2cac228eb17c59d72b6b4823f2)
 
