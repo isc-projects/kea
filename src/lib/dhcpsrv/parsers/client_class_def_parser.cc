@@ -198,7 +198,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     // Add the client class definition
     try {
         class_dictionary->addClass(name, match_expr, test, required, options,
-                                   defs, next_server, sname, filename);
+                                   defs, user_context, next_server, sname,
+                                   filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");
