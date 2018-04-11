@@ -59,6 +59,14 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+% DHCP4_CLASS_UNDEFINED required class %1 has no definition
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+% DHCP4_CLASS_UNTESTABLE required class %1 has no test expression
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
 This debug message is issued when the server is processing the DHCPv4 message
 for which client identifier will not be used when allocating new lease or

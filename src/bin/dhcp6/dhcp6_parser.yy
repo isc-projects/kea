@@ -123,7 +123,9 @@ using namespace std;
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
   CLIENT_CLASSES "client-classes"
+  REQUIRE_CLIENT_CLASSES "require-client-classes"
   TEST "test"
+  ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
 
   RESERVATIONS "reservations"
@@ -977,6 +979,7 @@ subnet6_param: preferred_lifetime
              | id
              | rapid_commit
              | client_class
+             | require_client_classes
              | reservations
              | reservation_mode
              | relay
@@ -1010,10 +1013,20 @@ interface_id: INTERFACE_ID {
 };
 
 client_class: CLIENT_CLASS {
-    ctx.enter(ctx.CLIENT_CLASS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("client-class", cls);
+    ctx.leave();
+};
+
+require_client_classes: REQUIRE_CLIENT_CLASSES {
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("require-client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 
@@ -1084,6 +1097,7 @@ shared_network_param: name
                     | relay
                     | reservation_mode
                     | client_class
+                    | require_client_classes
                     | preferred_lifetime
                     | rapid_commit
                     | valid_lifetime
@@ -1373,6 +1387,7 @@ pool_params: pool_param
 pool_param: pool_entry
           | option_data_list
           | client_class
+          | require_client_classes
           | user_context
           | comment
           | unknown_map_entry
@@ -1494,6 +1509,7 @@ pd_pool_param: pd_prefix
              | pd_delegated_len
              | option_data_list
              | client_class
+             | require_client_classes
              | excluded_prefix
              | excluded_prefix_len
              | user_context
@@ -1713,6 +1729,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
+                  | only_if_required
                   | option_data_list
                   | user_context
                   | comment
@@ -1727,6 +1744,11 @@ client_class_test: TEST {
     ElementPtr test(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
+};
+
+only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("only-if-required", b);
 };
 
 // --- end of client classes ---------------------------------

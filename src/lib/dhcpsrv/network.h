@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,7 @@ public:
     /// @brief Constructor.
     Network()
         : iface_name_(), relay_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
-          white_list_(), t1_(0), t2_(0), valid_(0),
+          client_class_(""), t1_(0), t2_(0), valid_(0),
           host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
     }
 
@@ -160,31 +160,35 @@ public:
     /// it is supported. On the other hand, client belonging to classes
     /// "foobar" and "zyxxy" is not supported.
     ///
-    /// @todo: Currently the logic is simple: client is supported if it belongs
-    /// to any class mentioned in white_list_. We will eventually need a
-    /// way to specify more fancy logic (e.g. to meet all classes, not just
-    /// any)
+    /// @note: changed the planned white and black lists idea to a simple
+    /// client class name.
     ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
-    /// @brief Adds class class_name to the list of supported classes
+    /// @brief Sets the supported class to class class_name
     ///
-    /// Also see explanation note in @ref white_list_.
-    ///
-    /// @param class_name client class to be supported by this subnet
+    /// @param class_name client class to be supported by this network
     void allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief returns the client class white list
+    /// @brief Adds class class_name to classes required to be evaluated.
+    ///
+    /// @param class_name client class required to be evaluated
+    void requireClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief Returns classes which are required to be evaluated
+    const isc::dhcp::ClientClasses& getRequiredClasses() const;
+
+    /// @brief returns the client class
     ///
     /// @note The returned reference is only valid as long as the object
     /// returned it is valid.
     ///
-    /// @return client classes @ref white_list_
-    const isc::dhcp::ClientClasses& getClientClasses() const {
-        return (white_list_);
+    /// @return client class @ref client_class_
+    const isc::dhcp::ClientClass& getClientClass() const {
+        return (client_class_);
     }
 
     /// @brief Return valid-lifetime for addresses in that prefix
@@ -274,14 +278,15 @@ protected:
     /// @brief Optional definition of a client class
     ///
     /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular network. The default value for this is an empty list,
+    /// this particular network. The default value for this is an empty string,
     /// which means that any client is allowed, regardless of its class.
+    ClientClass client_class_;
+
+    /// @brief Required classes
     ///
-    /// @todo This is just a single list of allowed classes. We'll also need
-    /// to add a black-list (only classes on the list are rejected, the rest
-    /// are allowed). Implementing this will require more fancy parser logic,
-    /// so it may be a while until we support this.
-    ClientClasses white_list_;
+    /// If the network is selected these classes will be added to the
+    /// incoming packet and their evaluation will be required.
+    ClientClasses required_classes_;
 
     /// @brief a Triplet (min/default/max) holding allowed renew timer values
     Triplet<uint32_t> t1_;

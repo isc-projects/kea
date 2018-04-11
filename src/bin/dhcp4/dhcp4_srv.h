@@ -832,6 +832,18 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
+    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    ///
+    /// @note This required classification evaluates all classes which
+    /// were marked for required evaluation. Classes are collected so
+    /// evaluated in the reversed order than output option processing.
+    ///
+    /// @note The only-if-required flag is related because it avoids
+    /// double evaluation (which is not forbidden).
+    ///
+    /// @param ex The exchange holding needed informations.
+    void requiredClassify(Dhcpv4Exchange& ex);
+
     /// @brief Perform deferred option unpacking.
     ///
     /// @note Options 43 and 224-254 are processed after classification.

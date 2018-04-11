@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,8 @@
 #include <exceptions/exceptions.h>
 
 #include <string>
+#include <unordered_map>
+#include <list>
 
 /// @file client_class_def.h
 ///
@@ -80,6 +82,12 @@ public:
     ///
     /// @param test the original expression to assign the class
     void setTest(const std::string& test);
+
+    /// @brief Fetches the only if required flag
+    bool getRequired() const;
+
+    /// @brief Sets the only if required flag
+    void setRequired(bool required);
 
     /// @brief Fetches the class's option definitions
     const CfgOptionDefPtr& getCfgOptionDef() const;
@@ -181,6 +189,12 @@ private:
     /// this class.
     std::string test_;
 
+    /// @brief The only-if-required flag: when false (the default) membership
+    /// is determined during classification so is available, of instance,
+    /// for subnet selection. When true, membership is evaluated
+    /// only when required and is usable only for option configuration.
+    bool required_;
+
     /// @brief The option definition configuration for this class
     CfgOptionDefPtr cfg_option_def_;
 
@@ -210,13 +224,16 @@ private:
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
 /// @brief Defines a map of ClientClassDef's, keyed by the class name.
-typedef std::map<std::string, ClientClassDefPtr> ClientClassDefMap;
+typedef std::unordered_map<std::string, ClientClassDefPtr> ClientClassDefMap;
 
 /// @brief Defines a pointer to a ClientClassDefMap
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
-/// @brief Defines a pair for working with ClientClassMap
-typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
+/// @brief Defines a list of ClientClassDefPtr's, using insert order.
+typedef std::list<ClientClassDefPtr> ClientClassDefList;
+
+/// @brief Defines a pointer to a ClientClassDefList
+typedef boost::shared_ptr<ClientClassDefList> ClientClassDefListPtr;
 
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary : public isc::data::CfgToElement {
@@ -235,6 +252,7 @@ public:
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
+    /// @param required Original value of the only if required flag
     /// @param options Collection of options members should be given
     /// @param defs Option definitions (optional)
     /// @param user_context User context (optional)
@@ -246,7 +264,8 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const std::string& test, const CfgOptionPtr& options,
+                  const std::string& test, bool required,
+                  const CfgOptionPtr& options,
                   CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
@@ -277,10 +296,10 @@ public:
     /// @param name the name of the class to remove
     void removeClass(const std::string& name);
 
-    /// @brief Fetches the dictionary's map of classes
+    /// @brief Fetches the dictionary's list of classes
     ///
-    /// @return ClientClassDefMapPtr to the map of classes
-    const ClientClassDefMapPtr& getClasses() const;
+    /// @return ClientClassDefListPtr to the list of classes
+    const ClientClassDefListPtr& getClasses() const;
 
     /// @brief Compares two @c ClientClassDictionary objects for equality.
     ///
@@ -315,12 +334,38 @@ public:
 private:
 
     /// @brief Map of the class definitions
-    ClientClassDefMapPtr classes_;
+    ClientClassDefMapPtr map_;
 
+    /// @brief List of the class definitions
+    ClientClassDefListPtr list_;
 };
 
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
+
+/// @brief List of built-in client class names.
+/// i.e. ALL and KNOWN.
+extern std::list<std::string> builtinNames;
+
+/// @brief List of built-in client class prefixes
+/// i.e. VENDOR_CLASS_, AFTER_ and EXTERNAL_.
+extern std::list<std::string> builtinPrefixes;
+
+/// @brief Check if a client class name is builtin.
+///
+/// @param client_class A client class name to look for.
+/// @return true if built-in, false if not.
+bool isClientClassBuiltIn(const ClientClass& client_class);
+
+
+/// @brief Check if a client class name is already defined,
+/// i.e. is built-in or in the dictionary,
+///
+/// @param class_dictionary A class dictionary where to look for.
+/// @param client_class A client class name to look for.
+/// @return true if defined or built-in, false if not.
+bool isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                          const ClientClass& client_class);
 
 } // namespace isc::dhcp
 } // namespace isc

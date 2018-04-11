@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,27 @@ namespace {
 ///     the 'foo' value.
 ///   - There is one subnet specified 2001:db8:1::/48 with pool of
 ///     IPv6 addresses.
+///
+/// - Configuration 1:
+///   - Used for complex membership (example taken from HA)
+///   - 1 subnet: 2001:db8:1::/48
+///   - 4 pools: 2001:db8:1:1::/64, 2001:db8:1:2::/64,
+///              2001:db8:1:3::/64 and 2001:db8:1:4::/64
+///   - 4 classes to compose:
+///      server1 and server2 for each HA server
+///      option 1234 'foo' aka telephones
+///      option 1234 'bar' aka computers
+///
+/// - Configuration 2:
+///   - Used for complex membership (example taken from HA) and pd-pools
+///   - 1 subnet: 2001:db8::/32
+///   - 4 pd-pools: 2001:db8:1::/48, 2001:db8:2::/48,
+///                 2001:db8:3::/48 and 2001:db8:4::/48
+///   - 4 classes to compose:
+///      server1 and server2 for each HA server
+///      option 1234 'foo' aka telephones
+///      option 1234 'bar' aka computers
+///
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -104,7 +125,132 @@ const char* CONFIGS[] = {
         "        \"client-classes\": [ \"reserved-class1\", \"reserved-class2\" ]"
         "    } ]"
         " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 1
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ "
+        "{"
+        "    \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\""
+        "} ],"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"server1\""
+        "},"
+        "{"
+        "   \"name\": \"server2\""
+        "},"
+        "{"
+        "   \"name\": \"telephones\","
+        "   \"test\": \"option[host-name].text == 'foo'\""
+        "},"
+        "{"
+        "   \"name\": \"computers\","
+        "   \"test\": \"option[host-name].text == 'bar'\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_telephones\","
+        "   \"test\": \"member('server1') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_computers\","
+        "   \"test\": \"member('server1') and member('computers')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_telephones\","
+        "   \"test\": \"member('server2') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_computers\","
+        "   \"test\": \"member('server2') and member('computers')\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\","
+        "    \"pools\": [ "
+        "        { \"pool\": \"2001:db8:1:1::/64\","
+        "          \"client-class\": \"server1_and_telephones\" },"
+        "        { \"pool\": \"2001:db8:1:2::/64\","
+        "          \"client-class\": \"server1_and_computers\" },"
+        "        { \"pool\": \"2001:db8:1:3::/64\","
+        "          \"client-class\": \"server2_and_telephones\" },"
+        "        { \"pool\": \"2001:db8:1:4::/64\","
+        "          \"client-class\": \"server2_and_computers\" } ]"
+        " } ],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 2
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"option-def\": [ "
+        "{"
+        "    \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\""
+        "} ],"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"server1\""
+        "},"
+        "{"
+        "   \"name\": \"server2\""
+        "},"
+        "{"
+        "   \"name\": \"telephones\","
+        "   \"test\": \"option[host-name].text == 'foo'\""
+        "},"
+        "{"
+        "   \"name\": \"computers\","
+        "   \"test\": \"option[host-name].text == 'bar'\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_telephones\","
+        "   \"test\": \"member('server1') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server1_and_computers\","
+        "   \"test\": \"member('server1') and member('computers')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_telephones\","
+        "   \"test\": \"member('server2') and member('telephones')\""
+        "},"
+        "{"
+        "   \"name\": \"server2_and_computers\","
+        "   \"test\": \"member('server2') and member('computers')\""
+        "}"
+        "],"
+        "\"subnet6\": [ "
+        "{   \"subnet\": \"2001:db8::/32\", "
+        "    \"interface\": \"eth1\","
+        "    \"pd-pools\": [ "
+        "        { \"prefix\": \"2001:db8:1::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
+        "          \"client-class\": \"server1_and_telephones\" },"
+        "        { \"prefix\": \"2001:db8:2::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
+        "          \"client-class\": \"server1_and_computers\" },"
+        "        { \"prefix\": \"2001:db8:3::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
+        "          \"client-class\": \"server2_and_telephones\" },"
+        "        { \"prefix\": \"2001:db8:4::\","
+        "          \"prefix-len\": 48, \"delegated-len\": 64,"
+        "          \"client-class\": \"server2_and_computers\" } ]"
+        " } ],"
         "\"valid-lifetime\": 4000 }"
+
 };
 
 /// @brief Test fixture class for testing client classification by the
@@ -281,6 +427,189 @@ TEST_F(ClassifyTest, matchClassification) {
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
+
+    // Process queries
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    Pkt6Ptr response3 = srv.processSolicit(query3);
+
+    // Classification processing should add an ip-forwarding option
+    OptionPtr opt1 = response1->getOption(2345);
+    EXPECT_TRUE(opt1);
+
+    // But only for the first query: second was not classified
+    OptionPtr opt2 = response2->getOption(2345);
+    EXPECT_FALSE(opt2);
+
+    // But only for the first query: third has no ORO
+    OptionPtr opt3 = response3->getOption(2345);
+    EXPECT_FALSE(opt3);
+}
+
+// Check that only-if-required classes are not evaluated by classifyPacket
+TEST_F(ClassifyTest, required) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\", "
+        "    \"only-if-required\": true, "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create packets with enough to select the subnet
+    OptionPtr clientid = generateClientId();
+    Pkt6Ptr query1(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("fe80::abcd"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query2->setRemoteAddr(IOAddress("fe80::abcd"));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query3->setRemoteAddr(IOAddress("fe80::abcd"));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
+    query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
+
+    // Create and add an ORO option to the first 2 queries
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query1->addOption(oro);
+    query2->addOption(oro);
+
+    // Create and add a host-name option to the first and last queries
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query1->addOption(hostname);
+    query3->addOption(hostname);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+    srv.classifyPacket(query2);
+    srv.classifyPacket(query3);
+
+    // No packet is in the router class
+    EXPECT_FALSE(query1->inClass("router"));
+    EXPECT_FALSE(query2->inClass("router"));
+    EXPECT_FALSE(query3->inClass("router"));
+
+    // Process queries
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    Pkt6Ptr response3 = srv.processSolicit(query3);
+
+    // Classification processing should do nothing
+    OptionPtr opt1 = response1->getOption(2345);
+    EXPECT_FALSE(opt1);
+    OptionPtr opt2 = response2->getOption(2345);
+    EXPECT_FALSE(opt2);
+    OptionPtr opt3 = response3->getOption(2345);
+    EXPECT_FALSE(opt3);
+}
+
+// Checks that when only-if-required classes are still evaluated
+TEST_F(ClassifyTest, requiredClassification) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"require-client-classes\": [ \"router\" ], "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\", "
+        "    \"only-if-required\": true, "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create packets with enough to select the subnet
+    OptionPtr clientid = generateClientId();
+    Pkt6Ptr query1(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("fe80::abcd"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query2->setRemoteAddr(IOAddress("fe80::abcd"));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query3->setRemoteAddr(IOAddress("fe80::abcd"));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
+    query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
+
+    // Create and add an ORO option to the first 2 queries
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query1->addOption(oro);
+    query2->addOption(oro);
+
+    // Create and add a host-name option to the first and last queries
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query1->addOption(hostname);
+    query3->addOption(hostname);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+    srv.classifyPacket(query2);
+    srv.classifyPacket(query3);
+
+    // No packet is in the router class yet
+    EXPECT_FALSE(query1->inClass("router"));
+    EXPECT_FALSE(query2->inClass("router"));
+    EXPECT_FALSE(query3->inClass("router"));
 
     // Process queries
     Pkt6Ptr response1 = srv.processSolicit(query1);
@@ -700,13 +1029,109 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     EXPECT_TRUE(ia_na3->getOption(D6O_IAADDR));
 }
 
+// Checks if the client-class field is indeed used for pool selection.
+TEST_F(ClassifyTest, clientClassifyPool) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // This test configures 2 pools.
+    // The second pool does not play any role here. The client's
+    // IP address belongs to the first pool, so only that first
+    // pool is being tested.
+    std::string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"client-classes\": [ "
+        " { "
+        "    \"name\": \"foo\" "
+        " }, "
+        " { "
+        "    \"name\": \"bar\" "
+        " } "
+        "], "
+        "\"subnet6\": [ "
+        " {  \"pools\": [ "
+        "    { "
+        "       \"pool\": \"2001:db8:1::/64\", "
+        "       \"client-class\": \"foo\" "
+        "    }, "
+        "    { "
+        "       \"pool\": \"2001:db8:2::/64\", "
+        "       \"client-class\": \"xyzzy\" "
+        "    } "
+        "   ], "
+        "   \"subnet\": \"2001:db8:2::/40\" "
+        " } "
+        "], "
+        "\"valid-lifetime\": 4000 }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    OptionPtr clientid = generateClientId();
+    Pkt6Ptr query1 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    query1->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    Pkt6Ptr query2 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query2->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
+    Pkt6Ptr query3 = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query3->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    query3->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
+
+    // This discover does not belong to foo class, so it will not
+    // be serviced
+    srv.classifyPacket(query1);
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    ASSERT_TRUE(response1);
+    OptionPtr ia_na1 = response1->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na1);
+    EXPECT_TRUE(ia_na1->getOption(D6O_STATUS_CODE));
+    EXPECT_FALSE(ia_na1->getOption(D6O_IAADDR));
+
+    // Let's add the packet to bar class and try again.
+    query2->addClass("bar");
+    // Still not supported, because it belongs to wrong class.
+    srv.classifyPacket(query2);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    ASSERT_TRUE(response2);
+    OptionPtr ia_na2 = response2->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na2);
+    EXPECT_TRUE(ia_na2->getOption(D6O_STATUS_CODE));
+    EXPECT_FALSE(ia_na2->getOption(D6O_IAADDR));
+
+    // Let's add it to matching class.
+    query3->addClass("foo");
+    // This time it should work
+    srv.classifyPacket(query3);
+    Pkt6Ptr response3 = srv.processSolicit(query3);
+    ASSERT_TRUE(response3);
+    OptionPtr ia_na3 = response3->getOption(D6O_IA_NA);
+    ASSERT_TRUE(ia_na3);
+    EXPECT_FALSE(ia_na3->getOption(D6O_STATUS_CODE));
+    EXPECT_TRUE(ia_na3->getOption(D6O_IAADDR));
+}
+
 // Tests whether a packet with custom vendor-class (not erouter or docsis)
 // is classified properly.
 TEST_F(ClassifyTest, vendorClientClassification2) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a SOLICIT.
-    Pkt6Ptr sol = createSolicit("2001:db8:1::3");
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
 
     // Now let's add a vendor-class with id=1234 and content "foo"
     OptionVendorClassPtr vendor_class(new OptionVendorClass(Option::V6, 1234));
@@ -865,5 +1290,695 @@ TEST_F(ClassifyTest, clientClassesInHostReservations) {
                                                  "2001:db8:1::100"));
 }
 
+// Check classification using membership expressions.
+TEST_F(ClassifyTest, member) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"not-foo\", "
+        "    \"test\": \"not (option[host-name].text == 'foo')\""
+        "},"
+        "{   \"name\": \"foo\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"true\" } ], "
+        "    \"test\": \"not member('not-foo')\""
+        "},"
+        "{   \"name\": \"bar\", "
+        "    \"test\": \"option[host-name].text == 'bar'\""
+        "},"
+        "{   \"name\": \"baz\", "
+        "    \"test\": \"option[host-name].text == 'baz'\""
+        "},"
+        "{   \"name\": \"barz\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"data\": \"false\" } ], "
+        "    \"test\": \"member('bar') or member('baz')\" } ] }";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create packets with enough to select the subnet
+    OptionPtr clientid = generateClientId();
+    Pkt6Ptr query1(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query1->setRemoteAddr(IOAddress("fe80::abcd"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
+    Pkt6Ptr query2(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query2->setRemoteAddr(IOAddress("fe80::abcd"));
+    query2->addOption(clientid);
+    query2->setIface("eth1");
+    query2->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    Pkt6Ptr query3(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query3->setRemoteAddr(IOAddress("fe80::abcd"));
+    query3->addOption(clientid);
+    query3->setIface("eth1");
+    query3->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
+
+    // Create and add an ORO option to queries
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(2345);
+    query1->addOption(oro);
+    query2->addOption(oro);
+    query3->addOption(oro);
+
+    // Create and add a host-name option to the first and last queries
+    OptionStringPtr hostname1(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname1);
+    query1->addOption(hostname1);
+    OptionStringPtr hostname3(new OptionString(Option::V6, 1234, "baz"));
+    ASSERT_TRUE(hostname3);
+    query3->addOption(hostname3);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+    srv.classifyPacket(query2);
+    srv.classifyPacket(query3);
+
+    // Check classes
+    EXPECT_FALSE(query1->inClass("not-foo"));
+    EXPECT_TRUE(query1->inClass("foo"));
+    EXPECT_FALSE(query1->inClass("bar"));
+    EXPECT_FALSE(query1->inClass("baz"));
+    EXPECT_FALSE(query1->inClass("barz"));
+
+    EXPECT_TRUE(query2->inClass("not-foo"));
+    EXPECT_FALSE(query2->inClass("foo"));
+    EXPECT_FALSE(query2->inClass("bar"));
+    EXPECT_FALSE(query2->inClass("baz"));
+    EXPECT_FALSE(query2->inClass("barz"));
+
+    EXPECT_TRUE(query3->inClass("not-foo"));
+    EXPECT_FALSE(query3->inClass("foo"));
+    EXPECT_FALSE(query3->inClass("bar"));
+    EXPECT_TRUE(query3->inClass("baz"));
+    EXPECT_TRUE(query3->inClass("barz"));
+
+    // Process queries
+    Pkt6Ptr response1 = srv.processSolicit(query1);
+    Pkt6Ptr response2 = srv.processSolicit(query2);
+    Pkt6Ptr response3 = srv.processSolicit(query3);
+
+    // Classification processing should add an ip-forwarding option
+    OptionPtr opt1 = response1->getOption(2345);
+    EXPECT_TRUE(opt1);
+    OptionCustomPtr ipf1 =
+        boost::dynamic_pointer_cast<OptionCustom>(opt1);
+    ASSERT_TRUE(ipf1);
+    EXPECT_TRUE(ipf1->readBoolean());
+
+    // But not the second query which was not classified
+    OptionPtr opt2 = response2->getOption(2345);
+    EXPECT_FALSE(opt2);
+
+    // The third has the option but with another value
+    OptionPtr opt3 = response3->getOption(2345);
+    EXPECT_TRUE(opt3);
+    OptionCustomPtr ipf3 =
+        boost::dynamic_pointer_cast<OptionCustom>(opt3);
+    ASSERT_TRUE(ipf3);
+    EXPECT_FALSE(ipf3->readBoolean());
+}
+
+// This test checks the precedence order in required evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedenceNone) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"interface\": \"eth1\","
+        "    \"subnet6\": [ { "
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "        } ]"
+        "    } ]"
+        "} ],"
+        "\"valid-lifetime\": 600"
+        "}";
+
+    // Create a client requesting dns-servers option
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.requestOption(D6O_NAME_SERVERS);
+
+    // Load the config and perform a SARR
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    EXPECT_EQ(1, client.getLeaseNum());
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // Check dns-servers option
+    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+    EXPECT_FALSE(opt);
+}
+
+// This test checks the precedence order in required evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedencePool) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"interface\": \"eth1\","
+        "    \"subnet6\": [ { "
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "        } ]"
+        "    } ]"
+        "} ],"
+        "\"valid-lifetime\": 600"
+        "}";
+
+    // Create a client requesting dns-servers option
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.requestOption(D6O_NAME_SERVERS);
+
+    // Load the config and perform a SARR
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    EXPECT_EQ(1, client.getLeaseNum());
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // Check dns-servers option
+    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option6AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
+}
+
+// This test checks the precedence order in required evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedenceSubnet) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"interface\": \"eth1\","
+        "    \"subnet6\": [ { "
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"require-client-classes\": [ \"for-subnet\" ],"
+        "        \"pools\": [ { "
+        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "        } ]"
+        "    } ]"
+        "} ],"
+        "\"valid-lifetime\": 600"
+        "}";
+
+    // Create a client requesting dns-servers option
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.requestOption(D6O_NAME_SERVERS);
+
+    // Load the config and perform a SARR
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    EXPECT_EQ(1, client.getLeaseNum());
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // Check dns-servers option
+    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option6AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
+}
+
+// This test checks the precedence order in required evaluation.
+// This order is: shared-network > subnet > pools
+TEST_F(ClassifyTest, precedenceNetwork) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"all\","
+        "       \"test\": \"'' == ''\""
+        "    },"
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('all')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"interface\": \"eth1\","
+        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"subnet6\": [ { "
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"require-client-classes\": [ \"for-subnet\" ],"
+        "        \"pools\": [ { "
+        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "        } ]"
+        "    } ]"
+        "} ],"
+        "\"valid-lifetime\": 600"
+        "}";
+
+    // Create a client requesting dns-servers option
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.requestOption(D6O_NAME_SERVERS);
+
+    // Load the config and perform a SARR
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    EXPECT_EQ(1, client.getLeaseNum());
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // Check dns-servers option
+    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option6AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
+}
+
+// This test checks the complex membership from HA with server1 telephone.
+TEST_F(ClassifyTest, server1Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the first pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:1::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server1 computer.
+TEST_F(ClassifyTest, server1Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the second pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:2::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 telephone.
+TEST_F(ClassifyTest, server2Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the third pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:3::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 computer.
+TEST_F(ClassifyTest, server2Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestAddress(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[1], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The address is from the forth pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1:4::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server1 telephone
+// with prefixes.
+TEST_F(ClassifyTest, pDserver1Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the first pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server1 computer
+// with prefix.
+TEST_F(ClassifyTest, pDserver1Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server1
+    client.addClass("server1");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the second pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:2::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 telephone
+// with prefixes.
+TEST_F(ClassifyTest, pDserver2Telephone) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the third pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:3::", lease_client.addr_.toText());
+}
+
+// This test checks the complex membership from HA with server2 computer
+// with prefix.
+TEST_F(ClassifyTest, pDserver2Computer) {
+    // Create a client.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    ASSERT_NO_THROW(client.requestPrefix(0xabca0));
+
+    // Add option.
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "bar"));
+    client.addExtraOption(hostname);
+
+    // Add server2
+    client.addClass("server2");
+
+    // Load the config and perform a SARR
+    configure(CONFIGS[2], *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // The prefix is from the forth pool.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:4::", lease_client.addr_.toText());
+}
 
 } // end of anonymous namespace

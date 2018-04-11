@@ -66,6 +66,14 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+% DHCP6_CLASS_UNDEFINED required class %1 has no definition
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+% DHCP6_CLASS_UNTESTABLE required class %1 has no test expression
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the IPv6 DHCP server.

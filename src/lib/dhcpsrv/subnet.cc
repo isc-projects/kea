@@ -408,7 +408,8 @@ const PoolPtr Subnet::getPool(Lease::Type type,
 
         if (ub != pools.begin()) {
             --ub;
-            if ((*ub)->inRange(hint) && (*ub)->clientSupported(client_classes)) {
+            if ((*ub)->inRange(hint) &&
+                (*ub)->clientSupported(client_classes)) {
                 candidate = *ub;
             }
         }
@@ -732,7 +733,8 @@ Subnet6::toElement() const {
     ElementPtr pool_list = Element::createList();
     for (PoolCollection::const_iterator pool = pools.cbegin();
          pool != pools.cend(); ++pool) {
-	pool_list->add((*pool)->toElement());
+        // Add the elementized pool to the list
+        pool_list->add((*pool)->toElement());
     }
     map->set("pools", pool_list);
 
@@ -741,6 +743,7 @@ Subnet6::toElement() const {
     ElementPtr pdpool_list = Element::createList();
     for (PoolCollection::const_iterator pool = pdpools.cbegin();
          pool != pdpools.cend(); ++pool) {
+        // Add the elementized pool to the list
         pdpool_list->add((*pool)->toElement());
     }
     map->set("pd-pools", pdpool_list);

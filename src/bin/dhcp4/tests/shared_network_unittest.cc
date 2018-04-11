@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1207,6 +1207,41 @@ public:
         ASSERT_NO_FATAL_FAILURE(verifyAssignedStats());
     }
 
+    /// @brief Check precedence.
+    ///
+    /// @param config the configuration.
+    /// @param ns_address expected name server address.
+    void testPrecedence(const std::string& config, const std::string& ns_address) {
+        // Create client and set MAC address to the one that has a reservation.
+        Dhcp4Client client(Dhcp4Client::SELECTING);
+        client.setIfaceName("eth1");
+        client.setHWAddress("aa:bb:cc:dd:ee:ff");
+        // Request domain-name-servers.
+        client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+        // Create server configuration.
+        configure(config, *client.getServer());
+
+        // Perform a DORA.
+        doDORA(client, "192.0.2.28", "192.0.2.28");
+
+        // Check response.
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        EXPECT_EQ(DHCPACK, resp->getType());
+        EXPECT_EQ("192.0.2.28", resp->getYiaddr().toText());
+
+        // Check domain-name-servers option.
+        OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+        ASSERT_TRUE(opt);
+        Option4AddrLstPtr servers =
+            boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+        ASSERT_TRUE(servers);
+        auto addrs = servers->getAddresses();
+        ASSERT_EQ(1, addrs.size());
+        EXPECT_EQ(ns_address, addrs[0].toText());
+    }
+
     /// @brief Destructor.
     virtual ~Dhcpv4SharedNetworkTest() {
         StatsMgr::instance().removeAll();
@@ -2084,4 +2119,449 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
         doRequest(client2, "192.0.2.100");
     });
 }
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedenceGlobal) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\""
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "192.0.2.1");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedenceClass) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\""
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "192.0.2.2");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedenceClasses) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"beta\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.2\""
+        "                }"
+        "            ]"
+        "        },"
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.3\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\""
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    // Class order is the insert order
+    testPrecedence(config, "192.0.2.2");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedenceNetwork) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.3\""
+        "                }"
+        "            ],"
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\""
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "192.0.2.3");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedenceSubnet) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.3\""
+        "                }"
+        "            ],"
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"domain-name-servers\","
+        "                           \"data\": \"192.0.2.4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\""
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "192.0.2.4");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedencePool) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.3\""
+        "                }"
+        "            ],"
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"domain-name-servers\","
+        "                           \"data\": \"192.0.2.4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"domain-name-servers\","
+        "                                   \"data\": \"192.0.2.5\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\""
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "192.0.2.5");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pool < host reservation
+TEST_F(Dhcpv4SharedNetworkTest, precedenceReservation) {
+    const std::string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"valid-lifetime\": 600,"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"192.0.2.1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.3\""
+        "                }"
+        "            ],"
+        "            \"subnet4\": ["
+        "                {"
+        "                    \"subnet\": \"192.0.2.0/26\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"domain-name-servers\","
+        "                           \"data\": \"192.0.2.4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"domain-name-servers\","
+        "                                   \"data\": \"192.0.2.5\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-address\": \"192.0.2.28\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"domain-name-servers\","
+        "                                   \"data\": \"192.0.2.6\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "192.0.2.6");
+}
+
 } // end of anonymous namespace

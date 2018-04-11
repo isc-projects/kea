@@ -280,6 +280,7 @@ TEST(SharedNetwork4Test, unparse) {
     std::string uc = "{ \"comment\": \"bar\", \"foo\": 1}";
     data::ElementPtr ctx = data::Element::fromJSON(uc);
     network->setContext(ctx);
+    network->requireClientClass("foo");
 
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
@@ -300,6 +301,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"ip-address\": \"0.0.0.0\"\n"
         "    },\n"
         "    \"renew-timer\": 100,\n"
+        "    \"require-client-classes\": [ \"foo\" ],\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet4\": [\n"
         "      {\n"
@@ -665,9 +667,11 @@ TEST(SharedNetwork6Test, unparse) {
     network->setPreferred(200);
     network->setValid(300);
     network->setRapidCommit(true);
+    network->requireClientClass("foo");
 
     data::ElementPtr ctx = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     network->setContext(ctx);
+    network->requireClientClass("foo");
 
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
@@ -688,6 +692,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"ip-address\": \"::\"\n"
         "    },\n"
         "    \"renew-timer\": 100,\n"
+        "    \"require-client-classes\": [ \"foo\" ],\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet6\": [\n"
         "      {\n"

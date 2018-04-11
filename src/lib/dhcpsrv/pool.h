@@ -148,6 +148,68 @@ public:
         last_allocated_valid_ = false;
     }
 
+    /// @brief Checks whether this pool supports client that belongs to
+    /// specified classes.
+    ///
+    /// @param client_classes list of all classes the client belongs to
+    /// @return true if client can be supported, false otherwise
+    bool clientSupported(const ClientClasses& client_classes) const;
+
+    /// @brief Sets the supported class to  class class_name
+    ///
+    /// @param class_name client class to be supported by this pool
+    void allowClientClass(const ClientClass& class_name);
+
+    /// @brief returns the client class
+    ///
+    /// @note The returned reference is only valid as long as the object
+    /// returned is valid.
+    ///
+    /// @return client class @ref client_class_
+    const ClientClass& getClientClass() const {
+        return (client_class_);
+    }
+
+    /// @brief Adds class class_name to classes required to be evaluated
+    ///
+    /// @param class_name client class required to be evaluated
+    void requireClientClass(const ClientClass& class_name) {
+        if (!required_classes_.contains(class_name)) {
+            required_classes_.insert(class_name);
+        }
+    }
+
+    /// @brief Returns classes which are required to be evaluated
+    const ClientClasses& getRequiredClasses() const {
+        return (required_classes_);
+    }
+
+    /// @brief returns the last address that was tried from this pool
+    ///
+    /// @return address/prefix that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated() const {
+        return last_allocated_;
+    }
+
+    /// @brief checks if the last address is valid
+    /// @return true if the last address is valid
+    bool isLastAllocatedValid() const {
+        return last_allocated_valid_;
+    }
+
+    /// @brief sets the last address that was tried from this pool
+    ///
+    /// @param addr address/prefix to that was tried last
+    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
+        last_allocated_ = addr;
+        last_allocated_valid_ = true;
+    }
+
+    /// @brief resets the last address to invalid
+    void resetLastAllocated() {
+        last_allocated_valid_ = false;
+    }
+
     /// @brief Unparse a pool object.
     ///
     /// @return A pointer to unparsed pool configuration.
@@ -203,14 +265,19 @@ protected:
 
     /// @brief Optional definition of a client class
     ///
-    /// If empty, all classes are allowed. If non-empty, only those listed
-    /// here are allowed.
+    /// @ref Network::client_class_
+    ClientClass client_class_;
+
+    /// @brief Required classes
     ///
-    /// @ref Network::white_list_
-    ClientClasses white_list_;
+    /// @ref isc::dhcp::Network::required_classes
+    ClientClasses required_classes_;
+
+    /// @brief Pointer to the user context (may be NULL)
+    data::ConstElementPtr user_context_;
 
     /// @brief Last allocated address
-    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
+    /// See @ref isc::dhcp::subnet::last_allocated_ia_
     /// Initialized and reset to first
     isc::asiolink::IOAddress last_allocated_;
 

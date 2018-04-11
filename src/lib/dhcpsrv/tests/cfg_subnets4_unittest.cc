@@ -739,6 +739,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setIface("lo");
     subnet2->setRelayInfo(IOAddress("10.0.0.1"));
     subnet3->setIface("eth1");
+    subnet3->requireClientClass("foo");
+    subnet3->requireClientClass("bar");
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -806,7 +808,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-subnet\": \"\",\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
-        "    \"pools\": [ ]\n"
+        "    \"pools\": [ ]\n,"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
@@ -826,6 +829,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
+    pool2->requireClientClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -857,9 +861,10 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"user-context\": { \"version\": 1 }\n"
         "        },{\n"
         "            \"option-data\": [ ],\n"
-        "            \"pool\": \"192.0.2.64/26\"\n,"
+        "            \"pool\": \"192.0.2.64/26\",\n"
+        "            \"user-context\": { \"foo\": \"bar\" },\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"user-context\": { \"foo\": \"bar\" }\n"
+        "            \"require-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"
         "} ]\n";

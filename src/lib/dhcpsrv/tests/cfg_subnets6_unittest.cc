@@ -438,6 +438,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setIface("lo");
     subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
+    subnet3->requireClientClass("foo");
+    subnet3->requireClientClass("bar");
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -494,7 +496,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
-        "    \"option-data\": [ ]\n"
+        "    \"option-data\": [ ],\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
 }
@@ -517,6 +520,7 @@ TEST(CfgSubnets6Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
+    pool2->requireClientClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -542,9 +546,10 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
-        "            \"client-class\": \"bar\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"client-class\": \"bar\",\n"
+        "            \"require-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -569,6 +574,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"foo\": [ \"bar\" ] }");
     pdpool1->setContext(ctx1);
+    pdpool1->requireClientClass("bar");
+    pdpool2->allowClientClass("bar");
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
@@ -593,7 +600,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
         "            \"user-context\": { \"foo\": [ \"bar\" ] },\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"require-client-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"
