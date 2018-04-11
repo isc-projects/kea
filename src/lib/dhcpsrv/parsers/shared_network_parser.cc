@@ -73,6 +73,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
+        }
 
         if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
@@ -132,6 +133,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
+        }
 
         if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
