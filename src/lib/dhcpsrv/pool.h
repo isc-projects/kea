@@ -106,55 +106,6 @@ public:
     /// @return true if client can be supported, false otherwise
     bool clientSupported(const ClientClasses& client_classes) const;
 
-    /// @brief Adds class class_name to the list of supported classes
-    ///
-    /// @param class_name client class to be supported by this pool
-    void allowClientClass(const ClientClass& class_name);
-
-    /// @brief returns the client class white list
-    ///
-    /// @note Currently white list is empty or has one element
-    /// @note The returned reference is only valid as long as the object
-    /// returned is valid.
-    ///
-    /// @return client classes @ref white_list_
-    const ClientClasses& getClientClasses() const {
-        return (white_list_);
-    }
-
-    /// @brief returns the last address that was tried from this pool
-    ///
-    /// @return address/prefix that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated() const {
-        return last_allocated_;
-    }
-
-    /// @brief checks if the last address is valid
-    /// @return true if the last address is valid
-    bool isLastAllocatedValid() const {
-        return last_allocated_valid_;
-    }
-
-    /// @brief sets the last address that was tried from this pool
-    ///
-    /// @param addr address/prefix to that was tried last
-    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
-        last_allocated_ = addr;
-        last_allocated_valid_ = true;
-    }
-
-    /// @brief resets the last address to invalid
-    void resetLastAllocated() {
-        last_allocated_valid_ = false;
-    }
-
-    /// @brief Checks whether this pool supports client that belongs to
-    /// specified classes.
-    ///
-    /// @param client_classes list of all classes the client belongs to
-    /// @return true if client can be supported, false otherwise
-    bool clientSupported(const ClientClasses& client_classes) const;
-
     /// @brief Sets the supported class to  class class_name
     ///
     /// @param class_name client class to be supported by this pool
