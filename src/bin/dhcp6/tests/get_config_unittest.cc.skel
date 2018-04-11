@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -322,12 +322,17 @@ TEST_P(Dhcp6GetConfigTest, run) {
         ASSERT_NO_THROW(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
+        // get the expected config using the dhcpv6 syntax parser
         ElementPtr jsond;
         ASSERT_NO_THROW(jsond = parseDHCP6(expected, true));
+        // get the expected config using the generic JSON syntax parser
         ElementPtr jsonj;
         ASSERT_NO_THROW(jsonj = parseJSON(expected));
-        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // check that unparsed and expected values match
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        // check on pretty prints too
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {

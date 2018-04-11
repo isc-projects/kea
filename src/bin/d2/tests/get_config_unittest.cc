@@ -240,12 +240,17 @@ TEST_F(D2GetConfigTest, sample1) {
         prettyPrint(unparsed, std::cerr, 0, 4);
         std::cerr << "\n";
     } else {
+        // get the expected config using the d2 syntax parser
         ElementPtr jsond;
         ASSERT_NO_THROW(jsond = parseDHCPDDNS(expected, true));
+        // get the expected config using the generic JSON syntax parser
         ElementPtr jsonj;
         ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // check that unparsed and expected values match
         EXPECT_TRUE(isEquivalent(unparsed, jsonj));
+        // check on pretty prints too
         std::string current = prettyPrint(unparsed, 0, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {
