@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -1454,6 +1455,41 @@ public:
         }
     }
 
+    /// @brief Check precedence.
+    ///
+    /// @param config the configuration.
+    /// @param ns_address expected name server address.
+    void testPrecedence(const std::string& config, const std::string& ns_address) {
+        // Create client and set DUID to the one that has a reservation.
+        Dhcp6Client client;
+        client.setInterface("eth1");
+        client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
+        client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+        // Request dns-servers.
+        client.requestOption(D6O_NAME_SERVERS);
+
+        // Create server configuration.
+        configure(config, *client.getServer());
+
+        // Perform SARR.
+        ASSERT_NO_THROW(client.doSARR());
+
+        // Check response.
+        EXPECT_EQ(1, client.getLeaseNum());
+        Pkt6Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+
+        // Check dns-servers option.
+        OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+        ASSERT_TRUE(opt);
+        Option6AddrLstPtr servers =
+            boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+        ASSERT_TRUE(servers);
+        auto addrs = servers->getAddresses();
+        ASSERT_EQ(1, addrs.size());
+        EXPECT_EQ(ns_address, addrs[0].toText());
+    }
+
     /// @brief Destructor.
     virtual ~Dhcpv6SharedNetworkTest() {
         StatsMgr::instance().removeAll();
@@ -2460,6 +2496,422 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     });
     EXPECT_EQ(1, client2.getLeaseNum());
     EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceGlobal) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::1");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceClass) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::2");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceClasses) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"beta\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        },"
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    // Class order is the insert order
+    testPrecedence(config, "2001:db8:1::2");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceNetworkClass) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::3");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceSubnet) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"dns-servers\","
+        "                           \"data\": \"2001:db8:1::4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::4");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedencePool) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"dns-servers\","
+        "                           \"data\": \"2001:db8:1::4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::5\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::5");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"dns-servers\","
+        "                           \"data\": \"2001:db8:1::4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::5\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ],"
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::6\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::6");
 }
 
 } // end of anonymous namespace

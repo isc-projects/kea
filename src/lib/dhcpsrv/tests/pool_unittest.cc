@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -214,7 +214,7 @@ TEST(Pool4Test, clientClass) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool->getClientClasses().size());
+    EXPECT_TRUE(pool->getClientClass().empty());
     EXPECT_TRUE(pool->clientSupported(no_class));
     EXPECT_TRUE(pool->clientSupported(foo_class));
     EXPECT_TRUE(pool->clientSupported(bar_class));
@@ -222,7 +222,7 @@ TEST(Pool4Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     pool->allowClientClass("bar");
-    EXPECT_EQ(1, pool->getClientClasses().size());
+    EXPECT_EQ("bar", pool->getClientClass());
 
     EXPECT_FALSE(pool->clientSupported(no_class));
     EXPECT_FALSE(pool->clientSupported(foo_class));
@@ -266,6 +266,35 @@ TEST(Pool4Test, clientClasses) {
 
     // Clients in bar class should be accepted as well.
     EXPECT_TRUE(pool->clientSupported(bar_class));
+}
+
+// This test checks that handling for require-client-classes is valid.
+TEST(Pool4Test, requiredClasses) {
+    // Create a pool.
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
+                            IOAddress("192.0.2.255")));
+
+    // This client starts with no required classes.
+    EXPECT_TRUE(pool->getRequiredClasses().empty());
+
+    // Add the first class
+    pool->requireClientClass("router");
+    EXPECT_EQ(1, pool->getRequiredClasses().size());
+
+    // Add a second class
+    pool->requireClientClass("modem");
+    EXPECT_EQ(2, pool->getRequiredClasses().size());
+    EXPECT_TRUE(pool->getRequiredClasses().contains("router"));
+    EXPECT_TRUE(pool->getRequiredClasses().contains("modem"));
+    EXPECT_FALSE(pool->getRequiredClasses().contains("foo"));
+
+    // Check that it's ok to add the same class repeatedly
+    EXPECT_NO_THROW(pool->requireClientClass("foo"));
+    EXPECT_NO_THROW(pool->requireClientClass("foo"));
+    EXPECT_NO_THROW(pool->requireClientClass("foo"));
+
+    // Check that 'foo' is marked for required evaluation
+    EXPECT_TRUE(pool->getRequiredClasses().contains("foo"));
 }
 
 // This test checks that handling for last allocated address/prefix is valid.
@@ -618,7 +647,7 @@ TEST(Pool6Test, clientClass) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool.getClientClasses().size());
+    EXPECT_TRUE(pool.getClientClass().empty());
     EXPECT_TRUE(pool.clientSupported(no_class));
     EXPECT_TRUE(pool.clientSupported(foo_class));
     EXPECT_TRUE(pool.clientSupported(bar_class));
@@ -626,7 +655,7 @@ TEST(Pool6Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     pool.allowClientClass("bar");
-    EXPECT_EQ(1, pool.getClientClasses().size());
+    EXPECT_EQ("bar", pool.getClientClass());
 
     EXPECT_FALSE(pool.clientSupported(no_class));
     EXPECT_FALSE(pool.clientSupported(foo_class));
@@ -670,6 +699,35 @@ TEST(Pool6Test, clientClasses) {
 
     // Clients in bar class should be accepted as well.
     EXPECT_TRUE(pool.clientSupported(bar_class));
+}
+
+// This test checks that handling for require-client-classes is valid.
+TEST(Pool6Test, requiredClasses) {
+    // Create a pool.
+    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+               IOAddress("2001:db8::2"));
+
+    // This client starts with no required classes.
+    EXPECT_TRUE(pool.getRequiredClasses().empty());
+
+    // Add the first class
+    pool.requireClientClass("router");
+    EXPECT_EQ(1, pool.getRequiredClasses().size());
+
+    // Add a second class
+    pool.requireClientClass("modem");
+    EXPECT_EQ(2, pool.getRequiredClasses().size());
+    EXPECT_TRUE(pool.getRequiredClasses().contains("router"));
+    EXPECT_TRUE(pool.getRequiredClasses().contains("modem"));
+    EXPECT_FALSE(pool.getRequiredClasses().contains("foo"));
+
+    // Check that it's ok to add the same class repeatedly
+    EXPECT_NO_THROW(pool.requireClientClass("foo"));
+    EXPECT_NO_THROW(pool.requireClientClass("foo"));
+    EXPECT_NO_THROW(pool.requireClientClass("foo"));
+
+    // Check that 'foo' is marked for required evaluation
+    EXPECT_TRUE(pool.getRequiredClasses().contains("foo"));
 }
 
 // This test checks that handling for last allocated address/prefix is valid.

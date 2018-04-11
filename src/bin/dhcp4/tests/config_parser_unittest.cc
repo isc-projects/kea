@@ -5742,8 +5742,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     SharedNetwork4Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
-    auto classes = net->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", net->getClientClass());
 
     // The first shared network has two subnets.
     const Subnet4Collection * subs = net->getAllSubnets();
@@ -5754,15 +5753,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     // shared-network level.
     Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 1, 2, 4);
     ASSERT_TRUE(s);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", s->getClientClass());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "192.0.2.0/24", 1, 2, 4);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("beta")); // beta defined on subnet level
-    EXPECT_FALSE(classes.contains("alpha")); // alpha defined on shared-network level
+    EXPECT_EQ("beta", s->getClientClass()); // beta defined on subnet level
 
     // Ok, now check the second shared network. It doesn't have anything defined
     // on shared-network or subnet level, so everything should have default
@@ -5775,8 +5771,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     EXPECT_EQ(1, subs->size());
 
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.empty());
+    EXPECT_TRUE(s->getClientClass().empty());
 }
 
 // This test checks multiple host data sources.

@@ -265,6 +265,7 @@ TEST(ParserTest, file) {
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
+                               "classify2.json",
                                "comments.json",
                                "dhcpv4-over-dhcpv6.json",
                                "hooks.json",

@@ -271,6 +271,7 @@ TEST(ParserTest, file) {
     configs.push_back("backends.json");
     configs.push_back("cassandra.json");
     configs.push_back("classify.json");
+    configs.push_back("classify2.json");
     configs.push_back("comments.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");

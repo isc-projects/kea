@@ -708,6 +708,20 @@ TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
         .arg('\'' + values.top() + '\'');
 }
 
+void
+TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
+    if (pkt.inClass(client_class_)) {
+        values.push("true");
+    } else {
+        values.push("false");
+    }
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_MEMBER)
+        .arg(client_class_)
+        .arg('\'' + values.top() + '\'');
+}
+
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
                          uint16_t option_code)
     :TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),

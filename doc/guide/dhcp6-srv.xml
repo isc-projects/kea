@@ -2207,11 +2207,9 @@ should include options from the isc option space:
       In certain cases it is useful to differentiate between different types
       of clients and treat them accordingly. It is envisaged that client
       classification will be used for changing the behavior of almost any part of
-      the DHCP message processing, including the assignment of leases from different
-      pools, the assignment of different options (or different values of the same
-      options) etc. In the current release of the software however, there are
-      only two mechanisms that take advantage of client classification:
-      subnet selection and assignment of different options.
+      the DHCP message processing. In the current release of the software however,
+      there are only some mechanisms that take advantage of client classification:
+      subnet selection, pool selection, and assignment of different options.
       </para>
 
       <para>
@@ -2225,26 +2223,38 @@ should include options from the isc option space:
       users from playing with their cable modems. For details on how to set up
       class restrictions on subnets, see <xref linkend="classification-subnets"/>.
       </para>
-
-      <para>
-      Client classification can also be used to restrict access to specific
-      pools within a subnet. This is useful when to segregate clients belonging
-      to the same subnet into different address or prefix ranges.
+      When subnets belong to a shared network the classification applies
+      to subnet selection but not to pools, e.g., a pool in a subnet
+      limited to a particular class can still be used by clients which do not
+      belong to the class if the pool they are expected to use is exhausted.
+      So the limit access based on class information is also available
+      at the address/prefix pool level, see <xref
+      linkend="classification-pools"/> within a subnet.
+      This is useful when to segregate clients belonging to the same subnet
+      into different address ranges.
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps. The first step
+      The process of doing classification is conducted in several steps. The first step
       is to assess an incoming packet and assign it to zero or more classes.  The
       second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign options again possibly based on the class
+      The third step is to assign classes from host reservations and
+      evaluate class expressions depending on the "KNOWN" class.
+      After the list of required classes is built and each class of the list
+      has its expression evaluated: when it returns true the packet is added
+      as a member of the class.
+      The last step is to assign options again possibly based on the class
       information.
+      More complete and detailed description is available in
+      <xref linkend="classify"/>.
       </para>
 
       <para>
-      There are two methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options. Information from these
+      There are two main methods of doing classification. The first is automatic and relies
+      on examining the values in the vendor class options or existence of a
+      host reservation. Information from these
       options is extracted and a class name is constructed from it and added to
-      the class list for the packet. The second allows you to specify an expression
+      the class list for the packet. The second allows for specifying an expression
       that is evaluated for each packet. If the result is true the packet is
       a member of the class.
       </para>
@@ -2319,6 +2329,81 @@ should include options from the isc option space:
 </screen>
         </para>
       </section>
+
+      <section id="dhcp6-required-class">
+        <title>Required classification</title>
+        <para>
+        In some cases it is useful to limit the scope of a class to
+        a shared-network, subnet or pool. There are two parameters
+        which are used to limit the scope of the class by instructing
+        the server to perform evaluation of test expressions when
+        required.
+        </para>
+
+        <para>
+        The first one is the per-class <command>only-if-required</command>
+        flag which is false by default. When it is set to
+        <command>true</command> the test expression of the class is not
+        evaluated at the reception of the incoming packet but later and
+        only if the class evaluation is required.
+        </para>
+
+        <para>
+        The second is the <command>require-client-classes</command> which
+        takes a list of class names and is valid in shared-network,
+        subnet and pool scope. Classes in these lists are marked as
+        required and evaluated after selection of this specific
+        shared-network/subnet/pool and before output option processing.
+        </para>
+
+        <para>
+        In this example, a class is assigned to the incoming packet
+        when the specified subnet is used.
+
+        <screen>
+"Dhcp6": {
+    "client-classes": [
+       {<userinput>
+           "name": "Client_foo",
+           "test": "member('ALL')",
+           "only-if-required": true</userinput>
+       },
+       ...
+    ],
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64"
+            "pools": [
+                 {
+                     "pool": "2001:db8:1::-2001:db8:1::ffff"
+                 }
+             ],
+            <userinput>"require-client-classes": [ "Client_foo" ],</userinput>
+            ...
+        },
+        ...
+    ],
+    ...
+}</screen>
+         </para>
+
+         <para>
+         Required evaluation can be used to express complex dependencies,
+         for example, subnet membership. It can also be used to reverse the
+         precedence: if you set an option-data in a subnet it takes
+         precedence over an option-data in a class. When you move the
+         option-data to a required class and require it in
+         the subnet, a class evaluated earlier may take precedence.
+         </para>
+
+         <para>
+         Required evaluation is also available at shared-network and
+         pool/pd-pool levels. The order in which required classes are
+         considered is: shared-network, subnet and (pd-)pool, i.e.
+         the opposite order option-data are processed.
+         </para>
+
+       </section>
     </section>
 
     <section xml:id="dhcp6-ddns-config">
@@ -3184,7 +3269,18 @@ should include options from the isc option space:
 
 </screen>
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions.</para>
+    with classification using expressions. The "KNOWN" builtin class is
+    added to the packet and any class depending on it directly or indirectly
+    and not only-if-required is evaluated.
+    </para>
+
+    <note>
+     <para>If you want to force the evaluation of a class expression after
+     the host reservation lookup, for instance because of a dependency on
+     "reserved-class1" from the previous example, you should add a
+     "member('KNOWN')" in the expression.</para>
+    </note>
+
     </section>
 
     <section id="reservations6-mysql-pgsql-cql">
@@ -3570,7 +3666,7 @@ for each subnet. Here's an example:
 
 <screen>
 "shared-networks": [
-    {"
+    {
         "name": "kakapo",
         <userinput>"relay": {
             "ip-address": "2001:db8::abcd"

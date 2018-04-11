@@ -273,9 +273,6 @@ public:
         /// Used while parsing Dhcp4/subnet4relay structures.
         RELAY,
 
-        /// Used while parsing Dhcp4/client-classes structures.
-        CLIENT_CLASS,
-
         /// Used while parsing Logging/loggers structures.
         LOGGERS,
 

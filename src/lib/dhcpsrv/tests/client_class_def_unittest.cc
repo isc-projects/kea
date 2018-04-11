@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,6 +142,13 @@ TEST(ClientClassDef, copyAndEquality) {
     EXPECT_TRUE(*cclass == *cclass2);
     EXPECT_FALSE(*cclass != *cclass2);
 
+    // Verify the required flag is enough to make classes not equal.
+    EXPECT_FALSE(cclass->getRequired());
+    cclass2->setRequired(true);
+    EXPECT_TRUE(cclass2->getRequired());
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
+
     // Make a class that differs from the first class only by name and
     // verify that the equality tools reflect that the classes are not equal.
     ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("class_two", expr,
@@ -218,23 +225,24 @@ TEST(ClientClassDictionary, basics) {
     // Verify constructor doesn't throw
     ASSERT_NO_THROW(dictionary.reset(new ClientClassDictionary()));
 
-    // Verify we can fetch a pointer the map of classes and
+    // Verify we can fetch a pointer the list of classes and
     // that we start with no classes defined
-    const ClientClassDefMapPtr classes = dictionary->getClasses();
+    const ClientClassDefListPtr classes = dictionary->getClasses();
     ASSERT_TRUE(classes);
     EXPECT_EQ(0, classes->size());
 
     // Verify that we can add classes with both addClass variants
     // First addClass(name, expression, cfg_option)
-    ASSERT_NO_THROW(dictionary->addClass("cc1", expr, "", cfg_option));
-    ASSERT_NO_THROW(dictionary->addClass("cc2", expr, "", cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("cc1", expr, "", false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("cc2", expr, "", false, cfg_option));
 
     // Verify duplicate add attempt throws
-    ASSERT_THROW(dictionary->addClass("cc2", expr, "", cfg_option),
+    ASSERT_THROW(dictionary->addClass("cc2", expr, "", false, cfg_option),
                  DuplicateClientClassDef);
 
     // Verify that you cannot add a class with no name.
-    ASSERT_THROW(dictionary->addClass("", expr, "", cfg_option), BadValue);
+    ASSERT_THROW(dictionary->addClass("", expr, "", false, cfg_option),
+                 BadValue);
 
     // Now with addClass(class pointer)
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef("cc3", expr, cfg_option)));
@@ -290,14 +298,14 @@ TEST(ClientClassDictionary, copyAndEquality) {
     CfgOptionPtr options;
 
     dictionary.reset(new ClientClassDictionary());
-    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", options));
-    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", options));
-    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", options));
+    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", false, options));
+    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", false, options));
+    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", false, options));
 
     // Copy constructor should succeed.
     ASSERT_NO_THROW(dictionary2.reset(new ClientClassDictionary(*dictionary)));
 
-    // Allocated class map pointers should not be equal
+    // Allocated class list pointers should not be equal
     EXPECT_NE(dictionary->getClasses().get(), dictionary2->getClasses().get());
 
     // Equality tools should reflect that the dictionaries are equal.
@@ -338,6 +346,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
     // Let's checks that it doesn't return any nonsense
+    EXPECT_FALSE(cclass->getRequired());
     EXPECT_FALSE(cclass->getCfgOptionDef());
     string empty;
     ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
@@ -360,6 +369,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     // Verify we can create a class with a name, expression, and no cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
+    cclass->setRequired(true);
 
     string sname = "This is a very long string that can be a server name";
     string filename = "this-is-a-slightly-longish-name-of-a-file.txt";
@@ -369,7 +379,8 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     cclass->setFilename(filename);
 
     // Let's checks that it doesn't return any nonsense
-    ASSERT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
+    EXPECT_TRUE(cclass->getRequired());
+    EXPECT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
     EXPECT_EQ(sname, cclass->getSname());
     EXPECT_EQ(filename, cclass->getFilename());
 }
@@ -390,6 +401,7 @@ TEST(ClientClassDef, unparseDef) {
     std::string user_context = "{ \"comment\": \"" + comment + "\", ";
     user_context += "\"bar\": 1 }";
     cclass->setContext(isc::data::Element::fromJSON(user_context));
+    cclass->setRequired(true);
     std::string next_server = "1.2.3.4";
     cclass->setNextServer(IOAddress(next_server));
     std::string sname = "my-server.example.com";
@@ -402,6 +414,7 @@ TEST(ClientClassDef, unparseDef) {
         "\"comment\": \"" + comment + "\",\n"
         "\"name\": \"" + name + "\",\n"
         "\"test\": \"" + test + "\",\n"
+        "\"only-if-required\": true,\n"
         "\"next-server\": \"" + next_server + "\",\n"
         "\"server-hostname\": \"" + sname + "\",\n"
         "\"boot-file-name\": \"" + filename + "\",\n"
@@ -419,9 +432,9 @@ TEST(ClientClassDictionary, unparseDict) {
 
     // Get a client class dictionary and fill it
     dictionary.reset(new ClientClassDictionary());
-    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", options));
-    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", options));
-    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", options));
+    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", false, options));
+    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", false, options));
+    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", false, options));
 
     // Unparse it
     auto add_defaults =

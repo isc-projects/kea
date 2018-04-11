@@ -780,7 +780,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), hint));
+            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(),
+                             hint));
 
         // check if the pool is allowed
         if (pool && !pool->clientSupported(ctx.query_->getClasses())) {
@@ -916,7 +917,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             continue;
         }
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
-
         Network::HRMode hr_mode = subnet->getHostReservationMode();
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
@@ -943,7 +943,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             uint8_t prefix_len = 128;
             if (ctx.currentIA().type_ == Lease::TYPE_PD) {
                 pool = boost::dynamic_pointer_cast<Pool6>(
-                        subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), candidate));
+                        subnet->getPool(ctx.currentIA().type_,
+                                        ctx.query_->getClasses(),
+                                        candidate));
                 if (pool) {
                     prefix_len = pool->getLength();
                 }

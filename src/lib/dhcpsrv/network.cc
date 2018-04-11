@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,25 +22,30 @@ Network::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
 
 bool
 Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (white_list_.empty()) {
+    if (client_class_.empty()) {
         // There is no class defined for this network, so we do
         // support everyone.
         return (true);
     }
 
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
-            return (true);
-        }
-    }
-
-    return (false);
+    return (classes.contains(client_class_));
 }
 
 void
 Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    white_list_.insert(class_name);
+    client_class_ = class_name;
+}
+
+void
+Network::requireClientClass(const isc::dhcp::ClientClass& class_name) {
+    if (!required_classes_.contains(class_name)) {
+        required_classes_.insert(class_name);
+    }
+}
+
+const ClientClasses&
+Network::getRequiredClasses() const {
+    return (required_classes_);
 }
 
 ElementPtr
@@ -63,12 +68,20 @@ Network::toElement() const {
     map->set("relay", relay);
 
     // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
+    const ClientClass& cclass = getClientClass();
+    if (!cclass.empty()) {
+        map->set("client-class", Element::create(cclass));
+    }
+
+    // Set require-client-classes
+    const ClientClasses& classes = getRequiredClasses();
+    if (!classes.empty()) {
+        ElementPtr class_list = Element::createList();
+        for (ClientClasses::const_iterator it = classes.cbegin();
+             it != classes.cend(); ++it) {
+            class_list->add(Element::create(*it));
+        }
+        map->set("require-client-classes", class_list);
     }
 
     // Set renew-timer

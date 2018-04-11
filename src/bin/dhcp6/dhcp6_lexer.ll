@@ -363,6 +363,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     return isc::dhcp::Dhcp6Parser::make_STRING(tmp, driver.loc_);
 }
 
+\"never\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::REPLACE_CLIENT_NAME:
+        return isc::dhcp::Dhcp6Parser::make_NEVER(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("never", driver.loc_);
+    }
+}
+
 (?i:\"never\") {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser6Context::REPLACE_CLIENT_NAME) {
@@ -753,7 +762,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::PD_POOLS:
     case isc::dhcp::Parser6Context::RESERVATIONS:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser6Context::CLIENT_CLASS:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_OPTION_DATA(driver.loc_);
     default:
@@ -768,7 +776,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::OPTION_DATA:
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser6Context::CLIENT_CLASS:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp6Parser::make_NAME(driver.loc_);
@@ -1134,6 +1141,18 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"require-client-classes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_REQUIRE_CLIENT_CLASSES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("require-client-classes", driver.loc_);
+    }
+}
+
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -1150,10 +1169,18 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"test\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser6Context::CLIENT_CLASS:
         return isc::dhcp::Dhcp6Parser::make_TEST(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("test", driver.loc_);
+    }
+}
+
+\"only-if-required\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp6Parser::make_ONLY_IF_REQUIRED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("only-if-required", driver.loc_);
     }
 }
 

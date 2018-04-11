@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -386,6 +386,21 @@ PoolParser::parse(PoolStoragePtr pools,
             pool->allowClientClass(cclass);
         }
     }
+
+    // Try setting up required client classes.
+    ConstElementPtr class_list = pool_structure->get("require-client-classes");
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            pool->requireClientClass((*cclass)->stringValue());
+        }
+    }
 }
 
 //****************************** Pool4Parser *************************
@@ -695,6 +710,21 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet4->allowClientClass(client_class);
     }
 
+    // Try setting up required client classes.
+    ConstElementPtr class_list = params->get("require-client-classes");
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            subnet4->requireClientClass((*cclass)->stringValue());
+        }
+    }
+
     // 4o6 specific parameter: 4o6-interface. If not explicitly specified,
     // it will have the default value of "".
     string iface4o6 = getString(params, "4o6-interface");
@@ -860,6 +890,8 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         client_class_ = client_class;
     }
 
+    ConstElementPtr class_list = pd_pool_->get("require-client-classes");
+
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -883,7 +915,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         pool_->setContext(user_context_);
     }
 
-
     if (client_class_) {
         string cclass = client_class_->stringValue();
         if (!cclass.empty()) {
@@ -891,6 +922,19 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_) {
         }
     }
         
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            pool_->requireClientClass((*cclass)->stringValue());
+        }
+    }
+
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
 }
@@ -1063,6 +1107,21 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     string client_class = getString(params, "client-class");
     if (!client_class.empty()) {
         subnet6->allowClientClass(client_class);
+    }
+
+    // Try setting up required client classes.
+    ConstElementPtr class_list = params->get("require-client-classes");
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            if (((*cclass)->getType() != Element::string) ||
+                (*cclass)->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name ("
+                          << (*cclass)->getPosition() << ")");
+            }
+            subnet6->requireClientClass((*cclass)->stringValue());
+        }
     }
 
     /// client-class processing is now generic and handled in the common
