@@ -230,44 +230,6 @@ TEST(Pool4Test, clientClass) {
     EXPECT_TRUE(pool->clientSupported(three_classes));
 }
 
-// This test checks that handling for multiple client-classes is valid.
-TEST(Pool4Test, clientClasses) {    
-    // Create a pool.
-    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
-                            IOAddress("192.0.2.255")));
-
-    // This client does not belong to any class.
-    isc::dhcp::ClientClasses no_class;
-
-    // This client belongs to foo only.
-    isc::dhcp::ClientClasses foo_class;
-    foo_class.insert("foo");
-
-    // This client belongs to bar only. I like that client.
-    isc::dhcp::ClientClasses bar_class;
-    bar_class.insert("bar");
-
-    // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool->getClientClasses().size());
-    EXPECT_TRUE(pool->clientSupported(no_class));
-    EXPECT_TRUE(pool->clientSupported(foo_class));
-    EXPECT_TRUE(pool->clientSupported(bar_class));
-
-    // Let's allow clients belonging to "bar" or "foo" class.
-    pool->allowClientClass("bar");
-    pool->allowClientClass("foo");
-    EXPECT_EQ(2, pool->getClientClasses().size());
-
-    // Class-less clients are to be rejected.
-    EXPECT_FALSE(pool->clientSupported(no_class));
-
-    // Clients in foo class should be accepted.
-    EXPECT_TRUE(pool->clientSupported(foo_class));
-
-    // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(pool->clientSupported(bar_class));
-}
-
 // This test checks that handling for require-client-classes is valid.
 TEST(Pool4Test, requiredClasses) {
     // Create a pool.
@@ -661,44 +623,6 @@ TEST(Pool6Test, clientClass) {
     EXPECT_FALSE(pool.clientSupported(foo_class));
     EXPECT_TRUE(pool.clientSupported(bar_class));
     EXPECT_TRUE(pool.clientSupported(three_classes));
-}
-
-// This test checks that handling for multiple client-classes is valid.
-TEST(Pool6Test, clientClasses) {    
-    // Create a pool.
-    Pool6 pool(Lease::TYPE_NA, IOAddress("2001:db8::1"),
-               IOAddress("2001:db8::2"));
-
-    // This client does not belong to any class.
-    isc::dhcp::ClientClasses no_class;
-
-    // This client belongs to foo only.
-    isc::dhcp::ClientClasses foo_class;
-    foo_class.insert("foo");
-
-    // This client belongs to bar only. I like that client.
-    isc::dhcp::ClientClasses bar_class;
-    bar_class.insert("bar");
-
-    // No class restrictions defined, any client should be supported
-    EXPECT_EQ(0, pool.getClientClasses().size());
-    EXPECT_TRUE(pool.clientSupported(no_class));
-    EXPECT_TRUE(pool.clientSupported(foo_class));
-    EXPECT_TRUE(pool.clientSupported(bar_class));
-
-    // Let's allow clients belonging to "bar" or "foo" class.
-    pool.allowClientClass("bar");
-    pool.allowClientClass("foo");
-    EXPECT_EQ(2, pool.getClientClasses().size());
-
-    // Class-less clients are to be rejected.
-    EXPECT_FALSE(pool.clientSupported(no_class));
-
-    // Clients in foo class should be accepted.
-    EXPECT_TRUE(pool.clientSupported(foo_class));
-
-    // Clients in bar class should be accepted as well.
-    EXPECT_TRUE(pool.clientSupported(bar_class));
 }
 
 // This test checks that handling for require-client-classes is valid.
