@@ -689,6 +689,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         callout_handle->setArgument("io_context", srv->getIOService());
+        // callout_handle->setArgument("network_state", srv->getNetworkState());
         callout_handle->setArgument("json_config", config);
         callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
 

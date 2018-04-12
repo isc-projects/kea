@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <asiolink/io_service.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp6/json_config_parser.h>
@@ -22,6 +23,7 @@
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
@@ -53,16 +55,17 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     NakedDhcpv6Srv srv(0);
 
     // check if appropriate hooks are registered
-    int hook_index_buffer6_receive  = -1;
-    int hook_index_buffer6_send     = -1;
-    int hook_index_lease6_renew     = -1;
-    int hook_index_lease6_release   = -1;
-    int hook_index_lease6_rebind    = -1;
-    int hook_index_lease6_decline   = -1;
-    int hook_index_pkt6_received    = -1;
-    int hook_index_select_subnet    = -1;
-    int hook_index_pkt6_send        = -1;
-    int hook_index_host6_identifier = -1;
+    int hook_index_buffer6_receive   = -1;
+    int hook_index_buffer6_send      = -1;
+    int hook_index_lease6_renew      = -1;
+    int hook_index_lease6_release    = -1;
+    int hook_index_lease6_rebind     = -1;
+    int hook_index_lease6_decline    = -1;
+    int hook_index_pkt6_received     = -1;
+    int hook_index_select_subnet     = -1;
+    int hook_index_leases6_committed = -1;
+    int hook_index_pkt6_send         = -1;
+    int hook_index_host6_identifier  = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer6_receive = ServerHooks::getServerHooks()
@@ -81,22 +84,25 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("pkt6_receive"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
                     .getIndex("subnet6_select"));
-    EXPECT_NO_THROW(hook_index_pkt6_send     = ServerHooks::getServerHooks()
+    EXPECT_NO_THROW(hook_index_leases6_committed = ServerHooks::getServerHooks()
+                    .getIndex("leases6_committed"));
+    EXPECT_NO_THROW(hook_index_pkt6_send = ServerHooks::getServerHooks()
                     .getIndex("pkt6_send"));
     EXPECT_NO_THROW(hook_index_host6_identifier = ServerHooks::getServerHooks()
                     .getIndex("host6_identifier"));
 
 
-    EXPECT_TRUE(hook_index_pkt6_received   > 0);
-    EXPECT_TRUE(hook_index_select_subnet   > 0);
-    EXPECT_TRUE(hook_index_pkt6_send       > 0);
-    EXPECT_TRUE(hook_index_buffer6_receive > 0);
-    EXPECT_TRUE(hook_index_buffer6_send    > 0);
-    EXPECT_TRUE(hook_index_lease6_renew    > 0);
-    EXPECT_TRUE(hook_index_lease6_release  > 0);
-    EXPECT_TRUE(hook_index_lease6_rebind   > 0);
-    EXPECT_TRUE(hook_index_lease6_decline  > 0);
-    EXPECT_TRUE(hook_index_host6_identifier > 0);
+    EXPECT_TRUE(hook_index_pkt6_received     > 0);
+    EXPECT_TRUE(hook_index_select_subnet     > 0);
+    EXPECT_TRUE(hook_index_leases6_committed > 0);
+    EXPECT_TRUE(hook_index_pkt6_send         > 0);
+    EXPECT_TRUE(hook_index_buffer6_receive   > 0);
+    EXPECT_TRUE(hook_index_buffer6_send      > 0);
+    EXPECT_TRUE(hook_index_lease6_renew      > 0);
+    EXPECT_TRUE(hook_index_lease6_release    > 0);
+    EXPECT_TRUE(hook_index_lease6_rebind     > 0);
+    EXPECT_TRUE(hook_index_lease6_decline    > 0);
+    EXPECT_TRUE(hook_index_host6_identifier  > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -119,6 +125,8 @@ public:
 
         // Clear static buffers
         resetCalloutBuffers();
+
+        io_service_ = boost::make_shared<IOService>();
 
         // Reset the hook system in its original state
         HooksManager::unloadLibraries();
@@ -750,6 +758,76 @@ public:
         return (lease6_decline_callout(callout_handle));
     }
 
+    /// Test callback that stores values passed to leases6_committed.
+    static int
+    leases6_committed_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("leases6_committed");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+
+        Lease6CollectionPtr leases6;
+        callout_handle.getArgument("leases6", leases6);
+        if (leases6->size() > 0) {
+            callback_lease6_ = leases6->at(0);
+        }
+
+        Lease6CollectionPtr deleted_leases6;
+        callout_handle.getArgument("deleted_leases6", deleted_leases6);
+        if (deleted_leases6->size() > 0) {
+            callback_deleted_lease6_ = deleted_leases6->at(0);
+        }
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    static void
+    leases6_committed_unpark(ParkingLotHandlePtr parking_lot, Pkt6Ptr query) {
+        parking_lot->unpark(query);
+    }
+
+    /// Test callback which asks the server to park the packet.
+    static int
+    leases6_committed_park_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("leases6_committed");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+
+        io_service_->post(boost::bind(&HooksDhcpv6SrvTest::leases6_committed_unpark,
+                                      callout_handle.getParkingLotHandlePtr(),
+                                      callback_qry_pkt6_));
+
+        callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt6_);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
+
+        Lease6CollectionPtr leases6;
+        callout_handle.getArgument("leases6", leases6);
+        if (leases6->size() > 0) {
+            callback_lease6_ = leases6->at(0);
+        }
+
+        Lease6CollectionPtr deleted_leases6;
+        callout_handle.getArgument("deleted_leases6", deleted_leases6);
+        if (deleted_leases6->size() > 0) {
+            callback_deleted_lease6_ = deleted_leases6->at(0);
+        }
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
     /// @brief Test host6_identifier by setting identifier to "foo"
     ///
     /// @param callout_handle handle passed by the hooks framework
@@ -777,7 +855,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host4_identifier callout by setting identifier to hwaddr
+    /// @brief Test host6_identifier callout by setting identifier to hwaddr
     ///
     /// This callout always returns fixed HWADDR: 00:01:02:03:04:05
     ///
@@ -814,6 +892,7 @@ public:
         callback_resp_pkt6_.reset();
         callback_subnet6_.reset();
         callback_lease6_.reset();
+        callback_deleted_lease6_.reset();
         callback_ia_na_.reset();
         callback_subnet6collection_ = NULL;
         callback_argument_names_.clear();
@@ -823,6 +902,9 @@ public:
 
     /// Pointer to Dhcpv6Srv that is used in tests
     boost::scoped_ptr<NakedDhcpv6Srv> srv_;
+
+    /// Pointer to the IO service used in the tests.
+    static IOServicePtr io_service_;
 
     // The following fields are used in testing pkt6_receive_callout
 
@@ -835,8 +917,11 @@ public:
     /// Server's response Pkt6 structure returned in the callout
     static Pkt6Ptr callback_resp_pkt6_;
 
-    /// Pointer to lease6
+    /// Pointer to lease6 structure returned in the leases8_committed callout
     static Lease6Ptr callback_lease6_;
+
+    /// Pointer to lease6 structure returned in the leases8_committed callout
+    static Lease6Ptr callback_deleted_lease6_;
 
     /// Pointer to IA_NA option being renewed or rebound
     static boost::shared_ptr<Option6IA> callback_ia_na_;
@@ -869,6 +954,7 @@ const uint32_t HooksDhcpv6SrvTest::override_valid_ = 1004;
 
 // The following fields are used in testing pkt6_receive_callout.
 // See fields description in the class for details
+IOServicePtr HooksDhcpv4SrvTest::io_service_;
 string HooksDhcpv6SrvTest::callback_name_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_qry_pkt6_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_resp_pkt6_;
@@ -876,6 +962,7 @@ Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
 const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
+Lease6Ptr HooksDhcpv6SrvTest::callback_deleted_lease6_;
 boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
 bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
@@ -907,10 +994,12 @@ public:
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
+        static_cast<void>(remove(SRV_CONFIG_MARKER_FILE));
 
         CfgMgr::instance().clear();
     }
 };
+
 
 // Checks if callouts installed on buffer6_receive are indeed called and the
 // all necessary parameters are passed.

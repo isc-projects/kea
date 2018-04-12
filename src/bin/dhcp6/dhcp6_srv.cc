@@ -29,7 +29,6 @@
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
-#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -94,33 +93,39 @@ namespace {
 
 /// Structure that holds registered hook indexes
 struct Dhcp6Hooks {
-    int hook_index_buffer6_receive_;///< index for "buffer6_receive" hook point
-    int hook_index_pkt6_receive_;   ///< index for "pkt6_receive" hook point
-    int hook_index_subnet6_select_; ///< index for "subnet6_select" hook point
-    int hook_index_lease6_release_; ///< index for "lease6_release" hook point
-    int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
-    int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
-    int hook_index_lease6_decline_; ///< index for "lease6_decline" hook point
-    int hook_index_host6_identifier_;///< index for "host6_identifier" hook point
+    int hook_index_buffer6_receive_;  ///< index for "buffer6_receive" hook point
+    int hook_index_pkt6_receive_;     ///< index for "pkt6_receive" hook point
+    int hook_index_subnet6_select_;   ///< index for "subnet6_select" hook point
+    int hook_index_leases6_committed_;///< index for "leases6_committed" hook point
+    int hook_index_lease6_release_;   ///< index for "lease6_release" hook point
+    int hook_index_pkt6_send_;        ///< index for "pkt6_send" hook point
+    int hook_index_buffer6_send_;     ///< index for "buffer6_send" hook point
+    int hook_index_lease6_decline_;   ///< index for "lease6_decline" hook point
+    int hook_index_host6_identifier_; ///< index for "host6_identifier" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
-        hook_index_buffer6_receive_ = HooksManager::registerHook("buffer6_receive");
-        hook_index_pkt6_receive_    = HooksManager::registerHook("pkt6_receive");
-        hook_index_subnet6_select_  = HooksManager::registerHook("subnet6_select");
-        hook_index_lease6_release_  = HooksManager::registerHook("lease6_release");
-        hook_index_pkt6_send_       = HooksManager::registerHook("pkt6_send");
-        hook_index_buffer6_send_    = HooksManager::registerHook("buffer6_send");
-        hook_index_lease6_decline_  = HooksManager::registerHook("lease6_decline");
-        hook_index_host6_identifier_= HooksManager::registerHook("host6_identifier");
+        hook_index_buffer6_receive_   = HooksManager::registerHook("buffer6_receive");
+        hook_index_pkt6_receive_      = HooksManager::registerHook("pkt6_receive");
+        hook_index_subnet6_select_    = HooksManager::registerHook("subnet6_select");
+        hook_index_leases6_committed_ = HooksManager::registerHook("leases6_committed");
+        hook_index_lease6_release_    = HooksManager::registerHook("lease6_release");
+        hook_index_pkt6_send_         = HooksManager::registerHook("pkt6_send");
+        hook_index_buffer6_send_      = HooksManager::registerHook("buffer6_send");
+        hook_index_lease6_decline_    = HooksManager::registerHook("lease6_decline");
+        hook_index_host6_identifier_  = HooksManager::registerHook("host6_identifier");
     }
 };
+
+} // end of anonymous namespace
 
 // Declare a Hooks object. As this is outside any function or method, it
 // will be instantiated (and the constructor run) when the module is loaded.
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
 Dhcp6Hooks Hooks;
+
+namespace {
 
 /// @brief Creates instance of the Status Code option.
 ///
@@ -488,55 +493,12 @@ void Dhcpv6Srv::run_one() {
         return;
     }
 
-    try {
-
-        // Now all fields and options are constructed into output wire buffer.
-        // Option objects modification does not make sense anymore. Hooks
-        // can only manipulate wire buffer at this stage.
-        // Let's execute all callouts registered for buffer6_send
-        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
-            CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
-
-            // Enable copying options from the packet within hook library.
-            ScopedEnableOptionsCopy<Pkt6> response6_options_copy(rsp);
-
-            // Pass incoming packet as argument
-            callout_handle->setArgument("response6", rsp);
-
-            // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
-
-            // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
-            // stage means drop.
-            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
-                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
-                    .arg(rsp->getLabel());
-                return;
-            }
-
-            callout_handle->getArgument("response6", rsp);
-        }
-
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
-            .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
-
-        sendPacket(rsp);
-
-        // Update statistics accordingly for sent packet.
-        processStatsSent(rsp);
-
-    } catch (const std::exception& e) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
-    }
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+    processPacketBufferSend(callout_handle, rsp);
 }
 
 void
-Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
     bool skip_unpack = false;
 
     // The packet has just been received so contains the uninterpreted wire
@@ -641,6 +603,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
+    // Assign this packet to a class, if possible
+    classifyPacket(query);
+
     LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
         .arg(query->getLabel())
         .arg(query->getName())
@@ -686,8 +651,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         callout_handle->getArgument("query6", query);
     }
 
-    // Assign this packet to a class, if possible
-    classifyPacket(query);
+    AllocEngine::ClientContext6Ptr ctx;
 
     try {
         NameChangeRequestPtr ncr;
@@ -698,15 +662,15 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             break;
 
         case DHCPV6_REQUEST:
-            rsp = processRequest(query);
+            rsp = processRequest(query, ctx);
             break;
 
         case DHCPV6_RENEW:
-            rsp = processRenew(query);
+            rsp = processRenew(query, ctx);
             break;
 
         case DHCPV6_REBIND:
-            rsp = processRebind(query);
+            rsp = processRebind(query, ctx);
             break;
 
         case DHCPV6_CONFIRM:
@@ -714,11 +678,11 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             break;
 
         case DHCPV6_RELEASE:
-            rsp = processRelease(query);
+            rsp = processRelease(query, ctx);
             break;
 
         case DHCPV6_DECLINE:
-            rsp = processDecline(query);
+            rsp = processDecline(query, ctx);
             break;
 
         case DHCPV6_INFORMATION_REQUEST:
@@ -799,6 +763,88 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     rsp->setIndex(query->getIndex());
     rsp->setIface(query->getIface());
 
+    bool packet_park = false;
+
+    if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases6_committed_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Clear skip flag if it was set in previous callouts
+        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
+
+        // Also pass the corresponding query packet as argument
+        callout_handle->setArgument("query6", query);
+
+        Lease6CollectionPtr new_leases(new Lease6Collection());
+        if (ctx->new_lease_) {
+            new_leases->push_back(ctx->new_lease_);
+        }
+        callout_handle->setArgument("leases6", new_leases);
+
+        Lease6CollectionPtr deleted_leases(new Lease6Collection());
+        if (ctx->old_lease_) {
+            if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
+                deleted_leases->push_back(ctx->old_lease_);
+            }
+        }
+        callout_handle->setArgument("deleted_leases6", deleted_leases);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_leases6_committed_,
+                                   *callout_handle);
+
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                      DHCP6_HOOK_LEASES6_COMMITTED_DROP)
+                .arg(query->getLabel());
+            rsp.reset();
+
+        } else if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
+                   && allow_packet_park) {
+            packet_park = true;
+        }
+    }
+
+    if (!rsp) {
+        return;
+    }
+
+    // PARKING SPOT after leases6_committed hook point.
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+    if (packet_park) {
+        LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                  DHCP6_HOOK_LEASES6_COMMITTED_PARK)
+            .arg(query->getLabel());
+
+        // Park the packet. The function we bind here will be executed when the hook
+        // library unparks the packet.
+        HooksManager::park("leases6_committed", query,
+        [this, callout_handle, query, rsp]() mutable {
+            processPacketPktSend(callout_handle, query, rsp);
+            processPacketBufferSend(callout_handle, rsp);
+        });
+
+        // If we have parked the packet, let's reset the pointer to the
+        // response to indicate to the caller that it should return, as
+        // the packet processing will continue via the callback.
+        rsp.reset();
+
+    } else {
+        processPacketPktSend(callout_handle, query, rsp);
+    }
+}
+
+void
+Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                                Pkt6Ptr& query, Pkt6Ptr& rsp) {
+    if (!rsp) {
+        return;
+    }
+
     // Specifies if server should do the packing
     bool skip_pack = false;
 
@@ -807,7 +853,6 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     // output wire data has not been prepared yet.
     // Execute all callouts registered for packet6_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Enable copying options from the packets within hook library.
         ScopedEnableOptionsCopy<Pkt6> query_resp_options_copy(query, rsp);
@@ -852,6 +897,60 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             return;
         }
 
+    }
+}
+
+void
+Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
+                                   Pkt6Ptr& rsp) {
+    if (!rsp) {
+        return;
+    }
+
+    try {
+        // Now all fields and options are constructed into output wire buffer.
+        // Option objects modification does not make sense anymore. Hooks
+        // can only manipulate wire buffer at this stage.
+        // Let's execute all callouts registered for buffer6_send
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt6> response6_options_copy(rsp);
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response6", rsp);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer6_send_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                          DHCP6_HOOK_BUFFER_SEND_SKIP)
+                    .arg(rsp->getLabel());
+                return;
+            }
+
+            callout_handle->getArgument("response6", rsp);
+        }
+
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
+            .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
+
+        sendPacket(rsp);
+
+        // Update statistics accordingly for sent packet.
+        processStatsSent(rsp);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
     }
 }
 
@@ -2516,7 +2615,6 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 }
 
 
-
 Pkt6Ptr
 Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
@@ -2574,17 +2672,20 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
+Dhcpv6Srv::processRequest(const Pkt6Ptr& request,
+                          AllocEngine::ClientContext6Ptr& context) {
 
     sanityCheck(request, MANDATORY, MANDATORY);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
+    context.reset(new AllocEngine::ClientContext6());
+    AllocEngine::ClientContext6& ctx = *context;
     bool drop = false;
     initContext(request, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
     if (drop) {
+        context.reset();
         return (Pkt6Ptr());
     }
 
@@ -2611,17 +2712,20 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
+Dhcpv6Srv::processRenew(const Pkt6Ptr& renew,
+                        AllocEngine::ClientContext6Ptr& context) {
 
     sanityCheck(renew, MANDATORY, MANDATORY);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
+    context.reset(new AllocEngine::ClientContext6());
+    AllocEngine::ClientContext6& ctx = *context;
     bool drop = false;
     initContext(renew, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
     if (drop) {
+        context.reset();
         return (Pkt6Ptr());
     }
 
@@ -2648,17 +2752,20 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
+Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind,
+                         AllocEngine::ClientContext6Ptr& context) {
 
     sanityCheck(rebind, MANDATORY, FORBIDDEN);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
+    context.reset(new AllocEngine::ClientContext6());
+    AllocEngine::ClientContext6& ctx = *context;
     bool drop = false;
     initContext(rebind, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
     if (drop) {
+        context.reset();
         return (Pkt6Ptr());
     }
 
@@ -2786,17 +2893,20 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
+Dhcpv6Srv::processRelease(const Pkt6Ptr& release,
+                          AllocEngine::ClientContext6Ptr& context) {
 
     sanityCheck(release, MANDATORY, MANDATORY);
 
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
+    context.reset(new AllocEngine::ClientContext6());
+    AllocEngine::ClientContext6& ctx = *context;
     bool drop = false;
     initContext(release, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
     if (drop) {
+        context.reset();
         return (Pkt6Ptr());
     }
 
@@ -2819,26 +2929,29 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
+Dhcpv6Srv::processDecline(const Pkt6Ptr& decline,
+                          AllocEngine::ClientContext6Ptr& context) {
 
     // Do sanity check.
     sanityCheck(decline, MANDATORY, MANDATORY);
 
-    // Create an empty Reply message.
-    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
-
     // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
+    context.reset(new AllocEngine::ClientContext6());
+    AllocEngine::ClientContext6& ctx = *context;
     bool drop = false;
     initContext(decline, ctx, drop);
 
     // Stop here if initContext decided to drop the packet.
     if (drop) {
+        context.reset();
         return (Pkt6Ptr());
     }
 
     setReservedClientClasses(decline, ctx);
     requiredClassify(decline, ctx);
+
+    // Create an empty Reply message.
+    Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, decline->getTransid()));
 
     // Copy client options (client-id, also relay information if present)
     copyClientOptions(decline, reply);
@@ -2856,6 +2969,7 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline) {
 
         // declineLeases returns false only if the hooks set the next step
         // status to DROP. We'll just doing as requested.
+        context.reset();
         return (Pkt6Ptr());
     }
 }
@@ -3006,7 +3120,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
         }
 
         // Ok, all is good. Decline this lease.
-        if (!declineLease(decline, lease, ia_rsp)) {
+        if (!declineLease(decline, lease, ia_rsp, ctx)) {
             // declineLease returns false only when hook callouts set the next
             // step status to drop. We just propagate the bad news here.
             return (OptionPtr());
@@ -3033,7 +3147,8 @@ Dhcpv6Srv::setStatusCode(boost::shared_ptr<isc::dhcp::Option6IA>& container,
 
 bool
 Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
-                        boost::shared_ptr<Option6IA> ia_rsp) {
+                        boost::shared_ptr<Option6IA> ia_rsp,
+                        AllocEngine::ClientContext6& ctx) {
     // We do not want to decrease the assigned-nas at this time. While
     // technically a declined address is no longer allocated, the primary usage
     // of the assigned-addresses statistic is to monitor pool utilization. Most
@@ -3101,6 +3216,8 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     // way.
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
     LeaseMgrFactory::instance().updateLease6(lease);
+
+    ctx.new_lease_ = lease;
 
     LOG_INFO(lease6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
         .arg(lease->addr_.toText()).arg(lease->valid_lft_);

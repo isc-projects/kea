@@ -46,6 +46,26 @@ packet processing, but the exact order depends on the actual processing. Hook po
 that are not specific to packet processing (e.g. lease expiration) will be added
 to the end of this list.
 
+ @subsection dhcp6HooksDhcpv6SrvConfigured dhcp6_srv_configured
+ - @b Arguments:
+   - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
+   - name: @b network_state, type: isc::dhcp::NetworkStatePtr, direction: <b>in</b>
+   - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
+   - name: @b server_config, type: isc::dhcp::SrvConfigPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has completed
+   its (re)configuration. The server provides received and parsed configuration
+   structures to the hook library. It also provides a pointer to the IOService
+   object which is used by the server to run asynchronous operations. The hooks
+   libraries can use this IOService object to schedule asynchronous tasks which
+   are triggered by the DHCP server's main loop. The hook library should hold the
+   provided pointer until the library is unloaded. The NetworkState object
+   provides access to the DHCP service state of the server and allows for
+   enabling and disabling the DHCP service from the hooks libraries.
+
+ - <b>Next step status</b>: Status codes retured by the callouts installed on
+   this hook point are ignored.
+
  @subsection dhcpv6HooksBuffer6Receive buffer6_receive
 
  - @b Arguments:
@@ -265,6 +285,39 @@ to the end of this list.
    sets the status to SKIP or DROP, the server will not delete the lease, which will
    remain in the database until it expires. However, the server will send out
    the response back to the client as if it did.
+
+@subsection dhcpv6Leases6Committed leases6_committed
+
+ - @b Arguments:
+   - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
+   - name: @b leases6, type: isc::dhcp::Leases6CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases6, type: isc::dhcp::Leases6CollectionPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has
+   applied all lease changes as a result of DHCP message
+   processing. This includes writing new lease into the database,
+   releasing an old lease for this client or declining a lease. This
+   callout is executed only for the DHCP client messages which may
+   cause lease changes, i.e. REQUEST, RENEW, REBIND, RELEASE and
+   DECLINE. This callout is not executed for SOLICIT, CONFIRM and
+   INFORMATION REQUEST.  If the callouts are executed as a result of
+   PREQUEST or RENEW message, it is possible that both leases
+   collections hold leases to be handled. This is the case when the
+   new lease allocation replaces an existing lease for the client. The
+   "deleted_leases6" object will hold a previous lease instance and
+   the "leases6" object will hold the new lease for this client. The
+   callouts should be prepared to handle such situation. When the
+   callout is executed as a result RELEASE or DECLINE, the callout
+   will typically receive only one lease (being released) in the
+   "deleted_leases6" object.  Both leases collections are always
+   provided to the callouts, even though they may sometimes be empty.
+
+ - <b>Next step status</b>: If any callout installed on the "leases6_committed"
+   sets the next step action to DROP the server will drop the processed query.
+   If it sets the next step action to PARK, the server will park the processed
+   packet (hold packet processing) until the hook libraries explicitly unpark
+   the packet after they are done performing asynchronous operations.
+
 
 @subsection dhcpv6HooksPkt6Send pkt6_send
 
