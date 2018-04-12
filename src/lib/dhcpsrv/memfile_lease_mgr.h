@@ -676,7 +676,6 @@ public:
     /// @return The populated query as a pointer to an LeaseStatsQuery.
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
-#if 0
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
     /// It creates an instance of a MemfileLeaseStatsQuery6 for a single subnet
@@ -698,7 +697,6 @@ public:
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
                                                                 const SubnetID& last_subnet_id);
-#endif
 
     /// @name Protected methods used for %Lease File Cleanup.
     /// The following methods are protected so as they can be accessed and

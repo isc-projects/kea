@@ -1935,9 +1935,16 @@ TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
     testWipeLeases6();
 }
 
+// Tests v4 lease stats query variants.
 TEST_F(MemfileLeaseMgrTest, leaseStatsQuery4) {
     startBackend(V4);
     testLeaseStatsQuery4();
+}
+
+// Tests v6 lease stats query variants.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQuery6) {
+    startBackend(V6);
+    testLeaseStatsQuery6();
 }
 
 

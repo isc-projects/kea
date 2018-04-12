@@ -461,6 +461,24 @@ public:
         : MemfileLeaseStatsQuery(), storage6_(storage6) {
     };
 
+    /// @brief Constructor for a single subnet query
+    ///
+    /// @param storage6 A pointer to the v6 lease storage to be counted
+    /// @param subnet_id ID of the desired subnet
+    MemfileLeaseStatsQuery6(Lease6Storage& storage6, const SubnetID& subnet_id)
+        : MemfileLeaseStatsQuery(subnet_id), storage6_(storage6) {
+    };
+
+    /// @brief Constructor for a subnet range query
+    ///
+    /// @param storage6 A pointer to the v6 lease storage to be counted
+    /// @param first_subnet_id ID of the first subnet in the desired range
+    /// @param last_subnet_id ID of the last subnet in the desired range
+    MemfileLeaseStatsQuery6(Lease6Storage& storage6, const SubnetID& first_subnet_id,
+                            const SubnetID& last_subnet_id)
+        : MemfileLeaseStatsQuery(first_subnet_id, last_subnet_id), storage6_(storage6) {
+    };
+
     /// @brief Destructor
     virtual ~MemfileLeaseStatsQuery6() {};
 
@@ -482,6 +500,31 @@ public:
         const Lease6StorageSubnetIdIndex& idx
             = storage6_.get<SubnetIdIndexTag>();
 
+        // Set lower and upper bounds based on select mode
+        Lease6StorageSubnetIdIndex::const_iterator lower;
+        Lease6StorageSubnetIdIndex::const_iterator upper;
+        switch (getSelectMode()) {
+        case ALL_SUBNETS:
+            lower = idx.begin();
+            upper = idx.end();
+            break;
+
+        case SINGLE_SUBNET:
+            lower = idx.lower_bound(getFirstSubnetID());
+            upper = idx.upper_bound(getFirstSubnetID());
+            break;
+
+        case SUBNET_RANGE:
+            lower = idx.lower_bound(getFirstSubnetID());
+            upper = idx.upper_bound(getLastSubnetID());
+            break;
+        }
+
+        // Return an empty set if there are no rows.
+        if (lower == upper) {
+            return;
+        }
+
         // Iterate over the leases in order by subnet, accumulating per
         // subnet counts for each state of interest.  As we finish each
         // subnet, add the appropriate rows to our result set.
@@ -489,10 +532,8 @@ public:
         int64_t assigned = 0;
         int64_t declined = 0;
         int64_t assigned_pds = 0;
-
-        for(Lease6StorageSubnetIdIndex::const_iterator lease = idx.begin();
-            lease != idx.end(); ++lease) {
-
+        for(Lease6StorageSubnetIdIndex::const_iterator lease = lower;
+            lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
             // and wipe the accumulators
             if ((*lease)->subnet_id_ != cur_id) {
@@ -536,17 +577,12 @@ public:
         }
 
         // Make the rows for last subnet, unless there were no rows
-        if (idx.begin() != idx.end()) {
-            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
-                                          Lease::STATE_DEFAULT,
-                                          assigned));
-            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
-                                          Lease::STATE_DECLINED,
-                                          declined));
-            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
-                                          Lease::STATE_DEFAULT,
-                                          assigned_pds));
-        }
+        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                      Lease::STATE_DEFAULT, assigned));
+        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                      Lease::STATE_DECLINED, declined));
+        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                      Lease::STATE_DEFAULT, assigned_pds));
 
         // Set the next row position to the beginning of the rows.
         next_pos_ = rows_.begin();
@@ -1444,7 +1480,6 @@ Memfile_LeaseMgr::startLeaseStatsQuery6() {
     return(query);
 }
 
-#if 0
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, subnet_id));
@@ -1455,12 +1490,11 @@ Memfile_LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
                                                    const SubnetID& last_subnet_id) {
-    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage6_, first_subnet_id,
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, first_subnet_id,
                                                          last_subnet_id));
     query->start();
     return(query);
 }
-#endif
 
 size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4)
