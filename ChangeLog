@@ -1,3 +1,8 @@
+1386.	[func]		fdupont
+	Extented comment / user-context support to DHCP-DDNS and
+	Control Agent configuration syntax.
+	(Trac #5495, git xxx)
+
 1385.	[func]		tomek
 	lease4-wipe and lease6-wipe are now able to wipe all leases
 	from all configured subnets if subnet-id specified is 0

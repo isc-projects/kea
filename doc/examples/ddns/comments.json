@@ -1,6 +1,6 @@
 // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
-// It uses embedded (i.e., which will be included in configuration objects
-// and not stripped by at lexical analysis) comments.
+// It uses embedded comments which will be included in configuration objects
+// within user-contexts rather than stripped away by at lexical analysis.
 
 {
 "DhcpDdns":
