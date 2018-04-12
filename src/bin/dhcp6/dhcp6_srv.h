@@ -17,6 +17,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>
@@ -24,6 +25,7 @@
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
 
+#include <functional>
 #include <iostream>
 #include <queue>
 
@@ -120,7 +122,9 @@ public:
     ///
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response
-    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp,
+                       bool allow_packet_park = true);
 
     /// @brief Instructs the server to shut down.
     void shutdown();
@@ -228,15 +232,21 @@ protected:
     /// leases.
     ///
     /// @param request a message received from client
+    /// @param [out] context pointer to the client context where allocated
+    /// and deleted leases are stored.
     ///
     /// @return REPLY message or NULL
-    Pkt6Ptr processRequest(const Pkt6Ptr& request);
+    Pkt6Ptr processRequest(const Pkt6Ptr& request,
+                           AllocEngine::ClientContext6Ptr& context);
 
     /// @brief Processes incoming Renew message.
     ///
     /// @param renew message received from the client
+    /// @param [out] context pointer to the client context where allocated
+    /// and deleted leases are stored.
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRenew(const Pkt6Ptr& renew);
+    Pkt6Ptr processRenew(const Pkt6Ptr& renew,
+                         AllocEngine::ClientContext6Ptr& context);
 
     /// @brief Processes incoming Rebind message.
     ///
@@ -247,8 +257,11 @@ protected:
     /// now.
     ///
     /// @param rebind message received from the client.
+    /// @param [out] context pointer to the client context where allocated
+    /// and deleted leases are stored.
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
+    Pkt6Ptr processRebind(const Pkt6Ptr& rebind,
+                          AllocEngine::ClientContext6Ptr& context);
 
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
@@ -278,8 +291,11 @@ protected:
     /// @brief Process incoming Release message.
     ///
     /// @param release message received from client
+    /// @param [out] context pointer to the client context where released
+    /// leases are stored.
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRelease(const Pkt6Ptr& release);
+    Pkt6Ptr processRelease(const Pkt6Ptr& release,
+                           AllocEngine::ClientContext6Ptr& context);
 
     /// @brief Process incoming Decline message.
     ///
@@ -292,7 +308,10 @@ protected:
     ///                     options)
     ///
     /// @param decline message received from client
-    Pkt6Ptr processDecline(const Pkt6Ptr& decline);
+    /// @param [out] context pointer to the client context where declined
+    /// leases are stored.
+    Pkt6Ptr processDecline(const Pkt6Ptr& decline,
+                           AllocEngine::ClientContext6Ptr& context);
 
     /// @brief Processes incoming Information-request message.
     ///
@@ -881,6 +900,13 @@ public:
     /// @return the index of the buffer6_send hook
     static int getHookIndexBuffer6Send();
 
+    /// @brief Executes buffer6_send callout and sends the response.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param rsp pointer to a response.
+    void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
+                                 Pkt6Ptr& rsp);
+
 protected:
 
     /// Server DUID (to be sent in server-identifier option)
@@ -889,6 +915,14 @@ protected:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    /// @brief Executes pkt6_send callout.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param query Pointer to a query.
+    /// @param rsp Pointer to a response.
+    void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                              Pkt6Ptr& query, Pkt6Ptr& rsp);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

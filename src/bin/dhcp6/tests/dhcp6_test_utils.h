@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,6 +181,51 @@ public:
     virtual ~NakedDhcpv6Srv() {
         // Close the lease database
         isc::dhcp::LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Processes incoming Request message.
+    ///
+    /// @param request a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRequest(const Pkt6Ptr& request) {
+        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
+        return (processRequest(request, context));
+    }
+
+    /// @brief Processes incoming Renew message.
+    ///
+    /// @param renew a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
+        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
+        return (processRenew(renew, context));
+    }
+
+    /// @brief Processes incoming Rebind message.
+    ///
+    /// @param rebind a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
+        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
+        return (processRebind(rebind, context));
+    }
+
+    /// @brief Processes incoming Release message.
+    ///
+    /// @param release a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRelease(const Pkt6Ptr& release) {
+        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
+        return (processRelease(release, context));
+    }
+
+    /// @brief Processes incoming Decline message.
+    ///
+    /// @param decline a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
+        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
+        return (processDecline(decline, context));
     }
 
     using Dhcpv6Srv::processSolicit;
