@@ -1,7 +1,7 @@
 1386.	[func]		fdupont
 	Extented comment / user-context support to DHCP-DDNS and
 	Control Agent configuration syntax.
-	(Trac #5495, git xxx)
+	(Trac #5495, git fe79959e3bc3c46ccb89661cb27696671a8508b8)
 
 1385.	[func]		tomek
 	lease4-wipe and lease6-wipe are now able to wipe all leases
