@@ -250,8 +250,8 @@ ClientClassDictionary::findClass(const std::string& name) const {
 
 void
 ClientClassDictionary::removeClass(const std::string& name) {
-    for (ClientClassDefList::const_iterator this_class = list_->cbegin();
-         this_class != list_->cend(); ++this_class) {
+    for (ClientClassDefList::iterator this_class = list_->begin();
+         this_class != list_->end(); ++this_class) {
         if ((*this_class)->getName() == name) {
             list_->erase(this_class);
             break;
