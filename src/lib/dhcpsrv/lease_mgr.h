@@ -155,17 +155,17 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @throw BadValue if sunbet_id given is 0.
-    LeaseStatsQuery(SubnetID subnet_id);
+    LeaseStatsQuery(const SubnetID& subnet_id);
 
     /// @brief Constructor to query for the stats for a range of subnets
     ///
     /// The query created will return statistics for the inclusive range of
     /// subnets described by first and last sunbet IDs.
     ///
-    /// @param first first subnet in the range of subnets
-    /// @param last last subnet in the range of subnets
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
     /// @throw BadValue if either value given is 0 or if last <= first.
-    LeaseStatsQuery(SubnetID first, SubnetID last);
+    LeaseStatsQuery(const SubnetID& first_subnet_id, const SubnetID& last_subnet_id);
 
     /// @brief virtual destructor
     virtual ~LeaseStatsQuery() {};
@@ -531,7 +531,7 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(SubnetID subnet_id);
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
 
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
@@ -541,11 +541,11 @@ public:
     /// range of subnets. Each row of the result set is an LeaseStatRow which
     /// ordered ascending by subnet ID.
     ///
-    /// @param first first subnet in the range of subnets
-    /// @param last last subnet in the range of subnets
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(SubnetID first,
-                                                                SubnetID last);
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Recalculates per-subnet and global stats for IPv6 leases
     ///
@@ -588,7 +588,7 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(SubnetID subnet_id);
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -598,11 +598,11 @@ public:
     /// range of subnets. Each row of the result set is an LeaseStatRow which
     /// ordered ascending by subnet ID.
     ///
-    /// @param first first subnet in the range of subnets
-    /// @param last last subnet in the range of subnets
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last last_subnet_id subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(SubnetID first,
-                                                                SubnetID last);
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Virtual method which removes specified leases.
     ///

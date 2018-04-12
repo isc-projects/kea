@@ -372,6 +372,7 @@ TEST_F(LeaseMgrTest, getLease6) {
 TEST (LeaseStatsQueryTest, defaultCtor) {
     LeaseStatsQueryPtr qry;
 
+    // Valid construction, verifiy member values.
     ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery()));
     ASSERT_EQ(0, qry->getFirstSubnetID());
     ASSERT_EQ(0, qry->getLastSubnetID());
@@ -382,7 +383,10 @@ TEST (LeaseStatsQueryTest, defaultCtor) {
 TEST (LeaseStatsQueryTest, singleSubnetCtor) {
     LeaseStatsQueryPtr qry;
 
+    // Invalid values for subnet_id
     ASSERT_THROW(qry.reset(new LeaseStatsQuery(0)), BadValue);
+
+    // Valid values should work and set mode accordingly.
     ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery(77)));
     ASSERT_EQ(77, qry->getFirstSubnetID());
     ASSERT_EQ(0, qry->getLastSubnetID());

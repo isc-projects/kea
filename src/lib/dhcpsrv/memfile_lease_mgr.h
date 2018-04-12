@@ -638,12 +638,34 @@ public:
 
     /// @brief Creates and runs the IPv4 lease stats query
     ///
-    /// It creates an instance of a MemfileLeaseStatsQuery4 and then
-    /// invokes its start method in which the query constructs its
+    /// It creates an instance of a MemfileLeaseStatsQuery4 for an all subnets
+    /// query and then invokes its start method in which the query constructs its
     /// statistical data result set.  The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery4 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery4 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Creates and runs the IPv6 lease stats query
     ///
@@ -653,6 +675,30 @@ public:
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery.
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+#if 0
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery6 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MemfileLeaseStatsQuery4 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
+#endif
 
     /// @name Protected methods used for %Lease File Cleanup.
     /// The following methods are protected so as they can be accessed and
