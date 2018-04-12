@@ -3334,6 +3334,154 @@ both the command and the response.
 
       </section> <!-- end of ha-load-balancing-config -->
 
+      <section xml:id="ha-load-balancing-advanced-config">
+        <title>Load Balancing with Advanced Classification</title>
+        <para>In the previous section we have provided an example which demonstrated
+        the load balancing configuration with the client classification limited
+        to the use of <command>ha_server1</command> and <command>ha_server2</command>
+        classes, which are dynamically assigned to the received DHCP queries.
+        In many cases it will be required to use HA in deployments which already
+        use some client classification.
+        </para>
+        <para>
+          Suppose there is a system which classifies devices into two groups:
+          phones and laptops, based on some classification criteria specified in
+          Kea configuration file. Both types of devices are allocated leases
+          from different address pools. Introducing HA in the load balancing mode
+          is expected to result in further split of each of those pools, so as
+          each of the servers can allocate leases for some part of the phones
+          and part of the laptops. This requires that each of the existing pools
+          should be split between the <command>ha_server1</command> and
+          <command>ha_server2</command>, so we end up with the following classes:
+
+          <itemizedlist>
+            <listitem><simpara>phones_server1</simpara></listitem>
+            <listitem><simpara>laptops_server1</simpara></listitem>
+            <listitem><simpara>phones_server2</simpara></listitem>
+            <listitem><simpara>laptops_server2</simpara></listitem>
+          </itemizedlist>
+        </para>
+
+        <para>The corresponding server configuration using advanced classification
+        (and <command>member</command> expression) is provided below. For brevity
+        the HA hook library configuration has been removed from this example.
+<screen>
+{
+"Dhcp4": {
+
+    "client-classes": [
+        {
+            "name": "ha_server1"
+        },
+        {
+            "name": "ha_server2"
+        },
+        {
+            "name": "phones",
+            "test": "substring(option[60].hex,0,6) == 'Aastra'",
+        },
+        {
+            "name": "laptops",
+            "test": "not member('phones')"
+        },
+        {
+            "name": "phones_server1",
+            "test": "member('phones') and member('ha_server1')"
+        },
+        {
+            "name": "phones_server2",
+            "test": "member('phones') and member('ha_server2')"
+        },
+        {
+            "name": "laptops_server1",
+            "test": "member('laptops') and member('ha_server1')"
+        },
+        {
+            "name": "laptops_server2",
+            "test": "member('laptops') and member('ha_server2')"
+        }
+    ],
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+
+                    ...
+
+                } ]
+            }
+        }
+    ],
+
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.3.100 - 192.0.3.125",
+                    "client-class": "phones_server1"
+                },
+                {
+                    "pool": "192.0.3.126 - 192.0.3.150",
+                    "client-class": "laptops_server1"
+                },
+                {
+                    "pool": "192.0.3.200 - 192.0.3.225",
+                    "client-class": "phones_server2"
+                },
+                {
+                    "pool": "192.0.3.226 - 192.0.3.250",
+                    "client-class": "laptops_server2"
+                }
+            ],
+
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": "192.0.3.1"
+                }
+            ],
+
+            "relay": { "ip-address": "10.1.2.3" }
+        }
+    ],
+
+    ...
+
+}
+
+}
+</screen>
+        </para>
+
+        <para>The configuration provided above splits the address range into
+        four pools. Two pools are dedicated to server1 and two are dedicated for
+        server2. Each server can assign leases to both phones and laptops.
+        Both groups of devices are assigned addresses from different pools.
+        Note that definition of classes <command>ha_server1</command> and
+        <command>ha_server2</command> is required because other classes
+        refer to them via <command>member</command> expression. These classes
+        do not include <command>test</command> parameter because they are
+        not evaluated with other classes. They are assigned dynamically
+        by the HA hook library as a result of load balancing algorithm.
+        The <command>phones_*</command> and <command>laptop_*</command>
+        evaluate to "true" when the query belongs to a given combination
+        of other classes, e.g. <command>ha_server1</command> and
+        <command>phones</command>. The pool will be selected accordingly
+        as a result of such evaluation.
+        </para>
+
+        <para>Consult <xref linkend="classify"/> for details on how to use
+        <command>member</command> expression and about class dependencies.</para>
+
+      </section> <!-- end of ha-load-balancing-advanced-config -->
+
       <section xml:id="ha-hot-standby-config">
         <title>Hot Standby Configuration</title>
         <para>The following is the example configuration of the primary server
