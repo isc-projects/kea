@@ -408,6 +408,18 @@ public:
     ///
     void testLeaseStatsQuery4();
 
+    /// @brief Checks operation of v6 LeaseStatsQuery variants
+    ///
+    /// It creates three subnets with leasese in various states in
+    /// each.  It runs and verifies the returned query contents for
+    /// each of the v6 startLeaseQuery variants:
+    ///
+    /// - startSubnetLeaseQuery()
+    /// - startSubneRangetLeaseQuery()
+    /// - startLeaseQuery()
+    ///
+    void testLeaseStatsQuery6();
+
     /// @brief Compares LeaseQueryStats content to expected set of rows
     ///
     /// @param qry - a started LeaseStatsQuery
