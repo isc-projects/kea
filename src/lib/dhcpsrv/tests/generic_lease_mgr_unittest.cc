@@ -2905,6 +2905,23 @@ GenericLeaseMgrTest::testLeaseStatsQuery4() {
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
+    // Make sure invalid values throw.
+    LeaseStatsQueryPtr query;
+    ASSERT_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(0), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(0,1), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(1,0), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(10,1), BadValue);
+
+    // Start tests with an empty expected row set.
+    RowSet expected_rows;
+
+    // Before we add leases, test an empty return for get all subnets
+    {
+        SCOPED_TRACE("GET ALL WITH NO LEASES");
+        ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
     // Now let's insert some leases into subnet 1.
     // Two leases in  the default state, i.e. assigned.
     // One lease in declined state.
@@ -2928,39 +2945,55 @@ GenericLeaseMgrTest::testLeaseStatsQuery4() {
     makeLease4("192.0.3.2", subnet_id);
     makeLease4("192.0.3.3", subnet_id, Lease::STATE_DECLINED);
 
-    LeaseStatsQueryPtr query;
-    RowSet expected_rows;
+    // Test single subnet for non-matching subnet
+    {
+        SCOPED_TRACE("NO MATCHING SUBNET");
+        ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(777));
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
 
-    // Test a non-matching single subnet
-    ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(777));
-    checkQueryAgainstRowSet(query, expected_rows);
+    // Test an empty range
+    {
+        SCOPED_TRACE("EMPTY SUBNET RANGE");
+        ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(777, 900));
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
 
     // Test a single subnet
-    // Add expected row for Subnet 2
-    expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 0));
-    expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DECLINED, 1));
-    // Start the query
-    ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(2));
-    // Verify contents
-    checkQueryAgainstRowSet(query, expected_rows);
+    {
+        SCOPED_TRACE("SINGLE SUBNET");
+        // Add expected row for Subnet 2
+        expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 0));
+        expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DECLINED, 1));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(2));
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
 
     // Test a range of subnets
-    // Add expected rows for Subnet 3
-    expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DEFAULT, 2));
-    expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DECLINED, 1));
-    // Start the query
-    ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(2,3));
-    // Verify contents
-    checkQueryAgainstRowSet(query, expected_rows);
+    {
+        SCOPED_TRACE("SUBNET RANGE");
+        // Add expected rows for Subnet 3
+        expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DEFAULT, 2));
+        expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DECLINED, 1));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(2,3));
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
 
     // Test all subnets
-    // Add expected rows for Subnet 1
-    expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DEFAULT, 2));
-    expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DECLINED, 1));
-    // Start the query
-    ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
-    // Verify contents
-    checkQueryAgainstRowSet(query, expected_rows);
+    {
+        SCOPED_TRACE("ALL SUBNETS");
+        // Add expected rows for Subnet 1
+        expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DEFAULT, 2));
+        expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DECLINED, 1));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
 }
 
 }; // namespace test

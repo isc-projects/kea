@@ -115,16 +115,18 @@ LeaseStatsQuery::LeaseStatsQuery()
     : first_subnet_id_(0), last_subnet_id_(0), select_mode_(ALL_SUBNETS) {
 }
 
-LeaseStatsQuery::LeaseStatsQuery(SubnetID subnet_id)
+LeaseStatsQuery::LeaseStatsQuery(const SubnetID& subnet_id)
     : first_subnet_id_(subnet_id), last_subnet_id_(0),
     select_mode_(SINGLE_SUBNET) {
-        if (first_subnet_id_ == 0) {
-            isc_throw(BadValue, "LeaseStatsQuery: subnet_id_ must be > 0");
-        }
+
+    if (first_subnet_id_ == 0) {
+        isc_throw(BadValue, "LeaseStatsQuery: subnet_id_ must be > 0");
+    }
 }
 
-LeaseStatsQuery::LeaseStatsQuery(SubnetID first, SubnetID last)
-    : first_subnet_id_(first), last_subnet_id_(last),
+LeaseStatsQuery::LeaseStatsQuery(const SubnetID& first_subnet_id,
+                                 const SubnetID& last_subnet_id)
+    : first_subnet_id_(first_subnet_id), last_subnet_id_(last_subnet_id),
     select_mode_(SUBNET_RANGE) {
 
     if (first_subnet_id_ == 0) {
@@ -147,13 +149,13 @@ LeaseMgr::startLeaseStatsQuery4() {
 }
 
 LeaseStatsQueryPtr
-LeaseMgr::startSubnetLeaseStatsQuery4(SubnetID /* subnet_id */) {
+LeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& /* subnet_id */) {
     return(LeaseStatsQueryPtr());
 }
 
 LeaseStatsQueryPtr
-LeaseMgr::startSubnetRangeLeaseStatsQuery4(SubnetID /* first */,
-                                           SubnetID  /* last */) {
+LeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& /* first_subnet_id */,
+                                           const SubnetID& /* last_subnet_id */) {
     return(LeaseStatsQueryPtr());
 }
 
@@ -260,13 +262,13 @@ LeaseMgr::startLeaseStatsQuery6() {
 }
 
 LeaseStatsQueryPtr
-LeaseMgr::startSubnetLeaseStatsQuery6(SubnetID /* subnet_id */) {
+LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& /* subnet_id */) {
     return(LeaseStatsQueryPtr());
 }
 
 LeaseStatsQueryPtr
-LeaseMgr::startSubnetRangeLeaseStatsQuery6(SubnetID /* first */,
-                                           SubnetID /* last */) {
+LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& /* first_subnet_id */,
+                                           const SubnetID& /* last_subnet_id */) {
     return(LeaseStatsQueryPtr());
 }
 
