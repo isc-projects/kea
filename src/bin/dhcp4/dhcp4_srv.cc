@@ -2451,7 +2451,6 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
         // Let's get class definitions
         const ClientClassDictionaryPtr& dict =
             CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
-        const ClientClassDefListPtr& defs = dict->getClasses();
 
         // Now we need to iterate over the classes assigned to the
         // query packet and find corresponding class definitions for it.
