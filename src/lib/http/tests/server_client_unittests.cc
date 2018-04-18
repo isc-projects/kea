@@ -1181,9 +1181,9 @@ TEST_F(HttpClientTest, malformedResponse) {
     HttpResponseJsonPtr response(new HttpResponseJson());
     unsigned resp_num = 0;
     ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
-        [this, &resp_num](const boost::system::error_code& ec,
-                          const HttpResponsePtr& response,
-                          const std::string& parsing_error) {
+        [this](const boost::system::error_code& ec,
+               const HttpResponsePtr& response,
+               const std::string& parsing_error) {
         io_service_.stop();
         // There should be no IO error (answer from the server is received).
         EXPECT_FALSE(ec);
