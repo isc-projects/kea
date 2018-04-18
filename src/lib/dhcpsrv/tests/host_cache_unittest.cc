@@ -66,7 +66,7 @@ public:
     }
 
     /// Flush
-    void flush(size_t count) {
+    void flush(size_t) {
         isc_throw(NotImplemented, "flush is not implemented");
     }
 
@@ -620,7 +620,7 @@ public:
         return (getOne());
     }
 
-    ConstHostPtr get4(const SubnetID& subnet_id, const IOAddress&) const {
+    ConstHostPtr get4(const SubnetID&, const IOAddress&) const {
         return (getOne());
     }
 
@@ -638,7 +638,7 @@ public:
         return (getOne());
     }
 
-    ConstHostPtr get6(const SubnetID& subnet_id, const IOAddress&) const {
+    ConstHostPtr get6(const SubnetID&, const IOAddress&) const {
         return (getOne());
     }
 
@@ -719,7 +719,7 @@ public:
     }
 
     /// Flush
-    void flush(size_t count) {
+    void flush(size_t) {
         isc_throw(NotImplemented, "flush is not implemented");
     }
 
