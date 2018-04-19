@@ -37,12 +37,31 @@
       documentation of the libraries to see if this is the case.
       </para>
       <para>
+      The next section describes how to build and install hooks libraries.
+      </para>
+    </section> <!-- end Introduction -->
+    <!--How to build and install  -->
+    <section>
+        <title>How to build and install</title>
+        <para>
+        Headers and sources for hooks libraries are in <filename> src/hooks </filename> form parent kea directory, 
+        to build hooks libraries form this directory run
+        <screen> $<userinput> <code> make </code> </userinput> </screen>
+        </para>
+        <para>
+        And then install hooks libraries by running
+        <screen> #<userinput> <code> make install </code> </userinput> </screen>
+        </para>
+        <para> The libraries are writen to [Kea installation directory]<filename>/local/lib/</filename> and headers to
+        [Kea installation directory] <filename>/local/include/kea/hooks/</filename>
+        </para>
+      <para>
       The next section describes how to configure hooks libraries. If you
       are interested in writing your own hooks library, information can be
       found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
       Developer's Guide</link>.
       </para>
-    </section> <!-- end Introduction -->
+    </section><!-- end of how to build and install -->
     <section>
       <title>Configuring Hooks Libraries</title>
       <para>
