@@ -365,6 +365,10 @@ public:
         ///        (if true).
         bool rev_dns_update_;
 
+        /// @brief A boolean value which indicates that server must
+        ///        invoke the leases committed callout (if true).
+        bool committed_;
+
         /// @brief Hostname.
         ///
         /// The server retrieves the hostname from the Client FQDN option,
@@ -376,6 +380,9 @@ public:
 
         /// @brief Holds addresses and prefixes allocated for all IAs.
         ResourceContainer allocated_resources_;
+
+        /// @brief A collection of newly allocated leases.
+        Lease6Collection new_leases_;
 
         //@}
 

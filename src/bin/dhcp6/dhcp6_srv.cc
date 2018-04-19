@@ -498,7 +498,7 @@ void Dhcpv6Srv::run_one() {
 }
 
 void
-Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
+Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     bool skip_unpack = false;
 
     // The packet has just been received so contains the uninterpreted wire
@@ -651,46 +651,24 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
         callout_handle->getArgument("query6", query);
     }
 
-    AllocEngine::ClientContext6Ptr ctx;
-
     try {
-        NameChangeRequestPtr ncr;
-
         switch (query->getType()) {
         case DHCPV6_SOLICIT:
-            rsp = processSolicit(query);
+        case DHCPV6_REBIND:
+        case DHCPV6_CONFIRM:
+            sanityCheck(query, MANDATORY, FORBIDDEN);
             break;
 
         case DHCPV6_REQUEST:
-            rsp = processRequest(query, ctx);
-            break;
-
         case DHCPV6_RENEW:
-            rsp = processRenew(query, ctx);
-            break;
-
-        case DHCPV6_REBIND:
-            rsp = processRebind(query, ctx);
-            break;
-
-        case DHCPV6_CONFIRM:
-            rsp = processConfirm(query);
-            break;
-
         case DHCPV6_RELEASE:
-            rsp = processRelease(query, ctx);
-            break;
-
         case DHCPV6_DECLINE:
-            rsp = processDecline(query, ctx);
+            sanityCheck(query, MANDATORY, MANDATORY);
             break;
 
         case DHCPV6_INFORMATION_REQUEST:
-            rsp = processInfRequest(query);
-            break;
-
         case DHCPV6_DHCPV4_QUERY:
-            processDhcp4Query(query);
+            sanityCheck(query, OPTIONAL, OPTIONAL);
             break;
 
         default:
@@ -712,6 +690,64 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
 
         // Increase the statistic of dropped packets.
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+
+        return;
+    }
+
+    if (query->getType() == DHCPV6_DHCPV4_QUERY) {
+        processDhcp4Query(query);
+        return;
+    }
+
+    // Let's create a simplified client context here.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    initContext(query, ctx, drop);
+
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return;
+    }
+
+    // Park point here.
+
+    try {
+        switch (query->getType()) {
+        case DHCPV6_SOLICIT:
+            rsp = processSolicit(query, ctx);
+            break;
+
+        case DHCPV6_REQUEST:
+            rsp = processRequest(query, ctx);
+            break;
+
+        case DHCPV6_RENEW:
+            rsp = processRenew(query, ctx);
+            break;
+
+        case DHCPV6_REBIND:
+            rsp = processRebind(query, ctx);
+            break;
+
+        case DHCPV6_CONFIRM:
+            rsp = processConfirm(query, ctx);
+            break;
+
+        case DHCPV6_RELEASE:
+            rsp = processRelease(query, ctx);
+            break;
+
+        case DHCPV6_DECLINE:
+            rsp = processDecline(query, ctx);
+            break;
+
+        case DHCPV6_INFORMATION_REQUEST:
+            rsp = processInfRequest(query, ctx);
+            break;
+
+        default:
+            return;
+        }
 
     } catch (const std::exception& e) {
 
@@ -765,7 +801,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
 
     bool packet_park = false;
 
-    if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases6_committed_)) {
+    if (ctx.committed_ &&
+        HooksManager::calloutsPresent(Hooks.hook_index_leases6_committed_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -780,15 +817,34 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
         callout_handle->setArgument("query6", query);
 
         Lease6CollectionPtr new_leases(new Lease6Collection());
-        if (ctx->new_lease_) {
-            new_leases->push_back(ctx->new_lease_);
+        if (!ctx.new_leases_.empty()) {
+            new_leases->assign(ctx.new_leases_.cbegin(),
+                               ctx.new_leases_.cend());
         }
         callout_handle->setArgument("leases6", new_leases);
 
+        // Two points: check only address? avoid duplicates in deleted_leases?
         Lease6CollectionPtr deleted_leases(new Lease6Collection());
-        if (ctx->old_lease_) {
-            if ((!ctx->new_lease_) || (ctx->new_lease_->addr_ != ctx->old_lease_->addr_)) {
-                deleted_leases->push_back(ctx->old_lease_);
+        for (auto const iac : ctx.ias_) {
+            if (!iac.old_leases_.empty()) {
+                for (auto old_lease : iac.old_leases_) {
+                    if (ctx.new_leases_.empty()) {
+                        deleted_leases->push_back(old_lease);
+                        continue;
+                    }
+                    bool in_new = false;
+                    for (auto const new_lease : ctx.new_leases_) {
+                        if ((new_lease->addr_ == old_lease->addr_) &&
+                            (new_lease->prefixlen_ == old_lease->prefixlen_)) {
+                            in_new = true;
+                            break;
+                        }
+                    }
+                    if (in_new) {
+                        continue;
+                    }
+                    deleted_leases->push_back(old_lease);
+                }
             }
         }
         callout_handle->setArgument("deleted_leases6", deleted_leases);
@@ -803,8 +859,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp, bool allow_packet_park) {
                 .arg(query->getLabel());
             rsp.reset();
 
-        } else if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK)
-                   && allow_packet_park) {
+        } else if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) {
             packet_park = true;
         }
     }
@@ -2616,19 +2671,8 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
 
 Pkt6Ptr
-Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
-
-    sanityCheck(solicit, MANDATORY, FORBIDDEN);
-
-    // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = false;
-    initContext(solicit, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        return (Pkt6Ptr());
-    }
+Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit,
+                          AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
@@ -2673,21 +2717,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
 Pkt6Ptr
 Dhcpv6Srv::processRequest(const Pkt6Ptr& request,
-                          AllocEngine::ClientContext6Ptr& context) {
-
-    sanityCheck(request, MANDATORY, MANDATORY);
-
-    // Let's create a simplified client context here.
-    context.reset(new AllocEngine::ClientContext6());
-    AllocEngine::ClientContext6& ctx = *context;
-    bool drop = false;
-    initContext(request, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        context.reset();
-        return (Pkt6Ptr());
-    }
+                          AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
@@ -2708,26 +2738,14 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request,
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
+    ctx.committed_ = true;
+
     return (reply);
 }
 
 Pkt6Ptr
 Dhcpv6Srv::processRenew(const Pkt6Ptr& renew,
-                        AllocEngine::ClientContext6Ptr& context) {
-
-    sanityCheck(renew, MANDATORY, MANDATORY);
-
-    // Let's create a simplified client context here.
-    context.reset(new AllocEngine::ClientContext6());
-    AllocEngine::ClientContext6& ctx = *context;
-    bool drop = false;
-    initContext(renew, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        context.reset();
-        return (Pkt6Ptr());
-    }
+                        AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
@@ -2748,26 +2766,14 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew,
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
+    ctx.committed_ = true;
+
     return (reply);
 }
 
 Pkt6Ptr
 Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind,
-                         AllocEngine::ClientContext6Ptr& context) {
-
-    sanityCheck(rebind, MANDATORY, FORBIDDEN);
-
-    // Let's create a simplified client context here.
-    context.reset(new AllocEngine::ClientContext6());
-    AllocEngine::ClientContext6& ctx = *context;
-    bool drop = false;
-    initContext(rebind, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        context.reset();
-        return (Pkt6Ptr());
-    }
+                         AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
@@ -2788,23 +2794,14 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind,
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
+    ctx.committed_ = true;
+
     return (reply);
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
-
-    sanityCheck(confirm, MANDATORY, FORBIDDEN);
-
-    // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = false;
-    initContext(confirm, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        return (Pkt6Ptr());
-    }
+Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm,
+                          AllocEngine::ClientContext6& ctx) {
 
     setReservedClientClasses(confirm, ctx);
     requiredClassify(confirm, ctx);
@@ -2894,28 +2891,18 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm) {
 
 Pkt6Ptr
 Dhcpv6Srv::processRelease(const Pkt6Ptr& release,
-                          AllocEngine::ClientContext6Ptr& context) {
-
-    sanityCheck(release, MANDATORY, MANDATORY);
-
-    // Let's create a simplified client context here.
-    context.reset(new AllocEngine::ClientContext6());
-    AllocEngine::ClientContext6& ctx = *context;
-    bool drop = false;
-    initContext(release, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        context.reset();
-        return (Pkt6Ptr());
-    }
+                          AllocEngine::ClientContext6& ctx) {
 
     setReservedClientClasses(release, ctx);
     requiredClassify(release, ctx);
 
+    // Create an empty Reply message.
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, release->getTransid()));
 
+    // Copy client options (client-id, also relay information if present)
     copyClientOptions(release, reply);
+
+    // Get the configured option list
     CfgOptionList co_list;
     // buildCfgOptionList(release, ctx, co_list);
     appendDefaultOptions(release, reply, co_list);
@@ -2925,27 +2912,14 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release,
     /// @todo If client sent a release and we should remove outstanding
     /// DNS records.
 
+    ctx.committed_ = true;
+
     return (reply);
 }
 
 Pkt6Ptr
 Dhcpv6Srv::processDecline(const Pkt6Ptr& decline,
-                          AllocEngine::ClientContext6Ptr& context) {
-
-    // Do sanity check.
-    sanityCheck(decline, MANDATORY, MANDATORY);
-
-    // Let's create a simplified client context here.
-    context.reset(new AllocEngine::ClientContext6());
-    AllocEngine::ClientContext6& ctx = *context;
-    bool drop = false;
-    initContext(decline, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        context.reset();
-        return (Pkt6Ptr());
-    }
+                          AllocEngine::ClientContext6& ctx) {
 
     setReservedClientClasses(decline, ctx);
     requiredClassify(decline, ctx);
@@ -2964,12 +2938,12 @@ Dhcpv6Srv::processDecline(const Pkt6Ptr& decline,
     appendDefaultOptions(decline, reply, co_list);
 
     if (declineLeases(decline, reply, ctx)) {
+        ctx.committed_ = true;
         return (reply);
     } else {
 
         // declineLeases returns false only if the hooks set the next step
         // status to DROP. We'll just doing as requested.
-        context.reset();
         return (Pkt6Ptr());
     }
 }
@@ -3120,7 +3094,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
         }
 
         // Ok, all is good. Decline this lease.
-        if (!declineLease(decline, lease, ia_rsp, ctx)) {
+        if (!declineLease(decline, lease, ia_rsp)) {
             // declineLease returns false only when hook callouts set the next
             // step status to drop. We just propagate the bad news here.
             return (OptionPtr());
@@ -3147,8 +3121,7 @@ Dhcpv6Srv::setStatusCode(boost::shared_ptr<isc::dhcp::Option6IA>& container,
 
 bool
 Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
-                        boost::shared_ptr<Option6IA> ia_rsp,
-                        AllocEngine::ClientContext6& ctx) {
+                        boost::shared_ptr<Option6IA> ia_rsp) {
     // We do not want to decrease the assigned-nas at this time. While
     // technically a declined address is no longer allocated, the primary usage
     // of the assigned-addresses statistic is to monitor pool utilization. Most
@@ -3217,8 +3190,6 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
     LeaseMgrFactory::instance().updateLease6(lease);
 
-    ctx.new_lease_ = lease;
-
     LOG_INFO(lease6_logger, DHCP6_DECLINE_LEASE).arg(decline->getLabel())
         .arg(lease->addr_.toText()).arg(lease->valid_lft_);
 
@@ -3229,19 +3200,8 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
-
-    sanityCheck(inf_request, OPTIONAL, OPTIONAL);
-
-    // Let's create a simplified client context here.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = false;
-    initContext(inf_request, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        return (Pkt6Ptr());
-    }
+Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request,
+                             AllocEngine::ClientContext6& ctx) {
 
     setReservedClientClasses(inf_request, ctx);
     requiredClassify(inf_request, ctx);
@@ -3273,8 +3233,6 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request) {
 void
 Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
-    sanityCheck(dhcp4_query, OPTIONAL, OPTIONAL);
-
     // flags are in transid
     // uint32_t flags = dhcp4_query->getTransid();
     // do nothing with DHCPV4_QUERY_FLAGS_UNICAST
@@ -3282,8 +3240,13 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
     // Get the DHCPv4 message option
     OptionPtr dhcp4_msg = dhcp4_query->getOption(D6O_DHCPV4_MSG);
     if (dhcp4_msg) {
-        // Forward the whole message to the DHCPv4 server via IPC
-        Dhcp6to4Ipc::instance().send(dhcp4_query);
+        try {
+            // Forward the whole message to the DHCPv4 server via IPC
+            Dhcp6to4Ipc::instance().send(dhcp4_query);
+        } catch (const std::exception&) {
+            // Assume the error was already logged
+            return;
+        }
     }
 
     // This method does not return anything as we always sent back

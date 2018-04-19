@@ -188,8 +188,8 @@ public:
     /// @param request a message received from client
     /// @return REPLY message or NULL
     Pkt6Ptr processRequest(const Pkt6Ptr& request) {
-        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
-        return (processRequest(request, context));
+        AllocEngine::ClientContext6 ctx;
+        return (processRequest(request, ctx));
     }
 
     /// @brief Processes incoming Renew message.
@@ -197,8 +197,8 @@ public:
     /// @param renew a message received from client
     /// @return REPLY message or NULL
     Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
-        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
-        return (processRenew(renew, context));
+        AllocEngine::ClientContext6 ctx;
+        return (processRenew(renew, ctx));
     }
 
     /// @brief Processes incoming Rebind message.
@@ -206,8 +206,8 @@ public:
     /// @param rebind a message received from client
     /// @return REPLY message or NULL
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
-        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
-        return (processRebind(rebind, context));
+        AllocEngine::ClientContext6 ctx;
+        return (processRebind(rebind, ctx));
     }
 
     /// @brief Processes incoming Release message.
@@ -215,8 +215,8 @@ public:
     /// @param release a message received from client
     /// @return REPLY message or NULL
     Pkt6Ptr processRelease(const Pkt6Ptr& release) {
-        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
-        return (processRelease(release, context));
+        AllocEngine::ClientContext6 ctx;
+        return (processRelease(release, ctx));
     }
 
     /// @brief Processes incoming Decline message.
@@ -224,8 +224,8 @@ public:
     /// @param decline a message received from client
     /// @return REPLY message or NULL
     Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
-        AllocEngine::ClientContext6Ptr context(new AllocEngine::ClientContext6());
-        return (processDecline(decline, context));
+        AllocEngine::ClientContext6 ctx;
+        return (processDecline(decline, ctx));
     }
 
     using Dhcpv6Srv::processSolicit;

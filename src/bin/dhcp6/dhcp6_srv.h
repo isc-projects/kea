@@ -122,9 +122,7 @@ public:
     ///
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp,
-                       bool allow_packet_park = true);
+    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp);
 
     /// @brief Instructs the server to shut down.
     void shutdown();
@@ -219,9 +217,11 @@ protected:
     /// immediately.
     ///
     /// @param solicit Solicit message received from client
+    /// @param ctx Reference to client context
     ///
     /// @return Advertise, Reply message or NULL.
-    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit);
+    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit,
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Request and returns Reply response.
     ///
@@ -232,21 +232,20 @@ protected:
     /// leases.
     ///
     /// @param request a message received from client
-    /// @param [out] context pointer to the client context where allocated
-    /// and deleted leases are stored.
+    /// @param ctx Reference to client context
     ///
     /// @return REPLY message or NULL
     Pkt6Ptr processRequest(const Pkt6Ptr& request,
-                           AllocEngine::ClientContext6Ptr& context);
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Renew message.
     ///
     /// @param renew message received from the client
-    /// @param [out] context pointer to the client context where allocated
-    /// and deleted leases are stored.
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processRenew(const Pkt6Ptr& renew,
-                         AllocEngine::ClientContext6Ptr& context);
+                         AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Rebind message.
     ///
@@ -257,11 +256,11 @@ protected:
     /// now.
     ///
     /// @param rebind message received from the client.
-    /// @param [out] context pointer to the client context where allocated
-    /// and deleted leases are stored.
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind,
-                          AllocEngine::ClientContext6Ptr& context);
+                          AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
@@ -283,19 +282,21 @@ protected:
     /// status code Success is returned.
     ///
     /// @param confirm Confirm message sent by a client.
+    /// @param ctx Reference to client context
     ///
     /// @return Reply message from the server or NULL pointer if Confirm
     /// message should be discarded by the server.
-    Pkt6Ptr processConfirm(const Pkt6Ptr& confirm);
+    Pkt6Ptr processConfirm(const Pkt6Ptr& confirm,
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Process incoming Release message.
     ///
     /// @param release message received from client
-    /// @param [out] context pointer to the client context where released
-    /// leases are stored.
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
     Pkt6Ptr processRelease(const Pkt6Ptr& release,
-                           AllocEngine::ClientContext6Ptr& context);
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Process incoming Decline message.
     ///
@@ -304,20 +305,21 @@ protected:
     /// the client's message. Finally, it calls @ref declineLeases, where
     /// the actual address processing takes place.
     ///
-    /// @throw RFCViolation if Decline message is invalid (lacking mandatory
-    ///                     options)
-    ///
     /// @param decline message received from client
-    /// @param [out] context pointer to the client context where declined
-    /// leases are stored.
+    /// @param ctx Reference to client context
+    ///
+    /// @return Reply message to be sent to the client.
     Pkt6Ptr processDecline(const Pkt6Ptr& decline,
-                           AllocEngine::ClientContext6Ptr& context);
+                           AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Information-request message.
     ///
     /// @param inf_request message received from client
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
+    Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request,
+                              AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming DHCPv4-query message.
     ///
@@ -327,6 +329,7 @@ protected:
     /// to the client once we get back DHCP4-REPLY from the DHCPv4 server.
     ///
     /// @param dhcp4_query message received from client
+    /// Does not throw
     void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
 
     /// @brief Selects a subnet for a given client's packet.
