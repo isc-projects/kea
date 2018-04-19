@@ -13,6 +13,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
@@ -99,9 +100,9 @@ void Dhcp6to4Ipc::handler() {
     }
 
     // Can't call the pkt6_send callout because we don't have the query
-
-    ControlledDhcpv4Srv::getInstance()->
-        processPacketBufferSend(getCalloutHandle(pkt), pkt);
+    CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
+    ControlledDhcpv6Srv::getInstance()->
+        processPacketBufferSend(callout_handle, pkt);
 }
 
 };  // namespace dhcp

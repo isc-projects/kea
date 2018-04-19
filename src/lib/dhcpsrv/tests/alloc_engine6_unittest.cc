@@ -35,6 +35,7 @@ TEST(ClientContext6Test, addHint) {
 // a context.
 TEST(ClientContext6Test, addAllocatedResource) {
    AllocEngine::ClientContext6 ctx;
+   ASSERT_FALSE(ctx.committed_);
    ctx.addAllocatedResource(IOAddress("2001:db8:1::1"));
    ctx.addAllocatedResource(IOAddress("3000:1::"), 64);
 
