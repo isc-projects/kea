@@ -713,11 +713,6 @@
 
         <refsect2>
             <title>Options Controlling a Test</title>
-            <para>
-                The following options may only be used in conjunction with
-                <option>-r</option> and control both the length of the test
-                and the frequency of reports.
-            </para>
 
             <variablelist>
 
