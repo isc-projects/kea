@@ -1,3 +1,8 @@
+1387.	[func]		tmark
+	perfdhcp no longer requires -r (rate) be specified in order to use
+	-D<max-drop>, -n<num-request>, -p<test-period> and -t<report> options.
+	(Trac #5115, git c3ba89c56882cac1080899ad201f0c02056eef38)
+
 1386.	[func]		fdupont
 	Extented comment / user-context support to DHCP-DDNS and
 	Control Agent configuration syntax.
