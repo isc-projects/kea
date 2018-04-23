@@ -96,19 +96,16 @@ TEST_F(ConfirmTest, sanityCheck) {
 
     // A message with no client-id should fail
     Pkt6Ptr confirm = Pkt6Ptr(new Pkt6(DHCPV6_CONFIRM, 1234));
-    EXPECT_THROW(srv.sanityCheck(confirm, Dhcpv6Srv::MANDATORY, 
-                                 Dhcpv6Srv::FORBIDDEN), RFCViolation);
+    EXPECT_THROW(srv.sanityCheck(confirm), RFCViolation);
 
     // A message with a single client-id should succeed
     OptionPtr clientid = generateClientId();
     confirm->addOption(clientid);
-    EXPECT_NO_THROW(srv.sanityCheck(confirm, Dhcpv6Srv::MANDATORY,
-                                    Dhcpv6Srv::FORBIDDEN));
+    EXPECT_NO_THROW(srv.sanityCheck(confirm));
 
     // A message with server-id present should fail
     confirm->addOption(srv.getServerID());
-    EXPECT_THROW(srv.sanityCheck(confirm, Dhcpv6Srv::MANDATORY,
-                                 Dhcpv6Srv::FORBIDDEN), RFCViolation);
+    EXPECT_THROW(srv.sanityCheck(confirm), RFCViolation);
 }
 
 // Test that directly connected client's Confirm message is processed and Reply

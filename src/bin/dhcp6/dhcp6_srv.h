@@ -199,6 +199,16 @@ protected:
     /// is not there, and that client-id or server-id appears only once.
     ///
     /// @param pkt packet to be checked
+    /// @return false if the message type is not recognized, true otherwise.
+    /// @throw RFCViolation if any issues are detected
+    bool sanityCheck(const Pkt6Ptr& pkt);
+
+    /// @brief verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
+    ///
+    /// @param pkt packet to be checked
     /// @param clientid expectation regarding client-id option
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected

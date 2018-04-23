@@ -100,9 +100,52 @@ void Dhcp6to4Ipc::handler() {
     }
 
     // Can't call the pkt6_send callout because we don't have the query
-    CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
-    ControlledDhcpv6Srv::getInstance()->
-        processPacketBufferSend(callout_handle, pkt);
+    // From Dhcpv6Srv::processPacketBufferSend
+
+    try {
+        // Let's execute all callouts registered for buffer6_send
+        if (HooksManager::calloutsPresent(Dhcpv6Srv::getHookIndexBuffer6Send())) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(pkt);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Enable copying options from the packet within hook library.
+            ScopedEnableOptionsCopy<Pkt6> response6_options_copy(pkt);
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("response6", pkt);
+
+            // Call callouts
+            HooksManager::callCallouts(Dhcpv6Srv::getHookIndexBuffer6Send(),
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means drop.
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                          DHCP6_HOOK_BUFFER_SEND_SKIP)
+                    .arg(pkt->getLabel());
+                return;
+            }
+
+            callout_handle->getArgument("response6", pkt);
+        }
+
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
+            .arg(static_cast<int>(pkt->getType())).arg(pkt->toText());
+
+        // Forward packet to the client.
+        IfaceMgr::instance().send(pkt);
+
+        // Update statistics accordingly for sent packet.
+        Dhcpv6Srv::processStatsSent(pkt);
+
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_DHCP4O6_SEND_FAIL).arg(e.what());
+    }
 }
 
 };  // namespace dhcp
