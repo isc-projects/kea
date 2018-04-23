@@ -1,3 +1,9 @@
+1388.	[build]		tmark
+	Modified configure script to support --with-dhcp-mysql and
+	--with-dhcp-pgsql but emit a deprecation warning message
+	encouraging their replacement with --with-mysql and --with-pgsql.
+	(Trac #5567, git 53761069761ddde44636baa30185322debfe4186)
+
 1387.	[func]		tmark
 	perfdhcp no longer requires -r (rate) be specified in order to use
 	-D<max-drop>, -n<num-request>, -p<test-period> and -t<report> options.
