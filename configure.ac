@@ -637,6 +637,10 @@ AC_ARG_WITH([benchmark],
 # sets variables CRYPTO_*
 AX_CRYPTO
 
+# List of directories, where tools like mysql_config or pgsql_config will be
+# searched for
+defaultdirs="/usr /usr/local /usr/pkg /opt /opt/local"
+
 # Check for MySql.  The path to the mysql_config program is given with
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
@@ -646,8 +650,22 @@ AC_ARG_WITH([mysql],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-mysql],,
+    [mysql_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-mysql has been deprecated, please use --with-mysql])
+fi
+
 if test "${mysql_config}" = "yes" ; then
-    MYSQL_CONFIG="/usr/bin/mysql_config"
+    for d in $defaultdirs
+    do
+        if test -f $d/bin/mysql_config; then
+            MYSQL_CONFIG="$d/bin/mysql_config"
+            break
+        fi
+    done
 elif test "${mysql_config}" != "no" ; then
     MYSQL_CONFIG="${withval}"
 fi
@@ -700,8 +718,22 @@ AC_ARG_WITH([pgsql],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-pgsql],,
+    [pg_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-pgsql has been deprecated, please use --with-pgsql])
+fi
+
 if test "${pg_config}" = "yes" ; then
-    PG_CONFIG="/usr/bin/pg_config"
+    for d in $defaultdirs
+    do
+        if test -f $d/bin/pg_config; then
+            PG_CONFIG="$d/bin/pg_config"
+            break
+        fi
+    done
 elif test "${pg_config}" != "no" ; then
     PG_CONFIG="${withval}"
 fi
@@ -816,8 +848,7 @@ elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
-        log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
-        for d in $log4cplusdirs
+        for d in $defaultdirs
         do
                 if test -f $d/include/log4cplus/logger.h; then
                         LOG4CPLUS_INCLUDES="-I$d/include"
