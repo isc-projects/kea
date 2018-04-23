@@ -495,9 +495,9 @@ public:
         // functions to generate response.
         Pkt6Ptr reply;
         AllocEngine::ClientContext6 ctx;
-	bool drop = false;
-	srv_->initContext(req, ctx, drop);
-	ASSERT_FALSE(drop);
+        bool drop = false;
+        srv_->initContext(req, ctx, drop);
+        ASSERT_FALSE(drop);
         if (msg_type == DHCPV6_SOLICIT) {
           ASSERT_NO_THROW(reply = srv_->processSolicit(req, ctx));
 

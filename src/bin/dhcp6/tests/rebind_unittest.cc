@@ -348,16 +348,16 @@ TEST_F(RebindTest, sanityCheck) {
 
     // A message with no client-id should fail
     Pkt6Ptr rebind = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
-    EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
+    EXPECT_THROW(srv.sanityCheck(rebind), RFCViolation);
 
     // A message with a single client-id should succeed
     OptionPtr clientid = generateClientId();
     rebind->addOption(clientid);
-    EXPECT_NO_THROW(srv.processRebind(rebind));
+    EXPECT_NO_THROW(srv.sanityCheck(rebind));
 
     // A message with server-id present should fail
     rebind->addOption(srv.getServerID());
-    EXPECT_THROW(srv.processRebind(rebind), RFCViolation);
+    EXPECT_THROW(srv.sanityCheck(rebind), RFCViolation);
 }
 
 // Test that directly connected client's Rebind message is processed and Reply

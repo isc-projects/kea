@@ -189,6 +189,11 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRequest(const Pkt6Ptr& request) {
         AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(request, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
         return (processRequest(request, ctx));
     }
 
@@ -198,6 +203,11 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
         AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(renew, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
         return (processRenew(renew, ctx));
     }
 
@@ -207,6 +217,11 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
         AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(rebind, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
         return (processRebind(rebind, ctx));
     }
 
@@ -216,6 +231,11 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processRelease(const Pkt6Ptr& release) {
         AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(release, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
         return (processRelease(release, ctx));
     }
 
@@ -225,6 +245,11 @@ public:
     /// @return REPLY message or NULL
     Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
         AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(decline, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
         return (processDecline(decline, ctx));
     }
 

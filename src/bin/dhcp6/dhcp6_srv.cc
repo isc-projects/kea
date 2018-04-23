@@ -652,36 +652,18 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     }
 
     try {
-        switch (query->getType()) {
-        case DHCPV6_SOLICIT:
-        case DHCPV6_REBIND:
-        case DHCPV6_CONFIRM:
-            sanityCheck(query, MANDATORY, FORBIDDEN);
-            break;
-
-        case DHCPV6_REQUEST:
-        case DHCPV6_RENEW:
-        case DHCPV6_RELEASE:
-        case DHCPV6_DECLINE:
-            sanityCheck(query, MANDATORY, MANDATORY);
-            break;
-
-        case DHCPV6_INFORMATION_REQUEST:
-        case DHCPV6_DHCPV4_QUERY:
-            sanityCheck(query, OPTIONAL, OPTIONAL);
-            break;
-
-        default:
+        if (!sanityCheck(query)) {
             // We received a packet type that we do not recognize.
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC,
+                      DHCP6_UNKNOWN_MSG_RECEIVED)
                 .arg(static_cast<int>(query->getType()))
                 .arg(query->getIface());
-            // Only action is to output a message if debug is enabled,
-            // and that will be covered by the debug statement before
-            // the "switch" statement.
-            ;
+            // Increase the statistic of dropped packets.
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
+            return;
         }
-
+                
     } catch (const RFCViolation& e) {
         LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
             .arg(query->getName())
@@ -1247,6 +1229,32 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
 
     if (added) {
         answer->addOption(vendor_rsp);
+    }
+}
+
+bool
+Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
+    switch (pkt->getType()) {
+    case DHCPV6_SOLICIT:
+    case DHCPV6_REBIND:
+    case DHCPV6_CONFIRM:
+        sanityCheck(pkt, MANDATORY, FORBIDDEN);
+        return (true);
+
+    case DHCPV6_REQUEST:
+    case DHCPV6_RENEW:
+    case DHCPV6_RELEASE:
+    case DHCPV6_DECLINE:
+        sanityCheck(pkt, MANDATORY, MANDATORY);
+        return (true);
+
+    case DHCPV6_INFORMATION_REQUEST:
+    case DHCPV6_DHCPV4_QUERY:
+        sanityCheck(pkt, OPTIONAL, OPTIONAL);
+        return (true);
+
+    default:
+        return (false);
     }
 }
 
