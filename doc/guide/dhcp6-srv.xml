@@ -304,19 +304,19 @@ be followed by a comma and another object definition.</para>
   <section>
   	<title>DHCPv6 lease field description</title>
   	<para>
-  	Lease issued by the dhcp6 are stored in the backends with the fields as.
+  	Leases issued by the dhcp6 server are stored in the backends with the fields as.
   	<screen>address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state</screen>
   	</para>
   	<para>
-  	Lets decipher these fields.
+  	Let's decipher these fields.
   	<itemizedlist>
   		<listitem>
-      		<simpara><command>address</command>: This field is the actual IPv6 address offered/assinged to a host.
+      		<simpara><command>address</command>: This field is the actual IPv6 address offered/assigned to a host.
       		</simpara>
       	</listitem>
       	<listitem>
       		<simpara><command>duid</command>: A string, DHCP Unique Identifier, consists of a two-octet type code represented in network byte order, 
-      		followed by the variable number of octets that make up the actual identifier. The DUID types include, see RFC 3315.
+      		followed by the variable number of octets that make up the actual identifier. The DUID types include(see RFC 3315).
       		<itemizedlist>
       			<listitem>
       				<simpara><command>DUID-LLT</command>: Link-layer address plus time.</simpara>
@@ -346,7 +346,7 @@ be followed by a comma and another object definition.</para>
       		</simpara>
       	</listitem>
       	<listitem>
-      		<simpara><command>pre_lifetime</command>: Prefered lifetime expressed in seconds <!-- (since cltt) -->.
+      		<simpara><command>pre_lifetime</command>: Prefered lifetime expressed in seconds.
       		</simpara>
       	</listitem>
       	<listitem>
@@ -368,13 +368,13 @@ be followed by a comma and another object definition.</para>
       		</simpara>
       	</listitem>
       	<listitem>
-      		<simpara><command>iaid</command>: This field <command>"iaid"</command> uniquely identifies the <command>IA-identity-association</command>(a construct
-      		through which a sever and a client can identify, group, and manage a set of related IPv6 addresses). In DHCPv6 a lease is identified by client's DUID+ia-id.
-      		see Section 10 of RFC 3315, see section 11 of RFC 3315 for selecting addresses for assingment to an IA.
+      		<simpara><command>iaid</command>: This field <command>"iaid"</command> uniquely identifies the <command>IA-identity-association</command>(a construct through
+      		which a server and a client can identify, group, and manage a set of related IPv6 addresses). In DHCPv6 a lease is identified by client's DUID+ia-id.
+      		see Section 10 of RFC 3315, see section 11 of RFC 3315 for selecting addresses for assignment to an IA.
       		</simpara>
       	</listitem>
       	<listitem>
-      		<simpara><command>prefix_len</command>: And interger, only for type <command>IA_PD</command>.
+      		<simpara><command>prefix_len</command>: And integer, only for type <command>IA_PD</command>.
       		</simpara>
       	</listitem>
       	<listitem>
@@ -385,27 +385,20 @@ be followed by a comma and another object definition.</para>
       		<simpara><command>fqdn_rev</command>: A bool value, was reverse update performed? Required during lease release or expiration.
       		</simpara>
       	</listitem>
-      	<!--
       	<listitem>
-      		<simpara><command>fqdn_rev</command>: If the server successfully updats the host PTR record,
-      		this field will will contain the name that the server used for the PTR record. The name to which
-      		the PTR record points will be the ddns-client-fqdn.
-      		</simpara>
-      	</listitem> -->
-      	<listitem>
-      		<simpara><command>hwaddr</command>: The hardware address/MAC address of the host/network
-      		interface on which the lease will be used. Usually the same as <command>clien_id</command>.
+      		<simpara><command>hwaddr</command>: The hardware address/MAC address of the host/network interface on which the lease will be used.
+      		Usually the same as <command>clien_id</command>.
       		</simpara>
       	</listitem>
       	<listitem>
-      		<simpara><command>hostname</command>: A string, hosts hostname. A host may send the their
-      		hostname in the host-name option. If the client sends its hostname in this way, the hostname
-      		is recorded in the hostname field. A hostname maybe shered by possible many leases if client
-      		request two or more addresses.
+      		<simpara><command>hostname</command>: A string, hosts hostname. A host may send their hostname
+      		in the host-name option. If the client sends its hostname in this way, the hostname is recorded
+      		in the hostname field. A hostname may be shared by possible many leases if a client requests two
+      		or more addresses.
       		</simpara>
       	</listitem>
       	<listitem>
-      		<simpara><command>state</command>: The state of the lease active, expired, or released.
+      		<simpara><command>state</command>: The state of the lease active, expired or released.
       		</simpara>
       	</listitem>
   	</itemizedlist>
