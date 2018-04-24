@@ -939,6 +939,26 @@ protected:
     void setDefaults6(const TestControlSocket& socket,
                       const dhcp::Pkt6Ptr& pkt);
 
+    /// @brief Inserts extra options specified by user.
+    ///
+    /// Note: addExtraOpts for v4 and v6 could easily be turned into a template.
+    /// However, this would require putting code here that uses CommandOptions,
+    /// and that would create dependency between test_control.h and
+    /// command_options.h.
+    ///
+    /// @param pkt4 options will be added here
+    void addExtraOpts(const dhcp::Pkt4Ptr& pkt4);
+
+    /// @brief Inserts extra options specified by user.
+    ///
+    /// Note: addExtraOpts for v4 and v6 could easily be turned into a template.
+    /// However, this would require putting code here that uses CommandOptions,
+    /// and that would create dependency between test_control.h and
+    /// command_options.h.
+    ///
+    /// @param pkt6 options will be added here
+    void addExtraOpts(const dhcp::Pkt6Ptr& pkt6);
+
     /// \brief Find if diagnostic flag has been set.
     ///
     /// \param diag diagnostic flag (a,e,i,s,r,t,T).
