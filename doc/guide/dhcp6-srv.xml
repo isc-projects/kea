@@ -301,6 +301,109 @@ be followed by a comma and another object definition.</para>
   <para>All leases issued by the server are stored in the lease database.
   Currently there are four database backends available:  memfile (which is the
   default backend), MySQL, PostgreSQL and Cassandra.</para>
+  <section>
+  	<title>DHCPv6 lease field description</title>
+  	<para>
+  	Leases issued by the dhcp6 server are stored in the backends with the fields as.
+  	<screen>address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state</screen>
+  	</para>
+  	<para>
+  	Let's decipher these fields.
+  	<itemizedlist>
+  		<listitem>
+      		<simpara><command>address</command>: This field is the actual IPv6 address offered/assigned to a host.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>duid</command>: A string, DHCP Unique Identifier, consists of a two-octet type code represented in network byte order, 
+      		followed by the variable number of octets that make up the actual identifier. The DUID types include(see RFC 3315).
+      		<itemizedlist>
+      			<listitem>
+      				<simpara><command>DUID-LLT</command>: Link-layer address plus time.</simpara>
+      			</listitem>
+      			<listitem>
+      				<simpara><command>DUID-EN</command>: Vendor-assigned Unique ID based on Enterprise Number.</simpara>
+      			</listitem>
+      			<listitem>
+      				<simpara><command>DUID-LL</command>: Link-layer address.</simpara>
+      			</listitem>
+      		</itemizedlist>
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>valid_lifetime</command>: The valide-time/life-time for the lease in seconds for which the lease
+      		is assigned(active) to the host, this is by default <command>3600</command> seconds after which it will be avaliable(free)
+      		to be assign to possibly same or new host.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>expire</command>: The lease end-time, a time in seconds since epoch for which the lease
+      		will expire and will be avaliable(free) for re-assignment.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>subnet_id</command>: The identifier(unique) for the particular subnet from which the lease was assigned.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>pre_lifetime</command>: Prefered lifetime expressed in seconds.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>lease_type</command>: Lease type, one of the following,
+      		<itemizedlist>
+      			<listitem>
+      				<simpara><command>IA_NA</command>: Non-temporary v6 addresses.
+      				</simpara>
+      			</listitem>
+      			<listitem>
+      				<simpara><command>IA_TA</command>: Temporary v6 addresses.
+      				</simpara>
+      			</listitem>
+      			<listitem>
+      				<simpara><command>IA_PD</command>: Prefix delegations.
+      				</simpara>
+      			</listitem>
+      		</itemizedlist> 
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>iaid</command>: This field <command>"iaid"</command> uniquely identifies the <command>IA-identity-association</command>(a construct through
+      		which a server and a client can identify, group, and manage a set of related IPv6 addresses). In DHCPv6 a lease is identified by client's DUID+ia-id.
+      		see Section 10 of RFC 3315, see section 11 of RFC 3315 for selecting addresses for assignment to an IA.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>prefix_len</command>: And integer, only for type <command>IA_PD</command>.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>fqdn_fwd</command>: A bool value, was forward update performed? Required during lease release or expiration.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>fqdn_rev</command>: A bool value, was reverse update performed? Required during lease release or expiration.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>hwaddr</command>: The hardware address/MAC address of the host/network interface on which the lease will be used.
+      		Usually the same as <command>clien_id</command>.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>hostname</command>: A string, hosts hostname. A host may send their hostname
+      		in the host-name option. If the client sends its hostname in this way, the hostname is recorded
+      		in the hostname field. A hostname may be shared by possible many leases if a client requests two
+      		or more addresses.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>state</command>: The state of the lease active, expired or released.
+      		</simpara>
+      	</listitem>
+  	</itemizedlist>
+  	</para>
+  </section>
 <section>
   <title>Memfile - Basic Storage for Leases</title>
 

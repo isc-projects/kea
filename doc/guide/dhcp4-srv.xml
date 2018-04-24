@@ -306,6 +306,68 @@ be followed by a comma and another object definition.</para>
   <para>All leases issued by the server are stored in the lease database.
   Currently there are four database backends available:  memfile (which is the
   default backend), MySQL, PostgreSQL and Cassandra.</para>
+  <section>
+  	<title>DHCPv4 lease field description</title>
+  	<para>
+  	Leases issued by the dhcp4 server are stored in the backends with the fields as,
+  	<screen>address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state</screen>
+  	</para>
+  	<para>
+  	Let's decipher these fields
+  	<itemizedlist>
+  		<listitem>
+      		<simpara><command>address</command>: This field is the actual IPv4 address
+      		offered or assigned to a host.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>hwaddr</command>: The hardware address/MAC address of the host or network
+      		interface on which the lease will be used. Usually the same as <command>clien_id</command>.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>client_id</command>: A unique identifier for the host used by the host
+      		to acquire the lease. Clients are not required to send client identifiers, this will only
+      		appear if a client, in fact, did send one. Usually the same as <command>hwaddr</command>.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>valid_lifetime</command>: The valid-time or lifetime for the lease in seconds for which the lease
+      		is assigned (active) to the host, this is by default <command>3600</command> seconds after which it will be available (free)
+      		to be assign to possibly same or new host.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>expire</command>: The lease end-time, a time in seconds since epoch for which the lease
+      		will expire and will be available (free) for re-assignment.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>subnet_id</command>: The identifier (unique) for the particular subnet from which the lease was assigned.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>fqdn_fwd</command>: A bool value, was forward update performed? Required during lease release or expiration.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>fqdn_rev</command>: A bool value, was reverse update performed? Required during lease release or expiration.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>hostname</command>: A string, hosts hostname. A host may send their
+      		hostname in the host-name option. If the client sends its hostname in this way, the hostname
+      		is recorded in the hostname field. A hostname may be shared by possible many leases if a client
+      		requests two or more addresses.
+      		</simpara>
+      	</listitem>
+      	<listitem>
+      		<simpara><command>state</command>: The state of the lease active, expired or released.
+      		</simpara>
+      	</listitem>
+  	</itemizedlist>
+  	</para>
+  </section>
 <section>
   <title>Memfile - Basic Storage for Leases</title>
 
