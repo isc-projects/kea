@@ -1,6 +1,6 @@
 1389.	[func]		fdupont
 	dhcp6_srv_configured hook point added.
-	(Trac #5530, git xxx)
+	(Trac #5530, git 3bb521f6ec8b4e2a1e57ec84b17ee12b0ccf0f83)
 
 1388.	[build]		tmark
 	Modified configure script to support --with-dhcp-mysql and
