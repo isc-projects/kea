@@ -137,17 +137,16 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
             // If relay information is specified for this subnet, it must match.
             // Otherwise, we ignore this subnet.
-            if (!(*subnet)->getRelayInfo().addr_.isV4Zero()) {
-                if (selector.giaddr_ != (*subnet)->getRelayInfo().addr_) {
+            if ((*subnet)->hasRelays()) {
+                if (!(*subnet)->hasRelayAddress(selector.giaddr_)) {
                     continue;
                 }
-
             } else {
                 // Relay information is not specified on the subnet level,
                 // so let's try matching on the shared network level.
                 SharedNetwork4Ptr network;
                 (*subnet)->getSharedNetwork(network);
-                if (!network || (selector.giaddr_ != network->getRelayInfo().addr_)) {
+                if (!network || !(network->hasRelayAddress(selector.giaddr_))) {
                     continue;
                 }
             }

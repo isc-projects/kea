@@ -414,7 +414,7 @@ TEST(CfgSubnets4Test, selectSubnetByOptionSelect) {
 
     // Over relay-info too
     selector.giaddr_ = IOAddress("10.0.0.1");
-    subnet2->setRelayInfo(IOAddress("10.0.0.1"));
+    subnet2->addRelayAddress(IOAddress("10.0.0.1"));
     EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
     selector.option_select_ = IOAddress("0.0.0.0");
     EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
@@ -450,9 +450,9 @@ TEST(CfgSubnets4Test, selectSubnetByRelayAddress) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 
     // Now specify relay info
-    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
-    subnet2->setRelayInfo(IOAddress("10.0.0.2"));
-    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
+    subnet1->addRelayAddress(IOAddress("10.0.0.1"));
+    subnet2->addRelayAddress(IOAddress("10.0.0.2"));
+    subnet3->addRelayAddress(IOAddress("10.0.0.3"));
 
     // And try again. This time relay-info is there and should match.
     selector.giaddr_ = IOAddress("10.0.0.1");
@@ -485,9 +485,9 @@ TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddressNetworkLevel) {
 
     // Now specify relay info. Note that for the second subnet we specify
     // relay info on the network level.
-    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
-    network->setRelayInfo(IOAddress("10.0.0.2"));
-    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
+    subnet1->addRelayAddress(IOAddress("10.0.0.1"));
+    network->addRelayAddress(IOAddress("10.0.0.2"));
+    subnet3->addRelayAddress(IOAddress("10.0.0.3"));
 
     // And try again. This time relay-info is there and should match.
     selector.giaddr_ = IOAddress("10.0.0.1");
@@ -524,9 +524,9 @@ TEST(CfgSubnets4Test, selectSharedNetworkByRelayAddressSubnetLevel) {
 
     // Now specify relay info. Note that for the second subnet we specify
     // relay info on the network level.
-    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
-    subnet2->setRelayInfo(IOAddress("10.0.0.2"));
-    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
+    subnet1->addRelayAddress(IOAddress("10.0.0.1"));
+    subnet2->addRelayAddress(IOAddress("10.0.0.2"));
+    subnet3->addRelayAddress(IOAddress("10.0.0.3"));
 
     // And try again. This time relay-info is there and should match.
     selector.giaddr_ = IOAddress("10.0.0.1");
@@ -737,7 +737,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
     subnet1->allowClientClass("foo");
     subnet2->setIface("lo");
-    subnet2->setRelayInfo(IOAddress("10.0.0.1"));
+    subnet2->addRelayAddress(IOAddress("10.0.0.1"));
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
@@ -757,13 +757,13 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/26\",\n"
-        "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
         "    \"server-hostname\": \"\",\n"
         "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"valid-lifetime\": 3,\n"
         "    \"client-class\": \"foo\",\n"
         "    \"4o6-interface\": \"\",\n"
@@ -775,7 +775,6 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "},{\n"
         "    \"id\": 124,\n"
         "    \"subnet\": \"192.0.2.64/26\",\n"
-        "    \"relay\": { \"ip-address\": \"10.0.0.1\" },\n"
         "    \"interface\": \"lo\",\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
@@ -783,6 +782,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ \"10.0.0.1\" ] },\n"
         "    \"valid-lifetime\": 3,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
@@ -794,7 +794,6 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"192.0.2.128/26\",\n"
-        "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
@@ -802,6 +801,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"valid-lifetime\": 3,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
@@ -840,13 +840,13 @@ TEST(CfgSubnets4Test, unparsePool) {
         "{\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/24\",\n"
-        "    \"relay\": { \"ip-address\": \"0.0.0.0\" },\n"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
         "    \"server-hostname\": \"\",\n"
         "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"valid-lifetime\": 3,\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"

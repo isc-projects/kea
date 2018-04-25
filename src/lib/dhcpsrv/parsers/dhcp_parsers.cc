@@ -249,7 +249,8 @@ RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& cfg,
 
     // Ok, we're done with parsing. Let's store the result in the structure
     // we were given as configuration storage.
-    *cfg = isc::dhcp::Network::RelayInfo(ip);
+    *cfg = isc::dhcp::Network::RelayInfo();
+    cfg->addAddress(ip);
 }
 
 //****************************** PoolParser ********************************
@@ -431,8 +432,7 @@ SubnetConfigParser::SubnetConfigParser(uint16_t family)
     : pools_(new PoolStorage()),
       address_family_(family),
       options_(new CfgOption()) {
-    string addr = family == AF_INET ? "0.0.0.0" : "::";
-    relay_info_.reset(new isc::dhcp::Network::RelayInfo(IOAddress(addr)));
+    relay_info_.reset(new isc::dhcp::Network::RelayInfo());
 }
 
 SubnetPtr
@@ -990,7 +990,6 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet) {
     if (relay_info_) {
         sn6ptr->setRelayInfo(*relay_info_);
     }
-
 
     // Parse Host Reservations for this subnet if any.
     ConstElementPtr reservations = subnet->get("reservations");
