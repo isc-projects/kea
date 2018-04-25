@@ -16,8 +16,56 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-Network::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
-    :addr_(addr) {
+void
+Network::RelayInfo::addAddress(const asiolink::IOAddress& addr) {
+    if (containsAddress(addr)) {
+        isc_throw (BadValue, "RelayInfo already contains address: "
+                   << addr.toText());
+    }
+
+    addresses_.push_back(addr);
+}
+
+bool
+Network::RelayInfo::hasAddresses() const {
+    return (addresses_.size() > 0);
+}
+
+bool
+Network::RelayInfo::containsAddress(const asiolink::IOAddress& addr) const {
+    for (auto address = addresses_.begin(); address != addresses_.end();
+         ++address) {
+        if ((*address) == addr) {
+            return (true);
+        }
+    }
+
+    return (false);
+}
+
+const IOAddressList&
+Network::RelayInfo::getAddresses() const {
+    return (addresses_);
+}
+
+void
+Network::addRelayAddress(const asiolink::IOAddress& addr) {
+    relay_.addAddress(addr);
+}
+
+bool
+Network::hasRelays() const {
+    return (relay_.hasAddresses());
+}
+
+bool
+Network::hasRelayAddress(const asiolink::IOAddress& addr) const {
+    return (relay_.containsAddress(addr));
+}
+
+const IOAddressList&
+Network::getRelayAddresses() const {
+    return (relay_.getAddresses());
 }
 
 bool
@@ -61,11 +109,15 @@ Network::toElement() const {
         map->set("interface", Element::create(iface));
     }
 
-    // Set relay info
-    const RelayInfo& relay_info = getRelayInfo();
-    ElementPtr relay = Element::createMap();
-    relay->set("ip-address", Element::create(relay_info.addr_.toText()));
-    map->set("relay", relay);
+    ElementPtr relay_map = Element::createMap();
+    ElementPtr address_list = Element::createList();
+    const IOAddressList addresses =  getRelayAddresses();
+    for (auto address = addresses.begin(); address != addresses.end(); ++address) {
+        address_list->add(Element::create((*address).toText()));
+    }
+
+    relay_map->set("ip-addresses", address_list);
+    map->set("relay", relay_map);
 
     // Set client-class
     const ClientClass& cclass = getClientClass();

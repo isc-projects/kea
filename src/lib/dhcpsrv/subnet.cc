@@ -231,8 +231,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
-    // Relay info.
-    setRelayInfo(IOAddress::IPV4_ZERO_ADDRESS());
+
     // Timers.
     setT1(t1);
     setT2(t2);
@@ -602,8 +601,6 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                   << " specified in subnet6");
     }
 
-    // Relay info.
-    setRelayInfo(RelayInfo(IOAddress::IPV6_ZERO_ADDRESS()));
     // Timers.
     setT1(t1);
     setT2(t2);

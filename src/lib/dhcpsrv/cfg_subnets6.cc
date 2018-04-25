@@ -116,16 +116,17 @@ CfgSubnets6::selectSubnet(const asiolink::IOAddress& address,
         for (Subnet6Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
 
-            // If the specified address matches the relay address, return this
+            // If the specified address matches a relay address, return this
             // subnet.
             if (is_relay_address &&
-                ((*subnet)->getRelayInfo().addr_ == address) &&
+                ((*subnet)->hasRelayAddress(address)) &&
                 (*subnet)->clientSupported(client_classes)) {
                 LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                           DHCPSRV_CFGMGR_SUBNET6_RELAY)
                     .arg((*subnet)->toText()).arg(address.toText());
                 return (*subnet);
             }
+
         }
     }
 

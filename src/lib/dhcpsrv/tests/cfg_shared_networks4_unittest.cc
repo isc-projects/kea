@@ -111,6 +111,9 @@ TEST(CfgSharedNetworks4Test, unparse) {
     SharedNetwork4Ptr network2(new SharedNetwork4("dog"));
 
     network1->setIface("eth0");
+    network1->addRelayAddress(IOAddress("198.16.1.1"));
+    network1->addRelayAddress(IOAddress("198.16.1.2"));
+
     network2->setIface("eth1");
 
     CfgSharedNetworks4 cfg;
@@ -125,9 +128,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"name\": \"dog\",\n"
         "    \"option-data\": [ ],\n"
         "    \"rebind-timer\": 0,\n"
-        "    \"relay\": {\n"
-        "        \"ip-address\": \"0.0.0.0\"\n"
-        "    },\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet4\": [ ],\n"
@@ -139,9 +140,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
         "    \"rebind-timer\": 0,\n"
-        "    \"relay\": {\n"
-        "        \"ip-address\": \"0.0.0.0\"\n"
-        "    },\n"
+        "    \"relay\": { \"ip-addresses\": [ \"198.16.1.1\", \"198.16.1.2\" ] },\n"
         "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet4\": [ ],\n"
