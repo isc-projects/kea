@@ -805,8 +805,27 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         }
         callout_handle->setArgument("leases6", new_leases);
 
-        // Two points: check only address? avoid duplicates in deleted_leases?
         Lease6CollectionPtr deleted_leases(new Lease6Collection());
+        // Do global list first
+        for (auto old_lease : ctx.deleted_leases_) {
+            if (ctx.new_leases_.empty()) {
+                deleted_leases->push_back(old_lease);
+                continue;
+            }
+            bool in_new = false;
+            for (auto const new_lease : ctx.new_leases_) {
+                if ((new_lease->addr_ == old_lease->addr_) &&
+                    (new_lease->prefixlen_ == old_lease->prefixlen_)) {
+                    in_new = true;
+                    break;
+                }
+            }
+            if (in_new) {
+                continue;
+            }
+            deleted_leases->push_back(old_lease);
+        }
+        // Do per IA lists
         for (auto const iac : ctx.ias_) {
             if (!iac.old_leases_.empty()) {
                 for (auto old_lease : iac.old_leases_) {
@@ -2328,10 +2347,12 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
     int general_status = STATUS_Success;
     for (OptionCollection::iterator opt = release->options_.begin();
          opt != release->options_.end(); ++opt) {
+        Lease6Ptr old_lease;
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = releaseIA_NA(ctx.duid_, release, general_status,
-                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+                                                boost::dynamic_pointer_cast<Option6IA>(opt->second),
+                                                old_lease);
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -2339,7 +2360,8 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
         }
         case D6O_IA_PD: {
             OptionPtr answer_opt = releaseIA_PD(ctx.duid_, release, general_status,
-                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+                                                boost::dynamic_pointer_cast<Option6IA>(opt->second),
+                                                old_lease);
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -2349,6 +2371,11 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
         default:
             // remaining options are stateless and thus ignored in this context
             ;
+        }
+
+        // Store the old lease.
+        if (old_lease) {
+            ctx.deleted_leases_.push_back(old_lease);
         }
     }
 
@@ -2361,7 +2388,8 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
 
 OptionPtr
 Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
-                        int& general_status, boost::shared_ptr<Option6IA> ia) {
+                        int& general_status, boost::shared_ptr<Option6IA> ia,
+                        Lease6Ptr& old_lease) {
 
     LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_NA_RELEASE)
         .arg(query->getLabel())
@@ -2501,6 +2529,8 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
         return (ia_rsp);
     } else {
+        old_lease = lease;
+
         LOG_INFO(lease6_logger, DHCP6_RELEASE_NA)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
@@ -2525,7 +2555,8 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
 OptionPtr
 Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
-                        int& general_status, boost::shared_ptr<Option6IA> ia) {
+                        int& general_status, boost::shared_ptr<Option6IA> ia,
+                        Lease6Ptr& old_lease) {
     // Release can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
     // to this particular client.
@@ -2659,6 +2690,8 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         general_status = STATUS_UnspecFail;
 
     } else {
+        old_lease = lease;
+
         LOG_INFO(lease6_logger, DHCP6_RELEASE_PD)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
@@ -2975,7 +3008,8 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
-                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+                                             boost::dynamic_pointer_cast<Option6IA>(opt->second),
+                                             ctx.deleted_leases_);
             if (answer_opt) {
 
                 // We have an answer, let's use it.
@@ -3000,7 +3034,8 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
 
 OptionPtr
 Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
-                     int& general_status, boost::shared_ptr<Option6IA> ia) {
+                     int& general_status, boost::shared_ptr<Option6IA> ia,
+                     Lease6Collection& old_leases) {
 
     LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, DHCP6_DECLINE_PROCESS_IA)
         .arg(decline->getLabel())
@@ -3106,6 +3141,8 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
             // declineLease returns false only when hook callouts set the next
             // step status to drop. We just propagate the bad news here.
             return (OptionPtr());
+        } else {
+            old_leases.push_back(lease);
         }
     }
 

@@ -457,10 +457,12 @@ protected:
     /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
     /// @param ia IA_NA option that is being released
+    /// @param old_lease a pointer to the lease being released
     /// @return IA_NA option (server's response)
     OptionPtr releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
-                           boost::shared_ptr<Option6IA> ia);
+                           boost::shared_ptr<Option6IA> ia,
+                           Lease6Ptr& old_lease);
 
     /// @brief Releases specific IA_PD option
     ///
@@ -473,10 +475,12 @@ protected:
     /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
     /// @param ia IA_PD option that is being released
+    /// @param old_lease a pointer to the lease being released
     /// @return IA_PD option (server's response)
     OptionPtr releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
-                           boost::shared_ptr<Option6IA> ia);
+                           boost::shared_ptr<Option6IA> ia,
+                           Lease6Ptr& old_lease);
 
     /// @brief Copies required options from client message to server answer.
     ///
@@ -771,10 +775,11 @@ protected:
     /// @param duid client's duid (used to verify if the client owns the lease)
     /// @param general_status [out] status in top-level message (may be updated)
     /// @param ia specific IA_NA option to process.
+    /// @param old_leases a collection of leases being declined.
     /// @return IA_NA option with response (to be included in Reply message)
     OptionPtr
     declineIA(const Pkt6Ptr& decline, const DuidPtr& duid, int& general_status,
-              boost::shared_ptr<Option6IA> ia);
+              boost::shared_ptr<Option6IA> ia, Lease6Collection& old_leases);
 
     /// @brief Declines specific IPv6 lease.
     ///
