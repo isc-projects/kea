@@ -1196,6 +1196,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"ip-addresses\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::RELAY:
         return isc::dhcp::Dhcp6Parser::make_IP_ADDRESSES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ip-addresses", driver.loc_);
