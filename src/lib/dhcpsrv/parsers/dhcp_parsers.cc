@@ -256,9 +256,11 @@ RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& relay_info,
     *relay_info = isc::dhcp::Network::RelayInfo();
 
     if (address) {
-        // log a deprec debug message ?
         addAddress("ip-address", getString(relay_elem, "ip-address"),
                    relay_elem, relay_info);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+                  DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED)
+                  .arg(getPosition("ip-address", relay_elem));
         return;
     }
 
