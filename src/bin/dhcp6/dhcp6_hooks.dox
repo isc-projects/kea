@@ -301,16 +301,16 @@ to the end of this list.
    cause lease changes, i.e. REQUEST, RENEW, REBIND, RELEASE and
    DECLINE. This callout is not executed for SOLICIT, CONFIRM and
    INFORMATION REQUEST.  If the callouts are executed as a result of
-   PREQUEST or RENEW message, it is possible that both leases
+   REQUEST or RENEW message, it is possible that both leases
    collections hold leases to be handled. This is the case when the
    new lease allocation replaces an existing lease for the client. The
    "deleted_leases6" object will hold a previous lease instance and
    the "leases6" object will hold the new lease for this client. The
    callouts should be prepared to handle such situation. When the
    callout is executed as a result RELEASE or DECLINE, the callout
-   will typically receive only one lease (being released) in the
-   "deleted_leases6" object.  Both leases collections are always
-   provided to the callouts, even though they may sometimes be empty.
+   will typically receive one or more leases in the "deleted_leases6"
+   object.  Both leases collections are always provided to the callouts,
+   even though they may sometimes be empty.
 
  - <b>Next step status</b>: If any callout installed on the "leases6_committed"
    sets the next step action to DROP the server will drop the processed query.
