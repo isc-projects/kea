@@ -21,15 +21,97 @@ using namespace isc::data;
 using namespace isc::dhcp;
 
 namespace {
+class SharedNetworkParserTest : public ::testing::Test {
+public:
+
+    /// @brief Structure for describing a single relay test scenario
+    struct RelayTest {
+        /// @brief Description of the test scenario, used for logging
+        std::string description_;
+        /// @brief JSON configuration body of the "relay" element
+        std::string json_content_;
+        /// @brief indicates if parsing should pass or fail
+        bool should_parse_;
+        /// @brief list of addresses expected after parsing
+        IOAddressList addresses_;
+    };
+
+    /// @brief virtual destructor
+    virtual ~SharedNetworkParserTest(){};
+
+    /// @brief Fetch valid shared network configuration JSON text
+    virtual std::string getWorkingConfig() const = 0;
+    ElementPtr makeTestConfig(const std::string& name, const std::string& json_content) {
+        // Create working config element tree
+        ElementPtr config = Element::fromJSON(getWorkingConfig());
+
+        // Create test element contents
+        ElementPtr content = Element::fromJSON(json_content);
+
+        // Add the test element to working config
+        config->set(name, content);
+        return (config);
+    }
+
+    /// @brief Executes a single "relay" parsing scenario
+    ///
+    /// Each test pass consists of the following steps:
+    /// -# Attempt to parse the given JSON text
+    /// -# If parsing is expected to fail and it does return otherwise fatal fail
+    /// -# If parsing is expected to succeed, fatal fail if it does not
+    /// -# Verify the network's relay address list matches the expected list
+    /// in size and content.
+    ///
+    /// @param test RelayTest which describes the test to conduct
+    void relayTest(const RelayTest& test) {
+        ElementPtr test_config;
+        ASSERT_NO_THROW(test_config =
+                        makeTestConfig("relay", test.json_content_));
+
+        // Init our ref to a place holder
+        Network4 dummy;
+        Network& network = dummy;
+
+        // If parsing should fail, call parse expecting a throw.
+        if (!test.should_parse_) {
+            ASSERT_THROW(network = parseIntoNetwork(test_config), DhcpConfigError);
+            // No throw so test outcome is correct, nothing else to do.
+           return;
+        }
+
+        // Should parse without error, let's see if it does.
+        ASSERT_NO_THROW(network = parseIntoNetwork(test_config));
+
+        // It parsed, are the number of entries correct?
+        ASSERT_EQ(test.addresses_.size(), network.getRelayAddresses().size());
+
+        // Are the expected addresses in the list?
+        for (auto exp_address = test.addresses_.begin(); exp_address != test.addresses_.end();
+             ++exp_address) {
+            EXPECT_TRUE(network.hasRelayAddress(*exp_address))
+                        << " expected address: " << (*exp_address).toText() << " not found" ;
+        }
+    }
+
+    /// @brief Attempts to parse the given configuration into a shared network
+    ///
+    /// Virtual function used by relayTest() to parse a test configuration.
+    /// Implementation should not catch parsing exceptions.
+    ///
+    /// @param test_config JSON configuration text to parse
+    /// @return A reference to the Network created if parsing is successful
+    virtual Network& parseIntoNetwork(ConstElementPtr test_config) = 0;
+};
+
 
 /// @brief Test fixture class for SharedNetwork4Parser class.
-class SharedNetwork4ParserTest : public ::testing::Test {
+class SharedNetwork4ParserTest : public SharedNetworkParserTest {
 public:
 
     /// @brief Creates valid shared network configuration.
     ///
     /// @return Valid shared network configuration.
-    std::string getWorkingConfig() const {
+    virtual std::string getWorkingConfig() const {
             std::string config = "{"
                 "    \"user-context\": { \"comment\": \"example\" },"
                 "    \"name\": \"bird\","
@@ -88,6 +170,16 @@ public:
 
             return (config);
     }
+
+    virtual Network& parseIntoNetwork(ConstElementPtr test_config) {
+        // Parse configuration.
+        SharedNetwork4Parser parser;
+        network_ = parser.parse(test_config);
+        return (*network_);
+    }
+
+private:
+    SharedNetwork4Ptr network_;
 };
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -152,8 +244,6 @@ TEST_F(SharedNetwork4ParserTest, missingName) {
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
 }
 
-// This test verifies that it's possible to specify client-class
-// and match-client-id on shared-network level.
 TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
@@ -172,14 +262,96 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
     EXPECT_FALSE(network->getMatchClientId());
 }
 
+// This test verifies that parsing of the "relay" element.
+// It checks both valid and invalid scenarios.
+TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
+
+    // Create the vector of test scenarios.
+    std::vector<RelayTest> tests = {
+        {
+            "valid ip-address #1",
+            "{ \"ip-address\": \"192.168.2.1\" }",
+            true,
+            { asiolink::IOAddress("192.168.2.1") }
+        },
+        {
+            "invalid ip-address #1",
+            "{ \"ip-address\": \"not an address\" }",
+            false,
+            { }
+        },
+        {
+            "invalid ip-address #2",
+            "{ \"ip-address\": \"2001:db8::1\" }",
+            false,
+            { }
+        },
+        {
+            "valid ip-addresses #1",
+            "{ \"ip-addresses\": [ ] }",
+            true,
+            {}
+        },
+        {
+            "valid ip-addresses #2",
+            "{ \"ip-addresses\": [ \"192.168.2.1\" ] }",
+            true,
+            { asiolink::IOAddress("192.168.2.1") }
+        },
+        {
+            "valid ip-addresses #3",
+            "{ \"ip-addresses\": [ \"192.168.2.1\", \"192.168.2.2\" ] }",
+            true,
+            { asiolink::IOAddress("192.168.2.1"), asiolink::IOAddress("192.168.2.2") }
+        },
+        {
+            "invalid ip-addresses #1",
+            "{ \"ip-addresses\": [ \"not an address\" ] }",
+            false,
+            { }
+        },
+        {
+            "invalid ip-addresses #2",
+            "{ \"ip-addresses\": [ \"2001:db8::1\" ] }",
+            false,
+            { }
+        },
+        {
+            "invalid both ip-address and ip-addresses",
+            "{"
+            " \"ip-address\": \"192.168.2.1\", "
+            " \"ip-addresses\": [ \"192.168.2.1\", \"192.168.2.2\" ]"
+            " }",
+            false,
+            { }
+        },
+        {
+            "invalid neither ip-address nor ip-addresses",
+            "{}",
+            false,
+            { }
+        }
+    };
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE((*test).description_);
+            relayTest(*test);
+        }
+    }
+}
+
+
 /// @brief Test fixture class for SharedNetwork6Parser class.
-class SharedNetwork6ParserTest : public ::testing::Test {
+class SharedNetwork6ParserTest : public SharedNetworkParserTest {
 public:
 
     /// @brief Creates valid shared network configuration.
     ///
     /// @return Valid shared network configuration.
-    std::string getWorkingConfig() const {
+    virtual std::string getWorkingConfig() const {
             std::string config = "{"
                 "    \"name\": \"bird\","
                 "    \"interface\": \"eth1\","
@@ -228,6 +400,16 @@ public:
 
             return (config);
     }
+
+    virtual Network& parseIntoNetwork(ConstElementPtr test_config) {
+        // Parse configuration.
+        SharedNetwork6Parser parser;
+        network_ = parser.parse(test_config);
+        return (*network_);
+    }
+
+private:
+    SharedNetwork6Ptr network_;
 };
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -344,6 +526,87 @@ TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     // trigger the previous error case...
     class_list = Element::createMap();
     EXPECT_THROW(network = parser.parse(config_element), DhcpConfigError);
+}
+
+// This test verifies that v6 parsing of the "relay" element.
+// It checks both valid and invalid scenarios.
+TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
+
+    // Create the vector of test scenarios.
+    std::vector<RelayTest> tests = {
+        {
+            "valid ip-address #1",
+            "{ \"ip-address\": \"2001:db8::1\" }",
+            true,
+            { asiolink::IOAddress("2001:db8::1") }
+        },
+        {
+            "invalid ip-address #1",
+            "{ \"ip-address\": \"not an address\" }",
+            false,
+            { }
+        },
+        {
+            "invalid ip-address #2",
+            "{ \"ip-address\": \"192.168.2.1\" }",
+            false,
+            { }
+        },
+        {
+            "valid ip-addresses #1",
+            "{ \"ip-addresses\": [ ] }",
+            true,
+            {}
+        },
+        {
+            "valid ip-addresses #2",
+            "{ \"ip-addresses\": [ \"2001:db8::1\" ] }",
+            true,
+            { asiolink::IOAddress("2001:db8::1") }
+        },
+        {
+            "valid ip-addresses #3",
+            "{ \"ip-addresses\": [ \"2001:db8::1\", \"2001:db8::2\" ] }",
+            true,
+            { asiolink::IOAddress("2001:db8::1"), asiolink::IOAddress("2001:db8::2") }
+        },
+        {
+            "invalid ip-addresses #1",
+            "{ \"ip-addresses\": [ \"not an address\" ] }",
+            false,
+            { }
+        },
+        {
+            "invalid ip-addresses #2",
+            "{ \"ip-addresses\": [ \"192.168.1.1\" ] }",
+            false,
+            { }
+        },
+        {
+            "invalid both ip-address and ip-addresses",
+            "{"
+            " \"ip-address\": \"2001:db8::1\", "
+            " \"ip-addresses\": [ \"2001:db8::1\", \"2001:db8::2\" ]"
+            " }",
+            false,
+            { }
+        },
+        {
+            "invalid neither ip-address nor ip-addresses",
+            "{}",
+            false,
+            { }
+        }
+    };
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE((*test).description_);
+            relayTest(*test);
+        }
+    }
 }
 
 } // end of anonymous namespace
