@@ -143,12 +143,14 @@
 
              // Configure an access (aka authentication/authorization) server.
              "access": {
-                 "server": "127.0.0.1"
+                 "server": "127.0.0.1",
+                 "secret": "12345678"
              },
 
              // Configure an accounting server.
              "accounting": {
-                 "server": "127.0.0.1"
+                 "server": "127.0.0.1",
+                 "secret": "12345678"
              }
          }
      } ]
