@@ -22,6 +22,12 @@
       processing is required.
       </para>
       <para>
+        The hooks concept also allows keeping the core Kea code reasonably small
+        by moving features that some, but not all users find useful to external
+        libraries. People who don't need specific functionality simply don't
+        load the libraries.
+      </para>
+      <para>
       Hooks libraries are attached to individual Kea processes, not to
       Kea as a whole.  This means (for example) that it is possible
       to associate one set of libraries with the DHCP4 server and a
@@ -41,6 +47,17 @@
       are interested in writing your own hooks library, information can be
       found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
       Developer's Guide</link>.
+      </para>
+
+      <para>
+        Note that some libraries are available under different licenses.
+      </para>
+      <para>
+        Note that some libraries may require additional dependencies and/or
+        compilation switches to be enabled, e.g. Radius library introduced in
+        Kea 1.4 requires FreeRadius-client library to be present. If
+        --with-free-radius option is not specified, the Radius library will not
+        be built.
       </para>
     </section> <!-- end Introduction -->
     <section>
@@ -281,6 +298,33 @@
               Kea DHCP.
               </entry>
             </row>
+            <row>
+              <entry>Radius</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>The RADIUS Hook library allows Kea to interact with the
+              RADIUS servers using access and accounting mechanisms. The access
+              mechanism may be used for access control, assigning specific IPv4
+              or IPv6 addresses reserved by RADIUS, dynamically assigning
+              addresses from designated pools chosen by RADIUS or rejecting
+              the client's messages altogether. The accounting mechanism allows
+              RADIUS server to keep track of device activity over time.
+              </entry>
+            </row>
+            <row>
+              <entry>Host Cache</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>Some of the database backends, such as RADIUS, are
+              considered slow and may take a long time to respond. Since Kea in
+              general is synchronous, the backend performance directly affects
+              the DHCP performance. To minimize the impact and improve
+              performance, the Host Cache library provides a way to cache
+              responses from other hosts. This includes negative caching,
+              i.e. the ability to remember that there is no client information
+              in the database.
+              </entry>
+            </row>
           </tbody>
           </tgroup>
           </table>
@@ -294,6 +338,9 @@
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
+      </para>
+      <para>
+        The libraries developed by ISC are described in detail in the following sections.
       </para>
       <section>
         <title>user_chk: Checking User Access</title>
@@ -2786,6 +2833,10 @@ both the command and the response.
         being developed for the Kea 1.4.0 release.
       </para>
     </section> <!-- end of high-availability-library -->
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-host-cache.xml"/>
 
   </section>
 
