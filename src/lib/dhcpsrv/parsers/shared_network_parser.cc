@@ -89,6 +89,15 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        if (shared_network_data->contains("relay")) {
+            auto relay_parms = shared_network_data->get("relay");
+            if (relay_parms) {
+                RelayInfoParser parser(Option::V4);
+                Network::RelayInfoPtr relay_info(new Network::RelayInfo());
+                parser.parse(relay_info, relay_parms);
+                shared_network->setRelayInfo(*relay_info);
+            }
+        }
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;
@@ -164,6 +173,15 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        if (shared_network_data->contains("relay")) {
+            auto relay_parms = shared_network_data->get("relay");
+            if (relay_parms) {
+                RelayInfoParser parser(Option::V6);
+                Network::RelayInfoPtr relay_info(new Network::RelayInfo());
+                parser.parse(relay_info, relay_parms);
+                shared_network->setRelayInfo(*relay_info);
+            }
+        }
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");
