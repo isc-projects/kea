@@ -1969,7 +1969,34 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Request a prefix: this should lead to an error as no prefix pool
+    // is configured.
+    client.requestPrefix(0x1122, 64, IOAddress("2001:db8:1000::"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
 }
+
+//// same with prefix
 
 // This test verifies that it is possible to park a packet as a result of
 // the leases6_committed callouts.
@@ -2069,6 +2096,8 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
     EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
     EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::29")));
 }
+
+//// same with prefix
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
 // and the lease6_renew callouts are triggered.
@@ -2468,7 +2497,34 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Renew a prefix: this should lead to an error as no prefix pool
+    // is configured.
+    client.requestPrefix(0x1122, 64, IOAddress("2001:db8:1000::"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
 }
+
+//// same with prefix
 
 // This test verifies that incoming (positive) RELEASE can be handled properly,
 // that a REPLY is generated, that the response has status code and that the
@@ -2821,6 +2877,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRelease) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
+
+//// same with prefix
+//// same with addresses and prefixes (2+2)
 
 // This test verifies that incoming (positive) REBIND can be handled properly,
 // and the lease6_rebind callouts are triggered.
@@ -3208,7 +3267,34 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Rebind a prefix: this should lead to an error as no prefix pool
+    // is configured.
+    client.requestPrefix(0x1122, 64, IOAddress("2001:db8:1000::"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
 }
+
+//// same with prefix
 
 // This test checks that the basic decline hook (lease6_decline) is
 // triggered properly.
@@ -3412,6 +3498,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 }
+
+//// same with 2 IA_NA
+//// same with an IA_NA with 2 addresses (if I can get an example)
 
 // Checks if callout installed on host6_identifier can generate an
 // identifier and whether that identifier is actually used.
