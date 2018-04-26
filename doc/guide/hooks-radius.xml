@@ -510,35 +510,6 @@ server. In other words, the host-cache mechanism is mandatory, unless you
 don't want the RADIUS communication for messages other than
 Discover and the first Request from each client.</para>
 
-<para>Furthermore, the Kea allocation engine must be informed that RADIUS is
-to be used as a source of information about hosts. To do so, radius must be
-configured as a hosts-database. This example configuration snippet shows how to
-do it:
-<screen>
-"Dhcp4": {
-    // Other DHCPv4 parameters here
-    ...
-
-    // One new feature of Kea 1.4 is the ability to use multiple backends.
-    // Earlier versions allowed only hosts-database (single), which is still
-    // supported. However, a new format for hosts-databases is now also
-    // supported.
-    "hosts-databases": [
-        // This tells the Kea engine that the first host backend to
-        // look at for hosts is the host cache.
-        {
-            "type": "host-cache"
-        },
-
-        // If host is not found in the first backend, the second backend
-        // should be used instead.
-        {
-            "type": "radius"
-        }
-    ]
-}</screen>
-
-</para>
 </section>
 
 </section>
