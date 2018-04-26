@@ -69,7 +69,7 @@ $ sudo rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noar
 $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
 </screen>
     </para>
-    
+
     <para>
       STEP 2: FreeRADIUS installation.
     </para>
@@ -122,11 +122,12 @@ $ sudo make install
         To download and compile Boost 1.65, please use the following
         commands:
 <screen>
-wget -nd https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
-tar zxvf boost_1_65_1.tar.gz
-cd boost_1_65_1/
-./bootstrap.sh
-./b2 --without-python
+$ wget -nd https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
+$ tar zxvf boost_1_65_1.tar.gz
+$ cd boost_1_65_1/
+$ ./bootstrap.sh
+$ ./b2 --without-python
+$ sudo ./b2 install
 </screen>
         Note that b2 script may optionally take extra parameters. One
         of them specify the destination path where the sources are to
@@ -211,8 +212,8 @@ should look as follows:</para>
   After some checks, the configure script should print a report similar to the
   following:
 
-<screen>  
-  
+<screen>
+
        Kea source configure results:
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -247,9 +248,9 @@ Boost:
 
 OpenSSL:
   CRYPTO_VERSION:  OpenSSL 1.0.2k  26 Jan 2017
-  CRYPTO_CFLAGS:   
-  CRYPTO_INCLUDES: 
-  CRYPTO_LDFLAGS:  
+  CRYPTO_CFLAGS:
+  CRYPTO_INCLUDES:
+  CRYPTO_LDFLAGS:
   CRYPTO_LIBS:     -lcrypto
 
 Botan: no
@@ -329,10 +330,15 @@ Please make sure that your compilation has the following:
   "Dhcp4": {
 
   // Your regular DHCPv4 configuration parameters here.
-  
+
   "hooks-libraries": [
   {
-      "library": "/usr/local/lib/hooks/libdhc_radio.so",
+      // Note that RADIUS requires host-cache for proper operation,
+      // so that library is loaded as well.
+      "library": "/usr/local/lib/hooks/libdhcp_host_cache.so"
+  },
+  {
+      "library": "/usr/local/lib/hooks/libdhc_radius.so",
       "parameters": {
 
           // Specify where FreeRADIUS dictionary could be located
@@ -398,7 +404,7 @@ Please make sure that your compilation has the following:
       be the same than host identifier and when the flex-id hook librairy is
       used the replace-client-id must be set to true and duid will be used with
       client-id-pop0. </simpara></listitem>
-      
+
       <listitem><simpara><command>realm</command> (default "") is the default
       realm. </simpara></listitem>
 
@@ -457,7 +463,7 @@ Please make sure that your compilation has the following:
             <listitem><simpara><command>type</command> of the attribute. Type or
             name is required, and the attribute must be defined in the
             dictionary.</simpara></listitem>
-            
+
             <listitem><simpara><command>data</command> is one of the three ways
             to specify the attribute content.  The data entry is parsed by the
             FreeRADIUS library so values defined in the dictionary of the
@@ -468,7 +474,7 @@ Please make sure that your compilation has the following:
             (date, integer and IPv4 address), a string content attribute
             (string. IPv6 address and IPv6 prefix) is
             required.</simpara></listitem>
-            
+
             <listitem><simpara><command>expr</command> specifies an evaluation
             expression which must return a not empty string when evaluated with
             the DHCP query packet.  A priori this is restricted to the access
@@ -476,18 +482,63 @@ Please make sure that your compilation has the following:
           </itemizedlist>
         </listitem>
       </itemizedlist>
-        
+
     </para>
 <para>
 
 </para>
-<para>TODO: Describe that RADIUS backend must be configured.</para>
 
-<para>TODO: Describe that host-cache library must also be loaded for the
-accounting to work.</para>
+<para>For the RADIUS Hook library to operate properly in DHCPv4, it is necessary
+to also load the Host Cache hook library. The reason for this is somewhat
+complex. In a typical deployment the DHCP clients send their packets via
+DHCP relay which inserts certain Relay Agent Information options, such are
+circuit-id or remote-id. The values of those options are then used by the
+Kea DHCP server to formulate necessary attributes in the Access-Request message
+sent to the RADIUS server. However, once the DHCP client gets its address, it
+then renews by sending packets directly to the DHCP server. As a result, the
+relays are not able to insert their RAI options and DHCP server can't send the
+Access-Request queries to the RADIUS server by using just the information from
+incoming packets. Kea needs to keep the information received during initial
+Discover/Offer exchanges and later use it when sending accounting
+messages.</para>
 
-<para>TODO: Add configuration file example here.</para>
+<para>This mechanism is implemented based on user context in host reservations.
+(See <xref linkend="user-context"/> for details about user context). The host
+cache mechanism allows to retain the information retrieved by RADIUS to be
+stored and later used for sending accounting and access queries to the RADIUS
+server. In other words, the host-cache mechanism is mandatory, unless you
+don't want the RADIUS communication for messages other than
+Discover and the first Request from each client.</para>
+
+<para>Furthermore, the Kea allocation engine must be informed that RADIUS is
+to be used as a source of information about hosts. To do so, radius must be
+configured as a hosts-database. This example configuration snippet shows how to
+do it:
+<screen>
+"Dhcp4": {
+    // Other DHCPv4 parameters here
+    ...
+
+    // One new feature of Kea 1.4 is the ability to use multiple backends.
+    // Earlier versions allowed only hosts-database (single), which is still
+    // supported. However, a new format for hosts-databases is now also
+    // supported.
+    "hosts-databases": [
+        // This tells the Kea engine that the first host backend to
+        // look at for hosts is the host cache.
+        {
+            "type": "host-cache"
+        },
+
+        // If host is not found in the first backend, the second backend
+        // should be used instead.
+        {
+            "type": "radius"
+        }
+    ]
+}</screen>
+
+</para>
 </section>
-    
-</section>
 
+</section>
