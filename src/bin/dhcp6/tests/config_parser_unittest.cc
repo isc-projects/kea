@@ -4142,7 +4142,43 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::1"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("2001:db8:1::abcd", subnet->getRelayInfo().addr_.toText());
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db8:1::abcd")));
+}
+
+// This test checks if it is possible to specify a list of relays
+TEST_F(Dhcp6ParserTest, subnetRelayInfoList) {
+    // A config with relay information.
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"relay\": { "
+        "        \"ip-addresses\": [ \"2001:db8:1::abcd\", \"2001:db8:1::abce\" ]"
+        "    },"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db8:1::1"), classify_);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db8:1::abcd")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db8:1::abce")));
 }
 
 // Goal of this test is to verify that multiple subnets can be configured
@@ -6008,7 +6044,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s);
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
-    EXPECT_EQ(IOAddress("1111::1"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("1111::1")));
     EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
@@ -6019,7 +6055,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     s = checkSubnet(*subs, "2001:db2::/48", 100, 200, 300, 400);
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
-    EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("2222::2")));
     EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
@@ -6034,7 +6070,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // This subnet should derive its renew-timer from global scope.
     s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
     EXPECT_FALSE(s->getInterfaceId());
-    EXPECT_EQ(IOAddress("::"), s->getRelayInfo().addr_);
+    EXPECT_FALSE(s->hasRelays());
     EXPECT_FALSE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
