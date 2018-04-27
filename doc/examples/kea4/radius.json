@@ -1,6 +1,12 @@
 // This is an example configuration file for the DHCPv4 server in Kea
-// illustrating the configuration of the RADIUS hooks library.
-
+// illustrating the configuration of the RADIUS and Host Cache hooks libraries.
+//
+// It is not intended to be used as is. It tries to showcase some of the
+// parameters available.
+//
+// To use this configuration file, you need to have both RADIUS and
+// Host Cache hooks. These are currently available to support customers only.
+//
 // clients get a wine name (option AOP code 250) divided into red and white.
 // Expensive brands have a host entry, i.e. a reserved address.
 //
@@ -32,8 +38,9 @@
 {"Dhcp4":
 
 {
-  // Kea is told to listen on the en0 interface only.
+  // Kea is told to listen on specfic interfaces only.
   "interfaces-config": {
+    // You should probably list your network interfaces here (e.g. "en0")
     "interfaces": [ "en0" ]
   },
 
@@ -42,9 +49,10 @@
     "type": "memfile"
   },
 
-  "valid-lifetime": 1800,
+  // Note there is hosts-database defined. RADIUS and Host Cache libraries
+  // will create them dynamically.
 
-  // Restrict us to flex-id.
+  // RADIUS uses flex-id reservations, so restrict Kea to use flex-id only.
   "host-reservation-identifiers": [ "flex-id" ],
 
   // Define the AOP option.
@@ -54,7 +62,7 @@
       "type": "string" } ],
 
   // Define red and white client classes.
-  // If there are not defined we can get spurious warnings.
+  // If they are not defined we can get spurious warnings.
   "client-classes": [
       { "name": "red" },
       { "name": "white" } ],
@@ -76,9 +84,14 @@
             "pool": "192.0.2.120-192.0.2.199",
             "client-class": "white"
          }
+
+          // Note there are not pools available to anyone. This is
+          // important to note. This means that to get an address, the
+          // client needs to belong to red class, to white class or
+          // have an address reserved.
       ],
       // Define host reservations for "expensive" wines.
-      // Use quotes in the host id value to say it is textual (vs hexa).
+      // Use quotes in the host id value to say it is textual, not hex.
       "reservations": [
          {
             "flex-id": "'chambertin'",
@@ -110,7 +123,7 @@
   "hooks-libraries": [
      {
         // Load the flex-id hook library.
-        "library": "/tmp/libdhcp_flex_id.so",
+        "library": "/usr/local/lib/hooks/libdhcp_flex_id.so",
 
         "parameters": {
             // Take the ID from the AOP option.
@@ -123,12 +136,14 @@
         }
      },
      {
-         // Load the host cache hook library before RADIUS one.
-         "library": "/tmp/libdhcp_host_cache.so"
+         // Load the host cache hook library. It is needed by the RADIUS
+         // library to keep the attributes from authorization to later user
+         // for accounting.
+         "library": "/usr/local/lib/hooks/libdhcp_host_cache.so"
      },
      {
          // Load the RADIUS hook library.
-         "library": "/tmp/libdhcp_radius.so",
+         "library": "/usr/local/lib/hooks/libdhcp_radius.so",
 
          "parameters": {
              // Strip the 0 type added by flex-id
