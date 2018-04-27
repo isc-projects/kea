@@ -27,7 +27,7 @@
   </para>
   <para>
     The major feature of the library is the ability to use RADIUS
-    authentication. When a DHCP packet is received, the Kea server
+    authorization. When a DHCP packet is received, the Kea server
     will send send Access-Request to the RADIUS server and will await
     a response. The server will then send back either Access-Accept
     with specific client attributes or Access-Reject. There are two
@@ -79,8 +79,8 @@ $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
       1.1.7 release available from the project website
       <uri xmlns:xlink="http://www.w3.org/1999/xlink"
            xlink:href="http://freeradius.org/sub_projects/">http://freeradius.org/sub_projects/</uri>
-      has several serious deficiencies. ISC observed a segmentation
-      fault during teting. Also, the base version of the library does
+      has several serious deficiencies. ISC engineers observed a segmentation
+      fault during testing. Also, the base version of the library does
       not offer asynchronous transmissions, which is essential for
       effective accounting implementation. Both of these issues
       were addressed by ISC engineers. The changes have been
@@ -322,9 +322,9 @@ Please make sure that your compilation has the following:
 
     <para>
       The RADIUS Hook is a library that has to be loaded by either DHCPv4 or
-      DHCPv6 Kea servers. What is different in this library is that it takes
-      many parameters to actually run. For example, this configuration could
-      be used:
+      DHCPv6 Kea servers. Compared to other avaiable hook libraries, this one
+      takes many parameters to actually run. For example, this configuration
+      could be used:
 
 <screen>
   "Dhcp4": {
@@ -353,8 +353,16 @@ Please make sure that your compilation has the following:
     </para>
 
     <para>
+      Radius is a complicated environment. As such, it's not really possible
+      to provide a default configuration that would work out of the box.
+      However, we do have one example that showcases some of the more
+      common features. Please see doc/examples/kea4/hooks-radius.json in your
+      Kea sources.
+    </para>
+
+    <para>
       The RADIUS hook library supports the following global configuration
-      flags, which correspond to FreeRADIUS client library options:
+      flags, which corresponds to FreeRADIUS client library options:
 
       <itemizedlist>
 
@@ -444,7 +452,10 @@ Please make sure that your compilation has the following:
 
             <listitem><simpara><command>port</command> (default RADIUS
             authentication or accounting service) which specifies the UDP port
-            of the server.</simpara></listitem>
+            of the server. Note that the FreeRADIUS client library by default
+            uses ports 1812 (auth) and 1813 (acct). Some server implementations
+            use 1645 (auth) ns 1646 (acct). You may use the "port" parameter to
+            adjust as needed.</simpara></listitem>
 
             <listitem><simpara><command>secret</command> which authenticates
             messages.</simpara></listitem>
