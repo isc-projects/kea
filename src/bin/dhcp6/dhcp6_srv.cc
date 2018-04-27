@@ -653,6 +653,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     }
 
     if (query->getType() == DHCPV6_DHCPV4_QUERY) {
+        // This call never throws. Should this change, this section must be
+        // enclosed in try-catch.
         processDhcp4Query(query);
         return;
     }
@@ -3280,7 +3282,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
         try {
             // Forward the whole message to the DHCPv4 server via IPC
             Dhcp6to4Ipc::instance().send(dhcp4_query);
-        } catch (const std::exception&) {
+        } catch (...) {
             // Assume the error was already logged
             return;
         }
