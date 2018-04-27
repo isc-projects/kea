@@ -3486,14 +3486,14 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
-    // No new allocations.
-    ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_TRUE(callback_new_leases6_->empty());
+    // No deleted leases.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
 
     // Declined lease should be returned.
-    ASSERT_TRUE(callback_deleted_leases6_);
-    EXPECT_EQ(1, callback_deleted_leases6_->size());
-    Lease6Ptr lease = callback_deleted_leases6_->at(0);
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
 

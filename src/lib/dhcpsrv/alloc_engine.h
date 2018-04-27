@@ -380,9 +380,6 @@ public:
         /// @brief A collection of newly allocated leases.
         Lease6Collection new_leases_;
 
-        /// @brief A collection of old leases that the client had before.
-        Lease6Collection deleted_leases_;
-
         //@}
 
         /// @brief Parameters pertaining to individual IAs.

@@ -759,11 +759,11 @@ protected:
     /// @param duid client's duid (used to verify if the client owns the lease)
     /// @param general_status [out] status in top-level message (may be updated)
     /// @param ia specific IA_NA option to process.
-    /// @param old_leases a collection of leases being declined.
+    /// @param new_leases a collection of leases being declined.
     /// @return IA_NA option with response (to be included in Reply message)
     OptionPtr
     declineIA(const Pkt6Ptr& decline, const DuidPtr& duid, int& general_status,
-              boost::shared_ptr<Option6IA> ia, Lease6Collection& old_leases);
+              boost::shared_ptr<Option6IA> ia, Lease6Collection& new_leases);
 
     /// @brief Declines specific IPv6 lease.
     ///
