@@ -4109,7 +4109,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
         "    \"rebind-timer\": 2, "
         "    \"valid-lifetime\": 4,"
         "    \"relay\": { "
-        "        \"ip-addresses\": [ \"192.0.2.123\", \"192.0.2.124\" ]"
+        "        \"ip-addresses\": [ \"192.0.3.123\", \"192.0.3.124\" ]"
         "    },"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
@@ -4123,13 +4123,16 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
+    SubnetSelector selector;
+    selector.giaddr_ = IOAddress("192.0.2.200");
+
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
+        getCfgSubnets4()->selectSubnet(selector);
     ASSERT_TRUE(subnet);
 
     EXPECT_TRUE(subnet->hasRelays());
-    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.2.123")));
-    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.2.124")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.123")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.124")));
 }
 
 
