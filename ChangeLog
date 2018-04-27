@@ -1,3 +1,7 @@
+1390.	[doc]		tomek
+	User's Guide documentation for RADIUS and Host Cache written.
+	(Trac #5538, git c73337a8ec691874b8ac0b2efcd8708f1a79acbb)
+
 1389.	[func]		fdupont
 	dhcp6_srv_configured hook point added.
 	(Trac #5530, git 3bb521f6ec8b4e2a1e57ec84b17ee12b0ccf0f83)
