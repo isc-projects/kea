@@ -1684,11 +1684,15 @@ relay: RELAY {
     ctx.leave();
 };
 
-relay_map: IP_ADDRESS {
+relay_map: ip_address
+         | ip_addresses
+         ;
+
+ip_address: IP_ADDRESS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
-    ElementPtr ip(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("ip-address", ip);
+    ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 };
 

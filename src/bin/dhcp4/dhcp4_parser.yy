@@ -145,6 +145,7 @@ using namespace std;
 
   RELAY "relay"
   IP_ADDRESS "ip-address"
+  IP_ADDRESSES "ip-addresses"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -1586,6 +1587,16 @@ ip_address: IP_ADDRESS {
     ctx.leave();
 };
 
+ip_addresses: IP_ADDRESSES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("ip-addresses", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
 duid: DUID {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -1657,13 +1668,9 @@ relay: RELAY {
     ctx.leave();
 };
 
-relay_map: IP_ADDRESS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr ip(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("ip-address", ip);
-    ctx.leave();
-};
+relay_map: ip_address
+         | ip_addresses
+         ;
 
 // --- end of relay definitions ------------------------------
 

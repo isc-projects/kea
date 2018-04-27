@@ -24,6 +24,9 @@
 namespace isc {
 namespace dhcp {
 
+/// List of IOAddresses
+typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
+
 /// @brief Common interface representing a network to which the DHCP clients
 /// are connected.
 ///
@@ -44,23 +47,41 @@ namespace dhcp {
 /// derived classes.
 class Network : public virtual UserContext, public data::CfgToElement {
 public:
-
     /// @brief Holds optional information about relay.
     ///
     /// In some cases it is beneficial to have additional information about
     /// a relay configured in the subnet. For now, the structure holds only
-    /// IP address, but there may potentially be additional parameters added
+    /// IP addresses, but there may potentially be additional parameters added
     /// later, e.g. relay interface-id or relay-id.
-    struct RelayInfo {
+    class RelayInfo {
+    public:
 
-        /// @brief default and the only constructor
+        /// @brief Adds an address to the list of addresses
         ///
-        /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
-        RelayInfo(const isc::asiolink::IOAddress& addr);
+        /// @param addr address to add
+        /// @throw BadValue if the address is already in the list
+        void addAddress(const asiolink::IOAddress& addr);
 
-        /// @brief IP address of the relay
-        isc::asiolink::IOAddress addr_;
+        /// @brief Returns const reference to the list of addresses
+        ///
+        /// @return const reference to the list of addresses
+        const IOAddressList& getAddresses() const;
+
+        /// @brief Indicates whether or not the address list has entries
+        ///
+        /// @return True if the address list is not empty
+        bool hasAddresses() const;
+
+        /// @brief Checks the address list for the given address
+        ///
+        /// @return True if the address is found in the address list
+        bool containsAddress(const asiolink::IOAddress& addr) const;
+
+    private:
+        /// @brief List of relay IP addresses
+        IOAddressList addresses_;
     };
+
 
     /// @brief Specifies allowed host reservation mode.
     ///
@@ -88,8 +109,7 @@ public:
 
     /// @brief Constructor.
     Network()
-        : iface_name_(), relay_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
-          client_class_(""), t1_(0), t2_(0), valid_(0),
+        : iface_name_(), client_class_(""), t1_(0), t2_(0), valid_(0),
           host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
     }
 
@@ -150,6 +170,28 @@ public:
     const RelayInfo& getRelayInfo() const {
         return (relay_);
     }
+
+    /// @brief Adds an address to the list addresses in the network's relay info
+    ///
+    /// @param addr address of the relay
+    /// @throw BadValue if the address is already in the list
+    void addRelayAddress(const asiolink::IOAddress& addr);
+
+    /// @brief Returns the list of relay addresses from the network's relay info
+    ///
+    /// @return const reference to the list of addresses
+    const IOAddressList& getRelayAddresses() const;
+
+    /// @brief Indicates if network's relay info has relay addresses
+    ///
+    /// @return True the relay list is not empty, false otherwise
+    bool hasRelays() const;
+
+    /// @brief Tests if the network's relay info contains the given address
+    ///
+    /// @param address address to search for in the relay list
+    /// @return True if a relay with the given address is found, false otherwise
+    bool hasRelayAddress(const asiolink::IOAddress& address) const;
 
     /// @brief Checks whether this network supports client that belongs to
     /// specified classes.
@@ -363,7 +405,6 @@ public:
     /// @brief Constructor.
     Network6()
         : Network(), preferred_(0), interface_id_(), rapid_commit_(false) {
-        setRelayInfo(asiolink::IOAddress::IPV6_ZERO_ADDRESS());
     }
 
     /// @brief Returns preferred lifetime (in seconds)

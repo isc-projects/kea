@@ -260,7 +260,7 @@ public:
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
-        EXPECT_EQ(expected_code, rcode_);
+        EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
     }
 
     /// @brief Convenience method for running configuration
@@ -1377,7 +1377,7 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
         "\"server-hostname\": \"nohost\","
-        "\"boot-file-name\": \"nofile\","        
+        "\"boot-file-name\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
@@ -4089,8 +4089,52 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("192.0.2.123", subnet->getRelayInfo().addr_.toText());
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.2.123")));
 }
+
+// This test checks if it is possible to specify a list of relays
+TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
+
+    ConstElementPtr status;
+
+    // A config with relay information.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"renew-timer\": 1, "
+        "    \"rebind-timer\": 2, "
+        "    \"valid-lifetime\": 4,"
+        "    \"relay\": { "
+        "        \"ip-addresses\": [ \"192.0.3.123\", \"192.0.3.124\" ]"
+        "    },"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    SubnetSelector selector;
+    selector.giaddr_ = IOAddress("192.0.2.200");
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(selector);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.123")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.124")));
+}
+
 
 // Goal of this test is to verify that multiple subnets can be configured
 // with defined client classes.
@@ -5652,7 +5696,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
     EXPECT_EQ("foo", s->getSname());
     EXPECT_EQ("bar", s->getFilename());
-    EXPECT_EQ(IOAddress("5.6.7.8"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("5.6.7.8")));
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
@@ -5667,7 +5711,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
     EXPECT_EQ("some-name.example.org", s->getSname());
     EXPECT_EQ("bootfile.efi", s->getFilename());
-    EXPECT_EQ(IOAddress("55.66.77.88"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("55.66.77.88")));
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
@@ -5686,7 +5730,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
     EXPECT_TRUE(s->getSname().empty());
     EXPECT_TRUE(s->getFilename().empty());
-    EXPECT_EQ(IOAddress("0.0.0.0"), s->getRelayInfo().addr_);
+    EXPECT_FALSE(s->hasRelays());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
 

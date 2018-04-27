@@ -132,9 +132,9 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 
     // Now specify relay information.
-    subnet1->setRelayInfo(IOAddress("2001:db8:ff::1"));
-    subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
-    subnet3->setRelayInfo(IOAddress("2001:db8:ff::3"));
+    subnet1->addRelayAddress(IOAddress("2001:db8:ff::1"));
+    subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
+    subnet3->addRelayAddress(IOAddress("2001:db8:ff::3"));
 
     // And try again. This time relay-info is there and should match.
     selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::1");
@@ -436,7 +436,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet1->setInterfaceId(ifaceid);
     subnet1->allowClientClass("foo");
     subnet2->setIface("lo");
-    subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
+    subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
@@ -456,10 +456,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"interface-id\": \"relay.eth0\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -471,10 +471,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "},{\n"
         "    \"id\": 124,\n"
         "    \"subnet\": \"2001:db8:2::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"2001:db8:ff::2\" },\n"
         "    \"interface\": \"lo\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ \"2001:db8:ff::2\" ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -486,10 +486,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"2001:db8:3::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"interface\": \"eth1\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -531,9 +531,9 @@ TEST(CfgSubnets6Test, unparsePool) {
         "{\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -586,9 +586,9 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "{\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"

@@ -84,6 +84,12 @@ This warning message is issued on an attempt to configure multiple options with 
 same option code for the particular subnet. Adding multiple options is uncommon
 for DHCPv6, but it is not prohibited.
 
+% DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED "relay" uses "ip-address", which has been deprecated, please use "ip-addresses": %1
+This is debug message issued when the "relay" element being parse
+contains "ip-address" rather than its replacement, "ip-addresses".
+The server will still honor the value but users are encouraged to
+move to the new list parameter.
+
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the
 DHCPv4 server should use the raw sockets to receive the DHCP
