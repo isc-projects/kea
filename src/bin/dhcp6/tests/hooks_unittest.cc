@@ -3740,7 +3740,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
 
     // Make sure there were no errors.
     int status_code;
-    std::cout << isc::config::parseAnswer(status_code, answer)->str() << std::endl;
+    isc::config::parseAnswer(status_code, answer);
     ASSERT_EQ(0, status_code);
 
     // The hook library should have been loaded.

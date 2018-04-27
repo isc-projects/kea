@@ -429,8 +429,7 @@ namespace dhcp {
 AllocEngine::ClientContext6::ClientContext6()
     : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
       hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
-      rev_dns_update_(false), committed_(false), hostname_(),
-      callout_handle_(), ias_() {
+      rev_dns_update_(false), hostname_(), callout_handle_(), ias_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
@@ -443,9 +442,9 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
                                             const CalloutHandlePtr& callout_handle)
     : query_(query), fake_allocation_(fake_allocation), subnet_(subnet),
       duid_(duid), hwaddr_(), host_identifiers_(), hosts_(),
-      fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns), committed_(false),
-      hostname_(hostname), callout_handle_(callout_handle),
-      allocated_resources_(), new_leases_(), deleted_leases_(), ias_() {
+      fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns), hostname_(hostname),
+      callout_handle_(callout_handle), allocated_resources_(), new_leases_(),
+      deleted_leases_(), ias_() {
 
     // Initialize host identifiers.
     if (duid) {
