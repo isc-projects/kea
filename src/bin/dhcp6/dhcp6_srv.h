@@ -226,12 +226,10 @@ protected:
     /// instead of Advertise and requested leases will be assigned
     /// immediately.
     ///
-    /// @param solicit Solicit message received from client
     /// @param ctx Reference to client context
     ///
     /// @return Advertise, Reply message or NULL.
-    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit,
-                           AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processSolicit(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Request and returns Reply response.
     ///
@@ -241,21 +239,17 @@ protected:
     /// prefixes, respectively. Uses LeaseMgr to allocate or update existing
     /// leases.
     ///
-    /// @param request a message received from client
     /// @param ctx Reference to client context
     ///
     /// @return REPLY message or NULL
-    Pkt6Ptr processRequest(const Pkt6Ptr& request,
-                           AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processRequest(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Renew message.
     ///
-    /// @param renew message received from the client
     /// @param ctx Reference to client context
     ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRenew(const Pkt6Ptr& renew,
-                         AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processRenew(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Rebind message.
     ///
@@ -265,12 +259,10 @@ protected:
     /// client is on the appropriate link or not. We don't seem to do it
     /// now.
     ///
-    /// @param rebind message received from the client.
     /// @param ctx Reference to client context
     ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRebind(const Pkt6Ptr& rebind,
-                          AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processRebind(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
@@ -291,22 +283,18 @@ protected:
     /// code NotOnLink is returned. Otherwise, the Reply message with the
     /// status code Success is returned.
     ///
-    /// @param confirm Confirm message sent by a client.
     /// @param ctx Reference to client context
     ///
     /// @return Reply message from the server or NULL pointer if Confirm
     /// message should be discarded by the server.
-    Pkt6Ptr processConfirm(const Pkt6Ptr& confirm,
-                           AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processConfirm(AllocEngine::ClientContext6& ctx);
 
     /// @brief Process incoming Release message.
     ///
-    /// @param release message received from client
     /// @param ctx Reference to client context
     ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRelease(const Pkt6Ptr& release,
-                           AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processRelease(AllocEngine::ClientContext6& ctx);
 
     /// @brief Process incoming Decline message.
     ///
@@ -315,21 +303,17 @@ protected:
     /// the client's message. Finally, it calls @ref declineLeases, where
     /// the actual address processing takes place.
     ///
-    /// @param decline message received from client
     /// @param ctx Reference to client context
     ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processDecline(const Pkt6Ptr& decline,
-                           AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processDecline(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Information-request message.
     ///
-    /// @param inf_request message received from client
     /// @param ctx Reference to client context
     ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request,
-                              AllocEngine::ClientContext6& ctx);
+    Pkt6Ptr processInfRequest(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming DHCPv4-query message.
     ///

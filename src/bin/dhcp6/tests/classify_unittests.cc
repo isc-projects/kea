@@ -433,15 +433,15 @@ TEST_F(ClassifyTest, matchClassification) {
     bool drop = false;
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(query1, ctx1);
+    Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(query2, ctx2);
+    Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(query3, ctx3);
+    Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(2345);
@@ -536,15 +536,15 @@ TEST_F(ClassifyTest, required) {
     bool drop = false;
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(query1, ctx1);
+    Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(query2, ctx2);
+    Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(query3, ctx3);
+    Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
     // Classification processing should do nothing
     OptionPtr opt1 = response1->getOption(2345);
@@ -636,15 +636,15 @@ TEST_F(ClassifyTest, requiredClassification) {
     bool drop = false;
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(query1, ctx1);
+    Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(query2, ctx2);
+    Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(query3, ctx3);
+    Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(2345);
@@ -722,7 +722,7 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     bool drop = false;
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(query, ctx);
+    Pkt6Ptr response = srv.processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -787,7 +787,7 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
     bool drop = false;
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(query, ctx);
+    Pkt6Ptr response = srv.processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -861,7 +861,7 @@ TEST_F(ClassifyTest, classGlobalPriority) {
     bool drop = false;
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(query, ctx);
+    Pkt6Ptr response = srv.processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -928,7 +928,7 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     bool drop = false;
     srv.initContext(query, ctx,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(query, ctx);
+    Pkt6Ptr response = srv.processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -1049,7 +1049,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     bool drop = false;
     srv.initContext(query1, ctx1,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(query1, ctx1);
+    Pkt6Ptr response1 = srv.processSolicit(ctx1);
     ASSERT_TRUE(response1);
     OptionPtr ia_na1 = response1->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na1);
@@ -1063,7 +1063,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx2;
     srv.initContext(query2, ctx2,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(query2, ctx2);
+    Pkt6Ptr response2 = srv.processSolicit(ctx2);
     ASSERT_TRUE(response2);
     OptionPtr ia_na2 = response2->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na2);
@@ -1077,7 +1077,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx3;
     srv.initContext(query3, ctx3,  drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(query3, ctx3);
+    Pkt6Ptr response3 = srv.processSolicit(ctx3);
     ASSERT_TRUE(response3);
     OptionPtr ia_na3 = response3->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na3);
@@ -1366,15 +1366,15 @@ TEST_F(ClassifyTest, member) {
     bool drop = false;
     srv.initContext(query1, ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(query1, ctx1);
+    Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     srv.initContext(query2, ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(query2, ctx2);
+    Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     srv.initContext(query3, ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(query3, ctx3);
+    Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(2345);
