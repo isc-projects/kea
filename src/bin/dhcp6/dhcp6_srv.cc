@@ -761,7 +761,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
     bool packet_park = false;
 
-    if (ctx.committed_ &&
+    if (!ctx.fake_allocation_ && (ctx.query_->getType() != DHCPV6_CONFIRM) &&
+        (ctx.query_->getType() != DHCPV6_INFORMATION_REQUEST) &&
         HooksManager::calloutsPresent(Hooks.hook_index_leases6_committed_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -1723,19 +1724,6 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         return (ia_rsp);
     }
 
-    // "Fake" allocation is the case when the server is processing the Solicit
-    // message without the Rapid Commit option and advertises a lease to
-    // the client, but doesn't commit this lease to the lease database. If
-    // the Solicit contains the Rapid Commit option and the server is
-    // configured to honor the Rapid Commit option, or the client has sent
-    // the Request message, the lease will be committed to the lease
-    // database. The type of the server's response may be used to determine
-    // if this is the fake allocation case or not. When the server sends
-    // Reply message it means that it is committing leases. Other message
-    // type (Advertise) means that server is not committing leases (fake
-    // allocation).
-    bool fake_allocation = (answer->getType() != DHCPV6_REPLY);
-
     // Get DDNS update direction flags
     bool do_fwd = false;
     bool do_rev = false;
@@ -1749,7 +1737,6 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     // Update per-packet context values.
     ctx.fwd_dns_update_ = do_fwd;
     ctx.rev_dns_update_ = do_rev;
-    ctx.fake_allocation_ = fake_allocation;
 
     // Set per-IA context values.
     ctx.createIAContext();
@@ -1777,7 +1764,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     if (lease) {
         // We have a lease! Let's wrap its content into IA_NA option
         // with IAADDR suboption.
-        LOG_INFO(lease6_logger, fake_allocation ? DHCP6_LEASE_ADVERT : DHCP6_LEASE_ALLOC)
+        LOG_INFO(lease6_logger, ctx.fake_allocation_ ? DHCP6_LEASE_ADVERT : DHCP6_LEASE_ALLOC)
             .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(ia->getIAID());
@@ -1803,7 +1790,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
         // cause of that failure. The only thing left is to insert
         // status code to pass the sad news to the client.
 
-        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+        LOG_DEBUG(lease6_logger, DBG_DHCP6_DETAIL, ctx.fake_allocation_ ?
                   DHCP6_LEASE_ADVERT_FAIL : DHCP6_LEASE_ALLOC_FAIL)
             .arg(query->getLabel())
             .arg(ia->getIAID());
@@ -1856,19 +1843,6 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
                                            "Sorry, no subnet available."));
         return (ia_rsp);
     }
-
-    // "Fake" allocation is the case when the server is processing the Solicit
-    // message without the Rapid Commit option and advertises a lease to
-    // the client, but doesn't commit this lease to the lease database. If
-    // the Solicit contains the Rapid Commit option and the server is
-    // configured to honor the Rapid Commit option, or the client has sent
-    // the Request message, the lease will be committed to the lease
-    // database. The type of the server's response may be used to determine
-    // if this is the fake allocation case or not. When the server sends
-    // Reply message it means that it is committing leases. Other message
-    // type (Advertise) means that server is not committing leases (fake
-    // allocation).
-    ctx.fake_allocation_ = (answer->getType() != DHCPV6_REPLY);
 
     // Set per-IA context values.
     ctx.createIAContext();
@@ -2726,6 +2700,19 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
         }
     }
 
+    // "Fake" allocation is the case when the server is processing the Solicit
+    // message without the Rapid Commit option and advertises a lease to
+    // the client, but doesn't commit this lease to the lease database. If
+    // the Solicit contains the Rapid Commit option and the server is
+    // configured to honor the Rapid Commit option, or the client has sent
+    // the Request message, the lease will be committed to the lease
+    // database. The type of the server's response may be used to determine
+    // if this is the fake allocation case or not. When the server sends
+    // Reply message it means that it is committing leases. Other message
+    // type (Advertise) means that server is not committing leases (fake
+    // allocation).
+    ctx.fake_allocation_ = (response->getType() != DHCPV6_REPLY);
+
     processClientFqdn(solicit, response, ctx);
     assignLeases(solicit, response, ctx);
 
@@ -2773,8 +2760,6 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
-    ctx.committed_ = true;
-
     return (reply);
 }
 
@@ -2801,8 +2786,6 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
 
-    ctx.committed_ = true;
-
     return (reply);
 }
 
@@ -2828,8 +2811,6 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     updateReservedFqdn(ctx, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply, ctx);
-
-    ctx.committed_ = true;
 
     return (reply);
 }
@@ -2947,8 +2928,6 @@ Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
     /// @todo If client sent a release and we should remove outstanding
     /// DNS records.
 
-    ctx.committed_ = true;
-
     return (reply);
 }
 
@@ -2973,7 +2952,6 @@ Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
     appendDefaultOptions(decline, reply, co_list);
 
     if (declineLeases(decline, reply, ctx)) {
-        ctx.committed_ = true;
         return (reply);
     } else {
 

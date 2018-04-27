@@ -365,10 +365,6 @@ public:
         ///        (if true).
         bool rev_dns_update_;
 
-        /// @brief A boolean value which indicates that server must
-        ///        invoke the leases committed callout (if true).
-        bool committed_;
-
         /// @brief Hostname.
         ///
         /// The server retrieves the hostname from the Client FQDN option,
