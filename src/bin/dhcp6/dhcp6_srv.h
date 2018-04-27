@@ -193,14 +193,14 @@ protected:
     /// not allowed according to RFC3315, section 15; true otherwise.
     bool testUnicast(const Pkt6Ptr& pkt) const;
 
-    /// @brief verifies if specified packet meets RFC requirements
+    /// @brief Verifies if specified packet meets RFC requirements
     ///
     /// Checks if mandatory option is really there, that forbidden option
     /// is not there, and that client-id or server-id appears only once.
     ///
     /// @param pkt packet to be checked
-    /// @return false if the message type is not recognized, true otherwise.
-    /// @throw RFCViolation if any issues are detected
+    /// @return false if the message should be dropped as a result of the
+    /// sanity check.
     bool sanityCheck(const Pkt6Ptr& pkt);
 
     /// @brief verifies if specified packet meets RFC requirements

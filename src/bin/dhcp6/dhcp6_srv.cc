@@ -647,28 +647,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         callout_handle->getArgument("query6", query);
     }
 
-    try {
-        if (!sanityCheck(query)) {
-            // We received a packet type that we do not recognize.
-            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC,
-                      DHCP6_UNKNOWN_MSG_RECEIVED)
-                .arg(static_cast<int>(query->getType()))
-                .arg(query->getIface());
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
-            return;
-        }
-                
-    } catch (const RFCViolation& e) {
-        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
-            .arg(query->getName())
-            .arg(query->getRemoteAddr().toText())
-            .arg(e.what());
-
-        // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-
+    // Reject the message if it doesn't pass the sanity check.
+    if (!sanityCheck(query)) {
         return;
     }
 
@@ -1249,28 +1229,44 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
 
 bool
 Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
-    switch (pkt->getType()) {
-    case DHCPV6_SOLICIT:
-    case DHCPV6_REBIND:
+    try {
+        switch (pkt->getType()) {
+        case DHCPV6_SOLICIT:
+        case DHCPV6_REBIND:
     case DHCPV6_CONFIRM:
-        sanityCheck(pkt, MANDATORY, FORBIDDEN);
-        return (true);
+            sanityCheck(pkt, MANDATORY, FORBIDDEN);
+            return (true);
 
-    case DHCPV6_REQUEST:
-    case DHCPV6_RENEW:
-    case DHCPV6_RELEASE:
-    case DHCPV6_DECLINE:
-        sanityCheck(pkt, MANDATORY, MANDATORY);
-        return (true);
+        case DHCPV6_REQUEST:
+        case DHCPV6_RENEW:
+        case DHCPV6_RELEASE:
+        case DHCPV6_DECLINE:
+            sanityCheck(pkt, MANDATORY, MANDATORY);
+            return (true);
 
-    case DHCPV6_INFORMATION_REQUEST:
-    case DHCPV6_DHCPV4_QUERY:
-        sanityCheck(pkt, OPTIONAL, OPTIONAL);
-        return (true);
+        case DHCPV6_INFORMATION_REQUEST:
+        case DHCPV6_DHCPV4_QUERY:
+            sanityCheck(pkt, OPTIONAL, OPTIONAL);
+            return (true);
 
-    default:
-        return (false);
+        default:
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC,
+                      DHCP6_UNKNOWN_MSG_RECEIVED)
+                .arg(static_cast<int>(pkt->getType()))
+                .arg(pkt->getIface());
+        }
+
+    } catch (const RFCViolation& e) {
+        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+            .arg(pkt->getName())
+            .arg(pkt->getRemoteAddr().toText())
+            .arg(e.what());
+
     }
+
+    // Increase the statistic of dropped packets.
+    StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+    return (false);
 }
 
 void
