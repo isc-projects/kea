@@ -28,7 +28,7 @@ Network::RelayInfo::addAddress(const asiolink::IOAddress& addr) {
 
 bool
 Network::RelayInfo::hasAddresses() const {
-    return (addresses_.size() > 0);
+    return (!addresses_.empty());
 }
 
 bool

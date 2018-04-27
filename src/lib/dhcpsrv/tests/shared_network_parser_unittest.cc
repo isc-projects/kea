@@ -244,6 +244,8 @@ TEST_F(SharedNetwork4ParserTest, missingName) {
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
 }
 
+// This test verifies that it's possible to specify client-class
+// and match-client-id on shared-network level.
 TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);

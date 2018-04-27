@@ -4156,7 +4156,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfoList) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
         "    \"relay\": { "
-        "        \"ip-addresses\": [ \"2001:db8:1::abcd\", \"2001:db8:1::abce\" ]"
+        "        \"ip-addresses\": [ \"2001:db9::abcd\", \"2001:db9::abce\" ]"
         "    },"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         "\"preferred-lifetime\": 3000, "
@@ -4173,12 +4173,12 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfoList) {
     checkResult(status, 0);
 
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::1"), classify_);
+        selectSubnet(IOAddress("2001:db9::abcd"), classify_, true);
     ASSERT_TRUE(subnet);
 
     EXPECT_TRUE(subnet->hasRelays());
-    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db8:1::abcd")));
-    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db8:1::abce")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db9::abcd")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db9::abce")));
 }
 
 // Goal of this test is to verify that multiple subnets can be configured
