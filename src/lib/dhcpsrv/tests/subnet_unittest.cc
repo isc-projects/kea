@@ -76,7 +76,7 @@ TEST(Subnet4Test, inRange) {
     EXPECT_EQ(2000, subnet.getT2());
     EXPECT_EQ(3000, subnet.getValid());
 
-    EXPECT_EQ("0.0.0.0", subnet.getRelayInfo().addr_.toText());
+    EXPECT_FALSE(subnet.hasRelays());
 
     EXPECT_FALSE(subnet.inRange(IOAddress("192.0.0.0")));
     EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.0")));
@@ -87,15 +87,34 @@ TEST(Subnet4Test, inRange) {
     EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
 }
 
-// Checks whether the relay field has sane default and if it can
-// be changed, stored and retrieved
+// Checks whether the relay list is empty by default
+// and basic operations function
 TEST(Subnet4Test, relay) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
 
-    EXPECT_EQ("0.0.0.0", subnet.getRelayInfo().addr_.toText());
+    // Should be empty.
+    EXPECT_FALSE(subnet.hasRelays());
+    EXPECT_EQ(0, subnet.getRelayAddresses().size());
 
-    subnet.setRelayInfo(IOAddress("192.0.123.45"));
-    EXPECT_EQ("192.0.123.45", subnet.getRelayInfo().addr_.toText());
+    // Matching should fail.
+    EXPECT_FALSE(subnet.hasRelayAddress(IOAddress("192.0.123.45")));
+
+    // Should be able to add them.
+    subnet.addRelayAddress(IOAddress("192.0.123.45"));
+    subnet.addRelayAddress(IOAddress("192.0.123.46"));
+
+    // Should not be empty.
+    EXPECT_TRUE(subnet.hasRelays());
+
+    // Should be two in the list.
+    EXPECT_EQ(2, subnet.getRelayAddresses().size());
+
+    // Should be able to match them if they are there.
+    EXPECT_TRUE(subnet.hasRelayAddress(IOAddress("192.0.123.45")));
+    EXPECT_TRUE(subnet.hasRelayAddress(IOAddress("192.0.123.46")));
+
+    // Should not match those that are not.
+    EXPECT_FALSE(subnet.hasRelayAddress(IOAddress("192.0.123.47")));
 }
 
 // Checks whether siaddr field can be set and retrieved correctly.
@@ -681,16 +700,34 @@ TEST(Subnet6Test, inRange) {
     EXPECT_FALSE(subnet.inRange(IOAddress("::")));
 }
 
-// Checks whether the relay field has sane default and if it can
-// be changed, stored and retrieved
+// Checks whether the relay list is empty by default
+// and basic operations function
 TEST(Subnet6Test, relay) {
     Subnet6 subnet(IOAddress("2001:db8:1::"), 64, 1000, 2000, 3000, 4000);
 
-    EXPECT_EQ("::", subnet.getRelayInfo().addr_.toText());
+    // Should be empty.
+    EXPECT_FALSE(subnet.hasRelays());
+    EXPECT_EQ(0, subnet.getRelayAddresses().size());
 
-    subnet.setRelayInfo(IOAddress("2001:ffff::1"));
+    // Matching should fail.
+    EXPECT_FALSE(subnet.hasRelayAddress(IOAddress("2001:ffff::45")));
 
-    EXPECT_EQ("2001:ffff::1", subnet.getRelayInfo().addr_.toText());
+    // Should be able to add them.
+    subnet.addRelayAddress(IOAddress("2001:ffff::45"));
+    subnet.addRelayAddress(IOAddress("2001:ffff::46"));
+
+    // Should not be empty.
+    EXPECT_TRUE(subnet.hasRelays());
+
+    // Should be two in the list.
+    EXPECT_EQ(2, subnet.getRelayAddresses().size());
+
+    // Should be able to match them if they are there.
+    EXPECT_TRUE(subnet.hasRelayAddress(IOAddress("2001:ffff::45")));
+    EXPECT_TRUE(subnet.hasRelayAddress(IOAddress("2001:ffff::46")));
+
+    // Should not match those that are not.
+    EXPECT_FALSE(subnet.hasRelayAddress(IOAddress("2001:ffff::47")));
 }
 
 // Test checks whether the number of addresses available in the pools are

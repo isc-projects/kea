@@ -265,6 +265,26 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
     EXPECT_EQ(subnet3->getID(), preferred->getID());
 }
 
+// This test verifies operations on the network's relay list
+TEST(SharedNetwork4Test, relayInfoList) {
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+
+    EXPECT_FALSE(network->hasRelays());
+    EXPECT_FALSE(network->hasRelayAddress(IOAddress("192.168.2.1")));
+
+    // Add relay addresses to the network.
+    network->addRelayAddress(IOAddress("192.168.2.1"));
+    network->addRelayAddress(IOAddress("192.168.2.2"));
+    network->addRelayAddress(IOAddress("192.168.2.3"));
+
+    // Verify we believe we have relays and we can match them accordingly.
+    EXPECT_TRUE(network->hasRelays());
+    EXPECT_TRUE(network->hasRelayAddress(IOAddress("192.168.2.1")));
+    EXPECT_TRUE(network->hasRelayAddress(IOAddress("192.168.2.2")));
+    EXPECT_TRUE(network->hasRelayAddress(IOAddress("192.168.2.3")));
+    EXPECT_FALSE(network->hasRelayAddress(IOAddress("192.168.2.4")));
+}
+
 // This test verifies that unparsing shared network returns valid structure.
 TEST(SharedNetwork4Test, unparse) {
     SharedNetwork4Ptr network(new SharedNetwork4("frog"));
@@ -281,10 +301,14 @@ TEST(SharedNetwork4Test, unparse) {
     data::ElementPtr ctx = data::Element::fromJSON(uc);
     network->setContext(ctx);
     network->requireClientClass("foo");
+    network->addRelayAddress(IOAddress("192.168.2.1"));
 
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
                                    SubnetID(1)));
+    subnet1->addRelayAddress(IOAddress("10.0.0.1"));
+    subnet1->addRelayAddress(IOAddress("10.0.0.2"));
+
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"), 24, 10, 20, 30,
                                    SubnetID(2)));
     network->add(subnet1);
@@ -298,7 +322,7 @@ TEST(SharedNetwork4Test, unparse) {
         "    \"option-data\": [ ],\n"
         "    \"rebind-timer\": 150,\n"
         "    \"relay\": {\n"
-        "        \"ip-address\": \"0.0.0.0\"\n"
+        "        \"ip-addresses\": [ \"192.168.2.1\" ]\n"
         "    },\n"
         "    \"renew-timer\": 100,\n"
         "    \"require-client-classes\": [ \"foo\" ],\n"
@@ -317,7 +341,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"pools\": [ ],\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
-        "          \"ip-address\": \"0.0.0.0\"\n"
+        "           \"ip-addresses\": [ \"10.0.0.1\", \"10.0.0.2\" ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"reservation-mode\": \"all\",\n"
@@ -337,7 +361,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"pools\": [ ],\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
-        "          \"ip-address\": \"0.0.0.0\"\n"
+        "           \"ip-addresses\": [ ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"reservation-mode\": \"all\",\n"
@@ -658,6 +682,26 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
     EXPECT_EQ(subnet3->getID(), preferred->getID());
 }
 
+// This test verifies operations on the network's relay list
+TEST(SharedNetwork6Test, relayInfoList) {
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+
+    EXPECT_FALSE(network->hasRelays());
+    EXPECT_FALSE(network->hasRelayAddress(IOAddress("2001:db8:2::1")));
+
+    // Add realy addresses to the network.
+    network->addRelayAddress(IOAddress("2001:db8:2::1"));
+    network->addRelayAddress(IOAddress("2001:db8:2::2"));
+    network->addRelayAddress(IOAddress("2001:db8:2::3"));
+
+    // Verify we believe we have relays and we can match them accordingly.
+    EXPECT_TRUE(network->hasRelays());
+    EXPECT_TRUE(network->hasRelayAddress(IOAddress("2001:db8:2::1")));
+    EXPECT_TRUE(network->hasRelayAddress(IOAddress("2001:db8:2::2")));
+    EXPECT_TRUE(network->hasRelayAddress(IOAddress("2001:db8:2::3")));
+    EXPECT_FALSE(network->hasRelayAddress(IOAddress("2001:db8:2::4")));
+}
+
 // This test verifies that unparsing shared network returns valid structure.
 TEST(SharedNetwork6Test, unparse) {
     SharedNetwork6Ptr network(new SharedNetwork6("frog"));
@@ -673,11 +717,16 @@ TEST(SharedNetwork6Test, unparse) {
     network->setContext(ctx);
     network->requireClientClass("foo");
 
+    network->addRelayAddress(IOAddress("2001:db8:1::7"));
+    network->addRelayAddress(IOAddress("2001:db8:1::8"));
+
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
                                    40, SubnetID(1)));
     Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 16, 10, 20, 30, 40,
                                    SubnetID(2)));
+    subnet2->addRelayAddress(IOAddress("2001:db8:1::8"));
+
     network->add(subnet1);
     network->add(subnet2);
 
@@ -689,7 +738,7 @@ TEST(SharedNetwork6Test, unparse) {
         "    \"rapid-commit\": true,\n"
         "    \"rebind-timer\": 150,\n"
         "    \"relay\": {\n"
-        "        \"ip-address\": \"::\"\n"
+        "        \"ip-addresses\": [ \"2001:db8:1::7\", \"2001:db8:1::8\" ]\n"
         "    },\n"
         "    \"renew-timer\": 100,\n"
         "    \"require-client-classes\": [ \"foo\" ],\n"
@@ -704,7 +753,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"rapid-commit\": false,\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
-        "          \"ip-address\": \"::\"\n"
+        "           \"ip-addresses\": [ ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"reservation-mode\": \"all\",\n"
@@ -720,7 +769,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"rapid-commit\": false,\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
-        "          \"ip-address\": \"::\"\n"
+        "           \"ip-addresses\": [ \"2001:db8:1::8\" ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
         "        \"reservation-mode\": \"all\",\n"
