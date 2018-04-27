@@ -298,9 +298,10 @@ to the end of this list.
    processing. This includes writing new lease into the database,
    releasing an old lease for this client or declining a lease. This
    callout is executed only for the DHCP client messages which may
-   cause lease changes, i.e. REQUEST, RENEW, REBIND, RELEASE and
-   DECLINE. This callout is not executed for SOLICIT, CONFIRM and
-   INFORMATION REQUEST.  If the callouts are executed as a result of
+   cause lease changes, i.e. SOLICIT with Rapid Commit option included
+   and when Rapid Commit is enabled, REQUEST, RENEW, REBIND, RELEASE and
+   DECLINE. This callout is not executed for SOLICIT without Rapid Commit,
+   CONFIRM and INFORMATION REQUEST.  If the callouts are executed as a result of
    REQUEST or RENEW message, it is possible that both leases
    collections hold leases to be handled. This is the case when the
    new lease allocation replaces an existing lease for the client. The
