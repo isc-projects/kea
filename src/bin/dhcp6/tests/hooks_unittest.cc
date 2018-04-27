@@ -118,7 +118,8 @@ class HooksDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
 
     /// @brief creates Dhcpv6Srv and prepares buffers for callouts
-    HooksDhcpv6SrvTest() {
+    HooksDhcpv6SrvTest()
+        : Dhcpv6SrvTest() {
 
         // Allocate new DHCPv6 Server
         srv_.reset(new NakedDhcpv6Srv(0));
@@ -955,12 +956,13 @@ bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
 
 /// @brief Fixture class used to do basic library load/unload tests
-class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
+class LoadUnloadDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedDhcpv6Srv> server_;
 
-    LoadUnloadDhcpv6SrvTest() {
+    LoadUnloadDhcpv6SrvTest()
+        : Dhcpv6SrvTest() {
         reset();
     }
 
@@ -3738,7 +3740,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
 
     // Make sure there were no errors.
     int status_code;
-    isc::config::parseAnswer(status_code, answer);
+    std::cout << isc::config::parseAnswer(status_code, answer)->str() << std::endl;
     ASSERT_EQ(0, status_code);
 
     // The hook library should have been loaded.
