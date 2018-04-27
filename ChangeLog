@@ -1,3 +1,13 @@
+1391.	[func]		tmark
+	For both kea-dhcp4 and kea-dhcp6, the "ip-address" parameter
+	in the "relay" element for both subnets and shared networks, 
+	has been replaced with a list form, "ip-addresses".  Configuration
+	parsing will continue to honor the singular form, but it should
+	be considered deprecated.  In addition, an omission in 1.3 that
+	caused shared network parsing to ignore the "relay' element has
+	been corrected. 
+	(Trac #5535, git f4601abdb657122a8ba5d7784eded773ec01d171)
+
 1390.	[doc]		tomek
 	User's Guide documentation for RADIUS and Host Cache written.
 	(Trac #5538, git c73337a8ec691874b8ac0b2efcd8708f1a79acbb)
