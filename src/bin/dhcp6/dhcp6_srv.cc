@@ -117,15 +117,11 @@ struct Dhcp6Hooks {
     }
 };
 
-} // end of anonymous namespace
-
 // Declare a Hooks object. As this is outside any function or method, it
 // will be instantiated (and the constructor run) when the module is loaded.
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
 Dhcp6Hooks Hooks;
-
-namespace {
 
 /// @brief Creates instance of the Status Code option.
 ///
