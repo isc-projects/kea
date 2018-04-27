@@ -499,18 +499,18 @@ public:
         srv_->initContext(req, ctx, drop);
         ASSERT_FALSE(drop);
         if (msg_type == DHCPV6_SOLICIT) {
-          ASSERT_NO_THROW(reply = srv_->processSolicit(req, ctx));
+          ASSERT_NO_THROW(reply = srv_->processSolicit(ctx));
 
         } else if (msg_type == DHCPV6_REQUEST) {
-          ASSERT_NO_THROW(reply = srv_->processRequest(req, ctx));
+          ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
 
         } else if (msg_type == DHCPV6_RENEW) {
-          ASSERT_NO_THROW(reply = srv_->processRenew(req, ctx));
+          ASSERT_NO_THROW(reply = srv_->processRenew(ctx));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave
             // function here.
-          ASSERT_NO_THROW(reply = srv_->processRelease(req, ctx));
+          ASSERT_NO_THROW(reply = srv_->processRelease(ctx));
             return;
         } else {
             // We are not interested in testing other message types.

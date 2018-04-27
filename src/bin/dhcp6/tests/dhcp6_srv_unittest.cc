@@ -168,7 +168,7 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     bool drop = false;
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply = srv.processSolicit(sol, ctx);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check that we get the right NAK
     checkNakResponse(reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail,
@@ -393,7 +393,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     bool drop = false;
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_.processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -420,7 +420,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     AllocEngine::ClientContext6 ctx2;
     srv_.initContext(sol, ctx2, drop);
     ASSERT_FALSE(drop);
-    adv = srv_.processSolicit(sol, ctx2);
+    adv = srv_.processSolicit(ctx2);
     ASSERT_TRUE(adv);
 
     OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
@@ -485,7 +485,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     bool drop = false;
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply = srv.processSolicit(sol, ctx);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -533,7 +533,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     bool drop = false;
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply = srv.processSolicit(sol, ctx);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -590,7 +590,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     bool drop = false;
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply = srv.processSolicit(sol, ctx);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -647,7 +647,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     bool drop = false;
     srv.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply = srv.processSolicit(sol, ctx);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -709,15 +709,15 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     bool drop = false;
     srv.initContext(sol1, ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply1 = srv.processSolicit(sol1, ctx1);
+    Pkt6Ptr reply1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     srv.initContext(sol2, ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply2 = srv.processSolicit(sol2, ctx2);
+    Pkt6Ptr reply2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     srv.initContext(sol3, ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr reply3 = srv.processSolicit(sol3, ctx3);
+    Pkt6Ptr reply3 = srv.processSolicit(ctx3);
 
     // check if we get response at all
     checkResponse(reply1, DHCPV6_ADVERTISE, 1234);
@@ -1726,7 +1726,7 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     bool drop = false;
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv_.processSolicit(sol, ctx);
+    Pkt6Ptr response = srv_.processSolicit(ctx);
 
     // The server should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -1745,7 +1745,7 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx2;
     srv_.initContext(sol, ctx2, drop);
     ASSERT_FALSE(drop);
-    response = srv_.processSolicit(sol, ctx2);
+    response = srv_.processSolicit(ctx2);
 
     // Processing should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -1884,7 +1884,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     bool drop = false;
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_.processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -1906,7 +1906,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     AllocEngine::ClientContext6 ctx2;
     srv_.initContext(sol, ctx2, drop);
     ASSERT_FALSE(drop);
-    adv = srv_.processSolicit(sol, ctx2);
+    adv = srv_.processSolicit(ctx2);
     ASSERT_TRUE(adv);
 
     // Check if there is vendor option response
@@ -1980,7 +1980,7 @@ TEST_F(Dhcpv6SrvTest, vendorPersistentOptions) {
     bool drop = false;
     srv_.initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_.processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);

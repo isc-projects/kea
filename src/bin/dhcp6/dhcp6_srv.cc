@@ -674,35 +674,35 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     try {
         switch (query->getType()) {
         case DHCPV6_SOLICIT:
-            rsp = processSolicit(query, ctx);
+            rsp = processSolicit(ctx);
             break;
 
         case DHCPV6_REQUEST:
-            rsp = processRequest(query, ctx);
+            rsp = processRequest(ctx);
             break;
 
         case DHCPV6_RENEW:
-            rsp = processRenew(query, ctx);
+            rsp = processRenew(ctx);
             break;
 
         case DHCPV6_REBIND:
-            rsp = processRebind(query, ctx);
+            rsp = processRebind(ctx);
             break;
 
         case DHCPV6_CONFIRM:
-            rsp = processConfirm(query, ctx);
+            rsp = processConfirm(ctx);
             break;
 
         case DHCPV6_RELEASE:
-            rsp = processRelease(query, ctx);
+            rsp = processRelease(ctx);
             break;
 
         case DHCPV6_DECLINE:
-            rsp = processDecline(query, ctx);
+            rsp = processDecline(ctx);
             break;
 
         case DHCPV6_INFORMATION_REQUEST:
-            rsp = processInfRequest(query, ctx);
+            rsp = processInfRequest(ctx);
             break;
 
         default:
@@ -2706,9 +2706,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
 
 Pkt6Ptr
-Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit,
-                          AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr solicit = ctx.query_;
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, solicit->getTransid()));
 
     // Handle Rapid Commit option, if present.
@@ -2751,9 +2751,9 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRequest(const Pkt6Ptr& request,
-                          AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr request = ctx.query_;
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, request->getTransid()));
 
     processClientFqdn(request, reply, ctx);
@@ -2779,9 +2779,9 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRenew(const Pkt6Ptr& renew,
-                        AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr renew = ctx.query_;
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, renew->getTransid()));
 
     processClientFqdn(renew, reply, ctx);
@@ -2807,9 +2807,9 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind,
-                         AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr rebind = ctx.query_;
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
 
     processClientFqdn(rebind, reply, ctx);
@@ -2835,9 +2835,9 @@ Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm,
-                          AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr confirm = ctx.query_;
     setReservedClientClasses(confirm, ctx);
     requiredClassify(confirm, ctx);
 
@@ -2925,9 +2925,9 @@ Dhcpv6Srv::processConfirm(const Pkt6Ptr& confirm,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processRelease(const Pkt6Ptr& release,
-                          AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr release = ctx.query_;
     setReservedClientClasses(release, ctx);
     requiredClassify(release, ctx);
 
@@ -2953,9 +2953,9 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processDecline(const Pkt6Ptr& decline,
-                          AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr decline = ctx.query_;
     setReservedClientClasses(decline, ctx);
     requiredClassify(decline, ctx);
 
@@ -3239,9 +3239,9 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processInfRequest(const Pkt6Ptr& inf_request,
-                             AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
+    Pkt6Ptr inf_request = ctx.query_;
     setReservedClientClasses(inf_request, ctx);
     requiredClassify(inf_request, ctx);
 

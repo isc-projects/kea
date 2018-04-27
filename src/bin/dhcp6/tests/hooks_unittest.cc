@@ -1597,7 +1597,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     bool drop = false;
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_->processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -1678,7 +1678,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
     bool drop = false;
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_->processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -3559,7 +3559,7 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
     bool drop = false;
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_->processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -3636,7 +3636,7 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier_hwaddr) {
     bool drop = false;
     srv_->initContext(sol, ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_->processSolicit(sol, ctx);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);

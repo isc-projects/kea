@@ -194,7 +194,7 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        return (processRequest(request, ctx));
+        return (processRequest(ctx));
     }
 
     /// @brief Processes incoming Renew message.
@@ -208,7 +208,7 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        return (processRenew(renew, ctx));
+        return (processRenew(ctx));
     }
 
     /// @brief Processes incoming Rebind message.
@@ -222,7 +222,7 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        return (processRebind(rebind, ctx));
+        return (processRebind(ctx));
     }
 
     /// @brief Processes incoming Release message.
@@ -236,7 +236,7 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        return (processRelease(release, ctx));
+        return (processRelease(ctx));
     }
 
     /// @brief Processes incoming Decline message.
@@ -250,7 +250,7 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        return (processDecline(decline, ctx));
+        return (processDecline(ctx));
     }
 
     using Dhcpv6Srv::processSolicit;
