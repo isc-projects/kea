@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1192,7 +1192,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
     ConstElementPtr cfg = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
-    EXPECT_FALSE(server_->network_state_.isServiceEnabled());
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable DHCP service for a short
@@ -1219,10 +1219,10 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableTemporarily) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
     // The service should be disabled.
-    EXPECT_FALSE(server_->network_state_.isServiceEnabled());
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
     // And the timer should be scheduled which counts the time to automatic
     // enabling of the service.
-    EXPECT_TRUE(server_->network_state_.isDelayedEnableAll());
+    EXPECT_TRUE(server_->network_state_->isDelayedEnableAll());
 }
 
 // This test verifies if it is possible to enable DHCP service via command.
@@ -1241,7 +1241,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
     ConstElementPtr cfg = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
-    EXPECT_TRUE(server_->network_state_.isServiceEnabled());
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
 /// Verify that concurrent connections over the control channel can be
