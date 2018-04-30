@@ -435,7 +435,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                     // The user specified that the DHCP service should resume not
                     // later than in max-period seconds. If the 'dhcp-enable' command
                     // is not sent, the DHCP service will resume automatically.
-                    network_state_.delayedEnableAll(static_cast<unsigned>(max_period));
+                    network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
                 }
             }
         }
@@ -443,7 +443,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_.disableService();
+        network_state_->disableService();
 
         message << "DHCPv6 service disabled";
         if (max_period > 0) {
@@ -459,7 +459,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
-    network_state_.enableService();
+    network_state_->enableService();
     return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
 }
 
@@ -689,7 +689,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         callout_handle->setArgument("io_context", srv->getIOService());
-        // callout_handle->setArgument("network_state", srv->getNetworkState());
+        callout_handle->setArgument("network_state", srv->getNetworkState());
         callout_handle->setArgument("json_config", config);
         callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
 
@@ -886,7 +886,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer"); }
 
         // Set network state to service enabled
-        network_state_.enableService();
+        network_state_->enableService();
 
         // Toss the reconnct control, we're done with it
         db_reconnect_ctl.reset();
@@ -918,7 +918,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until we recover
-    network_state_.disableService();
+    network_state_->disableService();
 
     if (!db_reconnect_ctl) {
         // This shouldn't never happen
