@@ -126,6 +126,12 @@ HostDataSourceFactory::deregisterFactory(const string& db_type, bool no_log) {
     }
 }
 
+bool
+HostDataSourceFactory::registeredFactory(const std::string& db_type) {
+    auto index = map_.find(db_type);
+    return (index != map_.end());
+}
+
 void
 HostDataSourceFactory::printRegistered() {
     std::stringstream txt;
