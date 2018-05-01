@@ -96,6 +96,20 @@ TEST_F(HostDataSourceFactoryTest, registerFactory) {
     EXPECT_FALSE(registerFactory());
 }
 
+// Verify a factory registration can be checked.
+TEST_F(HostDataSourceFactoryTest, registeredFactory) {
+    // Not yet registered
+    EXPECT_FALSE(HostDataSourceFactory::registeredFactory("mem"));
+    EXPECT_FALSE(HostDataSourceFactory::registeredFactory("mem1"));
+
+    // Register mem
+    EXPECT_TRUE(registerFactory());
+
+    // Now mem is registered but not mem1
+    EXPECT_TRUE(HostDataSourceFactory::registeredFactory("mem"));
+    EXPECT_FALSE(HostDataSourceFactory::registeredFactory("mem1"));
+}
+
 // Verify a factory can be registered and deregistered
 TEST_F(HostDataSourceFactoryTest, deregisterFactory) {
     // Does not exist at the beginning
@@ -104,6 +118,7 @@ TEST_F(HostDataSourceFactoryTest, deregisterFactory) {
     // Register and deregister
     EXPECT_TRUE(registerFactory());
     EXPECT_TRUE(HostDataSourceFactory::deregisterFactory("mem"));
+    EXPECT_FALSE(HostDataSourceFactory::registeredFactory("mem"));
 
     // No longer exists
     EXPECT_FALSE(HostDataSourceFactory::deregisterFactory("mem"));
