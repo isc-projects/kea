@@ -11,7 +11,7 @@
 // Expensive brands have a host entry, i.e. a reserved address.
 //
 // Names
-// 
+//
 // brouilly (red)
 // chablis (white)
 // chambertin (red, expensive)
@@ -102,7 +102,7 @@
       "id": 14,
       "subnet": "192.0.2.0/24",
       "interface": "en0",
-      "pools": [ 
+      "pools": [
          {
             // Red pool (10-19 are for reservations)
             "pool": "192.0.2.20-192.0.2.99",
@@ -160,42 +160,59 @@
 
              // Configure an access (aka authentication/authorization) server.
              "access": {
-                 "servers" : [ {
-                    "name": "127.0.0.1",
-                    "port": 1812,
-                    "secret": "testing123"
-                 } ],
-                 "attributes": [ {
-                    "name": "Password",
-                    "data": "French-wine"
-                 } ]
-             },
 
-             // Configure an accounting server.
+                 // This starts the list of access servers
+                 "servers": [
+                     {
+                         // These are parameters for the first (and only) access server
+                         "name": "127.0.0.1",
+                         "server": "127.0.0.1",
+                         "secret": "secret",
+                         "port": 1812
+                     }
+                     // Additional access servers could be specified here
+                 ],
+
+                 // This define a list of additional attributes Kea will send to each
+                 // access server in Access-Request.
+                 "attributes": [
+                 {
+                     // This attribute is identified by name (must be present in the
+                     // dictionary) and has static value (i.e. the same value will be
+                     // sent to every server for every packet)
+                     "name": "Password",
+                     "data": "mysecretpassword"
+                 },
+                 {
+                     // It's also possible to specify an attribute using its type,
+                     // rather than a name. 77 is Connect-Token. The value is specified
+                     // using hex. Again, this is a static value. It will be sent the
+                     // same for every packet and to every server.
+                     "type": 77,
+                     "raw": "65666a6a71"
+                 },
+                 {
+                     // This example shows how an expression can be used to send dynamic
+                     // value. The expression (see Section 13) may take any value from
+                     // the incoming packet or even its metadata (e.g. the interface
+                     // it was received over from)
+                     "name": "Configuration-Info",
+                     "expr": "pkt.iface"
+                 }
+                 ] // End of attributes
+              },
              "accounting": {
-                 "servers" : [ {
-                    "name": "127.0.0.1",
-                    "port": 1813,
-                    "secret": "testing123"
-                 } ]
+                 "servers": [ {
+                        "name": "127.0.0.1",
+                         "server": "127.0.0.1",
+                         "secret": "secret",
+                         "port": 1813
+                        }
+                ]
              }
          }
-     } ]
-},
-  "Logging": {
-      "loggers": [
-          {
-            "name": "kea-dhcp4",
-            "output_options": [
-                  {
-                      // Change to stderr for debug
-                      "output": "stdout"
-                  }
-              ],
-              // Change to DEBUG for debug
-              "severity": "INFO"
-          }
-      ]
-  }
+     }
+     ]
+}
 
 }
