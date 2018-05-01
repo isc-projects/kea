@@ -1764,6 +1764,10 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedSolicit) {
     EXPECT_TRUE(callback_name_.empty());
 }
 
+//// Add a positive (vs this negative one) test with Solicit and rapid commit
+
+//// Looks for the same with park
+
 // This test verifies that the leases6_committed hook point is not triggered
 // for the CONFIRM.
 TEST_F(HooksDhcpv6SrvTest, leases6CommittedConfirm) {
