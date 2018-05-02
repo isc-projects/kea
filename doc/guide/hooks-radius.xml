@@ -342,7 +342,7 @@ Please make sure that your compilation has the following:
       "parameters": {
 
           // Specify where FreeRADIUS dictionary could be located
-          "dictionary: "/usr/local/etc/freeradius/dictionary",
+          "dictionary": "/usr/local/etc/freeradius/dictionary",
 
           // Specify which address to use to communicate with RADIUS servers
           "bindaddr": "*",
@@ -467,8 +467,7 @@ Please make sure that your compilation has the following:
 
         <listitem>
           <simpara>attributes which define additional attributes that
-          the Kea server will send to a RADIUS server. Currently this
-          feature is supported for access servers only. The parameter
+          the Kea server will send to a RADIUS server. The parameter
           must be identified either by a name or type. Its value can
           be specified using one of three possible ways: data (which
           defines a plain text value), raw (which defines the value in
@@ -497,7 +496,7 @@ Please make sure that your compilation has the following:
             <listitem><simpara><command>expr</command> is the last way to
             specify the attribute content. It specifies an evaluation expression
             which must return a not empty string when evaluated with the DHCP
-            query packet.  A priori this is restricted to the access
+            query packet.  Currently this is restricted to the access
             service. </simpara></listitem>
           </itemizedlist>
         </listitem>
@@ -506,7 +505,7 @@ Please make sure that your compilation has the following:
 <para>
   For example, to specify a single access server available on localhost that
   uses "secret" as a secret and tell Kea to send three additional attributes
-  (Password, Connect-Token and Configuration-Info), the following snipped could
+  (Password, Connect-Info and Configuration-Token), the following snipped could
   be used:
   <screen>
 "parameters": {
@@ -519,10 +518,9 @@ Please make sure that your compilation has the following:
         "servers": [
         {
             // These are parameters for the first (and only) access server
-            "name": "127.0.0.1",
             "server": "127.0.0.1",
-            "secret": "secret",
-            "port": 1812
+            "port": 1812,
+            "secret": "secret"
         }
         // Additional access servers could be specified here
         ],
@@ -539,7 +537,7 @@ Please make sure that your compilation has the following:
         },
         {
             // It's also possible to specify an attribute using its type,
-            // rather than a name. 77 is Connect-Token. The value is specified
+            // rather than a name. 77 is Connect-Info. The value is specified
             // using hex. Again, this is a static value. It will be sent the
             // same for every packet and to every server.
             "type": 77,
@@ -550,7 +548,7 @@ Please make sure that your compilation has the following:
             // value. The expression (see Section 13) may take any value from
             // the incoming packet or even its metadata (e.g. the interface
             // it was received over from)
-            "name": "Configuration-Info",
+            "name": "Configuration-Token",
             "expr": "pkt.iface"
         }
         ] // End of attributes
