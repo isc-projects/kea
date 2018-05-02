@@ -409,12 +409,19 @@ public:
             // and wipe the accumulators
             if ((*lease)->subnet_id_ != cur_id) {
                 if (cur_id > 0) {
-                    rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
-                                                  assigned));
-                    assigned = 0;
-                    rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED,
-                                                  declined));
-                    declined = 0;
+                    if (assigned > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned));
+                        assigned = 0;
+                    }
+
+                    if (declined > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id,
+                                                      Lease::STATE_DECLINED,
+                                                      declined));
+                        declined = 0;
+                    }
                 }
 
                 // Update current subnet id
@@ -430,8 +437,15 @@ public:
         }
 
         // Make the rows for last subnet
-        rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT, assigned));
-        rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED, declined));
+        if (assigned > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
+                                          assigned));
+        }
+
+        if (declined > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED,
+                                          declined));
+        }
 
         // Reset the next row position back to the beginning of the rows.
         next_pos_ = rows_.begin();
@@ -538,18 +552,26 @@ public:
             // and wipe the accumulators
             if ((*lease)->subnet_id_ != cur_id) {
                 if (cur_id > 0) {
-                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
-                                                  Lease::STATE_DEFAULT,
-                                                  assigned));
-                    assigned = 0;
-                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
-                                                  Lease::STATE_DECLINED,
-                                                  declined));
-                    declined = 0;
-                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
-                                                  Lease::STATE_DEFAULT,
-                                                  assigned_pds));
-                    assigned_pds = 0;
+                    if (assigned > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned));
+                        assigned = 0;
+                    }
+
+                    if (declined > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_DECLINED,
+                                                      declined));
+                        declined = 0;
+                    }
+
+                    if (assigned_pds > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned_pds));
+                        assigned_pds = 0;
+                    }
                 }
 
                 // Update current subnet id
@@ -577,12 +599,20 @@ public:
         }
 
         // Make the rows for last subnet, unless there were no rows
-        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
-                                      Lease::STATE_DEFAULT, assigned));
-        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
-                                      Lease::STATE_DECLINED, declined));
-        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
-                                      Lease::STATE_DEFAULT, assigned_pds));
+        if (assigned > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DEFAULT, assigned));
+        }
+
+        if (declined > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DECLINED, declined));
+        }
+
+        if (assigned_pds > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                          Lease::STATE_DEFAULT, assigned_pds));
+        }
 
         // Set the next row position to the beginning of the rows.
         next_pos_ = rows_.begin();
