@@ -490,11 +490,12 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
+                        bool sanity_only) const {
 
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
-        return (selectSubnet4o6(query, drop));
+        return (selectSubnet4o6(query, drop, sanity_only));
     }
 
     Subnet4Ptr subnet;
@@ -546,7 +547,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+    if (!sanity_only &&
+        HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -611,7 +613,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
+Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
+                           bool sanity_only) const {
 
     Subnet4Ptr subnet;
 
@@ -661,7 +664,8 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet4o6(selector);
 
     // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+    if (!sanity_only &&
+        HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -2996,9 +3000,10 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         return (false);
     }
     bool drop = false;
-    bool result = (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt, drop));
+    bool result = (!pkt->getLocalAddr().isV4Bcast() ||
+                   selectSubnet(pkt, drop, true));
     if (drop) {
-        // The packet must be dropped.
+        // The packet must be dropped but as sanity_only is true it is dead code.
         return (false);
     }
     return (result);
