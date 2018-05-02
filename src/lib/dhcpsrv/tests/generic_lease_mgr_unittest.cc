@@ -2857,6 +2857,294 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     EXPECT_TRUE(callback_called_);
 }
 
+void
+GenericLeaseMgrTest::checkQueryAgainstRowSet(const LeaseStatsQueryPtr& query,
+                                             const RowSet& expected_rows) {
+    ASSERT_TRUE(query) << "query is null";
+
+    int rows_matched = 0;
+    LeaseStatsRow row;
+    while (query->getNextRow(row)) {
+        auto found_row = expected_rows.find(row);
+        if (found_row == expected_rows.end()) {
+            ADD_FAILURE() << "query row not in expected set"
+                << " id: " << row.subnet_id_
+                << " type: " << row.lease_type_
+                << " state: " << row.lease_state_
+                << " count: " << row.state_count_;
+        } else {
+           ++rows_matched;
+        }
+    }
+
+    ASSERT_EQ(rows_matched, expected_rows.size()) << "rows mismatched";
+}
+
+void
+GenericLeaseMgrTest::testLeaseStatsQuery4() {
+    // Create three subnets.
+    int num_subnets = 3;
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+    Pool4Ptr pool;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    pool.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 2));
+    pool.reset(new Pool4(IOAddress("192.0.2.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 3));
+    pool.reset(new Pool4(IOAddress("192.0.3.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Make sure invalid values throw.
+    LeaseStatsQueryPtr query;
+    ASSERT_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(0), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(0,1), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(1,0), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(10,1), BadValue);
+
+    // Start tests with an empty expected row set.
+    RowSet expected_rows;
+
+    // Before we add leases, test an empty return for get all subnets
+    {
+        SCOPED_TRACE("GET ALL WITH NO LEASES");
+        ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Now let's insert some leases into subnet 1.
+    // Two leases in  the default state, i.e. assigned.
+    // One lease in declined state.
+    // One lease in the expired state.
+    int subnet_id = 1;
+    makeLease4("192.0.1.1", subnet_id);
+    makeLease4("192.0.1.2", subnet_id, Lease::STATE_DECLINED);
+    makeLease4("192.0.1.3", subnet_id, Lease::STATE_EXPIRED_RECLAIMED);
+    makeLease4("192.0.1.4", subnet_id);
+
+    // Now let's add leases to subnet 2.
+    // One declined lease.
+    subnet_id = 2;
+    makeLease4("192.0.2.2", subnet_id, Lease::STATE_DECLINED);
+
+    // Now add leases to subnet 3
+    // Two leases in default state, i.e. assigned.
+    // One declined lease.
+    subnet_id = 3;
+    makeLease4("192.0.3.1", subnet_id);
+    makeLease4("192.0.3.2", subnet_id);
+    makeLease4("192.0.3.3", subnet_id, Lease::STATE_DECLINED);
+
+    // Test single subnet for non-matching subnet
+    {
+        SCOPED_TRACE("NO MATCHING SUBNET");
+        ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(777));
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test an empty range
+    {
+        SCOPED_TRACE("EMPTY SUBNET RANGE");
+        ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(777, 900));
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test a single subnet
+    {
+        SCOPED_TRACE("SINGLE SUBNET");
+        // Add expected rows for Subnet 2
+        expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 0));
+        expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DECLINED, 1));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(2));
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test a range of subnets
+    {
+        SCOPED_TRACE("SUBNET RANGE");
+        // Add expected rows for Subnet 3
+        expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DEFAULT, 2));
+        expected_rows.insert(LeaseStatsRow(3, Lease::STATE_DECLINED, 1));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery4(2,3));
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test all subnets
+    {
+        SCOPED_TRACE("ALL SUBNETS");
+        // Add expected rows for Subnet 1
+        expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DEFAULT, 2));
+        expected_rows.insert(LeaseStatsRow(1, Lease::STATE_DECLINED, 1));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery4());
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+}
+
+void
+GenericLeaseMgrTest::testLeaseStatsQuery6() {
+    // Create three subnets.
+    int num_subnets = 3;
+
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet;
+    Pool6Ptr pool;
+
+    int subnet_id = 1;
+    subnet.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, subnet_id));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                         IOAddress("3001:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"),96,112));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ++subnet_id;
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4,
+                             subnet_id));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 120));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ++subnet_id;
+    subnet.reset(new Subnet6(IOAddress("2002:db8:1::"), 64, 1, 2, 3, 4,
+                             subnet_id));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("2002:db8:1::"), 120));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Make sure invalid values throw.
+    LeaseStatsQueryPtr query;
+    ASSERT_THROW(query = lmptr_->startSubnetLeaseStatsQuery6(0), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery6(0,1), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery6(1,0), BadValue);
+    ASSERT_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery6(10,1), BadValue);
+
+    // Start tests with an empty expected row set.
+    RowSet expected_rows;
+
+    // Before we add leases, test an empty return for get all subnets
+    {
+        SCOPED_TRACE("GET ALL WITH NO LEASES");
+        ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery6());
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+
+    // Now let's insert some leases into subnet 1.
+    // Three assigned NAs.
+    // Two declined NAs.
+    // One expired NA.
+    // Two assigned PDs.
+    // Two expired PDs.
+    subnet_id = 1;
+    makeLease6(Lease::TYPE_NA, "3001:1::1", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::2", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::3", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "3001:1::4", 0, subnet_id,
+               Lease::STATE_DECLINED);
+    makeLease6(Lease::TYPE_NA, "3001:1::5", 0, subnet_id,
+               Lease::STATE_DECLINED);
+    makeLease6(Lease::TYPE_NA, "3001:1::6", 0, subnet_id,
+               Lease::STATE_EXPIRED_RECLAIMED);
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0100::", 112, subnet_id);
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0200::", 112, subnet_id);
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0300::", 112, subnet_id,
+               Lease::STATE_EXPIRED_RECLAIMED);
+    makeLease6(Lease::TYPE_PD, "3001:1:2:0400::", 112, subnet_id,
+               Lease::STATE_EXPIRED_RECLAIMED);
+
+    // Now let's add leases to subnet 2.
+    // Two assigned NAs
+    // One declined NAs
+    subnet_id = 2;
+    makeLease6(Lease::TYPE_NA, "2001:db81::1", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::2", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2001:db81::3", 0, subnet_id,
+               Lease::STATE_DECLINED);
+
+    // Now let's add leases to subnet 3.
+    // Two assigned NAs
+    // One declined NAs
+    subnet_id = 3;
+    makeLease6(Lease::TYPE_NA, "2002:db81::1", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2002:db81::2", 0, subnet_id);
+    makeLease6(Lease::TYPE_NA, "2002:db81::3", 0, subnet_id,
+               Lease::STATE_DECLINED);
+
+    // Test single subnet for non-matching subnet
+    {
+        SCOPED_TRACE("NO MATCHING SUBNET");
+        ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery6(777));
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test an empty range
+    {
+        SCOPED_TRACE("EMPTY SUBNET RANGE");
+        ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery6(777, 900));
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test a single subnet
+    {
+        SCOPED_TRACE("SINGLE SUBNET");
+        // Add expected row for Subnet 2
+        expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_NA, Lease::STATE_DEFAULT, 2));
+        expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_NA, Lease::STATE_DECLINED, 1));
+        expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_PD, Lease::STATE_DEFAULT, 0));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery6(2));
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test a range of subnets
+    {
+        SCOPED_TRACE("SUBNET RANGE");
+        // Add expected rows for Subnet 3
+        expected_rows.insert(LeaseStatsRow(3, Lease::TYPE_NA, Lease::STATE_DEFAULT, 2));
+        expected_rows.insert(LeaseStatsRow(3, Lease::TYPE_NA, Lease::STATE_DECLINED, 1));
+        expected_rows.insert(LeaseStatsRow(3, Lease::TYPE_PD, Lease::STATE_DEFAULT, 0));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery6(2,3));
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+
+    // Test all subnets
+    {
+        SCOPED_TRACE("ALL SUBNETS");
+        // Add expected rows for Subnet 1
+        expected_rows.insert(LeaseStatsRow(1, Lease::TYPE_NA, Lease::STATE_DEFAULT, 3));
+        expected_rows.insert(LeaseStatsRow(1, Lease::TYPE_NA, Lease::STATE_DECLINED, 2));
+        expected_rows.insert(LeaseStatsRow(1, Lease::TYPE_PD, Lease::STATE_DEFAULT, 2));
+        // Start the query
+        ASSERT_NO_THROW(query = lmptr_->startLeaseStatsQuery6());
+
+        // Verify contents
+        checkQueryAgainstRowSet(query, expected_rows);
+    }
+}
+
 }; // namespace test
 }; // namespace dhcp
 }; // namespace isc
