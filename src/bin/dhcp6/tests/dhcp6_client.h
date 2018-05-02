@@ -767,6 +767,15 @@ public:
     /// is incomplete. Please extend it when needed.
     void printConfiguration() const;
 
+    /// @brief Receives a response from the server.
+    ///
+    /// This method is useful to receive response from the server after
+    /// parking a packet. In this case, the packet is not received as a
+    /// result of initial exchange, e.g. @c doRequest. The test can call
+    /// this method to complete the transaction when it expects that the
+    /// packet has been unparked.
+    void receiveResponse();
+
 private:
 
     /// @brief Applies the new leases for the client.

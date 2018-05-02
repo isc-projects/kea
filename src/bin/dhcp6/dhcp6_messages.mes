@@ -320,6 +320,14 @@ The server will skip the operation of moving the lease to the declined state and
 will continue processing the packet. In particular, it will send a REPLY message
 as if the decline actually took place.
 
+% DHCP6_HOOK_LEASES6_COMMITTED_DROP %1: packet is dropped, because a callout set the next step to DROP
+This debug message is printed when a callout installed on the leases6_committed
+hook point sets the next step to DROP.
+
+% DHCP6_HOOK_LEASES6_COMMITTED_PARK %1: packet is parked, because a callout set the next step to PARK
+This debug message is printed when a callout installed on the lease6_committed
+hook point sets the next step to PARK.
+
 % DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP %1: DHCPv6 address lease was not released because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the
 lease6_release hook point set the next step to SKIP. For this particular hook
