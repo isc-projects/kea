@@ -1,11 +1,17 @@
+1392.	[func]		fdupont, marcin
+	Implemented new hook point "leases6_committed" in the DHCPv6
+	server. It supports new next step status NEXT_STEP_PARK
+	which causes the server	to "park" the client's DHCP packet.
+	(Trac #5458, git 04d6fb0a0ac5b9dff2a02764cc9265f9a2a05ae8)
+
 1391.	[func]		tmark
 	For both kea-dhcp4 and kea-dhcp6, the "ip-address" parameter
-	in the "relay" element for both subnets and shared networks, 
+	in the "relay" element for both subnets and shared networks,
 	has been replaced with a list form, "ip-addresses".  Configuration
 	parsing will continue to honor the singular form, but it should
 	be considered deprecated.  In addition, an omission in 1.3 that
 	caused shared network parsing to ignore the "relay' element has
-	been corrected. 
+	been corrected.
 	(Trac #5535, git f4601abdb657122a8ba5d7784eded773ec01d171)
 
 1390.	[doc]		tomek
