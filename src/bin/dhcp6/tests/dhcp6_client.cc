@@ -901,6 +901,16 @@ Dhcp6Client::receiveOneMsg() {
 }
 
 void
+Dhcp6Client::receiveResponse() {
+    context_.response_ = receiveOneMsg();
+    // If the server has responded, store the configuration received.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
 Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->shutdown_ = false;
     // The client is configured to send through the relay. We achieve that
@@ -944,7 +954,14 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     }
 
     srv_->fakeReceive(msg_copy);
-    srv_->run();
+
+    try {
+        // Invoke run_one instead of run, because we want to avoid triggering
+        // IO service.
+        srv_->run_one();
+    } catch (...) {
+        // Suppress errors, as the DHCPv6 server does.
+    }
 }
 
 void

@@ -13,6 +13,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
@@ -99,8 +100,7 @@ void Dhcp6to4Ipc::handler() {
     }
 
     // Can't call the pkt6_send callout because we don't have the query
-
-    // Copied from Dhcpv6Srv::run_one() sending part
+    // From Dhcpv6Srv::processPacketBufferSend
 
     try {
         // Let's execute all callouts registered for buffer6_send
@@ -125,7 +125,8 @@ void Dhcp6to4Ipc::handler() {
             // stage means drop.
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP)
+                LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                          DHCP6_HOOK_BUFFER_SEND_SKIP)
                     .arg(pkt->getLabel());
                 return;
             }
@@ -135,7 +136,6 @@ void Dhcp6to4Ipc::handler() {
 
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
             .arg(static_cast<int>(pkt->getType())).arg(pkt->toText());
-
 
         // Forward packet to the client.
         IfaceMgr::instance().send(pkt);
