@@ -177,10 +177,6 @@
                     "name": "127.0.0.1",
                     "port": 1813,
                     "secret": "testing123"
-                 } ],
-                 "attributes": [ {
-                    "name": "Password",
-                    "data": "French-wine"
                  } ]
              }
          }
