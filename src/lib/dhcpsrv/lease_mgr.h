@@ -186,15 +186,21 @@ public:
     virtual bool getNextRow(LeaseStatsRow& row);
 
     /// @brief Returns the value of first subnet ID specified (or zero)
-    SubnetID getFirstSubnetID() const { return first_subnet_id_; };
+    SubnetID getFirstSubnetID() const {
+        return (first_subnet_id_);
+    };
 
     /// @brief Returns the value of last subnet ID specified (or zero)
-    SubnetID getLastSubnetID() const { return last_subnet_id_; };
+    SubnetID getLastSubnetID() const {
+        return (last_subnet_id_);
+    };
 
     /// @brief Returns the selection criteria mode
     /// The value returned is based upon the constructor variant used
     /// and it indicates which query variant will be executed.
-    SelectMode getSelectMode() const { return select_mode_;  };
+    SelectMode getSelectMode() const {
+        return (select_mode_);
+    };
 
 private:
     /// @brief First (or only) subnet_id in the selection criteria

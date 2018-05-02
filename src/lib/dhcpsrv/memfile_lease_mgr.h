@@ -688,7 +688,7 @@ public:
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
-    /// It creates an instance of a MemfileLeaseStatsQuery4 for a subnet range
+    /// It creates an instance of a MemfileLeaseStatsQuery6 for a subnet range
     /// query and then invokes its start method in which the query constructs its
     /// statistical data result set.  The query object is then returned.
     ///
