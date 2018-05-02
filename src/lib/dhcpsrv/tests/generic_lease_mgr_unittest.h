@@ -424,7 +424,7 @@ public:
     ///
     /// @param qry - a started LeaseStatsQuery
     /// @param row_set - set of rows expected to be found in the query rows
-    void checkQueryAgainstRowSet(LeaseStatsQueryPtr qry, RowSet& row_set);
+    void checkQueryAgainstRowSet(const LeaseStatsQueryPtr& qry, const RowSet& row_set);
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

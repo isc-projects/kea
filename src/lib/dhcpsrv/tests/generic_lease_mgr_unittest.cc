@@ -2858,8 +2858,8 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
 }
 
 void
-GenericLeaseMgrTest::checkQueryAgainstRowSet(LeaseStatsQueryPtr query,
-                                             RowSet& expected_rows) {
+GenericLeaseMgrTest::checkQueryAgainstRowSet(const LeaseStatsQueryPtr& query,
+                                             const RowSet& expected_rows) {
     ASSERT_TRUE(query) << "query is null";
 
     int rows_matched = 0;
@@ -2962,7 +2962,7 @@ GenericLeaseMgrTest::testLeaseStatsQuery4() {
     // Test a single subnet
     {
         SCOPED_TRACE("SINGLE SUBNET");
-        // Add expected row for Subnet 2
+        // Add expected rows for Subnet 2
         expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 0));
         expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DECLINED, 1));
         // Start the query
