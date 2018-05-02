@@ -10,6 +10,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <gtest/gtest.h>
 #include <vector>
+#include <set>
 
 namespace isc {
 namespace dhcp {
@@ -19,6 +20,7 @@ namespace test {
 typedef std::map<std::string, int64_t> StatValMap;
 typedef std::pair<std::string, int64_t> StatValPair;
 typedef std::vector<StatValMap> StatValMapList;
+typedef std::set<LeaseStatsRow> RowSet;
 
 /// @brief Test Fixture class with utility functions for LeaseMgr backends
 ///
@@ -393,6 +395,36 @@ public:
     /// This test creates a bunch of leases in several subnets and then
     /// attempts to delete them, one subnet at a time.
     void testWipeLeases6();
+
+    /// @brief Checks operation of v4 LeaseStatsQuery variants
+    ///
+    /// It creates three subnets with leasese in various states in
+    /// each.  It runs and verifies the returned query contents for
+    /// each of the v4 startLeaseQuery variants:
+    ///
+    /// - startSubnetLeaseQuery()
+    /// - startSubneRangetLeaseQuery()
+    /// - startLeaseQuery()
+    ///
+    void testLeaseStatsQuery4();
+
+    /// @brief Checks operation of v6 LeaseStatsQuery variants
+    ///
+    /// It creates three subnets with leasese in various states in
+    /// each.  It runs and verifies the returned query contents for
+    /// each of the v6 startLeaseQuery variants:
+    ///
+    /// - startSubnetLeaseQuery()
+    /// - startSubneRangetLeaseQuery()
+    /// - startLeaseQuery()
+    ///
+    void testLeaseStatsQuery6();
+
+    /// @brief Compares LeaseQueryStats content to expected set of rows
+    ///
+    /// @param qry - a started LeaseStatsQuery
+    /// @param row_set - set of rows expected to be found in the query rows
+    void checkQueryAgainstRowSet(const LeaseStatsQueryPtr& qry, const RowSet& row_set);
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
