@@ -790,6 +790,11 @@ protected:
 
     /// @brief Selects a subnet for a given client's packet.
     ///
+    /// If selectSubnet is called to simply do sanity checks (check if a
+    /// subnet would be selected), then there is no need to call hooks,
+    /// as this will happen later (when selectSubnet is called again).
+    /// In such case the sanity_only should be set to true.
+    ///
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
@@ -799,6 +804,11 @@ protected:
                                        bool sanity_only = false) const;
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
+    ///
+    /// If selectSubnet is called to simply do sanity checks (check if a
+    /// subnet would be selected), then there is no need to call hooks,
+    /// as this will happen later (when selectSubnet is called again).
+    /// In such case the sanity_only should be set to true.
     ///
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
