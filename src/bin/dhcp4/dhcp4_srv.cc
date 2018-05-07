@@ -547,6 +547,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
+    // (skip callouts if the selectSubnet was called to do sanity checks only)
     if (!sanity_only &&
         HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -663,7 +664,8 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet4o6(selector);
 
-    // Let's execute all callouts registered for subnet4_select
+    // Let's execute all callouts registered for subnet4_select.
+    // (skip callouts if the selectSubnet was called to do sanity checks only)
     if (!sanity_only &&
         HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
