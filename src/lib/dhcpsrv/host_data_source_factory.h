@@ -107,6 +107,12 @@ public:
     static bool deregisterFactory(const std::string& db_type,
                                   bool no_log = false);
 
+    /// @brief Check if a host data source factory was registered
+    ///
+    /// @param db_type database type
+    /// @return true if a factory was registered for db_type, false if not.
+    static bool registeredFactory(const std::string& db_type);
+
     /// @brief Prints out all registered backends.
     ///
     /// We need a dedicated method for this, because we sometimes can't log

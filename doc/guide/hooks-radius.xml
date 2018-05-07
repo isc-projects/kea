@@ -342,7 +342,7 @@ Please make sure that your compilation has the following:
       "parameters": {
 
           // Specify where FreeRADIUS dictionary could be located
-          "dictionary: "/usr/local/etc/freeradius/dictionary",
+          "dictionary": "/usr/local/etc/freeradius/dictionary",
 
           // Specify which address to use to communicate with RADIUS servers
           "bindaddr": "*",
@@ -466,8 +466,14 @@ Please make sure that your compilation has the following:
         </listitem>
 
         <listitem>
-          <simpara>attributes which define attributes which are used by the
-          service with:</simpara>
+          <simpara>attributes which define additional attributes that
+          the Kea server will send to a RADIUS server. The parameter
+          must be identified either by a name or type. Its value can
+          be specified using one of three possible ways: data (which
+          defines a plain text value), raw (which defines the value in
+          hex) or expr (which defines an expression, which will be
+          evaluated for each incoming packet independently).
+          </simpara>
           <itemizedlist>
             <listitem><simpara><command>name</command> of the
             attribute. </simpara></listitem>
@@ -475,28 +481,83 @@ Please make sure that your compilation has the following:
             name is required, and the attribute must be defined in the
             dictionary.</simpara></listitem>
 
-            <listitem><simpara><command>data</command> is one of the three ways
-            to specify the attribute content.  The data entry is parsed by the
-            FreeRADIUS library so values defined in the dictionary of the
+            <listitem><simpara><command>data</command> is the first out of three
+            ways to specify the attribute content. The data entry is parsed by
+            the FreeRADIUS library so values defined in the dictionary of the
             attribute may be used.</simpara></listitem>
 
-            <listitem><simpara><command>raw</command> specifies the content in
+            <listitem><simpara><command>raw</command> is the second out of three
+            way to specify the attribute content. It specifies the content in
             hexadecimal. Note it does not work with integer content attributes
             (date, integer and IPv4 address), a string content attribute
             (string. IPv6 address and IPv6 prefix) is
             required.</simpara></listitem>
 
-            <listitem><simpara><command>expr</command> specifies an evaluation
-            expression which must return a not empty string when evaluated with
-            the DHCP query packet.  A priori this is restricted to the access
+            <listitem><simpara><command>expr</command> is the last way to
+            specify the attribute content. It specifies an evaluation expression
+            which must return a not empty string when evaluated with the DHCP
+            query packet.  Currently this is restricted to the access
             service. </simpara></listitem>
           </itemizedlist>
         </listitem>
       </itemizedlist>
-
     </para>
 <para>
+  For example, to specify a single access server available on localhost that
+  uses "secret" as a secret and tell Kea to send three additional attributes
+  (Password, Connect-Info and Configuration-Token), the following snipped could
+  be used:
+  <screen>
+"parameters": {
 
+    // Other RADIUS parameters here
+
+    "access": {
+
+        // This starts the list of access servers
+        "servers": [
+        {
+            // These are parameters for the first (and only) access server
+            "server": "127.0.0.1",
+            "port": 1812,
+            "secret": "secret"
+        }
+        // Additional access servers could be specified here
+        ],
+
+        // This define a list of additional attributes Kea will send to each
+        // access server in Access-Request.
+        "attributes": [
+        {
+            // This attribute is identified by name (must be present in the
+            // dictionary) and has static value (i.e. the same value will be
+            // sent to every server for every packet)
+            "name": "Password",
+            "data": "mysecretpassword"
+        },
+        {
+            // It's also possible to specify an attribute using its type,
+            // rather than a name. 77 is Connect-Info. The value is specified
+            // using hex. Again, this is a static value. It will be sent the
+            // same for every packet and to every server.
+            "type": 77,
+            "raw": "65666a6a71"
+        },
+        {
+            // This example shows how an expression can be used to send dynamic
+            // value. The expression (see Section 13) may take any value from
+            // the incoming packet or even its metadata (e.g. the interface
+            // it was received over from)
+            "name": "Configuration-Token",
+            "expr": "pkt.iface"
+        }
+        ] // End of attributes
+    } // End of access
+
+    // accounting could be specified here.
+
+    }
+</screen>
 </para>
 
 <para>For the RADIUS Hook library to operate properly in DHCPv4, it is necessary
