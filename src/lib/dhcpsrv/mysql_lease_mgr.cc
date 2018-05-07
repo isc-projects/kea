@@ -1290,7 +1290,7 @@ public:
     ///
     ///  The query created will return statistics for all subnets
     ///
-    /// @param conn A open connection to the database housing the lease data
+    /// @param conn An open connection to the database housing the lease data
     /// @param statement_index Index of the query's prepared statement
     /// @param fetch_type Indicates if query supplies lease type
     /// @throw if statement index is invalid.
@@ -1309,7 +1309,7 @@ public:
     ///
     /// The query created will return statistics for a single subnet
     ///
-    /// @param conn A open connection to the database housing the lease data
+    /// @param conn An open connection to the database housing the lease data
     /// @param statement_index Index of the query's prepared statement
     /// @param fetch_type Indicates if query supplies lease type
     /// @param subnet_id id of the subnet for which stats are desired
@@ -1330,7 +1330,7 @@ public:
     /// The query created will return statistics for the inclusive range of
     /// subnets described by first and last sunbet IDs.
     ///
-    /// @param conn A open connection to the database housing the lease data
+    /// @param conn An open connection to the database housing the lease data
     /// @param statement_index Index of the query's prepared statement
     /// @param fetch_type Indicates if query supplies lease type
     /// @param first_subnet_id first subnet in the range of subnets
@@ -1362,7 +1362,7 @@ public:
     /// the output bind array and then executes the statement, and fetches
     /// entire result set.
     void start() {
-        // Set up where clause inputs if needed */
+        // Set up where clause inputs if needed.
         if (getSelectMode() != ALL_SUBNETS) {
             MYSQL_BIND inbind[2];
             memset(inbind, 0, sizeof(inbind));
