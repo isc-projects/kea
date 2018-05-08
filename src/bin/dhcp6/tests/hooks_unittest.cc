@@ -1840,8 +1840,8 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedInfRequest) {
 }
 
 // This test verifies that the callout installed on the leases6_committed hook
-// point is executed as a result of SOLICIT message sent to allocate new
-// lease or renew an existing lease using Rapid Commit i.e. one exchange only.
+// point is executed as a result of SOLICIT message with Rapid Commit option,
+// sent to allocate new lease.
 TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1901,8 +1901,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
     EXPECT_TRUE(callback_qry_options_copy_);
 }
 
-// This test verifies that it is possible to park a packet as a result of
-// the leases6_committed callouts using Rapid Commit SOLICITs and prefixes.
+// This test verifies that it is possible to park a SOLICIT packet including
+// Rapid Commit option as a result of the leases6_committed callouts. The
+// prefix delegation is requested with the Solicit packet.
 TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1975,7 +1976,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp6Client client2;
+    Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     client2.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:29::"));
     client2.useRapidCommit(true);
@@ -2400,7 +2401,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp6Client client2;
+    Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     client2.requestAddress(0xabca, IOAddress("2001:db8:1::29"));
     ASSERT_NO_THROW(client2.doSARR());
@@ -2503,7 +2504,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp6Client client2;
+    Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     client2.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:29::"));
     ASSERT_NO_THROW(client2.doSARR());
@@ -2583,7 +2584,6 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     ia->addOption(renewed_addr_opt);
     req->addOption(ia);
     req->addOption(clientid);
-
     // Server-id is mandatory in RENEW
     req->addOption(srv.getServerID());
 
@@ -4331,7 +4331,8 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
 }
 
 // This test verifies that the leases6_committed callout is executed
-// with deleted leases as argument when DECLINE is processed.
+// when DECLINE is processed. The declined lease is expected to be passed
+// in leases6 argument to the callout.
 TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
     IfaceMgrTestConfig test_config(true);
 
@@ -4391,8 +4392,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
 }
 
 // This test verifies that the leases6_committed callout is executed
-// with deleted leases as argument when DECLINE is processed.
-// Variant with 2 IA_NAs.
+// when DECLINE is processed. Variant with 2 IA_NAs.
 TEST_F(HooksDhcpv6SrvTest, leases6CommittedDeclineTwoNAs) {
     IfaceMgrTestConfig test_config(true);
 
