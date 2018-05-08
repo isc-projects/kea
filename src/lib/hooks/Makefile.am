@@ -74,6 +74,7 @@ libkea_hooks_include_HEADERS = \
 	library_handle.h \
 	library_manager.h \
 	library_manager_collection.h \
+	parking_lots.h \
 	pointer_converter.h \
 	server_hooks.h
 
