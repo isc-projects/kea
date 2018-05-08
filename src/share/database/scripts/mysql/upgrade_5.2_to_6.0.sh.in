@@ -175,6 +175,21 @@ CREATE TRIGGER stat_lease6_delete AFTER DELETE ON lease6
     END $$
 DELIMITER ;
 
+# Populate lease4_stat table based on existing leases
+# We only care about assigned and declined states
+INSERT INTO lease4_stat (subnet_id, state, leases)
+    SELECT subnet_id, state, count(state)
+    FROM lease4 WHERE state < 2
+    GROUP BY subnet_id, state ORDER BY subnet_id;
+
+# Populate lease6_stat table based on existing leases
+# We only care about assigned and declined states
+INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
+    SELECT subnet_id, lease_type, state, count(state)
+    FROM lease6 WHERE state < 2
+    GROUP BY subnet_id, lease_type, state
+    ORDER BY subnet_id;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '6', minor = '0';
