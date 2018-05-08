@@ -124,8 +124,6 @@ TEST(MySqlOpenTest, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    LeaseMgrFactory::destroy();
-
     // Check that lease manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
@@ -140,8 +138,6 @@ TEST(MySqlOpenTest, OpenDatabase) {
                << "*** The test environment is broken and must be fixed\n"
                << "*** before the MySQL tests will run correctly.\n";
     }
-
-    LeaseMgrFactory::destroy();
 
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
@@ -163,15 +159,9 @@ TEST(MySqlOpenTest, OpenDatabase) {
         MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
 
-#if 0
-    // @todo Under MacOS, connecting with an invalid host, causes a TCP/IP socket
-    // to be orphaned and never closed.  This can interfer with subsequent tests
-    // which attempt to locate and manipulate MySQL client socket descriptor.
-    // In the interests of progress, we'll just avoid this test.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-#endif
 
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
