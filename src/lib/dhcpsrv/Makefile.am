@@ -276,8 +276,10 @@ libkea_dhcpsrv_include_HEADERS = \
 	daemon.h \
 	database_connection.h \
 	db_exceptions.h \
+	db_log.h \
 	db_type.h \
 	dhcp4o6_ipc.h \
+	dhcpsrv_db_log.h \
 	dhcpsrv_log.h \
 	host.h \
 	host_container.h \
@@ -296,6 +298,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	memfile_lease_storage.h \
 	ncr_generator.h \
 	network.h \
+	network_state.h \
 	pool.h \
 	shared_network.h \
 	sql_common.h \
@@ -311,6 +314,8 @@ libkea_dhcpsrv_include_HEADERS = \
 if HAVE_CQL
 libkea_dhcpsrv_include_HEADERS += \
 	cql_connection.h \
+	cql_exchange.h \
+	cql_host_data_source.h \
 	cql_lease_mgr.h
 endif
 
