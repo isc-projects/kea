@@ -279,23 +279,48 @@
               or configuration parameters currently used by the server.
               </entry>
             </row>
+
+            <row>
+              <entry>Lease Commands</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 1.3.0</entry>
+              <entry>The lease commands hook library offers a number of new
+              commands used to manage leases. Kea provides a way to store lease
+              information in various backends: memfile, MySQL, PostgreSQL and
+              Cassandra. This library provides a unified interface that can
+              manipulate leases in an unified, safe way. In particular, it
+              allows: manipulate leases in memfile while Kea is running, sanity
+              check changes, check lease existence and remove all leases
+              belonging to specific subnet. It can also catch more obscure
+              errors, like adding a lease with subnet-id that does not exist in
+              the configuration or configuring a lease to use an address that is
+              outside of the subnet to which it is supposed to belong.
+              </entry>
+            </row>
+
             <row>
               <entry>High Availability</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
-              <entry>Minimizing a risk of DHCP service unavailability is achieved
-              by setting up multiple instances of the DHCP servers in a network.
-              Each server can serve selected group of clients in this network
-              (load balancing) or all clients, if it detects that its partner has
-              crashed or cannot be providing DHCP service for any other reason.
-              It is also possible to designate one server to serve all DHCP clients,
-              and leave another server as "standby". This server will activate its
-              DHCP function when it detects that its partner is not available.
-              Such cooperation between the DHCP servers requires that these
-              servers constantly communicate with each other to send updates about
-              allocated leases and to periodically test whether their partners are still
-              operational. The "libdhcp_ha" library provides such functionality for
-              Kea DHCP.
+              <entry>Minimizing a risk of DHCP service unavailability is
+              achieved by setting up a pair of the DHCP servers in a network.
+              Two modes of operation are supported. The first one is called load
+              balancing and is sometimes referred to as active-active. Each
+              server can handle selected group of clients in this network or all
+              clients, if it detects that its partner has became unavailable.
+              It is also possible
+              to designate one server to serve all DHCP clients, and leave
+              another server as "standby". This mode is called hot standby and
+              is sometimes referenced to as active-passive. This server will
+              activate its DHCP function when it detects that its partner is not
+              available.  Such cooperation between the DHCP servers requires
+              that these servers constantly communicate with each other to send
+              updates about allocated leases and to periodically test whether
+              their partners are still operational. The hook library also
+              provides and ability to send lease updates to external backup
+              server, making it much easier to have a replacement that is almost
+              up to date. The "libdhcp_ha" library provides such functionality
+              for Kea DHCP.
               </entry>
             </row>
             <row>
@@ -2830,18 +2855,26 @@ both the command and the response.
       <title>libdhcp_ha: High Availability</title>
       <para>
         High Availability (HA) of the DHCP service is provided by running multiple
-        cooperating server instances. If any of these instances crashes, a surviving
+        cooperating server instances. If any of these instances becomes
+        unavailable for whatever reason (DHCP software crash, control agent
+        software crash, power failure, hardware
+        failure), a surviving
         server instance can continue providing the reliable service to the clients. Many
         DHCP servers implementations include "DHCP Failover" protocol, which most
         significant features are: communication between the servers, partner
         failure detection and leases synchronization between the servers.
+        However, the DHCPv4 failover standardization process was never completed
+        at IETF. The DHCPv6 failover standard (RFC 8156) was published, but it
+        is complex, difficult to use, has significant operational constraints
+        and is different than its v4 counterpart.
         Although it may be useful for some users to use a "standard" failover
         protocol, it seems that most of the Kea users are simply interested in
-        "some working solution" which guarantees high availability of the DHCP
+        a working solution which guarantees high availability of the DHCP
         service. Therefore, Kea HA hook library derives major concepts from the
         DHCP Failover protocol but uses its own solutions for communication,
         configuration and its own state machine, which greatly simplifies its
-        implementation and generally better fits into Kea. This document purposely
+        implementation and generally better fits into Kea. Also, it provides the
+        same features in both DHCPv4 and DHCPv6. This document purposely
         uses the term "High Availability" rather than "Failover" to emphasize that
         it is not the Failover protocol implementation.
       </para>
@@ -2865,7 +2898,7 @@ both the command and the response.
         the DHCP client by the server which has allocated the lease. By
         exchanging the lease updates, both servers get a copy of all leases
         allocated by the entire HA setup and any of the servers can be switched
-        to handle the entire DHCP traffic if its partner crashes.</para>
+        to handle the entire DHCP traffic if its partner becomes unavailable.</para>
 
         <para>In the load balancing configuration, one of the servers must be
         designated as "primary" and the other server is designated as "secondary".
@@ -2976,7 +3009,7 @@ both the command and the response.
 
           <listitem><para><command>waiting</command> - each started server
           instance enters this state. The backup server will transition
-          directly from this statet to the <command>backup</command> state.
+          directly from this state to the <command>backup</command> state.
           An active server will send heartbeat to its partner to check its
           state. If the partner appears to be unavailable the server will
           transition to the <command>partner-down</command>, otherwise it
@@ -3079,8 +3112,8 @@ both the command and the response.
 
         <para>In the hot standby mode, there is only one scope <command>
         ha_server1</command> because only the <command>server1</command>
-        is responding to the DHCP queries. If that server crashes, the
-        <command>server2</command> becomes responsible for this scope.
+        is responding to the DHCP queries. If that server becomes unavailable,
+        the <command>server2</command> becomes responsible for this scope.
         </para>
 
         <para>The backup servers do not have their own scopes. In some
@@ -3186,8 +3219,8 @@ both the command and the response.
 
         <para>Two hook libraries must be loaded to enable HA:
         <filename>libdhcp_lease_cmds.so</filename> and
-        <filename>libdhcp_ha.so</filename>. The former provides the
-        implemenation of the HA feature. The latter enables control
+        <filename>libdhcp_ha.so</filename>. The latter provides the
+        implemenation of the HA feature. The former enables control
         commands required by HA to fetch and manipulate leases on the
         remote servers. In the example provided above, it is assumed that
         Kea libraries are installed in the <filename>/usr/lib</filename>
@@ -3262,7 +3295,7 @@ both the command and the response.
 
         <para>
           The values of <command>max-ack-delay</command> and
-          <command>max-unacked</command> must be selected carefully, taking
+          <command>max-unacked-clients</command> must be selected carefully, taking
           into account specifics of the network in which DHCP servers are
           operating. Note that the server in question may not respond to some
           of the DHCP clients because these clients are not to be serviced
@@ -3299,7 +3332,7 @@ both the command and the response.
           the server.</para></listitem>
 
           <listitem><para><command>url</command> - specifies URL to be used to
-          contact this server over the control channel. Other servers used this
+          contact this server over the control channel. Other servers use this
           URL to send control commands to that server.</para></listitem>
 
           <listitem><para><command>role</command> - denotes the role of the
@@ -3327,7 +3360,7 @@ both the command and the response.
         </command> state, it can serve leases from both pools and it will
         select the pool which is appropriate for the received query. In
         other words, if the query would normally be processed by the
-        <command>server2</command>, but this server has crashed, the
+        <command>server2</command>, but this server is not available, the
         <command>server1</command> will allocate the lease from the pool of
         "192.0.3.200 - 192.0.3.250".
         </para>
@@ -3371,9 +3404,13 @@ both the command and the response.
 
     "client-classes": [
         {
+            // No test expression for this class. Incoming packets will be
+            // assigned to that class dynamically by the HA Hook library.
             "name": "ha_server1"
         },
         {
+            // No test expression for this class. Incoming packets will be
+            // assigned to that class dynamically by the HA Hook library.
             "name": "ha_server2"
         },
         {
