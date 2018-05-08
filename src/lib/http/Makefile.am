@@ -66,12 +66,16 @@ libkea_http_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_http_includedir = $(pkgincludedir)/http
 libkea_http_include_HEADERS = \
+	client.h \
 	connection.h \
 	connection_pool.h \
 	date_time.h \
 	header_context.h \
 	http_acceptor.h \
+	http_header.h \
 	http_log.h \
+	http_message.h \
+	http_message_parser_base.h \
 	http_types.h \
 	listener.h \
 	post_request.h \
@@ -80,7 +84,10 @@ libkea_http_include_HEADERS = \
 	request_context.h \
 	request_parser.h \
 	response.h \
+	response_context.h \
 	response_creator.h \
 	response_creator_factory.h \
-	response_json.h
+	response_json.h \
+	response_parser.h \
+	url.h
 
