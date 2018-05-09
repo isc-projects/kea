@@ -202,13 +202,14 @@ public:
         return (select_mode_);
     };
 
-private:
+protected:
     /// @brief First (or only) subnet_id in the selection criteria
     SubnetID first_subnet_id_;
 
     /// @brief Last subnet_id in the selection criteria when a range is given
     SubnetID last_subnet_id_;
 
+private:
     /// @brief Indicates the type of selection criteria specified
     SelectMode select_mode_;
 };
