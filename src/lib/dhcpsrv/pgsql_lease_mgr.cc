@@ -251,20 +251,49 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
         "state = $16 "
       "WHERE address = $17"},
-
-    // RECOUNT_LEASE4_STATS,
+    // ALL_LEASE4_STATS
     { 0, { OID_NONE },
-      "recount_lease4_stats",
-      "SELECT subnet_id, state, count(state) as state_count "
-      "FROM lease4 GROUP BY subnet_id, state ORDER BY subnet_id"},
+      "all_lease4_stats",
+      "SELECT subnet_id, state, leases as state_count"
+      "  FROM lease4_stat ORDER BY subnet_id, state"},
 
-    // RECOUNT_LEASE6_STATS,
+    // SUBNET_LEASE4_STATS
+    { 1, { OID_INT8 },
+      "subnet_lease4_stats",
+      "SELECT subnet_id, state, leases as state_count"
+      "  FROM lease4_stat "
+      "  WHERE subnet_id = $1 "
+      "  ORDER BY state"},
+
+    // SUBNET_RANGE_LEASE4_STATS
+    { 2, { OID_INT8, OID_INT8 },
+      "subnet_range_lease4_stats",
+      "SELECT subnet_id, state, leases as state_count"
+      "  FROM lease4_stat "
+      "  WHERE subnet_id >= $1 and subnet_id <= $2 "
+      "  ORDER BY subnet_id, state"},
+
+    // ALL_LEASE6_STATS,
     { 0, { OID_NONE },
-      "recount_lease6_stats",
-      "SELECT subnet_id, lease_type, state, count(state) as state_count "
-      "FROM lease6 GROUP BY subnet_id, lease_type, state "
-      "ORDER BY subnet_id"},
+     "all_lease6_stats",
+     "SELECT subnet_id, lease_type, state, leases as state_count"
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
 
+    // SUBNET_LEASE6_STATS
+    { 1, { OID_INT8 },
+      "subnet_lease6_stats",
+      "SELECT subnet_id, lease_type, state, leases as state_count"
+      "  FROM lease6_stat "
+      "  WHERE subnet_id = $1 "
+      "  ORDER BY lease_type, state" },
+
+    // SUBNET_RANGE_LEASE6_STATS
+    { 2, { OID_INT8, OID_INT8 },
+      "subnet_range_lease6_stats",
+      "SELECT subnet_id, lease_type, state, leases as state_count"
+      "  FROM lease6_stat "
+      "  WHERE subnet_id >= $1 and subnet_id <= $2 "
+      "  ORDER BY subnet_id, lease_type, state" },
     // End of list sentinel
     { 0,  { 0 }, NULL, NULL}
 };
@@ -814,7 +843,9 @@ private:
 ///
 class PgSqlLeaseStatsQuery : public LeaseStatsQuery {
 public:
-    /// @brief Constructor
+    /// @brief Constructor to query for all subnets' stats
+    ///
+    ///  The query created will return statistics for all subnets
     ///
     /// @param conn A open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement to execute
@@ -826,18 +857,75 @@ public:
          fetch_type_(fetch_type) {
     }
 
+    /// @brief Constructor to query for a single subnet's stats
+    ///
+    /// The query created will return statistics for a single subnet
+    ///
+    /// @param conn A open connection to the database housing the lease data
+    /// @param statement The lease data SQL prepared statement to execute
+    /// @param fetch_type Indicates if query supplies lease type
+    /// @param subnet_id id of the subnet for which stats are desired
+    PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
+                         const bool fetch_type, const SubnetID& subnet_id)
+        : LeaseStatsQuery(subnet_id), conn_(conn), statement_(statement), result_set_(),
+          next_row_(0), fetch_type_(fetch_type) {
+    }
+
+    /// @brief Constructor to query for the stats for a range of subnets
+    ///
+    /// The query created will return statistics for the inclusive range of
+    /// subnets described by first and last sunbet IDs.
+    ///
+    /// @param conn A open connection to the database housing the lease data
+    /// @param statement The lease data SQL prepared statement to execute
+    /// @param fetch_type Indicates if query supplies lease type
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    PgSqlLeaseStatsQuery(PgSqlConnection& conn, PgSqlTaggedStatement& statement,
+                         const bool fetch_type, const SubnetID& first_subnet_id,
+                         const SubnetID& last_subnet_id)
+        : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn), statement_(statement),
+          result_set_(), next_row_(0), fetch_type_(fetch_type) {
+    }
+
     /// @brief Destructor
     virtual ~PgSqlLeaseStatsQuery() {};
 
     /// @brief Creates the lease statistical data result set
     ///
     /// The result set is populated by executing a  prepared SQL query
-    /// against the database which sums the leases per lease state per
-    /// subnet id.
+    /// against the database fetches the lease count per lease state per
+    /// (per least type - v6 only) per subnet id.
+    ///
+    /// Depending upon the selection mode, the query will have either no
+    /// parameters (for all subnets), a subnet id for a single subnet, or
+    /// a first and last subnet id for a subnet range.
     void start() {
-        // The query has no parameters, so we only need it's name.
-        result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
-                                          0, NULL, NULL, NULL, 0)));
+
+        if (getSelectMode() == ALL_SUBNETS) {
+            // Run the query with no where clause parameters.
+            result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+                                                             0, 0, 0, 0, 0)));
+        } else {
+            // Set up the WHERE clause values
+            PsqlBindArray parms;
+
+            // Add first_subnet_id used by both single and range.
+            std::string subnet_id_str = boost::lexical_cast<std::string>(getFirstSubnetID());
+            parms.add(subnet_id_str);
+
+            // Add last_subnet_id for range.
+            if (getSelectMode() == SUBNET_RANGE) {
+                // Add last_subnet_id used by range.
+                string subnet_id_str = boost::lexical_cast<std::string>(getLastSubnetID());
+                parms.add(subnet_id_str);
+            }
+
+            // Run the query with where clause parameters.
+            result_set_.reset(new PgSqlResult(PQexecPrepared(conn_, statement_.name,
+                                              parms.size(), &parms.values_[0],
+                                              &parms.lengths_[0], &parms.formats_[0], 0)));
+        }
 
         conn_.checkStatementError(*result_set_, statement_);
     }
@@ -1511,9 +1599,26 @@ PgSqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startLeaseStatsQuery4() {
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_,
-                                 tagged_statements[RECOUNT_LEASE4_STATS],
-                                 false));
+        new PgSqlLeaseStatsQuery(conn_, tagged_statements[ALL_LEASE4_STATS], false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_LEASE4_STATS],
+                                 false, subnet_id));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                   const SubnetID& last_subnet_id) {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_RANGE_LEASE4_STATS],
+                                 false, first_subnet_id, last_subnet_id));
     query->start();
     return(query);
 }
@@ -1521,9 +1626,26 @@ PgSqlLeaseMgr::startLeaseStatsQuery4() {
 LeaseStatsQueryPtr
 PgSqlLeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(
-        new PgSqlLeaseStatsQuery(conn_,
-                                 tagged_statements[RECOUNT_LEASE6_STATS],
-                                 true));
+        new PgSqlLeaseStatsQuery(conn_, tagged_statements[ALL_LEASE6_STATS], true));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_LEASE6_STATS],
+                                 true, subnet_id));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                const SubnetID& last_subnet_id) {
+    LeaseStatsQueryPtr query(
+        new PgSqlLeaseStatsQuery(conn_, tagged_statements[SUBNET_RANGE_LEASE6_STATS],
+                                 true, first_subnet_id, last_subnet_id));
     query->start();
     return(query);
 }
