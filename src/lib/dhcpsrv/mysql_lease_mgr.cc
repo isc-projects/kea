@@ -240,13 +240,37 @@ tagged_statements = { {
                         "hostname = ?, hwaddr = ?, hwtype = ?, hwaddr_source = ?, "
                         "state = ? "
                             "WHERE address = ?"},
-    {MySqlLeaseMgr::RECOUNT_LEASE4_STATS,
-     "SELECT subnet_id, state, count(state) as state_count "
-     "  FROM lease4 GROUP BY subnet_id, state ORDER BY subnet_id"},
-    {MySqlLeaseMgr::RECOUNT_LEASE6_STATS,
-     "SELECT subnet_id, lease_type, state, count(state) as state_count"
-     "  FROM lease6 GROUP BY subnet_id, lease_type, state "
-     "  ORDER BY subnet_id" }
+    {MySqlLeaseMgr::ALL_LEASE4_STATS,
+     "SELECT subnet_id, state, leases as state_count"
+     "  FROM lease4_stat ORDER BY subnet_id, state"},
+
+    {MySqlLeaseMgr::SUBNET_LEASE4_STATS,
+     "SELECT subnet_id, state, leases as state_count"
+     "  FROM lease4_stat "
+     "  WHERE subnet_id = ? "
+     "  ORDER BY state"},
+
+    {MySqlLeaseMgr::SUBNET_RANGE_LEASE4_STATS,
+     "SELECT subnet_id, state, leases as state_count"
+     "  FROM lease4_stat "
+     "  WHERE subnet_id >= ? and subnet_id <= ? "
+     "  ORDER BY subnet_id, state"},
+
+    {MySqlLeaseMgr::ALL_LEASE6_STATS,
+     "SELECT subnet_id, lease_type, state, leases as state_count"
+     "  FROM lease6_stat ORDER BY subnet_id, lease_type, state" },
+
+    {MySqlLeaseMgr::SUBNET_LEASE6_STATS,
+     "SELECT subnet_id, lease_type, state, leases as state_count"
+     "  FROM lease6_stat "
+     "  WHERE subnet_id = ? "
+     "  ORDER BY lease_type, state" },
+
+    {MySqlLeaseMgr::SUBNET_RANGE_LEASE6_STATS,
+     "SELECT subnet_id, lease_type, state, leases as state_count"
+     "  FROM lease6_stat "
+     "  WHERE subnet_id >= ? and subnet_id <= ? "
+     "  ORDER BY subnet_id, lease_type, state" }
     }
 };
 
@@ -1262,11 +1286,14 @@ private:
 ///
 class MySqlLeaseStatsQuery : public LeaseStatsQuery {
 public:
-    /// @brief Constructor
+    /// @brief Constructor to query for all subnets' stats
     ///
-    /// @param conn A open connection to the database housing the lease data
+    ///  The query created will return statistics for all subnets
+    ///
+    /// @param conn An open connection to the database housing the lease data
     /// @param statement_index Index of the query's prepared statement
     /// @param fetch_type Indicates if query supplies lease type
+    /// @throw if statement index is invalid.
     MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
                          const bool fetch_type)
         : conn_(conn), statement_index_(statement_index), statement_(NULL),
@@ -1275,12 +1302,51 @@ public:
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
           subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
-        if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
-            isc_throw(BadValue, "MySqlLeaseStatsQuery"
-                      " - invalid statement index" << statement_index_);
-        }
+          validateStatement();
+    }
 
-        statement_ = conn.statements_[statement_index_];
+    /// @brief Constructor to query for a single subnet's stats
+    ///
+    /// The query created will return statistics for a single subnet
+    ///
+    /// @param conn An open connection to the database housing the lease data
+    /// @param statement_index Index of the query's prepared statement
+    /// @param fetch_type Indicates if query supplies lease type
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @throw BadValue if sunbet_id given is 0 or if statement index is invalid.
+    MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
+                         const bool fetch_type, const SubnetID& subnet_id)
+        : LeaseStatsQuery(subnet_id), conn_(conn), statement_index_(statement_index),
+          statement_(NULL), fetch_type_(fetch_type),
+          // Set the number of columns in the bind array based on fetch_type
+          // This is the number of columns expected in the result set
+          bind_(fetch_type_ ? 4 : 3),
+          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          validateStatement();
+    }
+
+    /// @brief Constructor to query for the stats for a range of subnets
+    ///
+    /// The query created will return statistics for the inclusive range of
+    /// subnets described by first and last sunbet IDs.
+    ///
+    /// @param conn An open connection to the database housing the lease data
+    /// @param statement_index Index of the query's prepared statement
+    /// @param fetch_type Indicates if query supplies lease type
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @throw BadValue if either subnet ID is 0 or if last <= first or
+    /// if statement index is invalid.
+    MySqlLeaseStatsQuery(MySqlConnection& conn, const size_t statement_index,
+                         const bool fetch_type, const SubnetID& first_subnet_id,
+                         const SubnetID& last_subnet_id)
+        : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn),
+          statement_index_(statement_index), statement_(NULL), fetch_type_(fetch_type),
+          // Set the number of columns in the bind array based on fetch_type
+          // This is the number of columns expected in the result set
+          bind_(fetch_type_ ? 4 : 3),
+          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          validateStatement();
     }
 
     /// @brief Destructor
@@ -1296,6 +1362,28 @@ public:
     /// the output bind array and then executes the statement, and fetches
     /// entire result set.
     void start() {
+        // Set up where clause inputs if needed.
+        if (getSelectMode() != ALL_SUBNETS) {
+            MYSQL_BIND inbind[2];
+            memset(inbind, 0, sizeof(inbind));
+
+            // Add first_subnet_id used by both single and range.
+            inbind[0].buffer_type = MYSQL_TYPE_LONG;
+            inbind[0].buffer = reinterpret_cast<char*>(&first_subnet_id_);
+            inbind[0].is_unsigned = MLM_TRUE;
+
+            // Add last_subnet_id for range.
+            if (getSelectMode() == SUBNET_RANGE) {
+                inbind[1].buffer_type = MYSQL_TYPE_LONG;
+                inbind[1].buffer = reinterpret_cast<char*>(&last_subnet_id_);
+                inbind[1].is_unsigned = MLM_TRUE;
+            }
+
+            // Bind the parameters to the statement
+            int status = mysql_stmt_bind_param(statement_, &inbind[0]);
+            conn_.checkError(status, statement_index_, "unable to bind parameters");
+        }
+
         int col = 0;
         // subnet_id: unsigned int
         bind_[col].buffer_type = MYSQL_TYPE_LONG;
@@ -1321,7 +1409,7 @@ public:
         ++col;
 
         // state_count_: uint32_t
-        bind_[col].buffer_type = MYSQL_TYPE_LONG;
+        bind_[col].buffer_type = MYSQL_TYPE_LONGLONG;
         bind_[col].buffer = reinterpret_cast<char*>(&state_count_);
         bind_[col].is_unsigned = MLM_TRUE;
 
@@ -1368,6 +1456,18 @@ public:
     }
 
 private:
+    /// @brief Validate the statement index passed to the constructor
+    /// Safely fetch the statement from the connection based on statement index
+    /// @throw  BadValue if statement index is out of range
+    void validateStatement() {
+        if (statement_index_ >= MySqlLeaseMgr::NUM_STATEMENTS) {
+            isc_throw(BadValue, "MySqlLeaseStatsQuery"
+                      " - invalid statement index" << statement_index_);
+        }
+
+        statement_ = conn_.statements_[statement_index_];
+    }
+
     /// @brief Database connection to use to execute the query
     MySqlConnection& conn_;
 
@@ -1390,7 +1490,7 @@ private:
     /// @brief Receives the lease state when fetching a row
     uint32_t lease_state_;
     /// @brief Receives the state count when fetching a row
-    uint32_t state_count_;
+    int64_t state_count_;
 };
 
 // MySqlLeaseMgr Constructor and Destructor
@@ -2185,8 +2285,29 @@ MySqlLeaseMgr::deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery4() {
     LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
-                                                      RECOUNT_LEASE4_STATS,
+                                                      ALL_LEASE4_STATS,
                                                       false));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                       SUBNET_LEASE4_STATS,
+                                                       false,
+                                                       subnet_id));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                   const SubnetID& last_subnet_id) {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                       SUBNET_RANGE_LEASE4_STATS,
+                                                       false,
+                                                       first_subnet_id, last_subnet_id));
     query->start();
     return(query);
 }
@@ -2194,8 +2315,29 @@ MySqlLeaseMgr::startLeaseStatsQuery4() {
 LeaseStatsQueryPtr
 MySqlLeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
-                                                      RECOUNT_LEASE6_STATS,
+                                                      ALL_LEASE6_STATS,
                                                       true));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      SUBNET_LEASE6_STATS,
+                                                      true,
+                                                      subnet_id));
+    query->start();
+    return(query);
+}
+
+LeaseStatsQueryPtr
+MySqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                   const SubnetID& last_subnet_id) {
+    LeaseStatsQueryPtr query(new MySqlLeaseStatsQuery(conn_,
+                                                      SUBNET_RANGE_LEASE6_STATS,
+                                                      true,
+                                                      first_subnet_id, last_subnet_id));
     query->start();
     return(query);
 }

@@ -2873,7 +2873,16 @@ GenericLeaseMgrTest::checkQueryAgainstRowSet(const LeaseStatsQueryPtr& query,
                 << " state: " << row.lease_state_
                 << " count: " << row.state_count_;
         } else {
-           ++rows_matched;
+            if (row.state_count_ != (*found_row).state_count_) {
+                ADD_FAILURE() << "row count wrong for "
+                              << " id: " << row.subnet_id_
+                              << " type: " << row.lease_type_
+                              << " state: " << row.lease_state_
+                              << " count: " << row.state_count_
+                              << "; expected: " << (*found_row).state_count_;
+            } else {
+                ++rows_matched;
+            }
         }
     }
 
@@ -2963,7 +2972,6 @@ GenericLeaseMgrTest::testLeaseStatsQuery4() {
     {
         SCOPED_TRACE("SINGLE SUBNET");
         // Add expected rows for Subnet 2
-        expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DEFAULT, 0));
         expected_rows.insert(LeaseStatsRow(2, Lease::STATE_DECLINED, 1));
         // Start the query
         ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery4(2));
@@ -3110,7 +3118,6 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
         // Add expected row for Subnet 2
         expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_NA, Lease::STATE_DEFAULT, 2));
         expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_NA, Lease::STATE_DECLINED, 1));
-        expected_rows.insert(LeaseStatsRow(2, Lease::TYPE_PD, Lease::STATE_DEFAULT, 0));
         // Start the query
         ASSERT_NO_THROW(query = lmptr_->startSubnetLeaseStatsQuery6(2));
         // Verify contents
@@ -3123,7 +3130,6 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
         // Add expected rows for Subnet 3
         expected_rows.insert(LeaseStatsRow(3, Lease::TYPE_NA, Lease::STATE_DEFAULT, 2));
         expected_rows.insert(LeaseStatsRow(3, Lease::TYPE_NA, Lease::STATE_DECLINED, 1));
-        expected_rows.insert(LeaseStatsRow(3, Lease::TYPE_PD, Lease::STATE_DEFAULT, 0));
         // Start the query
         ASSERT_NO_THROW(query = lmptr_->startSubnetRangeLeaseStatsQuery6(2,3));
         // Verify contents
