@@ -1,3 +1,9 @@
+1393.	[build]		marcin
+	Install new header files introduced since Kea 1.3 release.
+	Also, bumped up libraries version numbers for Kea 1.4 beta
+	release.
+	(Trac #5590, git 64351229a30832735c5a81ac17ca1521aa2483b2)
+
 1392.	[func]		fdupont, marcin
 	Implemented new hook point "leases6_committed" in the DHCPv6
 	server. It supports new next step status NEXT_STEP_PARK
