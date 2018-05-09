@@ -317,10 +317,10 @@
               that these servers constantly communicate with each other to send
               updates about allocated leases and to periodically test whether
               their partners are still operational. The hook library also
-              provides and ability to send lease updates to external backup
+              provides an ability to send lease updates to external backup
               server, making it much easier to have a replacement that is almost
               up to date. The "libdhcp_ha" library provides such functionality
-              for Kea DHCP.
+              for Kea DHCP servers.
               </entry>
             </row>
             <row>
