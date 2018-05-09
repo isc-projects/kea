@@ -210,6 +210,39 @@ EOF
     test_finish 0
 }
 
+# Upgrades an existing schema to a target newer version
+# param target_version - desired schema version as "major.minor"
+mysql_upgrade_schema_to_version() {
+    target_version=$1
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${db_scripts_dir}/mysql ]; then
+        log_error "Invalid scripts directory: ${db_scripts_dir}/mysql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${db_scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${db_scripts_dir}/mysql?"
+        exit 1
+    fi
+
+    for script in ${db_scripts_dir}/mysql/upgrade*.sh
+    do
+        if [ $version = "$target_version" ]
+        then
+            break;
+        fi
+
+        echo "Processing $script file..."
+        sh ${script} --host=${db_host} --user=${db_user} --password=${db_password} ${db_name}
+        version=`mysql_version`
+    done
+
+    echo "Schema upgraded to $version"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.host_reservation-upgrade"
@@ -683,13 +716,11 @@ mysql_lease_stat_upgrade_test() {
     # verify the upgrade mechanisms which prepopulate the lease stat
     # tables.
     #
-    # Initialize database to scheme 5.1.  We need a schema that has lease state
-    # might as well used the one right before 6.0 which adds lease4/6_stat stuff.
-    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_5.1.mysql
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
 
-    # Sanity check - verify that it reports version 5.1
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "5.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    # Now upgrade to schema 4.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 4.0
 
     # Now we need insert some leases to "migrate" for both v4 and v6
     qry=\
@@ -709,7 +740,7 @@ mysql_lease_stat_upgrade_test() {
  insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 5.1 database with leases. Let's upgrade it to 6.0
+    # Ok, we have a 4.0 database with leases. Let's upgrade it to 6.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
