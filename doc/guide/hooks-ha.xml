@@ -539,7 +539,8 @@
 
           <listitem><para><command>auto-failover</command> - a boolean value
           which denotes whether the server detecting a partner's failure should
-          automatically start serving partner's clients.</para></listitem>
+          automatically start serving partner's clients. The default value of
+          this parameter is true.</para></listitem>
 
         </itemizedlist>
         </para>
