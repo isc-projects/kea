@@ -820,6 +820,72 @@
         hot standby and load balancing mode of operation.</para>
       </section> <!-- end of ha-hot-standby-config -->
 
+      <section xml:id="ha-send-lease-updates">
+        <title>Controlling Lease Updates</title>
+        <para>The HA enabled server informs its active partner about allocated
+        or renewed leases by sending appropriate control commands. The partner
+        updates the lease information in its own database. This guarantees
+        consistency of the lease information between the servers and allows for
+        designating one of the servers to handle the entire DHCP traffic in
+        case the other server becomes unavailable.</para>
+
+        <para>In some cases, though, it is desired to disable lease updates
+        between the active servers if the exchange of information about the
+        allocated leases is performed using some other mechanism. Kea supports
+        various types of databases to be used as a storage for leases, e.g.
+        MySQL, Postgres, Cassandra. Those databases include builtin solutions
+        for data replication which are often used by Kea users to provide
+        redundancy.</para>
+
+        <para>The HA hook library supports such scenarios by allowing to
+        disable lease updates over the control channel, leaving the server
+        to rely on the database replication mechanism. This is controlled by
+        the <command>send-lease-updates</command> boolean parameter, which
+        value defaults to true:
+
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "send-lease-updates": false,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+      </section>
+
       <section xml:id="ha-ctrl-agent-config">
         <title>Control Agent Configuration</title>
         <para>The <xref linkend="kea-ctrl-agent"/> describes in detail the
