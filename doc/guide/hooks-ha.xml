@@ -7,13 +7,18 @@
 -->
 
     <section xml:id="high-availability-library">
-      <title>libdhcp_ha: High Availability</title>
+      <title>ha: High Availability</title>
+      <para>
+        This section describes the High Availability hooks library, which can be
+        loaded on a pair of DHCPv4 or DHCPv6 servers to increase reliability of
+        the DHCP service in case of outage of one of the servers. This library
+        is only available to ISC customers.
+      </para>
       <para>
         High Availability (HA) of the DHCP service is provided by running multiple
         cooperating server instances. If any of these instances becomes
-        unavailable for whatever reason (DHCP software crash, control agent
-        software crash, power failure, hardware
-        failure), a surviving
+        unavailable for whatever reason (DHCP software crash, Control Agent
+        software crash, power outage, hardware failure), a surviving
         server instance can continue providing the reliable service to the clients. Many
         DHCP servers implementations include "DHCP Failover" protocol, which most
         significant features are: communication between the servers, partner
@@ -98,10 +103,10 @@
         the partner server doesn't respond to the <command>ha-heartbeat</command>
         command longer than configured amount of time, the communication is
         considered interrupted and the server may (depending on the configuration)
-        use additional measures to verify if the partner is still operating.
-        If it finds that the partner is not operating, the server transitions
-        to the <command>partner-down</command> state to handle the entire
-        DHCP traffic directed to the system.</para>
+        use additional measures (desribed further in this document) to verify if
+        the partner is still operating. If it finds that the partner is not
+        operating, the server transitions to the <command>partner-down</command>
+        state to handle the entire DHCP traffic directed to the system.</para>
 
         <para>In this case, the surviving server continues to send the
         <command>ha-heartbeat</command> command to detect when the partner wakes
@@ -176,11 +181,16 @@
           synchronizes the database.</para></listitem>.
         </itemizedlist>
 
-        <para>Whether the server responds to the DHCP queries and which
+        Whether the server responds to the DHCP queries and which
         queries it responds to is a matter of the server's state, if no
         administrative action is performed to configure the server
         otherwise. The following table provides the default behavior for
         various states.</para>
+
+        <para>The <command>DHCP Server Scopes</command> denotes what group
+        of received DHCP queries the server responds to in the given state.
+        The in-depth explanation what the scopes are can be found below.
+        </para>
 
         <para>
           <table frame="all" xml:id="ha-default-states-behavior">
@@ -244,8 +254,6 @@
               </tbody>
             </tgroup>
           </table>
-        </para>
-
         </para>
 
         <para>The DHCP service scopes require some explanation. The HA
@@ -499,7 +507,7 @@
 
           <listitem><para><command>auto-failover</command> - a boolean value
           which denotes whether the server detecting a partner's failure should
-          automatically start serving its clients.</para></listitem>
+          automatically start serving partner's clients.</para></listitem>
 
         </itemizedlist>
         </para>
@@ -844,8 +852,19 @@
         <section xml:id="ha-sync-command">
           <title>ha-sync command</title>
           <para>The <command>ha-sync</command> is issued to instruct the
-          server to synchronize the local lease database with the
-          selected peer. The database synchronization may be triggered for
+          server to synchronize its local lease database with the
+          selected peer. The server fetches all leases from the peer and
+          updates those locally stored leases which are older comparing to
+          those fetched. It also creates new leases when any of those
+          fetched do not exist in the local database. All leases that
+          are not returned by the peer but are in the local database are
+          preserved. The database synchronization is unidirectional, i.e.
+          only the database on the server to which the command has been
+          sent is updated. In order to synchronize the peer's database a
+          separate <command>ha-sync</command> has to be issued to that
+          peer.</para>
+
+          <para>The database synchronization may be triggered for
           both active and backup server type. The <command>ha-sync</command>
           has the following structure (DHCPv4 server case):
 <screen>
@@ -872,6 +891,15 @@
             synchronization is complete, the synchronizing server sends the
             <command>dhcp-enable</command> to the peer to re-enable its
             DHCP service.
+          </para>
+
+          <para>The <command>max-period</command> value should be sufficiently
+          long to guarantee that it doesn't elapse before the synchronization
+          is completed. Otherwise, the DHCP server will automatically enable
+          its DHCP function while the synchronization is still in progress.
+          If the DHCP server subsequently allocates any leases during the
+          synchronization, those new (or updated) leases will not be fetched
+          by the synchronizing server leading to database inconsistencies.
           </para>
         </section> <!-- ha-sync-command -->
 
