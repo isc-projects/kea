@@ -279,23 +279,48 @@
               or configuration parameters currently used by the server.
               </entry>
             </row>
+
+            <row>
+              <entry>Lease Commands</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 1.3.0</entry>
+              <entry>The lease commands hook library offers a number of new
+              commands used to manage leases. Kea provides a way to store lease
+              information in various backends: memfile, MySQL, PostgreSQL and
+              Cassandra. This library provides a unified interface that can
+              manipulate leases in an unified, safe way. In particular, it
+              allows: manipulate leases in memfile while Kea is running, sanity
+              check changes, check lease existence and remove all leases
+              belonging to specific subnet. It can also catch more obscure
+              errors, like adding a lease with subnet-id that does not exist in
+              the configuration or configuring a lease to use an address that is
+              outside of the subnet to which it is supposed to belong.
+              </entry>
+            </row>
+
             <row>
               <entry>High Availability</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
-              <entry>Minimizing a risk of DHCP service unavailability is achieved
-              by setting up multiple instances of the DHCP servers in a network.
-              Each server can serve selected group of clients in this network
-              (load balancing) or all clients, if it detects that its partner has
-              crashed or cannot be providing DHCP service for any other reason.
-              It is also possible to designate one server to serve all DHCP clients,
-              and leave another server as "standby". This server will activate its
-              DHCP function when it detects that its partner is not available.
-              Such cooperation between the DHCP servers requires that these
-              servers constantly communicate with each other to send updates about
-              allocated leases and to periodically test whether their partners are still
-              operational. The "libdhcp_ha" library provides such functionality for
-              Kea DHCP.
+              <entry>Minimizing a risk of DHCP service unavailability is
+              achieved by setting up a pair of the DHCP servers in a network.
+              Two modes of operation are supported. The first one is called load
+              balancing and is sometimes referred to as active-active. Each
+              server can handle selected group of clients in this network or all
+              clients, if it detects that its partner has became unavailable.
+              It is also possible
+              to designate one server to serve all DHCP clients, and leave
+              another server as "standby". This mode is called hot standby and
+              is sometimes referenced to as active-passive. This server will
+              activate its DHCP function when it detects that its partner is not
+              available.  Such cooperation between the DHCP servers requires
+              that these servers constantly communicate with each other to send
+              updates about allocated leases and to periodically test whether
+              their partners are still operational. The hook library also
+              provides an ability to send lease updates to external backup
+              server, making it much easier to have a replacement that is almost
+              up to date. The "libdhcp_ha" library provides such functionality
+              for Kea DHCP servers.
               </entry>
             </row>
             <row>
@@ -2826,21 +2851,14 @@ both the command and the response.
 
     </section> <!-- end of subnet commands -->
 
-    <section id="high-availability-library">
-      <title>libdhcp_ha: High Availability</title>
-      <para>
-        This section will describe the <command>libdhcp_ha</command> hook library
-        being developed for the Kea 1.4.0 release.
-      </para>
-    </section> <!-- end of high-availability-library -->
+    <!-- section high-availability-library -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-ha.xml"/>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-host-cache.xml"/>
 
   </section>
-
-
 
     <section xml:id="user-context">
       <title>User contexts</title>
