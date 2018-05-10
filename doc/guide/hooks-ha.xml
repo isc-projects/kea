@@ -292,6 +292,38 @@
         (see below).</para>
       </section>
 
+      <section xml:id="ha-scope-transition">
+        <title>Scope Transition in Partner Down Case</title>
+        <para>When one of the servers finds that its partner is unavailble,
+        it will start serving clients from its own scope and the scope of the
+        partner which is considered unavailable. This is straight forward
+        for the new clients, i.e. sending DHCPDISCOVER (DHCPv4) or Solicit
+        (DHCPv6), because those requests are not sent to any particular server.
+        The available server will respond to all such queries when it is
+        in the <command>partner-down</command> state.</para>
+
+        <para>When the client is renewing a lease, it will send its
+        DHCPREQUEST (DHCPv4) or Renew (DHCPv6) message directly to the
+        server which has allocated the lease being renewed. Because this
+        server is unavailable, the client will not get any response. In
+        that case, the client continues to use its lease and re-tries to
+        renew until the rebind timer (T2) elapses. The client will now enter
+        the rebinding phase, in which it will send DHCPREQUEST (DHCPv4) or
+        Rebind (DHCPv6) message to any available server. The surviving
+        server will receive the rebinding request and will (typically)
+        extend the lifetime of the lease. The client will continue to
+        contact that new server to renew its lease as appropriate.</para>
+
+        <para>When the other server becomes available, both active servers
+        will eventually transition to the <command>load-balancing</command>
+        or <command>hot-standby</command> state, in which they will be
+        responsible for their own scopes. Some clients belonging to the
+        scope of the started server will be trying to renew their leases
+        via the surviving server. This server will not respond to them
+        anymore and the client will eventually transition back to the
+        right server via rebinding mechanism again.</para>
+      </section>
+
       <section xml:id="ha-load-balancing-config">
         <title>Load Balancing Configuration</title>
         <para>The following is the configuration snippet which enables
