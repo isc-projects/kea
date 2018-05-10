@@ -350,9 +350,9 @@
                 "high-availability": [ {
                     "this-server-name": "server1",
                     "mode": "load-balancing",
-                    "heartbeat-delay": 10,
-                    "max-response-delay": 10,
-                    "max-ack-delay": 5,
+                    "heartbeat-delay": 10000,
+                    "max-response-delay": 10000,
+                    "max-ack-delay": 5000,
                     "max-unacked-clients": 5,
                     "peers": [
                         {
@@ -444,14 +444,14 @@
           </command> and <command>hot-standby</command>.</para></listitem>
 
           <listitem><para><command>heartbeat-delay</command> - specifies
-          a duration in seconds between the last heartbeat (or other command sent
+          a duration in milliseconds between the last heartbeat (or other command sent
           to the partner) and sending the next heartbeat. The heartbeats are sent
           periodically to gather the status of the partner and to verify whether
           the partner is still operating. The default value of this parameter is
-          10.</para></listitem>
+          10000 ms.</para></listitem>
 
           <listitem><para><command>max-response-delay</command> - specifies a
-          duration in seconds since the last successful communication with the
+          duration in milliseconds since the last successful communication with the
           partner, after which the server assumes that the communication with
           the partner is interrupted. This duration should be greater than
           the <command>heartbeat-delay</command>. Usually it is a greater than
@@ -460,7 +460,7 @@
           may transition to the <command>partner-down</command> state (when
           <command>max-unacked-clients</command> is 0) or trigger failure
           detection procedure using the values of the two parameters below.
-          The default value of this parameter is 60.
+          The default value of this parameter is 60000.
           </para></listitem>
 
           <listitem><para><command>max-ack-delay</command> - is one of
@@ -469,10 +469,10 @@
           of the <command>secs</command> field (DHCPv4) or <command>Elapsed Time
           </command> option (DHCPv6) which denote how long the DHCP client has been
           trying to communicate with the DHCP server. This parameter specifies the
-          maximum time for the client to try to communicate with the DHCP server,
-          after which this server assumes that the client failed to communicate
-          with the DHCP server (is "unacked"). The default value of this parameter
-          is 10.</para></listitem>
+          maximum time in milliseconds for the client to try to communicate with the
+          DHCP server, after which this server assumes that the client failed to
+          communicate with the DHCP server (is "unacked"). The default value of
+          this parameter is 10000.</para></listitem>
 
           <listitem><para><command>max-unacked-clients</command> - specifies
           how many "unacked" clients are allowed (see <command>max-ack-delay</command>)
@@ -736,9 +736,9 @@
                 "high-availability": [ {
                     "this-server-name": "server1",
                     "mode": "hot-standby",
-                    "heartbeat-delay": 10,
-                    "max-response-delay": 10,
-                    "max-ack-delay": 5,
+                    "heartbeat-delay": 10000,
+                    "max-response-delay": 10000,
+                    "max-ack-delay": 5000,
                     "max-unacked-clients": 5,
                     "peers": [
                         {
