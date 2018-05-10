@@ -23,6 +23,7 @@ nobase_dist_doc_DATA += examples/kea4/classify.json
 nobase_dist_doc_DATA += examples/kea4/classify2.json
 nobase_dist_doc_DATA += examples/kea4/comments.json
 nobase_dist_doc_DATA += examples/kea4/dhcpv4-over-dhcpv6.json
+nobase_dist_doc_DATA += examples/kea4/ha-load-balancing-primary.json
 nobase_dist_doc_DATA += examples/kea4/hooks.json
 nobase_dist_doc_DATA += examples/kea4/hooks-radius.json
 nobase_dist_doc_DATA += examples/kea4/leases-expiration.json
