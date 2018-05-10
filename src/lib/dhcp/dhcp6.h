@@ -98,7 +98,7 @@ enum DHCPv6OptionType {
 // D6O_KRB_KDC                             = 78, /* RFC6784 */
    D6O_CLIENT_LINKLAYER_ADDR               = 79, /* RFC6939 */
    D6O_LINK_ADDRESS                        = 80, /* RFC6977 */
-// D6O_RADIUS                              = 81, /* RFC7037 */
+   D6O_RADIUS                              = 81, /* RFC7037 */
    D6O_SOL_MAX_RT                          = 82, /* RFC7083 */
    D6O_INF_MAX_RT                          = 83, /* RFC7083 */
 // D6O_ADDRSEL                             = 84, /* RFC7078 */

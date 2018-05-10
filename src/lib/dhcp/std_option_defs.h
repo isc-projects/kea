@@ -437,6 +437,8 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       NO_RECORD_DEF, "" },
     { "link-address", D6O_LINK_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false,
       NO_RECORD_DEF, "" },
+    // @todo: find a way to parse content as RADIUS attributes.
+    { "radius", D6O_RADIUS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "solmax-rt", D6O_SOL_MAX_RT, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "inf-max-rt", D6O_INF_MAX_RT, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },

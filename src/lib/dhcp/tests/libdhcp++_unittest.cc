@@ -1721,6 +1721,11 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_LINK_ADDRESS, begin, begin + 16,
                                     typeid(OptionCustom));
 
+    // @todo: Put real RADIUS options in content when we'll be able to
+    // parse it...
+    LibDhcpTest::testStdOptionDefs6(D6O_RADIUS, begin, end,
+                                    typeid(Option));
+
     LibDhcpTest::testStdOptionDefs6(D6O_SOL_MAX_RT, begin, begin + 4,
                                     typeid(OptionInt<uint32_t>));
 
