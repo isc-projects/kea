@@ -668,7 +668,7 @@ pgsql_lease_stat_upgrade_test() {
  insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 4.0 database with leases. Let's upgrade it to 6.0
+    # Ok, we have a 2.0 database with leases. Let's upgrade it to 4.0
     ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
