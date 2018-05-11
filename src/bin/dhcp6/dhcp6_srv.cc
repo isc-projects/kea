@@ -1305,30 +1305,10 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
 
 Subnet6Ptr
 Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
-    // Initialize subnet selector with the values used to select the subnet.
-    SubnetSelector selector;
-    selector.iface_name_ = question->getIface();
-    selector.remote_address_ = question->getRemoteAddr();
-    selector.first_relay_linkaddr_ = IOAddress("::");
-    selector.client_classes_ = question->classes_;
-
-    // Initialize fields specific to relayed messages.
-    if (!question->relay_info_.empty()) {
-        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, question->relay_info_) {
-            if (!relay.linkaddr_.isV6Zero() &&
-                !relay.linkaddr_.isV6LinkLocal()) {
-                selector.first_relay_linkaddr_ = relay.linkaddr_;
-                break;
-            }
-        }
-        selector.interface_id_ =
-            question->getAnyRelayOption(D6O_INTERFACE_ID,
-                                        Pkt6::RELAY_GET_FIRST);
-    }
+    const SubnetSelector& selector = CfgSubnets6::initSelector(question);
 
     Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->selectSubnet(selector);
-
 
     // Let's execute all callouts registered for subnet6_receive
     if (HooksManager::calloutsPresent(Hooks.hook_index_subnet6_select_)) {
