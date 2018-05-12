@@ -664,7 +664,7 @@ mysql_lease6_stat_per_type() {
     run_statement "#6" "$qry" 1
 
     # delete the lease
-    qry="delete from lease6 where address = 111;"
+    qry="delete from lease6 where address = $addr;"
     run_statement "#7" "$qry"
 
     # leases count for declined state should be 0

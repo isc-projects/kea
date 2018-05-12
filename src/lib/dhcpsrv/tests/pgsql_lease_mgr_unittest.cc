@@ -530,4 +530,14 @@ TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
+// Tests v4 lease stats query variants.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery4) {
+    testLeaseStatsQuery4();
+}
+
+// Tests v6 lease stats query variants.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery6) {
+    testLeaseStatsQuery6();
+}
+
 }  // namespace
