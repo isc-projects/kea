@@ -368,7 +368,7 @@ protected:
     /// allocation failure.
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
-    /// @param answer server's response to the client's message.
+    /// @param answer server's response to the client's message (unused).
     /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)

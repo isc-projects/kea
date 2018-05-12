@@ -1786,7 +1786,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
 }
 
 OptionPtr
-Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& answer,
+Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query, const Pkt6Ptr& /*answer*/,
                        AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
 
