@@ -2892,7 +2892,6 @@ GenericLeaseMgrTest::checkQueryAgainstRowSet(const LeaseStatsQueryPtr& query,
 void
 GenericLeaseMgrTest::testLeaseStatsQuery4() {
     // Create three subnets.
-    int num_subnets = 3;
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet;
     Pool4Ptr pool;
@@ -3007,8 +3006,6 @@ GenericLeaseMgrTest::testLeaseStatsQuery4() {
 void
 GenericLeaseMgrTest::testLeaseStatsQuery6() {
     // Create three subnets.
-    int num_subnets = 3;
-
     CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
     Subnet6Ptr subnet;
     Pool6Ptr pool;
