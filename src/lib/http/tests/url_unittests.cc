@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ public:
         Url url(text_url);
         ASSERT_TRUE(url.isValid()) << url.getErrorMessage();
         EXPECT_EQ(expected_scheme, url.getScheme());
-        EXPECT_EQ(expected_hostname, url.getHostname());
+        EXPECT_EQ(expected_hostname, url.getStrippedHostname());
         EXPECT_EQ(expected_port, url.getPort());
         EXPECT_EQ(expected_path, url.getPath());
     }
@@ -58,7 +58,7 @@ TEST_F(UrlTest, schemeHostnameSlash) {
 
 // URL contains scheme, IPv6 address and slash.
 TEST_F(UrlTest, schemeIPv6AddressSlash) {
-    testValidUrl("http://[2001:db8:1::100]/", Url::HTTP, "[2001:db8:1::100]", 0, "/");
+    testValidUrl("http://[2001:db8:1::100]/", Url::HTTP, "2001:db8:1::100", 0, "/");
 }
 
 // URL contains scheme, IPv4 address and slash.
@@ -84,7 +84,7 @@ TEST_F(UrlTest, schemeHostnamePortSlash) {
 
 // URL contains scheme, IPv6 address and port.
 TEST_F(UrlTest, schemeIPv6AddressPort) {
-    testValidUrl("http://[2001:db8:1::1]:8080/", Url::HTTP, "[2001:db8:1::1]", 8080, "/");
+    testValidUrl("http://[2001:db8:1::1]:8080/", Url::HTTP, "2001:db8:1::1", 8080, "/");
 }
 
 // URL contains scheme, hostname, port and path.
