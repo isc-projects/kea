@@ -534,6 +534,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         int64_t assigned_pds = 0;
         bool add_row = false;
         while (!query_eof && query_row.subnet_id_ == cur_id) {
+
             if (query_row.lease_state_ == Lease::STATE_DEFAULT) {
                 add_row = true;
                 if (query_row.lease_type_ == Lease::TYPE_NA) {
@@ -541,7 +542,6 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
                 } else {
                     assigned_pds = query_row.state_count_;
                 }
-                break;
             } else if (query_row.lease_state_ == Lease::STATE_DECLINED) {
                 add_row = true;
                 declined = query_row.state_count_;
