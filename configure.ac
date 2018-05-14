@@ -89,9 +89,7 @@ AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
 # Include premium configuration
-PREMIUM_HOOKS="forensic_log flex_id host_cmds subnet_cmds high_availability radius host_cache"
 INCLUDED_HOOKS=
-
 
 PREMIUM_DIR=
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=
