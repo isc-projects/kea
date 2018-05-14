@@ -86,8 +86,7 @@ public:
             EXPECT_TRUE(args_txt.find(name) != string::npos);
         } else {
             EXPECT_TRUE(args_txt.find(name) == string::npos);
-        }
-    }
+        } }
 
     /// @brief tests specified command and verifies response
     ///
@@ -385,16 +384,40 @@ public:
 
         cfg_mgr.commit();
 
-#if 0
-            addLease4("192.0.2.1", 1);
-            addLease4("192.0.2.2", 2, Lease::STATE_DECLINED);
-#endif
+        // Subnet 10
+        // 2 assigned, 3 declined,  1 expired
+        addLease4("192.0.1.1", 10);
+        addLease4("192.0.1.2", 10, Lease::STATE_DECLINED);
+        addLease4("192.0.1.3", 10, Lease::STATE_DECLINED);
+        addLease4("192.0.1.4", 10, Lease::STATE_DECLINED);
+        addLease4("192.0.1.5", 10);
+        addLease4("192.0.1.6", 10, Lease::STATE_EXPIRED_RECLAIMED);
+
+        // Subnet 20
+        // 3 assigned, 0 declined,  2 expired
+        addLease4("192.0.2.1", 20);
+        addLease4("192.0.2.2", 20);
+        addLease4("192.0.2.3", 20);
+        addLease4("192.0.2.4", 20, Lease::STATE_EXPIRED_RECLAIMED);
+        addLease4("192.0.2.5", 20, Lease::STATE_EXPIRED_RECLAIMED);
+
+        // Subnet 30 no leases
+
+        // Subnet 40, 4 assigned
+        addLease4("192.0.4.1", 40);
+        addLease4("192.0.4.2", 40);
+        addLease4("192.0.4.3", 40);
+        addLease4("192.0.4.4", 40);
+
+        // Subnet 50, 1 assigned, 1 declined
+        addLease4("192.0.5.1", 50);
+        addLease4("192.0.5.2", 50, Lease::STATE_DECLINED);
     }
 
     /// @brief Initializes lease manager for v6 operation
     ///
-    /// Creates a lease manager (memfile, trimmed down to keep everything in memory
-    /// only) and adds five subnets to the configuration.
+    /// Creates a lease manager (memfile, trimmed down to keep everything in
+    /// memory only) and adds five subnets to the configuration.
     void initLeaseMgr6() {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create("type=memfile persist=false universe=6");
@@ -430,6 +453,7 @@ public:
         subnet->addPool(pool);
         subnets->add(subnet);
 
+        // Subnet 50 is prefix only
         subnet.reset(new Subnet6(IOAddress("2001:db8:5::"), 64, 1, 2, 3, 4, 50));
         pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("5001::"), 96, 112));
         subnet->addPool(pool);
@@ -437,15 +461,37 @@ public:
 
         cfg_mgr.commit();
 
-#if 0
+        // Subnet 10:  2 assigned NAs, 3 declined NAs, 1 expired NAs
         addLease6("2001:db8:1::1", 10);
-#endif
+        addLease6("2001:db8:1::2", 10);
+        addLease6("2001:db8:1::3", 10, Lease::STATE_DECLINED);
+        addLease6("2001:db8:1::4", 10, Lease::STATE_DECLINED);
+        addLease6("2001:db8:1::5", 10, Lease::STATE_DECLINED);
+        addLease6("2001:db8:1::6", 10, Lease::STATE_EXPIRED_RECLAIMED);
+
+        // Subnet 20:  3 assigned NAs
+        addLease6("2001:db8:2::1", 20);
+        addLease6("2001:db8:2::2", 20);
+        addLease6("2001:db8:2::3", 20);
+
+        // Subnet 30:  1 assigned NAs, 1 declined NAs, 3 PDs
+        addLease6("2001:db8:3::1", 30);
+        addLease6("2001:db8:3::2", 30, Lease::STATE_DECLINED);
+        addPrefix("3001::1:0", 112, 30);
+        addPrefix("3001::2:0", 112, 30);
+        addPrefix("3001::3:0", 112, 30);
+
+        // Subnet 40:  no leases
+
+        // Subnet 50:  2 PDs
+        addPrefix("5001::1:0", 112, 50);
+        addPrefix("5001::2:0", 112, 50);
     }
 
     /// @brief Creates an IPv4 lease
     ///
-    /// Lease parameters: valid lifetime = 3600, cltt = 12345678, fqdn-fwd = false,
-    /// fqdn-rev = true, hostname = myhost.example.com
+    /// Lease parameters: valid lifetime = 3600, cltt = 12345678,
+    /// fqdn-fwd = false,fqdn-rev = true, hostname = myhost.example.com
     ///
     /// @param ip_address IP address for the lease.
     /// @param subnet_id subnet identifier
@@ -488,28 +534,32 @@ public:
     /// @param subnet_id subnet identifier
     /// @param state lease state
     void addLease6(const std::string& ip_address, const SubnetID& subnet_id,
-                   const int state = Lease::STATE_DEFAULT) {
+                   const int state = Lease::STATE_DEFAULT,
+                   const Lease::Type& lease_type = Lease::TYPE_NA,
+                   const int prefix_len = 128) {
         Lease6Ptr lease(new Lease6());
 
         ++duid_[7];
 
         lease->addr_ = IOAddress(ip_address);
-        lease->type_ = Lease::TYPE_NA;
-        lease->prefixlen_ = 128;
+        lease->type_ = lease_type;
+        lease->prefixlen_ = prefix_len;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(duid_));
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 3600;
         lease->cltt_ = 12345678;
         lease->subnet_id_ = subnet_id;
-        lease->fqdn_fwd_ = false;
-        lease->fqdn_rev_ = true;
-        lease->hostname_ = "myhost.example.com.";
         lease->state_ = state;
 
         ASSERT_NO_THROW(lmptr_->addLease(lease))
-                        << "cannot add lease6: " << ip_address
-                        << " subnet: " << subnet_id;
+                        << "cannot add lease6: " << lease->toText();
+        }
+
+    void addPrefix(const std::string& ip_address, const int prefix_len,
+                   const SubnetID& subnet_id,
+                   const int state = Lease::STATE_DEFAULT) {
+        addLease6(ip_address, subnet_id, state, Lease::TYPE_PD, prefix_len);
     }
 
     /// @brief Pointer to the lease manager
@@ -544,6 +594,7 @@ struct TestScenario {
     std::string exp_result_json;
 };
 
+// Verifies detection of invalid v4 input parameters.
 TEST_F(StatCmdsTest, StatLease4GetBadParams) {
     // Initialize lease manager
     initLeaseMgr4();
@@ -686,11 +737,9 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
     }
 }
 
-// Verifies result content for v4s statistics with with subnets,
-// but no leases.  These tests make it easier to see that the
-// permutations of selection criteria generate the correct rows.
+// Verifies result content for valid v4 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
-TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
+TEST_F(StatCmdsTest, statLease4GetValid) {
 
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr4();
@@ -713,11 +762,11 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
         "        \"assigned-addreses\", \"declined-addreses\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 10, 256, 0, 0 ],\n"
-        "       [ 20,  16, 0, 0 ],\n"
+        "       [ 10, 256, 2, 3 ],\n"
+        "       [ 20,  16, 3, 0 ],\n"
         "       [ 30, 256, 0, 0 ],\n"
-        "       [ 40,  16, 0, 0 ],\n"
-        "       [ 50, 256, 0, 0 ]\n"
+        "       [ 40,  16, 4, 0 ],\n"
+        "       [ 50, 256, 1, 1 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -738,7 +787,7 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
         "        \"assigned-addreses\", \"declined-addreses\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 20, 16, 0, 0 ],\n"
+        "       [ 20, 16, 3, 0 ],\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -762,8 +811,8 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
         "        \"assigned-addreses\", \"declined-addreses\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 10, 256, 0, 0 ],\n"
-        "       [ 20,  16, 0, 0 ],\n"
+        "       [ 10, 256, 2, 3 ],\n"
+        "       [ 20,  16, 3, 0 ],\n"
         "       [ 30, 256, 0, 0 ],\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
@@ -788,9 +837,9 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
         "        \"assigned-addreses\", \"declined-addreses\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 20,  16, 0, 0 ],\n"
+        "       [ 20,  16, 3, 0 ],\n"
         "       [ 30, 256, 0, 0 ],\n"
-        "       [ 40,  16, 0, 0 ],\n"
+        "       [ 40,  16, 4, 0 ],\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -815,8 +864,8 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
         "   ],\n"
         "   \"rows\": [\n"
         "       [ 30, 256, 0, 0 ],\n"
-        "       [ 40,  16, 0, 0 ],\n"
-        "       [ 50, 256, 0, 0 ],\n"
+        "       [ 40,  16, 4, 0 ],\n"
+        "       [ 50, 256, 1, 1 ],\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -841,7 +890,7 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
         "   ],\n"
         "   \"rows\": [\n"
         "       [ 30, 256, 0, 0 ],\n"
-        "       [ 40,  16, 0, 0 ],\n"
+        "       [ 40,  16, 4, 0 ],\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -858,6 +907,8 @@ TEST_F(StatCmdsTest, statLease4GetValidNoLeases) {
 
 }
 
+// Verifies result content for valid v4 statistic commands that
+// result in no matching subnets.
 TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
 
     // Initialize lease manager (false = v4, false = don't add leases)
@@ -917,7 +968,7 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
 
 }
 
-
+// Verifies detection of invalid v6 input parameters.
 TEST_F(StatCmdsTest, StatLease6GetBadParams) {
     // Initialize lease manager
     initLeaseMgr6();
@@ -1060,11 +1111,9 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
     }
 }
 
-// Verifies result content for v6s statistics with with subnets,
-// but no leases.  These tests make it easier to see that the
-// permutations of selection criteria generate the correct rows.
+// Verifies result content for valid v6 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
-TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
+TEST_F(StatCmdsTest, statLease6GetValid) {
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1087,11 +1136,11 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
         "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 10, 65536, 0, 0, 0, 0 ],\n"
-        "       [ 20, 16777216, 0, 0, 0, 0 ],\n"
-        "       [ 30, 16, 0, 0, 65536, 0 ],\n"
+        "       [ 10, 65536, 2, 3, 0, 0 ],\n"
+        "       [ 20, 16777216, 3, 0, 0, 0 ],\n"
+        "       [ 30, 16, 1, 1, 65536, 3 ],\n"
         "       [ 40, 16777216, 0, 0, 0, 0 ],\n"
-        "       [ 50, 0, 0, 0, 65536, 0 ]\n"
+        "       [ 50, 0, 0, 0, 65536, 2 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -1112,7 +1161,7 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
         "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 20, 16777216, 0, 0, 0, 0 ]\n"
+        "       [ 20, 16777216, 3, 0, 0, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -1136,9 +1185,9 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
         "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 10, 65536, 0, 0, 0, 0 ],\n"
-        "       [ 20, 16777216, 0, 0, 0, 0 ],\n"
-        "       [ 30, 16, 0, 0, 65536, 0 ]\n"
+        "       [ 10, 65536, 2, 3, 0, 0 ],\n"
+        "       [ 20, 16777216, 3, 0, 0, 0 ],\n"
+        "       [ 30, 16, 1, 1, 65536, 3 ],\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -1162,8 +1211,8 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
         "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 20, 16777216, 0, 0, 0, 0 ],\n"
-        "       [ 30, 16, 0, 0, 65536, 0 ],\n"
+        "       [ 20, 16777216, 3, 0, 0, 0 ],\n"
+        "       [ 30, 16, 1, 1, 65536, 3 ],\n"
         "       [ 40, 16777216, 0, 0, 0, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
@@ -1188,9 +1237,9 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
         "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 30, 16, 0, 0, 65536, 0 ],\n"
+        "       [ 30, 16, 1, 1, 65536, 3 ],\n"
         "       [ 40, 16777216, 0, 0, 0, 0 ],\n"
-        "       [ 50, 0, 0, 0, 65536, 0 ]\n"
+        "       [ 50, 0, 0, 0, 65536, 2 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
         "}\n"
@@ -1214,7 +1263,7 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
         "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
-        "       [ 30, 16, 0, 0, 65536, 0 ],\n"
+        "       [ 30, 16, 1, 1, 65536, 3 ],\n"
         "       [ 40, 16777216, 0, 0, 0, 0 ]\n"
         "   ],\n"
         "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
@@ -1232,6 +1281,8 @@ TEST_F(StatCmdsTest, statLease6GetValidNoLeases) {
 
 }
 
+// Verifies result content for valid v6 statistic commands that
+// result in no matching subnets.
 TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
 
     // Initialize lease manager
