@@ -89,13 +89,15 @@ AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
 # Include premium configuration
+PREMIUM_HOOKS="forensic_log flex_id host_cmds subnet_cmds high_availability radius host_cache"
+INCLUDED_HOOKS=
+
+
 PREMIUM_DIR=
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=
 AC_DEFUN([AX_PREMIUM],[])
 # m4_sinclude includes the file if it exists at autoreconf time
 m4_sinclude(premium/config.m4)
-m4_sinclude(premium/tier1.m4)
-m4_sinclude(premium/tier2.m4)
 AC_SUBST(PREMIUM_DIR)
 AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 AX_PREMIUM
@@ -1541,14 +1543,12 @@ Package:
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium package:   yes
-  Tier1 Packages:    ${TIER1_PACKAGES}
-  Tier2 Packages:    ${TIER2_PACKAGES}
-  Included Packages: ${INCLUDED_PACKAGES}
+  Premium hooks:     yes
+  Included Hooks:   ${INCLUDED_HOOKS}
 END
 else
 cat >> config.report << END
-  Premium package:   no
+  Premium hooks:     no
 END
 fi
 cat >> config.report << END
