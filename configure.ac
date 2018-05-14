@@ -95,7 +95,7 @@ PREMIUM_DIR=
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=
 AC_DEFUN([AX_PREMIUM],[])
 # m4_sinclude includes the file if it exists at autoreconf time
-m4_sinclude(premium/config.m4)
+m4_sinclude(m4macros/premium.m4)
 AC_SUBST(PREMIUM_DIR)
 AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 AX_PREMIUM
