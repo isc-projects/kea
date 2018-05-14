@@ -308,11 +308,11 @@ public:
     /// argument accordingly.
     ///
     /// Example command:
-    /// {\n"
-    ///     "command": "lease4-wipe",\n"
-    ///     "arguments": {"
+    /// {
+    ///     "command": "lease4-wipe",
+    ///     "arguments": {
     ///         "subnet-id": 44
-    ///     }\n"
+    ///     }
     /// }";
     ///
     /// @param handle Callout context - which is expected to contain the
@@ -332,12 +332,12 @@ public:
     /// argument accordingly.
     ///
     /// Example command:
-    /// {\n"
-    ///     "command": "lease4-wipe",\n"
-    ///     "arguments": {"
+    /// {
+    ///     "command": "lease4-wipe",
+    ///     "arguments": {
     ///         "subnet-id": 44
-    ///     }\n"
-    /// }";
+    ///     }
+    /// };
     ///
     /// @param handle Callout context - which is expected to contain the
     /// wipe command JSON text in the "command" argument
