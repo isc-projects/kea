@@ -43,11 +43,11 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-///@brief Implements command handlinge for stat-lease<x>-get commands
+///@brief Implements command handlinge for stat-leaseX-get commands
 class LeaseStatCmdsImpl : private CmdsImpl {
 public:
 
-    /// @brief Wrapper class stat-lease<x>-get command parameters.
+    /// @brief Wrapper class stat-leaseX-get command parameters.
     class Parameters {
     public:
         /// @brief Specifies the subnet-id for a single subnet, or
@@ -92,7 +92,7 @@ public:
     int
     statLease6GetHandler(CalloutHandle& handle);
 
-    /// @Brief Parses command arguments into stat-lease<x>-get parameters
+    /// @brief Parses command arguments into stat-leaseX-get parameters
     /// @param cmd_args Element form of command arguments to parse
     /// @throw BadValue if any of the following rules are broken:
     ///
@@ -165,17 +165,17 @@ public:
     /// @brief Adds a row of Lease4 stat values to a list of value rows
     ///
     /// @param[out] value_rows  list of rows to which to add
-    /// @param[out] subent_id  id of the subnet of the new row. This value is
+    /// @param[out] subnet_id  id of the subnet of the new row. This value is
     /// also used for fetching the total addresses in the subnet
     /// @param assigned number of assigned addresses in the subnet
-    /// @param assigned number of declined addresses in the subnet
+    /// @param declined number of declined addresses in the subnet
     void addValueRow4(ElementPtr value_rows, const SubnetID &subnet_id,
                       int64_t assigned, int64_t declined);
 
     /// @brief Adds a row of Lease6 stat values to a list of value rows
     ///
     /// @param[out] value_rows  list of rows to which to add
-    /// @param[out] subent_id  id of the subnet of the new row. This value is
+    /// @param[out] subnet_id  id of the subnet of the new row. This value is
     /// also used for fetching the total NAs and PDs in the subnet
     /// @param assigned number of assigned NAs in the subnet
     /// @param declined number of declined NAs in the subnet

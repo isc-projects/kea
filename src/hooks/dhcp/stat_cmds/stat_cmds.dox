@@ -21,78 +21,179 @@ particular its section about hooks.
 
 @section stat_cmds Stat Commands Overview
 
-Stat Commands (or stat_cmds) is a Hook library that can be loaded by Kea to
-extend it with additional mechanisms.
+Stat Commands (or stat_cmds) is a Hook library that can be loaded by
+either kea-dhcp4 and kea-dhcp6 servers to extend them with additional
+statistics mechanisms.
 
-The primary purpose of this library is to provide commands that manage leases.
-As such, the whole library is structured around command handlers. When the
-library is loaded it registers a number of handlers for new commands.  When a
-command is issued (be it directly via control channel or indirectly via REST
+The initial purpose of this library is provide supplemental commands for
+obtaining accurate lease statistics in deployments that share lease storage
+between multiple Kea DHCP servers. It is likely that additional statistics
+related commands will be added to this library in future releases as use
+cases for them arise.
+
+The library is structured around command handlers. When the library is
+loaded it registers handlers for new commands.  When a command
+is issued (be it directly via control channel or indirectly via REST
 interface from control agent), the code receives a JSON command with
-parameters. Those are parsed and then actual operation commences.  This
-operation always interacts with an instantiation of isc::dhcp::StatMgr
-instance, which is Kea's way of storing leases. At the time of writing this text
-(Aug. 2017), Kea supports four types of lease managers: memfile, MySQL,
-PostgreSQL or Cassandra. The lease commands provided by this library
-provide a unified interface for those backends.
+parameters.  The command is routed the appropriate handler, its parameters
+are parsed and command executed accordingly.  Lastly, a response is
+constructed and shipped back to the client.
 
-As with other hooks, this one also keeps its code in a separate namespace which
+This lease statistics commands interact with both the isc::dhcp::StatsMgr
+and the isc::dhcp::LeaseMgr instance.  At the time of writing this text
+(May, 2018), Kea supports four types of lease managers: memfile, MySQL,
+PostgreSQL or Cassandra. The lease statistics commands provided by this
+library provide a unified interface supported by all four of these backends.
+
+As with other hooks, this one keeps its code in a separate namespace which
 corresponds to the file name of the library: isc::stat_cmds.
+
+For background on the design and design choices please refer to: <a
+href="http://kea.isc.org/wiki/SharedLeaseStorageStats">Shared Lease Stats Design</a>
 
 @section stat_cmdsCode Stat Commands Code Overview
 
-The library operation starts with Kea calling the load() function (file
-load_unload.cc).  It instantiates an isc::stat_cmds::StatCmds object.
-The constructor of that object registers all of the lease commands. For a list,
-see @ref isc::stat_cmds::StatCmds class documentation.  This class uses Pimpl
-design pattern, thus the real implementation is hidden in isc::stat_cmds::StatCmdsImpl.
+Library operation starts with Kea calling the load() function (file
+stat_cmds_callouts.cc).  This function registers the command callout
+functions for each of the libraries commands. For a list,
+see @ref isc::stat_cmds::StatCmds class documentation.  This class uses
+the Pimpl design pattern, and thus the actual implementation is hidden
+in @ref isc::stat_cmds::LeaseStatCmdsImpl.
 
-Almost every command has its own handler, except few that share the same handler
-between v4 and v6 due to its similarity. For example
-isc::stat_cmds::StatCmdsImpl::leaseAddHandler handles lease4-add and lease6-add
-commands. Although the details differ between handlers, the general approach
-is the same. First, it starts with parameters sanitization and then some
-interaction with isc::dhcp::StatMgr is conducted.
+Unlike similar libraries, the Pimpl class is differentiated from the
+the StatCmds class by the prefix "Lease" and it is instantiated in the outer
+handler (e.g. @ref isc::stat_cmds::StatCmds::statLease4GetHandler) rather than
+the StatCmds constructor.  This was done in the event that commands, unrelated
+to lease statistics, are added to this library and that would be better served
+by Pimpl derviations specific to them.
 
-For commands that do something with a specific lease (lease4-get, lease6-get,
-lease4-del, lease6-del), there is a @ref isc::stat_cmds::StatCmdsImpl::Parameters
-class that contains parsed elements.
+@subsection stat_cmdsLeaseStatCode Lease Stat Commands Code Overview
 
-For details see documentation and code of the following handlers:
-- @ref isc::stat_cmds::StatCmdsImpl::leaseAddHandler (lease4-add, lease6-add)
-- @ref isc::stat_cmds::StatCmdsImpl::leaseGetHandler (lease4-get, lease6-get)
-- @ref isc::stat_cmds::StatCmdsImpl::lease4DelHandler (lease4-del)
-- @ref isc::stat_cmds::StatCmdsImpl::lease6DelHandler (lease6-del)
-- @ref isc::stat_cmds::StatCmdsImpl::lease4UpdateHandler (lease4-update)
-- @ref isc::stat_cmds::StatCmdsImpl::lease6UpdateHandler (lease6-update)
-- @ref isc::stat_cmds::StatCmdsImpl::lease4WipeHandler (lease4-wipe)
-- @ref isc::stat_cmds::StatCmdsImpl::lease6WipeHandler (lease6-wipe)
+There are two shared lease statistic commands, "stat-lease4-get" and "stat-lease6-get".
+Both of these support the same input parameters and have their own command handlers:
 
-@section stat_cmdsDesigns Stat Commands Design choices
+- @ref isc::stat_cmds::LeaseStatCmdsImpl::statLease4GetHandler (stat-lease4-get)
+- @ref isc::stat_cmds::LeaseStatCmdsImpl::statLease6GetHandler (stat-lease6-get)
 
-The lease manipulation commands were implemented to provide a convenient interface
-for sysadmins. The primary goal was to offer a way to interact with the live
-lease database in unified way, regardless of the actual backend being used.
+Briefly, the commands are intended to fetch the lease statistics per subnet
+for the range of subnets described by the input parameters.  JSON text structure
+of the commands is as follows:
 
-For some backends (MySQL, PostgreSQL and Cassandra) it is possible to interact
-directly with the backend while Kea is running and possibly change its content. This
-ability is both powerful and dangerous. In particular, only rudimentary
-checks are enforced by the DB schemas (e.g. not possible to have two leases
-for the same address). However, it does not prevent sysadmins from making
-more obscure errors, like inserting leases for subnets that do not exist
-or configuring an address that is topologically outside of the subnet to which
-it should belong. These kind of checks are only possible by DHCP-aware
-code, which this library provides.
+DHCPv4 command:
 
-Some of the queries may require a seemingly odd set of parameters. For example,
-lease6-get query requires at least DUID, subnet-id and IAID to retrieve a lease
-by DUID. The need for a sysadmin to know and specify an IAID is troublesome.
-However, the guiding principle here was to use whatever queries were already
-exposed by the lease manager and not introduce new indexes, unless absolutely
-necessary. This ensures that there is no performance degradation when the
-library is loaded. The only exception for that was lease4-wipe and lease6-wipe
-commands that remove all leases from specific subnet. As there were no
-queries that could retrieve or otherwise enumerate leases for a specific subnet,
-a new query type and a new index had to be added.
+@code
+{
+    "command": "stat-lease4-get",
+    "arguments": {
+        "subnet-id": x
+        "subnet-range": {
+            "first-subnet-id": x,
+            "last-subnet-id": y
+        }
+    }
+}
+
+    where subnet-id and subnet-range are optional and mutually exclusive
+@endcode
+
+DHCPv6 command:
+
+@code
+{
+    "command": "stat-lease6-get",
+    "arguments": {
+        "subnet-id": x
+        "subnet-range": {
+            "first-subnet-id": x,
+            "last-subnet-id": y
+        }
+    }
+}
+
+    where subnet-id and subnet-range are optional and mutually exclusive
+@endcode
+
+
+
+Command handling
+for both commands is symetrical consists of the following steps:
+
+-# The input parameters (if any) are parsed.  Invalid values or
+combinations if detected result in generating a CONTROL_RESULT_ERROR
+response to the client.  (See @ref isc::stat_cmds::LeaseStatCmdsImpl::getParameters
+and @ref isc::stat_cmds::LeaseStatCmdsImpl::Parameters)
+
+-# The parameters are used to identify the range of configured subnets
+to include in the response.  This is done by querying subnet configuration
+housed by @ref isc::dhcp::CfgMgr. If the range contains no known subnets then a
+CONTROL_RESULT_EMPTY response is sent back to the client.
+
+-# The initial result-set response is constructed.  Essentially this is
+an @ref isc::data::Element tree, which converted to JSON would appear as follows:
+
+@code
+    "result-set": {
+        "timestamp": "2018-03-22 09:43:30.815371",
+        "columns": ["<label-1>, <label-2>, ... ],
+        "rows": []
+    }
+@endcode
+
+-# The acutal lease statistics are then retrieved from @ref isc::dhcp::LeaseMgr instance
+by invoking of the three functions based on the input parameters:
+
+DHCPv4 functions:
+
+- @ref isc::dhcp::LeaseMgr::startLeaseStatsQuery4
+- @ref isc::dhcp::LeaseMgr::startSubnetLeaseStatsQuery4
+- @ref isc::dhcp::LeaseMgr::startSubnetRangeLeaseStatsQuery4
+
+DHCPv6 functions:
+
+- @ref isc::dhcp::LeaseMgr::startLeaseStatsQuery6
+- @ref isc::dhcp::LeaseMgr::startSubnetLeaseStatsQuery6
+- @ref isc::dhcp::LeaseMgr::startSubnetRangeLeaseStatsQuery6
+
+-# Iterate over the range of qualifying subnets adding a row of statistics for
+each subnet to the result-set.  Each row combines the subnet total(s) from isc::dhcp::StatsMgr
+with the type and state counts from the lease query results. For subnets with no query
+data (i.e. no leases), their rows have non-zero values for totals only.
+
+-# Finally, a CONTROL_RESULT_SUCCESS repsonse is generated containing the populated result-set.
+
+A DHCPv4 response might look like this:
+
+@code
+        {
+        "result-set\": {
+           "columns\": [
+                "subnet-id", "total-addreses",
+                "assigned-addreses", "declined-addreses"
+           ],
+           "rows\": [
+               [ 30, 256, 100, 2 ],
+               [ 40,  16, 0, 0 ],
+               [ 50, 256, 35, 0 ],
+           ],
+           timestamp\": \"2018-05-04 15:03:37.000000\" }
+        }
+@endcode
+
+and DHCPv6 response might look like this:
+
+@code
+        {
+        "result-set": {
+           "columns": [
+                "subnet-id", "total-nas", "assigned-nas",
+                "declined-nas", "total-pds", "assigned-pds"
+           ],
+           "rows": [
+               [ 30, 16, 6, 0, 65536, 400 ],
+               [ 40, 16777216, 989837, 0, 0, 0 ]
+           ],
+           "timestamp": "2018-05-04 15:03:37.000000" }
+        }
+@endcode
 
 */

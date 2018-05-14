@@ -606,7 +606,7 @@ public:
     /// ordered ascending by subnet ID.
     ///
     /// @param first_subnet_id first subnet in the range of subnets
-    /// @param last last_subnet_id subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
                                                                 const SubnetID& last_subnet_id);

@@ -40,9 +40,8 @@ public:
     /// {
     ///     "command": "stat-lease4-get",
     ///     "arguments": {
-    ///         "from_storage: true/false, // optional - maybe?
-    ///         "subnet-id": x,            // optional
-    ///         "subnet-id-range": {       // optional
+    ///         "subnet-id": x             // optional
+    ///         "subnet-range": {       // optional
     ///             "first-subnet-id": x,  // id >= x
     ///             "last-subnet-id": y    // id <= x
     ///         }
@@ -84,9 +83,8 @@ public:
     /// {
     ///     "command": "stat-lease6-get",
     ///     "arguments": {
-    ///         "from_storage: true/false,
-    ///         "subnet-id": x,            // optional
-    ///         "subnet-id-range": {       // optional
+    ///         "subnet-id": x             // optional
+    ///         "subnet-range": {       // optional
     ///                 "first-subnet-id": x,   // id >= x
     ///                 "last-subnet-id": y     // id <= x
     ///         }
