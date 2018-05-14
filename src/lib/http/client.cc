@@ -445,7 +445,8 @@ Connection::doTransaction(const HttpRequestPtr& request,
         /// @todo We're getting a hostname but in fact it is expected to be an IP address.
         /// We should extend the TCPEndpoint to also accept names. Currently, it will fall
         /// over for names.
-        TCPEndpoint endpoint(url_.getHostname(), static_cast<unsigned short>(url_.getPort()));
+        TCPEndpoint endpoint(url_.getStrippedHostname(),
+                             static_cast<unsigned short>(url_.getPort()));
         SocketCallback socket_cb(boost::bind(&Connection::connectCallback, shared_from_this(),
                                              request_timeout, _1));
 
