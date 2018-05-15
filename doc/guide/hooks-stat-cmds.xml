@@ -2,7 +2,7 @@
   <title>stat_cmds: Supplemental Statistics Commands</title>
   <para>
     This library provides additional statistics commands for
-    retrieving lease statistics from kea-dhcp servers.  These commands
+    retrieving lease statistics from Kea DHCP servers.  These commands
     were added to address an issue with obtaining accurate lease
     statistics in deployments running multiple Kea servers that use
     shared lease back end.  The in-memory statistics kept by individual
@@ -35,14 +35,14 @@
   </para>
 
   <para>
-    All commands use JSON syntax and can be issued either using directly to
+    All commands use JSON syntax and can be issued either directly to
     the servers via the control channel (see <xref linkend="ctrl-channel"/>)
     or via Control Agent (see <xref linkend="kea-ctrl-agent"/>).
   </para>
 
   <para>
     This library may be loaded by both kea-dhcp4 and kea-dhcp6 servers.
-    It is loaded in the same way as other other libraries and currently has
+    It is loaded in the same way as other libraries and currently has
     no parameters:
   </para>
 <para>
@@ -59,7 +59,7 @@
 </para>
 
   <para>
-    In a deployment with multiple kea-dhcp servers sharing a common lease
+    In a deployment with multiple Kea DHCP servers sharing a common lease
     storage, it may be loaded by any or all of the servers.  However, one
     thing to keep in mind is that a server's response to a stat-lease{4/6}-get
     command will only contain data for subnets known to that server.  In
@@ -91,12 +91,12 @@
             will be 2 (i.e. CONTROL_RESULT_EMPTY).
             <itemizedlist>
               <listitem>
-                <command>first-subnet-id</command> - ID of the first
-                subnet in the range.
+                <para><command>first-subnet-id</command> - ID of the first
+                subnet in the range.</para>
               </listitem>
               <listitem>
-                <command>last-subnet-id</command> - ID of the first
-                subnet in the range.
+                <para><command>last-subnet-id</command> - ID of the first
+                subnet in the range.</para>
               </listitem>
             </itemizedlist>
             </para>
@@ -106,8 +106,9 @@
         If no parameters are given, the result will contain data for all
         known subnets.  Note that in configurations with large numbers of
         subnets, this can be result in a large response.
-        <para>
-        The following command would fetch lease statistcis for all known subnets from kea-dhcp4 server:
+    </para>
+    <para>
+      The following command would fetch lease statistcis for all known subnets from kea-dhcp4 server:
 <screen>
 {
   "command": "stat-lease4-get",
@@ -115,8 +116,8 @@
   }
 }
 </screen>
-</para>
-      <para>
+    </para>
+    <para>
         The following command would fetch lease statistcis for subnet ID 10 from kea-dhcp6 server:
 <screen>
 {
@@ -126,8 +127,8 @@
   }
 }
 </screen>
-</para>
-        <para>
+    </para>
+    <para>
         The following command would fetch lease statistcis for all subnets from subnet ID 10 through 50 from kea-dhcp4 server:
 <screen>
 {
@@ -140,99 +141,102 @@
   }
 }
 </screen>
-</para>
+    </para>
 
-<para>
-  The response to the either command will contain three elements:
-  <itemizedlist>
-    <listitem>
-      <para><command>result</command> - numeric value indicating the outcome of the
-        command where:
-        <itemizedlist>
-          <listitem><command>0</command> - command was successful</listitem>
-          <listitem><command>1</command> - an error occurred, an explanation will
-            be the "text" element</listitem>
-          <listitem><command>2</command> - indicates the fetch found no matching data</listitem>
-        </itemizedlist>
-      </para>
-    </listitem>
-    <listitem>
-      <para><command>text</command> - an explanation of the command outcome. When the command
-      succeeds it will contain the command name along with the number of rows returned.</para>
-    </listitem>
-    <listitem>
-      <para><command>arguments</command></para> - a map containing the data returned by the
-        command as the element "result-set", which patterned after SQL statement responses:
+    <para>
+      The response to the either command will contain three elements:
       <itemizedlist>
-        <listitem><command>columns</command> - a list of text column labels.
-          The columns returned for DHCPv4 are:
+        <listitem>
+          <para><command>result</command> - numeric value indicating the outcome of the
+          command where:
           <itemizedlist>
-            <listitem><command>subnet-id</command> - ID of the subnet</listitem>
-            <listitem><command>total-addresses</command> - total number of addresses
+            <listitem><simpara><command>0</command> - command was successful</simpara></listitem>
+            <listitem><simpara><command>1</command> - an error occurred, an explanation will
+            be the "text" element</simpara></listitem>
+            <listitem><simpara><command>2</command> - indicates the fetch found no matching data</simpara></listitem>
+          </itemizedlist>
+          </para>
+        </listitem>
+        <listitem>
+          <para><command>text</command> - an explanation of the command outcome. When the command
+      succeeds it will contain the command name along with the number of rows returned.</para>
+        </listitem>
+        <listitem>
+          <para><command>arguments</command> - a map containing the data returned by the
+          command as the element "result-set", which patterned after SQL statement responses:
+          <itemizedlist>
+            <listitem><para><command>columns</command> - a list of text column labels.
+            The columns returned for DHCPv4 are:
+            <itemizedlist>
+              <listitem><simpara><command>subnet-id</command> - ID of the subnet</simpara></listitem>
+              <listitem><simpara><command>total-addresses</command> - total number of addresses
               available for DHCPv4 management. In other words, this is the sum of all
               addresses in all configured pools. This statistic changes only during
               configuration changes. Note it does not take into account any addresses that
               may be reserved due to host reservation.
-            </listitem>
-            <listitem><command>assigned-addresses</command> - number of assigned
+              </simpara></listitem>
+              <listitem><simpara><command>assigned-addresses</command> - number of assigned
               addresses in a given subnet. It increases every time a new lease is
               allocated (as a result of receiving a DHCPREQUEST message) and is decreased
               every time a lease is released (a DHCPRELEASE message is received) or expires.
-            </listitem>
-            <listitem><command>declined-addresses</command> - number of IPv4 addresses
+              </simpara></listitem>
+              <listitem><simpara><command>declined-addresses</command> - number of IPv4 addresses
               that are currently declined in a given subnet, so is a count of the number
               of leases currently unavailable. Once a lease is recovered, this statistic
               will be decreased. Ideally, this statistic should be zero. If this statistic
               is non-zero (or worse increasing), a network administrator should investigate
               if there is a misbehaving device in his network.
+              </simpara></listitem>
+            </itemizedlist></para>
             </listitem>
-          </itemizedlist>
-          The columns returned for DHCPv6 are:
-          <itemizedlist>
-            <listitem><command>subnet-id</command> - ID of the subnet</listitem>
-            <listitem><command>total-nas</command> - number of NA addresses available
+          <listitem><para>The columns returned for DHCPv6 are:
+            <itemizedlist>
+              <listitem><simpara><command>subnet-id</command> - ID of the subnet</simpara></listitem>
+              <listitem><simpara><command>total-nas</command> - number of NA addresses available
               for DHCPv6 management for a given subnet. In other words, this is the
               sum of all addresses in all configured pools. This statistic changes
               only during configuration changes. Note that it does not take into account
-              any addresses that may be reserved due to host reservation.
-            </listitem>
-            <listitem><command>assigned-nas</command> - number of NA addresses in a
+              any addresses that may be reserved due to host reservation.</simpara>
+              </listitem>
+              <listitem><simpara><command>assigned-nas</command> - number of NA addresses in a
               the subnet that are assigned. This statistic increases every time a new
               lease is allocated (as a result of receiving a REQUEST message) and is
               decreased every time a lease is released (a RELEASE message is received)
               or expires.
-            </listitem>
-            <listitem><command>declined-nas</command> - number of IPv6 addresses that
+              </simpara></listitem>
+              <listitem><simpara><command>declined-nas</command> - number of IPv6 addresses that
               are currently declined and so counts the number of leases currently
               unavailable. Once a lease is recovered, this statistic will be decreased.
               Ideally, this statistic should be zero. If this statistic is non-zero
               (or worse, increasing), the network administrator should investigate if
               there is a misbehaving device in the network.
-            </listitem>
-            <listitem><command>total-pds</command> - total number of PD prefixes available
+              </simpara></listitem>
+              <listitem><simpara><command>total-pds</command> - total number of PD prefixes available
               of DHCPv6 management for a given subnet. In other words, this is the sum
               of all prefixes in all configured pools. This statistic changes only during
               configuration changes. Note it does not take into account any prefixes that
               may be reserved due to host reservation.
-            </listitem>
-            <listitem><command>assigned-pds</command> - number of PD prefixes in a given
+              </simpara></listitem>
+              <listitem><simpara><command>assigned-pds</command> - number of PD prefixes in a given
               subnet that are assigned. This statistic increases every time a new lease is
               allocated (as a result of receiving a REQUEST message) and is decreased every
               time a lease is released (a RELEASE message is received) or expires.
+              </simpara></listitem>
+            </itemizedlist></para>
             </listitem>
+            <listitem><para><command>rows</command> - a list of rows, one per subnet ID. Each row
+            contains a data value for corresponding to and in the same order as each column
+            listed in "columns" for a given subnet.
+            </para></listitem>
+            <listitem><para><command>timestamp</command> - textual date and time the data was fetched,
+            expressed as GMT</para></listitem>
           </itemizedlist>
-        </listitem>
-        <listitem><command>rows</command> - a list of rows, one per subnet ID. Each row
-          contains a data value for corresponding to and in the same order as each column
-          listed in "columns" for a given subnet.
-        </listitem>
-        <listitem><command>timestamp</command> - textual date and time the data was fetched,
-           expressed as GMT</listitem>
-      </itemizedlist>
-    </listitem>
-  </itemizedlist>
-<para>
-  The response to a DHCPv4 command might look as follows:
+        </para>
+      </listitem>
+    </itemizedlist>
+  </para>
+  <para>
+      The response to a DHCPv4 command might look as follows:
 <screen>
   {
     "result": 0,
@@ -248,9 +252,9 @@
     }
   }
 </screen>
-</para>
-<para>
-  The response to a DHCPv6 command might look as follows:
+    </para>
+    <para>
+      The response to a DHCPv6 command might look as follows:
 <screen>
   {
     "result": 0,
@@ -267,17 +271,7 @@
     }
   }
 </screen>
-</para>
-
-
-
-</para>
-
-
-
-</para>
-
-
+    </para>
 
 </section>
 </section>
