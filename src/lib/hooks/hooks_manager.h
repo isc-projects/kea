@@ -310,6 +310,10 @@ public:
         getHooksManager().referenceInternal(hook_name, parked_object);
     }
 
+    static void clearParkingLots() {
+        getHooksManager().clearParkingLotsInternal();
+    }
+
 private:
 
     /// @brief Constructor
@@ -365,6 +369,10 @@ private:
     void referenceInternal(const std::string& hook_name, T parked_object) {
         ServerHooks::getServerHooks().
             getParkingLotPtr(hook_name)->reference(parked_object);
+    }
+
+    void clearParkingLotsInternal() {
+        ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
     }
 
     //@{
