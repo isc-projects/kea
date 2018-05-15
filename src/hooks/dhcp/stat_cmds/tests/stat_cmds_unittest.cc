@@ -314,6 +314,8 @@ public:
 ///
 /// Provides convenience methods for loading, testing all commands and
 /// unloading the lease_cmds library.
+/// @todo This class should really be separated from loading and unloading
+/// the library so implementation classes are tested more directly.
 class StatCmdsTest : public LibLoadTest {
 public:
 
