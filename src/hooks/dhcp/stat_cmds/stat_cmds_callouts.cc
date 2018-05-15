@@ -13,8 +13,6 @@
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>
 
-using namespace isc::config;
-using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::stat_cmds;
 
@@ -49,7 +47,7 @@ int stat_lease6_get(CalloutHandle& handle) {
 int load(LibraryHandle& handle) {
     handle.registerCommandCallout("stat-lease4-get", stat_lease4_get);
     handle.registerCommandCallout("stat-lease6-get", stat_lease6_get);
-    LOG_INFO(stat_cmds_logger, STAT_CMDS_INIT_OK);
+    LOG_INFO(stat_cmds_logger, STAT_CMDS_CMDS_INIT_OK);
     return (0);
 }
 
@@ -57,7 +55,7 @@ int load(LibraryHandle& handle) {
 ///
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
-    LOG_INFO(stat_cmds_logger, STAT_CMDS_DEINIT_OK);
+    LOG_INFO(stat_cmds_logger, STAT_CMDS_CMDS_DEINIT_OK);
     return (0);
 }
 

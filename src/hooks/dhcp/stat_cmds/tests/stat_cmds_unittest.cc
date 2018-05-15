@@ -526,13 +526,11 @@ public:
 
     /// @brief Creates an IPv6 lease
     ///
-    /// Lease parameters: cltt = 12345678, fqdn-fwd = false, fqdn-rev = true,
-    /// hostname = myhost.example.com, preferred lifetime = 1800,
-    /// valid lifetime = 3600
-    ///
     /// @param ip_address IP address for the lease.
     /// @param subnet_id subnet identifier
-    /// @param state lease state
+    /// @param state lease state of the lease, defaults to STATE_DEFAULT
+    /// @param lease_type type of the lease, defaults to TYPE_NA
+    /// @param prefix_len prefix length of the lease, defaults to 128
     void addLease6(const std::string& ip_address, const SubnetID& subnet_id,
                    const int state = Lease::STATE_DEFAULT,
                    const Lease::Type& lease_type = Lease::TYPE_NA,
@@ -556,10 +554,16 @@ public:
                         << "cannot add lease6: " << lease->toText();
         }
 
-    void addPrefix(const std::string& ip_address, const int prefix_len,
+    /// @brief Creates an IPv6 PD lease
+    ///
+    /// @param prefix IP address prefix for the lease.
+    /// @param prefix_len prefix length of the lease
+    /// @param subnet_id subnet identifier
+    /// @param state lease state of the lease, defaults to STATE_DEFAULT
+    void addPrefix(const std::string& prefix, const int prefix_len,
                    const SubnetID& subnet_id,
                    const int state = Lease::STATE_DEFAULT) {
-        addLease6(ip_address, subnet_id, state, Lease::TYPE_PD, prefix_len);
+        addLease6(prefix, subnet_id, state, Lease::TYPE_PD, prefix_len);
     }
 
     /// @brief Pointer to the lease manager
@@ -600,6 +604,14 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
     initLeaseMgr4();
 
     std::vector<TestScenario> tests = {
+        {
+        "arguments is not a map",
+        "{\n"
+        "    \"command\": \"stat-lease4-get\",\n"
+        "    \"arguments\": \"not a map\"\n"
+        "}",
+        "'arguments' parameter is not a map"
+        },
         {
         "subnet-id 0",
         "{\n"
@@ -727,6 +739,20 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
         "}",
         "'last-subnet-id' must be greater than 'first-subnet-id'"
         },
+        {
+        "Subnet-Range: all in the middle",
+        "{\n"
+        "    \"command\": \"stat-lease4-get\",\n"
+        "    \"arguments\": {"
+        "       \"subnet-id\": 10,\n"
+        "       \"subnet-range\": {\n"
+        "           \"first-subnet-id\": 20,"
+        "           \"last-subnet-id\": 40"
+        "       }\n"
+        "    }\n"
+        "}",
+        "cannot specify both subnet-id and subnet-range"
+        }
     };
 
     for (auto test = tests.begin(); test != tests.end(); ++test) {
@@ -754,7 +780,29 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "    \"arguments\": {"
         "    }\n"
         "}",
-        "stat-lease4-get: 5 rows found",
+        "stat-lease4-get[all subnets]: 5 rows found",
+        "{\n"
+        "\"result-set\": {\n"
+        "   \"columns\": [\n"
+        "        \"subnet-id\", \"total-addreses\",\n"
+        "        \"assigned-addreses\", \"declined-addreses\"\n"
+        "   ],\n"
+        "   \"rows\": [\n"
+        "       [ 10, 256, 2, 3 ],\n"
+        "       [ 20,  16, 3, 0 ],\n"
+        "       [ 30, 256, 0, 0 ],\n"
+        "       [ 40,  16, 4, 0 ],\n"
+        "       [ 50, 256, 1, 1 ]\n"
+        "   ],\n"
+        "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
+        "}\n"
+        },
+        {
+        "ALL-Subnets - arguments omitted",
+        "{\n"
+        "    \"command\": \"stat-lease4-get\"\n"
+        "}",
+        "stat-lease4-get[all subnets]: 5 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -779,7 +827,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "       \"subnet-id\": 20"
         "    }\n"
         "}",
-        "stat-lease4-get: 1 rows found",
+        "stat-lease4-get[subnet-id=20]: 1 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -803,7 +851,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease4-get: 3 rows found",
+        "stat-lease4-get[subnets 10 through 30]: 3 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -829,7 +877,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease4-get: 3 rows found",
+        "stat-lease4-get[subnets 20 through 40]: 3 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -855,7 +903,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease4-get: 3 rows found",
+        "stat-lease4-get[subnets 30 through 50]: 3 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -881,7 +929,7 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease4-get: 2 rows found",
+        "stat-lease4-get[subnets 25 through 45]: 2 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -925,7 +973,7 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
         "       \"subnet-id\": 88"
         "    }\n"
         "}",
-        "stat-lease4-get: no matching data, subnet-id: 88 does not exist",
+        "stat-lease4-get[subnet-id=88]: no matching data, subnet-id: 88 does not exist",
         "{}"
         },
         {
@@ -939,7 +987,7 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease4-get: no matching data, selected ID range: 2 through 6 includes no known subnets",
+        "stat-lease4-get[subnets 2 through 6]: no matching data, selected ID range: 2 through 6 includes no known subnets",
         "{}"
         },
         {
@@ -953,7 +1001,7 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease4-get: no matching data, selected ID range: 200 through 600 includes no known subnets",
+        "stat-lease4-get[subnets 200 through 600]: no matching data, selected ID range: 200 through 600 includes no known subnets",
         "{}"
         }
     };
@@ -974,6 +1022,14 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
     initLeaseMgr6();
 
     std::vector<TestScenario> tests = {
+        {
+        "arguments not a map",
+        "{\n"
+        "    \"command\": \"stat-lease6-get\",\n"
+        "    \"arguments\": \"not a map\"\n"
+        "}",
+        "'arguments' parameter is not a map"
+        },
         {
         "subnet-id 0",
         "{\n"
@@ -1101,6 +1157,20 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
         "}",
         "'last-subnet-id' must be greater than 'first-subnet-id'"
         },
+        {
+        "both subnet and range",
+        "{\n"
+        "    \"command\": \"stat-lease6-get\",\n"
+        "    \"arguments\": {"
+        "       \"subnet-id\": 10,\n"
+        "       \"subnet-range\": {\n"
+        "           \"first-subnet-id\": 20,"
+        "           \"last-subnet-id\": 40"
+        "       }\n"
+        "    }\n"
+        "}",
+        "cannot specify both subnet-id and subnet-range"
+        }
     };
 
     for (auto test = tests.begin(); test != tests.end(); ++test) {
@@ -1128,7 +1198,29 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "    \"arguments\": {"
         "    }\n"
         "}",
-        "stat-lease6-get: 5 rows found",
+        "stat-lease6-get[all subnets]: 5 rows found",
+        "{\n"
+        "\"result-set\": {\n"
+        "   \"columns\": [\n"
+        "        \"subnet-id\", \"total-nas\", \"assigned-nas\",\n"
+        "        \"declined-nas\", \"total-pds\", \"assigned-pds\"\n"
+        "   ],\n"
+        "   \"rows\": [\n"
+        "       [ 10, 65536, 2, 3, 0, 0 ],\n"
+        "       [ 20, 16777216, 3, 0, 0, 0 ],\n"
+        "       [ 30, 16, 1, 1, 65536, 3 ],\n"
+        "       [ 40, 16777216, 0, 0, 0, 0 ],\n"
+        "       [ 50, 0, 0, 0, 65536, 2 ]\n"
+        "   ],\n"
+        "   \"timestamp\": \"2018-05-04 15:03:37.000000\" }\n"
+        "}\n"
+        },
+        {
+        "ALL-Subnets6 arugments omitted",
+        "{\n"
+        "    \"command\": \"stat-lease6-get\"\n"
+        "}",
+        "stat-lease6-get[all subnets]: 5 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -1153,7 +1245,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "       \"subnet-id\": 20"
         "    }\n"
         "}",
-        "stat-lease6-get: 1 rows found",
+        "stat-lease6-get[subnet-id=20]: 1 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -1177,7 +1269,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease6-get: 3 rows found",
+        "stat-lease6-get[subnets 10 through 30]: 3 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -1203,7 +1295,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease6-get: 3 rows found",
+        "stat-lease6-get[subnets 20 through 40]: 3 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -1229,7 +1321,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease6-get: 3 rows found",
+        "stat-lease6-get[subnets 30 through 50]: 3 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -1255,7 +1347,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease6-get: 2 rows found",
+        "stat-lease6-get[subnets 25 through 45]: 2 rows found",
         "{\n"
         "\"result-set\": {\n"
         "   \"columns\": [\n"
@@ -1299,7 +1391,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
         "       \"subnet-id\": 88"
         "    }\n"
         "}",
-        "stat-lease6-get: no matching data, subnet-id: 88 does not exist",
+        "stat-lease6-get[subnet-id=88]: no matching data, subnet-id: 88 does not exist",
         "{}"
         },
         {
@@ -1313,7 +1405,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease6-get: no matching data, selected ID range: 2 through 6 includes no known subnets",
+        "stat-lease6-get[subnets 2 through 6]: no matching data, selected ID range: 2 through 6 includes no known subnets",
         "{}"
         },
         {
@@ -1327,7 +1419,7 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
         "       }\n"
         "    }\n"
         "}",
-        "stat-lease6-get: no matching data, selected ID range: 200 through 600 includes no known subnets",
+        "stat-lease6-get[subnets 200 through 600]: no matching data, selected ID range: 200 through 600 includes no known subnets",
         "{}"
         }
     };
