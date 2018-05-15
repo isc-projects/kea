@@ -315,6 +315,15 @@
 
           <listitem>
             <simpara>
+              <command>kea-dhcp4.stat-cmds-hooks</command> - this logger is used
+              to log messages related to operation of the Stats Cmds hooks library.
+              In general these will pertain to loading and unloading the library,
+              as well as execution of commands by the library.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>kea-dhcp6</command> - the root logger for the DHCPv6
               server. All components used by the DHCPv6 server inherit the
               settings from this logger if there is no specialized logger

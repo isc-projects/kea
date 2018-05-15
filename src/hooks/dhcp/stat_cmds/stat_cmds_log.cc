@@ -9,7 +9,7 @@
 namespace isc {
 namespace stat_cmds {
 
-isc::log::Logger stat_cmds_logger("stat_cmds_hooks");
+isc::log::Logger stat_cmds_logger("stat-cmds-hooks");
 
 }
 }

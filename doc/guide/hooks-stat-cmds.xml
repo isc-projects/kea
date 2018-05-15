@@ -7,7 +7,8 @@
     statistics in deployments running multiple Kea servers that use
     shared lease back end.  The in-memory statistics kept by individual
     servers only track lease changes made by that server.  Thus in a
-    deployment with multiple servers, these statistics are incomplete.
+    deployment with multiple servers (e.g. two kea-dhcp6 servers using the
+    same PostgreSQL database for lease storage), these statistics are incomplete.
     In Kea 1.4, the MySQL and PostgreSQL back ends were modified to track
     lease allocation changes as they occur via database triggers. Additionally,
     all four lease back ends were extended to support retrieving lease
@@ -111,9 +112,7 @@
       The following command would fetch lease statistcis for all known subnets from kea-dhcp4 server:
 <screen>
 {
-  "command": "stat-lease4-get",
-  "arguments": {
-  }
+  "command": "stat-lease4-get"
 }
 </screen>
     </para>
@@ -170,22 +169,12 @@
             <itemizedlist>
               <listitem><simpara><command>subnet-id</command> - ID of the subnet</simpara></listitem>
               <listitem><simpara><command>total-addresses</command> - total number of addresses
-              available for DHCPv4 management. In other words, this is the sum of all
-              addresses in all configured pools. This statistic changes only during
-              configuration changes. Note it does not take into account any addresses that
-              may be reserved due to host reservation.
-              </simpara></listitem>
-              <listitem><simpara><command>assigned-addresses</command> - number of assigned
-              addresses in a given subnet. It increases every time a new lease is
-              allocated (as a result of receiving a DHCPREQUEST message) and is decreased
-              every time a lease is released (a DHCPRELEASE message is received) or expires.
-              </simpara></listitem>
-              <listitem><simpara><command>declined-addresses</command> - number of IPv4 addresses
-              that are currently declined in a given subnet, so is a count of the number
-              of leases currently unavailable. Once a lease is recovered, this statistic
-              will be decreased. Ideally, this statistic should be zero. If this statistic
-              is non-zero (or worse increasing), a network administrator should investigate
-              if there is a misbehaving device in his network.
+              available for DHCPv4 management in the subnet. In other words, this is the sum of all
+              addresses in all the configured pools in the subnet.</simpara></listitem>
+              <listitem><simpara><command>assigned-addresses</command> - number of addresses
+              in the subnet that are currently assigned to a client.</simpara></listitem>
+              <listitem><simpara><command>declined-addresses</command> - number of addresses
+              in the subnet that are currently declined and are thus unavailable for assignment.
               </simpara></listitem>
             </itemizedlist></para>
             </listitem>
@@ -193,35 +182,17 @@
             <itemizedlist>
               <listitem><simpara><command>subnet-id</command> - ID of the subnet</simpara></listitem>
               <listitem><simpara><command>total-nas</command> - number of NA addresses available
-              for DHCPv6 management for a given subnet. In other words, this is the
-              sum of all addresses in all configured pools. This statistic changes
-              only during configuration changes. Note that it does not take into account
-              any addresses that may be reserved due to host reservation.</simpara>
-              </listitem>
+              for DHCPv6 management in the subnet. In other words, this is the sum of all
+              the NA addresses in the all configured NA pools in the subnet.</simpara></listitem>
               <listitem><simpara><command>assigned-nas</command> - number of NA addresses in a
-              the subnet that are assigned. This statistic increases every time a new
-              lease is allocated (as a result of receiving a REQUEST message) and is
-              decreased every time a lease is released (a RELEASE message is received)
-              or expires.
-              </simpara></listitem>
-              <listitem><simpara><command>declined-nas</command> - number of IPv6 addresses that
-              are currently declined and so counts the number of leases currently
-              unavailable. Once a lease is recovered, this statistic will be decreased.
-              Ideally, this statistic should be zero. If this statistic is non-zero
-              (or worse, increasing), the network administrator should investigate if
-              there is a misbehaving device in the network.
-              </simpara></listitem>
-              <listitem><simpara><command>total-pds</command> - total number of PD prefixes available
-              of DHCPv6 management for a given subnet. In other words, this is the sum
-              of all prefixes in all configured pools. This statistic changes only during
-              configuration changes. Note it does not take into account any prefixes that
-              may be reserved due to host reservation.
-              </simpara></listitem>
-              <listitem><simpara><command>assigned-pds</command> - number of PD prefixes in a given
-              subnet that are assigned. This statistic increases every time a new lease is
-              allocated (as a result of receiving a REQUEST message) and is decreased every
-              time a lease is released (a RELEASE message is received) or expires.
-              </simpara></listitem>
+              the subnet that are currently assigned to a client.</simpara></listitem>
+              <listitem><simpara><command>declined-nas</command> - number of NA addresses that
+              are currently declined and are thus unavailable for assignment.</simpara></listitem>
+              <listitem><simpara><command>total-pds</command> - total number of prefixes available
+              of DHCPv6 management in the subnet. In other words, this is the sum of all prefixes
+              in all the configured prefix pools in the subnet.</simpara></listitem>
+              <listitem><simpara><command>assigned-pds</command> - number of prefixes in the subnet
+              that are currently assigned to a client.</simpara></listitem>
             </itemizedlist></para>
             </listitem>
             <listitem><para><command>rows</command> - a list of rows, one per subnet ID. Each row
@@ -245,7 +216,8 @@
       "result-set": {
         "columns": [ "subnet-id", "total-addresses", "assigned-addresses", "declined-addresses" ]
         "rows": [
-          [ 10, 256, 111, 0 ], [ 20, 4098, 2034, 4 ]
+          [ 10, 256, 111, 0 ],
+          [ 20, 4098, 2034, 4 ]
         ],
       "timestamp": "2018-05-04 15:03:37.000000"
       }
@@ -254,7 +226,9 @@
 </screen>
     </para>
     <para>
-      The response to a DHCPv6 command might look as follows:
+      The response to a DHCPv6 command might look as follows (subnet 10 has no
+      prefix pools, subnet 20 has no NA pools, and subnet 30 has both NA and PD
+      pools):
 <screen>
   {
     "result": 0,
@@ -263,8 +237,9 @@
       "result-set": {
         "columns": [ "subnet-id", "total-nas", "assigned-nas", "declined-nas", "total-pds", "assigned-pds" ]
         "rows": [
-          [ 10, 256, 111, 0 ],
-          [ 20, 4098, 2034, 4 ]
+          [ 10, 4096, 2400, 3, 0, 0],
+          [ 20, 0, 0, 0, 1048, 233 ]
+          [ 30, 256, 60, 0, 1048, 15 ]
         ],
       "timestamp": "2018-05-04 15:03:37.000000"
       }

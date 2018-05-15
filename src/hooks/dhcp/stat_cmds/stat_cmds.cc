@@ -60,6 +60,25 @@ public:
         /// @brief Denotes the query selection mode all, subnet,
         /// or subnet range
         LeaseStatsQuery::SelectMode select_mode_;
+
+        /// @brief Generate a string version of the contents
+        std::string toText() {
+            std::stringstream os;
+            switch (select_mode_) {
+            case LeaseStatsQuery::ALL_SUBNETS:
+                os << "[all subnets]";
+                break;
+            case LeaseStatsQuery::SINGLE_SUBNET:
+                os << "[subnet-id=" << first_subnet_id_ << "]";
+                break;
+            case LeaseStatsQuery::SUBNET_RANGE:
+                os << "[subnets " << first_subnet_id_
+                   << " through " << last_subnet_id_ << "]";
+                break;
+            }
+
+            return (os.str());
+        }
     };
 
 public:
@@ -102,8 +121,7 @@ public:
     /// must fulfill: 0 < first-subnet-id < last-subnet-id
     /// -# subnet-id and subnet-range are mutually exclusive
     Parameters getParameters(const ConstElementPtr& cmd_args);
-
-    /// @brief Executes the lease4 query and constructs the outbound result set
+/// @brief Executes the lease4 query and constructs the outbound result set
     ///
     /// This method uses the command parameters to identify the range
     /// of configured subnets. If the range contains no known subnets
@@ -195,39 +213,46 @@ public:
 int
 LeaseStatCmdsImpl::statLease4GetHandler(CalloutHandle& handle) {
     ElementPtr result = Element::createMap();
-    int response_code;
-    string txt = "malformed command";
+    Parameters params;
+    ConstElementPtr response;
+
+    // Extract the command and then the parameters
     try {
-        // Extract the command and then the parameters
         extractCommand(handle);
-        Parameters params = getParameters(cmd_args_);
-
-        // Now build the result set
-        txt = "building result";
-        uint64_t rows = makeResultSet4(result, params);
-
-        // Eureka it worked!
-        response_code = CONTROL_RESULT_SUCCESS;
-        std::stringstream os;
-        os << "stat-lease4-get: " << rows << " rows found";
-        txt = os.str();
-    } catch (const NotFound& ex) {
-        // Criteria was valid but included no known subnets,
-        // so we return a not found response.
-        response_code = CONTROL_RESULT_EMPTY;
-        std::stringstream os;
-        os << "stat-lease4-get: " <<  "no matching data, " << ex.what();
-        txt = os.str();
+        params = getParameters(cmd_args_);
     } catch (const std::exception& ex) {
-        LOG_ERROR(stat_cmds_logger, STAT_LEASE4_GET_FAILED)
-            .arg(txt)
-            .arg(ex.what());
+        LOG_ERROR(stat_cmds_logger, STAT_CMDS_LEASE4_GET_INVALID)
+                  .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
-    LOG_INFO(stat_cmds_logger, STAT_LEASE4_GET).arg(txt);
-    ConstElementPtr response = createAnswer(response_code, txt, result);
+    try {
+        // Now build the result set
+        uint64_t rows = makeResultSet4(result, params);
+        LOG_INFO(stat_cmds_logger, STAT_CMDS_LEASE4_GET)
+                .arg(params.toText())
+                .arg(rows);
+        std::stringstream os;
+        os << "stat-lease4-get" << params.toText() << ": " << rows << " rows found";
+        response = createAnswer(CONTROL_RESULT_SUCCESS, os.str(), result);
+    } catch (const NotFound& ex) {
+        // Criteria was valid but included no known subnets,
+        // so we return a not found response.
+        LOG_INFO(stat_cmds_logger, STAT_CMDS_LEASE4_GET_NO_SUBNETS)
+                 .arg(params.toText())
+                 .arg(ex.what());
+        std::stringstream os;
+        os << "stat-lease4-get" << params.toText() <<  ": no matching data, " << ex.what();
+        response = createAnswer(CONTROL_RESULT_EMPTY, os.str(), result);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(stat_cmds_logger, STAT_CMDS_LEASE4_GET_FAILED)
+                  .arg(params.toText())
+                  .arg(ex.what());
+        setErrorResponse(handle, ex.what());
+        return (1);
+    }
+
     setResponse(handle, response);
     return (0);
 }
@@ -235,40 +260,46 @@ LeaseStatCmdsImpl::statLease4GetHandler(CalloutHandle& handle) {
 int
 LeaseStatCmdsImpl::statLease6GetHandler(CalloutHandle& handle) {
     ElementPtr result = Element::createMap();
-    int response_code;
-    string txt = "malformed command";
+    Parameters params;
+    ConstElementPtr response;
+
+    // Extract the command and then the parameters
     try {
-        // Extract the command and then the parameters
         extractCommand(handle);
-        Parameters params = getParameters(cmd_args_);
-
-        // Now build the result set
-        txt = "building result";
-        uint64_t rows = makeResultSet6(result, params);
-
-        // Eureka it worked!
-        response_code = CONTROL_RESULT_SUCCESS;
-        std::stringstream os;
-        os << "stat-lease6-get: " << rows << " rows found";
-        txt = os.str();
-    } catch (const NotFound& ex) {
-        // Criteria was valid but included no known subnets,
-        // so we return a not found response.
-        result = Element::createMap();
-        response_code = CONTROL_RESULT_EMPTY;
-        std::stringstream os;
-        os << "stat-lease6-get: " <<  "no matching data, " << ex.what();
-        txt = os.str();
+        params = getParameters(cmd_args_);
     } catch (const std::exception& ex) {
-        LOG_ERROR(stat_cmds_logger, STAT_LEASE6_GET_FAILED)
-            .arg(txt)
-            .arg(ex.what());
+        LOG_ERROR(stat_cmds_logger, STAT_CMDS_LEASE6_GET_INVALID)
+                  .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
-    LOG_INFO(stat_cmds_logger, STAT_LEASE6_GET).arg(txt);
-    ConstElementPtr response = createAnswer(response_code, txt, result);
+    try {
+        // Now build the result set
+        uint64_t rows = makeResultSet6(result, params);
+        LOG_INFO(stat_cmds_logger, STAT_CMDS_LEASE6_GET)
+                .arg(params.toText())
+                .arg(rows);
+        std::stringstream os;
+        os << "stat-lease6-get" << params.toText() << ": " << rows << " rows found";
+        response = createAnswer(CONTROL_RESULT_SUCCESS, os.str(), result);
+    } catch (const NotFound& ex) {
+        // Criteria was valid but included no known subnets,
+        // so we return a not found response.
+        LOG_INFO(stat_cmds_logger, STAT_CMDS_LEASE6_GET_NO_SUBNETS)
+                 .arg(params.toText())
+                 .arg(ex.what());
+        std::stringstream os;
+        os << "stat-lease6-get" << params.toText() <<  ": no matching data, " << ex.what();
+        response = createAnswer(CONTROL_RESULT_EMPTY, os.str(), result);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(stat_cmds_logger, STAT_CMDS_LEASE6_GET_FAILED)
+                 .arg(params.toText())
+                 .arg(ex.what());
+        setErrorResponse(handle, ex.what());
+        return (1);
+    }
+
     setResponse(handle, response);
     return (0);
 }
@@ -277,8 +308,14 @@ LeaseStatCmdsImpl::Parameters
 LeaseStatCmdsImpl::getParameters(const ConstElementPtr& cmd_args) {
     Parameters params;
 
-    if (!cmd_args || cmd_args->getType() != Element::map) {
-        isc_throw(BadValue, "Parameters missing or are not a map.");
+    params.select_mode_ = LeaseStatsQuery::ALL_SUBNETS;
+    if (!cmd_args ) {
+        // No arguments defaults to ALL_SUBNETS.
+        return (params);
+    }
+
+    if (cmd_args->getType() != Element::map) {
+        isc_throw(BadValue, "'arguments' parameter is not a map");
     }
 
     params.select_mode_ = LeaseStatsQuery::ALL_SUBNETS;
@@ -299,7 +336,7 @@ LeaseStatCmdsImpl::getParameters(const ConstElementPtr& cmd_args) {
 
     if (cmd_args->contains("subnet-range")) {
         if (params.select_mode_ == LeaseStatsQuery::SINGLE_SUBNET) {
-            isc_throw(BadValue, "Cannot specify both subnet-id and subnet-range");
+            isc_throw(BadValue, "cannot specify both subnet-id and subnet-range");
         }
 
         ConstElementPtr range = cmd_args->get("subnet-range");
@@ -567,7 +604,8 @@ LeaseStatCmdsImpl::createResultSet(const ElementPtr &result_wrapper,
     result_wrapper->set("result-set", result_set);
 
     // Create the timestamp based on time now and add it to the result set.
-    boost::posix_time::ptime now(boost::posix_time::second_clock::universal_time());
+    boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
+
     ElementPtr timestamp = Element::create(isc::util::ptimeToText(now));
     result_set->set("timestamp", timestamp);
 
@@ -630,9 +668,6 @@ int
 StatCmds::statLease6GetHandler(CalloutHandle& handle) {
     LeaseStatCmdsImpl impl;
     return(impl.statLease6GetHandler(handle));
-}
-
-StatCmds::StatCmds() {
 }
 
 };
