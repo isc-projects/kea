@@ -13,6 +13,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
+#include <dhcp6/dhcp6_srv.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -369,7 +370,7 @@ void configureCommandChannel() {
 }
 
 isc::data::ConstElementPtr
-configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
+configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
 
     if (!config_set) {
@@ -388,6 +389,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set,
     // Remove any existing timers.
     if (!check_only) {
         TimerMgr::instance()->unregisterTimers();
+        server.dumpPackets();
     }
 
     // Revert any runtime option definitions configured so far and not committed.
