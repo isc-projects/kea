@@ -43,11 +43,11 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-///@brief Implements command handlinge for stat-leaseX-get commands
+/// @brief Implements command handling for stat-leaseX-get commands
 class LeaseStatCmdsImpl : private CmdsImpl {
 public:
 
-    /// @brief Wrapper class stat-leaseX-get command parameters.
+    /// @brief Wrapper class for stat-leaseX-get command parameters.
     class Parameters {
     public:
         /// @brief Specifies the subnet-id for a single subnet, or
@@ -68,7 +68,7 @@ public:
     /// @ref isc::stat_cmds::StatCmds::statLease4GetHandler
     ///
     /// It parses the command arguments, and then invokes makeResult4()
-    /// to fulfull the lease6 statistics fetch. It then constructs the outbound
+    /// to fulfull the lease4 statistics fetch. It then constructs the outbound
     /// response based on those results.  If a NotFound exception is caught,
     /// a CONTROL_RESULT_EMTPY response is generated.
     ///
@@ -424,7 +424,7 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
         int64_t assigned = 0;
         int64_t declined = 0;
         bool add_row = false;
-        while (!query_eof && query_row.subnet_id_ == cur_id) {
+        while (!query_eof && (query_row.subnet_id_ == cur_id)) {
             if (query_row.lease_state_ == Lease::STATE_DEFAULT) {
                 add_row = true;
                 assigned = query_row.state_count_;
@@ -533,7 +533,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         int64_t declined = 0;
         int64_t assigned_pds = 0;
         bool add_row = false;
-        while (!query_eof && query_row.subnet_id_ == cur_id) {
+        while (!query_eof && (query_row.subnet_id_ == cur_id)) {
 
             if (query_row.lease_state_ == Lease::STATE_DEFAULT) {
                 add_row = true;
