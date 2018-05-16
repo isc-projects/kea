@@ -376,22 +376,64 @@ public:
     ///
     /// It creates an instance of a CqlLeaseStatsQuery4 and then
     /// invokes its start method, which fetches its statistical data
-    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// result set by executing the ALL_LEASE_STATS4 query.
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
     /// @brief Creates and runs the IPv6 lease stats query
     ///
-    /// It creates an instance of a CqllLeaseStatsQuery and then
+    /// It creates an instance of a CqlLeaseStatsQuery and then
     /// invokes its start method, which fetches its statistical data
-    /// result set by executing the RECOUNT_LEASE_STATS6 query.
+    /// result set by executing the ALL_LEASE_STATS6 query.
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
 
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery6 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery6 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
     /// @brief Removes specified IPv4 leases.
     ///
     /// This rather dangerous method is able to remove all leases from specified
