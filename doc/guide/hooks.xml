@@ -60,6 +60,117 @@
         be built.
       </para>
     </section> <!-- end Introduction -->
+
+    <section>
+      <title>Installing Hook packages</title>
+
+      <note>
+        <simpara>The installation procedure has changed in 1.4.0. Kea 1.3.0 and
+        earlier needed special switches passed to configure script to detect the
+        hook libraries. Please see this KB article: <uri
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://kb.isc.org/article/AA-01587">https://kb.isc.org/article/AA-01587</uri>
+        .</simpara>
+      </note>
+
+      <para>Some hook packages are included in the base Kea sources. There is no
+      need to do anything special to compile or install them, they are covered
+      by the usual building and installation procedure. ISC also provides several
+      additional hooks in form of various packages. All of those packages follow
+      the same installation procedure that is similar to base Kea, but has
+      several additional steps. For your convenience, the whole procedure is
+      described here. Please refer to <xref linkend="installation"/> for general
+      overview.</para>
+
+      <para>
+        1. Download the package. You will receive detailed instructions how to
+        get it separately. This will be a file with a name similar to
+        kea-premium-1.4.0.tar.gz. Your name may differ depending on which
+        package you got.
+      </para>
+
+      <para>
+        2. If you have the sources for the corresponding version of the
+        open-source Kea package still on your system (from when you installed
+        Kea), skip this step.  Otherwise extract the Kea source from the
+        original tarball you downloaded.  For example, if you downloaded Kea
+        1.4.0., you should have a tarball called kea-1.4.0.tar.gz on your
+        system. Unpack this tarball:
+
+<screen>
+$ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
+</screen>
+
+        This will unpack the tarball into the kea-1.4.0 subdirectory of your
+        current working directory.
+      </para>
+
+      <para>
+        3. Unpack the Kea premium tarball into the directory into which Kea was
+        unpacked. For example, assuming that you followed step 2 and that Kea
+        1.4.0 has been unpacked into a kea-1.4.0 subdirectory and that the Kea
+        premium tarball is in your current directory, the following steps will
+        unpack the premium tarball into the correct location:
+<screen>
+  $ <userinput>cd kea-1.3.0</userinput>
+  $ <userinput>tar xvf ../kea-premium-1.4.0.tar.gz</userinput>
+</screen>
+        Note that unpacking the Kea premium package will put the files into a
+        directory named premium. Regardless of the name of your package, the
+        directory will always be called premium, just its content may vary.
+      </para>
+
+      <para>
+        4. Run autoreconf tools. This step is necessary to update Kea's build
+        script to include additional directory. If this tool is not already
+        available on your system, you need to install automake and autoconf
+        tools. To generate configure script, please use:
+<screen>
+  $ <userinput>autoreconf -i</userinput>
+</screen>
+      </para>
+      <para>
+        5. Rerun configure, using the same configure options as you used when
+        originally building Kea. You can check if configure has detected the
+        premium package by inspecting the summary printed when it exits.  The
+        first section of the output should look something like:
+<screen>
+Package:
+  Name:            kea
+  Version:         1.4.0
+  Extended version:1.4.0 (tarball)
+  OS Family:       Linux
+  Using GNU sed:   yes
+  Premium package: yes
+  Included Hooks:  forensic_log flex_id host_cmds
+</screen>
+
+The last line indicates which specific hooks were detected. Note that some
+hooks may require its own dedicated switches, e.g. radius hook requires
+extra switches for FreeRADIUS. Please consult later sections of this
+chapter for details.
+      </para>
+
+      <para>
+        6. Rebuild Kea
+<screen>
+  $ <userinput>make</userinput>
+</screen>
+If your machine has multiple CPU cores, interesting option to consider here
+is -j X, where X is the number of available cores.
+      </para>
+
+      <para>
+        7. Install Kea sources together with hooks:
+<screen>
+$ <userinput>sudo make install</userinput>
+</screen>
+      Note that as part of the installation procedure, the install script will
+      eventually venture into premium/ directory and will install additional
+      hook libraries and associated files.
+      </para>
+    </section>
+
     <section>
       <title>Configuring Hooks Libraries</title>
       <para>
