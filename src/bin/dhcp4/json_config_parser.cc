@@ -8,6 +8,7 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/dhcp4_srv.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
@@ -272,7 +273,7 @@ void configureCommandChannel() {
 }
 
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
+configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
@@ -290,6 +291,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // Remove any existing timers.
     if (!check_only) {
         TimerMgr::instance()->unregisterTimers();
+        server.discardPackets();
     }
 
     // Revert any runtime option definitions configured so far and not committed.

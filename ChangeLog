@@ -1,11 +1,17 @@
-1401.	[bug]		tomek
+1402.	[bug]		tomek
 	Fixed a crash that was caused by hook library registering
 	new hook points. This fixes unit-tests with forensic
 	logging, but the problem was generic and could cause
 	other libraries to segfault during unloading or reconfiguration.
 	(Trac 5577, git 2f9d1aa95c16e12fabc50d581b966f20b6d8a950)
 
-	1400.   [func]       tmark
+1401.	[bug]		tmark
+	Corrected an issue which caused kea-dhcp4 and kea-dhcp6 servers
+	to unload their hooks libraries upon receipt of the first client
+	message following a dynamic reconfigure.
+	(Trac #5564, git 5111f569bd251c2a98a2e6d958e8f6b640a1802d)
+
+1400.   [func]       tmark
 	A new hooks library, Stat Cmds, has been added to the open source
 	distribution.  This library provides commands for fetching lease
 	allocation statistics using lease backend as the source for
