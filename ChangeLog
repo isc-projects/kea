@@ -1,3 +1,9 @@
+1401.	[bug]		tmark
+	Corrected an issue which caused kea-dhcp4 and kea-dhcp6 servers
+	to unload their hooks libraries upon receipt of the first client
+	message following a dynamic reconfigure.
+	(Trac #5564, git 5111f569bd251c2a98a2e6d958e8f6b640a1802d)
+
 1400.   [func]       tmark
 	A new hooks library, Stat Cmds, has been added to the open source
 	distribution.  This library provides commands for fetching lease
