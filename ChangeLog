@@ -1,3 +1,10 @@
+1398.	[bug]		fdupont
+	Fixed bug in configurations where "outbound-interface" parameter
+	was set to "use-routing", which in some cases would reset outbound
+	interface index to a negative value and cause the server to fail
+	to respond to the clients.
+	(Trac #5515, git 9d8d00f1f127ee606f09f7ff6006f0d142aac976)
+
 1397.	[bug]		marcin
 	A bug in http client library was fixed. The IPv6 address specified
 	in brackets is now supported properly.
