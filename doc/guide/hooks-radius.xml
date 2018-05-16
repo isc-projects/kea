@@ -418,11 +418,11 @@ Please make sure that your compilation has the following:
 
       <listitem><simpara><command>reselect-subnet-address</command> (default
       false) uses the Kea reserved address / RADIUS Framed-IP-Address or
-      Framed-IPv6-Address to re-select subnets where the address is not in
+      Framed-IPv6-Address to reselect subnets where the address is not in
       the subnet range. </simpara></listitem>
 
       <listitem><simpara><command>reselect-subnet-pool</command> (default
-      false) uses the Kea client-class / RADIUS Frame-Pool to re-select
+      false) uses the Kea client-class / RADIUS Frame-Pool to reselect
       subnets where no available pool can be found. </simpara></listitem>
 
       <listitem><simpara><command>retries</command> (default 3) is the number of
