@@ -1,14 +1,19 @@
+1397.	[bug]		marcin
+	A bug in http client library was fixed. The IPv6 address specified
+	in brackets is now supported properly.
+	(Trac #5620, git fe38c4368853e47bc993d6c3844cdddba5effde5)
+
 1396.	[bug]		tmark
 	The PostgreSQL schema was expanded to include two new tables:
 	lease4-stat and lease6-stat and triggers to update them as leases
 	are modified. This resolves an issue in deployements, where multiple
-	Kea servers share a common PostgreSQL lease database, which made 
+	Kea servers share a common PostgreSQL lease database, which made
 	it difficult to obtain accurate lease statistics. Since these statistics
 	are now tracked by the database, they do not have to be recalculated at
 	startup or following reconfiguration. This may result in less
 	processing overhead during these events. The new statistics will be
-	accessible via a new Hooks library, being developed for Kea 1.4 
-	under #5589. 
+	accessible via a new Hooks library, being developed for Kea 1.4
+	under #5589.
 	(Trac #5587, git 36a0160de0df7789eea224954717be05c08638b7)
 
 1395.	[bug]		tmark
