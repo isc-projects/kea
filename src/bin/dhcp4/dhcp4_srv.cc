@@ -503,48 +503,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
 
     Subnet4Ptr subnet;
 
-    SubnetSelector selector;
-    selector.ciaddr_ = query->getCiaddr();
-    selector.giaddr_ = query->getGiaddr();
-    selector.local_address_ = query->getLocalAddr();
-    selector.remote_address_ = query->getRemoteAddr();
-    selector.client_classes_ = query->classes_;
-    selector.iface_name_ = query->getIface();
-
-    // If the link-selection sub-option is present, extract its value.
-    // "The link-selection sub-option is used by any DHCP relay agent
-    // that desires to specify a subnet/link for a DHCP client request
-    // that it is relaying but needs the subnet/link specification to
-    // be different from the IP address the DHCP server should use
-    // when communicating with the relay agent." (RFC 3527)
-    //
-    // Try first Relay Agent Link Selection sub-option
-    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (rai) {
-        OptionCustomPtr rai_custom =
-            boost::dynamic_pointer_cast<OptionCustom>(rai);
-        if (rai_custom) {
-            OptionPtr link_select =
-                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
-            if (link_select) {
-                OptionBuffer link_select_buf = link_select->getData();
-                if (link_select_buf.size() == sizeof(uint32_t)) {
-                    selector.option_select_ =
-                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
-                }
-            }
-        }
-    } else {
-        // Or Subnet Selection option
-        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
-        if (sbnsel) {
-            OptionCustomPtr oc =
-                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
-            if (oc) {
-                selector.option_select_ = oc->readAddress();
-            }
-        }
-    }
+    const SubnetSelector& selector = CfgSubnets4::initSelector(query);
 
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);

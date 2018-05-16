@@ -301,7 +301,7 @@ Please make sure that your compilation has the following:
   <listitem>radius listed in tier 2 packages</listitem>
   <listitem>FreeRadius client directories printed and pointing to the right
   directories</listitem>
-  <listitem>Boost ersion is at least 1.65.1. The versions available
+  <listitem>Boost version is at least 1.65.1. The versions available
   in CentOS 7 (1.48 and and 1.53) are too old.</listitem>
 </itemizedlist>
 
@@ -322,7 +322,7 @@ Please make sure that your compilation has the following:
 
     <para>
       The RADIUS Hook is a library that has to be loaded by either DHCPv4 or
-      DHCPv6 Kea servers. Compared to other avaiable hook libraries, this one
+      DHCPv6 Kea servers. Compared to other available hook libraries, this one
       takes many parameters to actually run. For example, this configuration
       could be used:
 
@@ -403,18 +403,27 @@ Please make sure that your compilation has the following:
 
       <listitem><simpara><command>identifier-type4</command> (default client-id)
       specifies the identifier type to build the User-Name attribute. It should
-      be the same than host identifier and when the flex-id hook librairy is
+      be the same than host identifier and when the flex-id hook library is
       used the replace-client-id must be set to true and client-id will be used
       with client-id-pop0. </simpara></listitem>
 
       <listitem><simpara><command>identifier-type6</command> (default duid)
-      pecifies the identifier type to build the User-Name attribute. It should
+      specifies the identifier type to build the User-Name attribute. It should
       be the same than host identifier and when the flex-id hook librairy is
       used the replace-client-id must be set to true and duid will be used with
       client-id-pop0. </simpara></listitem>
 
       <listitem><simpara><command>realm</command> (default "") is the default
       realm. </simpara></listitem>
+
+      <listitem><simpara><command>reselect-subnet-address</command> (default
+      false) uses the Kea reserved address / RADIUS Framed-IP-Address or
+      Framed-IPv6-Address to reselect subnets where the address is not in
+      the subnet range. </simpara></listitem>
+
+      <listitem><simpara><command>reselect-subnet-pool</command> (default
+      false) uses the Kea client-class / RADIUS Frame-Pool to reselect
+      subnets where no available pool can be found. </simpara></listitem>
 
       <listitem><simpara><command>retries</command> (default 3) is the number of
       retries before trying the next server. Note it is not supported for
@@ -428,6 +437,13 @@ Please make sure that your compilation has the following:
       of seconds a response is waited for. </simpara></listitem>
       </itemizedlist>
 
+    </para>
+
+    <para> When <command>reselect-subnet-pool</command> or
+    <command>reselect-subnet-address</command> is set to true at the
+    reception of RADIUS Access-Accept the selected subnet is checked
+    against the client-class name or the reserved address and if it does
+    not matched another subnet is selected among matching subnets.
     </para>
 
     <para>
