@@ -459,6 +459,9 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
+    // Discard any cached packets or parked packets
+    discardPackets();
+
     try {
         stopD2();
     } catch(const std::exception& ex) {
@@ -3586,6 +3589,14 @@ int Dhcpv4Srv::getHookIndexBuffer4Send() {
 
 int Dhcpv4Srv::getHookIndexLease4Decline() {
     return (Hooks.hook_index_lease4_decline_);
+}
+
+void Dhcpv4Srv::discardPackets() {
+    // Clear any packets held by the callhout handle store and
+    // all parked packets
+    isc::dhcp::Pkt4Ptr pkt4ptr_empty;
+    isc::dhcp::getCalloutHandle(pkt4ptr_empty);
+    HooksManager::clearParkingLots();
 }
 
 }   // namespace dhcp
