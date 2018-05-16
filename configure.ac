@@ -788,7 +788,7 @@ AC_ARG_ENABLE([cql-static-link],
 AS_HELP_STRING([--enable-cql-static-link],
     [build programs with cassandra cpp driver static link [[default=no]]]),
     [enable_cql_static_link=yes], [enable_cql_static_link=no])
-AM_CONDITIONAL(USE_CQL_STATIC_LIB, test $enable_cql_static_lib = yes)
+AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
 #AC_DEFINE USE_CQL_STATIC_LIB? (unused)
 
 cql_lib="cassandra"
