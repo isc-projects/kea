@@ -45,6 +45,8 @@
 #  endif
 # endif
 
+#include <config.h>
+
 #include "parser.h"
 
 // User implementation prologue.
