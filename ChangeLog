@@ -1,3 +1,8 @@
+1404.	[doc]		tomek
+	Hooks package installation intruction added to Kea
+	User's Guide.
+	(Trac #5427, git 7bc5e4297e8b2ccb87d5d5d79ae066fe32964841)
+
 1403.	[build]		tomek
 	Support for hook packages has been updated. The --with-tierX
 	flags have been removed. Each hook library is now detected
@@ -17,7 +22,7 @@
 	message following a dynamic reconfigure.
 	(Trac #5564, git 5111f569bd251c2a98a2e6d958e8f6b640a1802d)
 
-1400.   [func]       tmark
+1400.   [func]		tmark
 	A new hooks library, Stat Cmds, has been added to the open source
 	distribution.  This library provides commands for fetching lease
 	allocation statistics using lease backend as the source for
