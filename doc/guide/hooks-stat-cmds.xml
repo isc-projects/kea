@@ -109,7 +109,7 @@
         subnets, this can be result in a large response.
     </para>
     <para>
-      The following command would fetch lease statistcis for all known subnets from kea-dhcp4 server:
+      The following command would fetch lease statistics for all known subnets from kea-dhcp4 server:
 <screen>
 {
   "command": "stat-lease4-get"
