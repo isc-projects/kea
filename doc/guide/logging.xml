@@ -315,10 +315,10 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp4.stat-cmds-hooks</command> - this logger is used
-              to log messages related to operation of the Stats Cmds hooks library.
-              In general these will pertain to loading and unloading the library,
-              as well as execution of commands by the library.
+              <command>kea-dhcp4.stat-cmds-hooks</command> - this logger is
+              used to log messages related to operation of the Stats Cmds hooks
+              library. In general these will pertain to loading and unloading
+              the library and the execution of commands by the library.
             </simpara>
           </listitem>
 
@@ -443,6 +443,15 @@
               selection is usually based on the IP addresses and/or interface
               names, which can be retrieved from the received packet, even
               before the DHCPv6 message carried in the packet is parsed.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-dhcp6.stat-cmds-hooks</command> - this logger is
+              used to log messages related to operation of the Stats Cmds hooks
+              library. In general these will pertain to loading and unloading
+              the library and the execution of commands by the library.
             </simpara>
           </listitem>
 
