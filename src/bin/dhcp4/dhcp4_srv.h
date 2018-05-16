@@ -331,7 +331,7 @@ public:
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 
     /// @brief Discard all in-progress packets
-    void dumpPackets();
+    void discardPackets();
 
 protected:
 

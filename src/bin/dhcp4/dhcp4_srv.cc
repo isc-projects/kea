@@ -460,7 +460,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
 
 Dhcpv4Srv::~Dhcpv4Srv() {
     // Discard any cached packets or parked packets
-    dumpPackets();
+    discardPackets();
 
     try {
         stopD2();
@@ -3589,7 +3589,7 @@ int Dhcpv4Srv::getHookIndexLease4Decline() {
     return (Hooks.hook_index_lease4_decline_);
 }
 
-void Dhcpv4Srv::dumpPackets() {
+void Dhcpv4Srv::discardPackets() {
     // Clear any packets held by the callhout handle store and
     // all parked packets
     isc::dhcp::Pkt4Ptr pkt4ptr_empty;

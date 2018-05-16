@@ -389,7 +389,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Remove any existing timers.
     if (!check_only) {
         TimerMgr::instance()->unregisterTimers();
-        server.dumpPackets();
+        server.discardPackets();
     }
 
     // Revert any runtime option definitions configured so far and not committed.
