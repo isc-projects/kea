@@ -1537,7 +1537,8 @@ Package:
   Version:           ${PACKAGE_VERSION}
   Extended version:  ${EXTENDED_VERSION}
   OS Family:         ${OS_TYPE}
-  Using GNU sed:     ${GNU_SED}
+
+  Hooks directory:   ${prefix}/lib/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
