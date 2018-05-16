@@ -1,9 +1,15 @@
+1403.	[build]		tomek
+	Support for hook packages has been updated. The --with-tierX
+	flags have been removed. Each hook library is now detected
+	independently.
+	(Trac #5619, git aa1f95d699dc664a5660db120ef71edee910a9b3)
+
 1402.	[bug]		tomek
 	Fixed a crash that was caused by hook library registering
 	new hook points. This fixes unit-tests with forensic
 	logging, but the problem was generic and could cause
 	other libraries to segfault during unloading or reconfiguration.
-	(Trac 5577, git 2f9d1aa95c16e12fabc50d581b966f20b6d8a950)
+	(Trac #5577, git 2f9d1aa95c16e12fabc50d581b966f20b6d8a950)
 
 1401.	[bug]		tmark
 	Corrected an issue which caused kea-dhcp4 and kea-dhcp6 servers
