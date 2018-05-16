@@ -919,6 +919,26 @@ TEST_F(CalloutManagerTest, LibraryHandleRegisterCommandHandler) {
                  NoSuchHook);
 }
 
+// This test checks if the CalloutManager can adjust its own hook_vector_ size.
+TEST_F(CalloutManagerTest, VectorSize) {
+
+    size_t s = getCalloutManager()->getVectorSize();
+
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+
+    EXPECT_NO_THROW(hooks.registerHook("a_new_one"));
+
+    // Now load a callout. Name of the hook point the new callout is installed
+    // on doesn't matter. CM should do sanity checks and adjust anyway.
+    getCalloutManager()->getPostLibraryHandle().registerCallout("alpha",
+                                                                callout_four);
+
+    // The vector size should have been increased by one, because there's
+    // one new hook point now.
+    EXPECT_EQ(s + 1, getCalloutManager()->getVectorSize());
+}
+
+
 // The setting of the hook index is checked in the handles_unittest
 // set of tests, as access restrictions mean it is not easily tested
 // on its own.

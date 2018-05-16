@@ -48,6 +48,11 @@ ServerHooks::registerHook(const string& name) {
     pair<HookCollection::iterator, bool> result =
         hooks_.insert(make_pair(name, index));
 
+    /// @todo: We also need to call CalloutManager::ensureVectorSize(), so it
+    /// adjusts its vector. Since CalloutManager is not a singleton, there's
+    /// no getInstance() or similar. Also, CalloutManager uses ServerHooks,
+    /// so such a call would induce circular dependencies. Ugh.
+
     if (!result.second) {
 
         // There's a problem with hook libraries that need to be linked with
