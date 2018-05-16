@@ -329,6 +329,10 @@ public:
     virtual void d2ClientErrorHandler(const dhcp_ddns::
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Discard all in-progress packets
+    void discardPackets();
+
 protected:
 
     /// @name Functions filtering and sanity-checking received messages.
