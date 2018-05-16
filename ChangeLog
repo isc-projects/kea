@@ -1,3 +1,12 @@
+1400.   [func]       tmark
+	A new hooks library, Stat Cmds, has been added to the open source
+	distribution.  This library provides commands for fetching lease
+	allocation statistics using lease backend as the source for
+	lease counts per state.  This resolves an issue in deployements,
+	where multiple Kea servers share a common lease backend, which made
+	it difficult to obtain accurate lease statistics.
+	(Trac #5589, git 36f20f1c8b28f629fe2896b817ac0f3c6026fe0e)
+
 1399.	[func]		tmark
 	Support for fetching lease allocation statistics by subnet-id 
 	or subnet-id range has been added to the Cassandra back end. This
