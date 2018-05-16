@@ -112,7 +112,7 @@ $ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
         premium tarball is in your current directory, the following steps will
         unpack the premium tarball into the correct location:
 <screen>
-  $ <userinput>cd kea-1.3.0</userinput>
+  $ <userinput>cd kea-1.4.0</userinput>
   $ <userinput>tar xvf ../kea-premium-1.4.0.tar.gz</userinput>
 </screen>
         Note that unpacking the Kea premium package will put the files into a
@@ -168,6 +168,23 @@ $ <userinput>sudo make install</userinput>
       Note that as part of the installation procedure, the install script will
       eventually venture into premium/ directory and will install additional
       hook libraries and associated files.
+      </para>
+      <para>
+      The installation location of the hooks libraries depends whether you
+      specified --prefix parameter to the configure script. If you did not,
+      the default location will be /usr/local/lib/hooks. You can verify the
+      libraries are installed properly with this command:
+<screen>
+$ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
+/usr/local/lib/hooks/libdhcp_flex_id.so
+/usr/local/lib/hooks/libdhcp_host_cmds.so
+/usr/local/lib/hooks/libdhcp_lease_cmds.so
+/usr/local/lib/hooks/libdhcp_legal_log.so
+/usr/local/lib/hooks/libdhcp_subnet_cmds.so
+</screen>
+      The exact list you see will depend on the packages you have.
+      If you specified directory via --prefix, the hooks libraries
+      will be located in {prefix directory}/lib/hooks.
       </para>
     </section>
 
