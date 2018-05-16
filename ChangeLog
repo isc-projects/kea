@@ -1,4 +1,11 @@
-1400.   [func]       tmark
+1401.	[bug]		tomek
+	Fixed a crash that was caused by hook library registering
+	new hook points. This fixes unit-tests with forensic
+	logging, but the problem was generic and could cause
+	other libraries to segfault during unloading or reconfiguration.
+	(Trac 5577, git 2f9d1aa95c16e12fabc50d581b966f20b6d8a950)
+
+	1400.   [func]       tmark
 	A new hooks library, Stat Cmds, has been added to the open source
 	distribution.  This library provides commands for fetching lease
 	allocation statistics using lease backend as the source for
@@ -8,9 +15,9 @@
 	(Trac #5589, git 36f20f1c8b28f629fe2896b817ac0f3c6026fe0e)
 
 1399.	[func]		tmark
-	Support for fetching lease allocation statistics by subnet-id 
+	Support for fetching lease allocation statistics by subnet-id
 	or subnet-id range has been added to the Cassandra back end. This
-	allows it to be used in conjunction with the Stat Cmds hooks 
+	allows it to be used in conjunction with the Stat Cmds hooks
 	library commands for fetching shared lease statistics.
 	(Trac #5588, git 3fcfefdea5ac838936c2109ecbbbc32eabc8fdba)
 
