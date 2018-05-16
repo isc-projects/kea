@@ -174,10 +174,10 @@ public:
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 
-    /// @brief Dumps cached and parked packets
+    /// @brief Discards cached and parked packets
     /// Clears the call_handle store and packet parking lots
     /// of all packets.  Called during reconfigure and shutdown.
-    void dumpPackets();
+    void discardPackets();
 
 protected:
 
