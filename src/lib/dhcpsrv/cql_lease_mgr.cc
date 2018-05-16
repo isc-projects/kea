@@ -1483,8 +1483,8 @@ public:
     /// @param conn An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute
     /// @param fetch_type Indicates whether or not lease_type should be
-    /// @param subnet_id id of the subnet for which stats are desired
     /// fetched from the result set (should be true for v6)
+    /// @param subnet_id id of the subnet for which stats are desired
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
                          const bool fetch_type,  const SubnetID& subnet_id)
         : LeaseStatsQuery(subnet_id), conn_(conn), statement_(statement),
@@ -1501,8 +1501,9 @@ public:
     /// @param conn An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute
     /// @param fetch_type Indicates whether or not lease_type should be
-    /// @param subnet_id id of the subnet for which stats are desired
     /// fetched from the result set (should be true for v6)
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
     CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
                          const bool fetch_type,  const SubnetID& first_subnet_id,
                          const SubnetID& last_subnet_id)
