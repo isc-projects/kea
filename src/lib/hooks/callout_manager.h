@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -365,11 +365,14 @@ public:
         return (post_library_handle_);
     }
 
+    //@}
 
     /// @brief Return number of currently available hooks
-    size_t getVectorSize() const {
+    size_t getHookLibsVectorSize() const {
         return (hook_vector_.size());
     }
+
+private:
 
     /// @brief This method checks whether the hook_vector_ size is suffucient
     ///        and extends it if necessary.
@@ -390,11 +393,8 @@ public:
     /// is registered. It checks whether the vector size is sufficient and
     /// extends it if necessary. It is safe to call it multiple times. It
     /// may grow the vector size, but will never shrink it.
-    void ensureVectorSize();
+    void ensureHookLibsVectorSize();
 
-    //@}
-
-private:
     /// @brief Check library index
     ///
     /// Ensures that the current library index is valid.  This is called by

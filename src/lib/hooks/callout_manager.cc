@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
     checkLibraryIndex(current_library_);
 
     // New hooks could have been registered since the manager was constructed.
-    ensureVectorSize();
+    ensureHookLibsVectorSize();
 
     // Get the index associated with this hook (validating the name in the
     // process).
@@ -237,7 +237,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     checkLibraryIndex(current_library_);
 
     // New hooks could have been registered since the manager was constructed.
-    ensureVectorSize();
+    ensureHookLibsVectorSize();
 
     // Get the index associated with this hook (validating the name in the
     // process).
@@ -288,7 +288,7 @@ bool
 CalloutManager::deregisterAllCallouts(const std::string& name) {
 
     // New hooks could have been registered since the manager was constructed.
-    ensureVectorSize();
+    ensureHookLibsVectorSize();
 
     // Get the index associated with this hook (validating the name in the
     // process).
@@ -325,7 +325,7 @@ void
 CalloutManager::registerCommandHook(const std::string& command_name) {
 
     // New hooks could have been registered since the manager was constructed.
-    ensureVectorSize();
+    ensureHookLibsVectorSize();
 
     ServerHooks& hooks = ServerHooks::getServerHooks();
     int hook_index = hooks.findIndex(ServerHooks::commandToHookName(command_name));
@@ -342,7 +342,7 @@ CalloutManager::registerCommandHook(const std::string& command_name) {
 }
 
 void
-CalloutManager::ensureVectorSize() {
+CalloutManager::ensureHookLibsVectorSize() {
     ServerHooks& hooks = ServerHooks::getServerHooks();
     if (hooks.getCount() > hook_vector_.size()) {
         // Uh oh, there are more hook points that our vector allows.

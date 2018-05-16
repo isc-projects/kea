@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -922,7 +922,7 @@ TEST_F(CalloutManagerTest, LibraryHandleRegisterCommandHandler) {
 // This test checks if the CalloutManager can adjust its own hook_vector_ size.
 TEST_F(CalloutManagerTest, VectorSize) {
 
-    size_t s = getCalloutManager()->getVectorSize();
+    size_t s = getCalloutManager()->getHookLibsVectorSize();
 
     ServerHooks& hooks = ServerHooks::getServerHooks();
 
@@ -935,7 +935,7 @@ TEST_F(CalloutManagerTest, VectorSize) {
 
     // The vector size should have been increased by one, because there's
     // one new hook point now.
-    EXPECT_EQ(s + 1, getCalloutManager()->getVectorSize());
+    EXPECT_EQ(s + 1, getCalloutManager()->getHookLibsVectorSize());
 }
 
 
