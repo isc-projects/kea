@@ -80,7 +80,7 @@
             <para><command>subnet-id</command> - ID of the subnet for which
             lease statistics should be fetched. Use this to get statistics for
             a single subnet.  If the subnet does not exist the command result
-            code will be 2 (i.e. CONTROL_RESULT_EMPTY).
+            code will be 3 (i.e. CONTROL_RESULT_EMPTY).
             </para>
           </listitem>
           <listitem>
@@ -89,7 +89,7 @@
             be retrieved.  Note that fuzzy values are supported thus allowing
             for a query for statistics using approximate ID values. If the
             range does not include any known subnets, the command result code
-            will be 2 (i.e. CONTROL_RESULT_EMPTY).
+            will be 3 (i.e. CONTROL_RESULT_EMPTY).
             <itemizedlist>
               <listitem>
                 <para><command>first-subnet-id</command> - ID of the first

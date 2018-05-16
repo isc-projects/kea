@@ -591,8 +591,6 @@ TEST_F(StatCmdsTest, multipleLoads) {
     testMultipleLoads();
 }
 
-using namespace isc::dhcp;
-
 struct TestScenario {
     std::string description_;
     std::string command_txt_;
