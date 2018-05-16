@@ -148,8 +148,11 @@
          "library": "/usr/local/lib/hooks/libdhcp_radius.so",
 
          "parameters": {
-             // Do not use RFC 4361
-             "extract-duid": false,
+             // If do not use RFC 4361
+             // "extract-duid": false,
+
+             // If have conflicting subnets
+             // "reselect-subnet-pool": true,
 
              // Strip the 0 type added by flex-id
              "client-id-pop0": true,
