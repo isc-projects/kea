@@ -380,13 +380,10 @@ public:
     /// can catch out of order delivery.
     static ConstElementPtr longResponseHandler(const std::string&,
                                                const ConstElementPtr&) {
-        // By seeding the generator with the constant value we will always
-        // get the same sequence of generated strings.
-        std::srand(1);
         ElementPtr arguments = Element::createList();
-        for (unsigned i = 0; i < 40000; ++i) {
+        for (unsigned i = 0; i < 80000; ++i) {
             std::ostringstream s;
-            s << std::setw(10) << std::rand();
+            s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
         }
         return (createAnswer(0, arguments));
