@@ -121,7 +121,8 @@ public:
     /// must fulfill: 0 < first-subnet-id < last-subnet-id
     /// -# subnet-id and subnet-range are mutually exclusive
     Parameters getParameters(const ConstElementPtr& cmd_args);
-/// @brief Executes the lease4 query and constructs the outbound result set
+
+    /// @brief Executes the lease4 query and constructs the outbound result set
     ///
     /// This method uses the command parameters to identify the range
     /// of configured subnets. If the range contains no known subnets
