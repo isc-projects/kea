@@ -218,6 +218,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
+    discardPackets();
     try {
         stopD2();
     } catch(const std::exception& ex) {
@@ -3761,6 +3762,12 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
     return (false);
 }
 
+void Dhcpv6Srv::discardPackets() {
+    // Dump all of our current packets, anything that is mid-stream
+    isc::dhcp::Pkt6Ptr pkt6ptr_empty;
+    isc::dhcp::getCalloutHandle(pkt6ptr_empty);
+    HooksManager::clearParkingLots();
+}
 
 };
 };
