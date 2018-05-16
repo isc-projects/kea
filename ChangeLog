@@ -1,3 +1,5 @@
+Kea 1.4.0-beta released on May 18, 2018
+
 1404.	[doc]		tomek
 	Hooks package installation intruction added to Kea
 	User's Guide.
@@ -26,7 +28,7 @@
 	A new hooks library, Stat Cmds, has been added to the open source
 	distribution.  This library provides commands for fetching lease
 	allocation statistics using lease backend as the source for
-	lease counts per state.  This resolves an issue in deployements,
+	lease counts per state.  This resolves an issue in deployments,
 	where multiple Kea servers share a common lease backend, which made
 	it difficult to obtain accurate lease statistics.
 	(Trac #5589, git 36f20f1c8b28f629fe2896b817ac0f3c6026fe0e)
@@ -53,7 +55,7 @@
 1396.	[bug]		tmark
 	The PostgreSQL schema was expanded to include two new tables:
 	lease4-stat and lease6-stat and triggers to update them as leases
-	are modified. This resolves an issue in deployements, where multiple
+	are modified. This resolves an issue in deployments, where multiple
 	Kea servers share a common PostgreSQL lease database, which made
 	it difficult to obtain accurate lease statistics. Since these statistics
 	are now tracked by the database, they do not have to be recalculated at
@@ -66,7 +68,7 @@
 1395.	[bug]		tmark
 	The MySQL schema was expanded to include two new tables:
 	lease4-stat and lease6-stat and triggers to update them as leases
-	are modified. This resolves an issue in deployements, where multiple
+	are modified. This resolves an issue in deployments, where multiple
 	Kea servers share a common MySQL lease database, which made it difficult
 	to obtain accurate lease statistics. Since these statistics are now
 	tracked by the database, they do not have to be recalculated at startup
@@ -122,7 +124,7 @@
 	(Trac #5115, git c3ba89c56882cac1080899ad201f0c02056eef38)
 
 1386.	[func]		fdupont
-	Extented comment / user-context support to DHCP-DDNS and
+	Extended comment / user-context support to DHCP-DDNS and
 	Control Agent configuration syntax.
 	(Trac #5495, git fe79959e3bc3c46ccb89661cb27696671a8508b8)
 
@@ -225,7 +227,7 @@
 	where IPv4 address was unspecified or when selected subnet identifier
 	was not specified (5416).  Corrected inconsistent data types for
 	subnet id columns in both Postgres and MySQL schemas.  Now both
-	schemas support upto MAX UINT32 in all subnet id columns. Exiting
+	schemas support up to MAX UINT32 in all subnet id columns. Exiting
 	databases may be updated without data migration.
 	(Trac #5416, #5522, git d1dd0f2e27ffa49515c17cf68d54f162359b6384)
 
@@ -268,7 +270,7 @@
 1362.	[func]		razvan, andrei
 	A new parameter exit-wait-time has been added to perfdhcp. It is
 	now possible to tell perfdhcp to wait certain amount of time after
-	exit conditions are met before actuallying terminating.
+	exit conditions are met before actually terminating.
 	(Github #55, git 0cd1178ae092fa0c2f122d0e16fb673b4074a6e6)
 
 1361.	[func]		razvan, andrei, tomek

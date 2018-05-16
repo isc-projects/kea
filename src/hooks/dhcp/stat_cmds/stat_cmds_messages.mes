@@ -1,5 +1,23 @@
 # Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 
+% STAT_CMDS_DEINIT_FAILED unloading Stat Commands hooks library failed: %1
+This error message indicates an error during unloading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% STAT_CMDS_DEINIT_OK unloading Stat Commands hooks library successful
+This info message indicates that the Stat Commands hooks library has been
+removed successfully.
+
+% STAT_CMDS_INIT_FAILED loading Stat Commands hooks library failed: %1
+This error message indicates an error during loading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% STAT_CMDS_INIT_OK loading Stat Commands hooks library successful
+This info message indicates that the Stat Commands hooks library has been
+loaded successfully. Enjoy!
+
 % STAT_CMDS_LEASE4_GET stat-lease4-get command successful, parameters: %1 rows found: %2
 The stat-lease4-get command has been successful. The log will contain
 the parameters supplied and the number of rows found.
@@ -33,21 +51,3 @@ parameters.  A detailed explanation should be logged.
 The parameters submitted with stat-lease6-get were valid but excluded all
 known subnets.  The parameters supplied along with an explanation should
 be logged.
-
-% STAT_CMDS_DEINIT_FAILED unloading Stat Commands hooks library failed: %1
-This error message indicates an error during unloading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
-
-% STAT_CMDS_DEINIT_OK unloading Stat Commands hooks library successful
-This info message indicates that the Stat Commands hooks library has been
-removed successfully.
-
-% STAT_CMDS_INIT_FAILED loading Stat Commands hooks library failed: %1
-This error message indicates an error during loading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
-
-% STAT_CMDS_INIT_OK loading Stat Commands hooks library successful
-This info message indicates that the Stat Commands hooks library has been
-loaded successfully. Enjoy!

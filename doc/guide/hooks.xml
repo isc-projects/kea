@@ -45,7 +45,7 @@
       <para>
       The next section describes how to configure hooks libraries. If you
       are interested in writing your own hooks library, information can be
-      found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
+      found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen">Kea
       Developer's Guide</link>.
       </para>
 
@@ -582,9 +582,9 @@ and may have the zero or more of the following entries:
         </para>
 
         <para>As with any other hooks libraries provided by ISC, internals of the
-        user_chk code are well documented. You can take a look at the  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</link>
+        user_chk code are well documented. You can take a look at the  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</link>
         that discusses how the code works internally. That, together with
-        our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
+        our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen">Hooks
         Framework section</link> should give you some pointers how to extend
         this library and perhaps even write your own from scratch.</para>
 
