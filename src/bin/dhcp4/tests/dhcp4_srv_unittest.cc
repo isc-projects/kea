@@ -339,8 +339,10 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     // No specific interface is selected as outbound interface and no specific
     // local address is provided. The IfaceMgr will figure out which interface to use.
     EXPECT_TRUE(resp->getLocalAddr().isV4Zero());
-    EXPECT_TRUE(resp->getIface().empty());
     EXPECT_FALSE(resp->indexSet());
+
+    // Fixed in #5515 so now the interface name is never empty.
+    EXPECT_FALSE(resp->getIface().empty());
 
     // Another test verifies that setting outbound interface to same as inbound will
     // cause the server to set interface and local address as expected.
