@@ -326,7 +326,7 @@ TimerMgr::TimerMgr()
 }
 
 TimerMgr::~TimerMgr() {
-    unregisterTimers();
+    impl_->unregisterTimers();
     delete impl_;
 }
 
