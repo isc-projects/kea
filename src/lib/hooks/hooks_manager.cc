@@ -14,6 +14,9 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/server_hooks.h>
 
+#include <dhcp/pkt6.h>
+#include <dhcpsrv/callout_handle_store.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -123,6 +126,10 @@ HooksManager::loadLibraries(const HookLibsCollection& libraries) {
 
 void
 HooksManager::unloadLibrariesInternal() {
+    // Clean callout_handle_store for static CalloutHandlePtr.
+    // fix the Kea reload cause the hook library unload.
+    isc::dhcp::Pkt6Ptr pkt6ptr_empty;
+    isc::dhcp::getCalloutHandle(pkt6ptr_empty);
     // The order of deletion does not matter here, as each library manager
     // holds its own pointer to the callout manager.  However, we may as
     // well delete the library managers first: if there are no other references
