@@ -380,7 +380,7 @@ public:
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
 
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
@@ -390,7 +390,7 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) override;
 
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
@@ -402,7 +402,7 @@ public:
     /// @param last_subnet_id last subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
-                                                                const SubnetID& last_subnet_id);
+                                                                const SubnetID& last_subnet_id) override;
     /// @brief Creates and runs the IPv6 lease stats query
     ///
     /// It creates an instance of a CqlLeaseStatsQuery and then
@@ -411,7 +411,7 @@ public:
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -421,7 +421,7 @@ public:
     ///
     /// @param subnet_id id of the subnet for which stats are desired
     /// @return A populated LeaseStatsQuery
-    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) override;
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -433,7 +433,7 @@ public:
     /// @param last_subnet_id last subnet in the range of subnets
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
-                                                                const SubnetID& last_subnet_id);
+                                                                const SubnetID& last_subnet_id) override;
     /// @brief Removes specified IPv4 leases.
     ///
     /// This rather dangerous method is able to remove all leases from specified
