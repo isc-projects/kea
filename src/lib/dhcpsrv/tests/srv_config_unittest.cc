@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,11 +67,11 @@ public:
 
         // Build our reference dictionary of client classes
         ref_dictionary_->addClass("cc1", ExpressionPtr(),
-                                  "", false, CfgOptionPtr());
+                                  "", false, false, CfgOptionPtr());
         ref_dictionary_->addClass("cc2", ExpressionPtr(),
-                                  "", false, CfgOptionPtr());
+                                  "", false, false, CfgOptionPtr());
         ref_dictionary_->addClass("cc3", ExpressionPtr(),
-                                  "", false, CfgOptionPtr());
+                                  "", false, false, CfgOptionPtr());
     }
 
 

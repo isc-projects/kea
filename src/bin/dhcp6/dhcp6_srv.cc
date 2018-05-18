@@ -378,6 +378,14 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 
         // Find host reservations using specified identifiers.
         alloc_engine_->findReservation(ctx);
+
+        // Set known builtin class if something was found.
+        if (!ctx.hosts_.empty()) {
+            pkt->addClass("KNOWN");
+        }
+
+        // Perform second pass of classification.
+        evaluateClasses(pkt, true);
     }
 }
 
@@ -3261,10 +3269,14 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     pkt->addClass("ALL");
     string classes = "ALL ";
 
-    // First phase: built-in vendor class processing
+    // First: built-in vendor class processing
     classifyByVendor(pkt, classes);
 
-    // Run match expressions
+    // Run match expressions on classes not depending on KNOWN.
+    evaluateClasses(pkt, false);
+}
+
+void Dhcpv6Srv::evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
@@ -3281,6 +3293,10 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
         if ((*it)->getRequired()) {
             continue;
         }
+        // Not the right pass.
+        if ((*it)->getDependOnKnown() != depend_on_known) {
+            continue;
+        }
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
@@ -3291,7 +3307,6 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
                     .arg(status);
                 // Matching: add the class
                 pkt->addClass((*it)->getName());
-                classes += (*it)->getName() + " ";
             } else {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
                     .arg((*it)->getName())
