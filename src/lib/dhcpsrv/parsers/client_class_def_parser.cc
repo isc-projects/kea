@@ -77,15 +77,27 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                   << getPosition("name", class_def_cfg) << ")");
     }
 
+    // Let's try to parse the only-if-required flag
+    bool required = false;
+    if (class_def_cfg->contains("only-if-required")) {
+        required = getBoolean(class_def_cfg, "only-if-required");
+    }
+
     // Parse matching expression
     ExpressionPtr match_expr;
     ConstElementPtr test_cfg = class_def_cfg->get("test");
     std::string test;
+    bool depend_on_known = false;
     if (test_cfg) {
         ExpressionParser parser;
         using std::placeholders::_1;
         auto check_defined =
-            std::bind(isClientClassDefined, class_dictionary, _1);
+            [&class_dictionary, &depend_on_known]
+            (const ClientClass& cclass) {
+                return (isClientClassDefined(class_dictionary,
+                                             depend_on_known,
+                                             cclass));
+        };
         parser.parse(match_expr, test_cfg, family, check_defined);
         test = test_cfg->stringValue();
     }
@@ -135,12 +147,6 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Parse user context
     ConstElementPtr user_context = class_def_cfg->get("user-context");
-
-    // Let's try to parse the only-if-required flag
-    bool required = false;
-    if (class_def_cfg->contains("only-if-required")) {
-        required = getBoolean(class_def_cfg, "only-if-required");
-    }
 
     // Let's try to parse the next-server field
     IOAddress next_server("0.0.0.0");
@@ -197,9 +203,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Add the client class definition
     try {
-        class_dictionary->addClass(name, match_expr, test, required, options,
-                                   defs, user_context, next_server, sname,
-                                   filename);
+        class_dictionary->addClass(name, match_expr, test, required,
+                                   depend_on_known, options, defs,
+                                   user_context, next_server, sname, filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");

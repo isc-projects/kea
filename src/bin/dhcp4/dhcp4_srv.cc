@@ -160,7 +160,15 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
+
+            // Set known builtin class if something was found.
+            if (!context_->hosts_.empty()) {
+                query->addClass("KNOWN");
+            }
         }
+
+        // Perform second pass of classification.
+	Dhcpv4Srv::evaluateClasses(query, true);
     }
 
     const ClientClasses& classes = query_->getClasses();
@@ -3186,10 +3194,14 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // All packets belongs to ALL.
     pkt->addClass("ALL");
 
-    // First phase: built-in vendor class processing
+    // First: built-in vendor class processing.
     classifyByVendor(pkt);
 
-    // Run match expressions
+    // Run match expressions on classes not depending on KNOWN.
+    evaluateClasses(pkt, false);
+}
+
+void Dhcpv4Srv::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
@@ -3204,6 +3216,10 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         }
         // Not the right time if only when required
         if ((*it)->getRequired()) {
+            continue;
+        }
+        // Not the right pass.
+        if ((*it)->getDependOnKnown() != depend_on_known) {
             continue;
         }
         // Evaluate the expression which can return false (no match),
