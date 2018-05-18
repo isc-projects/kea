@@ -45,8 +45,6 @@
 #  endif
 # endif
 
-#include <config.h>
-
 #include "agent_parser.h"
 
 // User implementation prologue.

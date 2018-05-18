@@ -6,8 +6,6 @@
 
 /// Defines the logger used by the top-level component of kea-dhcp-ddns.
 
-#include <config.h>
-
 #include <http/http_log.h>
 
 namespace isc {

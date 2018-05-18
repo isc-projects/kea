@@ -45,8 +45,6 @@
 #  endif
 # endif
 
-#include <config.h>
-
 #include "dhcp4_parser.h"
 
 // User implementation prologue.
