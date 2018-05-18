@@ -45,8 +45,6 @@
 #  endif
 # endif
 
-#include <config.h>
-
 #include "dhcp6_parser.h"
 
 // User implementation prologue.

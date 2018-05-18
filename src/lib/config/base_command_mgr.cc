@@ -4,8 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <config.h>
-
 #include <cc/command_interpreter.h>
 #include <config/base_command_mgr.h>
 #include <config/config_log.h>
