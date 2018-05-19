@@ -2237,11 +2237,22 @@ should include options from the isc option space:
       </para>
 
       <para>
-      The process of doing classification is conducted in several steps. The first step
-      is to assess an incoming packet and assign it to zero or more classes.  The
-      second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign classes from host reservations and
-      evaluate class expressions depending on the "KNOWN" class.
+      In a similar way a pool can be constrained to serve only known clients,
+      i.e. clients which have a reservation, using the build-n "KNOWN" class.
+      One can assign addresses to registered clients without giving a
+      different address per reservations, for instance when there is
+      not enough available addresses.
+      </para>
+
+      <para>
+      The process of doing classification is conducted in five steps.
+      The first step is to assess an incoming packet and assign it to
+      zero or more classes.
+      The second step is to choose a subnet, possibly based on the
+      class information.
+      The next step is to evaluate class expressions depending on the
+      built-in "KNOWN" class after host reservation lookup, and to
+      assign classes from host reservations.
       After the list of required classes is built and each class of the list
       has its expression evaluated: when it returns true the packet is added
       as a member of the class.

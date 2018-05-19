@@ -23,6 +23,12 @@
         "re-detect": true
     },
 
+    // Define the unknown client class.
+    "client-classes": [ {
+        "name": "unknown",
+        "test": "not member('KNOWN')"
+    } ],
+
     // We need to specify the the database used to store leases. As of
     // September 2016, four database backends are supported: MySQL,
     // PostgreSQL, Cassandra, and the in-memory database, Memfile.
@@ -139,6 +145,31 @@
         "relay": {
             "ip-address": "3000::1"
         }
+    },
+    {
+        // This subnet is divided in two pools for unknown and
+        // known (i.e. which have a reservation) clients.
+        // The built-in KNOWN class is set or not at host reservation
+        // lookup and client classes depending on it are evaluated.
+        // This happens after subnet selection and before address
+        // allocation from pools.
+        "pools": [
+            {
+               "pool": "2001:db8:8::/64",
+               "client-class": "unknown"
+            },
+            {
+               "pool": "2001:db8:9::/64",
+               "client-class": "KNOWN"
+           }
+        ],
+        "subnet": "2001:db8:8::/46",
+        "reservations": [
+            {  "hw-address": "00:00:00:11:22:33", "hostname": "h1" },
+            {  "hw-address": "00:00:00:44:55:66", "hostname": "h4" },
+            {  "hw-address": "00:00:00:77:88:99", "hostname": "h7" },
+            {  "hw-address": "00:00:00:aa:bb:cc", "hostname": "ha" }
+        ]
     }
     ]
 },
