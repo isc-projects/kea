@@ -168,7 +168,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         }
 
         // Perform second pass of classification.
-	Dhcpv4Srv::evaluateClasses(query, true);
+        Dhcpv4Srv::evaluateClasses(query, true);
     }
 
     const ClientClasses& classes = query_->getClasses();
