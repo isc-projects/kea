@@ -589,6 +589,19 @@ Debian and Ubuntu:
           Cassandra project website contains useful pointers: <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cassandra.apache.org">http://cassandra.apache.org</uri>.
         </para>
         <para>
+          If you have a cpp-driver package available as binary or as source
+          simply install or build and install the package. After build
+          and install Kea as described in <xref linkend="installation"/>:
+          To enable the Cassandra (CQL) database code, at the "configure"
+          step (see <xref linkend="configure"/>), do:
+          <screen><userinput>./configure [other-options] --with-cql=<replaceable>path-to-pkg-config</replaceable></userinput></screen>
+          Note if <command>pkg-config</command> is at its standard location
+          (so in the shell path) you do not need to give its path.
+          If it does not work (no pkg-config, package not available in
+          pkg-config with the cassandra name, etc, you can still use
+          the <command>cql_config</command> script in tools/ as describe below.
+        </para>
+        <para>
           Download and compile cpp-driver from DataStax. For details regarding
           dependencies for building cpp-driver, see the project homepage
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/datastax/cpp-driver">https://github.com/datastax/cpp-driver</uri>. In June
