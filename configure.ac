@@ -783,6 +783,19 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+# allow building kea programs with static link to cassandra cpp-driver.
+AC_ARG_ENABLE([cql-static-lib],
+AS_HELP_STRING([--enable-cql-static-lib],
+  [build programs with cassandra cpp driver static lib [[default=no]]]),
+  [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
+AM_CONDITIONAL(USE_CQL_STATIC_LIB, test $enable_cql_static_lib = yes)
+AM_COND_IF([USE_CQL_STATIC_LIB], [AC_DEFINE([USE_CQL_STATIC_LIB], [1], [Was Kea statically linked with cassandra cpp driver?])])
+
+cql_lib="cassandra"
+if test "${enable_cql_static_lib}" = "yes" ; then
+    cql_lib="${cql_lib}_static"
+fi
+
 cql_config="no"
 AC_ARG_WITH([cql],
   AC_HELP_STRING([--with-cql=PATH],
@@ -790,7 +803,7 @@ AC_ARG_WITH([cql],
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    CQL_CONFIG="/usr/bin/cql_config"
+    CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
 fi
@@ -800,10 +813,10 @@ if test "$CQL_CONFIG" != "" ; then
         AC_MSG_ERROR([--with-cql should point to a cql_config program])
     fi
 
-    CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
-    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra -luv"
-    CQL_VERSION=`$CQL_CONFIG --version`
+    CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
+    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
+    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
+    CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
     AC_SUBST(CQL_CPPFLAGS)
     AC_SUBST(CQL_LIBS)
