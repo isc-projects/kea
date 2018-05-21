@@ -590,15 +590,15 @@ Debian and Ubuntu:
         </para>
         <para>
           If you have a cpp-driver package available as binary or as source
-          simply install or build and install the package. After build
+          simply install or build and install the package. Then build
           and install Kea as described in <xref linkend="installation"/>:
           To enable the Cassandra (CQL) database code, at the "configure"
           step (see <xref linkend="configure"/>), do:
           <screen><userinput>./configure [other-options] --with-cql=<replaceable>path-to-pkg-config</replaceable></userinput></screen>
           Note if <command>pkg-config</command> is at its standard location
-          (so in the shell path) you do not need to give its path.
-          If it does not work (no pkg-config, package not available in
-          pkg-config with the cassandra name, etc, you can still use
+          (and thus in the shell path) you do not need to supply its path.
+          If it does not work (e.g. no pkg-config, package not available in
+          pkg-config with the cassandra name), you can still use
           the <command>cql_config</command> script in tools/ as describe below.
         </para>
         <para>
