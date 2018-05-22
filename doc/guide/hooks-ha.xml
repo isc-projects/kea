@@ -104,11 +104,11 @@
         clock skew between the servers participating the HA setup would usually
         exist. This is acceptable as long as the clock skew is relatively low,
         comparing to the lease lifetimes. However, if the clock skew becomes too
-        high, the different notion of time for the lease expiration by different
+        high, the different notions of time for the lease expiration by different
         servers may cause the HA system to malfuction. For example, one server
-        may consider valid lease to be expired. As a consequence, the lease reclamation
-        process may remove a name associated with this lease from the DNS, even though
-        the lease may later get renewed by a client.</para>
+        may consider a valid lease to be expired. As a consequence, the lease
+        reclamation process may remove a name associated with this lease from
+        the DNS, even though the lease may later get renewed by a client.</para>
 
         <para>Each active server monitors the clock skew by comparing its current
         time with the time returned by its partner in response to the heartbeat
@@ -214,10 +214,10 @@
           While in this state, the server will continue responding to the
           DHCP clients based on the HA mode selected (load balancing or
           hot standby), but the lease updates won't be exchanged and the
-          heartbeats won't be sent. The server which got into the
-          "terminated" state will remain in this state until it is
-          restarted. The administrator must eliminate the issue which caused
-          this situation prior to restarting the server (synchronize clocks).
+          heartbeats won't be sent. Once a server has entered the
+          "terminated" state it will remain in this state until it is
+          restarted. The administrator must correct the issue which caused
+          this situation prior to restarting the server (e.g. synchronize clocks).
           Otherwise, the server will return to the "terminated" state as
           soon as it finds that the clock skew is still too high.
           </para></listitem>
