@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <functional>
@@ -59,7 +60,7 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 ///    // Restore from backup
 ///    context_ = backup_copy;
 ///
-class DCfgContextBase : public isc::data::CfgToElement {
+class DCfgContextBase : public isc::dhcp::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Indicator that a configuration parameter is optional.
     static const bool OPTIONAL = true;

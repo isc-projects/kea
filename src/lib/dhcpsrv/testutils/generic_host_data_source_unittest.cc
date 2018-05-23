@@ -14,14 +14,16 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/db_exceptions.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
-#include <dhcpsrv/tests/test_utils.h>
-#include <dhcpsrv/testutils/schema.h>
-#include <boost/foreach.hpp>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
-#include <gtest/gtest.h>
+#include <dhcpsrv/testutils/schema.h>
 #include <util/buffer.h>
+
+#include <boost/foreach.hpp>
+#include <gtest/gtest.h>
 
 #include <chrono>
 #include <cstring>
@@ -209,12 +211,12 @@ GenericHostDataSourceTest::testReadOnlyDatabase(const char* valid_db_type) {
 
     // Close the database connection and reopen in "read-only" mode as
     // specified by the "VALID_READONLY_DB" parameter.
-    HostDataSourceFactory::destroy();
-    HostDataSourceFactory::create(connectionString(
+    HostMgr::create();
+    HostMgr::addBackend(connectionString(
         valid_db_type, VALID_NAME, VALID_HOST, VALID_READONLY_USER,
         VALID_PASSWORD, VALID_READONLY_DB));
 
-    hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+    hdsptr_ = HostMgr::instance().getHostDataSource();
 
     // Check that an attempt to insert new host would result in
     // exception.

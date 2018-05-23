@@ -3,73 +3,84 @@
 {
     "Control-agent":
     {
-	// We need to specify where the agent should listen to incoming HTTP
-	// queries. Note that agent does not provide SSL or TLS protection
-	// on its own, so limiting the traffic to localhost is a good idea.
-	"http-host": "127.0.0.1",
+        // We need to specify where the agent should listen to incoming HTTP
+        // queries. Note that agent does not provide SSL or TLS protection
+        // on its own, so limiting the traffic to localhost is a good idea.
+        "http-host": "127.0.0.1",
 
-	// Another mandatory parameter is the HTTP port.
-	"http-port": 8000,
+        // Another mandatory parameter is the HTTP port.
+        "http-port": 8000,
 
-	// This map specifies where control channel of each server is configured
-	// to listen on. See 'control-socket' object in the respective
-	// servers. At this time the only supported socket type is "unix".
-	// Make sure that the Agent and respective servers configuration
-	// matches exactly, otherwise they won't be able to communicate.
-	"control-sockets":
-	{
-	    // This is how the Agent can communicate with the DHCPv4 server.
-	    "dhcp4":
-	    {
-		"socket-type": "unix",
-		"socket-name": "/path/to/the/unix/socket-v4"
-	    },
+        // This map specifies where control channel of each server is configured
+        // to listen on. See 'control-socket' object in the respective
+        // servers. At this time the only supported socket type is "unix".
+        // Make sure that the Agent and respective servers configuration
+        // matches exactly, otherwise they won't be able to communicate.
+        // One extra feature that requires some explanation is
+        // user-context. This is a structure that you can define at
+        // global scope, in control sockets and others. It is parsed by
+        // Kea, but not used directly.  It is intended to keep anything
+        // you may want to put there - comments, extra designations,
+        // floor or department names etc. These structures will be made
+        // available to Kea hooks. A comment entry is translated into a
+        // user-context with a "comment" property so you can include
+        // comments inside the configuration itself.
+        "control-sockets":
+        {
+            // This is how the Agent can communicate with the DHCPv4 server.
+            "dhcp4":
+            {
+                "comment": "socket to DHCP4 server",
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-v4"
+            },
 
-	    // Location of the DHCPv6 command channel socket.
-	    "dhcp6":
-	    {
-		"socket-type": "unix",
-		"socket-name": "/path/to/the/unix/socket-v6"
-	    },
+            // Location of the DHCPv6 command channel socket.
+            "dhcp6":
+            {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-v6"
+            },
 
-	    // Currently DHCP-DDNS (nicknamed D2) does not support
-	    // command channel yet, but we hope this will change in the
-	    // future.
-	    "d2":
-	    {
-		"socket-type": "unix",
-		"socket-name": "/path/to/the/unix/socket-d2"
-	    }
-	},
+            // Currently DHCP-DDNS (nicknamed D2) does not support
+            // command channel yet, but we hope this will change in the
+            // future.
+            "d2":
+            {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-d2",
+                "user-context": { "in-use": false }
+            }
+        },
 
-	// CA is able to load hook libraries that augment its operation.
-	// The primary functionality is the ability to add new commands.
-	"hooks-libraries": [
-	    // Hook libraries list may contain more than one library.
-	    {
-		// The only necessary parameter is the library filename.
-		"library": "/opt/local/control-agent-commands.so",
+        // CA is able to load hook libraries that augment its operation.
+        // The primary functionality is the ability to add new commands.
+        "hooks-libraries": [
+            // Hook libraries list may contain more than one library.
+            {
+                // The only necessary parameter is the library filename.
+                "library": "/opt/local/control-agent-commands.so",
 
-		// Some libraries may support parameters. Make sure you
-		// type this section carefully, as the CA does not validate
-		// it (because the format is library specific).
-		"parameters": {
-		    "param1": "foo"
-		}
-	    }
-	]
+                // Some libraries may support parameters. Make sure you
+                // type this section carefully, as the CA does not validate
+                // it (because the format is library specific).
+                "parameters": {
+                    "param1": "foo"
+                }
+            }
+        ]
 
     },
 
     // Similar to other Kea components, CA also uses logging.
     "Logging":
     {
-	"loggers": [
-	    {
-		"name": "kea-ctrl-agent",
-		"output_options": [
-		    {
-			"output": "/var/log/kea-ctrl-agent.log",
+        "loggers": [
+            {
+                "name": "kea-ctrl-agent",
+                "output_options": [
+                    {
+                        "output": "/var/log/kea-ctrl-agent.log",
                         // Several additional parameters are possible in addition
                         // to the typical output. Flush determines whether logger
                         // flushes output to a file. Maxsize determines maximum
@@ -79,11 +90,11 @@
                         "flush": true,
                         "maxsize": 204800,
                         "maxver": 4
-		    }
-		],
-		"severity": "INFO",
-		"debuglevel": 0
-	    }
-	]
+                    }
+                ],
+                "severity": "INFO",
+                "debuglevel": 0
+            }
+        ]
     }
 }

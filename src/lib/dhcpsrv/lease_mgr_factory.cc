@@ -41,8 +41,7 @@ LeaseMgrFactory::getLeaseMgrPtr() {
 }
 
 void
-LeaseMgrFactory::create(const std::string& dbaccess,
-                        DatabaseConnection::DbLostCallback db_lost_callback) {
+LeaseMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
@@ -68,7 +67,7 @@ LeaseMgrFactory::create(const std::string& dbaccess,
 #ifdef HAVE_PGSQL
     if (parameters[type] == string("postgresql")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters, db_lost_callback));
+        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters));
         return;
     }
 #endif

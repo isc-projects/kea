@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,7 @@ public:
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
           response_in_progress_(false) {
 
-        LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_OPENED)
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_OPENED)
             .arg(socket_->getNative());
 
         // Callback value of 0 is used to indicate that callback function is
@@ -94,7 +94,7 @@ public:
     /// cause the server to not send a response to the client.
     void stop() {
         if (!response_in_progress_) {
-            LOG_INFO(command_logger, COMMAND_SOCKET_CONNECTION_CLOSED)
+            LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_CLOSED)
                 .arg(socket_->getNative());
 
             isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());

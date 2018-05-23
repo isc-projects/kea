@@ -63,6 +63,12 @@ public:
     /// @throw InvalidOperation if URL is invalid.
     std::string getHostname() const;
 
+    /// @brief Returns hostname stripped from [ ] characters surrounding
+    /// IPv6 address.
+    ///
+    /// @throw InvalidOperation of URL is invalid.
+    std::string getStrippedHostname() const;
+
     /// @brief Returns port number.
     ///
     /// @return Port number or 0 if URL doesn't contain port number.

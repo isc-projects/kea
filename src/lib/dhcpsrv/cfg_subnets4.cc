@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option_custom.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -75,6 +76,54 @@ CfgSubnets4::hasSubnetWithServerId(const asiolink::IOAddress& server_id) const {
     return (subnet_it != index.cend());
 }
 
+SubnetSelector
+CfgSubnets4::initSelector(const Pkt4Ptr& query) {
+    SubnetSelector selector;
+    selector.ciaddr_ = query->getCiaddr();
+    selector.giaddr_ = query->getGiaddr();
+    selector.local_address_ = query->getLocalAddr();
+    selector.remote_address_ = query->getRemoteAddr();
+    selector.client_classes_ = query->classes_;
+    selector.iface_name_ = query->getIface();
+
+    // If the link-selection sub-option is present, extract its value.
+    // "The link-selection sub-option is used by any DHCP relay agent
+    // that desires to specify a subnet/link for a DHCP client request
+    // that it is relaying but needs the subnet/link specification to
+    // be different from the IP address the DHCP server should use
+    // when communicating with the relay agent." (RFC 3527)
+    //
+    // Try first Relay Agent Link Selection sub-option
+    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        OptionCustomPtr rai_custom =
+            boost::dynamic_pointer_cast<OptionCustom>(rai);
+        if (rai_custom) {
+            OptionPtr link_select =
+                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+            if (link_select) {
+                OptionBuffer link_select_buf = link_select->getData();
+                if (link_select_buf.size() == sizeof(uint32_t)) {
+                    selector.option_select_ =
+                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
+                }
+            }
+        }
+    } else {
+        // Or Subnet Selection option
+        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
+        if (sbnsel) {
+            OptionCustomPtr oc =
+                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
+            if (oc) {
+                selector.option_select_ = oc->readAddress();
+            }
+        }
+    }
+
+    return (selector);
+}
+
 Subnet4Ptr
 CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 
@@ -137,17 +186,16 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
 
             // If relay information is specified for this subnet, it must match.
             // Otherwise, we ignore this subnet.
-            if (!(*subnet)->getRelayInfo().addr_.isV4Zero()) {
-                if (selector.giaddr_ != (*subnet)->getRelayInfo().addr_) {
+            if ((*subnet)->hasRelays()) {
+                if (!(*subnet)->hasRelayAddress(selector.giaddr_)) {
                     continue;
                 }
-
             } else {
                 // Relay information is not specified on the subnet level,
                 // so let's try matching on the shared network level.
                 SharedNetwork4Ptr network;
                 (*subnet)->getSharedNetwork(network);
-                if (!network || (selector.giaddr_ != network->getRelayInfo().addr_)) {
+                if (!network || !(network->hasRelayAddress(selector.giaddr_))) {
                     continue;
                 }
             }

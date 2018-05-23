@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,9 @@
 namespace isc {
 namespace dhcp {
 
+/// List of IOAddresses
+typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
+
 /// @brief Common interface representing a network to which the DHCP clients
 /// are connected.
 ///
@@ -44,23 +47,41 @@ namespace dhcp {
 /// derived classes.
 class Network : public virtual UserContext, public data::CfgToElement {
 public:
-
     /// @brief Holds optional information about relay.
     ///
     /// In some cases it is beneficial to have additional information about
     /// a relay configured in the subnet. For now, the structure holds only
-    /// IP address, but there may potentially be additional parameters added
+    /// IP addresses, but there may potentially be additional parameters added
     /// later, e.g. relay interface-id or relay-id.
-    struct RelayInfo {
+    class RelayInfo {
+    public:
 
-        /// @brief default and the only constructor
+        /// @brief Adds an address to the list of addresses
         ///
-        /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
-        RelayInfo(const isc::asiolink::IOAddress& addr);
+        /// @param addr address to add
+        /// @throw BadValue if the address is already in the list
+        void addAddress(const asiolink::IOAddress& addr);
 
-        /// @brief IP address of the relay
-        isc::asiolink::IOAddress addr_;
+        /// @brief Returns const reference to the list of addresses
+        ///
+        /// @return const reference to the list of addresses
+        const IOAddressList& getAddresses() const;
+
+        /// @brief Indicates whether or not the address list has entries
+        ///
+        /// @return True if the address list is not empty
+        bool hasAddresses() const;
+
+        /// @brief Checks the address list for the given address
+        ///
+        /// @return True if the address is found in the address list
+        bool containsAddress(const asiolink::IOAddress& addr) const;
+
+    private:
+        /// @brief List of relay IP addresses
+        IOAddressList addresses_;
     };
+
 
     /// @brief Specifies allowed host reservation mode.
     ///
@@ -88,8 +109,7 @@ public:
 
     /// @brief Constructor.
     Network()
-        : iface_name_(), relay_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
-          white_list_(), t1_(0), t2_(0), valid_(0),
+        : iface_name_(), client_class_(""), t1_(0), t2_(0), valid_(0),
           host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
     }
 
@@ -151,6 +171,28 @@ public:
         return (relay_);
     }
 
+    /// @brief Adds an address to the list addresses in the network's relay info
+    ///
+    /// @param addr address of the relay
+    /// @throw BadValue if the address is already in the list
+    void addRelayAddress(const asiolink::IOAddress& addr);
+
+    /// @brief Returns the list of relay addresses from the network's relay info
+    ///
+    /// @return const reference to the list of addresses
+    const IOAddressList& getRelayAddresses() const;
+
+    /// @brief Indicates if network's relay info has relay addresses
+    ///
+    /// @return True the relay list is not empty, false otherwise
+    bool hasRelays() const;
+
+    /// @brief Tests if the network's relay info contains the given address
+    ///
+    /// @param address address to search for in the relay list
+    /// @return True if a relay with the given address is found, false otherwise
+    bool hasRelayAddress(const asiolink::IOAddress& address) const;
+
     /// @brief Checks whether this network supports client that belongs to
     /// specified classes.
     ///
@@ -160,31 +202,35 @@ public:
     /// it is supported. On the other hand, client belonging to classes
     /// "foobar" and "zyxxy" is not supported.
     ///
-    /// @todo: Currently the logic is simple: client is supported if it belongs
-    /// to any class mentioned in white_list_. We will eventually need a
-    /// way to specify more fancy logic (e.g. to meet all classes, not just
-    /// any)
+    /// @note: changed the planned white and black lists idea to a simple
+    /// client class name.
     ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
-    /// @brief Adds class class_name to the list of supported classes
+    /// @brief Sets the supported class to class class_name
     ///
-    /// Also see explanation note in @ref white_list_.
-    ///
-    /// @param class_name client class to be supported by this subnet
+    /// @param class_name client class to be supported by this network
     void allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief returns the client class white list
+    /// @brief Adds class class_name to classes required to be evaluated.
+    ///
+    /// @param class_name client class required to be evaluated
+    void requireClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief Returns classes which are required to be evaluated
+    const isc::dhcp::ClientClasses& getRequiredClasses() const;
+
+    /// @brief returns the client class
     ///
     /// @note The returned reference is only valid as long as the object
     /// returned it is valid.
     ///
-    /// @return client classes @ref white_list_
-    const isc::dhcp::ClientClasses& getClientClasses() const {
-        return (white_list_);
+    /// @return client class @ref client_class_
+    const isc::dhcp::ClientClass& getClientClass() const {
+        return (client_class_);
     }
 
     /// @brief Return valid-lifetime for addresses in that prefix
@@ -274,14 +320,15 @@ protected:
     /// @brief Optional definition of a client class
     ///
     /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular network. The default value for this is an empty list,
+    /// this particular network. The default value for this is an empty string,
     /// which means that any client is allowed, regardless of its class.
+    ClientClass client_class_;
+
+    /// @brief Required classes
     ///
-    /// @todo This is just a single list of allowed classes. We'll also need
-    /// to add a black-list (only classes on the list are rejected, the rest
-    /// are allowed). Implementing this will require more fancy parser logic,
-    /// so it may be a while until we support this.
-    ClientClasses white_list_;
+    /// If the network is selected these classes will be added to the
+    /// incoming packet and their evaluation will be required.
+    ClientClasses required_classes_;
 
     /// @brief a Triplet (min/default/max) holding allowed renew timer values
     Triplet<uint32_t> t1_;
@@ -358,7 +405,6 @@ public:
     /// @brief Constructor.
     Network6()
         : Network(), preferred_(0), interface_id_(), rapid_commit_(false) {
-        setRelayInfo(asiolink::IOAddress::IPV6_ZERO_ADDRESS());
     }
 
     /// @brief Returns preferred lifetime (in seconds)

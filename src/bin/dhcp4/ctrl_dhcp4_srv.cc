@@ -432,7 +432,7 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
                     // The user specified that the DHCP service should resume not
                     // later than in max-period seconds. If the 'dhcp-enable' command
                     // is not sent, the DHCP service will resume automatically.
-                    network_state_.delayedEnableAll(static_cast<unsigned>(max_period));
+                    network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
                 }
             }
         }
@@ -440,7 +440,7 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_.disableService();
+        network_state_->disableService();
 
         message << "DHCPv4 service disabled";
         if (max_period > 0) {
@@ -456,7 +456,7 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
-    network_state_.enableService();
+    network_state_->enableService();
     return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
 }
 
@@ -603,9 +603,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Re-open lease and host database with new parameters.
     try {
+        DatabaseConnection::db_lost_callback =
+            boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1));
+        cfg_db->createManagers();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -663,6 +665,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
         callout_handle->setArgument("io_context", srv->getIOService());
+        callout_handle->setArgument("network_state", srv->getNetworkState());
         callout_handle->setArgument("json_config", config);
         callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
 
@@ -777,6 +780,10 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     try {
         cleanup();
 
+        // The closure captures either a shared pointer (memory leak)
+        // or a raw pointer (pointing to a deleted object).
+        DatabaseConnection::db_lost_callback = 0;
+
         timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
@@ -846,7 +853,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     // Re-open lease and host database with new parameters.
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv4Srv::dbLostCallback, this, _1));
+        cfg_db->createManagers();
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
@@ -859,7 +866,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         }
 
         // Set network state to service enabled
-        network_state_.enableService();
+        network_state_->enableService();
 
         // Toss the reconnect control, we're done with it
         db_reconnect_ctl.reset();
@@ -891,7 +898,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until we recover
-    network_state_.disableService();
+    network_state_->disableService();
 
     if (!db_reconnect_ctl) {
         // This shouldn't never happen

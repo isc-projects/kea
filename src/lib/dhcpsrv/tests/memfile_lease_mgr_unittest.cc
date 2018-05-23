@@ -542,7 +542,8 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // Check if we can still write to the lease file.
     std::vector<uint8_t> hwaddr_vec(6);
     HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
-    Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr, 0, 0,
+    Lease4Ptr new_lease(new Lease4(IOAddress("192.0.2.45"), hwaddr,
+                                   static_cast<const uint8_t*>(0), 0,
                                    100, 50, 60, 0, 1));
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
@@ -927,6 +928,18 @@ TEST_F(MemfileLeaseMgrTest, getLeases4SubnetId) {
 TEST_F(MemfileLeaseMgrTest, getLeases4) {
     startBackend(V4);
     testGetLeases4();
+}
+
+// This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
+    startBackend(V6);
+    testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6) {
+    startBackend(V6);
+    testGetLeases6();
 }
 
 /// @brief Basic Lease6 Checks
@@ -1921,5 +1934,18 @@ TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
     startBackend(V6);
     testWipeLeases6();
 }
+
+// Tests v4 lease stats query variants.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQuery4) {
+    startBackend(V4);
+    testLeaseStatsQuery4();
+}
+
+// Tests v6 lease stats query variants.
+TEST_F(MemfileLeaseMgrTest, leaseStatsQuery6) {
+    startBackend(V6);
+    testLeaseStatsQuery6();
+}
+
 
 }  // namespace

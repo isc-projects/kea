@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,10 @@
 /// line to the file, creating the file if need be.  In this way, the test code
 /// can determine whether the load/unload functions have been run and, if so,
 /// in what order.
+///
+/// The additional marker file is created for the dhcp6_srv_configured hook
+/// point. It records the library number and the names of the parameters
+/// provided to the callout.
 ///
 /// This file is the common library file for the tests.  It will not compile
 /// by itself - it is included into each callout library which specifies the
@@ -48,6 +52,26 @@ appendDigit(const char* name) {
 
     // Add the library number to it and close.
     file << LIBRARY_NUMBER;
+    file.close();
+
+    return (0);
+}
+
+/// @brief Append argument name passed to the callout to a marker file.
+///
+/// @param file_name Name of the file to open.
+/// @param parameter Parameter name.
+///
+/// @return 0 on success, non-zero on error.
+int appendArgument(const char* file_name, const char* argument) {
+    // Open the file and check if successful.
+    std::fstream file(file_name, std::fstream::out | std::fstream::app);
+    if (!file.good()) {
+        return (1);
+    }
+
+    // Add the library number to it and close.
+    file << argument;
     file.close();
 
     return (0);

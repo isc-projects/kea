@@ -471,7 +471,7 @@ be followed by a comma and another object definition.</para>
   Should the database use a port different than default, it may be
   specified as well:
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
 </screen>
   Should the database be located on a different system, you may need to specify a longer interval
   for the connection timeout:
@@ -481,14 +481,33 @@ be followed by a comma and another object definition.</para>
 The default value of five seconds should be more than adequate for local connections.
 If a timeout is given though, it should be an integer greater than zero.
   </para>
-
+  <para>
+The maxiumum number of times the server will automatically attempt to reconnect to
+the lease database after connectivity has been lost may be specified:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"max-reconnect-tries" : <replaceable>number-of-tries</replaceable></userinput>, ... }, ... }
+</screen>
+If the server is unable to reconnect to the database after making the maximum number
+of attempts the server will exit. A value of zero (the default) disables automatic
+recovery and the server will exit immediately upon detecting a loss of connectivity
+(MySQL and Postgres only).
+  </para>
+  <para>
+The number of seconds the server will wait in between attempts to reconnect to the
+lease database after connectivity has been lost may also be specified:
+<screen>
+"Dhcp6": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+</screen>
+A value of zero (the default) disables automatic recovery and the server will exit
+immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+  </para>
   <para>
     Note that host parameter is used by MySQL and PostgreSQL
     backends. Cassandra has a concept of contact points that could be
     used to contact the cluster, instead of a single IP or
     hostname. It takes a list of comma separated IP addresses. This may be specified as:
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
 </screen>
   </para>
 
@@ -532,7 +551,13 @@ linkend="cassandra-database-configuration4"/> for details.</para>
     from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
-<section xml:id="hosts-database-configuration6">
+    <para>Version 1.4 extends the host storage to multiple storages. Operations
+    are performed on host storages in the configuration order with a special
+    case for addition: read-only storages must be configured after a
+    required read-write storage, or host reservation addition will
+    always fail.</para>
+
+<section xml:id="hosts-databases-configuration6">
   <title>DHCPv6 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
@@ -559,8 +584,28 @@ linkend="cassandra-database-configuration4"/> for details.</para>
 "Dhcp6": { "hosts-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
 <screen>
-"Dhcp4": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
+"Dhcp6": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
 </screen>
+  </para>
+  <para>
+The maxiumum number of times the server will automatically attempt to reconnect to
+the host database after connectivity has been lost may be specified:
+<screen>
+"Dhcp6": { "host-database": { <userinput>"max-reconnect-tries" : <replaceable>number-of-tries</replaceable></userinput>, ... }, ... }
+</screen>
+If the server is unable to reconnect to the database after making the maximum number
+of attempts the server will exit. A value of zero (the default) disables automatic
+recovery and the server will exit immediately upon detecting a loss of connectivity
+(MySQL and Postgres only).
+  </para>
+  <para>
+The number of seconds the server will wait in between attempts to reconnect to the
+host database after connectivity has been lost may also be specified:
+<screen>
+"Dhcp6": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+</screen>
+A value of zero (the default) disables automatic recovery and the server will exit
+immediately upon detecting a loss of connectivity (MySQL and Postgres only).
   </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
@@ -573,9 +618,18 @@ linkend="cassandra-database-configuration4"/> for details.</para>
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 
+  <para>The multiple storage extension uses a similar syntax: a configuration
+  is placed into a "hosts-databases" list instead of into a "hosts-database"
+  entry as in:
+<screen>
+"Dhcp6": { "hosts-databases": [ { <userinput>"type": "mysql"</userinput>, ... }, ... ], ... }
+</screen>
+  </para>
+
   <para>
     For additional Cassandra specific parameters, see <xref
     linkend="cassandra-database-configuration4" />.</para>
+
 </section>
 
 <section xml:id="read-only-database-configuration6">
@@ -2153,11 +2207,9 @@ should include options from the isc option space:
       In certain cases it is useful to differentiate between different types
       of clients and treat them accordingly. It is envisaged that client
       classification will be used for changing the behavior of almost any part of
-      the DHCP message processing, including the assignment of leases from different
-      pools, the assignment of different options (or different values of the same
-      options) etc. In the current release of the software however, there are
-      only two mechanisms that take advantage of client classification:
-      subnet selection and assignment of different options.
+      the DHCP message processing. In the current release of the software however,
+      there are only some mechanisms that take advantage of client classification:
+      subnet selection, pool selection, and assignment of different options.
       </para>
 
       <para>
@@ -2173,24 +2225,38 @@ should include options from the isc option space:
       </para>
 
       <para>
-      Client classification can also be used to restrict access to specific
-      pools within a subnet. This is useful when to segregate clients belonging
-      to the same subnet into different address or prefix ranges.
+      When subnets belong to a shared network the classification applies
+      to subnet selection but not to pools, e.g., a pool in a subnet
+      limited to a particular class can still be used by clients which do not
+      belong to the class if the pool they are expected to use is exhausted.
+      So the limit access based on class information is also available
+      at the address/prefix pool level, see <xref
+      linkend="classification-pools"/> within a subnet.
+      This is useful when to segregate clients belonging to the same subnet
+      into different address ranges.
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps. The first step
+      The process of doing classification is conducted in several steps. The first step
       is to assess an incoming packet and assign it to zero or more classes.  The
       second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign options again possibly based on the class
+      The third step is to assign classes from host reservations and
+      evaluate class expressions depending on the "KNOWN" class.
+      After the list of required classes is built and each class of the list
+      has its expression evaluated: when it returns true the packet is added
+      as a member of the class.
+      The last step is to assign options again possibly based on the class
       information.
+      More complete and detailed description is available in
+      <xref linkend="classify"/>.
       </para>
 
       <para>
-      There are two methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options. Information from these
+      There are two main methods of doing classification. The first is automatic and relies
+      on examining the values in the vendor class options or existence of a
+      host reservation. Information from these
       options is extracted and a class name is constructed from it and added to
-      the class list for the packet. The second allows you to specify an expression
+      the class list for the packet. The second allows for specifying an expression
       that is evaluated for each packet. If the result is true the packet is
       a member of the class.
       </para>
@@ -2265,6 +2331,81 @@ should include options from the isc option space:
 </screen>
         </para>
       </section>
+
+      <section id="dhcp6-required-class">
+        <title>Required classification</title>
+        <para>
+        In some cases it is useful to limit the scope of a class to
+        a shared-network, subnet or pool. There are two parameters
+        which are used to limit the scope of the class by instructing
+        the server to perform evaluation of test expressions when
+        required.
+        </para>
+
+        <para>
+        The first one is the per-class <command>only-if-required</command>
+        flag which is false by default. When it is set to
+        <command>true</command> the test expression of the class is not
+        evaluated at the reception of the incoming packet but later and
+        only if the class evaluation is required.
+        </para>
+
+        <para>
+        The second is the <command>require-client-classes</command> which
+        takes a list of class names and is valid in shared-network,
+        subnet and pool scope. Classes in these lists are marked as
+        required and evaluated after selection of this specific
+        shared-network/subnet/pool and before output option processing.
+        </para>
+
+        <para>
+        In this example, a class is assigned to the incoming packet
+        when the specified subnet is used.
+
+        <screen>
+"Dhcp6": {
+    "client-classes": [
+       {<userinput>
+           "name": "Client_foo",
+           "test": "member('ALL')",
+           "only-if-required": true</userinput>
+       },
+       ...
+    ],
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64"
+            "pools": [
+                 {
+                     "pool": "2001:db8:1::-2001:db8:1::ffff"
+                 }
+             ],
+            <userinput>"require-client-classes": [ "Client_foo" ],</userinput>
+            ...
+        },
+        ...
+    ],
+    ...
+}</screen>
+         </para>
+
+         <para>
+         Required evaluation can be used to express complex dependencies,
+         for example, subnet membership. It can also be used to reverse the
+         precedence: if you set an option-data in a subnet it takes
+         precedence over an option-data in a class. When you move the
+         option-data to a required class and require it in
+         the subnet, a class evaluated earlier may take precedence.
+         </para>
+
+         <para>
+         Required evaluation is also available at shared-network and
+         pool/pd-pool levels. The order in which required classes are
+         considered is: shared-network, subnet and (pd-)pool, i.e.
+         the opposite order option-data are processed.
+         </para>
+
+       </section>
     </section>
 
     <section xml:id="dhcp6-ddns-config">
@@ -2703,6 +2844,8 @@ should include options from the isc option space:
       DHCPv4-over-DHCPv6 support is experimental and the details of
       the inter-process communication can change: both the
       DHCPv4 and DHCPv6 sides should be running the same version of Kea.
+      For instance the support of port relay (RFC 8357) introduced such
+      such incompatible change.
       </note>
       <para>
       There is only one specific parameter for the DHCPv6 side:
@@ -3128,7 +3271,18 @@ should include options from the isc option space:
 
 </screen>
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions.</para>
+    with classification using expressions. The "KNOWN" builtin class is
+    added to the packet and any class depending on it directly or indirectly
+    and not only-if-required is evaluated.
+    </para>
+
+    <note>
+     <para>If you want to force the evaluation of a class expression after
+     the host reservation lookup, for instance because of a dependency on
+     "reserved-class1" from the previous example, you should add a
+     "member('KNOWN')" in the expression.</para>
+    </note>
+
     </section>
 
     <section id="reservations6-mysql-pgsql-cql">
@@ -3342,7 +3496,7 @@ If not specified, the default value is:
             // Subnets from this shared network will be selected for clients
             // communicating via relay agent having the specified IP address.
             "relay": {
-                "ip-address": "2001:db8:2:34::1"
+                "ip-addresses": [ "2001:db8:2:34::1" ]
             },
 
             // This starts a list of subnets in this shared network.
@@ -3369,7 +3523,7 @@ If not specified, the default value is:
             "subnet": "2001:db9::/48",
             "pools": [ { "pool":  "2001:db9::/64" } ],
             "relay": {
-                "ip-address": "2001:db8:1:2::1"
+                "ip-addresses": [ "2001:db8:1:2::1" ]
             }
         }
     ]
@@ -3401,7 +3555,7 @@ If not specified, the default value is:
     {
         "name": "lab-network3",
         "relay": {
-             "ip-address": "2001:db8:2:34::1"
+             "ip-addresses": [ "2001:db8:2:34::1" ]
         },
 
         // This applies to all subnets in this shared network, unless
@@ -3514,16 +3668,16 @@ for each subnet. Here's an example:
 
 <screen>
 "shared-networks": [
-    {"
+    {
         "name": "kakapo",
         <userinput>"relay": {
-            "ip-address": "2001:db8::abcd"
+            "ip-addresses":  [ "2001:db8::abcd" ]
         }</userinput>,
         "subnet6": [
             {
                 "subnet": "2001:db8::/64",
                 <userinput>"relay": {
-                    "ip-address": "2001:db8::1234"
+                    "ip-addresses": [ "2001:db8::1234" ]
                 }</userinput>,
                 "pools": [ { "pool":  "2001:db8::1 - 2001:db8::ffff" } ]
             },
@@ -3531,7 +3685,7 @@ for each subnet. Here's an example:
                  "subnet": "3ffe:abcd::/64",
                  "pools": [ { "pool":  "3ffe:abcd::1 - 3ffe:abcd::ffff" } ],
                  <userinput>"relay": {
-                    "ip-address": "3ffe:abcd::cafe"
+                    "ip-addresses": [ "3ffe:abcd::cafe" ]
                  }</userinput>
             }
         ]
@@ -3576,7 +3730,7 @@ as long as it is valid IPv6 address.</para>
         {
             "name": "galah",
             "relay": {
-                "ip-address": "2001:db8:2:34::1"
+                "ip-address": [ "2001:db8:2:34::1" ]
             },
             "subnet6": [
                 {
@@ -3627,7 +3781,7 @@ as long as it is valid IPv6 address.</para>
         {
             "name": "galah",
             "relay": {
-                "ip-address": "2001:db8:2:34::1"
+                "ip-addresses":  [ "2001:db8:2:34::1" ]
             },
             "subnet6": [
                 {
@@ -3679,7 +3833,7 @@ desired outcome if one desires to service only clients of known properties
     {
         "name": "frog",
         "relay": {
-            "ip-address": "2001:db8:2:34::1"
+            "ip-addresses": [ "2001:db8:2:34::1" ]
         },
         "subnet6": [
             {
@@ -4098,7 +4252,7 @@ autogenerated IDs are not stable across configuration changes.
                  }
              ],
              <userinput>"relay": {
-                 "ip-address": "3000::1"
+                 "ip-addresses": [ "3000::1" ]
              }</userinput>
         }
     ]
@@ -4106,8 +4260,17 @@ autogenerated IDs are not stable across configuration changes.
 </screen>
       </para>
 
-      <para>If "relay" is specified, the "ip-address" parameter within
+      <para>If "relay" is specified, the "ip-addresses" parameter within
       it is mandatory.</para>
+
+      <note>
+      <para>
+      As of Kea 1.4, the "ip-address" parameter in "relay" has been deprecated
+      in favor of "ip-addresses" which supports specifying a list of addresses.
+      Configuration parsing, will honor the singular form for now but users are
+      encouraged to migrate.
+      </para>
+      </note>
 
     </section>
 
@@ -4139,7 +4302,7 @@ autogenerated IDs are not stable across configuration changes.
             ],
             <userinput>"client-class": "VENDOR_CLASS_docsis3.0",
             "relay": {
-                "ip-address": "3000::1"
+                "ip-addresses": [ "3000::1" ]
             }</userinput>
         },
 
@@ -4151,7 +4314,7 @@ autogenerated IDs are not stable across configuration changes.
                  }
              ],
              <userinput>"relay": {
-                 "ip-address": "3000::1"
+                 "ip-addresses": [ "3000::1" ]
              }</userinput>
         }
     ]

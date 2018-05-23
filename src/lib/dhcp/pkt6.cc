@@ -794,6 +794,12 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
             info.options_.insert(make_pair(opt->getType(), opt));
         }
 
+        // Same for relay-source-port option
+        opt = question->getNonCopiedRelayOption(D6O_RELAY_SOURCE_PORT, i);
+        if (opt) {
+            info.options_.insert(make_pair(opt->getType(), opt));
+        }
+
         /// @todo: Implement support for ERO (Echo Request Option, RFC4994)
 
         // Add this relay-forw info (client's message) to our relay-repl

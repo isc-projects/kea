@@ -75,11 +75,18 @@ public:
 class ReconnectCtl {
 public:
     /// @brief Constructor
+    /// @param backend_type type of the caller backend.
     /// @param max_retries maximum number of reconnect attempts to make
     /// @param retry_interval amount of time to between reconnect attempts
-    ReconnectCtl(unsigned int max_retries, unsigned int retry_interval)
-        : max_retries_(max_retries), retries_left_(max_retries), 
-          retry_interval_(retry_interval) {}
+    ReconnectCtl(const std::string& backend_type, unsigned int max_retries,
+                 unsigned int retry_interval)
+        : backend_type_(backend_type), max_retries_(max_retries),
+          retries_left_(max_retries), retry_interval_(retry_interval) {}
+
+    /// @brief Returns the type of the caller backend.
+    std::string backendType() const {
+        return (backend_type_);
+    }
 
     /// @brief Decrements the number of retries remaining
     ///
@@ -105,6 +112,9 @@ public:
     }
 
 private:
+    /// @brief Caller backend type.
+    const std::string backend_type_;
+
     /// @brief Maximum number of retry attempts to make
     unsigned int max_retries_;
 
@@ -140,18 +150,12 @@ public:
     /// @brief Database configuration parameter map
     typedef std::map<std::string, std::string> ParameterMap;
 
-    /// @brief Defines a callback prototype for propogating events upward
-    typedef boost::function<bool (ReconnectCtlPtr db_retry)> DbLostCallback;
-
     /// @brief Constructor
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    /// @param db_lost_callback  Optional call back function to invoke if a
-    ///        successfully open connection subsequently fails
-    DatabaseConnection(const ParameterMap& parameters,
-        DbLostCallback db_lost_callback = 0)
-        :parameters_(parameters), db_lost_callback_(db_lost_callback) {
+    DatabaseConnection(const ParameterMap& parameters)
+        :parameters_(parameters) {
     }
 
     /// @brief Destructor
@@ -197,6 +201,9 @@ public:
     /// and set to false.
     bool configuredReadOnly() const;
 
+    /// @brief Defines a callback prototype for propogating events upward
+    typedef boost::function<bool (ReconnectCtlPtr db_retry)> DbLostCallback;
+
     /// @brief Invokes the connection's lost connectivity callback
     ///
     /// This function may be called by derivations when the connectivity
@@ -208,6 +215,10 @@ public:
     /// callback.
     bool invokeDbLostCallback() const;
 
+    /// @brief Optional call back function to invoke if a successfully
+    /// open connection subsequently fails
+    static DbLostCallback db_lost_callback;
+
 private:
 
     /// @brief List of parameters passed in dbconfig
@@ -217,10 +228,6 @@ private:
     /// intended to keep any DHCP-related parameters.
     ParameterMap parameters_;
 
-protected:
-
-    /// @brief Optional function to invoke if the connectivity is lost
-    DbLostCallback db_lost_callback_;
 };
 
 }; // end of isc::dhcp namespace

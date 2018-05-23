@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,6 +65,9 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
 
     // Sanity check that the current library index is set to a valid value.
     checkLibraryIndex(current_library_);
+
+    // New hooks could have been registered since the manager was constructed.
+    ensureHookLibsVectorSize();
 
     // Get the index associated with this hook (validating the name in the
     // process).
@@ -233,9 +236,17 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
     // Sanity check that the current library index is set to a valid value.
     checkLibraryIndex(current_library_);
 
+    // New hooks could have been registered since the manager was constructed.
+    ensureHookLibsVectorSize();
+
     // Get the index associated with this hook (validating the name in the
     // process).
     int hook_index = server_hooks_.getIndex(name);
+
+    // New hooks can have been registered since the manager was constructed.
+    if (hook_index >= hook_vector_.size()) {
+        return (false);
+    }
 
     /// Construct a CalloutEntry matching the current library and the callout
     /// we want to remove.
@@ -276,6 +287,9 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
 bool
 CalloutManager::deregisterAllCallouts(const std::string& name) {
 
+    // New hooks could have been registered since the manager was constructed.
+    ensureHookLibsVectorSize();
+
     // Get the index associated with this hook (validating the name in the
     // process).
     int hook_index = server_hooks_.getIndex(name);
@@ -309,6 +323,10 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
 
 void
 CalloutManager::registerCommandHook(const std::string& command_name) {
+
+    // New hooks could have been registered since the manager was constructed.
+    ensureHookLibsVectorSize();
+
     ServerHooks& hooks = ServerHooks::getServerHooks();
     int hook_index = hooks.findIndex(ServerHooks::commandToHookName(command_name));
     if (hook_index < 0) {
@@ -320,6 +338,15 @@ CalloutManager::registerCommandHook(const std::string& command_name) {
         // element will match the index of the hook point in the ServerHooks
         // because ServerHooks allocates indexes incrementally.
         hook_vector_.resize(server_hooks_.getCount());
+    }
+}
+
+void
+CalloutManager::ensureHookLibsVectorSize() {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    if (hooks.getCount() > hook_vector_.size()) {
+        // Uh oh, there are more hook points that our vector allows.
+        hook_vector_.resize(hooks.getCount());
     }
 }
 

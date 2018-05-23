@@ -445,7 +445,8 @@ Connection::doTransaction(const HttpRequestPtr& request,
         /// @todo We're getting a hostname but in fact it is expected to be an IP address.
         /// We should extend the TCPEndpoint to also accept names. Currently, it will fall
         /// over for names.
-        TCPEndpoint endpoint(url_.getHostname(), static_cast<unsigned short>(url_.getPort()));
+        TCPEndpoint endpoint(url_.getStrippedHostname(),
+                             static_cast<unsigned short>(url_.getPort()));
         SocketCallback socket_cb(boost::bind(&Connection::connectCallback, shared_from_this(),
                                              request_timeout, _1));
 
@@ -473,6 +474,7 @@ Connection::isTransactionOngoing() const {
 void
 Connection::terminate(const boost::system::error_code& ec,
                       const std::string& parsing_error) {
+
     timer_.cancel();
     socket_.cancel();
 
@@ -514,7 +516,12 @@ void
 Connection::doSend() {
     SocketCallback socket_cb(boost::bind(&Connection::sendCallback, shared_from_this(),
                                          _1, _2));
-    socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
+    try {
+        socket_.asyncSend(&buf_[0], buf_.size(), socket_cb);
+
+    } catch (...) {
+        terminate(boost::asio::error::not_connected);
+    }
 }
 
 void
@@ -522,8 +529,13 @@ Connection::doReceive() {
     TCPEndpoint endpoint;
     SocketCallback socket_cb(boost::bind(&Connection::receiveCallback, shared_from_this(),
                                          _1, _2));
-    socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,
-                         &endpoint, socket_cb);
+
+    try {
+        socket_.asyncReceive(static_cast<void*>(input_buf_.data()), input_buf_.size(), 0,
+                             &endpoint, socket_cb);
+    } catch (...) {
+        terminate(boost::asio::error::not_connected);
+    }
 }
 
 void
@@ -558,6 +570,7 @@ Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
         } else {
             // Any other error should cause the transaction to terminate.
             terminate(ec);
+            return;
         }
     }
 
@@ -585,6 +598,7 @@ Connection::receiveCallback(const boost::system::error_code& ec, size_t length) 
         if ((ec.value() != boost::asio::error::try_again) &&
             (ec.value() != boost::asio::error::would_block)) {
             terminate(ec);
+            return;
 
         } else {
             // For EAGAIN and EWOULDBLOCK the length should be 0 anyway, but let's
