@@ -1,7 +1,7 @@
 1406.	[func]		fdupont
 	Added pkg-config alternative to configure --with-cql path so
 	now you can use either pkg-config or cql_config.
-	(Trac #5488, git xxx)
+	(Trac #5488, git 55498ca3455517132533a39002ebfc05d26c7e38)
 
 1405.	[bug]		tmark
 	Corrected missing "override" warning in cql_lease_mgr.h
