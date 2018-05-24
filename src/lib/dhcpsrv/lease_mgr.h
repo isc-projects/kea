@@ -114,7 +114,7 @@ struct LeaseStatsRow {
 
         if (subnet_id_ == rhs.subnet_id_ &&
             lease_type_ == rhs.lease_type_ &&
-            lease_state_ < rhs.lease_state_) {      
+            lease_state_ < rhs.lease_state_) {
                 return (true);
         }
 
@@ -138,8 +138,34 @@ struct LeaseStatsRow {
 /// instances. The rows must be accessible in ascending order by subnet id.
 class LeaseStatsQuery {
 public:
+    /// @brief Defines the types of selection criteria supported
+    typedef enum {
+        ALL_SUBNETS,
+        SINGLE_SUBNET,
+        SUBNET_RANGE
+    } SelectMode;
+
     /// @brief Default constructor
-    LeaseStatsQuery() {};
+    /// The query created will return statistics for all subnets
+    LeaseStatsQuery();
+
+    /// @brief Constructor to query for a single subnet's stats
+    ///
+    /// The query created will return statistics for a single subnet
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @throw BadValue if sunbet_id given is 0.
+    LeaseStatsQuery(const SubnetID& subnet_id);
+
+    /// @brief Constructor to query for the stats for a range of subnets
+    ///
+    /// The query created will return statistics for the inclusive range of
+    /// subnets described by first and last sunbet IDs.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @throw BadValue if either value given is 0 or if last <= first.
+    LeaseStatsQuery(const SubnetID& first_subnet_id, const SubnetID& last_subnet_id);
 
     /// @brief virtual destructor
     virtual ~LeaseStatsQuery() {};
@@ -158,6 +184,34 @@ public:
     /// @return True if a row was fetched, false if there are no
     /// more rows.
     virtual bool getNextRow(LeaseStatsRow& row);
+
+    /// @brief Returns the value of first subnet ID specified (or zero)
+    SubnetID getFirstSubnetID() const {
+        return (first_subnet_id_);
+    };
+
+    /// @brief Returns the value of last subnet ID specified (or zero)
+    SubnetID getLastSubnetID() const {
+        return (last_subnet_id_);
+    };
+
+    /// @brief Returns the selection criteria mode
+    /// The value returned is based upon the constructor variant used
+    /// and it indicates which query variant will be executed.
+    SelectMode getSelectMode() const {
+        return (select_mode_);
+    };
+
+protected:
+    /// @brief First (or only) subnet_id in the selection criteria
+    SubnetID first_subnet_id_;
+
+    /// @brief Last subnet_id in the selection criteria when a range is given
+    SubnetID last_subnet_id_;
+
+private:
+    /// @brief Indicates the type of selection criteria specified
+    SelectMode select_mode_;
 };
 
 /// @brief Defines a pointer to a LeaseStatsQuery.
@@ -364,6 +418,18 @@ public:
     Lease6Ptr getLease6(Lease::Type type, const DUID& duid,
                         uint32_t iaid, SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const = 0;
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const = 0;
+
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -461,15 +527,41 @@ public:
     /// adding to the appropriate global statistic.
     void recountLeaseStats4();
 
-    /// @brief Virtual method which creates and runs the IPv4 lease stats query
+    /// @brief Creates and runs the IPv4 lease stats query for all subnets
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with up to date IPv4 lease statistical data.  Each row of the
-    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    /// populated with up to date IPv4 lease statistical data for all subnets.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for a single
+    /// subnet.  Each row of the result set is an LeaseStatRow.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for an inclusive
+    /// range of subnets. Each row of the result set is an LeaseStatRow which
+    /// ordered ascending by subnet ID.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Recalculates per-subnet and global stats for IPv6 leases
     ///
@@ -492,15 +584,41 @@ public:
     /// per subnet and adding to the appropriate global statistic.
     void recountLeaseStats6();
 
-    /// @brief Virtual method which creates and runs the IPv6 lease stats query
+    /// @brief Creates and runs the IPv6 lease stats query for all subnets
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with up to date IPv6 lease statistical data.  Each row of the
-    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    /// populated with up to date IPv6 lease statistical data for all subnets.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for a single
+    /// subnet.  Each row of the result set is an LeaseStatRow.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for an inclusive
+    /// range of subnets. Each row of the result set is an LeaseStatRow which
+    /// ordered ascending by subnet ID.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Virtual method which removes specified leases.
     ///

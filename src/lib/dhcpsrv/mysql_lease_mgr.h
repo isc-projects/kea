@@ -268,6 +268,18 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
 
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const;
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const;
+
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -356,21 +368,65 @@ public:
     ///
     /// It creates an instance of a MySqlLeaseStatsQuery4 and then
     /// invokes its start method, which fetches its statistical data
-    /// result set by executing the RECOUNT_LEASE_STATS4 query.
+    /// result set by executing the ALL_LEASE_STATS4 query.
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MySqlLeaseStatsQuery4 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MySqlLeaseStatsQuery4 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
+
     /// @brief Creates and runs the IPv6 lease stats query
     ///
     /// It creates an instance of a MySqlLeaseStatsQuery6 and then
     /// invokes its start method, which fetches its statistical data
-    /// result set by executing the RECOUNT_LEASE_STATS6 query.
+    /// result set by executing the ALL_LEASE_STATS6 query.
     /// The query object is then returned.
     ///
     /// @return The populated query as a pointer to an LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MySqlLeaseStatsQuery6 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a MySqlLeaseStatsQuery6 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Removes specified IPv4 leases.
     ///
@@ -458,17 +514,23 @@ public:
         GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
+        GET_LEASE6,                  // Get all IPv6 leases
         GET_LEASE6_ADDR,             // Get lease6 by address
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
+        GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
         GET_VERSION,                 // Obtain version number
         INSERT_LEASE4,               // Add entry to lease4 table
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry
         UPDATE_LEASE6,               // Update a Lease6 entry
-        RECOUNT_LEASE4_STATS,        // Fetches IPv4 address statistics
-        RECOUNT_LEASE6_STATS,        // Fetches IPv6 address statistics
+        ALL_LEASE4_STATS,            // Fetches IPv4 lease statistics
+        SUBNET_LEASE4_STATS,         // Fetched IPv4 lease stats for a single subnet.
+        SUBNET_RANGE_LEASE4_STATS,   // Fetched IPv4 lease stats for a subnet range.
+        ALL_LEASE6_STATS,            // Fetches IPv6 lease statistics
+        SUBNET_LEASE6_STATS,         // Fetched IPv6 lease stats for a single subnet.
+        SUBNET_RANGE_LEASE6_STATS,   // Fetched IPv6 lease stats for a subnet range.
         NUM_STATEMENTS               // Number of statements
     };
 

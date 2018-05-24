@@ -164,7 +164,11 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply = srv.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check that we get the right NAK
     checkNakResponse(reply, DHCPV6_ADVERTISE, 1234, STATUS_NoAddrsAvail,
@@ -385,7 +389,11 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -409,7 +417,10 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     sol->addOption(option_oro);
 
     // Need to process SOLICIT again after requesting new option.
-    adv = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx2;
+    srv_.initContext(sol, ctx2, drop);
+    ASSERT_FALSE(drop);
+    adv = srv_.processSolicit(ctx2);
     ASSERT_TRUE(adv);
 
     OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
@@ -470,7 +481,11 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply = srv.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -514,7 +529,11 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply = srv.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -567,7 +586,11 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply = srv.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -620,7 +643,11 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply = srv.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processSolicit(ctx);
 
     // check if we get response at all
     checkResponse(reply, DHCPV6_ADVERTISE, 1234);
@@ -678,9 +705,19 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     sol3->addOption(clientid3);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr reply1 = srv.processSolicit(sol1);
-    Pkt6Ptr reply2 = srv.processSolicit(sol2);
-    Pkt6Ptr reply3 = srv.processSolicit(sol3);
+    AllocEngine::ClientContext6 ctx1;
+    bool drop = false;
+    srv.initContext(sol1, ctx1, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply1 = srv.processSolicit(ctx1);
+    AllocEngine::ClientContext6 ctx2;
+    srv.initContext(sol2, ctx2, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply2 = srv.processSolicit(ctx2);
+    AllocEngine::ClientContext6 ctx3;
+    srv.initContext(sol3, ctx3, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply3 = srv.processSolicit(ctx3);
 
     // check if we get response at all
     checkResponse(reply1, DHCPV6_ADVERTISE, 1234);
@@ -1576,6 +1613,97 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
 }
 
+// Test that the server processes relay-source-port option correctly.
+TEST_F(Dhcpv6SrvTest, relaySourcePort) {
+
+    NakedDhcpv6Srv srv(0);
+
+    string config =
+        "{"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "    \"valid-lifetime\": 4000"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, srv));
+
+    // Create a solicit
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = IOAddress("2001:db8::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+
+    // Set the source port
+    sol->setRemotePort(1234);
+
+    // Simulate that we have received that traffic
+    sol->pack();
+
+    // Add a relay-source-port option
+    OptionBuffer zero(2, 0);
+    OptionPtr opt(new Option(Option::V6, D6O_RELAY_SOURCE_PORT, zero));
+    relay.options_.insert(make_pair(opt->getType(), opt));
+    sol->relay_info_.push_back(relay);
+
+    // Simulate that we have received that traffic
+    sol->pack();
+    EXPECT_EQ(DHCPV6_RELAY_FORW, sol->getBuffer()[0]);
+    Pkt6Ptr query(new Pkt6(static_cast<const uint8_t*>
+                           (sol->getBuffer().getData()),
+                           sol->getBuffer().getLength()));
+    query->setRemoteAddr(sol->getRemoteAddr());
+    query->setRemotePort(sol->getRemotePort());
+    query->setLocalAddr(sol->getLocalAddr());
+    query->setLocalPort(sol->getLocalPort());
+    query->setIface(sol->getIface());
+
+    srv.fakeReceive(query);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Check trace of processing
+    EXPECT_EQ(1234, query->getRemotePort());
+    ASSERT_EQ(1, query->relay_info_.size());
+    EXPECT_TRUE(query->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
+
+    // Get Response...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr rsp = srv.fake_sent_.front();
+    ASSERT_TRUE(rsp);
+
+    // Check it
+    EXPECT_EQ(1234, rsp->getRemotePort());
+    EXPECT_EQ(DHCPV6_RELAY_REPL, rsp->getBuffer()[0]);
+
+    // Get Advertise
+    Pkt6Ptr adv(new Pkt6(static_cast<const uint8_t*>
+                         (rsp->getBuffer().getData()),
+                         rsp->getBuffer().getLength()));
+    adv->unpack();
+
+    // Check it
+    EXPECT_EQ(DHCPV6_ADVERTISE, adv->getType());
+    ASSERT_EQ(1, adv->relay_info_.size());
+    EXPECT_TRUE(adv->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
+}
+
 // Checks effect of persistency (aka always-true) flag on the ORO
 TEST_F(Dhcpv6SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
@@ -1598,7 +1726,11 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     sol->addOption(oro);
 
     // Let the server process it and generate a response.
-    Pkt6Ptr response = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr response = srv_.processSolicit(ctx);
 
     // The server should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -1614,7 +1746,10 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
 
     // Let the server process it again. This time the name-servers
     // option should be present.
-    response = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx2;
+    srv_.initContext(sol, ctx2, drop);
+    ASSERT_FALSE(drop);
+    response = srv_.processSolicit(ctx2);
 
     // Processing should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -1749,7 +1884,11 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -1768,7 +1907,10 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     sol->addOption(vendor);
 
     // Need to process SOLICIT again after requesting new option.
-    adv = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx2;
+    srv_.initContext(sol, ctx2, drop);
+    ASSERT_FALSE(drop);
+    adv = srv_.processSolicit(ctx2);
     ASSERT_TRUE(adv);
 
     // Check if there is vendor option response
@@ -1838,7 +1980,11 @@ TEST_F(Dhcpv6SrvTest, vendorPersistentOptions) {
     sol->addOption(vendor);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_.processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_.initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_.processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);

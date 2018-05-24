@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -367,7 +367,34 @@ public:
 
     //@}
 
+    /// @brief Return number of currently available hooks
+    size_t getHookLibsVectorSize() const {
+        return (hook_vector_.size());
+    }
+
 private:
+
+    /// @brief This method checks whether the hook_vector_ size is suffucient
+    ///        and extends it if necessary.
+    ///
+    /// The problem is as follows: some hooks are initialized statically
+    /// from global static objects. ServerHooks object creates hooks_ collection
+    /// and CalloutManager creates its own hook_vector_ and both are initialized
+    /// to the same size. All works well so far. However, if some code at a
+    /// later time (e.g. a hook library) register new hook point, then
+    /// ServerHooks::registerHook() will extend its hooks_ collection, but
+    /// the CalloutManager will keep the old hook_vector_ that is too small by
+    /// one. Now when the library is unloaded, deregisterAllCallouts will
+    /// go through all hook points and will eventually hit the one that
+    /// will return index greater than the hook_vector_ size.
+    ///
+    /// To solve this problem, ensureVectorSize was implemented. It should
+    /// be called (presumably from ServerHooks) every time a new hook point
+    /// is registered. It checks whether the vector size is sufficient and
+    /// extends it if necessary. It is safe to call it multiple times. It
+    /// may grow the vector size, but will never shrink it.
+    void ensureHookLibsVectorSize();
+
     /// @brief Check library index
     ///
     /// Ensures that the current library index is valid.  This is called by

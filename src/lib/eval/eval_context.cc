@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,14 +18,20 @@
 #include <fstream>
 #include <limits>
 
-EvalContext::EvalContext(const Option::Universe& option_universe)
-  : trace_scanning_(false), trace_parsing_(false),
-    option_universe_(option_universe)
+EvalContext::EvalContext(const Option::Universe& option_universe,
+                         CheckDefined check_defined)
+    : trace_scanning_(false), trace_parsing_(false),
+      option_universe_(option_universe), check_defined_(check_defined)
 {
 }
 
 EvalContext::~EvalContext()
 {
+}
+
+bool
+EvalContext::acceptAll(const ClientClass&) {
+    return (true);
 }
 
 bool
@@ -183,6 +189,11 @@ EvalContext::fromUint32(const uint32_t integer) {
     tmp[3] = integer & 0xff;
 
     return (tmp);
+}
+
+bool
+EvalContext::isClientClassDefined(const ClientClass& client_class) {
+    return (check_defined_(client_class));
 }
 
 void

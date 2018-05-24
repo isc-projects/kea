@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -184,6 +184,8 @@ TSIGKeyInfo::remakeKey() {
 ElementPtr
 TSIGKeyInfo::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user-context
+    contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
     // Set algorithm
@@ -218,6 +220,8 @@ DnsServerInfo::toText() const {
 ElementPtr
 DnsServerInfo::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user-context
+    contextToElement(result);
     // Set hostname
     result->set("hostname", Element::create(hostname_));
     // Set ip-address
@@ -259,6 +263,8 @@ DdnsDomain::getKeyName() const {
 ElementPtr
 DdnsDomain::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user-context
+    contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
     // Set servers
@@ -393,11 +399,12 @@ DdnsDomainListMgr::toElement() const {
 // *********************** TSIGKeyInfoParser  *************************
 
 TSIGKeyInfoPtr
-TSIGKeyInfoParser::parse(data::ConstElementPtr key_config) {
+TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
     std::string name = getString(key_config, "name");
     std::string algorithm = getString(key_config, "algorithm");
     uint32_t digestbits = getInteger(key_config, "digest-bits");
     std::string secret = getString(key_config, "secret");
+    ConstElementPtr user_context = key_config->get("user-context");
 
     // Algorithm must be valid.
     try {
@@ -435,15 +442,20 @@ TSIGKeyInfoParser::parse(data::ConstElementPtr key_config) {
                   << key_config->getPosition() << ")");
     }
 
+    // Add user-context
+    if (user_context) {
+        key_info->setContext(user_context);
+    }
+
     return (key_info);
 }
 
 // *********************** TSIGKeyInfoListParser  *************************
 
 TSIGKeyInfoMapPtr
-TSIGKeyInfoListParser::parse(data::ConstElementPtr key_list) {
+TSIGKeyInfoListParser::parse(ConstElementPtr key_list) {
     TSIGKeyInfoMapPtr keys(new TSIGKeyInfoMap());
-    data::ConstElementPtr key_config;
+    ConstElementPtr key_config;
     TSIGKeyInfoParser key_parser;
     BOOST_FOREACH(key_config, key_list->listValue()) {
         TSIGKeyInfoPtr key = key_parser.parse(key_config);
@@ -464,10 +476,11 @@ TSIGKeyInfoListParser::parse(data::ConstElementPtr key_list) {
 // *********************** DnsServerInfoParser  *************************
 
 DnsServerInfoPtr
-DnsServerInfoParser::parse(data::ConstElementPtr server_config) {
+DnsServerInfoParser::parse(ConstElementPtr server_config) {
     std::string hostname = getString(server_config, "hostname");
     std::string ip_address = getString(server_config, "ip-address");
     uint32_t port = getInteger(server_config, "port");
+    ConstElementPtr user_context = server_config->get("user-context");
 
     // The configuration must specify one or the other.
     if (hostname.empty() == ip_address.empty()) {
@@ -506,15 +519,20 @@ DnsServerInfoParser::parse(data::ConstElementPtr server_config) {
         }
     }
 
-    return(server_info);
+    // Add user-context
+    if (user_context) {
+        server_info->setContext(user_context);
+    }
+
+    return (server_info);
 }
 
 // *********************** DnsServerInfoListParser  *************************
 
 DnsServerInfoStoragePtr
-DnsServerInfoListParser::parse(data::ConstElementPtr server_list) {
+DnsServerInfoListParser::parse(ConstElementPtr server_list) {
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-    data::ConstElementPtr server_config;
+    ConstElementPtr server_config;
     DnsServerInfoParser parser;
     BOOST_FOREACH(server_config, server_list->listValue()) {
         DnsServerInfoPtr server = parser.parse(server_config);
@@ -526,10 +544,11 @@ DnsServerInfoListParser::parse(data::ConstElementPtr server_list) {
 
 // *********************** DdnsDomainParser  *************************
 
-DdnsDomainPtr DdnsDomainParser::parse(data::ConstElementPtr domain_config,
+DdnsDomainPtr DdnsDomainParser::parse(ConstElementPtr domain_config,
                                       const TSIGKeyInfoMapPtr keys) {
     std::string name = getString(domain_config, "name");
     std::string key_name = getString(domain_config, "key-name");
+    ConstElementPtr user_context = domain_config->get("user-context");
 
     // Key name is optional. If it is not blank, then find the key in the
     // list of defined keys.
@@ -550,7 +569,7 @@ DdnsDomainPtr DdnsDomainParser::parse(data::ConstElementPtr domain_config,
     }
 
     // Parse the list of DNS servers
-    data::ConstElementPtr servers_config;
+    ConstElementPtr servers_config;
     try {
         servers_config = domain_config->get("dns-servers");
     } catch (const std::exception& ex) {
@@ -568,16 +587,21 @@ DdnsDomainPtr DdnsDomainParser::parse(data::ConstElementPtr domain_config,
     // Instantiate the new domain and add it to domain storage.
     DdnsDomainPtr domain(new DdnsDomain(name, servers, tsig_key_info));
 
-    return(domain);
+    // Add user-context
+    if (user_context) {
+        domain->setContext(user_context);
+    }
+
+    return (domain);
 }
 
 // *********************** DdnsDomainListParser  *************************
 
-DdnsDomainMapPtr DdnsDomainListParser::parse(data::ConstElementPtr domain_list,
+DdnsDomainMapPtr DdnsDomainListParser::parse(ConstElementPtr domain_list,
                                              const TSIGKeyInfoMapPtr keys) {
     DdnsDomainMapPtr domains(new DdnsDomainMap());
     DdnsDomainParser parser;
-    data::ConstElementPtr domain_config;
+    ConstElementPtr domain_config;
     BOOST_FOREACH(domain_config, domain_list->listValue()) {
         DdnsDomainPtr domain = parser.parse(domain_config, keys);
 
@@ -597,13 +621,13 @@ DdnsDomainMapPtr DdnsDomainListParser::parse(data::ConstElementPtr domain_list,
 // *********************** DdnsDomainListMgrParser  *************************
 
 DdnsDomainListMgrPtr
-DdnsDomainListMgrParser::parse(data::ConstElementPtr mgr_config,
+DdnsDomainListMgrParser::parse(ConstElementPtr mgr_config,
                                const std::string& mgr_name,
                                const TSIGKeyInfoMapPtr keys) {
     DdnsDomainListMgrPtr mgr(new DdnsDomainListMgr(mgr_name));
 
     // Parse the list of domains
-    data::ConstElementPtr domains_config = mgr_config->get("ddns-domains");
+    ConstElementPtr domains_config = mgr_config->get("ddns-domains");
     if (domains_config) {
         DdnsDomainListParser domain_parser;
         DdnsDomainMapPtr domains =  domain_parser.parse(domains_config, keys);

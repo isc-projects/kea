@@ -429,8 +429,7 @@ namespace dhcp {
 AllocEngine::ClientContext6::ClientContext6()
     : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
       hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
-      rev_dns_update_(false), hostname_(), callout_handle_(),
-      ias_() {
+      rev_dns_update_(false), hostname_(), callout_handle_(), ias_() {
 }
 
 AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
@@ -443,9 +442,9 @@ AllocEngine::ClientContext6::ClientContext6(const Subnet6Ptr& subnet,
                                             const CalloutHandlePtr& callout_handle)
     : query_(query), fake_allocation_(fake_allocation), subnet_(subnet),
       duid_(duid), hwaddr_(), host_identifiers_(), hosts_(),
-      fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns),
-      hostname_(hostname), callout_handle_(callout_handle),
-      allocated_resources_(), ias_() {
+      fwd_dns_update_(fwd_dns), rev_dns_update_(rev_dns), hostname_(hostname),
+      callout_handle_(callout_handle), allocated_resources_(), new_leases_(),
+      ias_() {
 
     // Initialize host identifiers.
     if (duid) {
@@ -729,6 +728,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             // IAs.
             BOOST_FOREACH(Lease6Ptr lease, leases) {
                 ctx.addAllocatedResource(lease->addr_, lease->prefixlen_);
+                ctx.new_leases_.push_back(lease);
             }
             return (leases);
         }
@@ -780,7 +780,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), hint));
+            (subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(),
+                             hint));
 
         // check if the pool is allowed
         if (pool && !pool->clientSupported(ctx.query_->getClasses())) {
@@ -916,7 +917,6 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             continue;
         }
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
-
         Network::HRMode hr_mode = subnet->getHostReservationMode();
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
@@ -943,7 +943,9 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
             uint8_t prefix_len = 128;
             if (ctx.currentIA().type_ == Lease::TYPE_PD) {
                 pool = boost::dynamic_pointer_cast<Pool6>(
-                        subnet->getPool(ctx.currentIA().type_, ctx.query_->getClasses(), candidate));
+                        subnet->getPool(ctx.currentIA().type_,
+                                        ctx.query_->getClasses(),
+                                        candidate));
                 if (pool) {
                     prefix_len = pool->getLength();
                 }
@@ -1675,6 +1677,7 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
             // IAs.
             BOOST_FOREACH(Lease6Ptr lease, leases) {
                 ctx.addAllocatedResource(lease->addr_, lease->prefixlen_);
+                ctx.new_leases_.push_back(lease);
             }
         }
 

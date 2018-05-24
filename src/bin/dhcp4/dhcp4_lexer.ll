@@ -294,6 +294,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"hosts-databases\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_HOSTS_DATABASES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("hosts-databases", driver.loc_);
+    }
+}
+
 \"readonly\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
@@ -490,16 +499,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"reconnect-wait-time\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::LEASE_DATABASE:
-    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("reconnect-wait-time", driver.loc_);
-    }
-}
-
 \"valid-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -579,7 +578,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::POOLS:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser4Context::CLIENT_CLASS:
         return isc::dhcp::Dhcp4Parser::make_OPTION_DATA(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("option-data", driver.loc_);
@@ -593,7 +591,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::OPTION_DEF:
     case isc::dhcp::Parser4Context::OPTION_DATA:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser4Context::CLIENT_CLASS:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
     case isc::dhcp::Parser4Context::LOGGERS:
         return isc::dhcp::Dhcp4Parser::make_NAME(driver.loc_);
@@ -880,6 +877,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"require-client-classes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("require-client-classes", driver.loc_);
+    }
+}
+
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -895,10 +903,18 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 \"test\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser4Context::CLIENT_CLASS:
         return isc::dhcp::Dhcp4Parser::make_TEST(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("test", driver.loc_);
+    }
+}
+
+\"only-if-required\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_ONLY_IF_REQUIRED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("only-if-required", driver.loc_);
     }
 }
 
@@ -1033,6 +1049,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     return isc::dhcp::Dhcp4Parser::make_IP_ADDRESS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ip-address", driver.loc_);
+    }
+}
+
+\"ip-addresses\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RELAY:
+    return isc::dhcp::Dhcp4Parser::make_IP_ADDRESSES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ip-addresses", driver.loc_);
     }
 }
 

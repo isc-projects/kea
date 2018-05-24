@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -494,19 +494,23 @@ public:
         // For different client's message types we have to invoke different
         // functions to generate response.
         Pkt6Ptr reply;
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        srv_->initContext(req, ctx, drop);
+        ASSERT_FALSE(drop);
         if (msg_type == DHCPV6_SOLICIT) {
-            ASSERT_NO_THROW(reply = srv_->processSolicit(req));
+          ASSERT_NO_THROW(reply = srv_->processSolicit(ctx));
 
         } else if (msg_type == DHCPV6_REQUEST) {
-            ASSERT_NO_THROW(reply = srv_->processRequest(req));
+          ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
 
         } else if (msg_type == DHCPV6_RENEW) {
-            ASSERT_NO_THROW(reply = srv_->processRenew(req));
+          ASSERT_NO_THROW(reply = srv_->processRenew(ctx));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave
             // function here.
-            ASSERT_NO_THROW(reply = srv_->processRelease(req));
+          ASSERT_NO_THROW(reply = srv_->processRelease(ctx));
             return;
         } else {
             // We are not interested in testing other message types.

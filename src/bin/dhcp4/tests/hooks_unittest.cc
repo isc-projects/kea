@@ -2692,7 +2692,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
     // The dhcp4_srv_configured should have been invoked and the provided
     // parameters should be recorded.
     EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
-                                "3io_contextjson_configserver_config"));
+                                "3io_contextjson_confignetwork_stateserver_config"));
 
     // Destroy the server, instance which should unload the libraries.
     srv.reset();
@@ -2702,5 +2702,5 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
     EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
-                                "3io_contextjson_configserver_config"));
+                                "3io_contextjson_confignetwork_stateserver_config"));
 }

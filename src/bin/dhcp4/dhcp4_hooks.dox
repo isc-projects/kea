@@ -49,6 +49,7 @@ to the end of this list.
  @subsection dhcp4HooksDhcpv4SrvConfigured dhcp4_srv_configured
  - @b Arguments:
    - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
+   - name: @b network_state, type: isc::dhcp::NetworkStatePtr, direction: <b>in</b>
    - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
    - name: @b server_config, type: isc::dhcp::SrvConfigPtr, direction: <b>in</b>
 
@@ -58,7 +59,9 @@ to the end of this list.
    object which is used by the server to run asynchronous operations. The hooks
    libraries can use this IOService object to schedule asynchronous tasks which
    are triggered by the DHCP server's main loop. The hook library should hold the
-   provided pointer until the library is unloaded.
+   provided pointer until the library is unloaded. The NetworkState object
+   provides access to the DHCP service state of the server and allows for
+   enabling and disabling the DHCP service from the hooks libraries.
 
  - <b>Next step status</b>: Status codes retured by the callouts installed on
    this hook point are ignored.

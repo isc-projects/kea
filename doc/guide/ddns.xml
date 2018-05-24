@@ -772,6 +772,30 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
       </section> <!-- "d2-reverse-ddns-config" -->
 
+      <section xml:id="d2-user-contexts">
+        <title>User context in DDNS</title>
+
+        <note>
+          <para>User contexts were designed for hook libraries which
+          are not yet supported for DHCP-DDNS server configuration.</para>
+        </note>
+
+        <para>
+          User contexts can store arbitrary data as long as it is valid JSON
+          syntax and its top level element is a map (i.e. the data must be
+          enclosed in curly brackets).
+        </para>
+
+        <para>
+          User contexts can be specified on either global scope, ddns
+          domain, dns server, tsig key and loggers. One other useful
+          usage is the ability to store comments or descriptions: the
+          parser translates a "comment" entry into a user-context with
+          the entry, this allows to attach a comment inside the
+          configuration itself.
+        </para>
+      </section> <!-- "d2-user-contexts" -->
+
       <section xml:id="d2-example-config">
         <title>Example DHCP-DDNS Server Configuration</title>
         <para>
@@ -862,6 +886,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         The following example configuration specified the Forward DDNS Domains.
 <screen><userinput>
 "DhcpDdns": {
+    "comment": "example configuration: forward part",
     "forward-ddns": {
         "ddns-domains": [
             {
@@ -884,7 +909,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
                 "key-name": "",
                 "dns-servers": [
                     { "ip-address": "172.16.2.5" }
-                ]
+                ],
+                "user-context": { "backup": false }
             },
 
         ]
@@ -936,6 +962,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
 <screen><userinput>
 "DhcpDdns": {
+    "comment": "example configuration: reverse part",
     "reverse-ddns": {
         "ddns-domains": [
             {
