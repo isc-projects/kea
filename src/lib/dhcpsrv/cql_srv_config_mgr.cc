@@ -180,84 +180,48 @@ constexpr StatementTag CqlConfigExchange::UPDATE_CONFIGURATION6;
 StatementMap CqlConfigExchange::tagged_statements_ = {
     {GET_CONFIGURATION4_TIMESTAMP,   //
      {GET_CONFIGURATION4_TIMESTAMP,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_id, timestamp "
       "FROM server_configuration4 "
       "LIMIT 1 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // GET_CONFIGURATION6_TIMESTAMP
     {GET_CONFIGURATION6_TIMESTAMP,   //
      {GET_CONFIGURATION6_TIMESTAMP,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_id, timestamp "
       "FROM server_configuration6 "
       "LIMIT 1 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // GET_GENERIC_CONFIGURATION4
     {GET_GENERIC_CONFIGURATION4,   //
      {GET_GENERIC_CONFIGURATION4,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_id, timestamp, generic_data "
       "FROM server_configuration4 "
       "LIMIT 1 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // GET_GENERIC_CONFIGURATION6
     {GET_GENERIC_CONFIGURATION6,   //
      {GET_GENERIC_CONFIGURATION6,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_id, timestamp, generic_data "
       "FROM server_configuration6 LIMIT 1 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // GET_JSON_CONFIGURATION4
     {GET_JSON_CONFIGURATION4,   //
      {GET_JSON_CONFIGURATION4,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_id, timestamp, json_data "
       "FROM server_configuration4 "
       "LIMIT 1 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // GET_JSON_CONFIGURATION6
     {GET_JSON_CONFIGURATION6,   //
      {GET_JSON_CONFIGURATION6,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_id, timestamp, json_data "
       "FROM server_configuration6 "
       "LIMIT 1 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // INSERT_CONFIGURATION4
@@ -266,9 +230,6 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
       "INSERT INTO server_configuration4 "
       "(config_id, timestamp, json_data, generic_data) "
       "VALUES (?, ?, ?, ?) IF NOT EXISTS "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // INSERT_CONFIGURATION6
@@ -277,9 +238,6 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
       "INSERT INTO server_configuration6 "
       "(config_id, timestamp, json_data, generic_data) "
       "VALUES (?, ?, ?, ?) IF NOT EXISTS "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // UPDATE_CONFIGURATION4
@@ -289,9 +247,6 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
       "SET timestamp = ?, json_data = ?, "
       "generic_data = ? WHERE config_id = ? "
       "IF timestamp = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     // UPDATE_CONFIGURATION6
@@ -301,9 +256,6 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
       "SET timestamp = ?, json_data = ?, "
       "generic_data = ? WHERE config_id = ? "
       "IF timestamp = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif   // TERASTREAM_FULL_TRANSACTIONS
      }}  //
 };
 
@@ -351,11 +303,6 @@ CqlConfigExchange::getCommon(CqlConnection& connection,
     // Bind to array.
     AnyArray where_values;
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = connection.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     AnyArray collection =
         executeSelect(connection, where_values, statement_tag, true);
 
@@ -389,11 +336,6 @@ CqlConfigExchange::insertCommon(CqlConnection& connection,
     assigned_values.add(const_cast<std::string*>(&json_data));
     assigned_values.add(const_cast<std::string*>(&generic_data));
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = connection.getTransactionId();
-    assigned_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     executeMutation(connection, assigned_values, statement_tag);
 
     return true;
@@ -420,11 +362,6 @@ CqlConfigExchange::updateCommon(CqlConnection& connection,
     data.add(const_cast<std::string*>(&config_id));
     data.add(&old_config_timestamp);
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = connection.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     executeMutation(connection, data, statement_tag);
 
     return true;
@@ -434,16 +371,8 @@ CqlSrvConfigMgr::CqlSrvConfigMgr(
     const DatabaseConnection::ParameterMap& parameters)
     : SrvConfigMgr(), dbconn_(parameters) {
     dbconn_.openDatabase();
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    dbconn_.setTransactionOperations(CqlTransactionExchange::BEGIN_TXN,
-                                     CqlTransactionExchange::COMMIT_TXN,
-                                     CqlTransactionExchange::ROLLBACK_TXN);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
     dbconn_.prepareStatements(CqlConfigExchange::tagged_statements_);
     dbconn_.prepareStatements(CqlConfigVersionExchange::tagged_statements_);
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    dbconn_.prepareStatements(CqlTransactionExchange::tagged_statements_);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 }
 
 CqlSrvConfigMgr::~CqlSrvConfigMgr() {

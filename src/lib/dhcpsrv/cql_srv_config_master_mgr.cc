@@ -159,11 +159,7 @@ StatementMap CqlMasterConfigExchange::tagged_statements_ = {
       "INSERT INTO server_configuration4 "
       "(instance_id, timestamp, server_config, config_database, config_database_name) "
       "VALUES (?, ?, ?, ?, ?) "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#else  // TERASTREAM_FULL_TRANSACTIONS
       "IF NOT EXISTS "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {INSERT_SERVER_CONFIG6,   //
@@ -171,159 +167,87 @@ StatementMap CqlMasterConfigExchange::tagged_statements_ = {
       "INSERT INTO server_configuration6 "
       "(instance_id, timestamp, server_config, config_database, config_database_name) "
       "VALUES (?, ?, ?, ?, ?) "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#else  // TERASTREAM_FULL_TRANSACTIONS
       "IF NOT EXISTS "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_CONFIGURATION4_BY_SRV_ID,   //
      {GET_CONFIGURATION4_BY_SRV_ID,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration4 "
       "WHERE instance_id = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_CONFIGURATION6_BY_SRV_ID,   //
      {GET_CONFIGURATION6_BY_SRV_ID,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration6 "
       "WHERE instance_id = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_CONFIGURATION4_BY_SHARD_DB,   //
      {GET_CONFIGURATION4_BY_SHARD_DB,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration4 "
       "WHERE config_database_name = ? ALLOW FILTERING "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_CONFIGURATION6_BY_SHARD_DB,   //
      {GET_CONFIGURATION6_BY_SHARD_DB,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration6 "
       "WHERE config_database_name = ? ALLOW FILTERING "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_CONFIGURATION4_TIMESTAMP,   //
      {GET_CONFIGURATION4_TIMESTAMP,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id, timestamp "
       "FROM server_configuration4 "
       "WHERE instance_id = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_CONFIGURATION6_TIMESTAMP,   //
      {GET_CONFIGURATION6_TIMESTAMP,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id, timestamp "
       "FROM server_configuration6 "
       "WHERE instance_id = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_SERVERS_CONFIG4,   //
      {GET_SERVERS_CONFIG4,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id "
       "FROM server_configuration4 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_SERVERS_CONFIG6,   //
      {GET_SERVERS_CONFIG6,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT instance_id "
       "FROM server_configuration6 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {DELETE_SERVER_CONFIG4,   //
      {DELETE_SERVER_CONFIG4,  //
       "DELETE FROM server_configuration4 "
       "WHERE instance_id = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#else  // TERASTREAM_FULL_TRANSACTIONS
       "IF EXISTS "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {DELETE_SERVER_CONFIG6,   //
      {DELETE_SERVER_CONFIG6,  //
       "DELETE FROM server_configuration6 "
       "WHERE instance_id = ? "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#else  // TERASTREAM_FULL_TRANSACTIONS
       "IF EXISTS "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_SERVERS_CONFIG4_SHARDS_NAME,   //
      {GET_SERVERS_CONFIG4_SHARDS_NAME,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_database_name "
       "FROM server_configuration4 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
      }},
 
     {GET_SERVERS_CONFIG6_SHARDS_NAME,   //
      {GET_SERVERS_CONFIG6_SHARDS_NAME,  //
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "@free = "
-#endif  // TERASTREAM_FULL_TRANSACTIONS
       "SELECT config_database_name "
       "FROM server_configuration6 "
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-      "IN TXN ? "
-#endif   // TERASTREAM_FULL_TRANSACTIONS
      }}  //
 };
 
@@ -397,11 +321,6 @@ bool CqlMasterConfigExchange::insertCommon(CqlConnection& connection,
     assigned_values.add(const_cast<std::string*>(&config_database));
     assigned_values.add(const_cast<std::string*>(&config_database_name));
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = connection.getTransactionId();
-    assigned_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     executeMutation(connection, assigned_values, statement_tag);
 
     return true;
@@ -410,16 +329,8 @@ bool CqlMasterConfigExchange::insertCommon(CqlConnection& connection,
 CqlSrvConfigMasterMgr::CqlSrvConfigMasterMgr(const DatabaseConnection::ParameterMap& parameters)
     : SrvConfigMasterMgr(), dbconn_(parameters) {
     dbconn_.openDatabase();
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    dbconn_.setTransactionOperations(CqlTransactionExchange::BEGIN_TXN,
-                                     CqlTransactionExchange::COMMIT_TXN,
-                                     CqlTransactionExchange::ROLLBACK_TXN);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
     dbconn_.prepareStatements(CqlMasterConfigExchange::tagged_statements_);
     dbconn_.prepareStatements(CqlMasterConfigVersionExchange::tagged_statements_);
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    dbconn_.prepareStatements(CqlTransactionExchange::tagged_statements_);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 }
 
 CqlSrvConfigMasterMgr::~CqlSrvConfigMasterMgr() {
@@ -483,11 +394,6 @@ SrvConfigMasterInfoPtr CqlSrvConfigMasterMgr::getConfig4(const std::string& inst
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&instance_id));
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION4_BY_SRV_ID);
@@ -513,11 +419,6 @@ SrvConfigMasterInfoPtr CqlSrvConfigMasterMgr::getConfig6(const std::string& inst
 
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&instance_id));
-
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
@@ -549,11 +450,6 @@ bool CqlSrvConfigMasterMgr::getConfig4(
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&config_database_name));
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION4_BY_SHARD_DB, false);
@@ -581,11 +477,6 @@ bool CqlSrvConfigMasterMgr::getConfig6(
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&config_database_name));
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION6_BY_SHARD_DB, false);
@@ -612,11 +503,6 @@ CqlSrvConfigMasterMgr::getMasterConfig4Timestamp(const std::string& instance_id)
     AnyArray where_values;
 
     where_values.add(const_cast<std::string*>(&instance_id));
-
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
@@ -646,11 +532,6 @@ CqlSrvConfigMasterMgr::getMasterConfig6Timestamp(const std::string& instance_id)
     AnyArray where_values;
 
     where_values.add(const_cast<std::string*>(&instance_id));
-
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    where_values.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
@@ -713,11 +594,6 @@ bool CqlSrvConfigMasterMgr::getServersConfig4ShardsName(std::set<std::string>& s
 
     AnyArray data;
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, data, CqlMasterConfigExchange::GET_SERVERS_CONFIG4_SHARDS_NAME, false);
@@ -743,11 +619,6 @@ bool CqlSrvConfigMasterMgr::getServersConfig6ShardsName(std::set<std::string>& s
     CqlTransaction transaction(dbconn_);
 
     AnyArray data;
-
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
@@ -812,11 +683,6 @@ bool CqlSrvConfigMasterMgr::getServersConfig4(std::vector<std::string>& servers_
 
     AnyArray data;
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     AnyArray collection = master_config_exchange->executeSelect(
         dbconn_, data, CqlMasterConfigExchange::GET_SERVERS_CONFIG4);
@@ -844,11 +710,6 @@ bool CqlSrvConfigMasterMgr::getServersConfig6(std::vector<std::string>& servers_
     CqlTransaction transaction(dbconn_);
 
     AnyArray data;
-
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     AnyArray collection = master_config_exchange->executeSelect(
@@ -879,11 +740,6 @@ bool CqlSrvConfigMasterMgr::deleteServerConfig4(const std::string& instance_id) 
     AnyArray data;
     data.add(const_cast<std::string*>(&instance_id));
 
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     master_config_exchange->executeMutation(dbconn_, data,
                                             CqlMasterConfigExchange::DELETE_SERVER_CONFIG4);
@@ -903,11 +759,6 @@ bool CqlSrvConfigMasterMgr::deleteServerConfig6(const std::string& instance_id) 
 
     AnyArray data;
     data.add(const_cast<std::string*>(&instance_id));
-
-#ifdef TERASTREAM_FULL_TRANSACTIONS
-    CassUuid txid = dbconn_.getTransactionId();
-    data.add(&txid);
-#endif  // TERASTREAM_FULL_TRANSACTIONS
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     master_config_exchange->executeMutation(dbconn_, data,
