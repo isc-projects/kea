@@ -29,5 +29,5 @@ public:
 
 Initializer initializer;
 
-BENCHMARK_MAIN()
+BENCHMARK_MAIN();
 
