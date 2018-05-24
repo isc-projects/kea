@@ -6,3 +6,5 @@
 /upgrade_5.0_to_5.1.sh
 /upgrade_5.1_to_5.2.sh
 /upgrade_5.2_to_6.0.sh
+config_upgrade_0.0_to_1.0.sh
+master_upgrade_0.0_to_1.0.sh

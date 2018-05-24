@@ -1,6 +1,6 @@
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
-// Author: Cristian Secăreanu <cristian.secareanu@qualitance.com>
+// Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Pair containing major and minor versions
+typedef std::pair<uint32_t, uint32_t> VersionPair;
 
 /// @brief Used to map server data types with internal backend storage data
 /// types.

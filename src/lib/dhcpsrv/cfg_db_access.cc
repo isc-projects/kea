@@ -10,6 +10,8 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/srv_config_mgr_factory.h>
+#include <dhcpsrv/srv_config_master_mgr_factory.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
@@ -41,6 +43,35 @@ CfgDbAccess::getHostDbAccessString() const {
     }
 }
 
+std::string
+CfgDbAccess::getSrvCfgMasterDbAccessString() const {
+    return (getAccessString(srv_cfg_master_db_access_));
+}
+
+std::string
+CfgDbAccess::getSrvCfgDbAccessString() const {
+    return (getAccessString(srv_cfg_db_access_));
+}
+
+
+void
+CfgDbAccess::createSrvMasterCfgManagers() const {
+    // Recreate server configuration manager for the master database
+    SrvConfigMasterMgrFactory::destroy();
+    SrvConfigMasterMgrFactory::create(getSrvCfgMasterDbAccessString());
+}
+
+void
+CfgDbAccess::createSrvCfgManagers() const {
+    // Recreate server configuration manager.
+    SrvConfigMgrFactory::destroy();
+    SrvConfigMgrFactory::create(getSrvCfgDbAccessString());
+
+    HostMgr::instance();
+    HostMgr::delAllBackends();
+    HostMgr::addBackend(getSrvCfgDbAccessString());
+}
+
 std::list<std::string>
 CfgDbAccess::getHostDbAccessStringList() const {
     std::list<std::string> ret;
@@ -69,7 +100,7 @@ CfgDbAccess::createManagers() const {
     HostMgr::checkCacheBackend(true);
 }
 
-std::string 
+std::string
 CfgDbAccess::getAccessString(const std::string& access_string) const {
     std::ostringstream s;
     s << access_string;
@@ -100,6 +131,10 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
             std::string value = token.substr(pos + 1);
             if ((keyword == "lfc-interval") ||
                 (keyword == "connect-timeout") ||
+                (keyword == "reconnect-wait-time") ||
+                (keyword == "max-statement-tries") ||
+                (keyword == "request-timeout") ||
+                (keyword == "tcp-keepalive") ||
                 (keyword == "port")) {
                 // integer parameters
                 int64_t int_value;
@@ -112,6 +147,7 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                               << keyword << "=" << value);
                 }
             } else if ((keyword == "persist") ||
+                       (keyword == "tcp-nodelay") ||
                        (keyword == "readonly")) {
                 if (value == "true") {
                     result->set(keyword, Element::create(true));
@@ -142,5 +178,5 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
     return (result);
 }
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

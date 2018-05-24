@@ -2489,4 +2489,4 @@ TEST_F(OptionCustomTest, toTextNoRecord) {
               option.toText());
 }
 
-} // anonymous namespace
+}  // namespace

@@ -42,7 +42,7 @@ namespace test {
 bool testStatistics(const std::string& stat_name, const int64_t exp_value,
                     const SubnetID subnet_id) {
     try {
-        std::string name = (!subnet_id ? stat_name : 
+        std::string name = (!subnet_id ? stat_name :
                             StatsMgr::generateName("subnet", subnet_id, stat_name));
         ObservationPtr observation = StatsMgr::instance().getObservation(name);
         if (observation) {
@@ -567,6 +567,6 @@ AllocEngine4Test::AllocEngine4Test() {
     ctx_.query_.reset(new Pkt4(DHCPREQUEST, 1234));
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

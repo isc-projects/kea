@@ -540,13 +540,13 @@ protected:
     uint8_t file_[MAX_FILE_LEN];
 
     // end of real DHCPv4 fields
-}; // Pkt4 class
+};  // Pkt4 class
 
 /// @brief A pointer to Pkt4 object.
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;
 
-} // isc::dhcp namespace
+}  // namespace dhcp
 
-} // isc namespace
+}  // namespace isc
 
 #endif

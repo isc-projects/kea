@@ -19,7 +19,6 @@
 #include <utility>
 
 namespace isc {
-
 namespace dhcp {
 
 /// @brief RAII object enabling copying options retrieved from the
@@ -784,7 +783,7 @@ private:
                                  HWAddrPtr& storage);
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

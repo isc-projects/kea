@@ -455,3 +455,6 @@ This is a normal occurrence during conflict resolution, which can occur
 in cases such as the system administrator adding a reservation for an
 address that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their prefixes.
+
+% ALLOC_ENGINE_TRANSACTION_FAILED transaction failed. error: %1
+The transaction failed with the error message.

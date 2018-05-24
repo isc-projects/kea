@@ -28,6 +28,7 @@
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <boost/scoped_ptr.hpp>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in
@@ -952,7 +953,7 @@ protected:
 
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP6_SRV_H

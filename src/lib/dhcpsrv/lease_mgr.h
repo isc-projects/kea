@@ -61,9 +61,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Pair containing major and minor versions
-typedef std::pair<uint32_t, uint32_t> VersionPair;
-
 /// @brief Contains a single row of lease statistical data
 ///
 /// The contents of the row consist of a subnet ID, a lease
@@ -219,6 +216,9 @@ typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 
 /// @brief Defines a pointer to a LeaseStatsRow.
 typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
+
+/// @brief Collection of the @c LeaseStatsRow objects.
+typedef std::vector<LeaseStatsRowPtr> LeaseStatsCollection;
 
 /// @brief Abstract Lease Manager
 ///
@@ -666,6 +666,12 @@ public:
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
     virtual VersionPair getVersion() const = 0;
+
+    /// @brief Start Transaction
+    ///
+    /// Start transaction for database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    virtual bool startTransaction() = 0;
 
     /// @brief Commit Transactions
     ///

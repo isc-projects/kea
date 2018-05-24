@@ -54,6 +54,11 @@ using namespace std;
   INTERFACES "interfaces"
   RE_DETECT "re-detect"
 
+  CONFIGURATION_TYPE "configuration-type"
+  INSTANCE_ID "instance-id"
+
+  MASTER_DATABASE "master-database"
+  CONFIG_DATABASE "config-database"
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
   HOSTS_DATABASES "hosts-databases"
@@ -70,13 +75,13 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
-  CONTACT_POINTS "contact-points"
-  MAX_RECONNECT_TRIES "max-reconnect-tries"
+  TCP_NODELAY "tcp-nodelay"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
-  KEYSPACE "keyspace"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
-  TCP_NODELAY "tcp-nodelay"
+  CONTACT_POINTS "contact-points"
+  KEYSPACE "keyspace"
+  MAX_RECONNECT_TRIES "max-reconnect-tries"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -431,6 +436,8 @@ global_param: preferred_lifetime
             | subnet6_list
             | shared_networks
             | interfaces_config
+            | master_database
+            | config_database
             | lease_database
             | hosts_database
             | hosts_databases
@@ -449,6 +456,8 @@ global_param: preferred_lifetime
             | user_context
             | comment
             | unknown_map_entry
+            | configuration_type
+            | instance_id
             ;
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
@@ -517,11 +526,30 @@ interfaces_list: INTERFACES {
     ctx.leave();
 };
 
+master_database: MASTER_DATABASE {
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("master-database", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.MASTER_DATABASE);
+} COLON LCURLY_BRACKET database_map_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+config_database: CONFIG_DATABASE {
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-database", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.CONFIG_DATABASE);
+} COLON LCURLY_BRACKET database_map_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
 re_detect: RE_DETECT COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("re-detect", b);
 };
-
 
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -589,12 +617,12 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
-                  | contact_points
-                  | max_reconnect_tries
+                  | tcp_nodelay
                   | reconnect_wait_time
                   | request_timeout
                   | tcp_keepalive
-                  | tcp_nodelay
+                  | contact_points
+                  | max_reconnect_tries
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -669,6 +697,11 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
+tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-nodelay", n);
+};
+
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
@@ -684,22 +717,12 @@ tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
     ctx.stack_.back()->set("tcp-keepalive", n);
 };
 
-tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
-    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("tcp-nodelay", n);
-};
-
 contact_points: CONTACT_POINTS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cp(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
-};
-
-max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("max-reconnect-tries", n);
 };
 
 keyspace: KEYSPACE {
@@ -710,6 +733,10 @@ keyspace: KEYSPACE {
     ctx.leave();
 };
 
+max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-reconnect-tries", n);
+};
 
 mac_sources: MAC_SOURCES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -777,6 +804,22 @@ relay_supplied_options: RELAY_SUPPLIED_OPTIONS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON LSQUARE_BRACKET list_content RSQUARE_BRACKET {
     ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+configuration_type: CONFIGURATION_TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("configuration-type", prf);
+    ctx.leave();
+};
+
+instance_id: INSTANCE_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr prf(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("instance-id", prf);
     ctx.leave();
 };
 

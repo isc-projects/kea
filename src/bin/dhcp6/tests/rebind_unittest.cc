@@ -1144,5 +1144,4 @@ TEST_F(RebindTest, optionsInheritance) {
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::2"));
 }
 
-
-} // end of anonymous namespace
+}  // namespace

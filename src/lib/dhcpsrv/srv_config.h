@@ -14,13 +14,14 @@
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_rsoo.h>
+#include <dhcpsrv/cfg_srv_config_type.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
-#include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
@@ -28,43 +29,45 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <boost/shared_ptr.hpp>
-#include <vector>
+
 #include <stdint.h>
+
+#include <vector>
 
 namespace isc {
 namespace dhcp {
 
 class CfgMgr;
 
-
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
 class SrvConfig : public UserContext, public isc::data::CfgToElement {
 public:
-    /// @name Constants for selection of parameters returned by @c getConfigSummary
+    /// @name Constants for selection of parameters returned by @c
+    /// getConfigSummary
     ///
     //@{
     /// Nothing selected
-    static const uint32_t CFGSEL_NONE    = 0x00000000;
+    static const uint32_t CFGSEL_NONE = 0x00000000;
     /// Number of IPv4 subnets
     static const uint32_t CFGSEL_SUBNET4 = 0x00000001;
     /// Number of IPv6 subnets
     static const uint32_t CFGSEL_SUBNET6 = 0x00000002;
     /// Number of enabled ifaces
-    static const uint32_t CFGSEL_IFACE4  = 0x00000004;
+    static const uint32_t CFGSEL_IFACE4 = 0x00000004;
     /// Number of v6 ifaces
-    static const uint32_t CFGSEL_IFACE6  = 0x00000008;
+    static const uint32_t CFGSEL_IFACE6 = 0x00000008;
     /// DDNS enabled/disabled
-    static const uint32_t CFGSEL_DDNS    = 0x00000010;
+    static const uint32_t CFGSEL_DDNS = 0x00000010;
     /// Number of all subnets
-    static const uint32_t CFGSEL_SUBNET  = 0x00000003;
+    static const uint32_t CFGSEL_SUBNET = 0x00000003;
     /// IPv4 related config
-    static const uint32_t CFGSEL_ALL4    = 0x00000015;
+    static const uint32_t CFGSEL_ALL4 = 0x00000015;
     /// IPv6 related config
-    static const uint32_t CFGSEL_ALL6    = 0x0000001A;
+    static const uint32_t CFGSEL_ALL6 = 0x0000001A;
     /// Whole config
-    static const uint32_t CFGSEL_ALL     = 0xFFFFFFFF;
+    static const uint32_t CFGSEL_ALL = 0xFFFFFFFF;
     //@}
 
     /// @brief Default constructor.
@@ -76,6 +79,26 @@ public:
     ///
     /// Sets arbitrary configuration sequence number.
     SrvConfig(const uint32_t sequence);
+
+    /// @brief Returns a const reference to the unique instance identifier.
+    ///
+    /// This method returns a const reference to a instance identifier
+    /// unique among running servers.
+    /// It is used to uniquely identify a server in a master database.
+    /// The master database contains mappings of servers to shards.
+    const std::string& getInstanceId() const {
+        return instance_id_;
+    }
+
+    /// @brief Returns the unique instance identifier.
+    ///
+    /// This method returns a reference to a instance identifier
+    /// unique among running servers.
+    /// It is used to uniquely identify a server in a master database.
+    /// The master database contains mappings of servers to shards.
+    std::string& getInstanceId() {
+        return instance_id_;
+    }
 
     /// @brief Returns summary of the configuration in the textual format.
     ///
@@ -301,6 +324,20 @@ public:
     /// of the server identifier.
     ConstCfgDUIDPtr getCfgDUID() const {
         return (cfg_duid_);
+    }
+
+    /// @brief Returns non-const reference to configuration type information.
+    ///
+    /// @return non-const reference to configuration type
+    CfgSrvConfigType& getConfigurationType() {
+        return (cfg_configuration_type_);
+    }
+
+    /// @brief Returns const reference to configuration type information.
+    ///
+    /// @return const reference to configuration type
+    const CfgSrvConfigType& getConfigurationType() const {
+        return (cfg_configuration_type_);
     }
 
     /// @brief Returns pointer to the object holding configuration of the
@@ -540,6 +577,34 @@ public:
         return (dhcp4o6_port_);
     }
 
+    /// @brief Sets the master server's configuration timestamp.
+    ///
+    /// @param timestamp value of the master server's configuration timestamp
+    void setMasterServerCfgTimestamp(int64_t timestamp) {
+        master_server_cfg_timestamp_ = timestamp;
+    }
+
+    /// @brief Retrieves the master server's configuration timestamp.
+    ///
+    /// @return value of the master server's configuration timestamp
+    int64_t getMasterServerCfgTimestamp() const {
+        return (master_server_cfg_timestamp_);
+    }
+
+    /// @brief Sets the shard's configuration timestamp.
+    ///
+    /// @param timestamp value of the shard's configuration timestamp
+    void setServerCfgTimestamp(int64_t timestamp) {
+        server_cfg_timestamp_ = timestamp;
+    }
+
+    /// @brief Retrieves the shard's configuration timestamp.
+    ///
+    /// @return value of the shard's configuration timestamp
+    int64_t getServerCfgTimestamp() const {
+        return (server_cfg_timestamp_);
+    }
+
     /// @brief Returns pointer to the D2 client configuration
     D2ClientConfigPtr getD2ClientConfig() {
         return (d2_client_config_);
@@ -562,6 +627,8 @@ public:
     virtual isc::data::ElementPtr toElement() const;
 
 private:
+    /// @brief Instance identifier unique among running servers.
+    std::string instance_id_;
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
@@ -621,6 +688,9 @@ private:
     /// @brief Pointer to the configuration of the server identifier.
     CfgDUIDPtr cfg_duid_;
 
+    /// @brief Configuration might be read from a local file or from database
+    CfgSrvConfigType cfg_configuration_type_;
+
     /// @brief Pointer to the configuration of the lease and host database
     /// connection parameters.
     CfgDbAccessPtr cfg_db_access_;
@@ -657,6 +727,12 @@ private:
     /// this socket is bound and connected to this port and port + 1
     uint16_t dhcp4o6_port_;
 
+    /// @brief The server configuration version of on the master dabatase
+    int64_t master_server_cfg_timestamp_;
+
+    /// @brief The configuration timestamp of the server configuration.
+    int64_t server_cfg_timestamp_;
+
     D2ClientConfigPtr d2_client_config_;
 };
 
@@ -670,7 +746,7 @@ typedef boost::shared_ptr<SrvConfig> SrvConfigPtr;
 typedef boost::shared_ptr<const SrvConfig> ConstSrvConfigPtr;
 //@}
 
-} // namespace isc::dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCPSRV_CONFIG_H

@@ -722,7 +722,7 @@ private:
 };
 
 
-}; // end of isc::dhcp_ddns namespace
-}; // end of isc namespace
+}  // end of isc::dhcp_ddns namespace
+}  // end of isc namespace
 
 #endif

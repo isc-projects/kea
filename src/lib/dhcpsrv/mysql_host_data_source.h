@@ -298,7 +298,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual VersionPair getVersion() const;
 
     /// @brief Commit Transactions
     ///
@@ -309,6 +309,12 @@ public:
     ///
     /// Rolls back all pending database operations.
     virtual void rollback();
+
+    /// @brief Sync database tables with kea.conf
+    ///
+    /// Truncates database tables, retrieves reservations read from kea.conf and
+    /// inserts coresponding hosts, reservations and options in the database.
+    virtual void syncReservations();
 
 private:
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.

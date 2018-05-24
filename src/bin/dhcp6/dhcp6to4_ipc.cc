@@ -58,7 +58,7 @@ void Dhcp6to4Ipc::handler() {
 
     try {
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_DHCP4O6_RECEIVING);
-        // Receive message from IPC.
+        // Receive message from IPC
         pkt = ipc.receive();
 
         if (pkt) {
@@ -142,12 +142,10 @@ void Dhcp6to4Ipc::handler() {
 
         // Update statistics accordingly for sent packet.
         Dhcpv6Srv::processStatsSent(pkt);
-
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_DHCP4O6_SEND_FAIL).arg(e.what());
     }
 }
 
-};  // namespace dhcp
-
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc

@@ -36,6 +36,10 @@
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
+#include <dhcpsrv/srv_config_mgr.h>
+#include <dhcpsrv/srv_config_mgr_factory.h>
+#include <dhcpsrv/srv_config_master_mgr.h>
+#include <dhcpsrv/srv_config_master_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <eval/evaluate.h>
 #include <eval/eval_messages.h>
@@ -44,7 +48,6 @@
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
-
 #include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/pointer_util.h>
@@ -171,7 +174,7 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
     return (option_status);
 }
 
-}; // anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -654,79 +657,168 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         return;
     }
 
-    if (query->getType() == DHCPV6_DHCPV4_QUERY) {
-        // This call never throws. Should this change, this section must be
-        // enclosed in try-catch.
-        processDhcp4Query(query);
-        return;
-    }
-
-    // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
-    bool drop = false;
-    initContext(query, ctx, drop);
 
-    // Stop here if initContext decided to drop the packet.
-    if (drop) {
-        return;
-    }
-
-    // Park point here.
-
+    bool transactionError = false;
+    bool reloadConfiguration = false;
     try {
-        switch (query->getType()) {
-        case DHCPV6_SOLICIT:
-            rsp = processSolicit(ctx);
-            break;
-
-        case DHCPV6_REQUEST:
-            rsp = processRequest(ctx);
-            break;
-
-        case DHCPV6_RENEW:
-            rsp = processRenew(ctx);
-            break;
-
-        case DHCPV6_REBIND:
-            rsp = processRebind(ctx);
-            break;
-
-        case DHCPV6_CONFIRM:
-            rsp = processConfirm(ctx);
-            break;
-
-        case DHCPV6_RELEASE:
-            rsp = processRelease(ctx);
-            break;
-
-        case DHCPV6_DECLINE:
-            rsp = processDecline(ctx);
-            break;
-
-        case DHCPV6_INFORMATION_REQUEST:
-            rsp = processInfRequest(ctx);
-            break;
-
-        default:
-            return;
+        LeaseMgrFactory::instance().startTransaction();
+    } catch (const std::exception& ex) {
+        LOG_INFO(dhcp6_logger, DHCP6_TRANSACTION_FAILED).arg(ex.what());
+        transactionError = true;
+    }
+    if (!transactionError) {
+        bool rollback = false;
+        bool apply = true;
+        bool drop = false;
+        if (query->getType() != DHCPV6_DHCPV4_QUERY) {
+            initContext(query, ctx, drop);
+            // Stop here if initContext decided to drop the packet.
         }
 
-    } catch (const std::exception& e) {
+        // Park point here.
 
-        // Catch-all exception (at least for ones based on the isc Exception
-        // class, which covers more or less all that are explicitly raised
-        // in the Kea code), but also the standard one, which may possibly be
-        // thrown from boost code.  Just log the problem and ignore the packet.
-        // (The problem is logged as a debug message because debug is
-        // disabled by default - it prevents a DDOS attack based on the
-        // sending of problem packets.)
-        LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
-            .arg(query->getName())
-            .arg(query->getRemoteAddr().toText())
-            .arg(e.what());
+        try {
+            if (!drop) {
+                switch (query->getType()) {
+                case DHCPV6_SOLICIT:
+                    rsp = processSolicit(ctx);
+                    break;
 
-        // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+                case DHCPV6_REQUEST:
+                    rsp = processRequest(ctx);
+                    break;
+
+                case DHCPV6_RENEW:
+                    rsp = processRenew(ctx);
+                    break;
+
+                case DHCPV6_REBIND:
+                    rsp = processRebind(ctx);
+                    break;
+
+                case DHCPV6_CONFIRM:
+                    rsp = processConfirm(ctx);
+                    break;
+
+                case DHCPV6_RELEASE:
+                    rsp = processRelease(ctx);
+                    break;
+
+                case DHCPV6_DECLINE:
+                    rsp = processDecline(ctx);
+                    break;
+
+                case DHCPV6_INFORMATION_REQUEST:
+                    rsp = processInfRequest(ctx);
+                    break;
+
+                case DHCPV6_DHCPV4_QUERY:
+                    processDhcp4Query(query);
+                    break;
+
+                default:
+                    // We received a packet type that we do not recognize.
+                    LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
+                        .arg(static_cast<int>(query->getType()))
+                        .arg(query->getIface());
+                    // Only action is to output a message if debug is enabled,
+                    // and that will be covered by the debug statement before
+                    // the "switch" statement.
+                    ;
+                }
+            }
+        } catch (const TransactionException& e) {
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+            rollback = true;
+            apply = false;
+        } catch (const RFCViolation& e) {
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+            rollback = true;
+        } catch (const std::exception& e) {
+
+            // Catch-all exception (at least for ones based on the isc Exception
+            // class, which covers more or less all that are explicitly raised
+            // in the Kea code), but also the standard one, which may possibly be
+            // thrown from boost code.  Just log the problem and ignore the packet.
+            // (The problem is logged as a debug message because debug is
+            // disabled by default - it prevents a DDOS attack based on the
+            // sending of problem packets.)
+            LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+            rollback = true;
+        }
+        if (rollback) {
+            if (apply) {
+                try {
+                    LeaseMgrFactory::instance().rollback();
+                } catch (const std::exception& ex) {
+                    LOG_INFO(dhcp6_logger, DHCP6_TRANSACTION_FAILED).arg(ex.what());
+                }
+            }
+        } else {
+            try {
+                if (SrvConfigMgrFactory::initialized()) {
+                    SrvConfigInfoPtr configInfo =
+                        SrvConfigMgrFactory::instance().getConfig6Timestamp();
+                    if (configInfo && configInfo->timestamp_ !=
+                            CfgMgr::instance().getCurrentCfg()->getServerCfgTimestamp()) {
+                        LOG_INFO(dhcp6_logger, DHCP6_SHARD_CONFIGURATION_CHANGED);
+                        reloadConfiguration = true;
+                    }
+                }
+                if (SrvConfigMasterMgrFactory::initialized()) {
+                    std::string server_id = CfgMgr::instance().getCurrentCfg()->getInstanceId();
+                    SrvConfigMasterInfoPtr masterConfigInfo =
+                        SrvConfigMasterMgrFactory::instance().getMasterConfig6Timestamp(server_id);
+                    if (masterConfigInfo && masterConfigInfo->timestamp_ !=
+                            CfgMgr::instance().getCurrentCfg()->getMasterServerCfgTimestamp()) {
+                        LOG_INFO(dhcp6_logger, DHCP6_MASTER_CONFIGURATION_CHANGED);
+                        reloadConfiguration = true;
+                    }
+                }
+            } catch (const std::exception& ex) {
+                LOG_INFO(dhcp6_logger, DHCP6_TRANSACTION_FAILED).arg(ex.what());
+                reloadConfiguration = true;
+            }
+            if (!reloadConfiguration) {
+                try {
+                    LeaseMgrFactory::instance().commit();
+                } catch (const std::exception& ex) {
+                    LOG_INFO(dhcp6_logger, DHCP6_TRANSACTION_FAILED).arg(ex.what());
+                    reloadConfiguration = true;
+                }
+            } else {
+                try {
+                    LeaseMgrFactory::instance().rollback();
+                } catch (const std::exception& ex) {
+                    LOG_INFO(dhcp6_logger, DHCP6_TRANSACTION_FAILED).arg(ex.what());
+                }
+            }
+        }
+    }
+
+    if (reloadConfiguration) {
+        LOG_INFO(dhcp6_logger, DHCP6_FORCE_RELOAD_CONFIGURATION);
+        kill(getpid(), SIGHUP);
+        rsp = Pkt6Ptr();
     }
 
     if (!rsp) {
@@ -1219,7 +1311,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
         switch (pkt->getType()) {
         case DHCPV6_SOLICIT:
         case DHCPV6_REBIND:
-    case DHCPV6_CONFIRM:
+        case DHCPV6_CONFIRM:
             sanityCheck(pkt, MANDATORY, FORBIDDEN);
             return (true);
 
@@ -1415,6 +1507,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
+            break;
         }
         default:
             break;
@@ -2140,7 +2233,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                (*l)->preferred_lft_, (*l)->valid_lft_));
         ia_rsp->addOption(prf);
 
-
         if (pd_exclude_requested) {
             // PD exclude option has been requested via ORO, thus we need to
             // include it if the pool configuration specifies this option.
@@ -2154,7 +2246,6 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                 }
             }
         }
-
 
         LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
             .arg(query->getLabel())
@@ -3749,5 +3840,5 @@ void Dhcpv6Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc

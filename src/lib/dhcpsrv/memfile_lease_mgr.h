@@ -439,7 +439,7 @@ public:
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
+    virtual VersionPair getVersion() const {
         return (std::make_pair(MAJOR_VERSION, MINOR_VERSION));
     }
 
@@ -779,7 +779,7 @@ private:
     //@}
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // MEMFILE_LEASE_MGR_H

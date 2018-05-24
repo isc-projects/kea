@@ -28,3 +28,8 @@ DROP TABLE IF EXISTS lease6_stat CASCADE;
 DROP FUNCTION IF EXISTS proc_stat_lease6_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
+
+DROP TABLE IF EXISTS server_configuration4 CASCADE;
+DROP TABLE IF EXISTS server_configuration6 CASCADE;
+DROP TABLE IF EXISTS config_schema_version CASCADE;
+DROP TABLE IF EXISTS master_schema_version CASCADE;

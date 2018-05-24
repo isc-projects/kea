@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Deutsche Telekom AG.
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -32,11 +32,6 @@
 
 namespace isc {
 namespace dhcp {
-
-/// @brief Pair containing major and minor versions
-/// @todo: This is already defined in lease_mgr.h. Need to have one
-/// definition. May need to move it if necessary.
-typedef std::pair<uint32_t, uint32_t> VersionPair;
 
 /// @brief Statement index representing the statement name
 typedef char const* const StatementTag;

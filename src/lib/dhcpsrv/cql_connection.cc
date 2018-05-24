@@ -381,7 +381,7 @@ CqlConnection::checkFutureError(const std::string& what,
         stream << "Session action ";
     }
     if (cass_error == CASS_OK) {
-        stream << " executed succesfully.";
+        stream << " executed successfully.";
     } else {
         stream << " failed, Kea error: " << what
                << ", Cassandra error code: " << cass_error_desc(cass_error)

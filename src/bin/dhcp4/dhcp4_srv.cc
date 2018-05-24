@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -35,7 +36,10 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
-#include <dhcpsrv/utils.h>
+#include <dhcpsrv/srv_config_mgr.h>
+#include <dhcpsrv/srv_config_mgr_factory.h>
+#include <dhcpsrv/srv_config_master_mgr.h>
+#include <dhcpsrv/srv_config_master_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <eval/evaluate.h>
 #include <eval/eval_messages.h>
@@ -44,7 +48,6 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <util/strutil.h>
-#include <stats/stats_mgr.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <cfgrpt/config_report.h>
@@ -169,7 +172,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             .arg(query_->getLabel())
             .arg(classes.toText());
     }
-};
+}
 
 void
 Dhcpv4Exchange::initResponse() {
@@ -970,54 +973,132 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
 
     AllocEngine::ClientContext4Ptr ctx;
 
+    bool transactionError = false;
+    bool reloadConfiguration = false;
     try {
-        switch (query->getType()) {
-        case DHCPDISCOVER:
-            rsp = processDiscover(query);
-            break;
+        LeaseMgrFactory::instance().startTransaction();
+    } catch (const std::exception& ex) {
+        LOG_INFO(dhcp4_logger, DHCP4_TRANSACTION_FAILED).arg(ex.what());
+        transactionError = true;
+    }
+    if (!transactionError) {
+        bool rollback = false;
+        bool apply = true;
+        try {
+            switch (query->getType()) {
+            case DHCPDISCOVER:
+                rsp = processDiscover(query);
+                break;
 
-        case DHCPREQUEST:
-            // Note that REQUEST is used for many things in DHCPv4: for
-            // requesting new leases, renewing existing ones and even
-            // for rebinding.
-            rsp = processRequest(query, ctx);
-            break;
+            case DHCPREQUEST:
+                // Note that REQUEST is used for many things in DHCPv4: for
+                // requesting new leases, renewing existing ones and even
+                // for rebinding.
+                rsp = processRequest(query, ctx);
+                break;
 
-        case DHCPRELEASE:
-            processRelease(query, ctx);
-            break;
+            case DHCPRELEASE:
+                processRelease(query, ctx);
+                break;
 
-        case DHCPDECLINE:
-            processDecline(query, ctx);
-            break;
+            case DHCPDECLINE:
+                processDecline(query, ctx);
+                break;
 
-        case DHCPINFORM:
-            rsp = processInform(query);
-            break;
+            case DHCPINFORM:
+                rsp = processInform(query);
+                break;
 
-        default:
-            // Only action is to output a message if debug is enabled,
-            // and that is covered by the debug statement before the
-            // "switch" statement.
-            ;
+            default:
+                // Only action is to output a message if debug is enabled,
+                // and that is covered by the debug statement before the
+                // "switch" statement.
+                ;
+            }
+        } catch (const TransactionException& e) {
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_PACKET_DROP_0007)
+                .arg(query->getLabel())
+                .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<int64_t>(1));
+            rollback = true;
+            apply = false;
+        } catch (const std::exception& e) {
+
+            // Catch-all exception (we used to call only isc::Exception, but
+            // std::exception could potentially be raised and if we don't catch
+            // it here, it would be caught in main() and the process would
+            // terminate).  Just log the problem and ignore the packet.
+            // (The problem is logged as a debug message because debug is
+            // disabled by default - it prevents a DDOS attack based on the
+            // sending of problem packets.)
+            LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_PACKET_DROP_0007)
+                .arg(query->getLabel())
+                .arg(e.what());
+
+            // Increase the statistic of dropped packets.
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<int64_t>(1));
+            rollback = true;
         }
-    } catch (const std::exception& e) {
+        if (rollback) {
+            if (apply) {
+                try {
+                    LeaseMgrFactory::instance().rollback();
+                } catch (const std::exception& ex) {
+                    LOG_INFO(dhcp4_logger, DHCP4_TRANSACTION_FAILED).arg(ex.what());
+                }
+            }
+        } else {
+            try {
+                if (SrvConfigMgrFactory::initialized()) {
+                    SrvConfigInfoPtr configInfo =
+                        SrvConfigMgrFactory::instance().getConfig4Timestamp();
+                    if (configInfo && configInfo->timestamp_ !=
+                            CfgMgr::instance().getCurrentCfg()->getServerCfgTimestamp()) {
+                        LOG_INFO(dhcp4_logger, DHCP4_SHARD_CONFIGURATION_CHANGED);
+                        reloadConfiguration = true;
+                    }
+                }
+                if (SrvConfigMasterMgrFactory::initialized()) {
+                    std::string server_id = CfgMgr::instance().getCurrentCfg()->getInstanceId();
+                    SrvConfigMasterInfoPtr masterConfigInfo =
+                        SrvConfigMasterMgrFactory::instance().getMasterConfig4Timestamp(server_id);
+                    if (masterConfigInfo && masterConfigInfo->timestamp_ !=
+                            CfgMgr::instance().getCurrentCfg()->getMasterServerCfgTimestamp()) {
+                        LOG_INFO(dhcp4_logger, DHCP4_MASTER_CONFIGURATION_CHANGED);
+                        reloadConfiguration = true;
+                    }
+                }
+            } catch (const std::exception& ex) {
+                LOG_INFO(dhcp4_logger, DHCP4_TRANSACTION_FAILED).arg(ex.what());
+                reloadConfiguration = true;
+            }
+            if (!reloadConfiguration) {
+                try {
+                    LeaseMgrFactory::instance().commit();
+                } catch (const std::exception& ex) {
+                    LOG_INFO(dhcp4_logger, DHCP4_TRANSACTION_FAILED).arg(ex.what());
+                    reloadConfiguration = true;
+                }
+            } else {
+                try {
+                    LeaseMgrFactory::instance().rollback();
+                } catch (const std::exception& ex) {
+                    LOG_INFO(dhcp4_logger, DHCP4_TRANSACTION_FAILED).arg(ex.what());
+                }
+            }
+        }
+    }
 
-        // Catch-all exception (we used to call only isc::Exception, but
-        // std::exception could potentially be raised and if we don't catch
-        // it here, it would be caught in main() and the process would
-        // terminate).  Just log the problem and ignore the packet.
-        // (The problem is logged as a debug message because debug is
-        // disabled by default - it prevents a DDOS attack based on the
-        // sending of problem packets.)
-        LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
-                  DHCP4_PACKET_DROP_0007)
-            .arg(query->getLabel())
-            .arg(e.what());
-
-        // Increase the statistic of dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+    if (reloadConfiguration) {
+        LOG_INFO(dhcp4_logger, DHCP4_FORCE_RELOAD_CONFIGURATION);
+        kill(getpid(), SIGHUP);
+        rsp = Pkt4Ptr();
     }
 
     bool packet_park = false;
@@ -3558,5 +3639,5 @@ void Dhcpv4Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-}   // namespace dhcp
-}   // namespace isc
+}  // namespace dhcp
+}  // namespace isc

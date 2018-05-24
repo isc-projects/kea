@@ -66,7 +66,7 @@ public:
         : isc::Exception(file, line, what) {}
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif // DHCP_CONFIG_ERROR_H

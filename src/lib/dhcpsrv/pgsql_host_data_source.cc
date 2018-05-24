@@ -12,6 +12,7 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
 #include <dhcpsrv/db_exceptions.h>
@@ -24,8 +25,9 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/static_assert.hpp>
 
-#include <stdint.h>
 #include <string>
+#include <list>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -1236,7 +1238,7 @@ private:
     OptionPtr option_;
 };
 
-} // end of anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -1405,7 +1407,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
-    std::pair<uint32_t, uint32_t> getVersion() const;
+    VersionPair getVersion() const;
 
     /// @brief Pointer to the object representing an exchange which
     /// can be used to retrieve hosts and DHCPv4 options.
@@ -1693,7 +1695,7 @@ TaggedStatementArray tagged_statements = { {
 }
 };
 
-}; // end anonymous namespace
+}  // namespace
 
 PgSqlHostDataSourceImpl::
 PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
@@ -1893,20 +1895,21 @@ getHost(const SubnetID& subnet_id,
     return (result);
 }
 
-std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
+VersionPair
+PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
 
     PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
     conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
 
-    uint32_t version;
-    PgSqlExchange::getColumnValue(r, 0, 0, version);
+    uint32_t major;
+    PgSqlExchange::getColumnValue(r, 0, 0, major);
 
     uint32_t minor;
     PgSqlExchange::getColumnValue(r, 0, 0, minor);
 
-    return (std::make_pair(version, minor));
+    return (std::make_pair(major, minor));
 }
 
 void
@@ -2253,7 +2256,8 @@ PgSqlHostDataSource::get6(const SubnetID& subnet_id,
 
 // Miscellaneous database methods.
 
-std::string PgSqlHostDataSource::getName() const {
+std::string
+PgSqlHostDataSource::getName() const {
     std::string name = "";
     try {
         name = impl_->conn_.getParameter("name");
@@ -2263,13 +2267,29 @@ std::string PgSqlHostDataSource::getName() const {
     return (name);
 }
 
-std::string PgSqlHostDataSource::getDescription() const {
+std::string
+PgSqlHostDataSource::getDescription() const {
     return (std::string("Host data source that stores host information"
                         "in PostgreSQL database"));
 }
 
-std::pair<uint32_t, uint32_t> PgSqlHostDataSource::getVersion() const {
+VersionPair
+PgSqlHostDataSource::getVersion() const {
     return(impl_->getVersion());
+}
+
+void
+PgSqlHostDataSource::syncReservations() {
+    HostCollection hosts =
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->getAll();
+    for (HostCollection::const_iterator it = hosts.begin();
+        it != hosts.end(); ++it) {
+        try {
+            add(*it);
+        } catch(const DuplicateEntry& exception) {
+            // Don't insert duplicates.
+        }
+    }
 }
 
 void
@@ -2286,5 +2306,5 @@ PgSqlHostDataSource::rollback() {
     impl_->conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

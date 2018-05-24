@@ -35,6 +35,7 @@ void destroyPgSQLSchema(bool show_err) {
 
 void createPgSQLSchema(bool show_err) {
     runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/dhcpdb_create.pgsql", show_err);
+    runPgSQLScript(DATABASE_SCRIPTS_DIR, "pgsql/configdb_create.pgsql", show_err);
 }
 
 void runPgSQLScript(const std::string& path, const std::string& script_name,

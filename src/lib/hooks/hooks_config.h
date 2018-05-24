@@ -102,7 +102,7 @@ private:
     isc::hooks::HookLibsCollection libraries_;
 };
 
-};
-};
+}
+}
 
 #endif // HOOKS_CONFIG_H

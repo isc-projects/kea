@@ -1,0 +1,293 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+               [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2016-2018 Deutsche Telekom AG.
+ -
+ - Author: Andrei Pavel <andrei.pavel@qualitance.com>
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ -           http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+-->
+<article>
+    <title>kea-config-tool manual</title>
+    <refentry>
+        <refentryinfo>
+            <author>
+                <personname>
+                    <firstname>Andrei</firstname>
+                    <surname>Pavel</surname>
+                </personname>
+                <affiliation>
+                    <jobtitle>Junior C++ Developer</jobtitle>
+                    <orgname>SC QUALITANCE QBS SRL</orgname>
+                </affiliation>
+                <contrib>Created the manual for version 1.1.0 of
+                <command>kea-config-tool</command>.</contrib>
+            </author>
+            <date>September 15, 2016</date>
+            <productname>kea-config-tool</productname>
+        </refentryinfo>
+
+        <refmeta>
+            <refentrytitle>kea-config-tool</refentrytitle>
+            <manvolnum>8</manvolnum>
+            <refmiscinfo>
+                <source>Kea</source>
+                <version>1.1.0</version>
+            </refmiscinfo>
+        </refmeta>
+
+        <refnamediv>
+            <refname>kea-config-tool</refname>
+            <refpurpose>DHCP configuration tool</refpurpose>
+        </refnamediv>
+
+        <docinfo>
+            <copyright>
+                <year>2016</year>
+                <holder>Deutsche Telekom AG.</holder>
+            </copyright>
+        </docinfo>
+
+        <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>kea-config-tool</command>
+                <arg><option>-dbinit <replaceable class="command">KEA-ADMIN-COMMAND</replaceable></option></arg>
+                <arg><option>-shard -set-config|-get-config -4|-6 <replaceable class="parameter">master-config-file</replaceable> <replaceable class="parameter">shards-directory-path</replaceable> <replaceable class="parameter">list-of-shards</replaceable></option></arg>
+                <arg><option>-master -set-servers|-get-servers -4|-6 <replaceable class="parameter">master-config-file</replaceable> <replaceable class="parameter">shards-directory-path</replaceable> <replaceable class="parameter">list-of-shards</replaceable></option></arg>
+                <sbr></sbr>
+                <arg><option>-d</option></arg>
+                <arg><option>-h</option></arg>
+                <arg><option>-v</option></arg>
+                <arg><option>-V</option></arg>
+            </cmdsynopsis>
+        </refsynopsisdiv>
+
+        <refsect1>
+            <title>DESCRIPTION</title>
+            <para><command>kea-config-tool</command> is a DHCP configuration
+            tool used by system administrators. It provides a way of
+            initializing and maintaining Kea server configuration when the
+            server uses a database backend for leases, reservations and
+            stateless configuration. The tool can be used to manage both DHCPv4
+            and DHCPv6 server configurations.</para>
+            <para>Dependencies to the Kea server are statically linked so this
+            is a standalone tool and no Kea libraries are required in order to
+            run it.</para>
+        </refsect1>
+        <refsect1>
+            <title>TOP-LEVEL COMMANDS</title>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-dbinit <replaceable class="command">KEA-ADMIN-COMMAND</replaceable></option></term>
+                    <listitem>
+                        <para>A wrapper for kea-admin; it executes
+                        <command>kea-admin</command> and returns it’s exit
+                        status.</para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-shard <replaceable class="option">OPTIONS</replaceable></option></term>
+                    <listitem>
+                        <para>Insert or retrieve server configuration data into
+                        or from shard databases.</para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-master <replaceable class="option">OPTIONS</replaceable></option></term>
+                    <listitem>
+                        <para>Insert or retrieve server configuration data into
+                        or from the master database.</para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-d</option></term>
+                    <listitem>
+                        <para>Debug mode with exra verbose data</para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-h</option></term>
+                    <listitem>
+                        <para>Display this help.</para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-v</option></term>
+                    <listitem>
+                        <para>Print version number.</para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-V</option></term>
+                    <listitem>
+                        <para>Print detailed version number.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect1>
+
+        <refsect1>
+            <title>OPTIONS</title>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-set-config</option></term>
+                    <listitem>
+                        <para>Used alongside the <command>-shard</command>
+                        command. Inserts the provided server configuration into
+                        the provided shard databases.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-get-config</option></term>
+                    <listitem>
+                        <para>Used alongside the <command>-shard</command>
+                        command. Retrieves server configurations from the
+                        provided shard databases and writes it to the provided
+                        local directory.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-set-servers</option></term>
+                    <listitem>
+                        <para>Used alongside the <command>-master</command>
+                        command. Inserts the provided server configuration into
+                        the master database.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-get-servers</option></term>
+                    <listitem>
+                        <para>Used alongside the <command>-master</command>
+                        command. Retrieves server configurations from the master
+                        database and writes it to the provided local
+                        directory.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-4</option></term>
+                    <listitem>
+                        <para>Specifies that this is a DHCPv4 operation.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><option>-6</option></term>
+                    <listitem>
+                        <para>Specifies that this is a DHCPv6 operation.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect1>
+
+        <refsect1>
+            <title>PARAMETERS</title>
+            <variablelist>
+                <varlistentry>
+                    <term><parameter>master-config-file</parameter></term>
+                    <listitem>
+                        <para>Configuration file which provides backend
+                        credentials to the master database.</para>
+                        <para>The following is a DHCPv4 configuration
+                        example:</para>
+<screen>
+{
+  "Dhcp4": {
+    "configuration-type": "database",
+    "master-database": {
+      "type": "cql",
+      "keyspace": "kea_master",
+      "contact-points": "127.0.0.1",
+      "name": "keatest",
+      "user": "keatest",
+      "password": "keatest",
+      "port": "9042",
+      "max-statement-tries": 3
+    }
+  }
+}
+</screen>
+                        <para>And a DHCPv6 configuration example:</para>
+<screen>
+{
+  "Dhcp6": {
+    "configuration-type": "database",
+    "master-database": {
+      "type": "cql",
+      "keyspace": "kea_master",
+      "contact-points": "127.0.0.1",
+      "name": "keatest",
+      "user": "keatest",
+      "password": "keatest",
+      "port": "9042",
+      "max-statement-tries": 3
+    }
+  }
+}
+</screen>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><parameter>shards-directory-path</parameter></term>
+                    <listitem>
+                        <para>When used with <command>-set-*</command> commands,
+                        specifies the path from which the configuration is
+                        loaded.</para>
+                        <para>When used with <command>-get-*</command> commands,
+                        specifies the path where the configuration is stored.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+            <variablelist>
+                <varlistentry>
+                    <term><parameter>list-of-shards</parameter></term>
+                    <listitem>
+                        <para>Comma-separated shard names for which the command
+                        is applied (for <command>-set-*</command> commands,
+                        <optional><parameter>list-of-shards</parameter></optional>
+                        is optional. If it is not provided, the command is
+                        applied for all found shards.</para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect1>
+
+        <refsect1>
+            <title>SEE ALSO</title>
+            <para>
+                <citerefentry><refentrytitle>kea-admin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>kea-dhcp4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>kea-dhcp6</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+                <citetitle>Kea Administrator Guide</citetitle>.
+            </para>
+        </refsect1>
+
+    </refentry>
+</article>

@@ -191,7 +191,7 @@ typedef HostContainer6::nth_index<1>::type HostContainer6Index1;
 typedef std::pair<HostContainer6Index1::iterator,
                   HostContainer6Index1::iterator> HostContainer6Index1Range;
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif // HOST_CONTAINER_H

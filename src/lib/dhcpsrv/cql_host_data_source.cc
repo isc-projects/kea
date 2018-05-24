@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -92,12 +92,6 @@ static constexpr size_t CLIENT_CLASSES_MAX_LENGTH = 255u;
 ///     restricted by the length of the domain-name carried in the Client FQDN
 ///     Option (see RFC4702 and RFC4704).
 static constexpr size_t HOSTNAME_MAX_LENGTH = 255u;
-
-/// @brief Maximum length of option value
-static constexpr size_t OPTION_VALUE_MAX_LENGTH = 4096u;
-
-/// @brief Maximum length of option value specified in textual format
-static constexpr size_t OPTION_FORMATTED_VALUE_MAX_LENGTH = 8192u;
 
 /// @brief Maximum length of option space name
 static constexpr size_t OPTION_SPACE_MAX_LENGTH = 128u;
@@ -1162,12 +1156,12 @@ CqlHostExchange::retrieve() {
     asiolink::IOAddress ipv4_reservation =
         asiolink::IOAddress(static_cast<uint32_t>(host_ipv4_address_));
 
-    Host* host = new Host(host_identifier.data(), host_identifier.size(),
+    HostPtr host(new Host(host_identifier.data(), host_identifier.size(),
                           host_identifier_type, ipv4_subnet_id, ipv6_subnet_id,
                           ipv4_reservation, hostname_,
                           host_ipv4_client_classes_, host_ipv6_client_classes_,
                           static_cast<uint32_t>(host_ipv4_next_server_),
-                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_);
+                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_));
 
     // Set the user context if there is one.
     if (!user_context_.empty()) {
@@ -1464,6 +1458,16 @@ public:
     /// @brief Implementation of @ref CqlHostDataSource::getVersion()
     virtual VersionPair getVersion() const;
 
+    /// @brief Implementation of @ref CqlHostDataSource::commit()
+    virtual void commit();
+
+    /// @brief Implementation of @ref CqlHostDataSource::rollback()
+    virtual void rollback();
+
+    /// @brief Implementation of @ref
+    /// CqlHostDataSource::syncReservations()
+    virtual void syncReservations();
+
 protected:
     /// @brief Adds/deletes any options found in the @ref Host object to/from a separate
     ///     table entry.
@@ -1659,6 +1663,20 @@ CqlHostDataSourceImpl::insertOrDelete(const HostPtr& host, bool insert) {
     }
 
     return (result);
+}
+
+void
+CqlHostDataSourceImpl::syncReservations() {
+    HostCollection hosts =
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->getAll();
+    for (HostPtr& host : hosts) {
+        try {
+            insertOrDelete(host, true);
+        } catch (const DuplicateEntry& exception) {
+            // A duplicate was being inserted. Duplicates are expected.
+            // Carry on.
+        }
+    }
 }
 
 ConstHostPtr
@@ -1951,6 +1969,16 @@ CqlHostDataSourceImpl::getVersion() const {
     return (version_exchange->retrieveVersion(dbconn_));
 }
 
+void
+CqlHostDataSourceImpl::commit() {
+    dbconn_.commit();
+}
+
+void
+CqlHostDataSourceImpl::rollback() {
+    dbconn_.rollback();
+}
+
 bool
 CqlHostDataSourceImpl::insertOrDeleteHostWithOptions(bool insert,
                                                      const HostPtr& host,
@@ -2044,7 +2072,7 @@ CqlHostDataSourceImpl::getHostCollection(StatementTag statement_tag,
     // Form HostPtr objects.
     HostCollection host_collection;
     for (boost::any& host : collection) {
-        host_collection.push_back(HostPtr(boost::any_cast<Host*>(host)));
+        host_collection.push_back(boost::any_cast<HostPtr>(host));
     }
 
     // Merge the denormalized table entries that belong to the same host
@@ -2085,7 +2113,6 @@ CqlHostDataSourceImpl::insertOrDeleteHost(bool insert,
         if (insert) {
             host_exchange->createBindForMutation(host, subnet_id, reservation, option_space,
                 option_descriptor, CqlHostExchange::INSERT_HOST, assigned_values);
-
 
             host_exchange->executeMutation(dbconn_, assigned_values, CqlHostExchange::INSERT_HOST);
         } else {
@@ -2279,6 +2306,13 @@ CqlHostDataSource::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_DB_GET_VERSION);
 
     return impl_->getVersion();
+}
+
+void
+CqlHostDataSource::syncReservations() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_SYNC_RESERVATIONS);
+
+    impl_->syncReservations();
 }
 
 void

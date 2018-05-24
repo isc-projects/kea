@@ -1,0 +1,37 @@
+{
+  "config-database": {
+    "user": "keatest",
+    "type": "mysql",
+    "password": "keatest",
+    "keyspace": "kea_shard",
+    "contact-points": "192.168.128.17,192.168.128.18,192.168.128.19,192.168.128.20,192.168.128.21,192.168.128.22"
+  },
+  "master-config": [
+    {
+      "instance-id": "kea-dhcp4-server",
+      "server-config": {
+        "Dhcp4": {
+          "interfaces-config": {
+            "interfaces": [
+              "ens4"
+            ]
+          }
+        },
+        "Logging": {
+          "loggers": [
+            {
+              "name": "kea-dhcp4",
+              "output_options": [
+                {
+                  "output": "/var/log/kea-dhcp4.log"
+                }
+              ],
+              "severity": "DEBUG",
+              "debuglevel": 99
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

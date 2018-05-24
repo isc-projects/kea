@@ -218,7 +218,7 @@ public:
 
     /// @brief Returns version this backend
     /// @return two numbers that each represent practical value of this backend.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
+    virtual VersionPair getVersion() const {
         return (std::make_pair(0,0));
     }
 

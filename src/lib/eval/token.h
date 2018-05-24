@@ -1019,7 +1019,7 @@ protected:
     uint16_t index_;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif

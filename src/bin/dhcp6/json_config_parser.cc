@@ -323,7 +323,7 @@ public:
 
 };
 
-} // anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -335,7 +335,7 @@ namespace dhcp {
 /// a command result, unless they specifically alter the channel configuration.
 /// In that case the user simply has to accept they'll be disconnected.
 ///
-void configureCommandChannel() {
+void configureCommandChannel6() {
     // Get new socket configuration.
     ConstElementPtr sock_cfg =
         CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
@@ -555,6 +555,20 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "master-database") {
+                DbAccessParser parser(DBType::MASTER_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "config-database") {
+                DbAccessParser parser(DBType::CONFIG_DB);
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
+                parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
             if (config_pair.first == "subnet6") {
                 Subnets6ListConfigParser subnets_parser;
                 // parse() returns number of subnets parsed. We may log it one day.
@@ -643,11 +657,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // configuration. This will add created subnets and option values into
     // the server's configuration.
     // This operation should be exception safe but let's make sure.
-    if (!rollback) {
+    if (!rollback && IfaceMgr::instance().isServerMode()) {
         try {
 
             // Setup the command channel.
-            configureCommandChannel();
+            configureCommandChannel6();
 
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
@@ -696,5 +710,81 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     return (answer);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+isc::data::ConstElementPtr
+configureDhcp6ServerId(isc::data::ConstElementPtr config_set) {
+    ConstElementPtr answer;
+
+    // Check if an 'instance-id' parameter is provided.
+    ConstElementPtr server_id = config_set->get("instance-id");
+    if (server_id) {
+        std::string id;
+        if (server_id->getValue(id)) {
+            CfgMgr::instance().getStagingCfg()->getInstanceId() = id;
+        }
+    }
+
+    // Everything was fine. Configuration is successful.
+    answer = isc::config::createAnswer(0, "Configuration successful.");
+    return (answer);
+}
+
+isc::data::ConstElementPtr
+configureDhcp6ServerConfigSource(isc::data::ConstElementPtr config_set) {
+    ConstElementPtr answer;
+
+    SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+
+    // check if a 'configuration-type' parameter is provided
+    ConstElementPtr cfg_type_elem = config_set->get("configuration-type");
+    if (cfg_type_elem) {
+        std::string type;
+        if (cfg_type_elem->getValue(type)) {
+            // Valid values for "configuration-type" : "database" and "file"
+            if (type == "database") {
+                // The configuration type specifies that the server configuration should be
+                // read from the database.
+
+                // Parse the 'master-database' parameter in order to update the config manager
+                // with the configuration database type and credentials.
+                ConstElementPtr config_database = config_set->get("master-database");
+                if (config_database) {
+                    // Update the config manager with the server configuration type
+                    srv_cfg->getConfigurationType().type_ = CfgSrvConfigType::MASTER_DATABASE;
+
+                    DbAccessParser parser(DBType::MASTER_DB);
+                    CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                    parser.parse(cfg_db_access, config_database);
+                } else {
+                    // There has not been specified a "master-database" parameter.
+                    // Check if a "config-database" parameter has been specified
+                    ConstElementPtr config_database = config_set->get("config-database");
+                    if (config_database) {
+                        // Update the config manager with the server configuration type
+                        srv_cfg->getConfigurationType().type_ = CfgSrvConfigType::CONFIG_DATABASE;
+
+                        DbAccessParser parser(DBType::CONFIG_DB);
+                        CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                        parser.parse(cfg_db_access, config_database);
+                    }
+                }
+            } else if (type == "file") {
+                // Update the config manager with the server configuration type
+                srv_cfg->getConfigurationType().type_ = CfgSrvConfigType::FILE;
+            } else {
+                // Update the config manager with the server configuration type
+                srv_cfg->getConfigurationType().type_ = CfgSrvConfigType::UNKNOWN;
+
+                answer = isc::config::createAnswer(1,
+                    "Invalid value for 'configuration-type' parameter, can't process config.");
+                return (answer);
+            }
+        }
+    }
+
+    // Everything was fine. Configuration is successful.
+    answer = isc::config::createAnswer(0, "Configuration successful.");
+    return (answer);
+}
+
+}  // namespace dhcp
+}  // namespace isc

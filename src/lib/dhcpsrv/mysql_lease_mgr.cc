@@ -516,7 +516,7 @@ public:
             // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
 
-            // state: uint32_t.
+            // state: uint32_t
             bind_[9].buffer_type = MYSQL_TYPE_LONG;
             bind_[9].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[9].is_unsigned = MLM_TRUE;
@@ -625,7 +625,7 @@ public:
         // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
-        // state:  uint32_t
+        // state: uint32_t
         bind_[9].buffer_type = MYSQL_TYPE_LONG;
         bind_[9].buffer = reinterpret_cast<char*>(&state_);
         bind_[9].is_unsigned = MLM_TRUE;
@@ -985,7 +985,7 @@ public:
                 bind_[14].is_null = &hwaddr_null_;
             }
 
-            // state:  uint32_t
+            // state: uint32_t
             bind_[15].buffer_type = MYSQL_TYPE_LONG;
             bind_[15].buffer = reinterpret_cast<char*>(&lease_->state_);
             bind_[15].is_unsigned = MLM_TRUE;
@@ -1138,7 +1138,7 @@ public:
         bind_[14].buffer = reinterpret_cast<char*>(&hwaddr_source_);
         bind_[14].is_unsigned = MLM_TRUE;
 
-        // state:  uint32_t
+        // state: uint32_t
         bind_[15].buffer_type = MYSQL_TYPE_LONG;
         bind_[15].buffer = reinterpret_cast<char*>(&state_);
         bind_[15].is_unsigned = MLM_TRUE;
@@ -1301,7 +1301,7 @@ public:
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
           validateStatement();
     }
 
@@ -1321,7 +1321,7 @@ public:
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
           validateStatement();
     }
 
@@ -1345,7 +1345,7 @@ public:
           // Set the number of columns in the bind array based on fetch_type
           // This is the number of columns expected in the result set
           bind_(fetch_type_ ? 4 : 3),
-          subnet_id_(0), lease_type_(0), lease_state_(0), state_count_(0) {
+          subnet_id_(0), lease_type_(0), state_(0), state_count_(0) {
           validateStatement();
     }
 
@@ -1404,7 +1404,7 @@ public:
 
         // state: uint32_t
         bind_[col].buffer_type = MYSQL_TYPE_LONG;
-        bind_[col].buffer = reinterpret_cast<char*>(&lease_state_);
+        bind_[col].buffer = reinterpret_cast<char*>(&state_);
         bind_[col].is_unsigned = MLM_TRUE;
         ++col;
 
@@ -1445,7 +1445,7 @@ public:
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
             row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
             row.lease_type_ = static_cast<Lease::Type>(lease_type_);
-            row.lease_state_ = lease_state_;
+            row.lease_state_ = state_;
             row.state_count_ = state_count_;
             have_row = true;
         } else if (status != MYSQL_NO_DATA) {
@@ -1488,7 +1488,7 @@ private:
     /// @brief Receives the lease type when fetching a row
     uint32_t lease_type_;
     /// @brief Receives the lease state when fetching a row
-    uint32_t lease_state_;
+    uint32_t state_;
     /// @brief Receives the state count when fetching a row
     int64_t state_count_;
 };
@@ -2370,7 +2370,7 @@ MySqlLeaseMgr::getDescription() const {
     return (std::string("MySQL Database"));
 }
 
-std::pair<uint32_t, uint32_t>
+VersionPair
 MySqlLeaseMgr::getVersion() const {
     const StatementIndex stindex = GET_VERSION;
 
@@ -2408,6 +2408,16 @@ MySqlLeaseMgr::getVersion() const {
     checkError(status, stindex, "unable to fetch result set");
 
     return (std::make_pair(major, minor));
+}
+
+bool
+MySqlLeaseMgr::startTransaction() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_BEGIN_TRANSACTION);
+    if (mysql_query(conn_.mysql_, "START TRANSACTION")) {
+        isc_throw(DbOperationError, "start transaction failed: " << mysql_error(conn_.mysql_));
+    }
+
+    return true;
 }
 
 void

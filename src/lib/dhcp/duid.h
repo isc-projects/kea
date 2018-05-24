@@ -167,7 +167,7 @@ public:
     bool operator!=(const ClientId& other) const;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif /* DUID_H */

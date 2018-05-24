@@ -1,0 +1,21 @@
+#!/bin/sh
+
+prefix=@prefix@
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`mysql_master_version "$@"`
+
+if [ "$VERSION" != "0.0" ]; then
+    printf "This script upgrades 0.0 to 1.0. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+mysql_execute_script "$@" master_upgrade_0.0_to_1.0.mysql
+
+exit $?

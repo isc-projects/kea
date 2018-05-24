@@ -5,15 +5,19 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfg_hosts_util.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
-#include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
+
+#include <algorithm>
 #include <list>
 #include <sstream>
+#include <string>
 
 using namespace isc::log;
 using namespace isc::data;
@@ -22,7 +26,7 @@ namespace isc {
 namespace dhcp {
 
 SrvConfig::SrvConfig()
-    : sequence_(0), cfg_iface_(new CfgIface()),
+    : instance_id_(""), sequence_(0), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_shared_networks4_(new CfgSharedNetworks4()),
@@ -34,11 +38,13 @@ SrvConfig::SrvConfig()
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
+      master_server_cfg_timestamp_(-1),
+      server_cfg_timestamp_(-1),
       d2_client_config_(new D2ClientConfig()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
-    : sequence_(sequence), cfg_iface_(new CfgIface()),
+    : instance_id_(""), sequence_(sequence), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_shared_networks4_(new CfgSharedNetworks4()),
@@ -50,11 +56,12 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
+      master_server_cfg_timestamp_(-1),
+      server_cfg_timestamp_(-1),
       d2_client_config_(new D2ClientConfig()) {
 }
 
-std::string
-SrvConfig::getConfigSummary(const uint32_t selection) const {
+std::string SrvConfig::getConfigSummary(const uint32_t selection) const {
     std::ostringstream s;
     size_t subnets_num;
     if ((selection & CFGSEL_SUBNET4) == CFGSEL_SUBNET4) {
@@ -94,13 +101,11 @@ SrvConfig::getConfigSummary(const uint32_t selection) const {
     return (summary);
 }
 
-bool
-SrvConfig::sequenceEquals(const SrvConfig& other) {
+bool SrvConfig::sequenceEquals(const SrvConfig& other) {
     return (getSequence() == other.getSequence());
 }
 
-void
-SrvConfig::copy(SrvConfig& new_config) const {
+void SrvConfig::copy(SrvConfig& new_config) const {
     // We will entirely replace loggers in the new configuration.
     new_config.logging_info_.clear();
     for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
@@ -126,9 +131,7 @@ SrvConfig::copy(SrvConfig& new_config) const {
     }
 }
 
-void
-SrvConfig::applyLoggingCfg() const {
-
+void SrvConfig::applyLoggingCfg() const {
     std::list<LoggerSpecification> specs;
     for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
          it != logging_info_.end(); ++it) {
@@ -138,8 +141,7 @@ SrvConfig::applyLoggingCfg() const {
     manager.process(specs.begin(), specs.end());
 }
 
-bool
-SrvConfig::equals(const SrvConfig& other) const {
+bool SrvConfig::equals(const SrvConfig& other) const {
     // If number of loggers is different, then configurations aren't equal.
     if (logging_info_.size() != other.logging_info_.size()) {
         return (false);
@@ -147,9 +149,8 @@ SrvConfig::equals(const SrvConfig& other) const {
     // Pass through all loggers and try to find the match for each of them
     // with the loggers from the other configuration. The order doesn't
     // matter so we can't simply compare the vectors.
-    for (LoggingInfoStorage::const_iterator this_it =
-             logging_info_.begin(); this_it != logging_info_.end();
-         ++this_it) {
+    for (LoggingInfoStorage::const_iterator this_it = logging_info_.begin();
+         this_it != logging_info_.end(); ++this_it) {
         bool match = false;
         for (LoggingInfoStorage::const_iterator other_it =
                  other.logging_info_.begin();
@@ -182,9 +183,7 @@ SrvConfig::equals(const SrvConfig& other) const {
     return (hooks_config_.equal(other.hooks_config_));
 }
 
-void
-SrvConfig::removeStatistics() {
-
+void SrvConfig::removeStatistics() {
     // Removes statistics for v4 and v6 subnets
     getCfgSubnets4()->removeStatistics();
 

@@ -230,7 +230,7 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
 //****************************** RelayInfoParser ********************************
 RelayInfoParser::RelayInfoParser(const Option::Universe& family)
     : family_(family) {
-};
+}
 
 void
 RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& relay_info,
@@ -739,7 +739,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // directly over specified network interface.
     std::string iface = getString(params, "interface");
     if (!iface.empty()) {
-        if (!IfaceMgr::instance().getIface(iface)) {
+        if (IfaceMgr::instance().isServerMode() && !IfaceMgr::instance().getIface(iface)) {
             ConstElementPtr error = params->get("interface");
             isc_throw(DhcpConfigError, "Specified network interface name " << iface
                       << " for subnet " << subnet4->toText()
@@ -1137,7 +1137,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     // Get interface name. If it is defined, then the subnet is available
     // directly over specified network interface.
     if (!iface.empty()) {
-        if (!IfaceMgr::instance().getIface(iface)) {
+        if (IfaceMgr::instance().isServerMode() && !IfaceMgr::instance().getIface(iface)) {
             ConstElementPtr error = params->get("interface");
             isc_throw(DhcpConfigError, "Specified network interface name " << iface
                       << " for subnet " << subnet6->toText()
@@ -1418,5 +1418,5 @@ D2ClientConfigParser::setAllDefaults(isc::data::ConstElementPtr d2_config) {
     return (SimpleParser::setDefaults(mutable_d2, D2_CLIENT_CONFIG_DEFAULTS));
 }
 
-};  // namespace dhcp
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc

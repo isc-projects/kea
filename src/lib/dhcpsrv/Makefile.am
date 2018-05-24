@@ -106,6 +106,7 @@ libkea_dhcpsrv_la_SOURCES += cfg_shared_networks.cc cfg_shared_networks.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets4.cc cfg_subnets4.h
 libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfg_mac_source.cc cfg_mac_source.h
+libkea_dhcpsrv_la_SOURCES += cfg_srv_config_type.cc cfg_srv_config_type.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += client_class_def.cc client_class_def.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
@@ -131,6 +132,10 @@ libkea_dhcpsrv_la_SOURCES += lease_file_loader.h
 libkea_dhcpsrv_la_SOURCES += lease_file_stats.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
+libkea_dhcpsrv_la_SOURCES += srv_config_mgr.cc srv_config_mgr.h
+libkea_dhcpsrv_la_SOURCES += srv_config_mgr_factory.cc srv_config_mgr_factory.h
+libkea_dhcpsrv_la_SOURCES += srv_config_master_mgr.cc srv_config_master_mgr.h
+libkea_dhcpsrv_la_SOURCES += srv_config_master_mgr_factory.cc srv_config_master_mgr_factory.h
 libkea_dhcpsrv_la_SOURCES += logging.cc logging.h
 libkea_dhcpsrv_la_SOURCES += logging_info.cc logging_info.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
@@ -141,6 +146,8 @@ if HAVE_MYSQL
 libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += mysql_connection.cc mysql_connection.h
 libkea_dhcpsrv_la_SOURCES += mysql_host_data_source.cc mysql_host_data_source.h
+libkea_dhcpsrv_la_SOURCES += mysql_srv_config_mgr.cc mysql_srv_config_mgr.h
+libkea_dhcpsrv_la_SOURCES += mysql_srv_config_master_mgr.cc mysql_srv_config_master_mgr.h
 endif
 
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
@@ -152,6 +159,8 @@ libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
 libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
 libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
+libkea_dhcpsrv_la_SOURCES += pgsql_srv_config_mgr.cc pgsql_srv_config_mgr.h
+libkea_dhcpsrv_la_SOURCES += pgsql_srv_config_master_mgr.cc pgsql_srv_config_master_mgr.h
 endif
 
 if HAVE_CQL
@@ -159,6 +168,8 @@ libkea_dhcpsrv_la_SOURCES += cql_connection.cc cql_connection.h
 libkea_dhcpsrv_la_SOURCES += cql_exchange.cc cql_exchange.h
 libkea_dhcpsrv_la_SOURCES += cql_host_data_source.cc cql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cql_lease_mgr.cc cql_lease_mgr.h
+libkea_dhcpsrv_la_SOURCES += cql_srv_config_mgr.cc cql_srv_config_mgr.h
+libkea_dhcpsrv_la_SOURCES += cql_srv_config_master_mgr.cc cql_srv_config_master_mgr.h
 endif
 
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h

@@ -242,7 +242,7 @@ TEST_F(PgSqlLeaseMgrTest, getName) {
 /// @brief Check that getVersion() returns the expected version
 TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
-    pair<uint32_t, uint32_t> version;
+    VersionPair version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
     EXPECT_EQ(PG_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PG_SCHEMA_VERSION_MINOR, version.second);
@@ -484,12 +484,12 @@ TEST_F(PgSqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether Postgres can store and retrieve hardware addresses
+/// @brief Tests whether PostgreSQL can store and retrieve hardware addresses
 TEST_F(PgSqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether Postgres can store and retrieve hardware addresses
+/// @brief Tests whether PostgreSQL can store and retrieve hardware addresses
 TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
@@ -520,12 +520,12 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }

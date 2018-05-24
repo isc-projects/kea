@@ -38,6 +38,9 @@ config.h.in~
 /test-driver
 /ylwrap
 
+/.cproject
+/.project
+/.vscode
 /all.info
 /coverage-cpp-html
 /dns++.pc
@@ -45,3 +48,5 @@ config.h.in~
 /logger_lockfile
 /report.info
 
+*.tmp
+*parser.dot

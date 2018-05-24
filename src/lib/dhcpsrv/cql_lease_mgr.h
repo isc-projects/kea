@@ -105,7 +105,7 @@ public:
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
-    /// This method return a lease that is associated with a given address.
+    /// This method returns a lease that is associated with a given address.
     /// For other query types (by hardware addr, by Client ID) there can be
     /// several leases in different subnets (e.g. for mobile clients that
     /// got address in different subnets). However, for a single address
@@ -483,6 +483,12 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual VersionPair getVersion() const override;
+
+    /// @brief Start Transaction
+    ///
+    /// Start transaction for database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    virtual bool startTransaction() override;
 
     /// @brief Commit Transactions
     ///

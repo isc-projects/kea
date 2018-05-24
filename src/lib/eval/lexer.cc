@@ -1045,7 +1045,7 @@ static isc::eval::location loc;
 namespace {
     bool start_token_flag = false;
     isc::eval::EvalContext::ParserType start_token_value;
-};
+}  // namespace
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::eval::EvalContext::fatal(msg)
@@ -2933,6 +2933,6 @@ class Dummy {
     /* cppcheck-suppress unusedPrivateFunction */
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
-}
+}  // namespace
 #endif /* !__clang_analyzer__ */
 

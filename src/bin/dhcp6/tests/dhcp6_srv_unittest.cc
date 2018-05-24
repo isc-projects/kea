@@ -2687,4 +2687,4 @@ TEST_F(Dhcpv6SrvTest, truncatedVIVSO) {
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
 
-}   // end of anonymous namespace
+}  // namespace

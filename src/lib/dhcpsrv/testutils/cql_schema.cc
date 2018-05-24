@@ -55,6 +55,7 @@ void
 createCqlSchema(bool force_wipe, bool show_err) {
     if (force_wipe || !softWipeEnabled()) {
         runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_create.cql", show_err);
+        runCqlScript(DATABASE_SCRIPTS_DIR, "cql/configdb_create.cql", show_err);
     }
 }
 

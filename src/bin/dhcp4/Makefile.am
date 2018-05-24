@@ -31,7 +31,7 @@ EXTRA_DIST += dhcp4_parser.yy
 if GENERATE_DOCS
 kea-dhcp4.8: kea-dhcp4.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp4.xml
 
 else
@@ -63,6 +63,8 @@ libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
 libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
 libdhcp4_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+
+libdhcp4_la_LIBADD = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 
 nodist_libdhcp4_la_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
@@ -119,6 +121,7 @@ parser: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_pa
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h: dhcp4_parser.yy
 	$(YACC) --defines=dhcp4_parser.h --report=all --report-file=dhcp4_parser.report -o dhcp4_parser.cc dhcp4_parser.yy
+	$(YACC) --graph --defines=dhcp4_parser.h --report=all --report-file=dhcp4_parser.report -o dhcp4_parser.cc dhcp4_parser.yy
 
 dhcp4_lexer.cc: dhcp4_lexer.ll
 	$(LEX) --prefix parser4_ -o dhcp4_lexer.cc dhcp4_lexer.ll

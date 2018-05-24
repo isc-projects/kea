@@ -18,7 +18,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Holds access parameters and the configuration of the
-/// lease and hosts database connection.
+/// lease, hosts and configuration database connection.
 ///
 /// The database access strings use the same format as the strings
 /// passed to the @ref isc::dhcp::LeaseMgrFactory::create function.
@@ -68,6 +68,37 @@ public:
         }
     }
 
+    /// @brief Retrieves configuration database access string.
+    ///
+    /// @return Configuration database access string with additional parameters
+    /// specified with @ref CfgDbAccess::setAppendedParameters.
+    std::string getSrvCfgMasterDbAccessString() const;
+
+    /// @brief Sets the master database access string.
+    ///
+    /// @param srv_cfg_master_db_access New master config database access
+    /// string.
+    void setSrvCfgMasterDbAccessString(
+        const std::string& srv_cfg_master_db_access) {
+        srv_cfg_master_db_access_ = srv_cfg_master_db_access;
+    }
+
+    /// @brief Retrieves configuration database access string.
+    ///
+    /// @return Configuration database access string with additional parameters
+    /// specified with @ref CfgDbAccess::setAppendedParameters.
+    std::string getSrvCfgDbAccessString() const;
+
+    /// @brief Sets config database access string.
+    ///
+    /// @param config_db_access New config database access string.
+    void setSrvCfgDbAccessString(const std::string& config_db_access) {
+        srv_cfg_db_access_ = config_db_access;
+    }
+
+    void createSrvMasterCfgManagers() const;
+    void createSrvCfgManagers() const;
+
     /// @brief Retrieves host database access string.
     ///
     /// @return Database access strings with additional parameters
@@ -101,6 +132,12 @@ protected:
 
     /// @brief Holds host database access strings.
     std::list<std::string> host_db_access_;
+
+    /// @brief Holds configuration database access string.
+    std::string srv_cfg_db_access_;
+
+    /// @brief Holds configuration master database access string.
+    std::string srv_cfg_master_db_access_;
 
 };
 

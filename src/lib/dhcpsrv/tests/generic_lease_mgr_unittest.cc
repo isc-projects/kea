@@ -1611,7 +1611,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
 void
 GenericLeaseMgrTest::testRecreateLease4() {
     // Create a lease.
-    std::vector<Lease4Ptr> leases = createLeases4();
+    Lease4Collection leases = createLeases4();
     // Copy the lease so as we can freely modify it.
     Lease4Ptr lease(new Lease4(*leases[0]));
 
@@ -1651,7 +1651,7 @@ GenericLeaseMgrTest::testRecreateLease4() {
 void
 GenericLeaseMgrTest::testRecreateLease6() {
     // Create a lease.
-    std::vector<Lease6Ptr> leases = createLeases6();
+    Lease6Collection leases = createLeases6();
     // Copy the lease so as we can freely modify it.
     Lease6Ptr lease(new Lease6(*leases[0]));
 
@@ -1784,7 +1784,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     }
 
     // Remember expired leases returned.
-    std::vector<Lease4Ptr> saved_expired_leases = expired_leases;
+    Lease4Collection saved_expired_leases = expired_leases;
 
     // Remove expired leases again.
     expired_leases.clear();
@@ -1905,7 +1905,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     }
 
     // Remember expired leases returned.
-    std::vector<Lease6Ptr> saved_expired_leases = expired_leases;
+    Lease6Collection saved_expired_leases = expired_leases;
 
     // Remove expired leases again.
     expired_leases.clear();
@@ -2844,7 +2844,7 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
 
     // Verify we can execute a query.
     LeaseMgr& lm = LeaseMgrFactory::instance();
-    pair<uint32_t, uint32_t> version;
+    VersionPair version;
     ASSERT_NO_THROW(version = lm.getVersion());
 
     // Now close the sql socket out from under backend client
@@ -3148,6 +3148,6 @@ GenericLeaseMgrTest::testLeaseStatsQuery6() {
     }
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

@@ -14,7 +14,8 @@ namespace isc {
 namespace config {
 
 isc::log::Logger command_logger("commands");
+const int DBG_COMMAND = isc::log::DBGLVL_COMMAND;
 
-} // namespace nsas
-} // namespace isc
+}  // namespace nsas
+}  // namespace isc
 

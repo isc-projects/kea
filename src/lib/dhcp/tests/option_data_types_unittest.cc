@@ -874,4 +874,4 @@ TEST_F(OptionDataTypesTest, writeString) {
     EXPECT_TRUE(std::equal(buf_ref.begin(), buf_ref.end(), buf.begin()));
 }
 
-} // anonymous namespace
+}  // namespace

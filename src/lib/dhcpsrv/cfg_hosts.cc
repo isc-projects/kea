@@ -21,6 +21,29 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
+HostCollection CfgHosts::getAll() const {
+    HostCollection collection;
+
+    // Add hosts belonging to IPv4 subnets.
+    for (HostContainer::iterator it = hosts_.begin(); it != hosts_.end();
+        ++it) {
+        collection.push_back(*it);
+    }
+
+    // Add hosts belonging to IPv6 subnets.
+    std::set<HostPtr> set;
+    for (HostContainer6::iterator it = hosts6_.begin(); it != hosts6_.end();
+        ++it) {
+        set.insert(it->host_);
+    }
+
+    for (std::set<HostPtr>::iterator it = set.begin(); it != set.end(); ++it) {
+        collection.push_back(*it);
+    }
+
+    return collection;
+}
+
 ConstHostCollection
 CfgHosts::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
     // Do not issue logging message here because it will be logged by
@@ -104,7 +127,6 @@ CfgHosts::getAllInternal(const Host::IdentifierType& identifier_type,
                          const uint8_t* identifier,
                          const size_t identifier_len,
                          Storage& storage) const {
-
     // Convert host identifier into textual format for logging purposes.
     // This conversion is exception free.
     std::string identifier_text = Host::getIdentifierAsText(identifier_type,
@@ -408,7 +430,6 @@ CfgHosts::getHostInternal6(const SubnetID& subnet_id,
                   << subnet_id << "' and using the address '"
                   << address.toText() << "'");
     }
-
 }
 
 template<typename ReturnType>
@@ -464,7 +485,8 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
     // in all sane cases, there will be only one such host. (Each host can have
     // multiple addresses reserved, but for each (address, subnet_id) there should
     // be at most one host reserving it).
-    for(HostContainer6Index1::iterator resrv = r.first; resrv != r.second; ++resrv) {
+    for (HostContainer6Index1::iterator resrv = r.first; resrv != r.second;
+        ++resrv) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                   HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST)
             .arg(subnet_id)
@@ -485,7 +507,6 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier,
                           const size_t identifier_len) const {
-
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER)
         .arg(subnet6 ? "IPv6" : "IPv4")
         .arg(subnet_id)
@@ -673,7 +694,6 @@ CfgHosts::add6(const HostPtr& host) {
     // Now for each reservation, insert corresponding (address, host) tuple.
     for (IPv6ResrvIterator it = reservations.first; it != reservations.second;
          ++it) {
-
         // If there's an entry for this (subnet-id, address), reject it.
         if (get6(host->getIPv6SubnetID(), it->second.getPrefix())) {
             isc_throw(DuplicateHost, "failed to add address reservation for "
@@ -764,5 +784,5 @@ CfgHosts::toElement6() const {
     return (result.externalize());
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // namespace isc

@@ -24,23 +24,23 @@ namespace dhcp {
 ///
 /// An example of the normal operation is the call to one of the functions
 /// which retrieve the reservations or add new reservation.
-const int HOSTS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int HOSTS_DBG_TRACE;
 
 /// @brief Records the results of the lookups
 ///
 /// Messages logged at this level will typically contain summary of the
 /// data retrieved.
-const int HOSTS_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+extern const int HOSTS_DBG_RESULTS;
 
 /// @brief Record detailed traces
 ///
 /// Messages logged at this level will log detailed tracing information.
-const int HOSTS_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+extern const int HOSTS_DBG_TRACE_DETAIL;
 
 /// @brief Records detailed results of lookups.
 ///
 /// Messages logged at this level will contain detailed results.
-const int HOSTS_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int HOSTS_DBG_TRACE_DETAIL_DATA;
 
 ///@}
 
@@ -50,7 +50,7 @@ const int HOSTS_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
 /// calls to manage host reservations.
 extern isc::log::Logger hosts_logger;
 
-} // namespace dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // HOSTS_LOG_H

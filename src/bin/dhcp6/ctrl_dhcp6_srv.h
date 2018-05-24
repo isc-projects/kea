@@ -14,6 +14,8 @@
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/srv_config_mgr_factory.h>
+#include <dhcpsrv/srv_config_master_mgr_factory.h>
 
 namespace isc {
 namespace dhcp {
@@ -120,6 +122,38 @@ public:
     }
 
 private:
+    /// @brief Retrieves the server configuration information from the master database.
+    ///
+    /// Retrieves the server configuration information from the master database.
+    /// The information contains server specific settings and the shard credentials
+    /// where resides the rest of the configuration (common configuration for all servers)
+    ///
+    ///
+    /// @param dhcp6_config On input contains the current dhcp6 configuration in json format.
+    /// On output contains the new configuration read from database (also in json format)
+    ///
+    /// @return answer that contains result of the reconfiguration.
+    /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
+    static isc::data::ConstElementPtr
+    readDhcpv6SrvConfigFromMasterDatabase(isc::data::ElementPtr& db_local_config,
+                                          data::ElementPtr& db_logging,
+                                          SrvConfigMasterInfoPtr& configData);
+
+    /// @brief Retrieves the server configuration information from database
+    /// and updates the current configuration.
+    ///
+    /// Retrieves the server configuration information from database
+    /// and replaces the current configuration received as paramater with the
+    /// new one.
+    ///
+    ///
+    /// @param db_config On input contains the current dhcp6 configuration in json format.
+    /// On output contains the new configuration read from database (also in json format)
+    ///
+    /// @return answer that contains result of the reconfiguration.
+    /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
+    static isc::data::ConstElementPtr
+    readDhcpv6SrvConfigFromDatabase(isc::data::ElementPtr& db_config);
 
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
@@ -371,7 +405,7 @@ private:
     TimerMgrPtr timer_mgr_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

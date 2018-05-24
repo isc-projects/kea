@@ -5,13 +5,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/db_type.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
@@ -20,7 +23,10 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
+
 #include <signal.h>
+
+#include <memory>
 #include <sstream>
 
 using namespace isc::config;
@@ -95,8 +101,6 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
     // configuration from a JSON file.
 
     isc::data::ConstElementPtr json;
-    isc::data::ConstElementPtr dhcp6;
-    isc::data::ConstElementPtr logger;
     isc::data::ConstElementPtr result;
 
     // Basic sanity check: file name must not be empty.
@@ -234,7 +238,7 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
         LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             "Config reload failed:" + string(ex.what())));
+                             "Config reload failed: " + string(ex.what())));
     }
 }
 
@@ -562,13 +566,12 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
             return (srv->commandConfigWriteHandler(command, args));
 
         }
-
-        return (isc::config::createAnswer(1, "Unrecognized command:"
-                                          + command));
-
+        return (isc::config::createAnswer(1, "Unrecognized command: " +
+                                          command));
     } catch (const Exception& ex) {
-        return (isc::config::createAnswer(1, "Error while processing command '"
-                                          + command + "':" + ex.what()));
+        return (isc::config::createAnswer(1, "Error while processing command '" +
+                                          command + "': " + ex.what() +
+                                          ", params: '" + txt + "'"));
     }
 }
 
@@ -577,6 +580,114 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
               .arg(config->str());
+
+    ConstElementPtr answer = configureDhcp6ServerId(config);
+    // Check that configuration was successful.
+    try {
+        int rcode = 0;
+        isc::config::parseAnswer(rcode, answer);
+        if (rcode != 0) {
+            return (answer);
+        }
+    } catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1, "Failed to process server identifier: " +
+                                          string(ex.what())));
+    }
+
+    // Parse (and store in config manager) the 'configuration-type' parameter
+    // in order to decide if the Dhcp6 configuration will be read from the provided
+    // 'config' argument or from database
+    answer = configureDhcp6ServerConfigSource(config);
+
+    // Check that configuration was successful.
+    try {
+        int rcode = 0;
+        isc::config::parseAnswer(rcode, answer);
+        if (rcode != 0) {
+            return (answer);
+        }
+    } catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1,
+                        "Failed to process server configuration type: " +
+                         string(ex.what())));
+    }
+
+    auto stagingCfg = CfgMgr::instance().getStagingCfg();
+    CfgSrvConfigType& configurationType = stagingCfg->getConfigurationType();
+
+    // Read master/shard configuration into dhcpConfig.
+    ConstElementPtr interfacesConfig;
+    if (configurationType.type_ == CfgSrvConfigType::MASTER_DATABASE) {
+        ElementPtr dhcpConfig;
+        ElementPtr databaseLogging;
+        SrvConfigMasterInfoPtr configData;
+        try {
+            ConstElementPtr answer =
+                readDhcpv6SrvConfigFromMasterDatabase(dhcpConfig, databaseLogging, configData);
+            int rcode = 0;
+            parseAnswer(rcode, answer);
+            if (rcode != 0) {
+                return (answer);
+            }
+
+            if (configData == SrvConfigMasterInfoPtr()) {
+                isc_throw(Unexpected, "Null master configuration data returned");
+            }
+        } catch (const exception& ex) {
+            return createAnswer(1, "Failed to process master database server configuration: " +
+                                       string(ex.what()));
+        }
+
+        // If there's no logging element, we'll just pass NULL pointer,
+        // which will be handled by configureLogger().
+        Daemon::configureLogger(databaseLogging, stagingCfg);
+
+        // Apply the new logger configuration to log4cplus.
+        stagingCfg->applyLoggingCfg();
+
+        ConstElementPtr configDatabase = Element::fromJSON(configData->config_database_);
+        if (configDatabase) {
+            // Update the config manager with the server configuration type
+            configurationType.type_ = CfgSrvConfigType::CONFIG_DATABASE;
+
+            DbAccessParser parser(DBType::CONFIG_DB);
+            CfgDbAccessPtr stagingCfgDbAccess = stagingCfg->getCfgDbAccess();
+            parser.parse(stagingCfgDbAccess, configDatabase);
+        }
+
+        interfacesConfig = dhcpConfig->get("interfaces-config");
+    } else if (configurationType.type_ == CfgSrvConfigType::CONFIG_DATABASE) {
+        interfacesConfig = config->get("interfaces-config");
+    }
+
+    // Read database configuration and apply it to the current configuration.
+    if (configurationType.type_ == CfgSrvConfigType::MASTER_DATABASE ||
+        configurationType.type_ == CfgSrvConfigType::CONFIG_DATABASE) {
+        if (!interfacesConfig) {
+            return createAnswer(
+                1, "no mandatory 'interfaces-config' entry in the local configuration");
+        }
+
+        ElementPtr databaseConfig;
+        try {
+            ConstElementPtr answer = readDhcpv6SrvConfigFromDatabase(databaseConfig);
+            int rcode = 0;
+            parseAnswer(rcode, answer);
+            if (rcode != 0) {
+                return (answer);
+            }
+        } catch (const exception& ex) {
+            return createAnswer(1,
+                                "Failed to process configuration database server configuration: " +
+                                    string(ex.what()));
+        }
+
+        // Keep the 'interfaces-config' settings from the config file received at startup
+        databaseConfig->set("interfaces-config", interfacesConfig);
+
+        // The configuration for 'Dhcp6' will now point to the one read from the database.
+        config = ConstElementPtr(databaseConfig);
+    }
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
@@ -587,7 +698,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (no_srv);
     }
 
-    ConstElementPtr answer = configureDhcp6Server(*srv, config);
+    answer = configureDhcp6Server(*srv, config);
 
     // Check that configuration was successful. If not, do not reopen sockets
     // and don't bother with DDNS stuff.
@@ -598,8 +709,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             return (answer);
         }
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Failed to process configuration:"
-                                          + string(ex.what())));
+        return (isc::config::createAnswer(1, "Failed to process configuration: " +
+                                          string(ex.what())));
     }
 
     // Re-open lease and host database with new parameters.
@@ -840,6 +951,146 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
                     // at this stage anyway.
 }
 
+isc::data::ConstElementPtr
+ControlledDhcpv6Srv::readDhcpv6SrvConfigFromMasterDatabase(
+        isc::data::ElementPtr& db_local_config,
+        isc::data::ElementPtr& db_logging,
+        SrvConfigMasterInfoPtr& configData) {
+
+    std::string server_id = CfgMgr::instance().getStagingCfg()->getInstanceId();
+
+    // Re-open configuration database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=6");
+        cfg_db->createSrvMasterCfgManagers();
+
+        // Read the contents from database
+        configData = SrvConfigMasterMgrFactory::instance().getConfig6(server_id);
+        if (configData == SrvConfigMasterInfoPtr()) {
+            return (isc::config::createAnswer(1,
+                     "No entry found in master database for server id: "
+                     + server_id ));
+        }
+
+        CfgMgr::instance().getStagingCfg()->setMasterServerCfgTimestamp(configData->timestamp_);
+    } catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1, "Unable to open database: " +
+                                          std::string(ex.what())));
+    }
+
+    // Parse the contents as JSON
+    isc::data::ConstElementPtr json;
+    json = isc::data::Element::fromJSON(configData->server_config_, true);
+    if (!json) {
+        isc_throw(isc::BadValue, "no configuration found");
+    }
+
+    // Let's do sanity check before we call json->get() which
+    // works only for map.
+    if (json->getType() != isc::data::Element::map) {
+        isc_throw(isc::BadValue, "Configuration from database is expected to be "
+                  "a map, i.e., start with { and end with } and contain "
+                  "at least an entry called 'Dhcp6' that itself is a map. "
+                  "The database contains a valid JSON, but its top element is not a map."
+                  " Did you forget to add { } around your configuration?");
+    }
+
+    try {
+        isc::data::ConstElementPtr dhcp6;
+        // Get Dhcp6 component from the config
+        dhcp6 = json->get("Dhcp6");
+
+        if (!dhcp6) {
+            isc_throw(isc::BadValue, "no mandatory 'Dhcp6' entry in"
+                      " the configuration");
+        }
+
+        // Replace the dhcp6 current config with the one read from database
+        db_local_config = boost::const_pointer_cast<Element>(dhcp6);
+
+        isc::data::ConstElementPtr logging;
+        // Get Logging component from the config
+        logging = json->get("Logging");
+
+        if (logging) {
+            // Replace the Logging current config with the one read from database
+            db_logging = boost::const_pointer_cast<Element>(logging);
+        } else {
+            db_logging = isc::data::ElementPtr();
+        }
+
+    }  catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1,
+                        "Server Configuration error using using database: " +
+                        std::string(ex.what())));
+    }
+
+    return (isc::config::createAnswer(0,
+                             "Server Configuration successfully loaded from database."));
+}
+
+isc::data::ConstElementPtr
+ControlledDhcpv6Srv::readDhcpv6SrvConfigFromDatabase(isc::data::ElementPtr& db_config) {
+    SrvConfigInfoPtr configData;
+
+    // Re-open configuration database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+        cfg_db->setAppendedParameters("universe=6");
+        cfg_db->createSrvCfgManagers();
+
+        // Read the contents from database
+        configData = SrvConfigMgrFactory::instance().getJsonConfig6();
+        if (configData == SrvConfigInfoPtr()) {
+            return (isc::config::createAnswer(1, "No entry found in database: "));
+        }
+        CfgMgr::instance().getStagingCfg()->setServerCfgTimestamp(configData->timestamp_);
+    } catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1, "Unable to open database: " +
+                                          std::string(ex.what())));
+    }
+
+    // Parse the contents as JSON
+    isc::data::ConstElementPtr json;
+    json = isc::data::Element::fromJSON(configData->json_data_, true);
+    if (!json) {
+        isc_throw(isc::BadValue, "no configuration found");
+    }
+
+    // Let's do sanity check before we call json->get() which
+    // works only for map.
+    if (json->getType() != isc::data::Element::map) {
+        isc_throw(isc::BadValue, "Configuration from database is expected to be "
+                  "a map, i.e., start with { and end with } and contain "
+                  "at least an entry called 'Dhcp6' that itself is a map. "
+                  "The database contains a valid JSON, but its top element is not a map."
+                  " Did you forget to add { } around your configuration?");
+    }
+
+    try {
+        isc::data::ConstElementPtr dhcp6;
+        // Get Dhcp6 component from the config
+        dhcp6 = json->get("Dhcp6");
+
+        if (!dhcp6) {
+            isc_throw(isc::BadValue, "no mandatory 'Dhcp6' entry in"
+                      " the configuration");
+        }
+
+        // Replace the dhcp6 current config with the one read from database
+        db_config = boost::const_pointer_cast<Element>(dhcp6);
+
+    }  catch (const std::exception& ex) {
+        return (isc::config::createAnswer(1,
+                        "Server Configuration error using using database: " +
+                        std::string(ex.what())));
+    }
+
+    return (isc::config::createAnswer(0,
+                             "Server Configuration successfully loaded from database."));
+}
+
 void ControlledDhcpv6Srv::sessionReader(void) {
     // Process one asio event. If there are more events, iface_mgr will call
     // this callback more than once.
@@ -941,5 +1192,5 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     return(true);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

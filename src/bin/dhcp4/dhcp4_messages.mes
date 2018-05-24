@@ -233,7 +233,7 @@ the message.
 
 % DHCP4_DHCP4O6_RECEIVING receiving DHCPv4o6 packet from DHCPv6 server
 This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication socket.
+from the DHCPv4 server over inter-process communication socket.
 
 % DHCP4_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
 A debug message including the detailed data about the packet being
@@ -763,10 +763,15 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
-<<<<<<< HEAD
-=======
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
-This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication.
->>>>>>> trac5404
+% DHCP4_TRANSACTION_FAILED transaction failed. error: %1
+The transaction failed with the error message.
+
+% DHCP4_FORCE_RELOAD_CONFIGURATION DHCPv4 force configuration reload.
+A force configuration reload event has been initiated.
+
+% DHCP4_SHARD_CONFIGURATION_CHANGED DHCPv4 shard configuration is different.
+A different shard configuration has been detected.
+
+% DHCP4_MASTER_CONFIGURATION_CHANGED DHCPv4 master configuration is different.
+A different master configuration has been detected.

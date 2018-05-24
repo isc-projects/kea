@@ -79,7 +79,7 @@ struct AllocEngineHooks {
 // module is called.
 AllocEngineHooks Hooks;
 
-}; // anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -1914,103 +1914,133 @@ AllocEngine::reclaimExpiredLeases6(const size_t max_leases, const uint16_t timeo
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
-    // This value indicates if we have been able to deal with all expired
-    // leases in this pass.
-    bool incomplete_reclamation = false;
-    Lease6Collection leases;
-    // The value of 0 has a special meaning - reclaim all.
-    if (max_leases > 0) {
-        // If the value is non-zero, the caller has limited the number of
-        // leases to reclaim. We obtain one lease more to see if there will
-        // be still leases left after this pass.
-        lease_mgr.getExpiredLeases6(leases, max_leases + 1);
-        // There are more leases expired leases than we will process in this
-        // pass, so we should mark it as an incomplete reclamation. We also
-        // remove this extra lease (which we don't want to process anyway)
-        // from the collection.
-        if (leases.size() > max_leases) {
-            leases.pop_back();
-            incomplete_reclamation = true;
-        }
-
-    } else {
-        // If there is no limitation on the number of leases to reclaim,
-        // we will try to process all. Hence, we don't mark it as incomplete
-        // reclamation just yet.
-        lease_mgr.getExpiredLeases6(leases, max_leases);
+    bool transactionError = false;
+    try {
+        lease_mgr.startTransaction();
+    } catch (const std::exception& ex) {
+        LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+        transactionError = true;
     }
-
-    // Do not initialize the callout handle until we know if there are any
-    // lease6_expire callouts installed.
-    CalloutHandlePtr callout_handle;
-    if (!leases.empty() &&
-        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_expire_)) {
-        callout_handle = HooksManager::createCalloutHandle();
-    }
-
-    size_t leases_processed = 0;
-    BOOST_FOREACH(Lease6Ptr lease, leases) {
-
+    if (!transactionError) {
+        bool rollback = false;
         try {
-            // Reclaim the lease.
-            reclaimExpiredLease(lease, remove_lease, callout_handle);
-            ++leases_processed;
 
-        } catch (const std::exception& ex) {
-            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
-                .arg(lease->addr_.toText())
-                .arg(ex.what());
-        }
-
-        // Check if we have hit the timeout for running reclamation routine and
-        // return if we have. We're checking it here, because we always want to
-        // allow reclaiming at least one lease.
-        if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
-            // Timeout. This will likely mean that we haven't been able to process
-            // all leases we wanted to process. The reclamation pass will be
-            // probably marked as incomplete.
-            if (!incomplete_reclamation) {
-                if (leases_processed < leases.size()) {
+            // This value indicates if we have been able to deal with all expired
+            // leases in this pass.
+            bool incomplete_reclamation = false;
+            Lease6Collection leases;
+            // The value of 0 has a special meaning - reclaim all.
+            if (max_leases > 0) {
+                // If the value is non-zero, the caller has limited the number of
+                // leases to reclaim. We obtain one lease more to see if there will
+                // be still leases left after this pass.
+                lease_mgr.getExpiredLeases6(leases, max_leases + 1);
+                // There are more leases expired leases than we will process in this
+                // pass, so we should mark it as an incomplete reclamation. We also
+                // remove this extra lease (which we don't want to process anyway)
+                // from the collection.
+                if (leases.size() > max_leases) {
+                    leases.pop_back();
                     incomplete_reclamation = true;
+                }
+
+            } else {
+                // If there is no limitation on the number of leases to reclaim,
+                // we will try to process all. Hence, we don't mark it as incomplete
+                // reclamation just yet.
+                lease_mgr.getExpiredLeases6(leases, max_leases);
+            }
+
+            // Do not initialize the callout handle until we know if there are any
+            // lease6_expire callouts installed.
+            CalloutHandlePtr callout_handle;
+            if (!leases.empty() &&
+                HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_expire_)) {
+                callout_handle = HooksManager::createCalloutHandle();
+            }
+
+            size_t leases_processed = 0;
+            BOOST_FOREACH(Lease6Ptr lease, leases) {
+
+                try {
+                    // Reclaim the lease.
+                    reclaimExpiredLease(lease, remove_lease, callout_handle);
+                    ++leases_processed;
+
+                } catch (const std::exception& ex) {
+                    LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED)
+                        .arg(lease->addr_.toText())
+                        .arg(ex.what());
+                    rollback = true;
+                }
+
+                // Check if we have hit the timeout for running reclamation routine and
+                // return if we have. We're checking it here, because we always want to
+                // allow reclaiming at least one lease.
+                if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+                    // Timeout. This will likely mean that we haven't been able to process
+                    // all leases we wanted to process. The reclamation pass will be
+                    // probably marked as incomplete.
+                    if (!incomplete_reclamation) {
+                        if (leases_processed < leases.size()) {
+                            incomplete_reclamation = true;
+                        }
+                    }
+
+                    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                              ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
+                        .arg(timeout);
+                    break;
                 }
             }
 
+            // Stop measuring the time.
+            stopwatch.stop();
+
+            // Mark completion of the lease reclamation routine and present some stats.
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT)
-                .arg(timeout);
-            break;
+                      ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
+                .arg(leases_processed)
+                .arg(stopwatch.logFormatTotalDuration());
+
+            // Check if this was an incomplete reclamation and increase the number of
+            // consecutive incomplete reclamations.
+            if (incomplete_reclamation) {
+                ++incomplete_v6_reclamations_;
+                // If the number of incomplete reclamations is beyond the threshold, we
+                // need to issue a warning.
+                if ((max_unwarned_cycles > 0) &&
+                    (incomplete_v6_reclamations_ > max_unwarned_cycles)) {
+                    LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW)
+                        .arg(max_unwarned_cycles);
+                    // We issued a warning, so let's now reset the counter.
+                    incomplete_v6_reclamations_ = 0;
+                }
+
+            } else {
+                // This was a complete reclamation, so let's reset the counter.
+                incomplete_v6_reclamations_ = 0;
+
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V6_NO_MORE_EXPIRED_LEASES);
+            }
+        } catch (const std::exception& ex) {
+            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            rollback = true;
         }
-    }
-
-    // Stop measuring the time.
-    stopwatch.stop();
-
-    // Mark completion of the lease reclamation routine and present some stats.
-    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-              ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE)
-        .arg(leases_processed)
-        .arg(stopwatch.logFormatTotalDuration());
-
-    // Check if this was an incomplete reclamation and increase the number of
-    // consecutive incomplete reclamations.
-    if (incomplete_reclamation) {
-        ++incomplete_v6_reclamations_;
-        // If the number of incomplete reclamations is beyond the threshold, we
-        // need to issue a warning.
-        if ((max_unwarned_cycles > 0) &&
-            (incomplete_v6_reclamations_ > max_unwarned_cycles)) {
-            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW)
-                .arg(max_unwarned_cycles);
-            // We issued a warning, so let's now reset the counter.
-            incomplete_v6_reclamations_ = 0;
+        if (rollback) {
+            try {
+                lease_mgr.rollback();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
+        } else {
+            try {
+                lease_mgr.commit();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
         }
-
-    } else {
-        // This was a complete reclamation, so let's reset the counter.
-        incomplete_v6_reclamations_ = 0;
-
-        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                  ALLOC_ENGINE_V6_NO_MORE_EXPIRED_LEASES);
     }
 }
 
@@ -2019,21 +2049,44 @@ AllocEngine::deleteExpiredReclaimedLeases6(const uint32_t secs) {
     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
               ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE)
         .arg(secs);
-
-    uint64_t deleted_leases = 0;
+    bool transactionError = false;
     try {
-        // Try to delete leases from the lease database.
-        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-        deleted_leases = lease_mgr.deleteExpiredReclaimedLeases6(secs);
-
+        LeaseMgrFactory::instance().startTransaction();
     } catch (const std::exception& ex) {
-        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED)
-            .arg(ex.what());
+        LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+        transactionError = true;
     }
+    if (!transactionError) {
+        bool rollback = false;
+        uint64_t deleted_leases = 0;
+        try {
+            // Try to delete leases from the lease database.
+            LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+            deleted_leases = lease_mgr.deleteExpiredReclaimedLeases6(secs);
 
-    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-              ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE)
-        .arg(deleted_leases);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED)
+                .arg(ex.what());
+            rollback = true;
+        }
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE)
+            .arg(deleted_leases);
+        if (rollback) {
+            try {
+                LeaseMgrFactory::instance().rollback();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
+        } else {
+            try {
+                LeaseMgrFactory::instance().commit();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
+        }
+    }
 }
 
 
@@ -2053,104 +2106,134 @@ AllocEngine::reclaimExpiredLeases4(const size_t max_leases, const uint16_t timeo
 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
-    // This value indicates if we have been able to deal with all expired
-    // leases in this pass.
-    bool incomplete_reclamation = false;
-    Lease4Collection leases;
-    // The value of 0 has a special meaning - reclaim all.
-    if (max_leases > 0) {
-        // If the value is non-zero, the caller has limited the number of
-        // leases to reclaim. We obtain one lease more to see if there will
-        // be still leases left after this pass.
-        lease_mgr.getExpiredLeases4(leases, max_leases + 1);
-        // There are more leases expired leases than we will process in this
-        // pass, so we should mark it as an incomplete reclamation. We also
-        // remove this extra lease (which we don't want to process anyway)
-        // from the collection.
-        if (leases.size() > max_leases) {
-            leases.pop_back();
-            incomplete_reclamation = true;
-        }
-
-    } else {
-        // If there is no limitation on the number of leases to reclaim,
-        // we will try to process all. Hence, we don't mark it as incomplete
-        // reclamation just yet.
-        lease_mgr.getExpiredLeases4(leases, max_leases);
+    bool transactionError = false;
+    try {
+        lease_mgr.startTransaction();
+    } catch (const std::exception& ex) {
+        LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+        transactionError = true;
     }
-
-
-    // Do not initialize the callout handle until we know if there are any
-    // lease4_expire callouts installed.
-    CalloutHandlePtr callout_handle;
-    if (!leases.empty() &&
-        HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_expire_)) {
-        callout_handle = HooksManager::createCalloutHandle();
-    }
-
-    size_t leases_processed = 0;
-    BOOST_FOREACH(Lease4Ptr lease, leases) {
-
+    if (!transactionError) {
+        bool rollback = false;
         try {
-            // Reclaim the lease.
-            reclaimExpiredLease(lease, remove_lease, callout_handle);
-            ++leases_processed;
 
-        } catch (const std::exception& ex) {
-            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED)
-                .arg(lease->addr_.toText())
-                .arg(ex.what());
-        }
-
-        // Check if we have hit the timeout for running reclamation routine and
-        // return if we have. We're checking it here, because we always want to
-        // allow reclaiming at least one lease.
-        if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
-            // Timeout. This will likely mean that we haven't been able to process
-            // all leases we wanted to process. The reclamation pass will be
-            // probably marked as incomplete.
-            if (!incomplete_reclamation) {
-                if (leases_processed < leases.size()) {
+            // This value indicates if we have been able to deal with all expired
+            // leases in this pass.
+            bool incomplete_reclamation = false;
+            Lease4Collection leases;
+            // The value of 0 has a special meaning - reclaim all.
+            if (max_leases > 0) {
+                // If the value is non-zero, the caller has limited the number of
+                // leases to reclaim. We obtain one lease more to see if there will
+                // be still leases left after this pass.
+                lease_mgr.getExpiredLeases4(leases, max_leases + 1);
+                // There are more leases expired leases than we will process in this
+                // pass, so we should mark it as an incomplete reclamation. We also
+                // remove this extra lease (which we don't want to process anyway)
+                // from the collection.
+                if (leases.size() > max_leases) {
+                    leases.pop_back();
                     incomplete_reclamation = true;
+                }
+
+            } else {
+                // If there is no limitation on the number of leases to reclaim,
+                // we will try to process all. Hence, we don't mark it as incomplete
+                // reclamation just yet.
+                lease_mgr.getExpiredLeases4(leases, max_leases);
+            }
+
+
+            // Do not initialize the callout handle until we know if there are any
+            // lease4_expire callouts installed.
+            CalloutHandlePtr callout_handle;
+            if (!leases.empty() &&
+                HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_expire_)) {
+                callout_handle = HooksManager::createCalloutHandle();
+            }
+
+            size_t leases_processed = 0;
+            BOOST_FOREACH(Lease4Ptr lease, leases) {
+
+                try {
+                    // Reclaim the lease.
+                    reclaimExpiredLease(lease, remove_lease, callout_handle);
+                    ++leases_processed;
+
+                } catch (const std::exception& ex) {
+                    LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED)
+                        .arg(lease->addr_.toText())
+                        .arg(ex.what());
+                    rollback = true;
+                }
+
+                // Check if we have hit the timeout for running reclamation routine and
+                // return if we have. We're checking it here, because we always want to
+                // allow reclaiming at least one lease.
+                if ((timeout > 0) && (stopwatch.getTotalMilliseconds() >= timeout)) {
+                    // Timeout. This will likely mean that we haven't been able to process
+                    // all leases we wanted to process. The reclamation pass will be
+                    // probably marked as incomplete.
+                    if (!incomplete_reclamation) {
+                        if (leases_processed < leases.size()) {
+                            incomplete_reclamation = true;
+                        }
+                    }
+
+                    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                              ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT)
+                        .arg(timeout);
+                    break;
                 }
             }
 
+            // Stop measuring the time.
+            stopwatch.stop();
+
+            // Mark completion of the lease reclamation routine and present some stats.
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                      ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT)
-                .arg(timeout);
-            break;
+                      ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
+                .arg(leases_processed)
+                .arg(stopwatch.logFormatTotalDuration());
+
+            // Check if this was an incomplete reclamation and increase the number of
+            // consecutive incomplete reclamations.
+            if (incomplete_reclamation) {
+                ++incomplete_v4_reclamations_;
+                // If the number of incomplete reclamations is beyond the threshold, we
+                // need to issue a warning.
+                if ((max_unwarned_cycles > 0) &&
+                    (incomplete_v4_reclamations_ > max_unwarned_cycles)) {
+                    LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW)
+                        .arg(max_unwarned_cycles);
+                    // We issued a warning, so let's now reset the counter.
+                    incomplete_v4_reclamations_ = 0;
+                }
+
+            } else {
+                // This was a complete reclamation, so let's reset the counter.
+                incomplete_v4_reclamations_ = 0;
+
+                LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                          ALLOC_ENGINE_V4_NO_MORE_EXPIRED_LEASES);
+            }
+        } catch (const std::exception& ex) {
+            LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            rollback = true;
         }
-    }
-
-    // Stop measuring the time.
-    stopwatch.stop();
-
-    // Mark completion of the lease reclamation routine and present some stats.
-    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-              ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE)
-        .arg(leases_processed)
-        .arg(stopwatch.logFormatTotalDuration());
-
-    // Check if this was an incomplete reclamation and increase the number of
-    // consecutive incomplete reclamations.
-    if (incomplete_reclamation) {
-        ++incomplete_v4_reclamations_;
-        // If the number of incomplete reclamations is beyond the threshold, we
-        // need to issue a warning.
-        if ((max_unwarned_cycles > 0) &&
-            (incomplete_v4_reclamations_ > max_unwarned_cycles)) {
-            LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW)
-                .arg(max_unwarned_cycles);
-            // We issued a warning, so let's now reset the counter.
-            incomplete_v4_reclamations_ = 0;
+        if (rollback) {
+            try {
+                lease_mgr.rollback();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
+        } else {
+            try {
+                lease_mgr.commit();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
         }
-
-    } else {
-        // This was a complete reclamation, so let's reset the counter.
-        incomplete_v4_reclamations_ = 0;
-
-        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                  ALLOC_ENGINE_V4_NO_MORE_EXPIRED_LEASES);
     }
 }
 
@@ -2350,20 +2433,44 @@ AllocEngine::deleteExpiredReclaimedLeases4(const uint32_t secs) {
               ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE)
         .arg(secs);
 
-    uint64_t deleted_leases = 0;
+    bool transactionError = false;
     try {
-        // Try to delete leases from the lease database.
-        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
-        deleted_leases = lease_mgr.deleteExpiredReclaimedLeases4(secs);
-
+        LeaseMgrFactory::instance().startTransaction();
     } catch (const std::exception& ex) {
-        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED)
-            .arg(ex.what());
+        LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+        transactionError = true;
     }
+    if (!transactionError) {
+        bool rollback = false;
+        uint64_t deleted_leases = 0;
+        try {
+            // Try to delete leases from the lease database.
+            LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+            deleted_leases = lease_mgr.deleteExpiredReclaimedLeases4(secs);
 
-    LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-              ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE)
-        .arg(deleted_leases);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED)
+                .arg(ex.what());
+            rollback = true;
+        }
+
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE)
+            .arg(deleted_leases);
+        if (rollback) {
+            try {
+                LeaseMgrFactory::instance().rollback();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
+        } else {
+            try {
+                LeaseMgrFactory::instance().commit();
+            } catch (const std::exception& ex) {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_TRANSACTION_FAILED).arg(ex.what());
+            }
+        }
+    }
 }
 
 bool
@@ -2517,8 +2624,8 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
 }
 
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 // ##########################################################################
 // #    DHCPv4 lease allocation code starts here.
@@ -2727,7 +2834,7 @@ inAllowedPool(AllocEngine::ClientContext4& ctx, const IOAddress& address) {
     return (false);
 }
 
-} // end of anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -3479,7 +3586,6 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
 Lease4Ptr
 AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& ctx) {
     ctx.conflicting_lease_.reset();
-
     Lease4Ptr exist_lease = LeaseMgrFactory::instance().getLease4(candidate);
     if (exist_lease) {
         if (exist_lease->expired()) {
@@ -3607,5 +3713,5 @@ AllocEngine::conditionalExtendLifetime(Lease& lease) const {
     return (true);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

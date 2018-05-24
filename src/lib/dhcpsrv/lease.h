@@ -463,7 +463,6 @@ typedef boost::shared_ptr<Lease6> Lease6Ptr;
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease6 : public Lease {
-
     /// @brief Lease type
     ///
     /// One of normal address, temporary address, or prefix.
@@ -610,7 +609,7 @@ typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease);
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // LEASE_H

@@ -41,6 +41,10 @@ void destroyMySQLSchema(bool show_err = false);
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
 ///
+///  and the configuration update script:
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/configdb_create.mysql
+///
 /// to the unit test MySQL database. If the script fails, the invoking test
 /// will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
@@ -61,8 +65,8 @@ void createMySQLSchema(bool show_err = false);
 void runMySQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

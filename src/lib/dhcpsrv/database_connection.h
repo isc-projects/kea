@@ -230,7 +230,7 @@ private:
 
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif // DATABASE_CONNECTION_H

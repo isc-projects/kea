@@ -278,5 +278,5 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
     return (mac);
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc

@@ -1124,7 +1124,7 @@ bool start_token_flag = false;
 isc::d2::D2ParserContext::ParserType start_token_value;
 unsigned int comment_start_line = 0;
 
-};
+}  // namespace
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::d2::D2ParserContext::fatal(msg)

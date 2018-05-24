@@ -477,7 +477,13 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual VersionPair getVersion() const;
+
+    /// @brief Start Transaction
+    ///
+    /// Start transaction for database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    virtual bool startTransaction();
 
     /// @brief Commit Transactions
     ///

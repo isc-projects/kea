@@ -1412,7 +1412,7 @@ unsigned int comment_start_line = 0;
 using namespace isc;
 using isc::agent::AgentParser;
 
-};
+}  // namespace
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::agent::ParserContext::fatal(msg)

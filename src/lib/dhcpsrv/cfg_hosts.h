@@ -17,6 +17,8 @@
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/writable_host_data_source.h>
 #include <boost/shared_ptr.hpp>
+
+#include <string>
 #include <vector>
 
 namespace isc {
@@ -42,6 +44,13 @@ public:
 
     /// @brief Destructor.
     virtual ~CfgHosts() { }
+
+    /// @brief Return all hosts.
+    ///
+    /// Used when syncing reservations in kea.conf with database.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual HostCollection getAll() const;
 
     /// @brief Return all hosts for the specified HW address or DUID.
     ///
@@ -389,7 +398,6 @@ public:
     isc::data::ElementPtr toElement() const;
 
 private:
-
     /// @brief Returns @c Host objects for the specific identifier and type.
     ///
     /// This private method is called by the @c CfgHosts::getAllInternal

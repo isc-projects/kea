@@ -4,3 +4,5 @@ upgrade_3.0_to_3.1.sh
 upgrade_3.1_to_3.2.sh
 upgrade_3.2_to_3.3.sh
 upgrade_3.3_to_4.0.sh
+config_upgrade_0.0_to_1.0.sh
+master_upgrade_0.0_to_1.0.sh

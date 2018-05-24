@@ -6,6 +6,8 @@
 
 /// Defines the logger used by the NSAS
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/db_log.h>
 #include <dhcpsrv/dhcpsrv_db_log.h>

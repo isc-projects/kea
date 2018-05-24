@@ -2439,6 +2439,6 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     EXPECT_FALSE(ctx.fake_allocation_);
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

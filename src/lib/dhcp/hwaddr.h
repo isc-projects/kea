@@ -153,7 +153,7 @@ public:
 /// @brief Shared pointer to a hardware address structure
 typedef boost::shared_ptr<HWAddr> HWAddrPtr;
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // HWADDR_H

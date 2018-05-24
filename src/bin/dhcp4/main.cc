@@ -53,7 +53,7 @@ usage() {
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
-} // end of anonymous namespace
+}  // namespace
 
 int
 main(int argc, char* argv[]) {

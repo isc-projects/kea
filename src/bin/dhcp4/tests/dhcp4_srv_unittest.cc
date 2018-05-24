@@ -4302,4 +4302,4 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
 
-}; // end of anonymous namespace
+}  // namespace

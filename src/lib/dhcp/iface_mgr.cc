@@ -172,9 +172,8 @@ IfaceMgr::IfaceMgr()
      control_buf_(new char[control_buf_len_]),
      packet_filter_(new PktFilterInet()),
      packet_filter6_(new PktFilterInet6()),
-     test_mode_(false),
-     allow_loopback_(false)
-{
+     test_mode_(false), server_mode_(true),
+     allow_loopback_(false) {
 
     try {
         // required for sending/receiving packets
@@ -1193,5 +1192,5 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     return (*candidate);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // namespace isc

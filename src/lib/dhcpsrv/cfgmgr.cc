@@ -172,10 +172,14 @@ CfgMgr::CfgMgr()
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am
+    const char* const env = getenv("KEA_DATA_DIR");
+    if (env) {
+        datadir_ = env;
+    }
 }
 
 CfgMgr::~CfgMgr() {
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
