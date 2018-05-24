@@ -111,6 +111,8 @@ TEST(CfgSharedNetworks6Test, unparse) {
     SharedNetwork6Ptr network2(new SharedNetwork6("dog"));
 
     network1->setIface("eth0");
+    network1->addRelayAddress(IOAddress("2001:db8:1::1"));
+    network1->addRelayAddress(IOAddress("2001:db8:1::2"));
     network2->setIface("eth1");
 
     CfgSharedNetworks6 cfg;
@@ -126,9 +128,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"preferred-lifetime\": 0,\n"
         "    \"rapid-commit\": false,\n"
         "    \"rebind-timer\": 0,\n"
-        "    \"relay\": {\n"
-        "        \"ip-address\": \"::\"\n"
-        "    },\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet6\": [ ],\n"
@@ -141,9 +141,7 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"preferred-lifetime\": 0,\n"
         "    \"rapid-commit\": false,\n"
         "    \"rebind-timer\": 0,\n"
-        "    \"relay\": {\n"
-        "        \"ip-address\": \"::\"\n"
-        "    },\n"
+        "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\", \"2001:db8:1::2\" ] },\n"
         "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet6\": [ ],\n"

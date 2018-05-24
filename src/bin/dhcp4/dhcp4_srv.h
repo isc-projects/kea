@@ -235,6 +235,11 @@ public:
         return (io_service_);
     }
 
+    /// @brief Returns pointer to the network state used by the server.
+    NetworkStatePtr& getNetworkState() {
+        return (network_state_);
+    }
+
     /// @brief returns Kea version on stdout and exit.
     /// redeclaration/redefinition. @ref Daemon::getVersion()
     static std::string getVersion(bool extended);
@@ -324,6 +329,10 @@ public:
     virtual void d2ClientErrorHandler(const dhcp_ddns::
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Discard all in-progress packets
+    void discardPackets();
+
 protected:
 
     /// @name Functions filtering and sanity-checking received messages.
@@ -714,6 +723,12 @@ protected:
     /// server's response.
     static void appendServerID(Dhcpv4Exchange& ex);
 
+    /// @brief Check if the relay port RAI sub-option was set in the query.
+    ///
+    /// @param ex The exchange holding the client's message
+    /// @return the port to use to join the relay or 0 for the default
+    static uint16_t checkRelayPort(const Dhcpv4Exchange& ex);
+
     /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
     ///
     /// This method sets the following parameters for the DHCPv4 message being
@@ -779,19 +794,33 @@ protected:
 
     /// @brief Selects a subnet for a given client's packet.
     ///
-    /// @param query client's message
-    /// @param drop if it is true the packet will be dropped
-    /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
-                                       bool& drop) const;
-
-    /// @brief Selects a subnet for a given client's DHCP4o6 packet.
+    /// If selectSubnet is called to simply do sanity checks (check if a
+    /// subnet would be selected), then there is no need to call hooks,
+    /// as this will happen later (when selectSubnet is called again).
+    /// In such case the sanity_only should be set to true.
     ///
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
+    /// @param sanity_only if it is true the callout won't be called
+    /// @return selected subnet (or NULL if no suitable subnet was found)
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
+                                       bool& drop,
+                                       bool sanity_only = false) const;
+
+    /// @brief Selects a subnet for a given client's DHCP4o6 packet.
+    ///
+    /// If selectSubnet is called to simply do sanity checks (check if a
+    /// subnet would be selected), then there is no need to call hooks,
+    /// as this will happen later (when selectSubnet is called again).
+    /// In such case the sanity_only should be set to true.
+    ///
+    /// @param query client's message
+    /// @param drop if it is true the packet will be dropped
+    /// @param sanity_only if it is true the callout won't be called
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
-                                          bool& drop) const;
+                                          bool& drop,
+                                          bool sanity_only = false) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
@@ -820,6 +849,18 @@ protected:
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    ///
+    /// @note This required classification evaluates all classes which
+    /// were marked for required evaluation. Classes are collected so
+    /// evaluated in the reversed order than output option processing.
+    ///
+    /// @note The only-if-required flag is related because it avoids
+    /// double evaluation (which is not forbidden).
+    ///
+    /// @param ex The exchange holding needed informations.
+    void requiredClassify(Dhcpv4Exchange& ex);
 
     /// @brief Perform deferred option unpacking.
     ///
@@ -877,7 +918,7 @@ protected:
 
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
-    NetworkState network_state_;
+    NetworkStatePtr network_state_;
 
 public:
     /// Class methods for DHCPv4-over-DHCPv6 handler

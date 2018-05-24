@@ -12,6 +12,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <string>
+#include <list>
 
 namespace isc {
 namespace dhcp {
@@ -23,7 +24,6 @@ namespace dhcp {
 /// passed to the @ref isc::dhcp::LeaseMgrFactory::create function.
 class CfgDbAccess {
 public:
-
     /// @brief Constructor.
     CfgDbAccess();
 
@@ -58,17 +58,25 @@ public:
     /// @brief Sets host database access string.
     ///
     /// @param host_db_access New host database access string.
-    void setHostDbAccessString(const std::string& host_db_access) {
-        host_db_access_ = host_db_access;
+    /// @param front Add at front if true, at back if false (default).
+    void setHostDbAccessString(const std::string& host_db_access,
+                               bool front = false) {
+        if (front) {
+            host_db_access_.push_front(host_db_access);
+        } else {
+            host_db_access_.push_back(host_db_access);
+        }
     }
 
-    /// @brief Creates instance of lease manager and host data source
-    /// according to the configuration specified.
+    /// @brief Retrieves host database access string.
     ///
-    /// @param db_lost_callback function to invoke if connectivity to
-    /// either the lease or host managers, once established, is subsequently
-    /// lost.
-    void createManagers(DatabaseConnection::DbLostCallback db_lost_callback = 0) const;
+    /// @return Database access strings with additional parameters
+    /// specified with @ref CfgDbAccess::setAppendedParameters
+    std::list<std::string> getHostDbAccessStringList() const;
+
+    /// @brief Creates instance of lease manager and host data sources
+    /// according to the configuration specified.
+    void createManagers() const;
 
     /// @brief Unparse an access string
     ///
@@ -91,8 +99,8 @@ protected:
     /// @brief Holds lease database access string.
     std::string lease_db_access_;
 
-    /// @brief Holds host database access string.
-    std::string host_db_access_;
+    /// @brief Holds host database access strings.
+    std::list<std::string> host_db_access_;
 
 };
 
@@ -127,7 +135,15 @@ struct CfgHostDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
     ///
     /// @result a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {
-        return (CfgDbAccess::toElementDbAccessString(host_db_access_));
+        isc::data::ElementPtr result = isc::data::Element::createList();
+        for (const std::string& dbaccess : host_db_access_) {
+            isc::data::ElementPtr entry =
+                CfgDbAccess::toElementDbAccessString(dbaccess);
+            if (entry->size() > 0) {
+                result->add(entry);
+            }
+        }
+        return (result);
     }
 };
 

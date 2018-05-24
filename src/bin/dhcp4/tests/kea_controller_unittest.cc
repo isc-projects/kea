@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,7 +91,7 @@ public:
     /// @param timeout_ms Amount of time after which the method returns.
     void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms) {
         IntervalTimer timer(*io_service);
-        timer.setup([this, &io_service]() {
+        timer.setup([&io_service]() {
             io_service->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);
         io_service->run();

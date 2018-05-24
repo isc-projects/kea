@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -794,15 +794,6 @@ CommandOptions::validate() const {
           "-F<release-rate> is not compatible with -i");
     check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
           "-i must be set to use -c");
-    check((getRate() == 0) && (getReportDelay() != 0),
-          "-r<rate> must be set to use -t<report>");
-    check((getRate() == 0) && (getNumRequests().size() > 0),
-          "-r<rate> must be set to use -n<num-request>");
-    check((getRate() == 0) && (getPeriod() != 0),
-          "-r<rate> must be set to use -p<test-period>");
-    check((getRate() == 0) &&
-          ((getMaxDrop().size() > 0) || getMaxDropPercentage().size() > 0),
-          "-r<rate> must be set to use -D<max-drop>");
     check((getRate() != 0) && (getRenewRate() + getReleaseRate() > getRate()),
           "The sum of Renew rate (-f<renew-rate>) and Release rate"
           " (-F<release-rate>) must not be greater than the exchange"
@@ -1107,7 +1098,7 @@ CommandOptions::usage() const {
         "    traffic is an equivalent of the traffic passing through a single\n"
         "    relay agent.\n"
         "\n"
-        "The remaining options are used only in conjunction with -r:\n"
+        "The remaining options are typically used in conjunction with -r:\n"
         "\n"
         "-D<max-drop>: Abort the test immediately if max-drop requests have\n"
         "    been dropped.  max-drop must be a positive integer. If max-drop\n"

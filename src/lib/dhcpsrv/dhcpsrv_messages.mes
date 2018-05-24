@@ -84,6 +84,12 @@ This warning message is issued on an attempt to configure multiple options with 
 same option code for the particular subnet. Adding multiple options is uncommon
 for DHCPv6, but it is not prohibited.
 
+% DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED "relay" uses "ip-address", which has been deprecated, please use "ip-addresses": %1
+This is debug message issued when the "relay" element being parse
+contains "ip-address" rather than its replacement, "ip-addresses".
+The server will still honor the value but users are encouraged to
+move to the new list parameter.
+
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the
 DHCPv4 server should use the raw sockets to receive the DHCP
@@ -188,8 +194,20 @@ with the specified address to the Cassandra backend database.
 % DHCPSRV_CQL_COMMIT committing to Cassandra database.
 A commit call been issued on the server. For Cassandra, this is a no-op.
 
+% DHCPSRV_CQL_CONNECTION_BEGIN_TRANSACTION begin transaction on current connection.
+The server has issued a begin transaction call.
+
 % DHCPSRV_CQL_CONNECTION_COMMIT committing to Cassandra database on current connection.
 A commit call been issued on the server. For Cassandra, this is a no-op.
+
+% DHCPSRV_CQL_CONNECTION_ROLLBACK rolling back Cassandra database on current connection.
+The code has issued a rollback call. For Cassandra, this is a no-op.
+
+% DHCPSRV_CQL_DB opening Cassandra lease database: %1
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a Cassandra lease database.  The parameters of
+the connection including database name and username needed to access it
+(but not the password if any) are logged.
 
 % DHCPSRV_CQL_DEALLOC_ERROR An error occurred while closing the CQL connection: %1
 This is an error message issued when a DHCP server (either V4 or V6) experienced
@@ -197,15 +215,6 @@ and error freeing CQL database resources as part of closing its connection to
 the Cassandra database. The connection is closed as part of normal server
 shutdown. This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
-
-% DHCPSRV_CQL_CONNECTION_BEGIN_TRANSACTION begin transaction on current connection.
-The server has issued a begin transaction call.
-
-% DHCPSRV_CQL_DB opening Cassandra lease database: %1
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a Cassandra lease database.  The parameters of
-the connection including database name and username needed to access it
-(but not the password if any) are logged.
 
 % DHCPSRV_CQL_DELETE_ADDR deleting lease for address %1
 A debug message issued when the server is attempting to delete a lease from the
@@ -288,19 +297,9 @@ subnet ID and hardware address.
 A debug message issued when the server is about to obtain schema version
 information from the Cassandra database.
 
-% DHCPSRV_CQL_ROLLBACK rolling back Cassandra database.
-The code has issued a rollback call. For Cassandra, this is a no-op.
-
-% DHCPSRV_CQL_CONNECTION_ROLLBACK rolling back Cassandra database on current connection.
-The code has issued a rollback call. For Cassandra, this is a no-op.
-
-% DHCPSRV_CQL_UPDATE_ADDR4 updating IPv4 lease for address %1
-A debug message issued when the server is attempting to update IPv4
-lease from the Cassandra database for the specified address.
-
-% DHCPSRV_CQL_UPDATE_ADDR6 updating IPv6 lease for address %1
-A debug message issued when the server is attempting to update IPv6
-lease from the Cassandra database for the specified address.
+% DHCPSRV_CQL_HOST_ADD Adding host information to the database
+An informational message logged when options belonging to any reservation from a
+single host are inserted.
 
 % DHCPSRV_CQL_HOST_DB Connecting to CQL hosts database: %1
 An informational message logged when the CQL hosts database is about to be
@@ -311,13 +310,6 @@ username needed to access it (but not the password if any) are logged.
 A debug message issued when the server is about to obtain schema version
 information from the CQL hosts database.
 
-% DHCPSRV_CQL_HOST_ADD Adding host information to the database
-An informational message logged when options belonging to any reservation from a
-single host are inserted.
-
-% DHCPSRV_CQL_HOST_GET_ALL Retrieving multiple hosts from a CQL database
-An informational message logged when multiple hosts from a CQL database are retrieved.
-
 % DHCPSRV_CQL_HOST_GET4 Retrieving one DHCPv4 host from a CQL database
 An informational message logged when a DHCP server is about to retrieve one
 host from a CQL database by IPv4 criteria.
@@ -326,7 +318,21 @@ host from a CQL database by IPv4 criteria.
 An informational message logged when a DHCP server is about to retrieve one
 host from a CQL database by IPv6 criteria.
 
+% DHCPSRV_CQL_HOST_GET_ALL Retrieving multiple hosts from a CQL database
+An informational message logged when multiple hosts from a CQL database are retrieved.
+
 % DHCPSRV_CQL_LEASE_EXCEPTION_THROWN Exception thrown during Cassandra operation: %1
+
+% DHCPSRV_CQL_ROLLBACK rolling back Cassandra database.
+The code has issued a rollback call. For Cassandra, this is a no-op.
+
+% DHCPSRV_CQL_UPDATE_ADDR4 updating IPv4 lease for address %1
+A debug message issued when the server is attempting to update IPv4
+lease from the Cassandra database for the specified address.
+
+% DHCPSRV_CQL_UPDATE_ADDR6 updating IPv6 lease for address %1
+A debug message issued when the server is attempting to update IPv6
+lease from the Cassandra database for the specified address.
 
 % DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET received bad DHCPv4o6 packet: %1
 A bad DHCPv4o6 packet was received.
@@ -424,12 +430,12 @@ with the specified address to the memory file backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the memory file backend database.
 
-% DHCPSRV_MEMFILE_COMMIT committing to memory file database
-The code has issued a commit call.  For the memory file database, this is
-a no-op.
-
 % DHCPSRV_MEMFILE_BEGIN_TRANSACTION committing to memory file database
 The code has issued a begin transaction call.  For the memory file database, this is
+a no-op.
+
+% DHCPSRV_MEMFILE_COMMIT committing to memory file database
+The code has issued a commit call.  For the memory file database, this is
 a no-op.
 
 % DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES running LFC now to convert lease files to the current schema: %1.%2
@@ -469,6 +475,10 @@ in the message.
 
 % DHCPSRV_MEMFILE_GET4 obtaining all IPv4 leases
 A debug message issued when the server is attempting to obtain all IPv4
+leases from the memory file database.
+
+% DHCPSRV_MEMFILE_GET6 obtaining all IPv6 leases
+A debug message issued when the server is attempting to obtain all IPv6
 leases from the memory file database.
 
 % DHCPSRV_MEMFILE_GET_ADDR4 obtaining IPv4 lease for address %1
@@ -516,6 +526,10 @@ lease from the memory file database for a client with the specified IAID
 
 % DHCPSRV_MEMFILE_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the memory file database.
+
+% DHCPSRV_MEMFILE_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the memory file database.
 
 % DHCPSRV_MEMFILE_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
@@ -661,13 +675,13 @@ with the specified address to the MySQL backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the MySQL backend database.
 
+% DHCPSRV_MYSQL_BEGIN_TRANSACTION committing to MySQL database
+The code has issued a begin transaction call.
+
 % DHCPSRV_MYSQL_COMMIT committing to MySQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
 the committal may not include a write to disk.
-
-% DHCPSRV_MYSQL_BEGIN_TRANSACTION committing to MySQL database
-The code has issued a begin transaction call.
 
 % DHCPSRV_MYSQL_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
@@ -696,13 +710,19 @@ leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
-% DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4). Server exiting now!
+% DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
 An error message indicating that communication with the MySQL database server
-has been lost.  When this occurs the server exits immediately with a non-zero
-exit code.  This is most likely due to a network issue.
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover connectivity.  If not the server wil exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the MySQL server has gone down.
 
 % DHCPSRV_MYSQL_GET4 obtaining all IPv4 leases
 A debug message issued when the server is attempting to obtain all IPv4
+leases from the MySQL database.
+
+% DHCPSRV_MYSQL_GET6 obtaining all IPv6 leases
+A debug message issued when the server is attempting to obtain all IPv6
 leases from the MySQL database.
 
 % DHCPSRV_MYSQL_GET_ADDR4 obtaining IPv4 lease for address %1
@@ -745,6 +765,10 @@ lease from the MySQL database for a client with the specified IAID
 
 % DHCPSRV_MYSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the MySQL database.
+
+% DHCPSRV_MYSQL_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the MySQL database.
 
 % DHCPSRV_MYSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
@@ -821,13 +845,13 @@ with the specified address to the PostgreSQL backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
+% DHCPSRV_PGSQL_BEGIN_TRANSACTION committing to PostgreSQL database
+The code has issued a begin transaction call.
+
 % DHCPSRV_PGSQL_COMMIT committing to PostgreSQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.
-
-% DHCPSRV_PGSQL_BEGIN_TRANSACTION committing to PostgreSQL database
-The code has issued a begin transaction call.
 
 % DHCPSRV_PGSQL_DB opening PostgreSQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
@@ -838,7 +862,7 @@ connection including database name and username needed to access it
 % DHCPSRV_PGSQL_DEALLOC_ERROR An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1
 This is an error message issued when a DHCP server (either V4 or V6) experienced
 and error freeing database SQL resources as part of closing its connection to
-the Postgresql database.  The connection is closed as part of normal server
+the PostgreSQL database.  The connection is closed as part of normal server
 shutdown.  This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
 
@@ -858,13 +882,19 @@ leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
-% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3). Server exiting now!
-An error message indicating that communication with the MySQL database server
-has been lost.  When this occurs the server exits immediately with a non-zero
-exit code.  This is most likely due to a network issue.
+% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
+An error message indicating that communication with the PostgreSQL database server
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover the connectivity.  If not the server wil exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the PostgreSQL server has gone down.
 
 % DHCPSRV_PGSQL_GET4 obtaining all IPv4 leases
 A debug message issued when the server is attempting to obtain all IPv4
+leases from the PostgreSQL database.
+
+% DHCPSRV_PGSQL_GET6 obtaining all IPv6 leases
+A debug message issued when the server is attempting to obtain all IPv6
 leases from the PostgreSQL database.
 
 % DHCPSRV_PGSQL_GET_ADDR4 obtaining IPv4 lease for address %1
@@ -907,6 +937,10 @@ lease from the PostgreSQL database for a client with the specified IAID
 
 % DHCPSRV_PGSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the PostgreSQL database.
+
+% DHCPSRV_PGSQL_GET_SUBID6 obtaining IPv6 leases for subnet ID %1
+A debug message issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the PostgreSQL database.
 
 % DHCPSRV_PGSQL_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2

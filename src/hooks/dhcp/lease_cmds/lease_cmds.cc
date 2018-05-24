@@ -130,17 +130,18 @@ public:
     int
     leaseGetHandler(CalloutHandle& handle);
 
-    /// @brief lease4-get-all command handler
+    /// @brief lease4-get-all, lease6-get-all commands handler
     ///
-    /// This command attempts to retrieve all IPv4 leases or all IPv4 leases
-    /// belonging to the particular subnets. If no subnet identifiers are
-    /// provided, it returns all IPv4 leases from the database.
+    /// These commands attempt to retrieve all IPv4 or IPv6 leases,
+    /// or all IPv4 or all IPv6 leases belonging to the particular
+    /// subnets. If no subnet identifiers are provided, it returns all
+    /// IPv4 or IPv6 leases from the database.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get command JSON text in the "command" argument
     /// @return 0 upon success, non-zero otherwise.
     int
-    lease4GetAllHandler(CalloutHandle& handle);
+    leaseGetAllHandler(CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///
@@ -471,9 +472,11 @@ LeaseCmdsImpl::leaseGetHandler(CalloutHandle& handle) {
 }
 
 int
-LeaseCmdsImpl::lease4GetAllHandler(CalloutHandle& handle) {
+LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
+    bool v4 = true;
     try {
         extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-all");
 
         ElementPtr leases_json = Element::createList();
 
@@ -481,47 +484,67 @@ LeaseCmdsImpl::lease4GetAllHandler(CalloutHandle& handle) {
         // be returned.
         if (cmd_args_) {
             ConstElementPtr subnets = cmd_args_->get("subnets");
-            if (subnets) {
-                if (subnets->getType() != Element::list) {
-                    isc_throw(BadValue, "'subnets' parameter must be a list");
+            if (!subnets) {
+                isc_throw(BadValue, "'subnets' parameter not specified");
+            }
+            if (subnets->getType() != Element::list) {
+                isc_throw(BadValue, "'subnets' parameter must be a list");
+            }
+
+            const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
+            for (auto subnet_id = subnet_ids.begin();
+                 subnet_id != subnet_ids.end();
+                 ++subnet_id) {
+                if ((*subnet_id)->getType() != Element::integer) {
+                    isc_throw(BadValue, "listed subnet identifiers must be numbers");
                 }
 
-                const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
-                for (auto subnet_id = subnet_ids.begin(); subnet_id != subnet_ids.end();
-                     ++subnet_id) {
-                    if ((*subnet_id)->getType() != Element::integer) {
-                        isc_throw(BadValue, "listed subnet identifiers must be numbers");
-                    }
-
+                if (v4) {
                     Lease4Collection leases =
                         LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
-                    for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                        ElementPtr lease_json = (*lease)->toElement();
+                    for (auto lease : leases) {
+                        ElementPtr lease_json = lease->toElement();
+                        leases_json->add(lease_json);
+                    }
+                } else {
+                    Lease6Collection leases =
+                        LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
+                    for (auto lease : leases) {
+                        ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
                 }
-
-            } else {
-                isc_throw(BadValue, "'subnets' parameter not specified");
             }
 
         } else {
             // There is no 'subnets' argument so let's return all leases.
-            Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
-            for (auto lease = leases.begin(); lease != leases.end(); ++lease) {
-                ElementPtr lease_json = (*lease)->toElement();
-                leases_json->add(lease_json);
+            if (v4) {
+                Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
+                for (auto lease : leases) {
+                    ElementPtr lease_json = lease->toElement();
+                    leases_json->add(lease_json);
+                }
+            } else {
+                Lease6Collection leases = LeaseMgrFactory::instance().getLeases6();
+                for (auto lease : leases) {
+                    ElementPtr lease_json = lease->toElement();
+                    leases_json->add(lease_json);
+                }
             }
         }
 
         std::ostringstream s;
-        s << leases_json->size() << " IPv4 lease(s) found.";
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found.";
         ElementPtr args = Element::createMap();
         args->set("leases", leases_json);
-        ConstElementPtr response = createAnswer((leases_json->size() == 0 ? CONTROL_RESULT_EMPTY :
-                                                 CONTROL_RESULT_SUCCESS), s.str(), args);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
         setResponse(handle, response);
-
 
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
@@ -736,18 +759,36 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
     try {
         extractCommand(handle);
 
-        // The subnet-id is a mandatory parameter.
-        if (!cmd_args_) {
-            isc_throw(isc::BadValue, "no parameters specified for lease4-wipe command");
+        SimpleParser parser;
+        SubnetID id = 0;
+
+        size_t num = 0; // number of leases deleted
+        stringstream ids; // a text with subnet-ids being wiped
+
+        // The subnet-id parameter is now optional.
+        if (cmd_args_ && cmd_args_->contains("subnet-id")) {
+            id = parser.getUint32(cmd_args_, "subnet-id");
         }
 
-        SimpleParser parser;
-        SubnetID id = parser.getUint32(cmd_args_, "subnet-id");
+        if (id) {
+            // Wipe a single subnet
+            num = LeaseMgrFactory::instance().wipeLeases4(id);
+            ids << " " << id;
+        } else {
+            // Wipe them all!
+            ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
+            ConstCfgSubnets4Ptr subnets = config->getCfgSubnets4();
+            const Subnet4Collection * subs = subnets->getAll();
 
-        size_t num = LeaseMgrFactory::instance().wipeLeases4(id);
+            // Go over all subnets and wipe leases in each of them.
+            for (auto sub : *subs) {
+                num += LeaseMgrFactory::instance().wipeLeases4(sub->getID());
+                ids << " " << sub->getID();
+            }
+        }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv4 lease(s).";
+        tmp << "Deleted " << num << " IPv4 lease(s) from subnet(s)" << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
@@ -764,18 +805,42 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
     try {
         extractCommand(handle);
 
-        // The subnet-id is a mandatory parameter.
-        if (!cmd_args_) {
-            isc_throw(isc::BadValue, "no parameters specified for lease6-wipe command");
+        SimpleParser parser;
+        SubnetID id = 0;
+
+        size_t num = 0; // number of leases deleted
+        stringstream ids; // a text with subnet-ids being wiped
+
+        /// @todo: consider extending the code with wipe-leases:
+        /// - of specific type (v6)
+        /// - from specific shared network
+        /// - from specific pool
+        /// see https://kea.isc.org/ticket/5543#comment:6 for background.
+
+        // The subnet-id parameter is now optional.
+        if (cmd_args_ && cmd_args_->contains("subnet-id")) {
+            id = parser.getUint32(cmd_args_, "subnet-id");
         }
 
-        SimpleParser parser;
-        SubnetID id = parser.getUint32(cmd_args_, "subnet-id");
+        if (id) {
+            // Wipe a single subnet.
+            num = LeaseMgrFactory::instance().wipeLeases6(id);
+            ids << " " << id;
+       } else {
+            // Wipe them all!
+            ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
+            ConstCfgSubnets6Ptr subnets = config->getCfgSubnets6();
+            const Subnet6Collection * subs = subnets->getAll();
 
-        size_t num = LeaseMgrFactory::instance().wipeLeases6(id);
+            // Go over all subnets and wipe leases in each of them.
+            for (auto sub : *subs) {
+                num += LeaseMgrFactory::instance().wipeLeases6(sub->getID());
+                ids << " " << sub->getID();
+            }
+        }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv6 lease(s).";
+        tmp << "Deleted " << num << " IPv6 lease(s) from subnet(s)" << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
@@ -798,8 +863,8 @@ LeaseCmds::leaseGetHandler(CalloutHandle& handle) {
 }
 
 int
-LeaseCmds::lease4GetAllHandler(hooks::CalloutHandle& handle) {
-    return (impl_->lease4GetAllHandler(handle));
+LeaseCmds::leaseGetAllHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetAllHandler(handle));
 }
 
 int

@@ -106,20 +106,33 @@ public:
     /// @return true if client can be supported, false otherwise
     bool clientSupported(const ClientClasses& client_classes) const;
 
-    /// @brief Adds class class_name to the list of supported classes
+    /// @brief Sets the supported class to  class class_name
     ///
     /// @param class_name client class to be supported by this pool
     void allowClientClass(const ClientClass& class_name);
 
-    /// @brief returns the client class white list
+    /// @brief returns the client class
     ///
-    /// @note Currently white list is empty or has one element
     /// @note The returned reference is only valid as long as the object
     /// returned is valid.
     ///
-    /// @return client classes @ref white_list_
-    const ClientClasses& getClientClasses() const {
-        return (white_list_);
+    /// @return client class @ref client_class_
+    const ClientClass& getClientClass() const {
+        return (client_class_);
+    }
+
+    /// @brief Adds class class_name to classes required to be evaluated
+    ///
+    /// @param class_name client class required to be evaluated
+    void requireClientClass(const ClientClass& class_name) {
+        if (!required_classes_.contains(class_name)) {
+            required_classes_.insert(class_name);
+        }
+    }
+
+    /// @brief Returns classes which are required to be evaluated
+    const ClientClasses& getRequiredClasses() const {
+        return (required_classes_);
     }
 
     /// @brief returns the last address that was tried from this pool
@@ -203,14 +216,19 @@ protected:
 
     /// @brief Optional definition of a client class
     ///
-    /// If empty, all classes are allowed. If non-empty, only those listed
-    /// here are allowed.
+    /// @ref Network::client_class_
+    ClientClass client_class_;
+
+    /// @brief Required classes
     ///
-    /// @ref Network::white_list_
-    ClientClasses white_list_;
+    /// @ref isc::dhcp::Network::required_classes
+    ClientClasses required_classes_;
+
+    /// @brief Pointer to the user context (may be NULL)
+    data::ConstElementPtr user_context_;
 
     /// @brief Last allocated address
-    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
+    /// See @ref isc::dhcp::subnet::last_allocated_ia_
     /// Initialized and reset to first
     isc::asiolink::IOAddress last_allocated_;
 

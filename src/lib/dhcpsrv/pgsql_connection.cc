@@ -40,11 +40,16 @@ const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
 PgSqlResult::PgSqlResult(PGresult *result)
     : result_(result), rows_(0), cols_(0) {
     if (!result) {
-        isc_throw (BadValue, "PgSqlResult result pointer cannot be null");
+        // Certain failures, like a loss of connectivity, can return a
+        // null PGresult and we still need to be able to create a PgSqlResult.
+        // We'll set row and col counts to -1 to prevent anyone going off the
+        // rails.
+        rows_ = -1;
+        cols_ = -1;
+    } else {
+        rows_ = PQntuples(result);
+        cols_ = PQnfields(result);
     }
-
-    rows_ = PQntuples(result);
-    cols_ = PQnfields(result);
 }
 
 void
@@ -305,7 +310,9 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
                 .arg(statement.name)
                 .arg(PQerrorMessage(conn_))
                 .arg(sqlstate ? sqlstate : "<sqlstate null>");
-            // If there's no lost db callback, then exit
+
+            // If there's no lost db callback or it returns false,
+            // then we're not attempting to recover so we're done
             if (!invokeDbLostCallback()) {
                 exit (-1);
             }

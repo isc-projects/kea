@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,12 @@ struct UserContext {
     ///
     /// @param map A pointer to map where the user context will be unparsed.
     void contextToElement(data::ElementPtr map) const;
+
+    /// @brief Copy extracting comments an Element map
+    ///
+    /// @param map A pointer to map.
+    /// @return a copy of map where comment is extracted.
+    static data::ElementPtr toElement(data::ConstElementPtr map);
 
 protected:
 

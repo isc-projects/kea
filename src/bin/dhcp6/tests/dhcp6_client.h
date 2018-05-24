@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -753,11 +753,28 @@ public:
     /// @brief Configures the client to not send any extra options.
     void clearExtraOptions();
 
+    /// @brief Add a client class.
+    ///
+    /// @param client_class name of the class to be added.
+    void addClass(const ClientClass& client_class);
+
+    /// @brief Configures the client to not add client classes.
+    void clearClasses();
+
     /// @brief Debugging method the prints currently held configuration
     ///
     /// @todo: This is mostly useful when debugging tests. This method
     /// is incomplete. Please extend it when needed.
     void printConfiguration() const;
+
+    /// @brief Receives a response from the server.
+    ///
+    /// This method is useful to receive response from the server after
+    /// parking a packet. In this case, the packet is not received as a
+    /// result of initial exchange, e.g. @c doRequest. The test can call
+    /// this method to complete the transaction when it expects that the
+    /// packet has been unparked.
+    void receiveResponse();
 
 private:
 
@@ -927,6 +944,9 @@ private:
 
     /// @brief Interface id.
     OptionPtr interface_id_;
+
+    /// @brief Extra classes to add to the query.
+    ClientClasses classes_;
 };
 
 } // end of namespace isc::dhcp::test

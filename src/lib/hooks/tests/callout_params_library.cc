@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <hooks/hooks.h>
 #include <iostream>
 
+using namespace std;
 using namespace isc::hooks;
 using namespace isc::data;
 
@@ -39,6 +40,7 @@ int load(LibraryHandle& handle) {
     ConstElementPtr int_elem     = handle.getParameter("ivalue");
     ConstElementPtr bool_elem    = handle.getParameter("bvalue");
     ConstElementPtr nonexistent  = handle.getParameter("nonexistent");
+    vector<string>  names        = handle.getParameterNames();
 
     // String handling example.
     if (!string_elem) {
@@ -51,7 +53,7 @@ int load(LibraryHandle& handle) {
         return (2);
     }
 
-    std::string str = string_elem->stringValue();
+    string str = string_elem->stringValue();
     if (str != "string value") {
         // Parameter is specified, is a string, but has unexpected value.
         //
@@ -95,6 +97,14 @@ int load(LibraryHandle& handle) {
         // Parameter specified, is a boolean, but has a value different than
         // expected.
         return (9);
+    }
+
+    // Check names. As a side effect of what maps using strings are
+    // implemented names are sorted in alphabetical order.
+    if ((names.size() != 3) || (names[0] != "bvalue") ||
+        (names[1] != "ivalue") || (names[2] != "svalue")) {
+        // Expect 3 names: bvalue, ivalue, svalue.
+        return (10);
     }
 
     // All validation steps were successful. The library has all the parameters

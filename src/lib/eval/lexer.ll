@@ -204,6 +204,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
+"member"       return isc::eval::EvalParser::make_MEMBER(loc);
 "."            return isc::eval::EvalParser::make_DOT(loc);
 "("            return isc::eval::EvalParser::make_LPAREN(loc);
 ")"            return isc::eval::EvalParser::make_RPAREN(loc);

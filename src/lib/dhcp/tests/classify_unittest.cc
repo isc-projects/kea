@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,8 +86,8 @@ TEST(ClassifyTest, ClientClassesIterator) {
     bool seenbeta = false;
     bool seengamma = false;
     bool seendelta = false;
-    for (ClientClasses::const_iterator it = classes.begin();
-         it != classes.end(); ++it) {
+    for (ClientClasses::const_iterator it = classes.cbegin();
+         it != classes.cend(); ++it) {
         ++count;
         if (*it == "alpha") {
             seenalpha = true;
@@ -124,10 +124,10 @@ TEST(ClassifyTest, ClientClassesToText) {
     classes.insert("gamma");
     EXPECT_EQ("alpha, gamma", classes.toText());
 
-    // Insert third class and make sure they get ordered alphabetically.
+    // Insert third class and make sure they get ordered in insert order.
     classes.insert("beta");
-    EXPECT_EQ("alpha, beta, gamma", classes.toText());
+    EXPECT_EQ("alpha, gamma, beta", classes.toText());
 
     // Check non-standard separator.
-    EXPECT_EQ("alpha.beta.gamma", classes.toText("."));
+    EXPECT_EQ("alpha.gamma.beta", classes.toText("."));
 }
