@@ -784,10 +784,10 @@ fi
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
 # allow building kea programs with static link to cassandra cpp-driver.
-AC_ARG_ENABLE([cql-static-link],
-AS_HELP_STRING([--enable-cql-static-link],
-    [build programs with cassandra cpp driver static link [[default=no]]]),
-    [enable_cql_static_link=yes], [enable_cql_static_link=no])
+AC_ARG_ENABLE([cql-static-lib],
+AS_HELP_STRING([--enable-cql-static-lib],
+    [build programs with cassandra cpp driver static library [[default=no]]]),
+    [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
 AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
 #AC_DEFINE USE_CQL_STATIC_LIB? (unused)
 

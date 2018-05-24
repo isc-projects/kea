@@ -1,3 +1,9 @@
+1407.	[bug]		tmark
+	Corrected an issue where the destruction of loggers
+	prior to the destruction of the TimerMgr singleton
+	caused unit tests to segfault.
+	(Trac #5626, git 9f4e3f9cd8acf8e7d1d3e714d8f904754377c00f)
+
 1406.	[func]		fdupont
 	Added pkg-config alternative to configure --with-cql path so
 	now you can use either pkg-config or cql_config.
