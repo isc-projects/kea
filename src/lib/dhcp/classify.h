@@ -7,6 +7,7 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <algorithm>
 #include <string>
 #include <iterator>
 #include <list>

@@ -19,7 +19,6 @@
 
 #include <dhcpsrv/cql_srv_config_mgr.h>
 
-#include <dhcpsrv/cql_transaction.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <stddef.h>     // for NULL
@@ -382,17 +381,9 @@ SrvConfigInfoPtr
 CqlSrvConfigMgr::getConfig4Timestamp() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_SRV_CONFIG4_TIMESTAMP);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     SrvConfigInfoCollection collection = config_exchange->getCommon(
         dbconn_, CqlConfigExchange::GET_CONFIGURATION4_TIMESTAMP);
-
-    transaction.commit();
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -406,17 +397,9 @@ SrvConfigInfoPtr
 CqlSrvConfigMgr::getConfig6Timestamp() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_SRV_CONFIG6_TIMESTAMP);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     SrvConfigInfoCollection collection = config_exchange->getCommon(
         dbconn_, CqlConfigExchange::GET_CONFIGURATION6_TIMESTAMP);
-
-    transaction.commit();
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -430,17 +413,9 @@ SrvConfigInfoPtr
 CqlSrvConfigMgr::getGenericConfig4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_SRV_CONFIG4_GENERIC);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     SrvConfigInfoCollection collection = config_exchange->getCommon(
         dbconn_, CqlConfigExchange::GET_GENERIC_CONFIGURATION4);
-
-    transaction.commit();
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -454,17 +429,9 @@ SrvConfigInfoPtr
 CqlSrvConfigMgr::getGenericConfig6() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_SRV_CONFIG6_GENERIC);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     SrvConfigInfoCollection collection = config_exchange->getCommon(
         dbconn_, CqlConfigExchange::GET_GENERIC_CONFIGURATION6);
-
-    transaction.commit();
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -478,17 +445,9 @@ SrvConfigInfoPtr
 CqlSrvConfigMgr::getJsonConfig4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_SRV_CONFIG4_JSON);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     SrvConfigInfoCollection collection = config_exchange->getCommon(
         dbconn_, CqlConfigExchange::GET_JSON_CONFIGURATION4);
-
-    transaction.commit();
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -502,17 +461,9 @@ SrvConfigInfoPtr
 CqlSrvConfigMgr::getJsonConfig6() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_CQL_GET_SRV_CONFIG6_JSON);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     SrvConfigInfoCollection collection = config_exchange->getCommon(
         dbconn_, CqlConfigExchange::GET_JSON_CONFIGURATION6);
-
-    transaction.commit();
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -566,16 +517,10 @@ CqlSrvConfigMgr::updateConfig4(const int64_t config_timestamp,
     // also using transactions because we don't want another user to insert also
     // a new configuration in the same time.
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     SrvConfigInfoPtr current_config = getConfig4Timestamp();
 
     if (!current_config) {
         if (insertConfig4(json_data, generic_data)) {
-            transaction.commit();
             return true;
         }
         return false;
@@ -593,8 +538,6 @@ CqlSrvConfigMgr::updateConfig4(const int64_t config_timestamp,
 
         return false;
     }
-
-    transaction.commit();
 
     return true;
 }
@@ -617,16 +560,10 @@ CqlSrvConfigMgr::updateConfig6(const int64_t config_timestamp,
     // also using transactions because we don't want another user to insert also
     // a new configuration in the same time.
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     SrvConfigInfoPtr current_config = getConfig6Timestamp();
 
     if (!current_config) {
         if (insertConfig6(json_data, generic_data)) {
-            transaction.commit();
             return true;
         }
         return false;
@@ -643,8 +580,6 @@ CqlSrvConfigMgr::updateConfig6(const int64_t config_timestamp,
 
         return false;
     }
-
-    transaction.commit();
 
     return true;
 }

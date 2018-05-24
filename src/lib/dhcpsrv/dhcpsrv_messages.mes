@@ -200,6 +200,9 @@ The server has issued a begin transaction call.
 % DHCPSRV_CQL_CONNECTION_COMMIT committing to Cassandra database on current connection.
 A commit call been issued on the server. For Cassandra, this is a no-op.
 
+% DHCPSRV_CQL_BEGIN_TRANSACTION begin transaction.
+The server has issued a begin transaction call.
+
 % DHCPSRV_CQL_CONNECTION_ROLLBACK rolling back Cassandra database on current connection.
 The code has issued a rollback call. For Cassandra, this is a no-op.
 

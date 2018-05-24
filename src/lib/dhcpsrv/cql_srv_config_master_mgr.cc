@@ -19,7 +19,6 @@
 
 #include <dhcpsrv/cql_srv_config_master_mgr.h>
 
-#include <dhcpsrv/cql_transaction.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <boost/smart_ptr/make_shared.hpp>
@@ -343,18 +342,10 @@ bool CqlSrvConfigMasterMgr::addServerConfig4(const std::string& instance_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_INSERT_SRV_MASTER_CONFIG4)
         .arg(instance_id)
         .arg(config_database_name);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     master_config_exchange->insertCommon(dbconn_, instance_id, server_config, config_database,
                                          config_database_name,
                                          CqlMasterConfigExchange::INSERT_SERVER_CONFIG4);
-
-    transaction.commit();
 
     return true;
 }
@@ -366,18 +357,10 @@ bool CqlSrvConfigMasterMgr::addServerConfig6(const std::string& instance_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_INSERT_SRV_MASTER_CONFIG6)
         .arg(instance_id)
         .arg(config_database_name);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     master_config_exchange->insertCommon(dbconn_, instance_id, server_config, config_database,
                                          config_database_name,
                                          CqlMasterConfigExchange::INSERT_SERVER_CONFIG6);
-
-    transaction.commit();
 
     return true;
 }
@@ -385,20 +368,12 @@ bool CqlSrvConfigMasterMgr::addServerConfig6(const std::string& instance_id,
 SrvConfigMasterInfoPtr CqlSrvConfigMasterMgr::getConfig4(const std::string& instance_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_MASTER_CONFIG4)
         .arg(instance_id);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&instance_id));
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION4_BY_SRV_ID);
-
-    transaction.commit();
 
     SrvConfigMasterInfoPtr result;
     if (!collection.empty()) {
@@ -411,20 +386,12 @@ SrvConfigMasterInfoPtr CqlSrvConfigMasterMgr::getConfig4(const std::string& inst
 SrvConfigMasterInfoPtr CqlSrvConfigMasterMgr::getConfig6(const std::string& instance_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_MASTER_CONFIG6)
         .arg(instance_id);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&instance_id));
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION6_BY_SRV_ID);
-
-    transaction.commit();
 
     SrvConfigMasterInfoPtr result;
     if (!collection.empty()) {
@@ -442,19 +409,12 @@ bool CqlSrvConfigMasterMgr::getConfig4(
 
     server_configurations.clear();
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&config_database_name));
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION4_BY_SHARD_DB, false);
-
-    transaction.commit();
 
     server_configurations = collection_data;
 
@@ -469,19 +429,12 @@ bool CqlSrvConfigMasterMgr::getConfig6(
 
     server_configurations.clear();
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray where_values;
     where_values.add(const_cast<std::string*>(&config_database_name));
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION6_BY_SHARD_DB, false);
-
-    transaction.commit();
 
     server_configurations = collection_data;
 
@@ -495,11 +448,6 @@ CqlSrvConfigMasterMgr::getMasterConfig4Timestamp(const std::string& instance_id)
               DHCPSRV_CQL_GET_SRV_MASTER_CONFIG4_TIMESTAMP)
         .arg(instance_id);
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray where_values;
 
     where_values.add(const_cast<std::string*>(&instance_id));
@@ -507,8 +455,6 @@ CqlSrvConfigMasterMgr::getMasterConfig4Timestamp(const std::string& instance_id)
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION4_TIMESTAMP);
-
-    transaction.commit();
 
     SrvConfigMasterInfoPtr result;
     if (!collection.empty()) {
@@ -524,11 +470,6 @@ CqlSrvConfigMasterMgr::getMasterConfig6Timestamp(const std::string& instance_id)
               DHCPSRV_CQL_GET_SRV_MASTER_CONFIG6_TIMESTAMP)
         .arg(instance_id);
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray where_values;
 
     where_values.add(const_cast<std::string*>(&instance_id));
@@ -536,8 +477,6 @@ CqlSrvConfigMasterMgr::getMasterConfig6Timestamp(const std::string& instance_id)
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection = master_config_exchange->getCommon(
         dbconn_, where_values, CqlMasterConfigExchange::GET_CONFIGURATION6_TIMESTAMP);
-
-    transaction.commit();
 
     SrvConfigMasterInfoPtr result;
     if (!collection.empty()) {
@@ -550,16 +489,11 @@ CqlSrvConfigMasterMgr::getMasterConfig6Timestamp(const std::string& instance_id)
 bool CqlSrvConfigMasterMgr::clearServersConfig4() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_CLEAR_SRV_MASTER_CONFIG4);
 
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::vector<std::string> servers_id;
     getServersConfig4(servers_id);
     for (std::string const& server_id : servers_id) {
         deleteServerConfig4(server_id);
     }
-
-    transaction.commit();
 
     return true;
 }
@@ -567,16 +501,11 @@ bool CqlSrvConfigMasterMgr::clearServersConfig4() const {
 bool CqlSrvConfigMasterMgr::clearServersConfig6() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_CLEAR_SRV_MASTER_CONFIG6);
 
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     std::vector<std::string> servers_id;
     getServersConfig6(servers_id);
     for (std::string const& server_id : servers_id) {
         deleteServerConfig6(server_id);
     }
-
-    transaction.commit();
 
     return true;
 }
@@ -587,18 +516,11 @@ bool CqlSrvConfigMasterMgr::getServersConfig4ShardsName(std::set<std::string>& s
 
     shards_list.clear();
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray data;
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, data, CqlMasterConfigExchange::GET_SERVERS_CONFIG4_SHARDS_NAME, false);
-
-    transaction.commit();
 
     for (SrvConfigMasterInfoPtr const& srvInfo : collection_data) {
         shards_list.insert(srvInfo->config_database_name_);
@@ -613,18 +535,11 @@ bool CqlSrvConfigMasterMgr::getServersConfig6ShardsName(std::set<std::string>& s
 
     shards_list.clear();
 
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray data;
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     SrvConfigMasterInfoCollection collection_data = master_config_exchange->getCommon(
         dbconn_, data, CqlMasterConfigExchange::GET_SERVERS_CONFIG6_SHARDS_NAME, false);
-
-    transaction.commit();
 
     for (SrvConfigMasterInfoPtr const& srvInfo : collection_data) {
         shards_list.insert(srvInfo->config_database_name_);
@@ -674,20 +589,13 @@ void CqlSrvConfigMasterMgr::rollback() {
 // Protected methods
 
 bool CqlSrvConfigMasterMgr::getServersConfig4(std::vector<std::string>& servers_id) const {
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-
     servers_id.clear();
-    CqlTransaction transaction(dbconn_);
 
     AnyArray data;
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     AnyArray collection = master_config_exchange->executeSelect(
         dbconn_, data, CqlMasterConfigExchange::GET_SERVERS_CONFIG4);
-
-    transaction.commit();
 
     if (collection.empty()) {
         return true;
@@ -702,20 +610,13 @@ bool CqlSrvConfigMasterMgr::getServersConfig4(std::vector<std::string>& servers_
 }
 
 bool CqlSrvConfigMasterMgr::getServersConfig6(std::vector<std::string>& servers_id) const {
-    // CqlTransaction rolls back the transaction on its destructor.
-
-    // Begin the transaction.
-
     servers_id.clear();
-    CqlTransaction transaction(dbconn_);
 
     AnyArray data;
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     AnyArray collection = master_config_exchange->executeSelect(
         dbconn_, data, CqlMasterConfigExchange::GET_SERVERS_CONFIG6);
-
-    transaction.commit();
 
     if (collection.empty()) {
         return true;
@@ -732,11 +633,6 @@ bool CqlSrvConfigMasterMgr::getServersConfig6(std::vector<std::string>& servers_
 bool CqlSrvConfigMasterMgr::deleteServerConfig4(const std::string& instance_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_DELETE_SRV_MASTER_CONFIG4)
         .arg(instance_id);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray data;
     data.add(const_cast<std::string*>(&instance_id));
 
@@ -744,27 +640,18 @@ bool CqlSrvConfigMasterMgr::deleteServerConfig4(const std::string& instance_id) 
     master_config_exchange->executeMutation(dbconn_, data,
                                             CqlMasterConfigExchange::DELETE_SERVER_CONFIG4);
 
-    transaction.commit();
-
     return true;
 }
 
 bool CqlSrvConfigMasterMgr::deleteServerConfig6(const std::string& instance_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_DELETE_SRV_MASTER_CONFIG6)
         .arg(instance_id);
-
-    // CqlTransaction rolls back the transaction on its destructor.
-    // Begin the transaction.
-    CqlTransaction transaction(dbconn_);
-
     AnyArray data;
     data.add(const_cast<std::string*>(&instance_id));
 
     std::unique_ptr<CqlMasterConfigExchange> master_config_exchange(new CqlMasterConfigExchange());
     master_config_exchange->executeMutation(dbconn_, data,
                                             CqlMasterConfigExchange::DELETE_SERVER_CONFIG6);
-
-    transaction.commit();
 
     return true;
 }
