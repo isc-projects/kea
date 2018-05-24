@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -270,7 +270,7 @@ protected:
     /// it to be processed by SimpleParser derivations if they've been
     /// implemented. The method should return true if it has processed the
     /// element or false if the element should be passed onto the original
-    /// DhcpConfigParer mechanisms.  This method is invoked in both
+    /// DhcpConfigParser mechanisms.  This method is invoked in both
     /// @c DCfgMgrBase::buildParams() and DCfgMgrBase::buildAndCommit().
     ///
     /// @param element_id name of the element as it is expected in the cfg

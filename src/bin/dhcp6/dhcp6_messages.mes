@@ -66,6 +66,14 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+% DHCP6_CLASS_UNDEFINED required class %1 has no definition
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+% DHCP6_CLASS_UNTESTABLE required class %1 has no test expression
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
 % DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the Kea control system by the IPv6 DHCP server.
@@ -100,30 +108,30 @@ This informational message is printed every time the IPv6 DHCP server
 is started.  It indicates what database backend type is being to store
 lease and other information.
 
-% DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
-An informational message indicating that the server is scheduling the next
-attempt to reconnect to its lease and/or host databases.  This occurs when the
-server has lost databse connectivity and is attempting to reconnect 
-automatically.
-
 % DHCP6_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
 An error message indicating that an attempt to reconnect to the lease and/or
 host data bases has failed.  This occurs after connectivity to either one
 has been lost and an automatic attempt to reconnect has failed.
 
+% DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
+An informational message indicating that the server is scheduling the next
+attempt to reconnect to its lease and/or host databases.  This occurs when the
+server has lost databse connectivity and is attempting to reconnect
+automatically.
+
+% DHCP6_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+This is an informational message indicating that connectivity to either the
+lease or host database or both and that automatic reconnect is not enabled.
+
 % DHCP6_DB_RECONNECT_NO_DB_CTL unexpected error in database reconnect
 This is an error message indicating a programmatic error that should not
 occur. It will prohibit the server from attempting to reconnect to its
 databases if connectivy is lost, and the server will exit. This error
-should be reported. 
-
-% DHCP6_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %1
-This is an informational message indicating that connectivity to either the
-lease or host database or both and that automatic reconnect is not enabled.
+should be reported.
 
 % DHCP6_DB_RECONNECT_RETRIES_EXHAUSTED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
 This error indicates that the server is shutting down after failing to reconnect to
-the lease and/or host database(s) after making the maximum configured number 
+the lease and/or host database(s) after making the maximum configured number
 of reconnect attempts.  Loss of connectivity is typically a network or database
 server issue.
 
@@ -232,7 +240,7 @@ received in Decline message. It's expected that the option will contain an
 address that is being declined. Specific information will be printed in a
 separate message.
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 port %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
@@ -330,6 +338,14 @@ multiple IA options), the server will retains this particular lease and
 will proceed with other renewals as usual. The argument holds the
 client and transaction identification information.
 
+% DHCP6_HOOK_LEASES6_COMMITTED_DROP %1: packet is dropped, because a callout set the next step to DROP
+This debug message is printed when a callout installed on the leases6_committed
+hook point sets the next step to DROP.
+
+% DHCP6_HOOK_LEASES6_COMMITTED_PARK %1: packet is parked, because a callout set the next step to PARK
+This debug message is printed when a callout installed on the lease6_committed
+hook point sets the next step to PARK.
+
 % DHCP6_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the pkt6_receive
 hook point sets the next step to SKIP. For this particular hook point, the
@@ -352,6 +368,13 @@ not build the wire data (pack) because it was already done by the
 book. The argument specifies the client and transaction identification
 information.
 
+% DHCP6_HOOK_SUBNET6_SELECT_DROP %1: packet was dropped because a callout set the drop flag
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the drop flag. For this particular hook
+point, the setting of the flag instructs the server to drop the
+received packet. The argument holds the client and transaction
+identification information.
+
 % DHCP6_HOOK_SUBNET6_SELECT_SKIP %1: no subnet was selected because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the
 subnet6_select hook point set the next step to SKIP value. For this particular hook
@@ -359,13 +382,6 @@ point, the setting of this value instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses or prefixes
 will be assigned. The argument holds the client and transaction
-identification information.
-
-% DHCP6_HOOK_SUBNET6_SELECT_DROP %1: packet was dropped because a callout set the drop flag
-This debug message is printed when a callout installed on the
-subnet6_select hook point set the drop flag. For this particular hook
-point, the setting of the flag instructs the server to drop the
-received packet. The argument holds the client and transaction
 identification information.
 
 % DHCP6_INIT_FAIL failed to initialize Kea server: %1

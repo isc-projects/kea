@@ -919,13 +919,13 @@ TEST_F(Pkt4Test, clientClasses) {
     // Default values (do not belong to any class)
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
-    EXPECT_TRUE(pkt.classes_.empty());
+    EXPECT_TRUE(pkt.getClasses().empty());
 
     // Add to the first class
     pkt.addClass(DOCSIS3_CLASS_EROUTER);
     EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
-    ASSERT_FALSE(pkt.classes_.empty());
+    ASSERT_FALSE(pkt.getClasses().empty());
 
     // Add to a second class
     pkt.addClass(DOCSIS3_CLASS_MODEM);
@@ -939,6 +939,34 @@ TEST_F(Pkt4Test, clientClasses) {
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.inClass("foo"));
+}
+
+// Tests whether a packet can be marked to evaluate later a class and
+// after check if a given class is in the collection
+TEST_F(Pkt4Test, deferredClientClasses) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_TRUE(pkt.getClasses(true).empty());
+
+    // Add to the first class
+    pkt.addClass(DOCSIS3_CLASS_EROUTER, true);
+    EXPECT_EQ(1, pkt.getClasses(true).size());
+
+    // Add to a second class
+    pkt.addClass(DOCSIS3_CLASS_MODEM, true);
+    EXPECT_EQ(2, pkt.getClasses(true).size());
+    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_MODEM));
+    EXPECT_FALSE(pkt.getClasses(true).contains("foo"));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
 }
 
 // Tests whether MAC can be obtained and that MAC sources are not

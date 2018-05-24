@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/tests/test_utils.h>
 
 #if defined HAVE_MYSQL
 #include <dhcpsrv/testutils/mysql_schema.h>
@@ -113,12 +114,20 @@ protected:
     /// from which it will be retrieved.
     void testGet4(BaseHostDataSource& data_source);
 
+    /// @brief This test verifies that it is possible to retrieve negative
+    /// cached reservation with and only with get4Any.
+    void testGet4Any();
+
     /// @brief This test verifies that it is possible to retrieve an IPv6
     /// reservation for the particular host using HostMgr.
     ///
     /// @param data_source Host data source to which reservation is inserted and
     /// from which it will be retrieved.
     void testGet6(BaseHostDataSource& data_source);
+
+    /// @brief This test verifies that it is possible to retrieve negative
+    /// cached reservation with and only with get6Any.
+    void testGet6Any();
 
     /// @brief This test verifies that it is possible to retrieve an IPv6
     /// prefix reservation for the particular host using HostMgr.
@@ -214,8 +223,8 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     // If there non-matching HW address is specified, nothing should be
     // returned.
     hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
-                                           &hwaddrs_[1]->hwaddr_[0],
-                                           hwaddrs_[1]->hwaddr_.size());
+                                       &hwaddrs_[1]->hwaddr_[0],
+                                       hwaddrs_[1]->hwaddr_.size());
     ASSERT_TRUE(hosts.empty());
 
     // For the correct HW address, there should be two reservations.
@@ -229,7 +238,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 
     // Look for the first reservation.
     bool found = false;
-    for (int i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < 2; ++i) {
         if (hosts[0]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
             ASSERT_EQ(1, hosts[0]->getIPv4SubnetID());
             found = true;
@@ -242,7 +251,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
 
     // Look for the second reservation.
     found = false;
-    for (int i = 0; i < 2; ++i) {
+    for (unsigned i = 0; i < 2; ++i) {
         if (hosts[1]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
             ASSERT_EQ(10, hosts[1]->getIPv4SubnetID());
             found = true;
@@ -302,6 +311,60 @@ HostMgrTest::testGet4(BaseHostDataSource& data_source) {
 }
 
 void
+HostMgrTest::testGet4Any() {
+    // Initially, no host should be present.
+    ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                                 &duids_[0]->getDuid()[0],
+                                                 duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+    HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                &duids_[0]->getDuid()[0],
+                                duids_[0]->getDuid().size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    HostPtr new_host(new Host(duids_[0]->toText(), "duid", SubnetID(1),
+                              SubnetID(0), IOAddress("192.0.2.5")));
+    // Abuse of the server's configuration.
+    getCfgHosts()->add(new_host);
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+
+    // Set the negative cache flag on the host.
+    new_host->setNegative(true);
+
+    // get4 is not supposed to get it.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    EXPECT_FALSE(host);
+
+    // But get4Any should.
+    host = HostMgr::instance().get4Any(SubnetID(1), Host::IDENT_DUID,
+                                       &duids_[0]->getDuid()[0],
+                                       duids_[0]->getDuid().size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
+    EXPECT_TRUE(host->getNegative());
+
+    // To be sure. Note we use the CfgHosts source so only this
+    // get4 overload works.
+    host = HostMgr::instance().get4(SubnetID(1), Host::IDENT_DUID,
+                                    &duids_[0]->getDuid()[0],
+                                    duids_[0]->getDuid().size());
+    EXPECT_FALSE(host);
+}
+
+void
 HostMgrTest::testGet6(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
     ConstHostPtr host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
@@ -317,8 +380,69 @@ HostMgrTest::testGet6(BaseHostDataSource& data_source) {
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
     ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
+}
+
+void
+HostMgrTest::testGet6Any() {
+    // Initially, no host should be present.
+    ConstHostPtr host = HostMgr::instance().get6(SubnetID(2),
+                                                 Host::IDENT_HWADDR,
+                                                 &hwaddrs_[0]->hwaddr_[0],
+                                                 hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+    host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_FALSE(host);
+
+    // Add new host to the database.
+    HostPtr new_host(new Host(hwaddrs_[0]->toText(false), "hw-address",
+                              SubnetID(1), SubnetID(2),
+                              IOAddress::IPV4_ZERO_ADDRESS()));
+    new_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       IOAddress("2001:db8:1::1"), 128));
+    // Abuse of the server's configuration.
+    getCfgHosts()->add(new_host);
+
+    CfgMgr::instance().commit();
+
+    // Retrieve the host from the database and expect that the parameters match.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+
+    // Set the negative cache flag on the host.
+    new_host->setNegative(true);
+
+    // get6 is not supposed to get it.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    EXPECT_FALSE(host);
+
+    // But get6Any should.
+    host = HostMgr::instance().get6Any(SubnetID(2), Host::IDENT_HWADDR,
+                                       &hwaddrs_[0]->hwaddr_[0],
+                                       hwaddrs_[0]->hwaddr_.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                               IOAddress("2001:db8:1::1"))));
+    EXPECT_TRUE(host->getNegative());
+
+    // To be sure. Note we use the CfgHosts source so only this
+    // get6 overload works.
+    host = HostMgr::instance().get6(SubnetID(2), Host::IDENT_HWADDR,
+                                    &hwaddrs_[0]->hwaddr_[0],
+                                    hwaddrs_[0]->hwaddr_.size());
+    EXPECT_FALSE(host);
 }
 
 void
@@ -379,11 +503,21 @@ TEST_F(HostMgrTest, get4) {
     testGet4(*getCfgHosts());
 }
 
+// This test verifies handling of negative caching by get4/get4Any.
+TEST_F(HostMgrTest, get4Any) {
+    testGet4Any();
+}
+
 // This test verifies that it is possible to retrieve IPv6 reservations for
 // the particular host using HostMgr. The reservation is specified in the
 // server's configuration.
 TEST_F(HostMgrTest, get6) {
     testGet6(*getCfgHosts());
+}
+
+// This test verifies handling of negative caching by get4/get4Any.
+TEST_F(HostMgrTest, get6Any) {
+    testGet6Any();
 }
 
 // This test verifies that it is possible to retrieve the reservation of the
@@ -402,6 +536,102 @@ TEST_F(HostMgrTest, addNoDataSource) {
     HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
                           SubnetID(1), SubnetID(0), IOAddress("192.0.2.5")));
     EXPECT_THROW(HostMgr::instance().add(host), NoHostDataSourceManager);
+}
+
+class HostMgrDbLostCallbackTest : public ::testing::Test {
+public:
+    HostMgrDbLostCallbackTest() : callback_called_(false) {};
+
+    /// @brief Prepares the class for a test.
+    ///
+    /// Invoked by gtest prior test entry, we create the
+    /// appropriate schema and create a basic host manager to
+    /// wipe out any prior instance
+    virtual void SetUp() {
+        DatabaseConnection::db_lost_callback = 0;  
+        destroySchema();
+        createSchema();
+        // Wipe out any pre-existing mgr
+        HostMgr::create();
+    }
+
+    /// @brief Pre-text exit clean up
+    ///
+    /// Invoked by gtest upon test exit, we destroy the schema
+    /// we created.
+    virtual void TearDown() {
+        DatabaseConnection::db_lost_callback = 0;  
+        destroySchema();
+    }
+
+    /// @brief Abstract method for destroying the back end specific shcema
+    virtual void destroySchema() = 0;
+
+    /// @brief Abstract method for creating the back end specific shcema
+    virtual void createSchema() = 0;
+
+    /// @brief Abstract method which returns the back end specific connection
+    /// string
+    virtual std::string validConnectString() = 0;
+
+    /// @brief Verifies the host manager's behavior if DB connection is lost
+    ///
+    /// This function creates a host manager with an alternate data source
+    /// that supports connectivity lost callback (currently only MySQL and
+    /// PostgreSQL currently).  It verifies connectivity by issuing a known
+    /// valid query.  Next it simulates connectivity lost by identifying and
+    /// closing the socket connection to the host backend.  It then reissues
+    /// the query and verifies that:
+    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The registered DbLostCallback was invoked
+    void testDbLostCallback();
+
+    /// @brief Callback function registered with the host manager
+    bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
+        return (callback_called_ = true);
+    }
+
+    /// @brief Flag used to detect calls to db_lost_callback function
+    bool callback_called_;
+};
+
+
+void
+HostMgrDbLostCallbackTest::testDbLostCallback() {
+    // Create the HostMgr.
+    HostMgr::create();
+
+    // Set the connectivity lost callback.
+    DatabaseConnection::db_lost_callback =
+        boost::bind(&HostMgrDbLostCallbackTest::db_lost_callback, this, _1);
+
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = test::findLastSocketFd();
+
+    // Connect to the host backend.
+    ASSERT_NO_THROW(HostMgr::addBackend(validConnectString()));
+
+    // Find the SQL client socket.
+    int sql_socket = test::findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
+
+    // Clear the callback invocation marker.
+    callback_called_ = false;
+
+    // Verify we can execute a query.  We don't care about the answer.
+    ConstHostCollection hosts;
+    ASSERT_NO_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")));
+
+    // Now close the sql socket out from under backend client
+    ASSERT_FALSE(close(sql_socket)) << "failed to close socket";
+
+    // A query should fail with DbOperationError.
+    ASSERT_THROW(hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5")),
+                 DbOperationError);
+
+    // Our lost connectivity callback should have been invoked.
+    EXPECT_TRUE(callback_called_);
 }
 
 // The following tests require MySQL enabled.
@@ -429,7 +659,7 @@ MySQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(test::validMySQLConnectionString());
+        HostMgr::addBackend(test::validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -442,10 +672,27 @@ MySQLHostMgrTest::SetUp() {
 
 void
 MySQLHostMgrTest::TearDown() {
-    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
-    HostDataSourceFactory::destroy();
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delBackend("mysql");
     test::destroyMySQLSchema();
 }
+
+/// @brief Test fixture class for validating @c HostMgr using
+/// MySQL as alternate host data source and MySQL connectivity loss.
+class MySQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
+public:
+    virtual void destroySchema() {
+        test::destroyMySQLSchema();
+    }
+
+    virtual void createSchema() {
+        test::createMySQLSchema();
+    }
+
+    virtual std::string validConnectString() {
+        return (test::validMySQLConnectionString());
+    }
+};
 
 // This test verifies that reservations for a particular client can
 // be retrieved from the configuration file and a database simultaneously.
@@ -477,6 +724,10 @@ TEST_F(MySQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostCallback) {
+    testDbLostCallback();
+}
 #endif
 
 
@@ -505,7 +756,7 @@ PostgreSQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(test::validPgSQLConnectionString());
+        HostMgr::addBackend(test::validPgSQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -518,12 +769,28 @@ PostgreSQLHostMgrTest::SetUp() {
 
 void
 PostgreSQLHostMgrTest::TearDown() {
-    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
-    HostDataSourceFactory::destroy();
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delBackend("postgresql");
     test::destroyPgSQLSchema();
 }
 
-// This test verifies that reservations for a particular client can
+/// @brief Test fixture class for validating @c HostMgr using
+/// PostgreSQL as alternate host data source and PostgreSQL connectivity loss.
+class PostgreSQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
+public:
+    virtual void destroySchema() {
+        test::destroyPgSQLSchema();
+    }
+
+    virtual void createSchema() {
+        test::createPgSQLSchema();
+    }
+
+    virtual std::string validConnectString() {
+        return (test::validPgSQLConnectionString());
+    }
+};
+
 // be retrieved from the configuration file and a database simultaneously.
 TEST_F(PostgreSQLHostMgrTest, getAll) {
     testGetAll(*getCfgHosts(), HostMgr::instance());
@@ -553,8 +820,11 @@ TEST_F(PostgreSQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PostgreSQLHostMgrDbLostCallbackTest, testDbLostCallback) {
+    testDbLostCallback();
+}
 #endif
-
 
 // The following tests require Cassandra enabled.
 #if defined HAVE_CQL
@@ -581,7 +851,7 @@ CQLHostMgrTest::SetUp() {
 
     // Connect to the database
     try {
-        HostMgr::create(test::validCqlConnectionString());
+        HostMgr::addBackend(test::validCqlConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -594,8 +864,8 @@ CQLHostMgrTest::SetUp() {
 
 void
 CQLHostMgrTest::TearDown() {
-    HostDataSourceFactory::getHostDataSourcePtr()->rollback();
-    HostDataSourceFactory::destroy();
+    HostMgr::instance().getHostDataSource()->rollback();
+    HostMgr::delBackend("cql");
     test::destroyCqlSchema(false, true);
 }
 

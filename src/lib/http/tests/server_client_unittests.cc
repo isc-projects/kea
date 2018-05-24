@@ -38,6 +38,9 @@ namespace {
 /// @brief IP address to which HTTP service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
 
+/// @brief IPv6 address to whch HTTP service is bound.
+const std::string IPV6_SERVER_ADDRESS = "::1";
+
 /// @brief Port number to which HTTP service is bound.
 const unsigned short SERVER_PORT = 18123;
 
@@ -507,6 +510,7 @@ TEST_F(HttpListenerTest, listen) {
     io_service_.poll();
 }
 
+
 // This test verifies that persistent HTTP connection can be established when
 // "Conection: Keep-Alive" header value is specified.
 TEST_F(HttpListenerTest, keepAlive) {
@@ -899,7 +903,7 @@ public:
           listener_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
                     factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                     HttpListener::IdleTimeout(IDLE_TIMEOUT)),
-          listener2_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT + 1,
+          listener2_(io_service_, IOAddress(IPV6_SERVER_ADDRESS), SERVER_PORT + 1,
                      factory_, HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                      HttpListener::IdleTimeout(IDLE_TIMEOUT)),
           listener3_(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT + 2,
@@ -1036,7 +1040,7 @@ TEST_F(HttpClientTest, multipleDestinations) {
 
     // Specify the URLs on which the servers are available.
     Url url1("http://127.0.0.1:18123");
-    Url url2("http://127.0.0.1:18124");
+    Url url2("http://[::1]:18124");
 
     // Create a request to the first server.
     PostHttpRequestJsonPtr request1 = createRequest("sequence", 1);
@@ -1179,11 +1183,10 @@ TEST_F(HttpClientTest, malformedResponse) {
     // content type.
     PostHttpRequestJsonPtr request = createRequest("requested-content-type", "text/html");
     HttpResponseJsonPtr response(new HttpResponseJson());
-    unsigned resp_num = 0;
     ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
-        [this, &resp_num](const boost::system::error_code& ec,
-                          const HttpResponsePtr& response,
-                          const std::string& parsing_error) {
+        [this](const boost::system::error_code& ec,
+               const HttpResponsePtr& response,
+               const std::string& parsing_error) {
         io_service_.stop();
         // There should be no IO error (answer from the server is received).
         EXPECT_FALSE(ec);

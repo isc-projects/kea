@@ -310,6 +310,15 @@ public:
         getHooksManager().referenceInternal(hook_name, parked_object);
     }
 
+    /// @brief Clears any parking packets.
+    ///
+    /// This method should be called during reconfiguration to ensure there
+    /// are no dangling pointers that could possibly prevent the library
+    /// from being unloaded.
+    static void clearParkingLots() {
+        getHooksManager().clearParkingLotsInternal();
+    }
+
 private:
 
     /// @brief Constructor
@@ -365,6 +374,13 @@ private:
     void referenceInternal(const std::string& hook_name, T parked_object) {
         ServerHooks::getServerHooks().
             getParkingLotPtr(hook_name)->reference(parked_object);
+    }
+
+    /// @brief Clears all pointers stored in parking lots.
+    ///
+    /// See @ref clearParkingLots for explanation.
+    void clearParkingLotsInternal() {
+        ServerHooks::getServerHooks().getParkingLotsPtr()->clear();
     }
 
     //@{

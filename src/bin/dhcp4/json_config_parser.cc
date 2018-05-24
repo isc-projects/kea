@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,11 +8,13 @@
 
 #include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/dhcp4_srv.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcpsrv/db_type.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -23,6 +25,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
@@ -270,7 +273,7 @@ void configureCommandChannel() {
 }
 
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
+configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
@@ -288,6 +291,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // Remove any existing timers.
     if (!check_only) {
         TimerMgr::instance()->unregisterTimers();
+        server.discardPackets();
     }
 
     // Revert any runtime option definitions configured so far and not committed.
@@ -295,6 +299,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
+
+    // Print the list of known backends.
+    HostDataSourceFactory::printRegistered();
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -412,16 +419,26 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DbAccessParser::LEASE_DB);
+                DbAccessParser parser(DBType::LEASE_DB);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DbAccessParser::HOSTS_DB);
+                DbAccessParser parser(DBType::HOSTS_DB);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "hosts-databases") {
+                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                DbAccessParser parser(DBType::HOSTS_DB);
+                auto list = config_pair.second->listValue();
+                for (auto it : list) {
+                    parser.parse(cfg_db_access, it);
+                }
                 continue;
             }
 

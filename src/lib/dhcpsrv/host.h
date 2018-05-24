@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -546,6 +546,21 @@ public:
         return (host_id_);
     }
 
+    /// @brief Sets the negative cached flag.
+    ///
+    /// @param negative sets whether this is a negative cached host,
+    /// i.e. a fake host in the cache which indicates non-existence
+    /// and avoids to lookup in a slow backend.
+    void setNegative(bool negative) {
+        negative_ = negative;
+    }
+
+    /// @brief Return the negative cache flag value.
+    /// When true standard lookup methods return null host pointer instead.
+    bool getNegative() const {
+        return (negative_);
+    }
+
     /// @brief Unparses (converts to Element representation) IPv4 host
     ///
     /// @return Element representation of the host
@@ -604,6 +619,13 @@ private:
     CfgOptionPtr cfg_option4_;
     /// @brief Pointer to the DHCPv6 option data configuration for this host.
     CfgOptionPtr cfg_option6_;
+
+    /// @brief Negative cached flag.
+    ///
+    /// This flag determines whether this object is a negative cache, i.e.
+    /// we queried other backends for specific host and there was no
+    /// entry for it.
+    bool negative_;
 };
 
 /// @brief Pointer to the @c Host object.

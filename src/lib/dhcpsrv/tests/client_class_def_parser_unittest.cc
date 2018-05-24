@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,10 +117,10 @@ protected:
         parser.parse(dictionary, config_element, family);
 
         // If we didn't throw, then return the first and only class
-        ClientClassDefMapPtr classes = dictionary->getClasses();
-        ClientClassDefMap::iterator it = classes->begin();
-        if (it != classes->end()) {
-            return  (*it).second;
+        ClientClassDefListPtr classes = dictionary->getClasses();
+        ClientClassDefList::const_iterator it = classes->cbegin();
+        if (it != classes->cend()) {
+            return (*it);
         }
 
         // Return NULL if for some reason the class doesn't exist.
@@ -885,5 +885,89 @@ TEST_F(ClientClassDefParserTest, filenameBogus) {
     EXPECT_THROW(parseClientClassDef(cfg_too_long, AF_INET), DhcpConfigError);
 }
 
+// Verifies that backward and built-in dependencies will parse.
+TEST_F(ClientClassDefListParserTest, dependentList) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('VENDOR_CLASS_foo')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"three\", \n"
+        "       \"test\": \"member('two')\" \n"
+        "   } \n"
+        "] \n";
+
+    // Parsing the list should succeed.
+    ClientClassDictionaryPtr dictionary;
+    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET));
+    ASSERT_TRUE(dictionary);
+
+    // We should have three classes in the dictionary.
+    EXPECT_EQ(3, dictionary->getClasses()->size());
+
+    // Make sure we can find all three.
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = dictionary->findClass("one"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("one", cclass->getName());
+
+    ASSERT_NO_THROW(cclass = dictionary->findClass("two"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("two", cclass->getName());
+
+    ASSERT_NO_THROW(cclass = dictionary->findClass("three"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("three", cclass->getName());
+}
+
+// Verifies that not defined dependencies will not parse.
+TEST_F(ClientClassDefListParserTest, dependentNotDefined) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that forward dependencies will not parse.
+TEST_F(ClientClassDefListParserTest, dependentForwardError) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"foo\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that backward dependencies will parse.
+TEST_F(ClientClassDefListParserTest, dependentBackward) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"foo\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+}
 
 } // end of anonymous namespace

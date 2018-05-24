@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.3.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.4.0-beta-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -89,13 +89,13 @@ AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
 # Include premium configuration
+INCLUDED_HOOKS=
+
 PREMIUM_DIR=
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=
 AC_DEFUN([AX_PREMIUM],[])
 # m4_sinclude includes the file if it exists at autoreconf time
 m4_sinclude(premium/config.m4)
-m4_sinclude(premium/tier1.m4)
-m4_sinclude(premium/tier2.m4)
 AC_SUBST(PREMIUM_DIR)
 AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 AX_PREMIUM
@@ -637,6 +637,10 @@ AC_ARG_WITH([benchmark],
 # sets variables CRYPTO_*
 AX_CRYPTO
 
+# List of directories, where tools like mysql_config or pgsql_config will be
+# searched for
+defaultdirs="/usr /usr/local /usr/pkg /opt /opt/local"
+
 # Check for MySql.  The path to the mysql_config program is given with
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
@@ -646,8 +650,22 @@ AC_ARG_WITH([mysql],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-mysql],,
+    [mysql_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-mysql has been deprecated, please use --with-mysql])
+fi
+
 if test "${mysql_config}" = "yes" ; then
-    MYSQL_CONFIG="/usr/bin/mysql_config"
+    for d in $defaultdirs
+    do
+        if test -f $d/bin/mysql_config; then
+            MYSQL_CONFIG="$d/bin/mysql_config"
+            break
+        fi
+    done
 elif test "${mysql_config}" != "no" ; then
     MYSQL_CONFIG="${withval}"
 fi
@@ -700,8 +718,22 @@ AC_ARG_WITH([pgsql],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-pgsql],,
+    [pg_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-pgsql has been deprecated, please use --with-pgsql])
+fi
+
 if test "${pg_config}" = "yes" ; then
-    PG_CONFIG="/usr/bin/pg_config"
+    for d in $defaultdirs
+    do
+        if test -f $d/bin/pg_config; then
+            PG_CONFIG="$d/bin/pg_config"
+            break
+        fi
+    done
 elif test "${pg_config}" != "no" ; then
     PG_CONFIG="${withval}"
 fi
@@ -751,27 +783,41 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+# allow building kea programs with static link to cassandra cpp-driver.
+AC_ARG_ENABLE([cql-static-lib],
+AS_HELP_STRING([--enable-cql-static-lib],
+    [build programs with cassandra cpp driver static library [[default=no]]]),
+    [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
+AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
+#AC_DEFINE USE_CQL_STATIC_LIB? (unused)
+
+cql_lib="cassandra"
+if test "${enable_cql_static_lib}" = "yes" ; then
+    cql_lib="${cql_lib}_static"
+fi
+
 cql_config="no"
 AC_ARG_WITH([cql],
   AC_HELP_STRING([--with-cql=PATH],
-    [path to the Cassandra CQL 'cql_config' script]),
+    [path to pkg-config or the Cassandra CQL 'cql_config' script]),
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    CQL_CONFIG="/usr/bin/cql_config"
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+    CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
 fi
 
 if test "$CQL_CONFIG" != "" ; then
     if test -d "$CQL_CONFIG" -o ! -x "$CQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-cql should point to a cql_config program])
+        AC_MSG_ERROR([--with-cql should point to a pkg-config or cql_config program])
     fi
 
-    CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
-    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra -luv"
-    CQL_VERSION=`$CQL_CONFIG --version`
+    CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
+    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
+    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"    
+    CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
     AC_SUBST(CQL_CPPFLAGS)
     AC_SUBST(CQL_LIBS)
@@ -816,8 +862,7 @@ elif test "${log4cplus_path}" != "yes" ; then
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
-        log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
-        for d in $log4cplusdirs
+        for d in $defaultdirs
         do
                 if test -f $d/include/log4cplus/logger.h; then
                         LOG4CPLUS_INCLUDES="-I$d/include"
@@ -1142,7 +1187,7 @@ if test "x${BOOST_LIBS}" = "x"; then
 fi
 
 # Check for functions that are not available on all platforms
-AC_CHECK_FUNCS([pselect])
+AC_CHECK_FUNCS([pselect srandomdev])
 
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
@@ -1369,6 +1414,8 @@ AC_CONFIG_FILES([Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h
+                 src/hooks/dhcp/stat_cmds/Makefile
+                 src/hooks/dhcp/stat_cmds/tests/Makefile
                  src/lib/Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile
@@ -1504,18 +1551,17 @@ Package:
   Version:           ${PACKAGE_VERSION}
   Extended version:  ${EXTENDED_VERSION}
   OS Family:         ${OS_TYPE}
-  Using GNU sed:     ${GNU_SED}
+
+  Hooks directory:   ${prefix}/lib/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium package:   yes
-  Tier1 Packages:    ${TIER1_PACKAGES}
-  Tier2 Packages:    ${TIER2_PACKAGES}
-  Included Packages: ${INCLUDED_PACKAGES}
+  Premium hooks:     yes
+  Included Hooks:   ${INCLUDED_HOOKS}
 END
 else
 cat >> config.report << END
-  Premium package:   no
+  Premium hooks:     no
 END
 fi
 cat >> config.report << END
@@ -1674,8 +1720,9 @@ if test "$FREERADIUS_INCLUDE" != ""; then
 cat >> config.report << END
 
 FreeRADIUS client:
-  FREERADIUS_INCLUDE: ${FREERADIUS_INCLUDE}
-  FREERADIUS_LIB:     ${FREERADIUS_LIB}
+  FREERADIUS_INCLUDE:    ${FREERADIUS_INCLUDE}
+  FREERADIUS_LIB:        ${FREERADIUS_LIB}
+  FREERADIUS_DICTIONARY: ${FREERADIUS_DICTIONARY}
 END
 fi
 

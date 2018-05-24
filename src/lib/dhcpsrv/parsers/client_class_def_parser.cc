@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <asiolink/io_error.h>
 
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -35,7 +36,8 @@ namespace dhcp {
 void
 ExpressionParser::parse(ExpressionPtr& expression,
                         ConstElementPtr expression_cfg,
-                        uint16_t family) {
+                        uint16_t family,
+                        EvalContext::CheckDefined check_defined) {
     if (expression_cfg->getType() != Element::string) {
         isc_throw(DhcpConfigError, "expression ["
             << expression_cfg->str() << "] must be a string, at ("
@@ -47,7 +49,8 @@ ExpressionParser::parse(ExpressionPtr& expression,
     std::string value;
     expression_cfg->getValue(value);
     try {
-        EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6);
+        EvalContext eval_ctx(family == AF_INET ? Option::V4 : Option::V6,
+                             check_defined);
         eval_ctx.parseString(value);
         expression.reset(new Expression());
         *expression = eval_ctx.expression;
@@ -80,7 +83,10 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     std::string test;
     if (test_cfg) {
         ExpressionParser parser;
-        parser.parse(match_expr, test_cfg, family);
+        using std::placeholders::_1;
+        auto check_defined =
+            std::bind(isClientClassDefined, class_dictionary, _1);
+        parser.parse(match_expr, test_cfg, family, check_defined);
         test = test_cfg->stringValue();
     }
 
@@ -129,6 +135,12 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Parse user context
     ConstElementPtr user_context = class_def_cfg->get("user-context");
+
+    // Let's try to parse the only-if-required flag
+    bool required = false;
+    if (class_def_cfg->contains("only-if-required")) {
+        required = getBoolean(class_def_cfg, "only-if-required");
+    }
 
     // Let's try to parse the next-server field
     IOAddress next_server("0.0.0.0");
@@ -185,8 +197,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Add the client class definition
     try {
-        class_dictionary->addClass(name, match_expr, test, options, defs,
-                                   user_context, next_server, sname, filename);
+        class_dictionary->addClass(name, match_expr, test, required, options,
+                                   defs, user_context, next_server, sname,
+                                   filename);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
                   << " (" << class_def_cfg->getPosition() << ")");

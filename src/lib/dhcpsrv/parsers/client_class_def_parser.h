@@ -1,4 +1,4 @@
-// Copyright (C) 2015, 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,10 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <eval/eval_context.h>
 #include <dhcpsrv/client_class_def.h>
+#include <functional>
+#include <list>
 
 /// @file client_class_def_parser.h
 ///
@@ -64,10 +67,14 @@ public:
     /// @param expression variable in which to store the new expression
     /// @param expression_cfg the configuration entry to be parsed.
     /// @param family the address family of the expression.
+    /// @param check_defined a closure to check if a client class is defined.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ExpressionPtr& expression,
-               isc::data::ConstElementPtr expression_cfg, uint16_t family);
+               isc::data::ConstElementPtr expression_cfg,
+               uint16_t family,
+               isc::eval::EvalContext::CheckDefined check_defined =
+                   isc::eval::EvalContext::acceptAll);
 };
 
 /// @brief Parser for a single client class definition.
