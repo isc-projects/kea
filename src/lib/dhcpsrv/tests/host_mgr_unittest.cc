@@ -210,7 +210,10 @@ void
 HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
                         BaseHostDataSource& data_source2) {
     // Initially, no reservations should be present.
-    ConstHostCollection hosts = HostMgr::instance().getAll(hwaddrs_[0]);
+    ConstHostCollection hosts = 
+        HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                   &hwaddrs_[1]->hwaddr_[0],
+                                   hwaddrs_[1]->hwaddr_.size());
     ASSERT_TRUE(hosts.empty());
 
     // Add two reservations for the same HW address. They differ by the IP
@@ -293,7 +296,10 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
 void
 HostMgrTest::testGet4(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
-    ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), hwaddrs_[0]);
+    ConstHostPtr host =
+        HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                 &hwaddrs_[0]->hwaddr_[0],
+                                 hwaddrs_[0]->hwaddr_.size());
     ASSERT_FALSE(host);
 
     // Add new host to the database.
@@ -367,7 +373,10 @@ HostMgrTest::testGet4Any() {
 void
 HostMgrTest::testGet6(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
-    ConstHostPtr host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
+    ConstHostPtr host =
+        HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
+                                 &duids_[0]->getDuid()[0],
+                                 duids_[0]->getDuid().size());
     ASSERT_FALSE(host);
 
     // Add new host to the database.
