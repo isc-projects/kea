@@ -1,3 +1,8 @@
+1408.	[func]		tomek
+	perfdhcp now supports -o option that adds DHCP options.
+	This may be used to simulate various clients.
+	(github #77, git b81dedb7f0a2516130e7bd799d9084c63f0e844c)
+
 1407.	[bug]		tmark
 	Corrected an issue where the destruction of loggers
 	prior to the destruction of the TimerMgr singleton
