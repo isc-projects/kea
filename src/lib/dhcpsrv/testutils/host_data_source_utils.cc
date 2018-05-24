@@ -58,7 +58,7 @@ HostDataSourceUtils::generateIdentifier(const bool new_identifier) {
 
 HostPtr
 HostDataSourceUtils::initializeHost4(const std::string& address,
-                                           const Host::IdentifierType& id) {
+                                     const Host::IdentifierType& id) {
     std::vector<uint8_t> ident;
     if (id == Host::IDENT_HWADDR) {
         ident = generateHWAddr();
@@ -82,9 +82,9 @@ HostDataSourceUtils::initializeHost4(const std::string& address,
 
 HostPtr
 HostDataSourceUtils::initializeHost6(std::string address,
-                                           Host::IdentifierType identifier,
-                                           bool prefix,
-                                           bool new_identifier) {
+                                     Host::IdentifierType identifier,
+                                     bool prefix,
+                                     bool new_identifier) {
     std::vector<uint8_t> ident;
     switch (identifier) {
     case Host::IDENT_HWADDR:
@@ -123,7 +123,7 @@ HostDataSourceUtils::initializeHost6(std::string address,
 
 bool
 HostDataSourceUtils::reservationExists(const IPv6Resrv& resrv,
-                                             const IPv6ResrvRange& range) {
+                                       const IPv6ResrvRange& range) {
     for (IPv6ResrvIterator it = range.first; it != range.second; ++it) {
         if (resrv == it->second) {
             return true;
@@ -134,8 +134,8 @@ HostDataSourceUtils::reservationExists(const IPv6Resrv& resrv,
 
 void
 HostDataSourceUtils::compareHwaddrs(const ConstHostPtr& host1,
-                                          const ConstHostPtr& host2,
-                                          bool expect_match) {
+                                    const ConstHostPtr& host2,
+                                    bool expect_match) {
     ASSERT_TRUE(host1);
     ASSERT_TRUE(host2);
 
@@ -170,8 +170,8 @@ HostDataSourceUtils::compareHwaddrs(const ConstHostPtr& host1,
 
 void
 HostDataSourceUtils::compareDuids(const ConstHostPtr& host1,
-                                        const ConstHostPtr& host2,
-                                        bool expect_match) {
+                                  const ConstHostPtr& host2,
+                                  bool expect_match) {
     ASSERT_TRUE(host1);
     ASSERT_TRUE(host2);
 
@@ -205,7 +205,7 @@ HostDataSourceUtils::compareDuids(const ConstHostPtr& host1,
 
 void
 HostDataSourceUtils::compareHosts(const ConstHostPtr& host1,
-                                        const ConstHostPtr& host2) {
+                                  const ConstHostPtr& host2) {
     // Let's compare HW addresses and expect match.
     compareHwaddrs(host1, host2, true);
 
@@ -253,7 +253,7 @@ HostDataSourceUtils::compareHosts(const ConstHostPtr& host1,
 
 void
 HostDataSourceUtils::compareReservations6(IPv6ResrvRange resrv1,
-                                                IPv6ResrvRange resrv2) {
+                                          IPv6ResrvRange resrv2) {
     // Compare number of reservations for both hosts
     if (std::distance(resrv1.first, resrv1.second) !=
         std::distance(resrv2.first, resrv2.second)) {
@@ -305,13 +305,13 @@ HostDataSourceUtils::compareReservations6(IPv6ResrvRange resrv1,
 
 void
 HostDataSourceUtils::compareClientClasses(const ClientClasses& classes1,
-                                                const ClientClasses& classes2) {
-    EXPECT_TRUE(std::equal(classes1.begin(), classes1.end(), classes2.begin()));
+                                          const ClientClasses& classes2) {
+    EXPECT_TRUE(std::equal(classes1.cbegin(), classes1.cend(), classes2.cbegin()));
 }
 
 void
 HostDataSourceUtils::compareOptions(const ConstCfgOptionPtr& cfg1,
-                                          const ConstCfgOptionPtr& cfg2) {
+                                    const ConstCfgOptionPtr& cfg2) {
     ASSERT_TRUE(cfg1);
     ASSERT_TRUE(cfg2);
 

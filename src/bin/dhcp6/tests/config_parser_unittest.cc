@@ -208,6 +208,29 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
+    // Configuration 7: two host databases
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"preferred-lifetime\": 3000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"hosts-databases\": [ {"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest1\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      },{"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest2\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      }"
+    "    ]"
+    "}",
+
     // Last configuration for comments
     "{"
     "    \"comment\": \"A DHCPv6 server\","
@@ -4119,7 +4142,43 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::1"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("2001:db8:1::abcd", subnet->getRelayInfo().addr_.toText());
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db8:1::abcd")));
+}
+
+// This test checks if it is possible to specify a list of relays
+TEST_F(Dhcp6ParserTest, subnetRelayInfoList) {
+    // A config with relay information.
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"relay\": { "
+        "        \"ip-addresses\": [ \"2001:db9::abcd\", \"2001:db9::abce\" ]"
+        "    },"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+        selectSubnet(IOAddress("2001:db9::abcd"), classify_, true);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db9::abcd")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("2001:db9::abce")));
 }
 
 // Goal of this test is to verify that multiple subnets can be configured
@@ -5985,7 +6044,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s);
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id1.equals(s->getInterfaceId()));
-    EXPECT_EQ(IOAddress("1111::1"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("1111::1")));
     EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
@@ -5996,7 +6055,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     s = checkSubnet(*subs, "2001:db2::/48", 100, 200, 300, 400);
     ASSERT_TRUE(s->getInterfaceId());
     EXPECT_TRUE(iface_id2.equals(s->getInterfaceId()));
-    EXPECT_EQ(IOAddress("2222::2"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("2222::2")));
     EXPECT_TRUE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
@@ -6011,7 +6070,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // This subnet should derive its renew-timer from global scope.
     s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
     EXPECT_FALSE(s->getInterfaceId());
-    EXPECT_EQ(IOAddress("::"), s->getRelayInfo().addr_);
+    EXPECT_FALSE(s->hasRelays());
     EXPECT_FALSE(s->getRapidCommit());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
@@ -6179,9 +6238,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     // Let's check the first one.
     SharedNetwork6Ptr net = nets->at(0);
     ASSERT_TRUE(net);
-
-    auto classes = net->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", net->getClientClass());
 
     const Subnet6Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
@@ -6191,16 +6248,13 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     // shared-network level.
     Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", s->getClientClass());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("beta")); // beta defined on subnet level
-    EXPECT_FALSE(classes.contains("alpha")); // alpha defined on shared-network level
+    EXPECT_EQ("beta", s->getClientClass()); // beta defined on subnet level
 
     // Ok, now check the second shared network. It doesn't have
     // anything defined on shared-network or subnet level, so
@@ -6214,8 +6268,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
 
     // This subnet should derive its renew-timer from global scope.
     s = checkSubnet(*subs, "2001:db3::/48", 900, 1800, 3600, 7200);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.empty());
+    EXPECT_TRUE(s->getClientClass().empty());
 }
 
 // Tests if rapid-commit is derived properly.
@@ -6314,10 +6367,28 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
               "shared-network or the shared-network itself used rapid-commit true");
 }
 
+// This test checks multiple host data sources.
+TEST_F(Dhcp6ParserTest, hostsDatabases) {
+
+    string config = PARSER_CONFIGS[7];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Check database config
+    ConstCfgDbAccessPtr cfgdb =
+        CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+    ASSERT_TRUE(cfgdb);
+    const std::list<std::string>& hal = cfgdb->getHostDbAccessStringList();
+    ASSERT_EQ(2, hal.size());
+    // Keywords are in alphabetical order
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
+}
+
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp6ParserTest, comments) {
 
-    string config = PARSER_CONFIGS[7];
+    string config = PARSER_CONFIGS[8];
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 

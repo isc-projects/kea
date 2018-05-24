@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,21 +18,26 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-Network::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
-    :addr_(addr) {
+void
+Network::RelayInfo::addAddress(const asiolink::IOAddress& addr) {
+    if (containsAddress(addr)) {
+        isc_throw (BadValue, "RelayInfo already contains address: "
+                   << addr.toText());
+    }
+
+    addresses_.push_back(addr);
 }
 
 bool
-Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (white_list_.empty()) {
-        // There is no class defined for this network, so we do
-        // support everyone.
-        return (true);
-    }
+Network::RelayInfo::hasAddresses() const {
+    return (!addresses_.empty());
+}
 
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
+bool
+Network::RelayInfo::containsAddress(const asiolink::IOAddress& addr) const {
+    for (auto address = addresses_.begin(); address != addresses_.end();
+         ++address) {
+        if ((*address) == addr) {
             return (true);
         }
     }
@@ -40,9 +45,57 @@ Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
     return (false);
 }
 
+const IOAddressList&
+Network::RelayInfo::getAddresses() const {
+    return (addresses_);
+}
+
+void
+Network::addRelayAddress(const asiolink::IOAddress& addr) {
+    relay_.addAddress(addr);
+}
+
+bool
+Network::hasRelays() const {
+    return (relay_.hasAddresses());
+}
+
+bool
+Network::hasRelayAddress(const asiolink::IOAddress& addr) const {
+    return (relay_.containsAddress(addr));
+}
+
+const IOAddressList&
+Network::getRelayAddresses() const {
+    return (relay_.getAddresses());
+}
+
+bool
+Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
+    if (client_class_.empty()) {
+        // There is no class defined for this network, so we do
+        // support everyone.
+        return (true);
+    }
+
+    return (classes.contains(client_class_));
+}
+
 void
 Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    white_list_.insert(class_name);
+    client_class_ = class_name;
+}
+
+void
+Network::requireClientClass(const isc::dhcp::ClientClass& class_name) {
+    if (!required_classes_.contains(class_name)) {
+        required_classes_.insert(class_name);
+    }
+}
+
+const ClientClasses&
+Network::getRequiredClasses() const {
+    return (required_classes_);
 }
 
 ElementPtr
@@ -58,19 +111,31 @@ Network::toElement() const {
         map->set("interface", Element::create(iface));
     }
 
-    // Set relay info
-    const RelayInfo& relay_info = getRelayInfo();
-    ElementPtr relay = Element::createMap();
-    relay->set("ip-address", Element::create(relay_info.addr_.toText()));
-    map->set("relay", relay);
+    ElementPtr relay_map = Element::createMap();
+    ElementPtr address_list = Element::createList();
+    const IOAddressList addresses =  getRelayAddresses();
+    for (auto address = addresses.begin(); address != addresses.end(); ++address) {
+        address_list->add(Element::create((*address).toText()));
+    }
+
+    relay_map->set("ip-addresses", address_list);
+    map->set("relay", relay_map);
 
     // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
+    const ClientClass& cclass = getClientClass();
+    if (!cclass.empty()) {
+        map->set("client-class", Element::create(cclass));
+    }
+
+    // Set require-client-classes
+    const ClientClasses& classes = getRequiredClasses();
+    if (!classes.empty()) {
+        ElementPtr class_list = Element::createList();
+        for (ClientClasses::const_iterator it = classes.cbegin();
+             it != classes.cend(); ++it) {
+            class_list->add(Element::create(*it));
+        }
+        map->set("require-client-classes", class_list);
     }
 
     // Set renew-timer

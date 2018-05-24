@@ -39,6 +39,16 @@ Url::getHostname() const {
     return (hostname_);
 }
 
+std::string
+Url::getStrippedHostname() const {
+    std::string hostname = getHostname();
+    if ((hostname.length() >= 2) && (hostname.at(0) == '[')) {
+        return (hostname.substr(1, hostname.length() - 2));
+    }
+
+    return (hostname);
+}
+
 unsigned
 Url::getPort() const {
     checkValid();

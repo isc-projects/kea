@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,9 +12,10 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
 
 #include <gtest/gtest.h>
@@ -44,7 +45,8 @@ public:
 
         // Connect to the database
         try {
-            HostDataSourceFactory::create(validMySQLConnectionString());
+            HostMgr::create();
+            HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -54,7 +56,7 @@ public:
             throw;
         }
 
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief Destroys the HDS and the schema.
@@ -64,7 +66,8 @@ public:
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
-        HostDataSourceFactory::destroy();
+        HostMgr::delAllBackends();
+        hdsptr_.reset();
         destroyMySQLSchema();
     }
 
@@ -91,9 +94,9 @@ public:
     /// Parameter is ignored for MySQL backend as the v4 and v6 leases share
     /// the same database.
     void reopen(Universe) {
-        HostDataSourceFactory::destroy();
-        HostDataSourceFactory::create(validMySQLConnectionString());
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        HostMgr::create();
+        HostMgr::addBackend(validMySQLConnectionString());
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief returns number of rows in a table
@@ -156,12 +159,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     destroyMySQLSchema();
     createMySQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        HostDataSourceFactory::create(validMySQLConnectionString());
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(validMySQLConnectionString()));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -169,14 +172,14 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
-        HostDataSourceFactory::create(connection_string);
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -184,45 +187,45 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the host data source when
+    // Check that attempting to get an instance of the host manager when
     // none is set throws an exception.
-    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
+    EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
     // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 

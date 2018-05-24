@@ -20,7 +20,7 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     :id_(getNextID()), first_(first), last_(last), type_(type),
-     capacity_(0), cfg_option_(new CfgOption()), white_list_(),
+     capacity_(0), cfg_option_(new CfgOption()), client_class_(""),
      last_allocated_(first), last_allocated_valid_(false) {
 }
 
@@ -29,24 +29,11 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
 }
 
 bool Pool::clientSupported(const ClientClasses& classes) const {
-    if (white_list_.empty()) {
-        // There is no class defined for this pool, so we do
-        // support everyone.
-        return (true);
-    }
-
-    for (ClientClasses::const_iterator it = white_list_.begin();
-         it != white_list_.end(); ++it) {
-        if (classes.contains(*it)) {
-            return (true);
-        }
-    }
-
-    return (false);
+    return (client_class_.empty() || classes.contains(client_class_));
 }
 
 void Pool::allowClientClass(const ClientClass& class_name) {
-    white_list_.insert(class_name);
+    client_class_ = class_name;
 }
 
 std::string
@@ -112,12 +99,20 @@ Pool::toElement() const {
     map->set("option-data", opts->toElement());
 
     // Set client-class
-    const ClientClasses& cclasses = getClientClasses();
-    if (cclasses.size() > 1) {
-        isc_throw(ToElementError, "client-class has too many items: "
-                  << cclasses.size());
-    } else if (!cclasses.empty()) {
-        map->set("client-class", Element::create(*cclasses.cbegin()));
+    const ClientClass& cclass = getClientClass();
+    if (!cclass.empty()) {
+        map->set("client-class", Element::create(cclass));
+    }
+
+    // Set require-client-classes
+    const ClientClasses& classes = getRequiredClasses();
+    if (!classes.empty()) {
+        ElementPtr class_list =Element::createList();
+        for (ClientClasses::const_iterator it = classes.cbegin();
+             it != classes.cend(); ++it) {
+            class_list->add(Element::create(*it));
+        }
+        map->set("require-client-classes", class_list);
     }
 
     return (map);

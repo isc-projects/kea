@@ -210,7 +210,7 @@ public:
     /// such subnet by inspecting "last allocation" timestamps. The one with most
     /// recent timestamp is selected.
     ///
-    /// The preferred subnet must also fulfil the condition of equal client classes
+    /// The preferred subnet must also fulfil the condition of equal client class
     /// with the @c selected_subnet.
     ///
     /// @param subnets Container holding subnets belonging to this shared
@@ -228,7 +228,7 @@ public:
 
         auto preferred_subnet = selected_subnet;
         for (auto s = subnets.begin(); s != subnets.end(); ++s) {
-            if (((*s)->getClientClasses() == selected_subnet->getClientClasses()) &&
+            if (((*s)->getClientClass() == selected_subnet->getClientClass()) &&
                 ((*s)->getLastAllocatedTime(lease_type) >
                  selected_subnet->getLastAllocatedTime(lease_type))) {
                 preferred_subnet = (*s);

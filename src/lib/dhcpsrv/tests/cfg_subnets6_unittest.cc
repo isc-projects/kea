@@ -132,9 +132,9 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {
     EXPECT_FALSE(cfg.selectSubnet(selector));
 
     // Now specify relay information.
-    subnet1->setRelayInfo(IOAddress("2001:db8:ff::1"));
-    subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
-    subnet3->setRelayInfo(IOAddress("2001:db8:ff::3"));
+    subnet1->addRelayAddress(IOAddress("2001:db8:ff::1"));
+    subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
+    subnet3->addRelayAddress(IOAddress("2001:db8:ff::3"));
 
     // And try again. This time relay-info is there and should match.
     selector.first_relay_linkaddr_ = IOAddress("2001:db8:ff::1");
@@ -436,8 +436,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet1->setInterfaceId(ifaceid);
     subnet1->allowClientClass("foo");
     subnet2->setIface("lo");
-    subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
+    subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
     subnet3->setIface("eth1");
+    subnet3->requireClientClass("foo");
+    subnet3->requireClientClass("bar");
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -454,10 +456,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"interface-id\": \"relay.eth0\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -469,10 +471,10 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "},{\n"
         "    \"id\": 124,\n"
         "    \"subnet\": \"2001:db8:2::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"2001:db8:ff::2\" },\n"
         "    \"interface\": \"lo\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ \"2001:db8:ff::2\" ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -484,17 +486,18 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "},{\n"
         "    \"id\": 125,\n"
         "    \"subnet\": \"2001:db8:3::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"interface\": \"eth1\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
-        "    \"option-data\": [ ]\n"
+        "    \"option-data\": [ ],\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
         "} ]\n";
     runToElementTest<CfgSubnets6>(expected, cfg);
 }
@@ -517,6 +520,7 @@ TEST(CfgSubnets6Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
+    pool2->requireClientClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -527,9 +531,9 @@ TEST(CfgSubnets6Test, unparsePool) {
         "{\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -542,9 +546,10 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"option-data\": [ ]\n"
         "        },{\n"
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
-        "            \"client-class\": \"bar\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"client-class\": \"bar\",\n"
+        "            \"require-client-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -569,6 +574,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"foo\": [ \"bar\" ] }");
     pdpool1->setContext(ctx1);
+    pdpool1->requireClientClass("bar");
+    pdpool2->allowClientClass("bar");
 
     subnet->addPool(pdpool1);
     subnet->addPool(pdpool2);
@@ -579,9 +586,9 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "{\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
-        "    \"relay\": { \"ip-address\": \"::\" },\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
+        "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
         "    \"rapid-commit\": false,\n"
@@ -593,7 +600,8 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"prefix-len\": 48,\n"
         "            \"delegated-len\": 64,\n"
         "            \"user-context\": { \"foo\": [ \"bar\" ] },\n"
-        "            \"option-data\": [ ]\n"
+        "            \"option-data\": [ ],\n"
+        "            \"require-client-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"

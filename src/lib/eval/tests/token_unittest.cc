@@ -2193,6 +2193,36 @@ TEST_F(TokenTest, operatorOrTrue) {
     EXPECT_TRUE(checkFile());
 }
 
+// This test verifies client class membership
+TEST_F(TokenTest, member) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenMember("foo")));
+
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // the packet has no classes so false was left on the stack
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+
+    // Add bar and retry
+    pkt4_->addClass("bar");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // the packet has a class but it is not foo
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+
+    // Add foo and retry
+    pkt4_->addClass("foo");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // Now the packet is in the foo class
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
+}
+
 // This test verifies if expression vendor[4491].exists works properly in DHCPv4.
 TEST_F(TokenTest, vendor4SpecificVendorExists) {
     // Case 1: no option, should evaluate to false

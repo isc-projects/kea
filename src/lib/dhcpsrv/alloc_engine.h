@@ -386,6 +386,9 @@ public:
         /// @brief Holds addresses and prefixes allocated for all IAs.
         ResourceContainer allocated_resources_;
 
+        /// @brief A collection of newly allocated leases.
+        Lease6Collection new_leases_;
+
         //@}
 
         /// @brief Parameters pertaining to individual IAs.

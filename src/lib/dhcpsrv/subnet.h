@@ -96,7 +96,7 @@ public:
     /// not recognized (which is unlikely).
     boost::posix_time::ptime getLastAllocatedTime(const Lease::Type& lease_type) const;
 
-    /// @brief sets the last address that was tried from this pool
+    /// @brief sets the last address that was tried from this subnet
     ///
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next

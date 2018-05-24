@@ -2220,14 +2220,13 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
-    // We need to set the default ip-address to something.
-    Network::RelayInfoPtr result(new Network::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V4);
 
-    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
     EXPECT_NO_THROW(parser.parse(result, json));
-    EXPECT_EQ("192.0.2.1", result->addr_.toText());
+    EXPECT_TRUE(result->containsAddress(IOAddress("192.0.2.1")));
 }
 
 /// @brief Checks that a bogus relay info structure for IPv4 is rejected.
@@ -2253,8 +2252,8 @@ TEST_F(ParseConfigTest, bogusRelayInfo4) {
         "    }";
     ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
 
-    // We need to set the default ip-address to something.
-    Network::RelayInfoPtr result(new Network::RelayInfo(IOAddress::IPV4_ZERO_ADDRESS()));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V4);
 
@@ -2278,13 +2277,13 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
-    // We need to set the default ip-address to something.
-    Network::RelayInfoPtr result(new Network::RelayInfo(asiolink::IOAddress("::")));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V6);
-    // Subnet4 parser will pass :: to the RelayInfoParser
+
     EXPECT_NO_THROW(parser.parse(result, json));
-    EXPECT_EQ("2001:db8::1", result->addr_.toText());
+    EXPECT_TRUE(result->containsAddress(IOAddress("2001:db8::1")));
 }
 
 /// @brief Checks that a valid relay info structure for IPv6 can be handled
@@ -2310,8 +2309,8 @@ TEST_F(ParseConfigTest, bogusRelayInfo6) {
         "    }";
     ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
 
-    // We need to set the default ip-address to something.
-    Network::RelayInfoPtr result(new Network::RelayInfo(asiolink::IOAddress("::")));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V6);
 

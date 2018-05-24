@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,29 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             shared_network->setContext(user_context);
         }
 
+        if (shared_network_data->contains("require-client-classes")) {
+            const std::vector<data::ElementPtr>& class_list =
+                shared_network_data->get("require-client-classes")->listValue();
+            for (auto cclass = class_list.cbegin();
+                 cclass != class_list.cend(); ++cclass) {
+                if (((*cclass)->getType() != Element::string) ||
+                    (*cclass)->stringValue().empty()) {
+                    isc_throw(DhcpConfigError, "invalid class name ("
+                              << (*cclass)->getPosition() << ")");
+                }
+                shared_network->requireClientClass((*cclass)->stringValue());
+            }
+        }
+
+        if (shared_network_data->contains("relay")) {
+            auto relay_parms = shared_network_data->get("relay");
+            if (relay_parms) {
+                RelayInfoParser parser(Option::V4);
+                Network::RelayInfoPtr relay_info(new Network::RelayInfo());
+                parser.parse(relay_info, relay_parms);
+                shared_network->setRelayInfo(*relay_info);
+            }
+        }
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;
@@ -123,6 +146,20 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             shared_network->setContext(user_context);
         }
 
+        if (shared_network_data->contains("require-client-classes")) {
+            const std::vector<data::ElementPtr>& class_list =
+                shared_network_data->get("require-client-classes")->listValue();
+            for (auto cclass = class_list.cbegin();
+                 cclass != class_list.cend(); ++cclass) {
+                if (((*cclass)->getType() != Element::string) ||
+                    (*cclass)->stringValue().empty()) {
+                    isc_throw(DhcpConfigError, "invalid class name ("
+                              << (*cclass)->getPosition() << ")");
+                }
+                shared_network->requireClientClass((*cclass)->stringValue());
+            }
+        }
+
         if (shared_network_data->contains("subnet6")) {
             auto json = shared_network_data->get("subnet6");
 
@@ -138,6 +175,15 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             }
         }
 
+        if (shared_network_data->contains("relay")) {
+            auto relay_parms = shared_network_data->get("relay");
+            if (relay_parms) {
+                RelayInfoParser parser(Option::V6);
+                Network::RelayInfoPtr relay_info(new Network::RelayInfo());
+                parser.parse(relay_info, relay_parms);
+                shared_network->setRelayInfo(*relay_info);
+            }
+        }
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");

@@ -1,0 +1,224 @@
+// This is an example configuration file for the DHCPv4 server in Kea
+// illustrating the configuration of the RADIUS and Host Cache hooks libraries.
+//
+// It is not intended to be used as is. It tries to showcase some of the
+// parameters available.
+//
+// To use this configuration file, you need to have both RADIUS and
+// Host Cache hooks. These are currently available to support customers only.
+//
+// clients get a wine name (option AOP code 250) divided into red and white.
+// Expensive brands have a host entry, i.e. a reserved address.
+//
+// Names
+//
+// brouilly (red)
+// chablis (white)
+// chambertin (red, expensive)
+// chinon (red)
+// chiroubles (red)
+// condrieu (white)
+// cornas (red)
+// corton (red)
+// fleurie (red)
+// givry (red)
+// margaux (red, expensive)
+// meursault (white)
+// montrachet (white, expensive)
+// morgon (red)
+// muscadet (white)
+// petrus (red, expensive)
+// riesling (white)
+// romanee (red, expensive)
+// sylvaner (white)
+// yquem (white, expensive)
+//
+// Address space is 192.0.2.0/24 with 10-99 for reds and 110-199 for whites.
+//
+// Reservations are given here in Kea/JSON style but they must be
+// in the RADIUS server configuration:
+//
+//       {
+//          "flex-id": "'chambertin'",
+//          "ip-address": "192.0.2.10"
+//       },
+//       {
+//          "flex-id": "'margaux'",
+//          "ip-address": "192.0.2.11"
+//       },
+//       {
+//          "flex-id": "'petrus'",
+//          "ip-address": "192.0.2.12"
+//       },
+//       {
+//          "flex-id": "'romanee'",
+//          "ip-address": "192.0.2.13"
+//       },
+//       {
+//          "flex-id": "'montrachet'",
+//          "ip-address": "192.0.2.110"
+//       },
+//       {
+//          "flex-id": "'yquem'",
+//          "ip-address": "192.0.2.111"
+//       }
+//
+
+{"Dhcp4":
+
+{
+  // Kea is told to listen on specfic interfaces only.
+  "interfaces-config": {
+    // You should probably list your network interfaces here (e.g. "en0")
+    "interfaces": [ "en0" ]
+  },
+
+  // Set up the storage for leases.
+  "lease-database": {
+    "type": "memfile"
+  },
+
+  // Note there is hosts-database defined. RADIUS and Host Cache libraries
+  // will create them dynamically.
+
+  // RADIUS uses flex-id reservations, so restrict Kea to use flex-id only.
+  "host-reservation-identifiers": [ "flex-id" ],
+
+  // Define the AOP option.
+  "option-def": [ {
+      "name": "AOP",
+      "code": 250,
+      "type": "string" } ],
+
+  // Define red and white client classes.
+  // If they are not defined we can get spurious warnings.
+  "client-classes": [
+      { "name": "red" },
+      { "name": "white" } ],
+
+  // Define a subnet.
+  "subnet4": [ {
+      // Set the subnet ID (aka RADIUS NAS port).
+      "id": 14,
+      "subnet": "192.0.2.0/24",
+      "interface": "en0",
+      "pools": [
+         {
+            // Red pool (10-19 are for reservations)
+            "pool": "192.0.2.20-192.0.2.99",
+            "client-class": "red"
+         },
+         {
+            // White pool (110-119 are for reservations)
+            "pool": "192.0.2.120-192.0.2.199",
+            "client-class": "white"
+         }
+
+          // Note there are not pools available to anyone. This is
+          // important to note. This means that to get an address, the
+          // client needs to belong to red class, to white class or
+          // have an address reserved.
+      ]
+    } ],
+
+  // Set up the hooks libraries.
+  "hooks-libraries": [
+     {
+        // Load the flex-id hook library.
+        "library": "/usr/local/lib/hooks/libdhcp_flex_id.so",
+
+        "parameters": {
+            // Take the ID from the AOP option.
+            "identifier-expression": "option[250].text",
+
+            // Replace the client ID in queries by the flex-id.
+            // Currently required by access code.
+            // Required for accounting as it will become the lease ID too.
+            "replace-client-id": true
+        }
+     },
+     {
+         // Load the host cache hook library. It is needed by the RADIUS
+         // library to keep the attributes from authorization to later user
+         // for accounting.
+         "library": "/usr/local/lib/hooks/libdhcp_host_cache.so"
+     },
+     {
+         // Load the RADIUS hook library.
+         "library": "/usr/local/lib/hooks/libdhcp_radius.so",
+
+         "parameters": {
+             // If do not use RFC 4361
+             // "extract-duid": false,
+
+             // If have conflicting subnets
+             // "reselect-subnet-pool": true,
+
+             // Strip the 0 type added by flex-id
+             "client-id-pop0": true,
+
+             // flex Id is printable (far easier for the RADIUS server config)
+             // Without this it will be in hexadecimal...
+             "client-id-printable": true,
+
+             // Use the flex-id.
+             "identifier-type4": "flex-id",
+
+             // Configure an access (aka authentication/authorization) server.
+             "access": {
+
+                 // This starts the list of access servers
+                 "servers": [
+                     {
+                         // These are parameters for the first (and only) access server
+                         "name": "127.0.0.1",
+                         "port": 1812,
+                         "secret": "secret"
+                     }
+                     // Additional access servers could be specified here
+                 ],
+
+                 // This define a list of additional attributes Kea will send to each
+                 // access server in Access-Request.
+                 "attributes": [
+                 {
+                     // This attribute is identified by name (must be present in the
+                     // dictionary) and has static value (i.e. the same value will be
+                     // sent to every server for every packet)
+                     "name": "Password",
+                     "data": "mysecretpassword"
+                 },
+                 {
+                     // It's also possible to specify an attribute using its type,
+                     // rather than a name. 77 is Connect-Info. The value is specified
+                     // using hex. Again, this is a static value. It will be sent the
+                     // same for every packet and to every server.
+                     "type": 77,
+                     "raw": "65666a6a71"
+                 },
+                 {
+                     // This example shows how an expression can be used to send dynamic
+                     // value. The expression (see Section 13) may take any value from
+                     // the incoming packet or even its metadata (e.g. the interface
+                     // it was received over from)
+                     "name": "Configuration-Token",
+                     "expr": "pkt.iface"
+                 }
+                 ] // End of attributes
+              },
+
+             // Configure an accouting server.
+             "accounting": {
+                 "servers": [ {
+                         "name": "127.0.0.1",
+                         "port": 1813,
+                         "secret": "secret"
+                     }
+                ]
+             }
+         }
+     }
+     ]
+}
+
+}

@@ -204,35 +204,36 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     destroyPgSQLSchema(true);
 }
 
-/// @brief Flag used to detect calls to db_lost_callback function
-bool callback_called = false;
+/// @brief Test fixture class for validating @c LeaseMgr using
+/// PostgreSQL as back end and PostgreSQL connectivity loss.
+class PgSqlLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
+public:
+    virtual void destroySchema() {
+        test::destroyPgSQLSchema();
+    }
 
-/// @brief Callback function used in open database testing
-bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
-    return (callback_called = true);
+    virtual void createSchema() {
+        test::createPgSQLSchema();
+    }
+
+    virtual std::string validConnectString() {
+        return (test::validPgSQLConnectionString());
+    }
+
+    virtual std::string invalidConnectString() {
+        return (connectionString(PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST,
+                        VALID_USER, VALID_PASSWORD));
+    }
+};
+
+// Verifies that db lost callback is not invoked on an open failure
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    testDbLostCallback();
 }
 
-/// @brief Make sure open failures do NOT invoke db lost callback
-/// The db lost callback should only be invoked after succesfully
-/// opening the DB and then subsequently losing it. Failing to
-/// open should be handled directly by the application layer.
-/// There is simply no good way to break the connection in a
-/// unit test environment.  So testing the callback invocation
-/// in a unit test is next to impossible. That has to be done
-/// as a system test.
-TEST(PgSqlOpenTest, NoCallbackOnOpenFail) {
-    // Schema needs to be created for the test to work.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
-
-    callback_called = false;
-    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD),
-        db_lost_callback),
-        DbOpenError);
-    EXPECT_FALSE(callback_called);
-
-    destroyPgSQLSchema();
+// Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testDbLostCallback) {
+    testDbLostCallback();
 }
 
 /// @brief Check the getType() method
@@ -351,6 +352,16 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4SubnetId) {
 // This test checks that all IPv4 leases are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
+}
+
+// This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetId) {
+    testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6) {
+    testGetLeases6();
 }
 
 /// @brief Basic Lease4 Checks
@@ -527,6 +538,16 @@ TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
 /// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
+}
+
+// Tests v4 lease stats query variants.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery4) {
+    testLeaseStatsQuery4();
+}
+
+// Tests v6 lease stats query variants.
+TEST_F(PgSqlLeaseMgrTest, leaseStatsQuery6) {
+    testLeaseStatsQuery6();
 }
 
 }  // namespace

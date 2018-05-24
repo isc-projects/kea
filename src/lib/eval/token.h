@@ -800,6 +800,40 @@ public:
     void evaluate(Pkt& pkt, ValueStack& values);
 };
 
+/// @brief Token that represents client class membership
+///
+/// For example "not member('foo')" is the complement of class foo
+class TokenMember : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param client_class client class name
+    TokenMember(const std::string& client_class)
+        :client_class_(client_class){
+    }
+
+    /// @brief Token evaluation (check if client_class_ was added to
+    /// packet client classes)
+    ///
+    /// @param pkt the class name will be check from this packet's client classes
+    /// @param values true (if found) or false (if not found) will be pushed here
+    void evaluate(Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns client class name
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenMember with correct parameters.
+    ///
+    /// @return client class name the token expects to check membership.
+    const ClientClass& getClientClass() const {
+        return (client_class_);
+    }
+
+protected:
+    /// @brief The client class name
+    ClientClass client_class_;
+};
+
 /// @brief Token that represents vendor options in DHCPv4 and DHCPv6.
 ///
 /// It covers vendor independent vendor information option (125, DHCPv4)

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -1397,7 +1398,7 @@ public:
         IOAddress requested_address = exp_addr1.empty() ? IOAddress::IPV6_ZERO_ADDRESS() :
             IOAddress(exp_addr1);
         ASSERT_NO_THROW(client1.requestAddress(0xabca0, requested_address));
-        testAssigned([this, &client1] {
+        testAssigned([&client1] {
             ASSERT_NO_THROW(client1.doSolicit());
         });
 
@@ -1427,7 +1428,7 @@ public:
         // first subnet is already full (it's a really small subnet) and the second
         // subnet does not allow rapid-commit.
         ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-        testAssigned([this, &client2] {
+        testAssigned([&client2] {
             ASSERT_NO_THROW(client2.doSolicit());
         });
 
@@ -1452,6 +1453,41 @@ public:
             // And that it doesn't have any leases.
             EXPECT_EQ(0, client1.getLeaseNum());
         }
+    }
+
+    /// @brief Check precedence.
+    ///
+    /// @param config the configuration.
+    /// @param ns_address expected name server address.
+    void testPrecedence(const std::string& config, const std::string& ns_address) {
+        // Create client and set DUID to the one that has a reservation.
+        Dhcp6Client client;
+        client.setInterface("eth1");
+        client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
+        client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+        // Request dns-servers.
+        client.requestOption(D6O_NAME_SERVERS);
+
+        // Create server configuration.
+        configure(config, *client.getServer());
+
+        // Perform SARR.
+        ASSERT_NO_THROW(client.doSARR());
+
+        // Check response.
+        EXPECT_EQ(1, client.getLeaseNum());
+        Pkt6Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+
+        // Check dns-servers option.
+        OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+        ASSERT_TRUE(opt);
+        Option6AddrLstPtr servers =
+            boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+        ASSERT_TRUE(servers);
+        auto addrs = servers->getAddresses();
+        ASSERT_EQ(1, addrs.size());
+        EXPECT_EQ(ns_address, addrs[0].toText());
     }
 
     /// @brief Destructor.
@@ -1502,7 +1538,7 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
 
     // Client #1 requests an address in first subnet within a shared network.
     ASSERT_NO_THROW(client1.requestAddress(0xabca0, IOAddress("2001:db8:1::20")));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -1512,7 +1548,7 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
@@ -1522,27 +1558,27 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     Dhcp6Client client3(client1.getServer());
     client3.setInterface("eth1");
     ASSERT_NO_THROW(client3.requestAddress(0xabca0));
-    testAssigned([this, &client3] {
+    testAssigned([&client3] {
         ASSERT_NO_THROW(client3.doSolicit(true));
     });
     EXPECT_EQ(0, client3.getLeaseNum());
 
     // Client #3 should be assigned an address if subnet 3 is selected for it.
     client3.setInterface("eth0");
-    testAssigned([this, &client3] {
+    testAssigned([&client3] {
         ASSERT_NO_THROW(client3.doSolicit(true));
     });
     EXPECT_EQ(1, client3.getLeaseNum());
 
     // Client #1 should be able to renew its lease.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRenew());
     });
     EXPECT_EQ(1, client1.getLeaseNum());
     EXPECT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client #2 should be able to renew its lease too.
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(1, client2.getLeaseNum());
@@ -1562,7 +1598,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
 
     // Client #1 should be assigned an address from shared network.
     ASSERT_NO_THROW(client1.requestAddress(0xabca0));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -1572,7 +1608,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
     Dhcp6Client client2(client1.getServer());
     client2.useRelay(true, IOAddress("3001::2"));
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
@@ -1591,7 +1627,7 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     // Provide a hint to an existing address within first subnet. This address
     // should be offered out of this subnet.
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSolicit(true));
     });
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20"),
@@ -1601,7 +1637,7 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     // the same shared network when we ask for it.
     client.clearRequestedIAs();
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:2::20")));
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSolicit(true));
     });
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20"),
@@ -1611,7 +1647,7 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     // an address from one of the subnets, but generally hard to tell from which one.
     client.clearRequestedIAs();
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3002::123")));
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSolicit(true));
     });
     std::vector<Lease6> leases = client.getLeasesByType(Lease::TYPE_NA);
@@ -1637,14 +1673,14 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // Client #1 requests an address in the restricted subnet but can't be assigned
     // this address because the client doesn't belong to a certain class.
     ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::20")));
 
     // Release the lease that the client has got, because we'll need this address
     // further in the test.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRelease());
     });
 
@@ -1653,7 +1689,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     client1.addExtraOption(option1234);
 
     // This time, the allocation of the address provided as hint should be successful.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -1662,7 +1698,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
@@ -1671,7 +1707,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // subnet to which client2 now belongs.
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[3], *client1.getServer()));
 
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(0, client2.getLeaseNum());
@@ -1680,7 +1716,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // get renewed.
     OptionPtr option1234_bis(new OptionUint16(Option::V6, 1234, 0x0002));
     client2.addExtraOption(option1234_bis);
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(1, client2.getLeaseNum());
@@ -1700,7 +1736,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
 
     // Client #1 should get his reserved address from the second subnet.
     ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::28")));
@@ -1712,7 +1748,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
 
     // Client #2 should get its reserved address from the first subnet.
     ASSERT_NO_THROW(client2.requestAddress(0xabca, IOAddress("2001:db8:1::30")));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::28")));
@@ -1725,7 +1761,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     // because its lease is now reserved for some other client. The client won't be
     // assigned a lease for which it has a reservation because another client holds
     // this lease.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRenew());
     });
     ASSERT_TRUE(client1.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:2::28")));
@@ -1738,14 +1774,14 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     }
 
     // Client #2 is now renewing its lease and should get its newly reserved address.
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     ASSERT_TRUE(client2.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1::28")));
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::28")));
 
     // Same for client #1.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRenew());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::28")));
@@ -1767,7 +1803,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationAccessRestrictedByClass) {
     // Assigned address should be allocated from the second subnet, because the
     // client doesn't belong to the "a-devices" class.
     ASSERT_NO_THROW(client.requestAddress(0xabca));
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::16")));
@@ -1777,7 +1813,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationAccessRestrictedByClass) {
     client.addExtraOption(option1234);
 
     // The client should now be assigned the reserved address from the first subnet.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doRenew());
     });
     ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:2::16")));
@@ -1800,7 +1836,7 @@ TEST_F(Dhcpv6SharedNetworkTest, renewalRestrictedByClass) {
 
     // Client requests an address from the second subnet which should be successful.
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("2001:db8:2::20")));
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::20")));
@@ -1811,7 +1847,7 @@ TEST_F(Dhcpv6SharedNetworkTest, renewalRestrictedByClass) {
     // The client should not be able to renew the existing lease because it is now
     // prohibited by the classification. Instead, the client should get a lease from the
     // unrestricted subnet.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doRenew());
     });
     ASSERT_TRUE(client.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:2::20")));
@@ -1839,7 +1875,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
 
     // Perform 4-way exchange and make sure we have been assigned address from the
     // subnet we wanted.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -1871,7 +1907,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
 
     // Perform 4-way exchange and make sure we have been assigned address from the
     // subnet we wanted.
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
@@ -1898,7 +1934,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
 
     // Perform 4-way exchange and make sure we have been assigned address from the
     // subnet we wanted.
-    testAssigned([this, &client3] {
+    testAssigned([&client3] {
         ASSERT_NO_THROW(client3.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client3, IOAddress("3000::1")));
@@ -1930,7 +1966,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
     // Send solicit without a hint. The client should be offerred an address from the
     // shared network. Depending on the subnet from which the address has been allocated
     // a specific value of the Name Servers option should be returned.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSolicit(true));
     });
 
@@ -1948,7 +1984,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
     client.clearRequestedIAs();
     client.requestAddress(0xabca, IOAddress("2001:db8:2::20"));
 
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSolicit(true));
     });
 
@@ -1956,7 +1992,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "5555::33"));
 
     // This time, let's do the 4-way exchange.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
 
@@ -1964,7 +2000,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_NAME_SERVERS, "5555::33"));
 
     // And renew the lease.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doRenew());
     });
     ASSERT_TRUE(client.hasLeaseForAddress(IOAddress("2001:db8:2::20")));
@@ -1986,7 +2022,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
 
     // Client #1 should be assigned an address from one of the two subnets
     // belonging to the first shared network.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     if (!hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")) &&
@@ -2001,7 +2037,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
 
     // Client #2 should be assigned an address from one of the two subnets
     // belonging to the second shared network.
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     if (!hasLeaseForAddress(client2, IOAddress("2001:db8:3::20")) &&
@@ -2023,7 +2059,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
 
     // Client #1 should be assigned an address from one of the two subnets
     // belonging to the first shared network.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     if (!hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")) &&
@@ -2038,7 +2074,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
 
     // Client #2 should be assigned an address from one of the two subnets
     // belonging to the second shared network
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     if (!hasLeaseForAddress(client2, IOAddress("2001:db8:3::20")) &&
@@ -2063,7 +2099,7 @@ TEST_F(Dhcpv6SharedNetworkTest, variousFieldsInReservation) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[10], *client.getServer()));
 
     // Perform 4-way exchange.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
 
@@ -2109,7 +2145,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[11], *client1.getServer()));
 
     // The client 1 should be offerred an address from the second subnet.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSolicit(true));
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::20"),
@@ -2125,7 +2161,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
     client2.addExtraOption(option1234);
 
     // Client 2 should be offerred an address from the first subnet.
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSolicit(true));
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::20"),
@@ -2149,7 +2185,7 @@ TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[0], *client.getServer()));
 
     // 4-way exchange.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
     // The two addresses should come from different subnets.
@@ -2160,7 +2196,7 @@ TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
     ASSERT_TRUE(hasLeaseForPrefixPool(client, IOAddress("5000::"), 96, 96));
 
     // Try to renew.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doRenew());
     });
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:1::20")));
@@ -2189,7 +2225,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[4], *client.getServer()));
 
     // 4-way exchange.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
     ASSERT_EQ(4, client.getLeaseNum());
@@ -2209,7 +2245,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     ASSERT_NE("1234::", leases_2222[0].addr_.toText());
 
     // Try to renew and check this again.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doRenew());
     });
     ASSERT_EQ(4, client.getLeaseNum());
@@ -2241,7 +2277,7 @@ TEST_F(Dhcpv6SharedNetworkTest, relaySpecifiedForEachSubnet) {
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[13], *client.getServer()));
 
     // 4-way exchange.
-    testAssigned([this, &client] {
+    testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
     ASSERT_EQ(2, client.getLeaseNum());
@@ -2267,7 +2303,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
 
     // Client #1 should be assigned an address from shared network.
     ASSERT_NO_THROW(client1.requestAddress(0xabca0));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -2278,7 +2314,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
     client2.useRelay(true, IOAddress("3001::2"));
     client2.useInterfaceId("vlan1000");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
@@ -2300,7 +2336,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
 
     // Client #1 should be assigned an address from shared network.
     ASSERT_NO_THROW(client1.requestAddress(0xabca0));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -2311,7 +2347,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
     client2.useRelay(true, IOAddress("3001::2"));
     client2.useInterfaceId("vlan1000");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
@@ -2349,14 +2385,14 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     // Client #1 requests an address in the restricted pool but can't be assigned
     // this address because the client doesn't belong to a certain class.
     ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::50")));
 
     // Release the lease that the client has got, because we'll need this address
     // further in the test.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRelease());
     });
 
@@ -2365,7 +2401,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     client1.addExtraOption(option1234);
 
     // This time, the allocation of the address provided as hint should be successful.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -2374,7 +2410,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::50")));
@@ -2383,7 +2419,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     // pool to which client2 now belongs.
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[20], *client1.getServer()));
 
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(0, client2.getLeasesWithNonZeroLifetime().size());
@@ -2392,7 +2428,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     // get renewed.
     OptionPtr option1234_bis(new OptionUint16(Option::V6, 1234, 0x0002));
     client2.addExtraOption(option1234_bis);
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(1, client2.getLeaseNum());
@@ -2412,14 +2448,14 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     // Client #1 requests an address in the restricted pool but can't be assigned
     // this address because the client doesn't belong to a certain class.
     ASSERT_NO_THROW(client1.requestAddress(0xabca, IOAddress("2001:db8:1::20")));
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::50")));
 
     // Release the lease that the client has got, because we'll need this address
     // further in the test.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRelease());
     });
 
@@ -2428,7 +2464,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     client1.addExtraOption(option1234);
 
     // This time, the allocation of the address provided as hint should be successful.
-    testAssigned([this, &client1] {
+    testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
@@ -2437,7 +2473,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     Dhcp6Client client2(client1.getServer());
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doSARR());
     });
     ASSERT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:1::50")));
@@ -2446,7 +2482,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     // pool to which client2 now belongs.
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[22], *client1.getServer()));
 
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(0, client2.getLeasesWithNonZeroLifetime().size());
@@ -2455,11 +2491,427 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     // get renewed.
     OptionPtr option1234_bis(new OptionUint16(Option::V6, 1234, 0x0002));
     client2.addExtraOption(option1234_bis);
-    testAssigned([this, &client2] {
+    testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
     EXPECT_EQ(1, client2.getLeaseNum());
     EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceGlobal) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::1");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceClass) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::2");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceClasses) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"beta\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        },"
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    // Class order is the insert order
+    testPrecedence(config, "2001:db8:1::2");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceNetworkClass) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::3");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceSubnet) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"dns-servers\","
+        "                           \"data\": \"2001:db8:1::4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::4");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedencePool) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"dns-servers\","
+        "                           \"data\": \"2001:db8:1::4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::5\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::5");
+}
+
+// Verify option processing precedence
+// Order is global < class < shared-network < subnet < pools < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
+    const std::string config =
+        "{"
+        "    \"option-data\": ["
+        "        {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "        {"
+        "            \"name\": \"alpha\","
+        "            \"test\": \"'' == ''\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::2\""
+        "                }"
+        "            ]"
+        "        }"
+        "    ],"
+        "    \"shared-networks\": ["
+        "        {"
+        "            \"name\": \"frog\","
+        "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"dns-servers\","
+        "                   \"data\": \"2001:db8:1::3\""
+        "                }"
+        "            ],"
+        "            \"subnet6\": ["
+        "                {"
+        "                    \"subnet\": \"2001:db8:1::/64\","
+        "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"dns-servers\","
+        "                           \"data\": \"2001:db8:1::4\""
+        "                        }"
+        "                    ],"
+        "                    \"pools\": ["
+        "                        {"
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::5\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ],"
+        "                    \"reservations\": ["
+        "                        {"
+        "                            \"duid\": \"00:03:00:01:aa:bb:cc:dd:ee:ff\","
+        "                            \"ip-addresses\": [ \"2001:db8:1::28\" ],"
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::6\""
+        "                                }"
+        "                            ]"
+        "                        }"
+        "                    ]"
+        "                }"
+        "            ]"
+        "        }"
+        "    ]"
+        "}";
+
+    testPrecedence(config, "2001:db8:1::6");
 }
 
 } // end of anonymous namespace
