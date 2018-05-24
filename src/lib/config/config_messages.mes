@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,7 +59,7 @@ when the timeout occurs during communication with a client. The error message
 includes details about the reason for failure.
 
 % COMMAND_SOCKET_CONNECTION_CLOSED Closed socket %1 for existing command connection
-This is an informational message that the socket created for handling
+This is a debug message indicating that the socket created for handling
 client's connection is closed. This usually means that the client disconnected,
 but may also mean a timeout.
 
@@ -69,7 +69,7 @@ command connection and/or removing it from the connections pool. The
 detailed error is provided as an argument.
 
 % COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection
-This is an informational message that a new incoming command connection was
+This is a debug message indicating that a new incoming command connection was
 detected and a dedicated socket was opened for that connection.
 
 % COMMAND_SOCKET_CONNECTION_SHUTDOWN_FAIL Encountered error %1 while trying to gracefully shutdown socket

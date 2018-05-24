@@ -18,7 +18,7 @@ BUILT_SOURCES = asiodns_messages.h asiodns_messages.cc
 
 lib_LTLIBRARIES = libkea-asiodns.la
 
-libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 0:1:0
+libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 0:2:0
 
 libkea_asiodns_la_SOURCES = io_fetch.cc io_fetch.h
 libkea_asiodns_la_SOURCES += logger.h logger.cc

@@ -165,10 +165,9 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
     const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
-        std::string joined_classes = boost::algorithm::join(classes, ", ");
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
             .arg(query_->getLabel())
-            .arg(joined_classes);
+            .arg(classes.toText());
     }
 };
 
@@ -211,10 +210,11 @@ Dhcpv4Exchange::initResponse4o6() {
     if (!query6->relay_info_.empty()) {
         resp6->copyRelayInfo(query6);
     }
-    // Copy interface and remote address
+    // Copy interface, and remote address and port
     resp6->setIface(query6->getIface());
     resp6->setIndex(query6->getIndex());
     resp6->setRemoteAddr(query6->getRemoteAddr());
+    resp6->setRemotePort(query6->getRemotePort());
     resp_.reset(new Pkt4o6(resp_, resp6));
 }
 
@@ -387,9 +387,10 @@ Dhcpv4Exchange::setHostIdentifiers() {
 void
 Dhcpv4Exchange::setReservedClientClasses() {
     if (context_->currentHost() && query_) {
-        BOOST_FOREACH(const std::string& client_class,
-                      context_->currentHost()->getClientClasses4()) {
-            query_->addClass(client_class);
+        const ClientClasses& classes = context_->currentHost()->getClientClasses4();
+        for (ClientClasses::const_iterator cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
+            query_->addClass(*cclass);
         }
     }
 }
@@ -422,7 +423,7 @@ const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
                      const bool direct_response_desired)
     : io_service_(new IOService()), shutdown_(true), alloc_engine_(), port_(port),
-      use_bcast_(use_bcast), network_state_(NetworkState::DHCPv4) {
+      use_bcast_(use_bcast), network_state_(new NetworkState(NetworkState::DHCPv4)) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
@@ -458,6 +459,9 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
+    // Discard any cached packets or parked packets
+    discardPackets();
+
     try {
         stopD2();
     } catch(const std::exception& ex) {
@@ -489,63 +493,25 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
+                        bool sanity_only) const {
 
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
-        return (selectSubnet4o6(query, drop));
+        return (selectSubnet4o6(query, drop, sanity_only));
     }
 
     Subnet4Ptr subnet;
 
-    SubnetSelector selector;
-    selector.ciaddr_ = query->getCiaddr();
-    selector.giaddr_ = query->getGiaddr();
-    selector.local_address_ = query->getLocalAddr();
-    selector.remote_address_ = query->getRemoteAddr();
-    selector.client_classes_ = query->classes_;
-    selector.iface_name_ = query->getIface();
-
-    // If the link-selection sub-option is present, extract its value.
-    // "The link-selection sub-option is used by any DHCP relay agent
-    // that desires to specify a subnet/link for a DHCP client request
-    // that it is relaying but needs the subnet/link specification to
-    // be different from the IP address the DHCP server should use
-    // when communicating with the relay agent." (RFC 3527)
-    //
-    // Try first Relay Agent Link Selection sub-option
-    OptionPtr rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (rai) {
-        OptionCustomPtr rai_custom =
-            boost::dynamic_pointer_cast<OptionCustom>(rai);
-        if (rai_custom) {
-            OptionPtr link_select =
-                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
-            if (link_select) {
-                OptionBuffer link_select_buf = link_select->getData();
-                if (link_select_buf.size() == sizeof(uint32_t)) {
-                    selector.option_select_ =
-                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
-                }
-            }
-        }
-    } else {
-        // Or Subnet Selection option
-        OptionPtr sbnsel = query->getOption(DHO_SUBNET_SELECTION);
-        if (sbnsel) {
-            OptionCustomPtr oc =
-                boost::dynamic_pointer_cast<OptionCustom>(sbnsel);
-            if (oc) {
-                selector.option_select_ = oc->readAddress();
-            }
-        }
-    }
+    const SubnetSelector& selector = CfgSubnets4::initSelector(query);
 
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+    // (skip callouts if the selectSubnet was called to do sanity checks only)
+    if (!sanity_only &&
+        HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -610,7 +576,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop) const {
 }
 
 isc::dhcp::Subnet4Ptr
-Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
+Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
+                           bool sanity_only) const {
 
     Subnet4Ptr subnet;
 
@@ -663,8 +630,10 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop) const {
     CfgMgr& cfgmgr = CfgMgr::instance();
     subnet = cfgmgr.getCurrentCfg()->getCfgSubnets4()->selectSubnet4o6(selector);
 
-    // Let's execute all callouts registered for subnet4_select
-    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+    // Let's execute all callouts registered for subnet4_select.
+    // (skip callouts if the selectSubnet was called to do sanity checks only)
+    if (!sanity_only &&
+        HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // We're reusing callout_handle from previous calls
@@ -831,7 +800,7 @@ Dhcpv4Srv::run_one() {
     }
 
     // If the DHCP service has been globally disabled, drop the packet.
-    if (!network_state_.isServiceEnabled()) {
+    if (!network_state_->isServiceEnabled()) {
         LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_BASIC,
                   DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
@@ -1353,12 +1322,25 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
         co_list.push_back(host->getCfgOption4());
     }
 
-    // Secondly, subnet configured options.
+    // Secondly, pool specific options.
+    Pkt4Ptr resp = ex.getResponse();
+    IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
+    if (resp) {
+        addr = resp->getYiaddr();
+    }
+    if (!addr.isV4Zero()) {
+        PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
+        if (pool && !pool->getCfgOption()->empty()) {
+            co_list.push_back(pool->getCfgOption());
+        }
+    }
+
+    // Thirdly, subnet configured options.
     if (!subnet->getCfgOption()->empty()) {
         co_list.push_back(subnet->getCfgOption());
     }
 
-    // Thirdly, shared network specific options.
+    // Forthly, shared network specific options.
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
     if (network && !network->getCfgOption()->empty()) {
@@ -1367,16 +1349,14 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // Each class in the incoming packet
     const ClientClasses& classes = ex.getQuery()->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.begin();
-         cclass != classes.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
         // Find the client class definition for this class
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
             getClientClassDictionary()->findClass(*cclass);
         if (!ccdef) {
-            // Not found: the class is not configured
-            if (((*cclass).size() <= VENDOR_CLASS_PREFIX.size()) ||
-                ((*cclass).compare(0, VENDOR_CLASS_PREFIX.size(), VENDOR_CLASS_PREFIX) != 0)) {
-                // Not a VENDOR_CLASS_* so should be configured
+            // Not found: the class is built-in or not configured
+            if (!isClientClassBuiltIn(*cclass)) {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
                     .arg(ex.getQuery()->getLabel())
                     .arg(*cclass);
@@ -2252,6 +2232,19 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     }
 }
 
+uint16_t
+Dhcpv4Srv::checkRelayPort(const Dhcpv4Exchange& ex) {
+
+    // Look for a relay-port RAI sub-option in the query.
+    const Pkt4Ptr& query = ex.getQuery();
+    const OptionPtr& rai = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai && rai->getOption(RAI_OPTION_RELAY_PORT)) {
+        // Got the sub-option so use the remote port set by the relay.
+        return (query->getRemotePort());
+    }
+    return (0);
+}
+
 void
 Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     adjustRemoteAddr(ex);
@@ -2278,7 +2271,9 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         response->setRemotePort(DHCP4_CLIENT_PORT);
 
     } else {
-        response->setRemotePort(DHCP4_SERVER_PORT);
+        // RFC 8357 section 5.1
+        uint16_t relay_port = checkRelayPort(ex);
+        response->setRemotePort(relay_port ? relay_port : DHCP4_SERVER_PORT);
     }
 
     CfgIfacePtr cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
@@ -2286,9 +2281,11 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         (cfg_iface->getSocketType() == CfgIface::SOCKET_UDP) &&
         (cfg_iface->getOutboundIface() == CfgIface::USE_ROUTING)) {
 
+        // Mark the response to follow routing
         response->setLocalAddr(IOAddress::IPV4_ZERO_ADDRESS());
-        response->setIface("");
         response->resetIndex();
+        // But keep the interface name
+        response->setIface(query->getIface());
 
     } else {
 
@@ -2322,8 +2319,8 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
         // may throw if for some reason the socket is closed.
         /// @todo Consider an optimization that we use local address from
         /// the query if this address is not broadcast.
-        response->setIface(query->getIface());
         response->setIndex(query->getIndex());
+        response->setIface(query->getIface());
     }
 
     response->setLocalPort(DHCP4_SERVER_PORT);
@@ -2468,16 +2465,16 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
     if (!classes.empty()) {
 
         // Let's get class definitions
-        const ClientClassDefMapPtr& defs = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->getClasses();
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
 
         // Now we need to iterate over the classes assigned to the
         // query packet and find corresponding class definitions for it.
-        for (ClientClasses::const_iterator name = classes.begin();
-             name != classes.end(); ++name) {
+        for (ClientClasses::const_iterator name = classes.cbegin();
+             name != classes.cend(); ++name) {
 
-            ClientClassDefMap::const_iterator cl = defs->find(*name);
-            if (cl == defs->end()) {
+            ClientClassDefPtr cl = dict->findClass(*name);
+            if (!cl) {
                 // Let's skip classes that don't have definitions. Currently
                 // these are automatic classes VENDOR_CLASS_something, but there
                 // may be other classes assigned under other circumstances, e.g.
@@ -2485,12 +2482,12 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                 continue;
             }
 
-            IOAddress next_server = cl->second->getNextServer();
+            IOAddress next_server = cl->getNextServer();
             if (!next_server.isV4Zero()) {
                 response->setSiaddr(next_server);
             }
 
-            const string& sname = cl->second->getSname();
+            const string& sname = cl->getSname();
             if (!sname.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
                 // tricky. reinterpret_cast is not the most elegant solution,
@@ -2501,7 +2498,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
                                    sname.size());
             }
 
-            const string& filename = cl->second->getFilename();
+            const string& filename = cl->getFilename();
             if (!filename.empty()) {
                 // Converting string to (const uint8_t*, size_t len) format is
                 // tricky. reinterpret_cast is not the most elegant solution,
@@ -2554,11 +2551,13 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         return (Pkt4Ptr());
     }
 
-    // Assign reserved classes.
-    ex.setReservedClientClasses();
-
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        // Assign reserved classes.
+        ex.setReservedClientClasses();
+        // Required classification
+        requiredClassify(ex);
+
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
@@ -2615,11 +2614,13 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         return (Pkt4Ptr());
     }
 
-    // Assign reserved classes.
-    ex.setReservedClientClasses();
-
     // Adding any other options makes sense only when we got the lease.
     if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+        // Assign reserved classes.
+        ex.setReservedClientClasses();
+        // Required classification
+        requiredClassify(ex);
+
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
         appendRequestedVendorOptions(ex);
@@ -2921,6 +2922,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
     Pkt4Ptr ack = ex.getResponse();
 
     ex.setReservedClientClasses();
+    requiredClassify(ex);
 
     buildCfgOptionList(ex);
     appendRequestedOptions(ex);
@@ -3010,9 +3012,10 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         return (false);
     }
     bool drop = false;
-    bool result = (!pkt->getLocalAddr().isV4Bcast() || selectSubnet(pkt, drop));
+    bool result = (!pkt->getLocalAddr().isV4Bcast() ||
+                   selectSubnet(pkt, drop, true));
     if (drop) {
-        // The packet must be dropped.
+        // The packet must be dropped but as sanity_only is true it is dead code.
         return (false);
     }
     return (result);
@@ -3226,19 +3229,27 @@ void Dhcpv4Srv::classifyByVendor(const Pkt4Ptr& pkt) {
 }
 
 void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    // All packets belongs to ALL.
+    pkt->addClass("ALL");
+
     // First phase: built-in vendor class processing
     classifyByVendor(pkt);
 
     // Run match expressions
     // Note getClientClassDictionary() cannot be null
-    const ClientClassDefMapPtr& defs_ptr = CfgMgr::instance().getCurrentCfg()->
-        getClientClassDictionary()->getClasses();
-    for (ClientClassDefMap::const_iterator it = defs_ptr->begin();
-         it != defs_ptr->end(); ++it) {
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    const ClientClassDefListPtr& defs_ptr = dict->getClasses();
+    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
+         it != defs_ptr->cend(); ++it) {
         // Note second cannot be null
-        const ExpressionPtr& expr_ptr = it->second->getMatchExpr();
+        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
+            continue;
+        }
+        // Not the right time if only when required
+        if ((*it)->getRequired()) {
             continue;
         }
         // Evaluate the expression which can return false (no match),
@@ -3247,22 +3258,113 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
             bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(options4_logger, EVAL_RESULT)
-                    .arg(it->first)
+                    .arg((*it)->getName())
                     .arg(status);
                 // Matching: add the class
-                pkt->addClass(it->first);
+                pkt->addClass((*it)->getName());
             } else {
                 LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
-                    .arg(it->first)
+                    .arg((*it)->getName())
                     .arg(status);
             }
         } catch (const Exception& ex) {
             LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg(it->first)
+                .arg((*it)->getName())
                 .arg(ex.what());
         } catch (...) {
             LOG_ERROR(options4_logger, EVAL_RESULT)
-                .arg(it->first)
+                .arg((*it)->getName())
+                .arg("get exception?");
+        }
+    }
+}
+
+void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
+    // First collect required classes
+    Pkt4Ptr query = ex.getQuery();
+    ClientClasses classes = query->getClasses(true);
+    Subnet4Ptr subnet = ex.getContext()->subnet_;
+
+    if (subnet) {
+        // Begin by the shared-network
+        SharedNetwork4Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            const ClientClasses& to_add = network->getRequiredClasses();
+            for (ClientClasses::const_iterator cclass = to_add.cbegin();
+                 cclass != to_add.cend(); ++cclass) {
+                classes.insert(*cclass);
+            }
+        }
+
+        // Followed by the subnet
+        const ClientClasses& to_add = subnet->getRequiredClasses();
+        for(ClientClasses::const_iterator cclass = to_add.cbegin();
+            cclass != to_add.cend(); ++cclass) {
+            classes.insert(*cclass);
+        }
+
+        // And finish by the pool
+        Pkt4Ptr resp = ex.getResponse();
+        IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
+        if (resp) {
+            addr = resp->getYiaddr();
+        }
+        if (!addr.isV4Zero()) {
+            PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
+            if (pool) {
+                const ClientClasses& to_add = pool->getRequiredClasses();
+                for (ClientClasses::const_iterator cclass = to_add.cbegin();
+                     cclass != to_add.cend(); ++cclass) {
+                    classes.insert(*cclass);
+                }
+            }
+        }
+
+        // host reservation???
+    }
+
+    // Run match expressions
+    // Note getClientClassDictionary() cannot be null
+    const ClientClassDictionaryPtr& dict =
+        CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        const ClientClassDefPtr class_def = dict->findClass(*cclass);
+        if (!class_def) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNDEFINED)
+                .arg(*cclass);
+            continue;
+        }
+        const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
+        // Nothing to do without an expression to evaluate
+        if (!expr_ptr) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNTESTABLE)
+                .arg(*cclass);
+            continue;
+        }
+        // Evaluate the expression which can return false (no match),
+        // true (match) or raise an exception (error)
+        try {
+            bool status = evaluateBool(*expr_ptr, *query);
+            if (status) {
+                LOG_INFO(options4_logger, EVAL_RESULT)
+                    .arg(*cclass)
+                    .arg(status);
+                // Matching: add the class
+                query->addClass(*cclass);
+            } else {
+                LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
+                    .arg(*cclass)
+                    .arg(status);
+            }
+        } catch (const Exception& ex) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(*cclass)
+                .arg(ex.what());
+        } catch (...) {
+            LOG_ERROR(options4_logger, EVAL_RESULT)
+                .arg(*cclass)
                 .arg("get exception?");
         }
     }
@@ -3276,8 +3378,8 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query)
         OptionDefinitionPtr def;
         // Iterate on client classes
         const ClientClasses& classes = query->getClasses();
-        for (ClientClasses::const_iterator cclass = classes.begin();
-             cclass != classes.end(); ++cclass) {
+        for (ClientClasses::const_iterator cclass = classes.cbegin();
+             cclass != classes.cend(); ++cclass) {
             // Get the client class definition for this class
             const ClientClassDefPtr& ccdef =
                 CfgMgr::instance().getCurrentCfg()->
@@ -3492,6 +3594,14 @@ int Dhcpv4Srv::getHookIndexBuffer4Send() {
 
 int Dhcpv4Srv::getHookIndexLease4Decline() {
     return (Hooks.hook_index_lease4_decline_);
+}
+
+void Dhcpv4Srv::discardPackets() {
+    // Clear any packets held by the callhout handle store and
+    // all parked packets
+    isc::dhcp::Pkt4Ptr pkt4ptr_empty;
+    isc::dhcp::getCalloutHandle(pkt4ptr_empty);
+    HooksManager::clearParkingLots();
 }
 
 }   // namespace dhcp

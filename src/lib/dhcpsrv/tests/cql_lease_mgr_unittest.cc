@@ -768,4 +768,14 @@ TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
+// Tests v4 lease stats query variants.
+TEST_F(CqlLeaseMgrTest, leaseStatsQuery4) {
+    testLeaseStatsQuery4();
+}
+
+// Tests v6 lease stats query variants.
+TEST_F(CqlLeaseMgrTest, leaseStatsQuery6) {
+    testLeaseStatsQuery6();
+}
+
 }  // namespace

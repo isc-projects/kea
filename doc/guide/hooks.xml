@@ -5,6 +5,7 @@
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
+
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
 
@@ -19,6 +20,12 @@
       and, at various points in its processing ("hook points"), call
       functions in them.  Those functions perform whatever custom
       processing is required.
+      </para>
+      <para>
+        The hooks concept also allows keeping the core Kea code reasonably small
+        by moving features that some, but not all users find useful to external
+        libraries. People who don't need specific functionality simply don't
+        load the libraries.
       </para>
       <para>
       Hooks libraries are attached to individual Kea processes, not to
@@ -38,10 +45,149 @@
       <para>
       The next section describes how to configure hooks libraries. If you
       are interested in writing your own hooks library, information can be
-      found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Kea
+      found in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen">Kea
       Developer's Guide</link>.
       </para>
+
+      <para>
+        Note that some libraries are available under different licenses.
+      </para>
+      <para>
+        Note that some libraries may require additional dependencies and/or
+        compilation switches to be enabled, e.g. Radius library introduced in
+        Kea 1.4 requires FreeRadius-client library to be present. If
+        --with-free-radius option is not specified, the Radius library will not
+        be built.
+      </para>
     </section> <!-- end Introduction -->
+
+    <section>
+      <title>Installing Hook packages</title>
+
+      <note>
+        <simpara>The installation procedure has changed in 1.4.0. Kea 1.3.0 and
+        earlier needed special switches passed to configure script to detect the
+        hook libraries. Please see this KB article: <uri
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://kb.isc.org/article/AA-01587">https://kb.isc.org/article/AA-01587</uri>
+        .</simpara>
+      </note>
+
+      <para>Some hook packages are included in the base Kea sources. There is no
+      need to do anything special to compile or install them, they are covered
+      by the usual building and installation procedure. ISC also provides several
+      additional hooks in form of various packages. All of those packages follow
+      the same installation procedure that is similar to base Kea, but has
+      several additional steps. For your convenience, the whole procedure is
+      described here. Please refer to <xref linkend="installation"/> for general
+      overview.</para>
+
+      <para>
+        1. Download the package. You will receive detailed instructions how to
+        get it separately. This will be a file with a name similar to
+        kea-premium-1.4.0.tar.gz. Your name may differ depending on which
+        package you got.
+      </para>
+
+      <para>
+        2. If you have the sources for the corresponding version of the
+        open-source Kea package still on your system (from when you installed
+        Kea), skip this step.  Otherwise extract the Kea source from the
+        original tarball you downloaded.  For example, if you downloaded Kea
+        1.4.0., you should have a tarball called kea-1.4.0.tar.gz on your
+        system. Unpack this tarball:
+
+<screen>
+$ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
+</screen>
+
+        This will unpack the tarball into the kea-1.4.0 subdirectory of your
+        current working directory.
+      </para>
+
+      <para>
+        3. Unpack the Kea premium tarball into the directory into which Kea was
+        unpacked. For example, assuming that you followed step 2 and that Kea
+        1.4.0 has been unpacked into a kea-1.4.0 subdirectory and that the Kea
+        premium tarball is in your current directory, the following steps will
+        unpack the premium tarball into the correct location:
+<screen>
+  $ <userinput>cd kea-1.4.0</userinput>
+  $ <userinput>tar xvf ../kea-premium-1.4.0.tar.gz</userinput>
+</screen>
+        Note that unpacking the Kea premium package will put the files into a
+        directory named premium. Regardless of the name of your package, the
+        directory will always be called premium, just its content may vary.
+      </para>
+
+      <para>
+        4. Run autoreconf tools. This step is necessary to update Kea's build
+        script to include additional directory. If this tool is not already
+        available on your system, you need to install automake and autoconf
+        tools. To generate configure script, please use:
+<screen>
+  $ <userinput>autoreconf -i</userinput>
+</screen>
+      </para>
+      <para>
+        5. Rerun configure, using the same configure options as you used when
+        originally building Kea. You can check if configure has detected the
+        premium package by inspecting the summary printed when it exits.  The
+        first section of the output should look something like:
+<screen>
+Package:
+  Name:            kea
+  Version:         1.4.0
+  Extended version:1.4.0 (tarball)
+  OS Family:       Linux
+  Using GNU sed:   yes
+  Premium package: yes
+  Included Hooks:  forensic_log flex_id host_cmds
+</screen>
+
+The last line indicates which specific hooks were detected. Note that some
+hooks may require its own dedicated switches, e.g. radius hook requires
+extra switches for FreeRADIUS. Please consult later sections of this
+chapter for details.
+      </para>
+
+      <para>
+        6. Rebuild Kea
+<screen>
+  $ <userinput>make</userinput>
+</screen>
+If your machine has multiple CPU cores, interesting option to consider here
+is -j X, where X is the number of available cores.
+      </para>
+
+      <para>
+        7. Install Kea sources together with hooks:
+<screen>
+$ <userinput>sudo make install</userinput>
+</screen>
+      Note that as part of the installation procedure, the install script will
+      eventually venture into premium/ directory and will install additional
+      hook libraries and associated files.
+      </para>
+      <para>
+      The installation location of the hooks libraries depends whether you
+      specified --prefix parameter to the configure script. If you did not,
+      the default location will be /usr/local/lib/hooks. You can verify the
+      libraries are installed properly with this command:
+<screen>
+$ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
+/usr/local/lib/hooks/libdhcp_flex_id.so
+/usr/local/lib/hooks/libdhcp_host_cmds.so
+/usr/local/lib/hooks/libdhcp_lease_cmds.so
+/usr/local/lib/hooks/libdhcp_legal_log.so
+/usr/local/lib/hooks/libdhcp_subnet_cmds.so
+</screen>
+      The exact list you see will depend on the packages you have.
+      If you specified directory via --prefix, the hooks libraries
+      will be located in {prefix directory}/lib/hooks.
+      </para>
+    </section>
+
     <section>
       <title>Configuring Hooks Libraries</title>
       <para>
@@ -261,23 +407,75 @@
               or configuration parameters currently used by the server.
               </entry>
             </row>
+
+            <row>
+              <entry>Lease Commands</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 1.3.0</entry>
+              <entry>The lease commands hook library offers a number of new
+              commands used to manage leases. Kea provides a way to store lease
+              information in various backends: memfile, MySQL, PostgreSQL and
+              Cassandra. This library provides a unified interface that can
+              manipulate leases in an unified, safe way. In particular, it
+              allows: manipulate leases in memfile while Kea is running, sanity
+              check changes, check lease existence and remove all leases
+              belonging to specific subnet. It can also catch more obscure
+              errors, like adding a lease with subnet-id that does not exist in
+              the configuration or configuring a lease to use an address that is
+              outside of the subnet to which it is supposed to belong.
+              </entry>
+            </row>
+
             <row>
               <entry>High Availability</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
-              <entry>Minimizing a risk of DHCP service unavailability is achieved
-              by setting up multiple instances of the DHCP servers in a network.
-              Each server can serve selected group of clients in this network
-              (load balancing) or all clients, if it detects that its partner has
-              crashed or cannot be providing DHCP service for any other reason.
-              It is also possible to designate one server to serve all DHCP clients,
-              and leave another server as "standby". This server will activate its
-              DHCP function when it detects that its partner is not available.
-              Such cooperation between the DHCP servers requires that these
-              servers constantly communicate with each other to send updates about
-              allocated leases and to periodically test whether their partners are still
-              operational. The "libdhcp_ha" library provides such functionality for
-              Kea DHCP.
+              <entry>Minimizing a risk of DHCP service unavailability is
+              achieved by setting up a pair of the DHCP servers in a network.
+              Two modes of operation are supported. The first one is called load
+              balancing and is sometimes referred to as active-active. Each
+              server can handle selected group of clients in this network or all
+              clients, if it detects that its partner has became unavailable.
+              It is also possible
+              to designate one server to serve all DHCP clients, and leave
+              another server as "standby". This mode is called hot standby and
+              is sometimes referenced to as active-passive. This server will
+              activate its DHCP function when it detects that its partner is not
+              available.  Such cooperation between the DHCP servers requires
+              that these servers constantly communicate with each other to send
+              updates about allocated leases and to periodically test whether
+              their partners are still operational. The hook library also
+              provides an ability to send lease updates to external backup
+              server, making it much easier to have a replacement that is almost
+              up to date. The "libdhcp_ha" library provides such functionality
+              for Kea DHCP servers.
+              </entry>
+            </row>
+            <row>
+              <entry>Radius</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>The RADIUS Hook library allows Kea to interact with the
+              RADIUS servers using access and accounting mechanisms. The access
+              mechanism may be used for access control, assigning specific IPv4
+              or IPv6 addresses reserved by RADIUS, dynamically assigning
+              addresses from designated pools chosen by RADIUS or rejecting
+              the client's messages altogether. The accounting mechanism allows
+              RADIUS server to keep track of device activity over time.
+              </entry>
+            </row>
+            <row>
+              <entry>Host Cache</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>Some of the database backends, such as RADIUS, are
+              considered slow and may take a long time to respond. Since Kea in
+              general is synchronous, the backend performance directly affects
+              the DHCP performance. To minimize the impact and improve
+              performance, the Host Cache library provides a way to cache
+              responses from other hosts. This includes negative caching,
+              i.e. the ability to remember that there is no client information
+              in the database.
               </entry>
             </row>
           </tbody>
@@ -293,6 +491,9 @@
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
+      </para>
+      <para>
+        The libraries developed by ISC are described in detail in the following sections.
       </para>
       <section>
         <title>user_chk: Checking User Access</title>
@@ -381,9 +582,9 @@ and may have the zero or more of the following entries:
         </para>
 
         <para>As with any other hooks libraries provided by ISC, internals of the
-        user_chk code are well documented. You can take a look at the  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</link>
+        user_chk code are well documented. You can take a look at the  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/d8/db2/libdhcp_user_chk.html">Kea Developer's Guide section dedicated to the user_chk library</link>
         that discusses how the code works internally. That, together with
-        our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Fedora20_32_doxygen_doc/doxygen/">Hooks
+        our general entries in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen">Hooks
         Framework section</link> should give you some pointers how to extend
         this library and perhaps even write your own from scratch.</para>
 
@@ -1083,9 +1284,9 @@ $
           criteria). To use commands that change the reservation information
           (currently these are reservation-add and reservation-del, but this
           rule applies to other commands that may be implemented in the future),
-          hosts database must be specified (see hosts-database description in
-          <xref linkend="hosts-database-configuration4"/> and <xref linkend="hosts-database-configuration6"/>) and it must not operate in
-          read-only mode. If the hosts-database is not specified or is running
+          hosts database must be specified (see hosts-databases description in
+          <xref linkend="hosts-databases-configuration4"/> and <xref linkend="hosts-databases-configuration6"/>) and it must not operate in
+          read-only mode. If the hosts-databases are not specified or are running
           in read-only mode, the host_cmds library will load, but any attempts
           to use reservation-add or reservation-del will fail.
         </para>
@@ -1204,8 +1405,8 @@ Here is an example of complex IPv6 reservation:
 
         <para>
           As <command>reservation-add</command> is expected to store the host,
-          hosts-database parameter must be specified in your configuration and
-          the database must not run in read-only mode. In the future versions
+          hosts-databases parameter must be specified in your configuration and
+          databases must not run in read-only mode. In the future versions
           it will be possible to modify the reservations read from a
           configuration file. Please contact ISC if you are interested in this
           functionality.
@@ -1395,12 +1596,16 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
               the specified parameters exists and returns it if it does;</para>
             </listitem>
             <listitem>
+              <para><command>lease6-get</command> - checks if an IPv6 lease with
+              the specified parameters exists and returns it if it does;</para>
+            </listitem>
+            <listitem>
               <para><command>lease4-get-all</command> - returns all IPv4 leases
               or IPv4 leases for specified subnets;</para>
             </listitem>
             <listitem>
-              <para><command>lease6-get</command> - checks if an IPv6 lease with
-              the specified parameters exists and returns it if it does;</para>
+              <para><command>lease6-get-all</command> - returns all IPv6 leases
+              or IPv6 leases for specified subnets;</para>
             </listitem>
             <listitem>
               <para><command>lease4-del</command> - attempts to delete an IPv4
@@ -1418,11 +1623,11 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
             </listitem>
             <listitem>
               <para><command>lease4-wipe</command> - removes all leases from a
-              specific IPv4 subnet;</para>
+              specific IPv4 subnet or all subnets;</para>
             </listitem>
             <listitem>
               <para><command>lease6-wipe</command> - removes all leases from a
-              specific IPv6 subnet;</para>
+              specific IPv6 subnet or all subnets;</para>
             </listitem>
           </itemizedlist>
 
@@ -1717,11 +1922,12 @@ An example result returned when the host was found:
         </section>
 
         <section>
-          <title>lease4-get-all command</title>
-          <para><command>lease4-get-all</command> is used to retrieve all IPv4
-          leases or all leases for the specified set of subnets. All leases are
-          returned when there are no arguments specified with the command as
-          in the following example:
+          <title>lease4-get-all, lease6-get-all commands</title>
+          <para><command>lease4-get-all</command> and
+          <command>lease6-get-all</command> are used to retrieve all
+          IPv4 or IPv6 leases or all leases for the specified set of
+          subnets. All leases are returned when there are no arguments
+          specified with the command as in the following example:
 <screen>
 {
     "command": "lease4-get-all"
@@ -1731,10 +1937,11 @@ An example result returned when the host was found:
 
           <para>If the arguments are provided, it is expected that they contain
           "subnets" parameter, being a list of subnet identifiers for which the
-          leases should be returned, e.g.:
+          leases should be returned. For example, in order to retrieve all IPv6
+          leases belonging to the subnets with identifiers 1, 2, 3 and 4:
 <screen>
 {
-    "command": "lease4-get-all",
+    "command": "lease6-get-all",
     "arguments": {
         "subnets": [ 1, 2, 3, 4 ]
     }
@@ -1749,38 +1956,45 @@ An example result returned when the host was found:
     "arguments": {
         "leases": [
             {
-                "client-id": "42:42:42:42:42:42:42:42",
                 "cltt": 12345678,
+                "duid": "42:42:42:42:42:42:42:42",
                 "fqdn-fwd": false,
                 "fqdn-rev": true,
                 "hostname": "myhost.example.com.",
                 "hw-address": "08:08:08:08:08:08",
-                "ip-address": "192.0.2.1",
+                "iaid": 1,
+                "ip-address": "2001:db8:2::1",
+                "preferred-lft": 500,
                 "state": 0,
                 "subnet-id": 44,
+                "type": "IA_NA",
                 "valid-lft": 3600
             },
             {
-                "client-id": "21:21:21:21:21:21:21:21",
                 "cltt": 12345678,
+                "duid": "21:21:21:21:21:21:21:21",
                 "fqdn-fwd": false,
                 "fqdn-rev": true,
                 "hostname": "",
-                "hw-address": "10:10:10:10:10:10",
-                "ip-address": "192.0.2.2",
+                "iaid": 1,
+                "ip-address": "2001:db8:0:0:2::",
+                "preferred-lft": 500,
+                "prefix-len": 80,
                 "state": 0,
                 "subnet-id": 44,
+                "type": "IA_PD",
                 "valid-lft": 3600
             }
         ]
     },
     "result": 0,
-    "text": "2 IPv4 lease(s) found."
+    "text": "2 IPv6 lease(s) found."
 }</screen>
           </para>
 
           <warning>
-            <para>The <command>lease4-get-command</command> may result in very
+            <para>The <command>lease4-get</command> and
+            <command>lease6-get</command> commands may result in very
             large responses. This may have negative impact on the DHCP server
             responsiveness while the response is generated and transmitted
             over the control channel, as the server imposes no restriction
@@ -1921,6 +2135,11 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           leases. Status code 1 (error) may be returned in case the
           parameters are incorrect or some other exception is
           encountered.</para>
+
+          <para>The subnet-id 0 has special meaning. It tells Kea to
+          delete leases from all configured subnets. Also, the
+          subnet-id parameter may be omitted. If not specified, leases
+          from all subnets are wiped.</para>
 
           <para>Note: not all backends support this command.</para>
         </section>
@@ -2760,17 +2979,16 @@ both the command and the response.
 
     </section> <!-- end of subnet commands -->
 
-    <section id="high-availability-library">
-      <title>libdhcp_ha: High Availability</title>
-      <para>
-        This section will describe the <command>libdhcp_ha</command> hook library
-        being developed for the Kea 1.4.0 release.
-      </para>
-    </section> <!-- end of high-availability-library -->
+    <!-- section high-availability-library -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-ha.xml"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-host-cache.xml"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-stat-cmds.xml"/>
 
   </section>
-
-
 
     <section xml:id="user-context">
       <title>User contexts</title>

@@ -12,6 +12,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_int.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
 #include <dhcpsrv/testutils/dhcp4o6_test_ipc.h>
 #include <boost/bind.hpp>
@@ -173,6 +174,10 @@ Dhcp4o6IpcBaseTest::createDHCPv4o6Message(uint16_t msg_type,
     // right address.
     pkt->setRemoteAddr(IOAddress(concatenate("2001:db8:1::", postfix)));
 
+    // The remote port of the sender of the DHCPv6 packet is carried
+    // between the servers in the dedicated option.
+    pkt->setRemotePort(10000 + (postfix % 1000));
+
     // Determine the endpoint type using the message type.
     TestIpc::EndpointType src = (msg_type ==  DHCPV6_DHCPV4_QUERY) ?
         TestIpc::ENDPOINT_TYPE_V6 : TestIpc::ENDPOINT_TYPE_V4;
@@ -286,6 +291,9 @@ Dhcp4o6IpcBaseTest::testSendReceive(uint16_t iterations_num,
         EXPECT_EQ(concatenate("2001:db8:1::", i),
                   pkt_received->getRemoteAddr().toText());
 
+        // Check that the port conveyed is correct.
+        EXPECT_EQ(10000 + (i % 1000), pkt_received->getRemotePort());
+
         // Check that encapsulated DHCPv4 message has been received.
         EXPECT_TRUE(pkt_received->getOption(D6O_DHCPV4_MSG));
 
@@ -320,6 +328,7 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
 
     pkt->setIface("eth0");
     pkt->setRemoteAddr(IOAddress("2001:db8:1::1"));
+    pkt->setRemotePort(TEST_PORT);
     pkt->addOption(createDHCPv4MsgOption(TestIpc::ENDPOINT_TYPE_V6));
 
     OutputBuffer& buf = pkt->getBuffer();
@@ -476,6 +485,10 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutInterfaceOption) {
         Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
                                              IOAddress("2001:db8:1::1")))
     );
+    option_vendor->addOption(
+        OptionUint16Ptr(new OptionUint16(Option::V6,
+                                         ISC_V6_4O6_SRC_PORT,
+                                         TEST_PORT)));
 
     pkt->addOption(option_vendor);
     testReceiveError(pkt);
@@ -495,6 +508,10 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithInvalidInterface) {
         Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
                                              IOAddress("2001:db8:1::1")))
     );
+    option_vendor->addOption(
+        OptionUint16Ptr(new OptionUint16(Option::V6,
+                                         ISC_V6_4O6_SRC_PORT,
+                                         TEST_PORT)));
 
     pkt->addOption(option_vendor);
     testReceiveError(pkt);
@@ -510,6 +527,28 @@ TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourceAddressOption) {
     option_vendor->addOption(
         OptionStringPtr(new OptionString(Option::V6, ISC_V6_4O6_INTERFACE,
                                          "eth0")));
+    option_vendor->addOption(
+        OptionUint16Ptr(new OptionUint16(Option::V6,
+                                         ISC_V6_4O6_SRC_PORT,
+                                         TEST_PORT)));
+
+    pkt->addOption(option_vendor);
+    testReceiveError(pkt);
+}
+
+// This test verifies that receiving packet over the IPC fails when the
+// source port option is not present.
+TEST_F(Dhcp4o6IpcBaseTest, receiveWithoutSourcePortOption) {
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_QUERY, 0));
+    OptionVendorPtr option_vendor(new OptionVendor(Option::V6,
+                                                   ENTERPRISE_ID_ISC));
+    option_vendor->addOption(
+        OptionStringPtr(new OptionString(Option::V6, ISC_V6_4O6_INTERFACE,
+                                         "eth0")));
+    option_vendor->addOption(
+        Option6AddrLstPtr(new Option6AddrLst(ISC_V6_4O6_SRC_ADDRESS,
+                                             IOAddress("2001:db8:1::1")))
+    );
 
     pkt->addOption(option_vendor);
     testReceiveError(pkt);

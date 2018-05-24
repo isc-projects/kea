@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/network_state.h>
@@ -24,6 +25,7 @@
 #include <hooks/callout_handle.h>
 #include <dhcpsrv/daemon.h>
 
+#include <functional>
 #include <iostream>
 #include <queue>
 
@@ -87,6 +89,11 @@ public:
     /// @brief Returns pointer to the IO service used by the server.
     asiolink::IOServicePtr& getIOService() {
         return (io_service_);
+    }
+
+    /// @brief Returns pointer to the network state used by the server.
+    NetworkStatePtr& getNetworkState() {
+        return (network_state_);
     }
 
     /// @brief returns Kea version on stdout and exit.
@@ -167,6 +174,11 @@ public:
                                       NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 
+    /// @brief Discards cached and parked packets
+    /// Clears the call_handle store and packet parking lots
+    /// of all packets.  Called during reconfigure and shutdown.
+    void discardPackets();
+
 protected:
 
     /// @brief Compare received server id with our server id
@@ -191,6 +203,16 @@ protected:
     /// not allowed according to RFC3315, section 15; true otherwise.
     bool testUnicast(const Pkt6Ptr& pkt) const;
 
+    /// @brief Verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
+    ///
+    /// @param pkt packet to be checked
+    /// @return false if the message should be dropped as a result of the
+    /// sanity check.
+    bool sanityCheck(const Pkt6Ptr& pkt);
+
     /// @brief verifies if specified packet meets RFC requirements
     ///
     /// Checks if mandatory option is really there, that forbidden option
@@ -214,10 +236,10 @@ protected:
     /// instead of Advertise and requested leases will be assigned
     /// immediately.
     ///
-    /// @param solicit Solicit message received from client
+    /// @param ctx Reference to client context
     ///
     /// @return Advertise, Reply message or NULL.
-    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit);
+    Pkt6Ptr processSolicit(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Request and returns Reply response.
     ///
@@ -227,16 +249,17 @@ protected:
     /// prefixes, respectively. Uses LeaseMgr to allocate or update existing
     /// leases.
     ///
-    /// @param request a message received from client
+    /// @param ctx Reference to client context
     ///
     /// @return REPLY message or NULL
-    Pkt6Ptr processRequest(const Pkt6Ptr& request);
+    Pkt6Ptr processRequest(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Renew message.
     ///
-    /// @param renew message received from the client
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRenew(const Pkt6Ptr& renew);
+    Pkt6Ptr processRenew(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Rebind message.
     ///
@@ -246,9 +269,10 @@ protected:
     /// client is on the appropriate link or not. We don't seem to do it
     /// now.
     ///
-    /// @param rebind message received from the client.
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRebind(const Pkt6Ptr& rebind);
+    Pkt6Ptr processRebind(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
@@ -269,17 +293,18 @@ protected:
     /// code NotOnLink is returned. Otherwise, the Reply message with the
     /// status code Success is returned.
     ///
-    /// @param confirm Confirm message sent by a client.
+    /// @param ctx Reference to client context
     ///
     /// @return Reply message from the server or NULL pointer if Confirm
     /// message should be discarded by the server.
-    Pkt6Ptr processConfirm(const Pkt6Ptr& confirm);
+    Pkt6Ptr processConfirm(AllocEngine::ClientContext6& ctx);
 
     /// @brief Process incoming Release message.
     ///
-    /// @param release message received from client
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processRelease(const Pkt6Ptr& release);
+    Pkt6Ptr processRelease(AllocEngine::ClientContext6& ctx);
 
     /// @brief Process incoming Decline message.
     ///
@@ -288,17 +313,17 @@ protected:
     /// the client's message. Finally, it calls @ref declineLeases, where
     /// the actual address processing takes place.
     ///
-    /// @throw RFCViolation if Decline message is invalid (lacking mandatory
-    ///                     options)
+    /// @param ctx Reference to client context
     ///
-    /// @param decline message received from client
-    Pkt6Ptr processDecline(const Pkt6Ptr& decline);
+    /// @return Reply message to be sent to the client.
+    Pkt6Ptr processDecline(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming Information-request message.
     ///
-    /// @param inf_request message received from client
+    /// @param ctx Reference to client context
+    ///
     /// @return Reply message to be sent to the client.
-    Pkt6Ptr processInfRequest(const Pkt6Ptr& inf_request);
+    Pkt6Ptr processInfRequest(AllocEngine::ClientContext6& ctx);
 
     /// @brief Processes incoming DHCPv4-query message.
     ///
@@ -308,6 +333,7 @@ protected:
     /// to the client once we get back DHCP4-REPLY from the DHCPv4 server.
     ///
     /// @param dhcp4_query message received from client
+    /// Does not throw
     void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
 
     /// @brief Selects a subnet for a given client's packet.
@@ -347,7 +373,7 @@ protected:
     /// allocation failure.
     ///
     /// @param query client's message (typically SOLICIT or REQUEST)
-    /// @param answer server's response to the client's message.
+    /// @param answer server's response to the client's message (unused).
     /// @param ctx client context (contains subnet, duid and other parameters)
     /// @param ia pointer to client's IA_PD option (client's request)
     /// @return IA_PD option (server's response)
@@ -425,10 +451,12 @@ protected:
     /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
     /// @param ia IA_NA option that is being released
+    /// @param old_lease a pointer to the lease being released
     /// @return IA_NA option (server's response)
     OptionPtr releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
-                           boost::shared_ptr<Option6IA> ia);
+                           boost::shared_ptr<Option6IA> ia,
+                           Lease6Ptr& old_lease);
 
     /// @brief Releases specific IA_PD option
     ///
@@ -441,10 +469,12 @@ protected:
     /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
     /// @param ia IA_PD option that is being released
+    /// @param old_lease a pointer to the lease being released
     /// @return IA_PD option (server's response)
     OptionPtr releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
-                           boost::shared_ptr<Option6IA> ia);
+                           boost::shared_ptr<Option6IA> ia,
+                           Lease6Ptr& old_lease);
 
     /// @brief Copies required options from client message to server answer.
     ///
@@ -651,6 +681,19 @@ protected:
     void setReservedClientClasses(const Pkt6Ptr& pkt,
                                   const AllocEngine::ClientContext6& ctx);
 
+    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    ///
+    /// @note This required classification evaluates all classes which
+    /// were marked for required evaluation. Classes are collected so
+    /// evaluated in the reversed order than output option processing.
+    ///
+    /// @note The only-if-required flag is related because it avoids
+    /// double evaluation (which is not forbidden).
+    ///
+    /// @param pkt packet to be classified
+    /// @param ctx allocation context where to get informations
+    void requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+
     /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
     /// Tries to extract MAC/hardware address information from the packet
@@ -726,10 +769,11 @@ protected:
     /// @param duid client's duid (used to verify if the client owns the lease)
     /// @param general_status [out] status in top-level message (may be updated)
     /// @param ia specific IA_NA option to process.
+    /// @param new_leases a collection of leases being declined.
     /// @return IA_NA option with response (to be included in Reply message)
     OptionPtr
     declineIA(const Pkt6Ptr& decline, const DuidPtr& duid, int& general_status,
-              boost::shared_ptr<Option6IA> ia);
+              boost::shared_ptr<Option6IA> ia, Lease6Collection& new_leases);
 
     /// @brief Declines specific IPv6 lease.
     ///
@@ -757,6 +801,16 @@ protected:
     /// @param status status code option
     void setStatusCode(boost::shared_ptr<Option6IA>& container,
                        const OptionPtr& status);
+
+public:
+
+    /// Used for DHCPv4-over-DHCPv6 too.
+
+    /// @brief Check if the last relay added a relay-source-port option.
+    ///
+    /// @param query DHCPv6 message to be checked.
+    /// @return the port to use to join the relay or 0 for the default.
+    static uint16_t checkRelaySourcePort(const Pkt6Ptr& query);
 
 private:
 
@@ -858,6 +912,13 @@ public:
     /// @return the index of the buffer6_send hook
     static int getHookIndexBuffer6Send();
 
+    /// @brief Executes buffer6_send callout and sends the response.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param rsp pointer to a response.
+    void processPacketBufferSend(hooks::CalloutHandlePtr& callout_handle,
+                                 Pkt6Ptr& rsp);
+
 protected:
 
     /// Server DUID (to be sent in server-identifier option)
@@ -866,6 +927,14 @@ protected:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
+
+    /// @brief Executes pkt6_send callout.
+    ///
+    /// @param callout_handle pointer to the callout handle.
+    /// @param query Pointer to a query.
+    /// @param rsp Pointer to a response.
+    void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
+                              Pkt6Ptr& query, Pkt6Ptr& rsp);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
@@ -879,7 +948,7 @@ protected:
 
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
-    NetworkState network_state_;
+    NetworkStatePtr network_state_;
 
 };
 

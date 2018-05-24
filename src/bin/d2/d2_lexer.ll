@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -258,6 +258,38 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     std::string tmp(yytext+1);
     tmp.resize(tmp.size() - 1);
     return isc::d2::D2Parser::make_STRING(tmp, driver.loc_);
+}
+
+\"user-context\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+    case isc::d2::D2ParserContext::DDNS_DOMAIN:
+    case isc::d2::D2ParserContext::DDNS_DOMAINS:
+    case isc::d2::D2ParserContext::DNS_SERVER:
+    case isc::d2::D2ParserContext::DNS_SERVERS:
+    case isc::d2::D2ParserContext::TSIG_KEY:
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_USER_CONTEXT(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("user-context", driver.loc_);
+    }
+}
+
+\"comment\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+    case isc::d2::D2ParserContext::DDNS_DOMAIN:
+    case isc::d2::D2ParserContext::DDNS_DOMAINS:
+    case isc::d2::D2ParserContext::DNS_SERVER:
+    case isc::d2::D2ParserContext::DNS_SERVERS:
+    case isc::d2::D2ParserContext::TSIG_KEY:
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_COMMENT(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("comment", driver.loc_);
+    }
 }
 
 \"forward-ddns\" {

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
+#include <dhcp/pkt4.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
@@ -98,6 +99,14 @@ public:
     ///
     /// @return true if there is a subnet with a specified server identifier.
     bool hasSubnetWithServerId(const asiolink::IOAddress& server_id) const;
+
+    /// @brief Build selector from a client's message.
+    ///
+    /// @note: code moved from server.
+    ///
+    /// @param query client's message.
+    /// @return filled selector.
+    static SubnetSelector initSelector(const Pkt4Ptr& query);
 
     /// @brief Returns a pointer to the selected subnet.
     ///

@@ -410,8 +410,8 @@ TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
 
     const ClientClasses& classes = hosts[0]->getClientClasses4();
     ASSERT_EQ(2, classes.size());
-    EXPECT_EQ(1, classes.count("foo"));
-    EXPECT_EQ(1, classes.count("bar"));
+    EXPECT_TRUE(classes.contains("foo"));
+    EXPECT_TRUE(classes.contains("bar"));
 
     CfgMgr::instance().setFamily(AF_INET);
     CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
@@ -881,8 +881,8 @@ TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
 
     const ClientClasses& classes = hosts[0]->getClientClasses6();
     ASSERT_EQ(2, classes.size());
-    EXPECT_EQ(1, classes.count("foo"));
-    EXPECT_EQ(1, classes.count("bar"));
+    EXPECT_TRUE(classes.contains("foo"));
+    EXPECT_TRUE(classes.contains("bar"));
 
     // lower duid value
     boost::algorithm::to_lower(config);

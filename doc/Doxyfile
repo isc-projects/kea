@@ -780,6 +780,7 @@ INPUT                  = ../src/bin/agent \
                          ../src/bin/lfc \
                          ../src/hooks/dhcp/user_chk \
                          ../src/hooks/dhcp/lease_cmds \
+                         ../src/hooks/dhcp/stat_cmds \
                          ../src/lib/asiodns \
                          ../src/lib/asiolink \
                          ../src/lib/cc \
