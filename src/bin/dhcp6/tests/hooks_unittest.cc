@@ -2725,7 +2725,9 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
+    Lease6Ptr deleted_lease(new Lease6());
+    deleted_lease->addr_ = addr_opt->getAddress();
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(deleted_lease));
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,

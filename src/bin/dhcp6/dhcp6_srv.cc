@@ -1415,6 +1415,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
+            break;
         }
         default:
             break;
