@@ -1462,7 +1462,7 @@ public:
     ///
     ///  The query created will return statistics for all subnets
     ///
-    /// @param conn An open connection to the database housing the lease data
+    /// @param connection An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute
     /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set (should be true for v6)
@@ -1477,17 +1477,17 @@ public:
     ///
     /// The query created will return statistics for a single subnet
     ///
-    /// @param conn An open connection to the database housing the lease data
+    /// @param connection An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute
     /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set (should be true for v6)
     /// @param subnet_id id of the subnet for which stats are desired
-    CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
-                         const bool fetch_type,  const SubnetID& subnet_id)
-        : LeaseStatsQuery(subnet_id), conn_(conn), statement_(statement),
+    CqlLeaseStatsQuery(CqlConnection& connection, StatementTag& statement,
+                       const bool fetch_type, const SubnetID& subnet_id)
+        : LeaseStatsQuery(subnet_id), connection_(connection), statement_(statement),
           fetch_type_(fetch_type), cummulative_rows_(),
           next_row_(cummulative_rows_.begin()),
-          subnet_id_(0), lease_type_(0), lease_state_(0) {
+          subnet_id_(0), lease_type_(0), state_(0) {
     }
 
     /// @brief Constructor to query for the stats for a range of subnets
@@ -1495,19 +1495,19 @@ public:
     /// The query created will return statistics for the inclusive range of
     /// subnets described by first and last sunbet IDs.
     ///
-    /// @param conn An open connection to the database housing the lease data
+    /// @param connection An open connection to the database housing the lease data
     /// @param statement The lease data SQL prepared statement tag to execute
     /// @param fetch_type Indicates whether or not lease_type should be
     /// fetched from the result set (should be true for v6)
     /// @param first_subnet_id first subnet in the range of subnets
     /// @param last_subnet_id last subnet in the range of subnets
-    CqlLeaseStatsQuery(CqlConnection& conn, StatementTag& statement,
-                         const bool fetch_type,  const SubnetID& first_subnet_id,
-                         const SubnetID& last_subnet_id)
-        : LeaseStatsQuery(first_subnet_id, last_subnet_id), conn_(conn),
+    CqlLeaseStatsQuery(CqlConnection& connection, StatementTag& statement,
+                       const bool fetch_type, const SubnetID& first_subnet_id,
+                       const SubnetID& last_subnet_id)
+        : LeaseStatsQuery(first_subnet_id, last_subnet_id), connection_(connection),
           statement_(statement), fetch_type_(fetch_type), cummulative_rows_(),
           next_row_(cummulative_rows_.begin()),
-          subnet_id_(0), lease_type_(0), lease_state_(0) {
+          subnet_id_(0), lease_type_(0), state_(0) {
     }
 
     /// @brief Destructor
@@ -1561,7 +1561,6 @@ public:
     static constexpr StatementTag SUBNET_LEASE4_STATS = "SUBNET_LEASE4_STATS";
     /// Return lease4 lease statistics for a range of subnets
     static constexpr StatementTag SUBNET_RANGE_LEASE4_STATS = "SUBNET_RANGE_LEASE4_STATS";
-
     // Return lease6 lease statistics for all subnets
     static constexpr StatementTag ALL_LEASE6_STATS = "ALL_LEASE6_STATS";
     /// Return lease6 lease statistics for a single subnet
@@ -1580,7 +1579,7 @@ private:
     /// @brief The query's prepared statement tag
     StatementTag statement_;
 
-    /// @brief Indicates if query supplies lease type
+    /// @brief fetch from the result set? (should be true for v6)
     bool fetch_type_;
 
     /// @brief map containing the aggregated lease counts
@@ -1660,12 +1659,10 @@ StatementMap CqlLeaseStatsQuery::tagged_statements_{
         "WHERE subnet_id >= ? and subnet_id <= ? "
         "ALLOW FILTERING "
     }},
-
 };
 
 void
 CqlLeaseStatsQuery::start() {
-
     // Set up where clause parameters as needed
     AnyArray data;
     cass_int32_t first_subnet_id_data;
@@ -1679,16 +1676,16 @@ CqlLeaseStatsQuery::start() {
             data.add(&last_subnet_id_data);
         }
     }
-
-    // This gets a collection of "raw" data for all leases that match
-    // the subnet selection criteria (all, range, or single subnets)
-    // then rolls them up into cummulative_rows_
     AnyArray collection = executeSelect(connection_, data, statement_);
 
     // Form LeaseStatsRowPtr objects.
     LeaseStatsCollection stats_collection;
     for (boost::any& stats : collection) {
         LeaseStatsRowPtr data(boost::any_cast<LeaseStatsRowPtr>(stats));
+        if (data->lease_state_ != Lease::STATE_DEFAULT &&
+            data->lease_state_ != Lease::STATE_DECLINED) {
+            continue;
+        }
         stats_collection.push_back(data);
         auto cum_row = cummulative_rows_.find(*data);
         if (cum_row != cummulative_rows_.end()) {
@@ -1732,7 +1729,7 @@ CqlLeaseStatsQuery::createBindForSelect(AnyArray& data, StatementTag statement_t
     data.add(&subnet_id_);
 
     // lease_type: int
-    if (statement_tag == CqlLeaseStatsQuery::RECOUNT_LEASE6_STATS) {
+    if (fetch_type_) {
         data.add(&lease_type_);
     } else {
         lease_type_ = Lease::TYPE_NA; // lease type is always NA for v4
@@ -2226,7 +2223,7 @@ CqlLeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
 
 LeaseStatsQueryPtr
 CqlLeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
-                                                   const SubnetID& last_subnet_id) {
+                                              const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(
         new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::SUBNET_RANGE_LEASE4_STATS,
                                false, first_subnet_id, last_subnet_id));
@@ -2254,7 +2251,7 @@ CqlLeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
 
 LeaseStatsQueryPtr
 CqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
-                                                   const SubnetID& last_subnet_id) {
+                                              const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(
         new CqlLeaseStatsQuery(dbconn_, CqlLeaseStatsQuery::SUBNET_RANGE_LEASE6_STATS,
                                true, first_subnet_id, last_subnet_id));
