@@ -1720,7 +1720,7 @@ CqlLeaseStatsQuery::getNextRow(LeaseStatsRow& row) {
 }
 
 void
-CqlLeaseStatsQuery::createBindForSelect(AnyArray& data, StatementTag statement_tag) {
+CqlLeaseStatsQuery::createBindForSelect(AnyArray& data, StatementTag /* statement_tag */) {
 
     // Start with a fresh array.
     data.clear();
