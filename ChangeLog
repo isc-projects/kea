@@ -1,3 +1,9 @@
+1409.	[doc]		marcin
+	Documented in the User's Guide how Kea HA service behaves
+	when the clock skew between active servers becomes too
+	high.
+	(Trac #5603, git ffaff4d2a03600bb4f81d335b49a840e31d03c8c)
+
 1408.	[func]		tomek
 	perfdhcp now supports -o option that adds DHCP options.
 	This may be used to simulate various clients.
