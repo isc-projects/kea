@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -289,10 +289,14 @@ public:
     /// model is expected to account for any possible errors so any that
     /// escape are treated as unrecoverable.
     ///
+    /// @note This method is made virtual for the unit tests which require
+    /// customizations allowing for more control over the state model
+    /// execution.
+    ///
     /// @param event is the next event to process
     ///
     /// This method is guaranteed not to throw.
-    void runModel(unsigned int event);
+    virtual void runModel(unsigned int event);
 
     /// @brief Conducts a normal transition to the end of the model.
     ///

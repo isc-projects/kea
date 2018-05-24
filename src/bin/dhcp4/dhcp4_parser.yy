@@ -68,6 +68,7 @@ using namespace std;
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
+  HOSTS_DATABASES "hosts-databases"
   TYPE "type"
   MEMFILE "memfile"
   MYSQL "mysql"
@@ -129,7 +130,9 @@ using namespace std;
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
 
   CLIENT_CLASSES "client-classes"
+  REQUIRE_CLIENT_CLASSES "require-client-classes"
   TEST "test"
+  ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
 
   RESERVATIONS "reservations"
@@ -142,6 +145,7 @@ using namespace std;
 
   RELAY "relay"
   IP_ADDRESS "ip-address"
+  IP_ADDRESSES "ip-addresses"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -426,6 +430,7 @@ global_param: valid_lifetime
             | interfaces_config
             | lease_database
             | hosts_database
+            | hosts_databases
             | host_reservation_identifiers
             | client_classes
             | option_def_list
@@ -571,6 +576,34 @@ hosts_database: HOSTS_DATABASE {
     ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+hosts_databases: HOSTS_DATABASES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("hosts-databases", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.HOSTS_DATABASE);
+} COLON LSQUARE_BRACKET database_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+database_list: %empty
+             | not_empty_database_list
+             ;
+
+not_empty_database_list: database
+                       | not_empty_database_list COMMA database
+                       ;
+
+database: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} database_map_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@1), ctx.loc2pos(@4));
+    ctx.stack_.pop_back();
 };
 
 database_map_params: database_map_param
@@ -951,6 +984,7 @@ subnet4_param: valid_lifetime
              | id
              | rapid_commit
              | client_class
+             | require_client_classes
              | reservations
              | reservation_mode
              | relay
@@ -1015,10 +1049,20 @@ interface_id: INTERFACE_ID {
 };
 
 client_class: CLIENT_CLASS {
-    ctx.enter(ctx.CLIENT_CLASS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("client-class", cls);
+    ctx.leave();
+};
+
+require_client_classes: REQUIRE_CLIENT_CLASSES {
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("require-client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 
@@ -1091,6 +1135,7 @@ shared_network_param: name
                     | relay
                     | reservation_mode
                     | client_class
+                    | require_client_classes
                     | valid_lifetime
                     | user_context
                     | comment
@@ -1379,6 +1424,7 @@ pool_params: pool_param
 pool_param: pool_entry
           | option_data_list
           | client_class
+          | require_client_classes
           | user_context
           | comment
           | unknown_map_entry
@@ -1541,6 +1587,16 @@ ip_address: IP_ADDRESS {
     ctx.leave();
 };
 
+ip_addresses: IP_ADDRESSES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("ip-addresses", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
 duid: DUID {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -1612,13 +1668,9 @@ relay: RELAY {
     ctx.leave();
 };
 
-relay_map: IP_ADDRESS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr ip(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("ip-address", ip);
-    ctx.leave();
-};
+relay_map: ip_address
+         | ip_addresses
+         ;
 
 // --- end of relay definitions ------------------------------
 
@@ -1657,6 +1709,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
+                  | only_if_required
                   | option_def_list
                   | option_data_list
                   | next_server
@@ -1675,6 +1728,11 @@ client_class_test: TEST {
     ElementPtr test(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
+};
+
+only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("only-if-required", b);
 };
 
 // --- end of client classes ---------------------------------

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -211,6 +211,15 @@ DCfgMgrBase::parseConfig(isc::data::ConstElementPtr config_set,
                                << element_id << " ("
                                << mutable_cfg->getPosition() << ")");
                 }
+            }
+
+            // Handle user context here as it is really optional.
+            std::string user_context_id("user-context");
+            it = objects_map.find(user_context_id);
+            if (it != objects_map.end()) {
+                buildAndCommit(user_context_id, it->second);
+                // We parsed it, take it out of the list.
+                objects_map.erase(it);
             }
 
             // NOTE: When using ordered parsing, the parse order list MUST

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,4 +13,4 @@
 static const int LIBRARY_NUMBER = 1;
 #include <config.h>
 
-#include "callout_library_common.h"
+#include <dhcp6/tests/callout_library_common.h>

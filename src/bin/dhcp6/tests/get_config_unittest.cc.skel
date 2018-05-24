@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -125,7 +125,7 @@ outputFormatted(const std::string& config) {
     }
 }
 
-};
+} // namespace
 
 namespace isc {
 namespace dhcp {
@@ -156,9 +156,9 @@ extractConfig(const std::string& config) {
     ++extract_count;
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 namespace {
 
@@ -322,12 +322,17 @@ TEST_P(Dhcp6GetConfigTest, run) {
         ASSERT_NO_THROW(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
+        // get the expected config using the dhcpv6 syntax parser
         ElementPtr jsond;
         ASSERT_NO_THROW(jsond = parseDHCP6(expected, true));
+        // get the expected config using the generic JSON syntax parser
         ElementPtr jsonj;
         ASSERT_NO_THROW(jsonj = parseJSON(expected));
-        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        // the generic JSON parser does not handle comments
         EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // check that unparsed and expected values match
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        // check on pretty prints too
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {
@@ -351,7 +356,9 @@ TEST_P(Dhcp6GetConfigTest, run) {
 class IntToString {
 public:
     std::string operator()(const testing::TestParamInfo<size_t>& n) {
-        return to_string(n.param);
+        std::ostringstream ss;
+        ss << static_cast<size_t>(n.param);
+        return (ss.str());
     }
 };
 

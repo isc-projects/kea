@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,6 +131,28 @@ const char* PARSER_CONFIGS[] = {
     "     } ]"
     "}",
 
+    // Configuration 4: two host databases
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [\"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 4000,"
+    "    \"rebind-timer\": 2000,"
+    "    \"renew-timer\": 1000,"
+    "    \"hosts-databases\": [ {"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest1\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      },{"
+    "        \"type\": \"mysql\","
+    "        \"name\": \"keatest2\","
+    "        \"user\": \"keatest\","
+    "        \"password\": \"keatest\""
+    "      }"
+    "    ]"
+    "}",
+
     // Last Configuration for comments
     "{"
     "    \"comment\": \"A DHCPv4 server\","
@@ -238,7 +260,7 @@ public:
     void checkResult(ConstElementPtr status, int expected_code) {
         ASSERT_TRUE(status);
         comment_ = parseAnswer(rcode_, status);
-        EXPECT_EQ(expected_code, rcode_);
+        EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
     }
 
     /// @brief Convenience method for running configuration
@@ -1355,7 +1377,7 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
         "\"server-hostname\": \"nohost\","
-        "\"boot-file-name\": \"nofile\","        
+        "\"boot-file-name\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
@@ -4067,8 +4089,52 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("192.0.2.123", subnet->getRelayInfo().addr_.toText());
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.2.123")));
 }
+
+// This test checks if it is possible to specify a list of relays
+TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
+
+    ConstElementPtr status;
+
+    // A config with relay information.
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"renew-timer\": 1, "
+        "    \"rebind-timer\": 2, "
+        "    \"valid-lifetime\": 4,"
+        "    \"relay\": { "
+        "        \"ip-addresses\": [ \"192.0.3.123\", \"192.0.3.124\" ]"
+        "    },"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    SubnetSelector selector;
+    selector.giaddr_ = IOAddress("192.0.2.200");
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(selector);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_TRUE(subnet->hasRelays());
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.123")));
+    EXPECT_TRUE(subnet->hasRelayAddress(IOAddress("192.0.3.124")));
+}
+
 
 // Goal of this test is to verify that multiple subnets can be configured
 // with defined client classes.
@@ -5630,7 +5696,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
     EXPECT_EQ("foo", s->getSname());
     EXPECT_EQ("bar", s->getFilename());
-    EXPECT_EQ(IOAddress("5.6.7.8"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("5.6.7.8")));
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
     // For the second subnet, the renew-timer should be 100, because it
@@ -5645,7 +5711,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
     EXPECT_EQ("some-name.example.org", s->getSname());
     EXPECT_EQ("bootfile.efi", s->getFilename());
-    EXPECT_EQ(IOAddress("55.66.77.88"), s->getRelayInfo().addr_);
+    EXPECT_TRUE(s->hasRelayAddress(IOAddress("55.66.77.88")));
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
     // Ok, now check the second shared subnet.
@@ -5664,7 +5730,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
     EXPECT_TRUE(s->getSname().empty());
     EXPECT_TRUE(s->getFilename().empty());
-    EXPECT_EQ(IOAddress("0.0.0.0"), s->getRelayInfo().addr_);
+    EXPECT_FALSE(s->hasRelays());
     EXPECT_EQ(Network::HR_ALL, s->getHostReservationMode());
 }
 
@@ -5720,8 +5786,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     SharedNetwork4Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
-    auto classes = net->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", net->getClientClass());
 
     // The first shared network has two subnets.
     const Subnet4Collection * subs = net->getAllSubnets();
@@ -5732,15 +5797,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     // shared-network level.
     Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 1, 2, 4);
     ASSERT_TRUE(s);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("alpha"));
+    EXPECT_EQ("alpha", s->getClientClass());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "192.0.2.0/24", 1, 2, 4);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.contains("beta")); // beta defined on subnet level
-    EXPECT_FALSE(classes.contains("alpha")); // alpha defined on shared-network level
+    EXPECT_EQ("beta", s->getClientClass()); // beta defined on subnet level
 
     // Ok, now check the second shared network. It doesn't have anything defined
     // on shared-network or subnet level, so everything should have default
@@ -5753,14 +5815,31 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     EXPECT_EQ(1, subs->size());
 
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
-    classes = s->getClientClasses();
-    EXPECT_TRUE(classes.empty());
+    EXPECT_TRUE(s->getClientClass().empty());
+}
+
+// This test checks multiple host data sources.
+TEST_F(Dhcp4ParserTest, hostsDatabases) {
+
+    string config = PARSER_CONFIGS[4];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Check database config
+    ConstCfgDbAccessPtr cfgdb =
+        CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+    ASSERT_TRUE(cfgdb);
+    const std::list<std::string>& hal = cfgdb->getHostDbAccessStringList();
+    ASSERT_EQ(2, hal.size());
+    // Keywords are in alphabetical order
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
 }
 
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
 
-    string config = PARSER_CONFIGS[4];
+    string config = PARSER_CONFIGS[5];
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 

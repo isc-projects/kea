@@ -59,7 +59,7 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     EXPECT_TRUE(chptr_1 == chptr_2);
 
     // Reference count is now 3 on the callout handle - two for pointers here,
-    // one for the static pointer in the function.  The count is 2 for the]
+    // one for the static pointer in the function.  The count is 2 for the
     // object pointed to by pktptr_1 - one for that pointer and one for the
     // pointer in the function.
     EXPECT_EQ(3, chptr_1.use_count());
@@ -73,9 +73,23 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     EXPECT_FALSE(chptr_1 == chptr_2);
 
     // Check reference counts.  The getCalloutHandle function should be storing
-    // pointers to the objects pointed to by chptr_2 and pktptr_2.
+    // pointers to objects pointed to by chptr_1, pktptr_1, chptr_2 and pktptr_2.
+    EXPECT_EQ(2, chptr_1.use_count());
+    EXPECT_EQ(2, pktptr_1.use_count());
+    EXPECT_EQ(2, chptr_2.use_count());
+    EXPECT_EQ(2, pktptr_2.use_count());
+
+    // Now clear the pktptr_1 simulating the situation when the DHCP packet
+    // has been fully processed.
+    pktptr_1.reset();
+
+    // Retrieve chptr_2 again to trigger clearing unused pointer chptr_1.
+    chptr_2 = getCalloutHandle(pktptr_2);
+    ASSERT_TRUE(chptr_2);
+
+    // This should merely affect chptr_1 and pktptr_1, but the pointers for the
+    // second packet should remain unchanged.
     EXPECT_EQ(1, chptr_1.use_count());
-    EXPECT_EQ(1, pktptr_1.use_count());
     EXPECT_EQ(2, chptr_2.use_count());
     EXPECT_EQ(2, pktptr_2.use_count());
 
@@ -89,7 +103,6 @@ TEST(CalloutHandleStoreTest, StoreRetrieve) {
     // Reference counts should be back to 1 for the CalloutHandles and the
     // Packet pointers.
     EXPECT_EQ(1, chptr_1.use_count());
-    EXPECT_EQ(1, pktptr_1.use_count());
     EXPECT_EQ(1, chptr_2.use_count());
     EXPECT_EQ(1, pktptr_2.use_count());
 }
