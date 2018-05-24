@@ -234,9 +234,16 @@
           synchronize first. The secondary or standby server will remain
           in the <command>waiting</command> state until the primary
           synchronizes the database.</para></listitem>.
-        </itemizedlist>
+        </itemizedlist></para>
 
-        Whether the server responds to the DHCP queries and which
+        <note>
+          <para>Currently, restarting the HA service being in the
+          <command>terminated</command> state requires restarting the
+          DHCP server or reloading its configuration. In the future, we will
+          provide a command to restart the HA service.</para>
+        </note>
+
+        <para>Whether the server responds to the DHCP queries and which
         queries it responds to is a matter of the server's state, if no
         administrative action is performed to configure the server
         otherwise. The following table provides the default behavior for
