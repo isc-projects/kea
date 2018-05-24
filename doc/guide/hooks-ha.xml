@@ -96,6 +96,41 @@
       </section>
 
       <section>
+        <title>Clocks on Active Servers</title>
+        <para>Synchronized clocks are essential for the HA setup to operate
+        reliably. The servers share lease information via lease updates and
+        during synchronization of the databases. The lease information includes
+        the time when the lease has been allocated and when it expires. Some
+        clock skew between the servers participating the HA setup would usually
+        exist. This is acceptable as long as the clock skew is relatively low,
+        comparing to the lease lifetimes. However, if the clock skew becomes too
+        high, the different notions of time for the lease expiration by different
+        servers may cause the HA system to malfuction. For example, one server
+        may consider a valid lease to be expired. As a consequence, the lease
+        reclamation process may remove a name associated with this lease from
+        the DNS, even though the lease may later get renewed by a client.</para>
+
+        <para>Each active server monitors the clock skew by comparing its current
+        time with the time returned by its partner in response to the heartbeat
+        command. This gives a good approximation of the clock skew, although it
+        doesn't take into account the time between sending the response by the
+        partner and receiving this response by the server which sent the
+        heartbeat command. If the clock skew exceeds 30 seconds, a warning log
+        message is issued. The administrator may correct this problem by
+        synchronizing the clocks (e.g. using NTP). The servers should notice
+        the clock skew correction and stop issuing the warning</para>
+
+        <para>If the clock skew is not corrected and it exceeds 60 seconds, the
+        HA service on each of the servers is terminated, i.e. the state
+        machine enters the <command>terminated</command> state. The servers
+        will continue to respond to the DHCP clients (as in the load-balancing
+        or hot-standby mode), but will neither exchange lease updates nor
+        heartbeats and their lease databases will diverge. In this case, the
+        administrator should synchronize the clocks and restart the servers.
+        </para>
+      </section>
+
+      <section>
         <title>Server States</title>
         <para>The DHCP server operating within an HA setup runs a state machine
         and the state of the server can be retrieved by its peers using the
@@ -167,6 +202,26 @@
           answer from the partner and is not doing anything else while the
           leases synchronization takes place.</para></listitem>
 
+          <listitem><para><command>terminated</command> - an active server
+          transitions to this state when the High Availability  hooks library
+          is unable to further provide reliable service and a manual
+          intervention of the administrator is required to correct the problem.
+          It is envisaged that various issues with the HA setup may cause the
+          server to transition to this state in the future. As of Kea 1.4.0
+          release, the only issue causing the HA service to terminate is
+          unacceptably high clock skew between the active servers, i.e. if the
+          clocks on respective servers are more than 60 seconds apart.
+          While in this state, the server will continue responding to the
+          DHCP clients based on the HA mode selected (load balancing or
+          hot standby), but the lease updates won't be exchanged and the
+          heartbeats won't be sent. Once a server has entered the
+          "terminated" state it will remain in this state until it is
+          restarted. The administrator must correct the issue which caused
+          this situation prior to restarting the server (e.g. synchronize clocks).
+          Otherwise, the server will return to the "terminated" state as
+          soon as it finds that the clock skew is still too high.
+          </para></listitem>
+
           <listitem><para><command>waiting</command> - each started server
           instance enters this state. The backup server will transition
           directly from this state to the <command>backup</command> state.
@@ -179,9 +234,16 @@
           synchronize first. The secondary or standby server will remain
           in the <command>waiting</command> state until the primary
           synchronizes the database.</para></listitem>.
-        </itemizedlist>
+        </itemizedlist></para>
 
-        Whether the server responds to the DHCP queries and which
+        <note>
+          <para>Currently, restarting the HA service being in the
+          <command>terminated</command> state requires restarting the
+          DHCP server or reloading its configuration. In the future, we will
+          provide a command to restart the HA service.</para>
+        </note>
+
+        <para>Whether the server responds to the DHCP queries and which
         queries it responds to is a matter of the server's state, if no
         administrative action is performed to configure the server
         otherwise. The following table provides the default behavior for
@@ -244,6 +306,12 @@
                   <entry>active server</entry>
                   <entry>disabled</entry>
                   <entry>none</entry>
+                </row>
+                <row>
+                  <entry>terminated</entry>
+                  <entry>active server</entry>
+                  <entry>enabled</entry>
+                  <entry>same as in the load-balancing or hot-standby state</entry>
                 </row>
                 <row>
                   <entry>waiting</entry>
