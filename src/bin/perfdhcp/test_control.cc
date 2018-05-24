@@ -61,7 +61,6 @@ TestControl::waitToExit() const {
 
         // Init the end time if it hasn't started yet
         if (exit_time.is_not_a_date_time()) {
-            CommandOptions& options = CommandOptions::instance();
             exit_time = now + time_duration(microseconds(wait_time));
         }
 

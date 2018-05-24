@@ -53,17 +53,6 @@ int lease4_get(CalloutHandle& handle) {
     return(lease_cmds.leaseGetHandler(handle));
 }
 
-/// @brief This is a command callout for 'lease4-get-all' command.
-///
-/// @param handle Callout handle used to retrieve a command and
-/// provide a response.
-/// @return 0 if this callout has been invoked successfully,
-/// 1 otherwise.
-int lease4_get_all(CalloutHandle& handle) {
-    LeaseCmds lease_cmds;
-    return (lease_cmds.lease4GetAllHandler(handle));
-}
-
 /// @brief This is a command callout for 'lease6-get' command.
 ///
 /// @param handle Callout handle used to retrieve a command and
@@ -73,6 +62,28 @@ int lease4_get_all(CalloutHandle& handle) {
 int lease6_get(CalloutHandle& handle) {
     LeaseCmds lease_cmds;
     return(lease_cmds.leaseGetHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease4-get-all' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease4_get_all(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetAllHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-get-all' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease6_get_all(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetAllHandler(handle));
 }
 
 /// @brief This is a command callout for 'lease4-del' command.
@@ -151,6 +162,7 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease4-get", lease4_get);
     handle.registerCommandCallout("lease4-get-all", lease4_get_all);
     handle.registerCommandCallout("lease6-get", lease6_get);
+    handle.registerCommandCallout("lease6-get-all", lease6_get_all);
     handle.registerCommandCallout("lease4-del", lease4_del);
     handle.registerCommandCallout("lease6-del", lease6_del);
     handle.registerCommandCallout("lease4-update", lease4_update);

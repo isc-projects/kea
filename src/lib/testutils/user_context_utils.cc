@@ -12,35 +12,46 @@ using namespace isc::data;
 
 namespace {
 
-/// @brief Exception to handle a unmodified value
+/// @brief Encapsulate either a modified copy or a unmodified value
 /// @tparam EP ElementPtr or ConstElementPtr (compiler can't infer which one)
 template<typename EP>
-class UnModified {
+class Value {
 public:
-    /// @brief Constructor
-    /// @param value the unmodified value
-    UnModified(EP value) : value_(value) { }
+    /// @brief Factory for modified copy
+    static Value mkCopy(EP value) { return (Value(value, false)); }
+
+    /// @brief Factory for unmodified original
+    static Value mkShare(EP value) { return (Value(value, true)); }
 
     /// @brief Get the value
     /// @return the value
     EP get() const { return (value_); }
 
-protected:
-    /// @brief the unmodified value
+    /// @brief Get the shared status
+    /// @return true if original, false if copy
+    bool isShared() const { return (shared_); }
+
+private:
+    /// @brief Constructor
+    /// @param value the modified copy or unmodified value
+    /// @param shared true if original, false if copy
+    Value(EP value, bool shared) : value_(value), shared_(shared) { }
+
+    /// @brief the value
     EP value_;
+
+    /// @brief the shared status
+    bool shared_;
 };
 
 /// @brief Recursive helper
 ///
-/// Instead of returning a unmodified copy a @ref UnModified exception
-/// is raised with the unmodified value
-///
 /// @tparam EP ElementPtr or ConstElementPtr (compiler will infer which one)
 /// @param element the element to traverse
 /// @return a modified copy where comment entries were moved to user-context
-/// @throw UnModified with the unmodified value
+/// or the unmodified original argument encapsulated into a Value
 template<typename EP>
-EP moveComments1(EP element) {
+Value<EP> moveComments1(EP element) {
     bool modified = false;
 
     // On lists recurse on items
@@ -50,20 +61,19 @@ EP moveComments1(EP element) {
         const ListType& list = element->listValue();
         for (ListType::const_iterator it = list.cbegin();
              it != list.cend(); ++it) {
-            try {
-                result->add(moveComments1(*it));
+            Value<ElementPtr> item = moveComments1(*it);
+            result->add(item.get());
+            if (!item.isShared()) {
                 modified = true;
-            }
-            catch (const UnModified<ElementPtr>& ex) {
-                result->add(ex.get());
             }
         }
         if (!modified) {
-            throw UnModified<EP>(element);
+            return (Value<EP>::mkShare(element));
+        } else {
+            return (Value<EP>::mkCopy(result));
         }
-        return (result);
     } else if (element->getType() != Element::map) {
-        throw UnModified<EP>(element);
+        return (Value<EP>::mkShare(element));
     }
 
     // Process maps: recurse on items
@@ -80,18 +90,16 @@ EP moveComments1(EP element) {
             result->set("user-context", it->second);
         } else {
             // Not comment or user-context
-            try {
-                result->set(it->first, moveComments1(it->second));
+            Value<ConstElementPtr> item = moveComments1(it->second);
+            result->set(it->first, item.get());
+            if (!item.isShared()) {
                 modified = true;
-            }
-            catch (const UnModified<ConstElementPtr>& ex) {
-                result->set(it->first, ex.get());
             }
         }
     }
     // Check if the value should be not modified
     if (!has_comment && !modified) {
-        throw UnModified<EP>(element);
+        return (Value<EP>::mkShare(element));
     }
 
     if (has_comment) {
@@ -107,7 +115,7 @@ EP moveComments1(EP element) {
         result->set("user-context", moved);
     }
 
-    return (result);
+    return (Value<EP>::mkCopy(result));
 }
 
 } // anonymous namespace
@@ -116,14 +124,8 @@ namespace isc {
 namespace test {
 
 ElementPtr moveComments(ElementPtr element) {
-    ElementPtr result;
-    try {
-        result = moveComments1(element);
-    }
-    catch (const UnModified<ElementPtr>& ex) {
-        result = ex.get();
-    }
-    return result;
+    Value<ElementPtr> result = moveComments1(element);
+    return (result.get());
 }
 
 }; // end of isc::test namespace
@@ -139,9 +141,9 @@ namespace {
 /// @tparam EP ElementPtr or ConstElementPtr (compiler will infer which one)
 /// @param element the element to traverse
 /// @return a modified copy where comment entries were moved from user-context
-/// @throw UnModified with the unmodified value
+/// or the unmodified original argument encapsulated into a Value
 template<typename EP>
-EP extractComments1(EP element) {
+Value<EP> extractComments1(EP element) {
     bool modified = false;
 
     // On lists recurse on items
@@ -151,20 +153,19 @@ EP extractComments1(EP element) {
         const ListType& list = element->listValue();
         for (ListType::const_iterator it = list.cbegin();
              it != list.cend(); ++it) {
-            try {
-                result->add(extractComments1(*it));
+            Value<ElementPtr> item = extractComments1(*it);
+            result->add(item.get());
+            if (!item.isShared()) {
                 modified = true;
-            }
-            catch (const UnModified<ElementPtr>& ex) {
-                result->add(ex.get());
             }
         }
         if (!modified) {
-            throw UnModified<EP>(element);
+            return (Value<EP>::mkShare(element));
+        } else {
+            return (Value<EP>::mkCopy(result));
         }
-        return (result);
     } else if (element->getType() != Element::map) {
-        throw UnModified<EP>(element);
+        return (Value<EP>::mkShare(element));
     }
 
     // Process maps: recurse on items
@@ -186,18 +187,16 @@ EP extractComments1(EP element) {
             }
         } else {
             // Not comment or user-context
-            try {
-                result->set(it->first, extractComments1(it->second));
+            Value<ConstElementPtr> item = extractComments1(it->second);
+            result->set(it->first, item.get());
+            if (!item.isShared()) {
                 modified = true;
-            }
-            catch (const UnModified<ConstElementPtr>& ex) {
-                result->set(it->first, ex.get());
             }
         }
     }
     // Check if the value should be not modified
     if (!has_comment && !modified) {
-        throw UnModified<EP>(element);
+        return (Value<EP>::mkShare(element));
     }
 
     if (has_comment) {
@@ -219,7 +218,7 @@ EP extractComments1(EP element) {
         result->set("comment", comment);
     }
 
-    return (result);
+    return (Value<EP>::mkCopy(result));
 }
 
 } // anonymous namespace
@@ -228,14 +227,8 @@ namespace isc {
 namespace test {
 
 ElementPtr extractComments(ElementPtr element) {
-    ElementPtr result;
-    try {
-        result = extractComments1(element);
-    }
-    catch (const UnModified<ElementPtr>& ex) {
-        result = ex.get();
-    }
-    return result;
+    Value<ElementPtr> result = extractComments1(element);
+    return (result.get());
 }
 
 }; // end of isc::test namespace

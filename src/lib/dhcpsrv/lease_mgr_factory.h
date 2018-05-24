@@ -63,15 +63,11 @@ public:
     ///        -end specific, although must include the "type" keyword which
     ///        gives the backend in use.
     ///
-    /// @param db_lost_callback function to invoke if connectivity to lease
-    /// database is lost.
-    ///
     /// @throw isc::InvalidParameter dbaccess string does not contain the "type"
     ///        keyword.
     /// @throw isc::dhcp::InvalidType The "type" keyword in dbaccess does not
     ///        identify a supported backend.
-    static void create(const std::string& dbaccess, 
-                       DatabaseConnection::DbLostCallback db_lost_callback = 0);
+    static void create(const std::string& dbaccess);
 
     /// @brief Destroy lease manager
     ///

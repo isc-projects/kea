@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -421,6 +421,12 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
              opt != extra_options_.end(); ++opt) {
             msg->addOption(opt->second);
         }
+    }
+
+    // Add classes.
+    for (ClientClasses::const_iterator cclass = classes_.cbegin();
+         cclass != classes_.cend(); ++cclass) {
+        msg->addClass(*cclass);
     }
 
     return (msg);
@@ -895,6 +901,16 @@ Dhcp6Client::receiveOneMsg() {
 }
 
 void
+Dhcp6Client::receiveResponse() {
+    context_.response_ = receiveOneMsg();
+    // If the server has responded, store the configuration received.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
 Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->shutdown_ = false;
     // The client is configured to send through the relay. We achieve that
@@ -930,8 +946,22 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
 
+    // Copy classes
+    const ClientClasses& classes = msg->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        msg_copy->addClass(*cclass);
+    }
+
     srv_->fakeReceive(msg_copy);
-    srv_->run();
+
+    try {
+        // Invoke run_one instead of run, because we want to avoid triggering
+        // IO service.
+        srv_->run_one();
+    } catch (...) {
+        // Suppress errors, as the DHCPv6 server does.
+    }
 }
 
 void
@@ -967,6 +997,18 @@ Dhcp6Client::addExtraOption(const OptionPtr& opt) {
 void
 Dhcp6Client::clearExtraOptions() {
     extra_options_.clear();
+}
+
+void
+Dhcp6Client::addClass(const ClientClass& client_class) {
+    if (!classes_.contains(client_class)) {
+        classes_.insert(client_class);
+    }
+}
+
+void
+Dhcp6Client::clearClasses() {
+    classes_.clear();
 }
 
 void

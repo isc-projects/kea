@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,8 +111,51 @@ LeaseMgr::recountLeaseStats4() {
     }
 }
 
+LeaseStatsQuery::LeaseStatsQuery()
+    : first_subnet_id_(0), last_subnet_id_(0), select_mode_(ALL_SUBNETS) {
+}
+
+LeaseStatsQuery::LeaseStatsQuery(const SubnetID& subnet_id)
+    : first_subnet_id_(subnet_id), last_subnet_id_(0),
+    select_mode_(SINGLE_SUBNET) {
+
+    if (first_subnet_id_ == 0) {
+        isc_throw(BadValue, "LeaseStatsQuery: subnet_id_ must be > 0");
+    }
+}
+
+LeaseStatsQuery::LeaseStatsQuery(const SubnetID& first_subnet_id,
+                                 const SubnetID& last_subnet_id)
+    : first_subnet_id_(first_subnet_id), last_subnet_id_(last_subnet_id),
+    select_mode_(SUBNET_RANGE) {
+
+    if (first_subnet_id_ == 0) {
+        isc_throw(BadValue, "LeaseStatsQuery: first_subnet_id_ must be > 0");
+    }
+
+    if (last_subnet_id_ == 0) {
+        isc_throw(BadValue, "LeaseStatsQuery: last_subnet_id_ must be > 0");
+    }
+
+    if (last_subnet_id_ <= first_subnet_id_) {
+        isc_throw(BadValue,
+                  "LeaseStatsQuery: last_subnet_id_must be > first_subnet_id_");
+    }
+}
+
 LeaseStatsQueryPtr
 LeaseMgr::startLeaseStatsQuery4() {
+    return(LeaseStatsQueryPtr());
+}
+
+LeaseStatsQueryPtr
+LeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& /* subnet_id */) {
+    return(LeaseStatsQueryPtr());
+}
+
+LeaseStatsQueryPtr
+LeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& /* first_subnet_id */,
+                                           const SubnetID& /* last_subnet_id */) {
     return(LeaseStatsQueryPtr());
 }
 
@@ -215,6 +258,17 @@ LeaseMgr::recountLeaseStats6() {
 
 LeaseStatsQueryPtr
 LeaseMgr::startLeaseStatsQuery6() {
+    return(LeaseStatsQueryPtr());
+}
+
+LeaseStatsQueryPtr
+LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& /* subnet_id */) {
+    return(LeaseStatsQueryPtr());
+}
+
+LeaseStatsQueryPtr
+LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& /* first_subnet_id */,
+                                           const SubnetID& /* last_subnet_id */) {
     return(LeaseStatsQueryPtr());
 }
 

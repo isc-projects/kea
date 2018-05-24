@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -285,13 +285,20 @@ public:
     /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
-    void addClass(const isc::dhcp::ClientClass& client_class);
+    /// @param required the class is marked for required evaluation
+    void addClass(const isc::dhcp::ClientClass& client_class,
+                  bool required = false);
 
     /// @brief Returns the class set
     ///
     /// @note This should be used only to iterate over the class set.
-    /// @return
-    const ClientClasses& getClasses() const { return (classes_); }
+    /// @param required return classes or required to be evaluated classes.
+    /// @return if required is false (the default) the classes the
+    /// packet belongs to else the classes which are required to be
+    /// evaluated.
+    const ClientClasses& getClasses(bool required = false) const {
+        return (!required ? classes_ : required_classes_);
+    }
 
     /// @brief Unparsed data (in received packets).
     ///
@@ -578,6 +585,14 @@ public:
     /// of returned reference lifetime. It is preferred to use @ref inClass and
     /// @ref addClass should be used to operate on this field.
     ClientClasses classes_;
+
+    /// @brief Classes which are required to be evaluated.
+    ///
+    /// The comment on @ref classes_ applies here.
+    ///
+    /// Before output option processing these classes will be evaluated
+    /// and if evaluation status is true added to the previous collection.
+    ClientClasses required_classes_;
 
     /// @brief Collection of options present in this message.
     ///

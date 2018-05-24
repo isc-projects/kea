@@ -32,6 +32,23 @@ using namespace std;
 
 namespace {
 
+/// Structure that holds registered hook indexes.
+struct CtrlDhcp6Hooks {
+    int hooks_index_dhcp6_srv_configured_;
+
+    /// Constructor that registers hook points for the DHCPv6 server.
+    CtrlDhcp6Hooks() {
+        hooks_index_dhcp6_srv_configured_ = HooksManager::registerHook("dhcp6_srv_configured");
+    }
+
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+CtrlDhcp6Hooks Hooks;
+
 // Name of the file holding server identifier.
 static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 
@@ -418,7 +435,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
                     // The user specified that the DHCP service should resume not
                     // later than in max-period seconds. If the 'dhcp-enable' command
                     // is not sent, the DHCP service will resume automatically.
-                    network_state_.delayedEnableAll(static_cast<unsigned>(max_period));
+                    network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
                 }
             }
         }
@@ -426,7 +443,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
     // No error occurred, so let's disable the service.
     if (message.tellp() == 0) {
-        network_state_.disableService();
+        network_state_->disableService();
 
         message << "DHCPv6 service disabled";
         if (max_period > 0) {
@@ -442,7 +459,7 @@ ControlledDhcpv6Srv::commandDhcpDisableHandler(const std::string&,
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
-    network_state_.enableService();
+    network_state_->enableService();
     return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
 }
 
@@ -587,9 +604,11 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Re-open lease and host database with new parameters.
     try {
+        DatabaseConnection::db_lost_callback =
+            boost::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=6");
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv6Srv::dbLostCallback, srv, _1));
+        cfg_db->createManagers();
     } catch (const std::exception& ex) {
         return (isc::config::createAnswer(1, "Unable to open database: "
                                           + std::string(ex.what())));
@@ -660,6 +679,26 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // Finally, we can commit runtime option definitions in libdhcp++. This is
     // exception free.
     LibDHCP::commitRuntimeOptionDefs();
+
+    // This hook point notifies hooks libraries that the configuration of the
+    // DHCPv6 server has completed. It provides the hook library with the pointer
+    // to the common IO service object, new server configuration in the JSON
+    // format and with the pointer to the configuration storage where the
+    // parsed configuration is stored.
+    if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp6_srv_configured_)) {
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+        callout_handle->setArgument("io_context", srv->getIOService());
+        callout_handle->setArgument("network_state", srv->getNetworkState());
+        callout_handle->setArgument("json_config", config);
+        callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
+
+        HooksManager::callCallouts(Hooks.hooks_index_dhcp6_srv_configured_,
+                                   *callout_handle);
+
+        // Ignore status code as none of them would have an effect on further
+        // operation.
+    }
 
     return (answer);
 }
@@ -762,6 +801,10 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
     try {
         cleanup();
 
+        // The closure captures either a shared pointer (memory leak)
+        // or a raw pointer (pointing to a deleted object).
+        DatabaseConnection::db_lost_callback = 0;
+
         timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
@@ -831,7 +874,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     // Re-open lease and host database with new parameters.
     try {
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
-        cfg_db->createManagers(boost::bind(&ControlledDhcpv6Srv::dbLostCallback, this, _1));
+        cfg_db->createManagers();
         reopened = true;
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
@@ -843,7 +886,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer"); }
 
         // Set network state to service enabled
-        network_state_.enableService();
+        network_state_->enableService();
 
         // Toss the reconnct control, we're done with it
         db_reconnect_ctl.reset();
@@ -875,7 +918,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 bool
 ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until we recover
-    network_state_.disableService();
+    network_state_->disableService();
 
     if (!db_reconnect_ctl) {
         // This shouldn't never happen

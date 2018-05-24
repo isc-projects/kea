@@ -89,6 +89,7 @@ libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += assignable_network.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
+libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
 libkea_dhcpsrv_la_SOURCES += cfg_4o6.cc cfg_4o6.h
 libkea_dhcpsrv_la_SOURCES += cfg_db_access.cc cfg_db_access.h
@@ -115,6 +116,7 @@ libkea_dhcpsrv_la_SOURCES += daemon.cc daemon.h
 libkea_dhcpsrv_la_SOURCES += database_connection.cc database_connection.h
 libkea_dhcpsrv_la_SOURCES += db_exceptions.h
 libkea_dhcpsrv_la_SOURCES += db_log.cc db_log.h
+libkea_dhcpsrv_la_SOURCES += db_type.h
 libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_db_log.cc dhcpsrv_db_log.h
@@ -219,7 +221,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 8:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 9:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
@@ -248,6 +250,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	alloc_engine_log.h \
 	assignable_network.h \
 	base_host_data_source.h \
+	cache_host_data_source.h \
 	callout_handle_store.h \
 	cfg_4o6.h \
 	cfg_db_access.h \
@@ -273,7 +276,10 @@ libkea_dhcpsrv_include_HEADERS = \
 	daemon.h \
 	database_connection.h \
 	db_exceptions.h \
+	db_log.h \
+	db_type.h \
 	dhcp4o6_ipc.h \
+	dhcpsrv_db_log.h \
 	dhcpsrv_log.h \
 	host.h \
 	host_container.h \
@@ -292,6 +298,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	memfile_lease_storage.h \
 	ncr_generator.h \
 	network.h \
+	network_state.h \
 	pool.h \
 	shared_network.h \
 	sql_common.h \
@@ -307,6 +314,8 @@ libkea_dhcpsrv_include_HEADERS = \
 if HAVE_CQL
 libkea_dhcpsrv_include_HEADERS += \
 	cql_connection.h \
+	cql_exchange.h \
+	cql_host_data_source.h \
 	cql_lease_mgr.h
 endif
 

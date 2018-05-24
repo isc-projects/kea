@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -200,6 +200,24 @@ TEST(ParserTest, multilineComments) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"comment\": \"a comment\",\n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"subnet4\": [ { "
+                "    \"user-context\": { \"comment\": \"indirect\" },"
+                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"subnet\": \"192.0.2.0/24\", "
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"user-context\": { \"compatible\": true },"
+                "\"valid-lifetime\": 4000 } }";
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
+}
 
 /// @brief Loads specified example config file
 ///
@@ -247,6 +265,7 @@ TEST(ParserTest, file) {
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
+                               "classify2.json",
                                "comments.json",
                                "dhcpv4-over-dhcpv6.json",
                                "hooks.json",
@@ -532,6 +551,45 @@ TEST(ParserTest, errors) {
               Parser4Context::PARSER_OPTION_DEF,
               "missing parameter 'type' (<string>:1:1) "
               "[option-def map between <string>:1:1 and <string>:2:15]");
+
+    // user context and embedded comments
+    testError("{ \"Dhcp4\":{\n"
+              "  \"comment\": true,\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes

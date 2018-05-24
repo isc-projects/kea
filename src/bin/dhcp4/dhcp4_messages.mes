@@ -59,6 +59,14 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+% DHCP4_CLASS_UNDEFINED required class %1 has no definition
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+% DHCP4_CLASS_UNTESTABLE required class %1 has no test expression
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
 This debug message is issued when the server is processing the DHCPv4 message
 for which client identifier will not be used when allocating new lease or
@@ -140,30 +148,30 @@ change is committed by the administrator.
 A debug message indicating that the DHCPv4 server has received an
 updated configuration from the Kea configuration system.
 
-% DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
-An informational message indicating that the server is scheduling the next
-attempt to reconnect to its lease and/or host databases.  This occurs when the
-server has lost databse connectivity and is attempting to reconnect 
-automatically.
-
 % DHCP4_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
 An error message indicating that an attempt to reconnect to the lease and/or
 host data bases has failed.  This occurs after connectivity to either one
 has been lost and an automatic attempt to reconnect has failed.
 
+% DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
+An informational message indicating that the server is scheduling the next
+attempt to reconnect to its lease and/or host databases.  This occurs when the
+server has lost databse connectivity and is attempting to reconnect
+automatically.
+
+% DHCP4_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+This is an informational message indicating that connectivity to either the
+lease or host database or both and that automatic reconnect is not enabled.
+
 % DHCP4_DB_RECONNECT_NO_DB_CTL unexpected error in database reconnect
 This is an error message indicating a programmatic error that should not
 occur. It will prohibit the server from attempting to reconnect to its
 databases if connectivy is lost, and the server will exit. This error
-should be reported. 
-
-% DHCP4_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %1
-This is an informational message indicating that connectivity to either the
-lease or host database or both and that automatic reconnect is not enabled.
+should be reported.
 
 % DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
 This error indicates that the server is shutting down after failing to reconnect to
-the lease and/or host database(s) after making the maximum configured number 
+the lease and/or host database(s) after making the maximum configured number
 of reconnect attempts.  Loss of connectivity is typically a network or database
 server issue.
 
@@ -207,11 +215,11 @@ A malformed DHCPv4o6 packet was received.
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
-% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 on interface %5 encapsulating %6: %7 (type %8)
+% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)
 The arguments specify the client identification information (HW address
 and client identifier), DHCPv6 message name and type, source IPv6
-address and interface name, DHCPv4 client identification, message
-name and type.
+address and port, and interface name, DHCPv4 client identification,
+message name and type.
 
 % DHCP4_DHCP4O6_PACKET_SEND_FAIL %1: failed to send DHCPv4o6 packet: %2
 This error is output if the IPv4 DHCP server fails to send an
@@ -411,11 +419,6 @@ server is about to open sockets on the specified port.
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
-% DHCP4_PACKET_OPTIONS_SKIPPED An error upacking an option, caused subsequent options to be skipped: %1
-A debug message issued when an option failed to unpack correctly, making it
-impossible to unpack the remaining options in the packet.  The server will
-server will still attempt to service the packet.
-
 % DHCP4_PACKET_DROP_0001 failed to parse packet from %1 to %2, received over interface %3, reason: %4
 The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
@@ -505,6 +508,11 @@ reason. The first argument contains the client and the transaction
 identification information. The second argument contains the IPv4 address
 in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
+
+% DHCP4_PACKET_OPTIONS_SKIPPED An error upacking an option, caused subsequent options to be skipped: %1
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the packet.  The server will
+server will still attempt to service the packet.
 
 % DHCP4_PACKET_PACK %1: preparing on-wire format of the packet to be sent
 This debug message is issued when the server starts preparing the on-wire
@@ -755,3 +763,10 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
+<<<<<<< HEAD
+=======
+
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication.
+>>>>>>> trac5404

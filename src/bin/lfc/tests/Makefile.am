@@ -55,6 +55,7 @@ lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 lfc_unittests_LDADD = $(top_builddir)/src/bin/lfc/liblfc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+lfc_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la

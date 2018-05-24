@@ -371,13 +371,10 @@ public:
     /// can catch out of order delivery.
     static ConstElementPtr longResponseHandler(const std::string&,
                                                const ConstElementPtr&) {
-        // By seeding the generator with the constant value we will always
-        // get the same sequence of generated strings.
-        std::srand(1);
         ElementPtr arguments = Element::createList();
-        for (unsigned i = 0; i < 40000; ++i) {
+        for (unsigned i = 0; i < 80000; ++i) {
             std::ostringstream s;
-            s << std::setw(10) << std::rand();
+            s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
         }
         return (createAnswer(0, arguments));
@@ -1171,7 +1168,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisable) {
     ConstElementPtr cfg = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
-    EXPECT_FALSE(server_->network_state_.isServiceEnabled());
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 }
 
 // This test verifies that it is possible to disable DHCP service for a short
@@ -1198,10 +1195,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableTemporarily) {
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
     // The service should be disabled.
-    EXPECT_FALSE(server_->network_state_.isServiceEnabled());
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
     // And the timer should be scheduled which counts the time to automatic
     // enabling of the service.
-    EXPECT_TRUE(server_->network_state_.isDelayedEnableAll());
+    EXPECT_TRUE(server_->network_state_->isDelayedEnableAll());
 }
 
 // This test verifies if it is possible to enable DHCP service via command.
@@ -1220,7 +1217,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnable) {
     ConstElementPtr cfg = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
-    EXPECT_TRUE(server_->network_state_.isServiceEnabled());
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
 /// Verify that concurrent connections over the control channel can be

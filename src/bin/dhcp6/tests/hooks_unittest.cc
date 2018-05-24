@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <asiolink/io_service.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp6/json_config_parser.h>
@@ -22,6 +23,7 @@
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <cc/command_interpreter.h>
@@ -53,16 +55,17 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     NakedDhcpv6Srv srv(0);
 
     // check if appropriate hooks are registered
-    int hook_index_buffer6_receive  = -1;
-    int hook_index_buffer6_send     = -1;
-    int hook_index_lease6_renew     = -1;
-    int hook_index_lease6_release   = -1;
-    int hook_index_lease6_rebind    = -1;
-    int hook_index_lease6_decline   = -1;
-    int hook_index_pkt6_received    = -1;
-    int hook_index_select_subnet    = -1;
-    int hook_index_pkt6_send        = -1;
-    int hook_index_host6_identifier = -1;
+    int hook_index_buffer6_receive   = -1;
+    int hook_index_buffer6_send      = -1;
+    int hook_index_lease6_renew      = -1;
+    int hook_index_lease6_release    = -1;
+    int hook_index_lease6_rebind     = -1;
+    int hook_index_lease6_decline    = -1;
+    int hook_index_pkt6_received     = -1;
+    int hook_index_select_subnet     = -1;
+    int hook_index_leases6_committed = -1;
+    int hook_index_pkt6_send         = -1;
+    int hook_index_host6_identifier  = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer6_receive = ServerHooks::getServerHooks()
@@ -81,22 +84,25 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("pkt6_receive"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
                     .getIndex("subnet6_select"));
-    EXPECT_NO_THROW(hook_index_pkt6_send     = ServerHooks::getServerHooks()
+    EXPECT_NO_THROW(hook_index_leases6_committed = ServerHooks::getServerHooks()
+                    .getIndex("leases6_committed"));
+    EXPECT_NO_THROW(hook_index_pkt6_send = ServerHooks::getServerHooks()
                     .getIndex("pkt6_send"));
     EXPECT_NO_THROW(hook_index_host6_identifier = ServerHooks::getServerHooks()
                     .getIndex("host6_identifier"));
 
 
-    EXPECT_TRUE(hook_index_pkt6_received   > 0);
-    EXPECT_TRUE(hook_index_select_subnet   > 0);
-    EXPECT_TRUE(hook_index_pkt6_send       > 0);
-    EXPECT_TRUE(hook_index_buffer6_receive > 0);
-    EXPECT_TRUE(hook_index_buffer6_send    > 0);
-    EXPECT_TRUE(hook_index_lease6_renew    > 0);
-    EXPECT_TRUE(hook_index_lease6_release  > 0);
-    EXPECT_TRUE(hook_index_lease6_rebind   > 0);
-    EXPECT_TRUE(hook_index_lease6_decline  > 0);
-    EXPECT_TRUE(hook_index_host6_identifier > 0);
+    EXPECT_TRUE(hook_index_pkt6_received     > 0);
+    EXPECT_TRUE(hook_index_select_subnet     > 0);
+    EXPECT_TRUE(hook_index_leases6_committed > 0);
+    EXPECT_TRUE(hook_index_pkt6_send         > 0);
+    EXPECT_TRUE(hook_index_buffer6_receive   > 0);
+    EXPECT_TRUE(hook_index_buffer6_send      > 0);
+    EXPECT_TRUE(hook_index_lease6_renew      > 0);
+    EXPECT_TRUE(hook_index_lease6_release    > 0);
+    EXPECT_TRUE(hook_index_lease6_rebind     > 0);
+    EXPECT_TRUE(hook_index_lease6_decline    > 0);
+    EXPECT_TRUE(hook_index_host6_identifier  > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -112,13 +118,16 @@ class HooksDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
 
     /// @brief creates Dhcpv6Srv and prepares buffers for callouts
-    HooksDhcpv6SrvTest() {
+    HooksDhcpv6SrvTest()
+        : Dhcpv6SrvTest() {
 
         // Allocate new DHCPv6 Server
         srv_.reset(new NakedDhcpv6Srv(0));
 
         // Clear static buffers
         resetCalloutBuffers();
+
+        io_service_ = boost::make_shared<IOService>();
 
         // Reset the hook system in its original state
         HooksManager::unloadLibraries();
@@ -750,6 +759,60 @@ public:
         return (lease6_decline_callout(callout_handle));
     }
 
+    /// Test callback that stores values passed to leases6_committed.
+    static int
+    leases6_committed_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("leases6_committed");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+
+        callout_handle.getArgument("leases6", callback_new_leases6_);
+
+        callout_handle.getArgument("deleted_leases6", callback_deleted_leases6_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    static void
+    leases6_committed_unpark(ParkingLotHandlePtr parking_lot, Pkt6Ptr query) {
+        parking_lot->unpark(query);
+    }
+
+    /// Test callback which asks the server to park the packet.
+    static int
+    leases6_committed_park_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("leases6_committed");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+
+        io_service_->post(boost::bind(&HooksDhcpv6SrvTest::leases6_committed_unpark,
+                                      callout_handle.getParkingLotHandlePtr(),
+                                      callback_qry_pkt6_));
+
+        callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt6_);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
+
+        callout_handle.getArgument("leases6", callback_new_leases6_);
+
+        callout_handle.getArgument("deleted_leases6", callback_deleted_leases6_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt6_) {
+            callback_qry_options_copy_ = callback_qry_pkt6_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
     /// @brief Test host6_identifier by setting identifier to "foo"
     ///
     /// @param callout_handle handle passed by the hooks framework
@@ -777,7 +840,7 @@ public:
         return (0);
     }
 
-    /// @brief Test host4_identifier callout by setting identifier to hwaddr
+    /// @brief Test host6_identifier callout by setting identifier to hwaddr
     ///
     /// This callout always returns fixed HWADDR: 00:01:02:03:04:05
     ///
@@ -814,6 +877,8 @@ public:
         callback_resp_pkt6_.reset();
         callback_subnet6_.reset();
         callback_lease6_.reset();
+        callback_new_leases6_.reset();
+        callback_deleted_leases6_.reset();
         callback_ia_na_.reset();
         callback_subnet6collection_ = NULL;
         callback_argument_names_.clear();
@@ -823,6 +888,9 @@ public:
 
     /// Pointer to Dhcpv6Srv that is used in tests
     boost::scoped_ptr<NakedDhcpv6Srv> srv_;
+
+    /// Pointer to the IO service used in the tests.
+    static IOServicePtr io_service_;
 
     // The following fields are used in testing pkt6_receive_callout
 
@@ -835,8 +903,12 @@ public:
     /// Server's response Pkt6 structure returned in the callout
     static Pkt6Ptr callback_resp_pkt6_;
 
-    /// Pointer to lease6
+    /// Pointer to lease6 structure returned in the leases6_committed callout
     static Lease6Ptr callback_lease6_;
+
+    /// Pointers to lease6 structures returned in the leases6_committed callout
+    static Lease6CollectionPtr callback_new_leases6_;
+    static Lease6CollectionPtr callback_deleted_leases6_;
 
     /// Pointer to IA_NA option being renewed or rebound
     static boost::shared_ptr<Option6IA> callback_ia_na_;
@@ -869,6 +941,7 @@ const uint32_t HooksDhcpv6SrvTest::override_valid_ = 1004;
 
 // The following fields are used in testing pkt6_receive_callout.
 // See fields description in the class for details
+IOServicePtr HooksDhcpv6SrvTest::io_service_;
 string HooksDhcpv6SrvTest::callback_name_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_qry_pkt6_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_resp_pkt6_;
@@ -876,17 +949,20 @@ Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
 const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
+Lease6CollectionPtr HooksDhcpv6SrvTest::callback_new_leases6_;
+Lease6CollectionPtr HooksDhcpv6SrvTest::callback_deleted_leases6_;
 boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
 bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
 
 /// @brief Fixture class used to do basic library load/unload tests
-class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
+class LoadUnloadDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedDhcpv6Srv> server_;
 
-    LoadUnloadDhcpv6SrvTest() {
+    LoadUnloadDhcpv6SrvTest()
+        : Dhcpv6SrvTest() {
         reset();
     }
 
@@ -907,10 +983,12 @@ public:
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
+        static_cast<void>(remove(SRV_CONFIG_MARKER_FILE));
 
         CfgMgr::instance().clear();
     }
 };
+
 
 // Checks if callouts installed on buffer6_receive are indeed called and the
 // all necessary parameters are passed.
@@ -1515,7 +1593,11 @@ TEST_F(HooksDhcpv6SrvTest, subnet6Select) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_->processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_->initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -1592,7 +1674,11 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SselectChange) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_->processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_->initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -1640,6 +1726,813 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectDrop) {
 
     // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// This test verifies that the leases6_committed hook point is not triggered
+// for the SOLICIT.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedSolicit) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    // Install leases6_committed callout
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSolicit());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+}
+
+// This test verifies that the leases6_committed hook point is not triggered
+// for the CONFIRM.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedConfirm) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    // Get a lease for the client.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Install leases6_committed callout
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doConfirm());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+}
+
+// This test verifies that the leases6_committed hook point is not triggered
+// for the INFREQUEST.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedInfRequest) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.useRelay();
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doInfRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Make sure that the callout wasn't called.
+    EXPECT_TRUE(callback_name_.empty());
+}
+
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of SOLICIT message with Rapid Commit option,
+// sent to allocate new lease.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"rapid-commit\": true, "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.useRapidCommit(true);
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSolicit());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
+// This test verifies that it is possible to park a SOLICIT packet including
+// Rapid Commit option as a result of the leases6_committed callouts. The
+// prefix delegation is requested with the Solicit packet.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:1::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"rapid-commit\": true, "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Create first client and perform SARR.
+    Dhcp6Client client1;
+    client1.setInterface("eth1");
+    client1.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
+    client1.useRapidCommit(true);
+
+    ASSERT_NO_THROW(configure(config, *client1.getServer()));
+
+    // This callout uses provided IO service object to post a function
+    // that unparks the packet. The packet is parked and can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_park_callout));
+
+    ASSERT_NO_THROW(client1.doSolicit());
+
+    // We should be offered an address but the REPLY should not arrive
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client1.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be passed to the callout.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Create the second client to test that it may communicate with the
+    // server while the previous packet is parked.
+    Dhcp6Client client2(client1.getServer());
+    client2.setInterface("eth1");
+    client2.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:29::"));
+    client2.useRapidCommit(true);
+    ASSERT_NO_THROW(client2.doSolicit());
+
+    // The ADVERTISE should have been returned but not REPLAY, as this
+    // packet got parked too.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed.
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // There should be now two actions scheduled on our IO service
+    // by the invoked callouts. They unpark both REPLY messages.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client1.receiveResponse());
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt6Ptr rsp = client1.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client1.hasLeaseForPrefix(IOAddress("2001:db8:1:28::"), 64));
+
+    // Receive and check the second response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_TRUE(client2.getContext().response_);
+    rsp = client2.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("2001:db8:1:29::"), 64));
+}
+
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of REQUEST message sent to allocate new
+// lease or renew an existing lease.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Request the lease and make sure that the callout has been executed.
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Requested lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to request again but force the client to request a different
+    // address with a different IAID.
+    client.requestAddress(0x2233, IOAddress("2001:db8:1::29"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
+
+    // The old lease is kept.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // The requested address is just a hint.
+    client.requestAddress(0x5577, IOAddress("4000::2"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Request a prefix: this should lead to an error as no prefix pool
+    // is configured.
+    client.requestPrefix(0x1122, 64, IOAddress("2001:db8:1000::"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+}
+
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of REQUEST message sent to allocate new
+// lease or renew an existing lease. Prefix variant.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:1::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Request the lease and make sure that the callout has been executed.
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Requested lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to request again but force the client to request a different
+    // prefix with a different IAID.
+    client.requestPrefix(0x2233, 64, IOAddress("2001:db8:1:29::"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:29::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // The old lease is kept.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // The requested prefix is just a hint.
+    client.requestPrefix(0x5577, 64, IOAddress("4000::1"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Request an address: this should lead to an error as no address pool
+    // is configured.
+    client.requestAddress(0x1122, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+}
+
+// This test verifies that it is possible to park a packet as a result of
+// the leases6_committed callouts.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Create first client and perform SARR.
+    Dhcp6Client client1;
+    client1.setInterface("eth1");
+    client1.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client1.getServer()));
+
+    // This callout uses provided IO service object to post a function
+    // that unparks the packet. The packet is parked and can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_park_callout));
+
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // We should be offered an address but the REPLY should not arrive
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client1.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be passed to the callout.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Create the second client to test that it may communicate with the
+    // server while the previous packet is parked.
+    Dhcp6Client client2(client1.getServer());
+    client2.setInterface("eth1");
+    client2.requestAddress(0xabca, IOAddress("2001:db8:1::29"));
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // The ADVERTISE should have been returned but not REPLAY, as this
+    // packet got parked too.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed.
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // There should be now two actions scheduled on our IO service
+    // by the invoked callouts. They unpark both REPLY messages.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client1.receiveResponse());
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt6Ptr rsp = client1.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
+
+    // Receive and check the second response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_TRUE(client2.getContext().response_);
+    rsp = client2.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::29")));
+}
+
+// This test verifies that it is possible to park a packet as a result of
+// the leases6_committed callouts. Prefix variant.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:1::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Create first client and perform SARR.
+    Dhcp6Client client1;
+    client1.setInterface("eth1");
+    client1.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
+
+    ASSERT_NO_THROW(configure(config, *client1.getServer()));
+
+    // This callout uses provided IO service object to post a function
+    // that unparks the packet. The packet is parked and can be unparked
+    // by simply calling IOService::poll.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_park_callout));
+
+    ASSERT_NO_THROW(client1.doSARR());
+
+    // We should be offered an address but the REPLY should not arrive
+    // at this point, because the packet is parked.
+    ASSERT_FALSE(client1.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be passed to the callout.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Reset all indicators because we'll be now creating a second client.
+    resetCalloutBuffers();
+
+    // Create the second client to test that it may communicate with the
+    // server while the previous packet is parked.
+    Dhcp6Client client2(client1.getServer());
+    client2.setInterface("eth1");
+    client2.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:29::"));
+    ASSERT_NO_THROW(client2.doSARR());
+
+    // The ADVERTISE should have been returned but not REPLAY, as this
+    // packet got parked too.
+    ASSERT_FALSE(client2.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed.
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // There should be now two actions scheduled on our IO service
+    // by the invoked callouts. They unpark both REPLY messages.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // Receive and check the first response.
+    ASSERT_NO_THROW(client1.receiveResponse());
+    ASSERT_TRUE(client1.getContext().response_);
+    Pkt6Ptr rsp = client1.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client1.hasLeaseForPrefix(IOAddress("2001:db8:1:28::"), 64));
+
+    // Receive and check the second response.
+    ASSERT_NO_THROW(client2.receiveResponse());
+    ASSERT_TRUE(client2.getContext().response_);
+    rsp = client2.getContext().response_;
+    EXPECT_EQ(DHCPV6_REPLY, rsp->getType());
+    EXPECT_TRUE(client2.hasLeaseForPrefix(IOAddress("2001:db8:1:29::"), 64));
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1691,7 +2584,6 @@ TEST_F(HooksDhcpv6SrvTest, basicLease6Renew) {
     ia->addOption(renewed_addr_opt);
     req->addOption(ia);
     req->addOption(clientid);
-
     // Server-id is mandatory in RENEW
     req->addOption(srv.getServerID());
 
@@ -1906,6 +2798,331 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Renew) {
     EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
     EXPECT_NE(l->valid_lft_, subnet_->getValid());
     EXPECT_NE(l->cltt_, time(NULL));
+}
+
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of RENEW message sent to allocate new
+// lease or renew an existing lease.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Renew the lease and make sure that the callout has been executed.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Renewed lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to renew again but force the client to renew a different
+    // address with a different IAID.
+    client.requestAddress(0x2233, IOAddress("2001:db8:1::29"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
+
+    // The old lease is kept.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // The renewed address is just a hint.
+    client.requestAddress(0x5577, IOAddress("4000::2"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Renew a prefix: this should lead to an error as no prefix pool
+    // is configured.
+    client.requestPrefix(0x1122, 64, IOAddress("2001:db8:1000::"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+}
+
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of RENEW message sent to allocate new
+// lease or renew an existing lease. Prefix variant.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:1::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Renew the lease and make sure that the callout has been executed.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Renewed lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to renew again but force the client to renew a different
+    // prefix with a different IAID.
+    client.requestPrefix(0x2233, 64, IOAddress("2001:db8:1:29::"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:29::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // The old lease is kept.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // The renewed prefix is just a hint.
+    client.requestPrefix(0x5577, 64, IOAddress("4000::1"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Renew an address: this should lead to an error as no address pool
+    // is configured.
+    client.requestAddress(0x1122, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly,
@@ -2200,6 +3417,197 @@ TEST_F(HooksDhcpv6SrvTest, dropLease6Release) {
     ASSERT_TRUE(l);
 }
 
+// This test verifies that the leases6_committed callout is executed
+// with deleted leases as argument when RELEASE is processed.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRelease) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(client.doSARR());
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_TRUE(callback_new_leases6_->empty());
+
+    // Released lease should be returned.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_EQ(1, callback_deleted_leases6_->size());
+    Lease6Ptr lease = callback_deleted_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
+// This test verifies that the leases6_committed callout is executed
+// with deleted leases as argument when RELEASE is processed. Prefix variant.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleasePrefix) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:1::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(client.doSARR());
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_TRUE(callback_new_leases6_->empty());
+
+    // Released lease should be returned.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_EQ(1, callback_deleted_leases6_->size());
+    Lease6Ptr lease = callback_deleted_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
+// This test verifies that the leases6_committed callout is executed
+// with deleted leases as argument when RELEASE is processed.
+// Variant with two addresses and two prefixes.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleaseMultiple) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:2::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8::/32\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    // In theory we can reuse the IAID but copyIAsFromLeases() copies
+    // only one lease...
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.requestPrefix(0xabcb, 64, IOAddress("2001:db8:2:28::"));
+    client.requestAddress(0x2233, IOAddress("2001:db8:1::29"));
+    client.requestPrefix(0x2234, 64, IOAddress("2001:db8:2:29::"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(client.doSARR());
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No new allocations.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_TRUE(callback_new_leases6_->empty());
+
+    // Released lease should be returned.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_EQ(4, callback_deleted_leases6_->size());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
 // This test verifies that incoming (positive) REBIND can be handled properly,
 // and the lease6_rebind callouts are triggered.
 TEST_F(HooksDhcpv6SrvTest, basicLease6Rebind) {
@@ -2454,6 +3862,331 @@ TEST_F(HooksDhcpv6SrvTest, skipLease6Rebind) {
     EXPECT_NE(l->cltt_, time(NULL));
 }
 
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of REBIND message sent to allocate new
+// lease or renew an existing lease.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Rebind the lease and make sure that the callout has been executed.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Rebound lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to rebind again but force the client to rebind a different
+    // address with a different IAID.
+    client.requestAddress(0x2233, IOAddress("2001:db8:1::29"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
+
+    // The old lease is kept.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // The rebound address is just a hint.
+    client.requestAddress(0x5577, IOAddress("4000::2"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Rebind a prefix: this should lead to an error as no prefix pool
+    // is configured.
+    client.requestPrefix(0x1122, 64, IOAddress("2001:db8:1000::"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoPrefixAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+}
+
+// This test verifies that the callout installed on the leases6_committed hook
+// point is executed as a result of REBIND message sent to allocate new
+// lease or renew an existing lease. Prefix variant.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pd-pools\": [ {"
+        "        \"prefix\": \"2001:db8:1::\", "
+        "        \"prefix-len\": 56, "
+        "        \"delegated-len\": 64 } ], "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Newly allocated lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Rebind the lease and make sure that the callout has been executed.
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Rebound lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // Deleted lease must not be present, because it is a new allocation.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Let's try to rebind again but force the client to rebind a different
+    // prefix with a different IAID.
+    client.requestPrefix(0x2233, 64, IOAddress("2001:db8:1:29::"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // New lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1:29::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+
+    // The old lease is kept.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // The rebound prefix is just a hint.
+    client.requestPrefix(0x5577, 64, IOAddress("4000::1"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    lease = callback_new_leases6_->at(2);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
+    EXPECT_EQ(64, lease->prefixlen_);
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+
+    resetCalloutBuffers();
+
+    // Rebind an address: this should lead to an error as no address pool
+    // is configured.
+    client.requestAddress(0x1122, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(client.doRebind());
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check the error.
+    EXPECT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(0x1122));
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    ASSERT_TRUE(callback_new_leases6_);
+    EXPECT_EQ(3, callback_new_leases6_->size());
+    ASSERT_TRUE(callback_deleted_leases6_);
+    EXPECT_TRUE(callback_deleted_leases6_->empty());
+}
+
 // This test checks that the basic decline hook (lease6_decline) is
 // triggered properly.
 TEST_F(HooksDhcpv6SrvTest, basicLease6Decline) {
@@ -2597,6 +4330,133 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     EXPECT_EQ(Lease::STATE_DEFAULT, from_mgr->state_);
 }
 
+// This test verifies that the leases6_committed callout is executed
+// when DECLINE is processed. The declined lease is expected to be passed
+// in leases6 argument to the callout.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(client.doSARR());
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doDecline());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No deleted leases.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Declined lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(1, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
+// This test verifies that the leases6_committed callout is executed
+// when DECLINE is processed. Variant with 2 IA_NAs.
+TEST_F(HooksDhcpv6SrvTest, leases6CommittedDeclineTwoNAs) {
+    IfaceMgrTestConfig test_config(true);
+
+    string config = "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.requestAddress(0x2233, IOAddress("2001:db8:1::29"));
+
+    ASSERT_NO_THROW(configure(config, *client.getServer()));
+
+    ASSERT_NO_THROW(client.doSARR());
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "leases6_committed", leases6_committed_callout));
+
+    ASSERT_NO_THROW(client.doDecline());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("leases6_committed", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("deleted_leases6");
+    expected_argument_names.push_back("leases6");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // No deleted leases.
+    ASSERT_TRUE(callback_deleted_leases6_);
+    ASSERT_TRUE(callback_deleted_leases6_->empty());
+
+    // Declined lease should be returned.
+    ASSERT_TRUE(callback_new_leases6_);
+    ASSERT_EQ(2, callback_new_leases6_->size());
+    Lease6Ptr lease = callback_new_leases6_->at(0);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
+    lease = callback_new_leases6_->at(1);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
+
+    // Pkt passed to a callout must be configured to copy retrieved options.
+    EXPECT_TRUE(callback_qry_options_copy_);
+}
+
+// Should test with one NA and two addresses but need an example first...
+
 // Checks if callout installed on host6_identifier can generate an
 // identifier and whether that identifier is actually used.
 TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
@@ -2648,7 +4508,11 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_->processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_->initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -2721,7 +4585,11 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier_hwaddr) {
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv_->processSolicit(sol);
+    AllocEngine::ClientContext6 ctx;
+    bool drop = false;
+    srv_->initContext(sol, ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // Check if we get response at all
     ASSERT_TRUE(adv);
@@ -2781,6 +4649,72 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
 
+}
+
+// Checks if callouts installed on the dhcp6_srv_configured ared indeed called
+// and all the necessary parameters are passed.
+TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
+    boost::shared_ptr<ControlledDhcpv6Srv> srv(new ControlledDhcpv6Srv(0));
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(SRV_CONFIG_MARKER_FILE));
+
+    // Minimal valid configuration for the server. It includes the
+    // section which loads the callout library #3, which implements
+    // dhcp6_srv_configured callout.
+    std::string config_str =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000,"
+        "    \"renew-timer\": 1000,"
+        "    \"subnet6\": [ ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "         \"type\": \"memfile\","
+        "         \"persist\": false"
+        "    },"
+        "    \"hooks-libraries\": ["
+        "        {"
+        "            \"library\": \"" + std::string(CALLOUT_LIBRARY_3) + "\""
+        "        }"
+        "    ]"
+        "}";
+
+    ConstElementPtr config = Element::fromJSON(config_str);
+
+    // Configure the server.
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = srv->processConfig(config));
+
+    // Make sure there were no errors.
+    int status_code;
+    isc::config::parseAnswer(status_code, answer);
+    ASSERT_EQ(0, status_code);
+
+    // The hook library should have been loaded.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    // The dhcp6_srv_configured should have been invoked and the provided
+    // parameters should be recorded.
+    //// not yet network_state
+    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                "3io_contextjson_confignetwork_stateserver_config"));
+
+    // Destroy the server, instance which should unload the libraries.
+    srv.reset();
+
+    // The server was destroyed, so the unload() function should now
+    // include the library number in its marker file.
+    //// not yet network_state
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "3"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
+    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                "3io_contextjson_confignetwork_stateserver_config"));
 }
 
 }   // end of anonymous namespace
