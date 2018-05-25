@@ -1,6 +1,6 @@
 1411.	[bug]		fdupont
 	Fixed warnings about lambda's not using captured variables.
-	(Trac #5591, git xxx)
+	(Trac #5591, git f88a505823d39faec7dc5f647f40e6454e5dfc74)
 
 1410.	[bug]		marcin
 	Fixed multiple hanging Control Agent unittests.
