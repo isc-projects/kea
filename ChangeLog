@@ -1,3 +1,7 @@
+1410.	[bug]		marcin
+	Fixed multiple hanging Control Agent unittests.
+	(Trac #5576, git 310af68101cba74220652ec2b403520fc5666dc0)
+
 1409.	[doc]		marcin
 	Documented in the User's Guide how Kea HA service behaves
 	when the clock skew between active servers becomes too
