@@ -149,6 +149,7 @@ public:
     /// - request-timeout 12000
     /// - tcp-keepalive no
     /// - tcp-nodelay no
+    /// - max-statement-tries 3
     ///
     /// @throw DbOpenError error opening the database
     void openDatabase();
@@ -198,6 +199,9 @@ public:
 
     /// @brief Keyspace meta information, used for UDTs
     const CassKeyspaceMeta* keyspace_meta_;
+
+    /// @brief Maximum tries for any executeMutation().
+    uint32_t max_statement_tries_;
 
     /// @brief CQL consistency enabled
     bool force_consistency_;
