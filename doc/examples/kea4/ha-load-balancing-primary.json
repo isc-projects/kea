@@ -43,7 +43,7 @@
         // phones class
         {
             "name": "phones",
-            "test": "substring(option[60].hex,0,6) == 'Aastra'",
+            "test": "substring(option[60].hex,0,6) == 'Aastra'"
         },
         // laptops are everything but phones.
         {
