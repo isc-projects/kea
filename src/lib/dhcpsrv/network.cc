@@ -136,18 +136,26 @@ Network::toElement() const {
         map->set("require-client-classes", class_list);
     }
 
-    // Set renew-timer
-    map->set("renew-timer",
-             Element::create(static_cast<long long>
-                                 (getT1().get())));
+    // T1, T2, and Valid are optional for SharedNetworks, and
+    // T1 and T2 are optional for Subnet4 thus we will only
+    // output them if they are marked as specified.
+    if (!getT1().unspecified()) {
+        map->set("renew-timer",
+                 Element::create(static_cast<long long>(getT1().get())));
+    }
+
     // Set rebind-timer
-    map->set("rebind-timer",
-             Element::create(static_cast<long long>
-                                 (getT2().get())));
+    if (!getT2().unspecified()) {
+        map->set("rebind-timer",
+                 Element::create(static_cast<long long>(getT2().get())));
+    }
+
     // Set valid-lifetime
-    map->set("valid-lifetime",
-             Element::create(static_cast<long long>
+    if (!getValid().unspecified()) {
+        map->set("valid-lifetime",
+                 Element::create(static_cast<long long>
                                  (getValid().get())));
+    }
 
     // Set reservation mode
     Network::HRMode hrmode = getHostReservationMode();
