@@ -348,7 +348,7 @@ typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
 extern std::list<std::string> builtinNames;
 
 /// @brief List of built-in client class prefixes
-/// i.e. VENDOR_CLASS_, AFTER_ and EXTERNAL_.
+/// i.e. VENDOR_CLASS_, AFTER_, EXTERNAL_ and HA_.
 extern std::list<std::string> builtinPrefixes;
 
 /// @brief Check if a client class name is builtin.
