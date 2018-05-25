@@ -9,12 +9,13 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <config/command_mgr.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <config/command_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option_definition.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
@@ -319,8 +320,6 @@ public:
 
         }
     }
-
-
 };
 
 }  // namespace
@@ -372,7 +371,6 @@ void configureCommandChannel6() {
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
-
     if (!config_set) {
         ConstElementPtr answer = isc::config::createAnswer(1,
                                  string("Can't parse NULL config"));
@@ -401,14 +399,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Print the list of known backends.
     HostDataSourceFactory::printRegistered();
 
-    // This is a way to convert ConstElementPtr to ElementPtr.
-    // We need a config that can be edited, because we will insert
-    // default values and will insert derived values as well.
-    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
-
-    // answer will hold the result.
+    // Answer will hold the result.
     ConstElementPtr answer;
-    // rollback informs whether error occurred and original data
+    // Rollback informs whether error occurred and original data
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds the details of the current parser when iterating over
@@ -419,6 +412,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
         SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
 
+        // This is a way to convert ConstElementPtr to ElementPtr.
+        // We need a config that can be edited, because we will insert
+        // default values and will insert derived values as well.
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
         // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
 
@@ -513,6 +510,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            // Legacy DhcpConfigParser stuff below
             if (config_pair.first == "dhcp-ddns") {
                 // Apply defaults
                 D2ClientConfigParser::setAllDefaults(config_pair.second);
@@ -522,7 +520,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
-            if (config_pair.first =="client-classes") {
+            if (config_pair.first == "client-classes") {
                 ClientClassDefListParser parser;
                 ClientClassDictionaryPtr dictionary =
                     parser.parse(config_pair.second, AF_INET6);
@@ -582,7 +580,6 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 /// CfgSharedNetworks4 object. One additional step is then to
                 /// add subnets from the CfgSharedNetworks6 into CfgSubnets6
                 /// as well.
-
                 SharedNetworks6ListParser parser;
                 CfgSharedNetworks6Ptr cfg = srv_config->getCfgSharedNetworks6();
                 parser.parse(cfg, config_pair.second);
@@ -632,14 +629,16 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
         answer = isc::config::createAnswer(1, ex.what());
+
         // An error occurred, so make sure that we restore original data.
         rollback = true;
 
     } catch (...) {
-        // for things like bad_cast in boost::lexical_cast
+        // For things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp6_logger, DHCP6_PARSER_EXCEPTION).arg(config_pair.first);
         answer = isc::config::createAnswer(1, "undefined configuration"
                                            " processing error");
+
         // An error occurred, so make sure that we restore original data.
         rollback = true;
     }
@@ -666,12 +665,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
-            // Apply staged D2ClientConfig, used to be done by parser commit
+            // Apply the staged D2ClientConfig, used to be done by parser commit
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
 
-            // This occurs last as if it succeeds, there is no easy way to
+            // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
             const HooksConfig& libraries =
@@ -684,7 +683,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
-            // for things like bad_cast in boost::lexical_cast
+            // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(2, "undefined configuration"
                                                " parsing error");
