@@ -68,6 +68,7 @@ public:
     /// - request-timeout
     /// - tcp-keepalive
     /// - tcp-nodelay
+    /// - max-statement-tries
     ///
     /// For details regarding those paraemters, see
     /// @ref isc::dhcp::CqlConnection::openDatabase.

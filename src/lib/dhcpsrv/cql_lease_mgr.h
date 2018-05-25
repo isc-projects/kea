@@ -59,6 +59,7 @@ public:
     /// - request-timeout (12000)
     /// - tcp-keepalive (no)
     /// - tcp-nodelay (no)
+    /// - max-statement-tries (1)
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///

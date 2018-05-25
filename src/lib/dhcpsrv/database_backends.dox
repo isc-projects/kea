@@ -102,6 +102,8 @@
   - <b>password</b> - an optional password if required for connection
   - <b>keyspace</b> - an optional keyspace. If not specified, the default value
     of 'keatest' will be used.
+  - <b>max-statement-tries</b> - maximum number of tries for a Cassandra
+    statement before throwing exception, default: 1
 
   For details, see @ref isc::dhcp::CqlConnection::openDatabase().
 
