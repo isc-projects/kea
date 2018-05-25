@@ -574,6 +574,7 @@ immediately upon detecting a loss of connectivity (MySQL and Postgres only).
       "type": "cql",
       "keyspace": "keatest",
       "contact-points": "192.0.2.1, 192.0.2.2, 192.0.2.3",
+      "max-statement-tries": 1,
       "port": 9042,
       "reconnect-wait-time": 2000,
       "connect-timeout": 5000,

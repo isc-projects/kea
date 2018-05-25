@@ -29,6 +29,9 @@ using namespace std;
 /// instantiates ControlledDhcpv4Srv class that is responsible for establishing
 /// connection with msgq (receiving commands and configuration) and also
 /// creating Dhcpv4 server object as well.
+///
+/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
+/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 
 namespace {
 
@@ -58,7 +61,7 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    int port_number = DHCP4_SERVER_PORT; // The default. any other values are
+    int port_number = DHCP4_SERVER_PORT; // The default. Any other values are
                                          // useful for testing only.
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
@@ -92,7 +95,7 @@ main(int argc, char* argv[]) {
             config_file = optarg;
             break;
 
-        case 'p':
+        case 'p': // port number
             try {
                 port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
@@ -117,7 +120,6 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-
     // Configuration file is required.
     if (config_file.empty()) {
         cerr << "Configuration file not specified." << endl;
@@ -129,7 +131,6 @@ main(int argc, char* argv[]) {
 
     if (check_mode) {
         try {
-
             // We need to initialize logging, in case any error messages are to be printed.
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);
@@ -195,7 +196,7 @@ main(int argc, char* argv[]) {
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
 
-        // Create our PID file.
+        // Create our PID file
         server.setProcName(DHCP4_NAME);
         server.setConfigFile(config_file);
         server.createPIDFile();

@@ -473,6 +473,7 @@ TEST_F(RebindTest, directClientLostLease) {
     // The lease has been acquired. Now, let's explicitly remove it from the
     // lease database.
     LeaseMgrFactory::instance().deleteLease(lease_client.addr_);
+
     // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());
 

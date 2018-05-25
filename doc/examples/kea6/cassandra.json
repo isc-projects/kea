@@ -34,6 +34,10 @@
       // in milliseconds. The default is 5000 [ms].
       "connect-timeout": 5000,
 
+      // Maximum number of tries for a statement (i.e. select, insert, update,
+      // delete) before giving up and throwing an exception
+      "max-statement-tries": 1,
+
       // This parameter sets the timeout for waiting for a response
       // from a node. Expressed in milliseconds. The default is 12000 [ms].
       "request-timeout": 12000,

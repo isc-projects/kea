@@ -9,17 +9,18 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/dhcp6_log.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp6/dhcp6to4_ipc.h>
+#include <dhcp6/parser_context.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
-#include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/dhcp6to4_ipc.h>
-#include <dhcp6/dhcp6_log.h>
-#include <dhcp6/json_config_parser.h>
-#include <dhcp6/parser_context.h>
+#include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
@@ -142,8 +143,7 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
         // Now check is the returned result is successful (rcode=0) or not
         // (see @ref isc::config::parseAnswer).
         int rcode;
-        isc::data::ConstElementPtr comment =
-            isc::config::parseAnswer(rcode, result);
+        ConstElementPtr comment = isc::config::parseAnswer(rcode, result);
         if (rcode != 0) {
             string reason = comment ? comment->stringValue() :
                 "no details available";
@@ -162,7 +162,6 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
 
     return (result);
 }
-
 
 void
 ControlledDhcpv6Srv::init(const std::string& file_name) {
@@ -192,17 +191,16 @@ void ControlledDhcpv6Srv::cleanup() {
     // Nothing to do here. No need to disconnect from anything.
 }
 
-
 ConstElementPtr
 ControlledDhcpv6Srv::commandShutdownHandler(const string&, ConstElementPtr) {
-    if (ControlledDhcpv6Srv::server_) {
-        ControlledDhcpv6Srv::server_->shutdown();
+    if (ControlledDhcpv6Srv::getInstance()) {
+        ControlledDhcpv6Srv::getInstance()->shutdown();
     } else {
         LOG_WARN(dhcp6_logger, DHCP6_NOT_RUNNING);
-        ConstElementPtr answer = isc::config::createAnswer(1, "Shutdown failure.");
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "Shutdown failure.");
         return (answer);
     }
-    ConstElementPtr answer = isc::config::createAnswer(0, "Shutting down.");
+    ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Shutting down.");
     return (answer);
 }
 
@@ -214,11 +212,11 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
     bool status = HooksManager::loadLibraries(loaded);
     if (!status) {
         LOG_ERROR(dhcp6_logger, DHCP6_HOOKS_LIBS_RELOAD_FAIL);
-        ConstElementPtr answer = isc::config::createAnswer(1,
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                                  "Failed to reload hooks libraries.");
         return (answer);
     }
-    ConstElementPtr answer = isc::config::createAnswer(0,
+    ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
                              "Hooks libraries successfully reloaded.");
     return (answer);
 }
@@ -472,7 +470,7 @@ ControlledDhcpv6Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
     ElementPtr extended = Element::create(Dhcpv6Srv::getVersion(true));
     ElementPtr arguments = Element::createMap();
     arguments->set("extended", extended);
-    ConstElementPtr answer = isc::config::createAnswer(0,
+    ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
                                 Dhcpv6Srv::getVersion(false),
                                 arguments);
     return (answer);
@@ -481,14 +479,14 @@ ControlledDhcpv6Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
 ConstElementPtr
 ControlledDhcpv6Srv::commandBuildReportHandler(const string&, ConstElementPtr) {
     ConstElementPtr answer =
-        isc::config::createAnswer(0, isc::detail::getConfigReport());
+        isc::config::createAnswer(CONTROL_RESULT_SUCCESS, isc::detail::getConfigReport());
     return (answer);
 }
 
 ConstElementPtr
 ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
                                                  ConstElementPtr args) {
-    int status_code = 1;
+    int status_code = CONTROL_RESULT_ERROR;
     string message;
 
     // args must be { "remove": <bool> }
@@ -511,9 +509,9 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
     return (answer);
 }
 
-isc::data::ConstElementPtr
-ControlledDhcpv6Srv::processCommand(const std::string& command,
-                                    isc::data::ConstElementPtr args) {
+ConstElementPtr
+ControlledDhcpv6Srv::processCommand(const string& command,
+                                    ConstElementPtr args) {
     string txt = args ? args->str() : "(none)";
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_COMMAND_RECEIVED)
@@ -522,7 +520,7 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(1,
+        ConstElementPtr no_srv = isc::config::createAnswer(CONTROL_RESULT_ERROR,
           "Server object not initialized, can't process command '" +
           command + "', arguments: '" + txt + "'.");
         return (no_srv);
@@ -566,10 +564,10 @@ ControlledDhcpv6Srv::processCommand(const std::string& command,
             return (srv->commandConfigWriteHandler(command, args));
 
         }
-        return (isc::config::createAnswer(1, "Unrecognized command: " +
-                                          command));
+        return(isc::config::createAnswer(CONTROL_RESULT_ERROR, "Unrecognized command: " +
+                                         command));
     } catch (const Exception& ex) {
-        return (isc::config::createAnswer(1, "Error while processing command '" +
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Error while processing command '" +
                                           command + "': " + ex.what() +
                                           ", params: '" + txt + "'"));
     }
@@ -590,7 +588,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             return (answer);
         }
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Failed to process server identifier: " +
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Failed to process server identifier: " +
                                           string(ex.what())));
     }
 
@@ -607,7 +605,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             return (answer);
         }
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1,
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
                         "Failed to process server configuration type: " +
                          string(ex.what())));
     }
@@ -691,11 +689,12 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
+    // Single stream instance used in all error clauses
+    std::ostringstream err;
+
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(
-            CONTROL_RESULT_ERROR,
-            "Server object not initialized, can't process config.");
-        return (no_srv);
+        err << "Server object not initialized, can't process config.";
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     answer = configureDhcp6Server(*srv, config);
@@ -709,8 +708,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             return (answer);
         }
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Failed to process configuration: " +
-                                          string(ex.what())));
+        err << "Failed to process configuration: " << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Re-open lease and host database with new parameters.
@@ -721,8 +720,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->setAppendedParameters("universe=6");
         cfg_db->createManagers();
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Unable to open database: "
-                                          + std::string(ex.what())));
+        err << "Unable to open database: " << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Regenerate server identifier if needed.
@@ -740,17 +739,16 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "unable to configure server identifier: " << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Server will start DDNS communications if its enabled.
     try {
         srv->startD2();
     } catch (const std::exception& ex) {
-        std::ostringstream err;
-        err << "error starting DHCP_DDNS client "
-                " after server reconfiguration: " << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        err << "Error starting DHCP_DDNS client after server reconfiguration: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Setup DHCPv4-over-DHCPv6 IPC
@@ -760,7 +758,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         std::ostringstream err;
         err << "error starting DHCPv4-over-DHCPv6 IPC "
                " after server reconfiguration: " << ex.what();
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Configuration may change active interfaces. Therefore, we have to reopen
@@ -780,11 +778,10 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
                         server_);
 
     } catch (const std::exception& ex) {
-        std::ostringstream err;
         err << "unable to setup timers for periodically running the"
             " reclamation of the expired leases: "
             << ex.what() << ".";
-        return (isc::config::createAnswer(1, err.str()));
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Finally, we can commit runtime option definitions in libdhcp++. This is
@@ -822,10 +819,12 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
     ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
 
+    // Single stream instance used in all error clauses
+    std::ostringstream err;
+
     if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(1,
-            "Server object not initialized, can't process config.");
-        return (no_srv);
+        err << "Server object not initialized, can't process config.";
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     return (configureDhcp6Server(*srv, config, true));
@@ -833,11 +832,11 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
 
 ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
-    if (server_) {
+    if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");
     }
-    server_ = this; // remember this instance for use in callback
+    server_ = this; // remember this instance for later use in handlers
 
     // TimerMgr uses IO service to run asynchronous timers.
     TimerMgr::instance()->setIOService(getIOService());
@@ -856,26 +855,26 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
     CommandMgr::instance().registerCommand("config-reload",
         boost::bind(&ControlledDhcpv6Srv::commandConfigReloadHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("config-set",
+        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("config-test",
         boost::bind(&ControlledDhcpv6Srv::commandConfigTestHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv6Srv::commandConfigWriteHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("dhcp-disable",
-        boost::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, _1, _2));
-
     CommandMgr::instance().registerCommand("dhcp-enable",
         boost::bind(&ControlledDhcpv6Srv::commandDhcpEnableHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("leases-reclaim",
-        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("dhcp-disable",
+        boost::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv6Srv::commandLibReloadHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("config-set",
-        boost::bind(&ControlledDhcpv6Srv::commandConfigSetHandler, this, _1, _2));
+    CommandMgr::instance().registerCommand("leases-reclaim",
+        boost::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, _1, _2));
 
     CommandMgr::instance().registerCommand("shutdown",
         boost::bind(&ControlledDhcpv6Srv::commandShutdownHandler, this, _1, _2));
@@ -968,14 +967,14 @@ ControlledDhcpv6Srv::readDhcpv6SrvConfigFromMasterDatabase(
         // Read the contents from database
         configData = SrvConfigMasterMgrFactory::instance().getConfig6(server_id);
         if (configData == SrvConfigMasterInfoPtr()) {
-            return (isc::config::createAnswer(1,
+            return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
                      "No entry found in master database for server id: "
                      + server_id ));
         }
 
         CfgMgr::instance().getStagingCfg()->setMasterServerCfgTimestamp(configData->timestamp_);
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Unable to open database: " +
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Unable to open database: " +
                                           std::string(ex.what())));
     }
 
@@ -1021,12 +1020,12 @@ ControlledDhcpv6Srv::readDhcpv6SrvConfigFromMasterDatabase(
         }
 
     }  catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1,
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
                         "Server Configuration error using using database: " +
                         std::string(ex.what())));
     }
 
-    return (isc::config::createAnswer(0,
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
                              "Server Configuration successfully loaded from database."));
 }
 
@@ -1043,11 +1042,11 @@ ControlledDhcpv6Srv::readDhcpv6SrvConfigFromDatabase(isc::data::ElementPtr& db_c
         // Read the contents from database
         configData = SrvConfigMgrFactory::instance().getJsonConfig6();
         if (configData == SrvConfigInfoPtr()) {
-            return (isc::config::createAnswer(1, "No entry found in database: "));
+            return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "No entry found in database: "));
         }
         CfgMgr::instance().getStagingCfg()->setServerCfgTimestamp(configData->timestamp_);
     } catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1, "Unable to open database: " +
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Unable to open database: " +
                                           std::string(ex.what())));
     }
 
@@ -1082,20 +1081,20 @@ ControlledDhcpv6Srv::readDhcpv6SrvConfigFromDatabase(isc::data::ElementPtr& db_c
         db_config = boost::const_pointer_cast<Element>(dhcp6);
 
     }  catch (const std::exception& ex) {
-        return (isc::config::createAnswer(1,
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
                         "Server Configuration error using using database: " +
                         std::string(ex.what())));
     }
 
-    return (isc::config::createAnswer(0,
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
                              "Server Configuration successfully loaded from database."));
 }
 
 void ControlledDhcpv6Srv::sessionReader(void) {
     // Process one asio event. If there are more events, iface_mgr will call
     // this callback more than once.
-    if (server_) {
-        server_->io_service_.run_one();
+    if (getInstance()) {
+        getInstance()->io_service_.run_one();
     }
 }
 
@@ -1134,12 +1133,13 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     if (reopened) {
         // Cancel the timer.
         if (TimerMgr::instance()->isTimerRegistered("Dhcp6DbReconnectTimer")) {
-            TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer"); }
+            TimerMgr::instance()->cancel("Dhcp6DbReconnectTimer");
+        }
 
         // Set network state to service enabled
         network_state_->enableService();
 
-        // Toss the reconnct control, we're done with it
+        // Toss the reconnect control, we're done with it
         db_reconnect_ctl.reset();
     } else {
         if (!db_reconnect_ctl->checkRetries()) {

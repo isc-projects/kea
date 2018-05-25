@@ -885,7 +885,6 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
     return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt));
 }
 
-
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {

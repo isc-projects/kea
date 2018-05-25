@@ -58,6 +58,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     int64_t timeout = 0;
     int64_t port = 0;
     int64_t max_reconnect_tries = 0;
+    int64_t max_statement_tries = 0;
     int64_t reconnect_wait_time = 0;
     int64_t request_timeout = 0;
     int64_t tcp_keepalive = 0;
@@ -105,6 +106,11 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
                 port = param.second->intValue();
                 values_copy[param.first] =
                     boost::lexical_cast<std::string>(port);
+
+            } else if (param.first == "max-statement-tries") {
+                max_statement_tries = param.second->intValue();
+                values_copy[param.first] =
+                    boost::lexical_cast<std::string>(max_statement_tries);
 
             } else {
                 // all remaining string parameters

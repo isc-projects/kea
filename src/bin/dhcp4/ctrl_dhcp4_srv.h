@@ -33,7 +33,7 @@ public:
     ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief Destructor.
-    ~ControlledDhcpv4Srv();
+    virtual ~ControlledDhcpv4Srv();
 
     /// @brief Initializes the server.
     ///
@@ -43,12 +43,12 @@ public:
     /// This method may throw if initialization fails.
     void init(const std::string& config_file);
 
-    /// @brief Loads specific config file
+    /// @brief Loads specific configuration file
     ///
     /// This utility method is called whenever we know a filename of the config
     /// and need to load it. It calls config-set command once the content of
     /// the file has been loaded and verified to be a sane JSON configuration.
-    /// config-set handler will process the config file (load it as current
+    /// config-set handler will process the config file (apply it as current
     /// configuration).
     ///
     /// @param file_name name of the file to be loaded
@@ -121,7 +121,6 @@ public:
         return (server_);
     }
 
-
 private:
     /// @brief Retrieves the server configuration information from the master database.
     ///
@@ -154,7 +153,7 @@ private:
     /// @return answer that contains result of the reconfiguration.
     /// @throw Dhcp4ConfigError if trying to create a parser for NULL config.
     static isc::data::ConstElementPtr
-    readDhcpv4SrvConfigFromDatabase(data::ElementPtr& db_config);
+    readDhcpv4SrvConfigFromDatabase(isc::data::ElementPtr& db_config);
 
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
@@ -280,7 +279,6 @@ private:
     commandDhcpEnableHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
-
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
@@ -396,7 +394,7 @@ private:
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
-    /// the server
+    /// the server. Some of them need to be static methods.
     static ControlledDhcpv4Srv* server_;
 
     /// @brief IOService object, used for all ASIO operations.

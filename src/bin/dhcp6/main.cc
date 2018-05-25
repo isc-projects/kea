@@ -171,11 +171,8 @@ main(int argc, char* argv[]) {
                 cerr << "Error encountered: " << answer->stringValue() << endl;
                 return (EXIT_FAILURE);
             }
-
-
-            return (EXIT_SUCCESS);
         } catch (const std::exception& ex) {
-            cerr << "Syntax check failed with " << ex.what() << endl;
+            cerr << "Syntax check failed with: " << ex.what() << endl;
         }
         return (EXIT_FAILURE);
     }
@@ -189,7 +186,6 @@ main(int argc, char* argv[]) {
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP6_LOGGER_NAME, verbose_mode);
-
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
             .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
 
@@ -207,10 +203,8 @@ main(int argc, char* argv[]) {
         server.createPIDFile();
 
         try {
-            // Initialize the server, e.g. establish control session
-            // Read a configuration file
+            // Initialize the server.
             server.init(config_file);
-
         } catch (const std::exception& ex) {
 
             try {
@@ -220,8 +214,8 @@ main(int argc, char* argv[]) {
                 LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
             } catch (...) {
                 // The exception thrown during the initialization could
-                // originate from logger subsystem. Therefore LOG_ERROR() may
-                // fail as well.
+                // originate from logger subsystem. Therefore LOG_ERROR()
+                // may fail as well.
                 cerr << "Failed to initialize server: " << ex.what() << endl;
             }
 
@@ -252,7 +246,6 @@ main(int argc, char* argv[]) {
         }
         ret = EXIT_FAILURE;
     } catch (const std::exception& ex) {
-
         // First, we print the error on stderr (that should always work)
         cerr << DHCP6_NAME << "Fatal error during start up: " << ex.what()
              << endl;

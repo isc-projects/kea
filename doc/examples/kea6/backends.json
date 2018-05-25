@@ -72,7 +72,8 @@
 //      "type": "cql",
 //      "keyspace": "keatest",
 //      "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
-//      "port": 9042
+//      "port": 9042,
+//      "max-statement-tries": 3
 //  },
 
 // Addresses will be assigned with preferred and valid lifetimes

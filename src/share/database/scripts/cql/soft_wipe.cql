@@ -24,3 +24,5 @@ TRUNCATE TABLE lease_hwaddr_source;
 TRUNCATE TABLE lease_state;
 TRUNCATE TABLE schema_version;
 TRUNCATE TABLE host_reservations;
+TRUNCATE TABLE server_configuration4;
+TRUNCATE TABLE server_configuration6;

@@ -739,6 +739,18 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"max-statement-tries\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::MASTER_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+        return isc::dhcp::Dhcp6Parser::make_MAX_STATEMENT_TRIES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("max-statement-tries", driver.loc_);
+    }
+}
+
 \"preferred-lifetime\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

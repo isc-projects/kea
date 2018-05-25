@@ -82,6 +82,7 @@ using namespace std;
   CONTACT_POINTS "contact-points"
   KEYSPACE "keyspace"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
+  MAX_STATEMENT_TRIES "max-statement-tries"
 
   PREFERRED_LIFETIME "preferred-lifetime"
   VALID_LIFETIME "valid-lifetime"
@@ -623,6 +624,7 @@ database_map_param: database_type
                   | tcp_keepalive
                   | contact_points
                   | max_reconnect_tries
+                  | max_statement_tries
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -736,6 +738,11 @@ keyspace: KEYSPACE {
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
+};
+
+max_statement_tries: MAX_STATEMENT_TRIES COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("max-statement-tries", n);
 };
 
 mac_sources: MAC_SOURCES {
