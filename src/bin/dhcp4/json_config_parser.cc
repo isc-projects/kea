@@ -6,15 +6,21 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/option_definition.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/timer_mgr.h>
+#include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -26,26 +32,29 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_parser.h>
-#include <config/command_mgr.h>
+#include <log/logger_support.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
-#include <limits>
 #include <iostream>
+#include <limits>
+#include <map>
 #include <netinet/in.h>
 #include <vector>
-#include <map>
+
+#include <stdint.h>
 
 using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 
@@ -61,6 +70,7 @@ namespace {
 /// See @ref parse method for a list of supported parameters.
 class Dhcp4ConfigParser : public isc::data::SimpleParser {
 public:
+
     /// @brief Sets global parameters in staging configuration
     ///
     /// @param global global configuration scope
@@ -75,26 +85,26 @@ public:
     ///
     /// @throw DhcpConfigError if parameters are missing or
     /// or having incorrect values.
-    void parse(const SrvConfigPtr& cfg, const ConstElementPtr& global) {
+    void parse(const SrvConfigPtr& srv_config, const ConstElementPtr& global) {
 
         // Set whether v4 server is supposed to echo back client-id
         // (yes = RFC6842 compatible, no = backward compatibility)
         bool echo_client_id = getBoolean(global, "echo-client-id");
-        cfg->setEchoClientId(echo_client_id);
+        srv_config->setEchoClientId(echo_client_id);
 
         // Set the probation period for decline handling.
         uint32_t probation_period =
             getUint32(global, "decline-probation-period");
-        cfg->setDeclinePeriod(probation_period);
+        srv_config->setDeclinePeriod(probation_period);
 
         // Set the DHCPv4-over-DHCPv6 interserver port.
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
-        cfg->setDhcp4o6Port(dhcp4o6_port);
+        srv_config->setDhcp4o6Port(dhcp4o6_port);
 
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
         if (user_context) {
-            cfg->setContext(user_context);
+            srv_config->setContext(user_context);
         }
     }
 
@@ -308,29 +318,32 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // have to be restored to global storages.
     bool rollback = false;
     // config_pair holds the details of the current parser when iterating over
-    // the parsers.  It is declared outside the loops so in case of an error,
-    // the name of the failing parser can be retrieved in the "catch" clause.
+    // the parsers.  It is declared outside the loop so in case of error, the
+    // name of the failing parser can be retrieved within the "catch" clause.
     ConfigPair config_pair;
     try {
 
-        SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+        SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
 
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
         ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
-
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
 
         // And now derive (inherit) global parameters to subnets, if not specified.
         SimpleParser4::deriveParameters(mutable_cfg);
 
+        // Make parsers grouping.
+        const std::map<std::string, ConstElementPtr>& values_map =
+            mutable_cfg->mapValue();
+
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {
             OptionDefListParser parser;
-            CfgOptionDefPtr cfg_option_def = srv_cfg->getCfgOptionDef();
+            CfgOptionDefPtr cfg_option_def = srv_config->getCfgOptionDef();
             parser.parse(cfg_option_def, option_defs);
         }
 
@@ -338,15 +351,13 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // early.
         Dhcp4ConfigParser global_parser;
 
-        // Make parsers grouping.
-        const std::map<std::string, ConstElementPtr>& values_map =
-                                                        mutable_cfg->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
             // In principle we could have the following code structured as a series
             // of long if else if clauses. That would give a marginal performance
             // boost, but would make the code less readable. We had serious issues
             // with the parser code debugability, so I decided to keep it as a
             // series of independent ifs.
+
             if (config_pair.first == "option-def") {
                 // This is converted to SimpleParser and is handled already above.
                 continue;
@@ -354,14 +365,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             if (config_pair.first == "option-data") {
                 OptionDataListParser parser(AF_INET);
-                CfgOptionPtr cfg_option = srv_cfg->getCfgOption();
+                CfgOptionPtr cfg_option = srv_config->getCfgOption();
                 parser.parse(cfg_option, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "control-socket") {
                 ControlSocketParser parser;
-                parser.parse(*srv_cfg, config_pair.second);
+                parser.parse(*srv_config, config_pair.second);
                 continue;
             }
 
@@ -379,7 +390,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                     ifaces_cfg->set("re-detect", Element::create(false));
                 }
                 IfacesConfigParser parser(AF_INET);
-                CfgIfacePtr cfg_iface = srv_cfg->getCfgIface();
+                CfgIfacePtr cfg_iface = srv_config->getCfgIface();
                 parser.parse(cfg_iface, ifaces_cfg);
                 continue;
             }
@@ -392,7 +403,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             if (config_pair.first == "hooks-libraries") {
                 HooksLibrariesParser hooks_parser;
-                HooksConfig& libraries = srv_cfg->getHooksConfig();
+                HooksConfig& libraries = srv_config->getHooksConfig();
                 hooks_parser.parse(libraries, config_pair.second);
                 libraries.verifyLibraries(config_pair.second->getPosition());
                 continue;
@@ -404,7 +415,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 D2ClientConfigParser::setAllDefaults(config_pair.second);
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(config_pair.second);
-                srv_cfg->setD2ClientConfig(cfg);
+                srv_config->setD2ClientConfig(cfg);
                 continue;
             }
 
@@ -412,27 +423,27 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 ClientClassDefListParser parser;
                 ClientClassDictionaryPtr dictionary =
                     parser.parse(config_pair.second, AF_INET);
-                srv_cfg->setClientClassDictionary(dictionary);
+                srv_config->setClientClassDictionary(dictionary);
                 continue;
             }
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
                 DbAccessParser parser(DBType::LEASE_DB);
-                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
                 DbAccessParser parser(DBType::HOSTS_DB);
-                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "hosts-databases") {
-                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 DbAccessParser parser(DBType::HOSTS_DB);
                 auto list = config_pair.second->listValue();
                 for (auto it : list) {
@@ -443,23 +454,22 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             if (config_pair.first == "master-database") {
                 DbAccessParser parser(DBType::MASTER_DB);
-                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "config-database") {
                 DbAccessParser parser(DBType::CONFIG_DB);
-                CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
+                CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
                 parser.parse(cfg_db_access, config_pair.second);
                 continue;
             }
 
             if (config_pair.first == "subnet4") {
-                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
                 Subnets4ListConfigParser subnets_parser;
                 // parse() returns number of subnets parsed. We may log it one day.
-                subnets_parser.parse(srv_cfg, config_pair.second);
+                subnets_parser.parse(srv_config, config_pair.second);
                 continue;
             }
 
@@ -470,12 +480,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 /// add subnets from the CfgSharedNetworks4 into CfgSubnets4
                 /// as well.
                 SharedNetworks4ListParser parser;
-                CfgSharedNetworks4Ptr cfg = srv_cfg->getCfgSharedNetworks4();
+                CfgSharedNetworks4Ptr cfg = srv_config->getCfgSharedNetworks4();
                 parser.parse(cfg, config_pair.second);
 
                 // We also need to put the subnets it contains into normal
                 // subnets list.
-                global_parser.copySubnets4(srv_cfg->getCfgSubnets4(), cfg);
+                global_parser.copySubnets4(srv_config->getCfgSubnets4(), cfg);
                 continue;
             }
 
@@ -506,12 +516,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         }
 
         // Apply global options in the staging config.
-        global_parser.parse(srv_cfg, mutable_cfg);
+        global_parser.parse(srv_config, mutable_cfg);
 
         // This method conducts final sanity checks and tweaks. In particular,
         // it checks that there is no conflict between plain subnets and those
         // defined as part of shared networks.
-        global_parser.sanityChecks(srv_cfg, mutable_cfg);
+        global_parser.sanityChecks(srv_config, mutable_cfg);
 
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
@@ -568,12 +578,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(2, ex.what());
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(2, "undefined configuration"
                                                " parsing error");
+            // An error occurred, so make sure to restore the original data.
             rollback = true;
         }
     }
