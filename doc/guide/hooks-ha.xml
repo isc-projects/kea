@@ -668,16 +668,6 @@
 
     "client-classes": [
         {
-            // No test expression for this class. Incoming packets will be
-            // assigned to that class dynamically by the HA Hook library.
-            "name": "HA_server1"
-        },
-        {
-            // No test expression for this class. Incoming packets will be
-            // assigned to that class dynamically by the HA Hook library.
-            "name": "HA_server2"
-        },
-        {
             "name": "phones",
             "test": "substring(option[60].hex,0,6) == 'Aastra'",
         },
@@ -765,17 +755,14 @@
         four pools. Two pools are dedicated to server1 and two are dedicated for
         server2. Each server can assign leases to both phones and laptops.
         Both groups of devices are assigned addresses from different pools.
-        Note that definition of classes <command>HA_server1</command> and
-        <command>HA_server2</command> is required because other classes
-        refer to them via <command>member</command> expression. These classes
-        do not include <command>test</command> parameter because they are
-        not evaluated with other classes. They are assigned dynamically
-        by the HA hook library as a result of load balancing algorithm.
-        The <command>phones_*</command> and <command>laptop_*</command>
-        evaluate to "true" when the query belongs to a given combination
-        of other classes, e.g. <command>HA_server1</command> and
-        <command>phones</command>. The pool will be selected accordingly
-        as a result of such evaluation.
+        The <command>HA_server1</command> and <command>HA_server2</command>
+        are builtin classes (see <xref linkend="classification-using-vendor"/>)
+        and they don't need to be declared. They are assigned dynamically by
+        the HA hook library as a result of load balancing algorithm. The
+        <command>phones_*</command> and <command>laptop_*</command> evaluate to
+        "true" when the query belongs to a given combination of other classes,
+        e.g. <command>HA_server1</command> and <command>phones</command>.
+        The pool will be selected accordingly as a result of such evaluation.
         </para>
 
         <para>Consult <xref linkend="classify"/> for details on how to use
