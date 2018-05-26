@@ -574,6 +574,7 @@ public:
     /// string
     virtual std::string validConnectString() = 0;
 
+#if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
     /// This function creates a host manager with an alternate data source
@@ -585,6 +586,7 @@ public:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     void testDbLostCallback();
+#endif
 
     /// @brief Callback function registered with the host manager
     bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
@@ -595,7 +597,7 @@ public:
     bool callback_called_;
 };
 
-
+#if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
 void
 HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Create the HostMgr.
@@ -633,6 +635,7 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
 }
+#endif
 
 // The following tests require MySQL enabled.
 #if defined HAVE_MYSQL
