@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2036,7 +2036,6 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
     int iterations_performed = 0;
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
-    bool use_templates = false;
 
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
