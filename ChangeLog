@@ -1,3 +1,10 @@
+1412.	[func]*		marcin
+	The client classes used by the High Availability hook library
+	use upper case "HA_" prefix and they are now built-in classes.
+	This means that those classes do not need to be	declared in the
+	server configuration.
+	(Trac #5632, git 2d590bfd7d1b0eca377eb99eef83a3083a1d7399)
+
 1411.	[bug]		fdupont
 	Fixed warnings about lambda's not using captured variables.
 	(Trac #5591, git f88a505823d39faec7dc5f647f40e6454e5dfc74)
