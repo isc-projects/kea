@@ -189,7 +189,7 @@
       prepending the &quot;HA_&quot; prefix to the name of the server
       which should process the DHCP packet. This server will use appropriate
       pool or subnet to allocate IP addresses (and/or prefixes) from, based on
-      the client classes assigned. The details can be found in
+      the assigned client classes. The details can be found in
       <xref linkend="high-availability-library"/>.</para>
 
       <para>Other examples are: the  ALL class which all incoming packets
