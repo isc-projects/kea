@@ -40,47 +40,37 @@
     // Client classes will associate address pools with certain servers taking
     // part in providing High Availability.
     "client-classes": [
-        // This class corresponds with a scope of the server1.
-        // It must be always declared.
-        {
-            "name": "ha_server1"
-        },
-        // This class corresponds with a scope of the server2.
-        // It must be always declared.
-        {
-            "name": "ha_server2"
-        },
         // phones class
         {
             "name": "phones",
-            "test": "substring(option[60].hex,0,6) == 'Aastra'",
+            "test": "substring(option[60].hex,0,6) == 'Aastra'"
         },
         // laptops are everything but phones.
         {
             "name": "laptops",
             "test": "not member('phones')"
         },
-        // Some phones will be handled by server1. Whether the ha_server1
-        // or ha_server2 is assigned for the client is a matter of load
+        // Some phones will be handled by server1. Whether the HA_server1
+        // or HA_server2 is assigned for the client is a matter of load
         // balancing performed by the HA hooks library.
         {
             "name": "phones_server1",
-            "test": "member('phones') and member('ha_server1')"
+            "test": "member('phones') and member('HA_server1')"
         },
         // Some phones will be handled by server2.
         {
             "name": "phones_server2",
-            "test": "member('phones') and member('ha_server2')"
+            "test": "member('phones') and member('HA_server2')"
         },
         // Some laptops will be handled by server1.
         {
             "name": "laptops_server1",
-            "test": "member('laptops') and member('ha_server1')"
+            "test": "member('laptops') and member('HA_server1')"
         },
         // Some laptops will be handled by server2.
         {
             "name": "laptops_server2",
-            "test": "member('laptops') and member('ha_server2')"
+            "test": "member('laptops') and member('HA_server2')"
         }
     ],
 
