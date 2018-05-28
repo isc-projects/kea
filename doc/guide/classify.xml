@@ -183,6 +183,15 @@
       packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
 
+      <para>The &quot;HA_&quot; prefix is used by the High Availability
+      hooks library to designate certain servers to process DHCP packets
+      as a result of load balancing. The class name is constructed by
+      prepending the &quot;HA_&quot; prefix to the name of the server
+      which should process the DHCP packet. This server will use appropriate
+      pool or subnet to allocate IP addresses (and/or prefixes) from, based on
+      the assigned client classes. The details can be found in
+      <xref linkend="high-availability-library"/>.</para>
+
       <para>Other examples are: the  ALL class which all incoming packets
       belong to, and the KNOWN class assigned when host reservations exist
       for the particular client. By convention, builtin classes' names
@@ -190,7 +199,7 @@
       </para>
 
       <para>Currently recognized builtin class names are ALL and KNOWN
-      and prefixes VENDOR_CLASS_, AFTER_ and EXTERNAL_. The AFTER_ prefix
+      and prefixes VENDOR_CLASS_, AFTER_ , EXTERNAL_ and HA_. The AFTER_ prefix
       is a provision for a not yet written hook, the EXTERNAL_ prefix
       can be freely used: builtin classes are implicitly defined so
       never raise warnings if they do not appear in the configuration.

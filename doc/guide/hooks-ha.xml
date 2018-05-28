@@ -281,13 +281,13 @@
                   <entry>hot-standby</entry>
                   <entry>primary or standby (hot standby mode)</entry>
                   <entry>enabled</entry>
-                  <entry><command>ha_server1</command> if primary, none otherwise</entry>
+                  <entry><command>HA_server1</command> if primary, none otherwise</entry>
                 </row>
                 <row>
                   <entry>load-balancing</entry>
                   <entry>primary or secondary (load balancing mode)</entry>
                   <entry>enabled</entry>
-                  <entry><command>ha_server1</command> or <command>ha_server2</command></entry>
+                  <entry><command>HA_server1</command> or <command>HA_server2</command></entry>
                 </row>
                 <row>
                   <entry>partner-down</entry>
@@ -333,16 +333,16 @@
         any names can be used as long as they remain unique.</para>
 
         <para>In the load balancing mode there are two scopes named after
-        the active servers: <command>ha_server1</command> and <command>
-        ha_server2</command>. The DHCP queries load balanced to the
-        <command>server1</command> belong to the <command>ha_server1</command>
+        the active servers: <command>HA_server1</command> and <command>
+        HA_server2</command>. The DHCP queries load balanced to the
+        <command>server1</command> belong to the <command>HA_server1</command>
         scope and the queries load balanced to the <command>server2</command>
-        belong to the <command>ha_server2</command> scope. If any of the
+        belong to the <command>HA_server2</command> scope. If any of the
         servers is in the <command>partner-down</command> state, it is
         responsible for serving both scopes.</para>
 
         <para>In the hot standby mode, there is only one scope <command>
-        ha_server1</command> because only the <command>server1</command>
+        HA_server1</command> because only the <command>server1</command>
         is responding to the DHCP queries. If that server becomes unavailable,
         the <command>server2</command> becomes responsible for this scope.
         </para>
@@ -453,11 +453,11 @@
             "pools": [
                 {
                     "pool": "192.0.3.100 - 192.0.3.150",
-                    "client-class": "ha_server1"
+                    "client-class": "HA_server1"
                 },
                 {
                     "pool": "192.0.3.200 - 192.0.3.250",
-                    "client-class": "ha_server2"
+                    "client-class": "HA_server2"
                 }
             ],
 
@@ -635,7 +635,7 @@
         <title>Load Balancing with Advanced Classification</title>
         <para>In the previous section we have provided an example which demonstrated
         the load balancing configuration with the client classification limited
-        to the use of <command>ha_server1</command> and <command>ha_server2</command>
+        to the use of <command>HA_server1</command> and <command>HA_server2</command>
         classes, which are dynamically assigned to the received DHCP queries.
         In many cases it will be required to use HA in deployments which already
         use some client classification.
@@ -648,8 +648,8 @@
           is expected to result in further split of each of those pools, so as
           each of the servers can allocate leases for some part of the phones
           and part of the laptops. This requires that each of the existing pools
-          should be split between the <command>ha_server1</command> and
-          <command>ha_server2</command>, so we end up with the following classes:
+          should be split between the <command>HA_server1</command> and
+          <command>HA_server2</command>, so we end up with the following classes:
 
           <itemizedlist>
             <listitem><simpara>phones_server1</simpara></listitem>
@@ -668,16 +668,6 @@
 
     "client-classes": [
         {
-            // No test expression for this class. Incoming packets will be
-            // assigned to that class dynamically by the HA Hook library.
-            "name": "ha_server1"
-        },
-        {
-            // No test expression for this class. Incoming packets will be
-            // assigned to that class dynamically by the HA Hook library.
-            "name": "ha_server2"
-        },
-        {
             "name": "phones",
             "test": "substring(option[60].hex,0,6) == 'Aastra'",
         },
@@ -687,19 +677,19 @@
         },
         {
             "name": "phones_server1",
-            "test": "member('phones') and member('ha_server1')"
+            "test": "member('phones') and member('HA_server1')"
         },
         {
             "name": "phones_server2",
-            "test": "member('phones') and member('ha_server2')"
+            "test": "member('phones') and member('HA_server2')"
         },
         {
             "name": "laptops_server1",
-            "test": "member('laptops') and member('ha_server1')"
+            "test": "member('laptops') and member('HA_server1')"
         },
         {
             "name": "laptops_server2",
-            "test": "member('laptops') and member('ha_server2')"
+            "test": "member('laptops') and member('HA_server2')"
         }
     ],
 
@@ -765,17 +755,14 @@
         four pools. Two pools are dedicated to server1 and two are dedicated for
         server2. Each server can assign leases to both phones and laptops.
         Both groups of devices are assigned addresses from different pools.
-        Note that definition of classes <command>ha_server1</command> and
-        <command>ha_server2</command> is required because other classes
-        refer to them via <command>member</command> expression. These classes
-        do not include <command>test</command> parameter because they are
-        not evaluated with other classes. They are assigned dynamically
-        by the HA hook library as a result of load balancing algorithm.
-        The <command>phones_*</command> and <command>laptop_*</command>
-        evaluate to "true" when the query belongs to a given combination
-        of other classes, e.g. <command>ha_server1</command> and
-        <command>phones</command>. The pool will be selected accordingly
-        as a result of such evaluation.
+        The <command>HA_server1</command> and <command>HA_server2</command>
+        are builtin classes (see <xref linkend="classification-using-vendor"/>)
+        and they don't need to be declared. They are assigned dynamically by
+        the HA hook library as a result of load balancing algorithm. The
+        <command>phones_*</command> and <command>laptop_*</command> evaluate to
+        "true" when the query belongs to a given combination of other classes,
+        e.g. <command>HA_server1</command> and <command>phones</command>.
+        The pool will be selected accordingly as a result of such evaluation.
         </para>
 
         <para>Consult <xref linkend="classify"/> for details on how to use
@@ -839,7 +826,7 @@
             "pools": [
                 {
                     "pool": "192.0.3.100 - 192.0.3.250",
-                    "client-class": "ha_server1"
+                    "client-class": "HA_server1"
                 }
             ],
 
@@ -878,7 +865,7 @@
         active server is set to.</para>
 
         <para>Finally, because there is always one server responding to the
-        DHCP queries, there is only one scope <command>ha_server1</command>
+        DHCP queries, there is only one scope <command>HA_server1</command>
         in use within pools definitions. In fact, the <command>client-class</command>
         parameter could be removed from this configuration without harm,
         because there are no conflicts in lease allocations by different
@@ -1083,14 +1070,14 @@
     "command": "ha-scopes",
     "service": [ "dhcp4 "],
     "arguments": {
-        "scopes": [ "ha_server1", "ha_server2" ]
+        "scopes": [ "HA_server1", "HA_server2" ]
     }
 }
 </screen>
           </para>
 
           <para>This command configures the server to handle traffic from
-          both <command>ha_server1</command> and <command>ha_server2</command>
+          both <command>HA_server1</command> and <command>HA_server2</command>
           scopes. In order to disable all scopes specify an empty list:
 
 <screen>
