@@ -11,7 +11,10 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <botan/lookup.h>
+#include <botan/version.h>
+#include <botan/botan.h>
+#include <botan/hash.h>
+#include <botan/types.h>
 
 #include <cryptolink/botan_common.h>
 
@@ -59,7 +62,7 @@ public:
         try {
             const std::string& name =
                 btn::getHashAlgorithmName(hash_algorithm);
-            hash = Botan::HashFunction::create(name).release();
+            hash = Botan::get_hash(name);
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
@@ -84,7 +87,13 @@ public:
     ///
     /// @return output size of the digest
     size_t getOutputLength() const {
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
         return (hash_->output_length());
+#else
+#error "Unsupported Botan version (need 1.9 or higher)"
+        // added to suppress irrelevant compiler errors
+        return 0;
+#endif
     }
 
     /// @brief Adds data to the digest
@@ -104,7 +113,7 @@ public:
     /// See @ref isc::cryptolink::Hash::final() for details.
     void final(isc::util::OutputBuffer& result, size_t len) {
         try {
-            Botan::secure_vector<Botan::byte> b_result(hash_->final());
+            Botan::SecureVector<Botan::byte> b_result(hash_->final());
 
             if (len > b_result.size()) {
                 len = b_result.size();
@@ -121,7 +130,7 @@ public:
     /// See @ref isc::cryptolink::Hash::final() for details.
     void final(void* result, size_t len) {
         try {
-            Botan::secure_vector<Botan::byte> b_result(hash_->final());
+            Botan::SecureVector<Botan::byte> b_result(hash_->final());
             size_t output_size = getOutputLength();
             if (output_size > len) {
                 output_size = len;
@@ -138,7 +147,7 @@ public:
     /// See @ref isc::cryptolink::Hash::final() for details.
     std::vector<uint8_t> final(size_t len) {
         try {
-            Botan::secure_vector<Botan::byte> b_result(hash_->final());
+            Botan::SecureVector<Botan::byte> b_result(hash_->final());
             if (len > b_result.size()) {
                 len = b_result.size();
             }
