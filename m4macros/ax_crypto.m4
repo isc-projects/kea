@@ -293,7 +293,7 @@ else
       use_openssl="yes"
    fi
    if test "${use_openssl}" = "yes" ; then
-      for d in /usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw; do
+      for d in /usr /usr/local /usr/local/ssl /usr/local/opt/openssl /usr/pkg /usr/sfw; do
           if test -f $d/include/openssl/opensslv.h; then
              use_openssl=$d; break
           fi
