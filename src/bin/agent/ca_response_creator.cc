@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <agent/ca_command_mgr.h>
 #include <agent/ca_response_creator.h>
 #include <cc/data.h>
