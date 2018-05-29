@@ -79,11 +79,9 @@ HttpMessageParserBase::getBufferAsString(const size_t limit) const {
 std::string
 HttpMessageParserBase::logFormatHttpMessage(const std::string& message,
                                             const size_t limit) {
-    if (!message.empty()) {
+    if ((limit > 0) && !message.empty()) {
         if (limit < message.size()) {
             std::ostringstream s;
-            s << ".........\n(truncating HTTP message larger than "
-              << limit << " characters)\n";
             s << message.substr(0, limit)
               << ".........\n(truncating HTTP message larger than "
               << limit << " characters)\n";

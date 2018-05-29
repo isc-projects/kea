@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -339,6 +339,33 @@ TEST_F(HttpRequestParserTest, noColonInHttpHeader) {
     std::string http_req = "POST /foo/ HTTP/1.1\r\n"
         "Content-Type text/html\r\n\r\n";
     testInvalidHttpRequest(http_req);
+}
+
+// This test verifies that the input buffer of the HTTP request can be
+// retrieved as text formatted for logging.
+TEST_F(HttpRequestParserTest, getBufferAsString) {
+    std::string http_req = "POST /foo/bar HTTP/1.0\r\n"
+        "Content-Type: application/json\r\n";
+
+    // Create HTTP request.
+    PostHttpRequestJson request;
+
+    // Create a parser and make it use the request we created.
+    HttpRequestParser parser(request);
+    ASSERT_NO_THROW(parser.initModel());
+
+    // Insert data into the request.
+    ASSERT_NO_THROW(parser.postBuffer(&http_req[0], http_req.size()));
+
+    // limit = 0 means no limit
+    EXPECT_EQ(http_req, parser.getBufferAsString(0));
+
+    // large enough limit should not cause the truncation.
+    EXPECT_EQ(http_req, parser.getBufferAsString(1024));
+
+    // Only 3 characters requested. The request should be truncated.
+    EXPECT_EQ("POS.........\n(truncating HTTP message larger than 3 characters)\n",
+              parser.getBufferAsString(3));
 }
 
 }
