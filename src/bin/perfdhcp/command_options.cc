@@ -10,7 +10,9 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
+#include <dhcp/option.h>
 #include <cfgrpt/config_report.h>
+#include <util/encode/hex.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -28,6 +30,7 @@ extern int optreset;
 
 using namespace std;
 using namespace isc;
+using namespace isc::dhcp;
 
 namespace isc {
 namespace perfdhcp {
@@ -151,6 +154,7 @@ CommandOptions::reset() {
     server_name_.clear();
     v6_relay_encapsulation_level_ = 0;
     generateDuidTemplate();
+    extra_opts_.clear();
 }
 
 bool
@@ -218,7 +222,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
-                        "s:iBc1T:X:O:E:S:I:x:W:w:e:f:F:")) != -1) {
+                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -400,7 +404,46 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                   " -O<value> must be greater than 3 ");
             rnd_offset_.push_back(offset_arg);
             break;
+        case 'o': {
 
+            // we must know how to contruct the option: whether it's v4 or v6.
+            check( (ipversion_ != 4) && (ipversion_ != 6),
+                   "-4 or -6 must be explicitly specified before -o is used.");
+
+            // custom option (expected format: code,hexstring)
+            std::string opt_text = std::string(optarg);
+            size_t coma_loc = opt_text.find(',');
+            check(coma_loc == std::string::npos,
+                  "-o option must provide option code, a coma and hexstring for"
+                  " the option content, e.g. -o60,646f63736973 for sending option"
+                  " 60 (class-id) with the value 'docsis'");
+            int code = 0;
+
+            // Try to parse the option code
+            try {
+                code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
+                check(code <= 0, "Option code can't be negative");
+            } catch (boost::bad_lexical_cast&) {
+                isc_throw(InvalidParameter, "Invalid option code specified for "
+                          "-o option, expected format: -o<integer>,<hexstring>");
+            }
+
+            // Now try to interpret the hexstring
+            opt_text = opt_text.substr(coma_loc + 1);
+            std::vector<uint8_t> bin;
+            try {
+                isc::util::encode::decodeHex(opt_text, bin);
+            } catch (BadValue& e) {
+                isc_throw(InvalidParameter, "Error during encoding option -o:"
+                          << e.what());
+            }
+
+            // Create and remember the option.
+            OptionPtr opt(new Option(ipversion_ == 4 ? Option::V4 : Option::V6,
+                                     code, bin));
+            extra_opts_.insert(make_pair(code, opt));
+            break;
+        }
         case 'p':
             period_ = positiveInteger("value of test period:"
                                       " -p<value> must be a positive integer");
@@ -721,11 +764,16 @@ CommandOptions::convertHexString(const std::string& text) const {
 }
 
 void CommandOptions::loadMacs() {
-  std::string line;
-  std::ifstream infile(mac_list_file_.c_str());
-  while (std::getline(infile, line)) {
-    check(decodeMacString(line), "invalid mac in input");
-  }
+    std::string line;
+    std::ifstream infile(mac_list_file_.c_str());
+    size_t cnt = 0;
+    while (std::getline(infile, line)) {
+        cnt++;
+        stringstream tmp;
+        tmp << "invalid mac in input line " << cnt;
+        // Let's print more meaningful error that contains line with error.
+        check(decodeMacString(line), tmp.str());
+    }
 }
 
 bool CommandOptions::decodeMacString(const std::string& line) {

@@ -1,3 +1,44 @@
+1412.	[func]*		marcin
+	The client classes used by the High Availability hook library
+	use upper case "HA_" prefix and they are now built-in classes.
+	This means that those classes do not need to be	declared in the
+	server configuration.
+	(Trac #5632, git 2d590bfd7d1b0eca377eb99eef83a3083a1d7399)
+
+1411.	[bug]		fdupont
+	Fixed warnings about lambda's not using captured variables.
+	(Trac #5591, git f88a505823d39faec7dc5f647f40e6454e5dfc74)
+
+1410.	[bug]		marcin
+	Fixed multiple hanging Control Agent unittests.
+	(Trac #5576, git 310af68101cba74220652ec2b403520fc5666dc0)
+
+1409.	[doc]		marcin
+	Documented in the User's Guide how Kea HA service behaves
+	when the clock skew between active servers becomes too
+	high.
+	(Trac #5603, git ffaff4d2a03600bb4f81d335b49a840e31d03c8c)
+
+1408.	[func]		tomek
+	perfdhcp now supports -o option that adds DHCP options.
+	This may be used to simulate various clients.
+	(github #77, git b81dedb7f0a2516130e7bd799d9084c63f0e844c)
+
+1407.	[bug]		tmark
+	Corrected an issue where the destruction of loggers
+	prior to the destruction of the TimerMgr singleton
+	caused unit tests to segfault.
+	(Trac #5626, git 9f4e3f9cd8acf8e7d1d3e714d8f904754377c00f)
+
+1406.	[func]		fdupont
+	Added pkg-config alternative to configure --with-cql path so
+	now you can use either pkg-config or cql_config.
+	(Trac #5488, git 55498ca3455517132533a39002ebfc05d26c7e38)
+
+1405.	[bug]		tmark
+	Corrected missing "override" warning in cql_lease_mgr.h
+	(Trac #5625, git df3068ba0e520df4d96dd38e2de679beb99f2e23)
+
 Kea 1.4.0-beta released on May 18, 2018
 
 1404.	[doc]		tomek
@@ -8840,3 +8881,5 @@ LEGEND
 	fix except that it will be handled as confidential and will cause
 	security patch releases.
 *: Backward incompatible or operational change.
+
+
