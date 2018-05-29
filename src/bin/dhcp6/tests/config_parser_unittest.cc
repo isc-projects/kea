@@ -1533,6 +1533,71 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
+// Goal of this test is to verify that invalid subnet fails to be parsed.
+TEST_F(Dhcp6ParserTest, badSubnetValues) {
+
+    // Contains parts needed for a single test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string config_json_;
+        std::string exp_error_msg_;
+    };
+
+    // Vector of scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+        "IP is not an address",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"not an address/64\" } ]}",
+        "subnet configuration failed: "
+        "Failed to convert string to address 'notanaddress': Invalid argument"
+        },
+        {
+        "IP is Invalid",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"200175:db8::/64\" } ]}",
+        "subnet configuration failed: "
+        "Failed to convert string to address '200175:db8::': Invalid argument"
+        },
+        {
+        "Missing prefix",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"2001:db8::\" } ]}",
+        "subnet configuration failed: "
+        "Invalid subnet syntax (prefix/len expected):2001:db8:: (<string>:1:30)"
+        },
+        {
+        "Prefix not an integer (2 slashes)",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"2001:db8:://64\" } ]}",
+        "subnet configuration failed: "
+        "prefix length: '/64' is not an integer (<string>:1:30)"
+        },
+        {
+        "Prefix value is insane",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"2001:db8::/43225\" } ]}",
+        "subnet configuration failed: "
+        "Invalid prefix length specified for subnet: 43225 (<string>:1:30)"
+        }
+    };
+
+    // Iterate over the list of scenarios.  Each should fail to parse with
+    // a specific error message.
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        {
+            SCOPED_TRACE((*scenario).description_);
+            ConstElementPtr config;
+            ASSERT_NO_THROW(config = parseDHCP6((*scenario).config_json_))
+                            << "invalid json, broken test";
+            ConstElementPtr status;
+            EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+            checkResult(status, 1);
+            EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
+        }
+    }
+}
+
 // This test checks the configuration of the Rapid Commit option
 // support for the subnet.
 TEST_F(Dhcp6ParserTest, subnetRapidCommit) {
