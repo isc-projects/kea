@@ -2138,7 +2138,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         resp->addOption(getNetmaskOption(subnet));
 
         // rebind timer (type 59) - if specified then send it only it if
-        // it is lease than lease life time.  Note we "sanity" check T1
+        // it is less than lease lifetime.  Note we "sanity" check T1
         // and T2 against lease lifetime here in event the lifetime has
         // been altered somewhere along the line.
         uint32_t timer_ceiling = lease->valid_lft_;
