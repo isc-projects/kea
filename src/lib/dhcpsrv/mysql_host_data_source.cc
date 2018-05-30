@@ -2713,23 +2713,6 @@ MySqlHostDataSource::del6(const SubnetID& subnet_id,
 }
 
 ConstHostCollection
-MySqlHostDataSource::getAll(const HWAddrPtr& hwaddr,
-                            const DuidPtr& duid) const {
-
-    if (duid) {
-        return (getAll(Host::IDENT_DUID, &duid->getDuid()[0],
-                       duid->getDuid().size()));
-
-    } else if (hwaddr) {
-        return (getAll(Host::IDENT_HWADDR,
-                       &hwaddr->hwaddr_[0],
-                       hwaddr->hwaddr_.size()));
-    }
-
-    return (ConstHostCollection());
-}
-
-ConstHostCollection
 MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                             const uint8_t* identifier_begin,
                             const size_t identifier_len) const {
@@ -2779,33 +2762,6 @@ MySqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
 }
 
 ConstHostPtr
-MySqlHostDataSource::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-                          const DuidPtr& duid) const {
-
-    /// @todo: Rethink the logic in BaseHostDataSource::get4(subnet, hwaddr, duid)
-    if (hwaddr && duid) {
-        isc_throw(BadValue, "MySQL host data source get4() called with both"
-                  " hwaddr and duid, only one of them is allowed");
-    }
-    if (!hwaddr && !duid) {
-        isc_throw(BadValue, "MySQL host data source get4() called with "
-                  "neither hwaddr or duid specified, one of them is required");
-    }
-
-    // Choosing one of the identifiers
-    if (hwaddr) {
-        return (get4(subnet_id, Host::IDENT_HWADDR, &hwaddr->hwaddr_[0],
-                     hwaddr->hwaddr_.size()));
-
-    } else if (duid) {
-        return (get4(subnet_id, Host::IDENT_DUID, &duid->getDuid()[0],
-                     duid->getDuid().size()));
-    }
-
-    return (ConstHostPtr());
-}
-
-ConstHostPtr
 MySqlHostDataSource::get4(const SubnetID& subnet_id,
                           const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
@@ -2848,32 +2804,6 @@ MySqlHostDataSource::get4(const SubnetID& subnet_id,
         result = *collection.begin();
 
     return (result);
-}
-
-ConstHostPtr
-MySqlHostDataSource::get6(const SubnetID& subnet_id, const DuidPtr& duid,
-                          const HWAddrPtr& hwaddr) const {
-
-    /// @todo: Rethink the logic in BaseHostDataSource::get6(subnet, hwaddr, duid)
-    if (hwaddr && duid) {
-        isc_throw(BadValue, "MySQL host data source get6() called with both"
-                  " hwaddr and duid, only one of them is allowed");
-    }
-    if (!hwaddr && !duid) {
-        isc_throw(BadValue, "MySQL host data source get6() called with "
-                  "neither hwaddr or duid specified, one of them is required");
-    }
-
-    // Choosing one of the identifiers
-    if (hwaddr) {
-        return (get6(subnet_id, Host::IDENT_HWADDR, &hwaddr->hwaddr_[0],
-                     hwaddr->hwaddr_.size()));
-    } else if (duid) {
-        return (get6(subnet_id, Host::IDENT_DUID, &duid->getDuid()[0],
-                     duid->getDuid().size()));
-    }
-
-    return (ConstHostPtr());
 }
 
 ConstHostPtr
