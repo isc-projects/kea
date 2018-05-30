@@ -2,7 +2,7 @@
 	Removed getAll, get4 and get6 methods using both hardware address
 	and DUID from host backend (aka host data source) APIs.
 	This is an *incompatible* change.
-	(Trac #5563, git xxx)
+	(Trac #5563, git db4c34b069f114f93d9f29cdeb02b536a0fbc982)
 
 1412.	[func]*		marcin
 	The client classes used by the High Availability hook library
