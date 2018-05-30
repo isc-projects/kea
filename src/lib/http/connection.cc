@@ -216,34 +216,34 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
             request_->finalize();
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
-                      HTTP_REQUEST_RECEIVED)
+                      HTTP_CLIENT_REQUEST_RECEIVED)
                 .arg(getRemoteEndpointAddressAsText());
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                      HTTP_REQUEST_DETAILS)
+                      HTTP_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
 
         } catch (const std::exception& ex) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
-                      HTTP_BAD_REQUEST_RECEIVED)
+                      HTTP_BAD_CLIENT_REQUEST_RECEIVED)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(ex.what());
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                      HTTP_BAD_REQUEST_DETAILS)
+                      HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
         }
 
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
-                  HTTP_RESPONSE_SEND)
+                  HTTP_SERVER_RESPONSE_SEND)
             .arg(response->toBriefString())
             .arg(getRemoteEndpointAddressAsText());
 
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                  HTTP_RESPONSE_DETAILS)
+                  HTTP_SERVER_RESPONSE_SEND_DETAILS)
             .arg(getRemoteEndpointAddressAsText())
             .arg(HttpMessageParserBase::logFormatHttpMessage(response->toString(),
                                                              MAX_LOGGED_MESSAGE_SIZE));
@@ -323,7 +323,7 @@ HttpConnection::setupIdleTimer() {
 void
 HttpConnection::requestTimeoutCallback() {
     LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-              HTTP_REQUEST_TIMEOUT_OCCURRED)
+              HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
     HttpResponsePtr response =
         response_creator_->createStockHttpResponse(request_,
