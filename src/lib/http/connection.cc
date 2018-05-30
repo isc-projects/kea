@@ -237,12 +237,12 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
         }
 
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_RESPONSE_SEND)
             .arg(response->toBriefString())
             .arg(getRemoteEndpointAddressAsText());
 
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
                   HTTP_RESPONSE_DETAILS)
             .arg(getRemoteEndpointAddressAsText())
             .arg(HttpMessageParserBase::logFormatHttpMessage(response->toString(),
