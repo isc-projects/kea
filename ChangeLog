@@ -1,3 +1,9 @@
+1413.	[func]		fdupont
+	Removed getAll, get4 and get6 methods using both hardware address
+	and DUID from host backend (aka host data source) APIs.
+	This is an *incompatible* change.
+	(Trac #5563, git xxx)
+
 1412.	[func]*		marcin
 	The client classes used by the High Availability hook library
 	use upper case "HA_" prefix and they are now built-in classes.
