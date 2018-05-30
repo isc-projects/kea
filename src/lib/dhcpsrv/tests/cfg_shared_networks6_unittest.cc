@@ -113,7 +113,11 @@ TEST(CfgSharedNetworks6Test, unparse) {
     network1->setIface("eth0");
     network1->addRelayAddress(IOAddress("2001:db8:1::1"));
     network1->addRelayAddress(IOAddress("2001:db8:1::2"));
+
     network2->setIface("eth1");
+    network2->setT1(Triplet<uint32_t>(100));
+    network2->setT2(Triplet<uint32_t>(200));
+    network2->setValid(Triplet<uint32_t>(300));
 
     CfgSharedNetworks6 cfg;
     ASSERT_NO_THROW(cfg.add(network1));
@@ -127,12 +131,12 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"option-data\": [ ],\n"
         "    \"preferred-lifetime\": 0,\n"
         "    \"rapid-commit\": false,\n"
-        "    \"rebind-timer\": 0,\n"
+        "    \"rebind-timer\": 200,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
-        "    \"renew-timer\": 0,\n"
+        "    \"renew-timer\": 100,\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet6\": [ ],\n"
-        "    \"valid-lifetime\": 0\n"
+        "    \"valid-lifetime\": 300\n"
         "  },\n"
         "  {\n"
         "    \"interface\": \"eth0\",\n"
@@ -140,12 +144,9 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"option-data\": [ ],\n"
         "    \"preferred-lifetime\": 0,\n"
         "    \"rapid-commit\": false,\n"
-        "    \"rebind-timer\": 0,\n"
         "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\", \"2001:db8:1::2\" ] },\n"
-        "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
-        "    \"subnet6\": [ ],\n"
-        "    \"valid-lifetime\": 0\n"
+        "    \"subnet6\": [ ]\n"
         "  }\n"
         "]\n";
 

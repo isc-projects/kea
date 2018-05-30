@@ -826,15 +826,14 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_FALSE(subnet->getT1().unspecified());
+
+    EXPECT_TRUE(subnet->getT1().unspecified());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(900, subnet->getT1()); // that's the default value
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
 
     // Check that subnet-id is 1
     EXPECT_EQ(1, subnet->getID());
-
 }
 
 /// Check that the rebind-timer doesn't have to be specified, in which case
@@ -863,8 +862,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getT1().unspecified());
     EXPECT_EQ(1000, subnet->getT1());
-    EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(1800, subnet->getT2()); // that's the default value
+    EXPECT_TRUE(subnet->getT2().unspecified());
     EXPECT_EQ(4000, subnet->getValid());
 
     // Check that subnet-id is 1
