@@ -652,9 +652,16 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
     // The renew-timer and rebind-timer are optional. If not set, the
     // option 58 and 59 will not be sent to a client. In this case the
-    // client will use default values based on the valid-lifetime.
-    Triplet<uint32_t> t1 = getInteger(params, "renew-timer");
-    Triplet<uint32_t> t2 = getInteger(params, "rebind-timer");
+    // client should formulate default values based on the valid-lifetime.
+    Triplet<uint32_t> t1;
+    if (params->contains("renew-timer")) {
+        t1 = getInteger(params, "renew-timer");
+    }
+
+    Triplet<uint32_t> t2;
+    if (params->contains("rebind-timer")) {
+        t2 = getInteger(params, "rebind-timer");
+    }
 
     // The valid-lifetime is mandatory. It may be specified for a
     // particular subnet. If not, the global value should be present.
