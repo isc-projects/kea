@@ -147,12 +147,22 @@ HttpRequest::getBody() const {
 }
 
 std::string
-HttpRequest::toString() const {
+HttpRequest::toBriefString() const {
     checkFinalized();
 
     std::ostringstream s;
     s << methodToString(getMethod()) << " " << getUri() << " HTTP/" <<
-        getHttpVersion().major_ << "." << getHttpVersion().minor_ << crlf;
+        getHttpVersion().major_ << "." << getHttpVersion().minor_;
+    return (s.str());
+}
+
+std::string
+HttpRequest::toString() const {
+    checkFinalized();
+
+    std::ostringstream s;
+    // HTTP method, URI and version number.
+    s << toBriefString() << crlf;
 
     for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
          ++header_it) {
