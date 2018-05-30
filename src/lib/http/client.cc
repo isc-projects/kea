@@ -455,7 +455,7 @@ Connection::doTransaction(const HttpRequestPtr& request,
             .arg(url_.toText());
 
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
-                  HTTP_CLIENT_REQUEST_DETAILS)
+                  HTTP_CLIENT_REQUEST_SEND_DETAILS)
             .arg(url_.toText())
             .arg(HttpMessageParserBase::logFormatHttpMessage(request->toString(),
                                                              MAX_LOGGED_MESSAGE_SIZE));
@@ -506,7 +506,7 @@ Connection::terminate(const boost::system::error_code& ec,
             .arg(url_.toText());
 
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                  HTTP_SERVER_RESPONSE_DETAILS)
+                  HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
             .arg(url_.toText())
             .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
 
@@ -522,7 +522,7 @@ Connection::terminate(const boost::system::error_code& ec,
         // to parse it.
         if (!parsing_error.empty()) {
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
-                      HTTP_BAD_SERVER_RESPONSE_DETAILS)
+                      HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
                 .arg(url_.toText())
                 .arg(parser_->getBufferAsString());
         }
