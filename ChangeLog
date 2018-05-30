@@ -1,3 +1,12 @@
+1414.	[bug]		tmark
+	kea-dhcp4 parsing now treats renew-timer and rebind-timer
+	as optional with no defaults. The logic for sending them
+	to the client was changed to: send rebind-timer only
+	when it is less than the lease lifetime; and send renew-timer
+	only when it less than either the rebind-timer if specified,
+	or lease lifetime in the absence of rebind-timer.
+	(Trac #5596, git 38426e16ec04a786e35a65d27cbcb7dbabfe79b5)
+
 1413.	[func]		fdupont
 	Removed getAll, get4 and get6 methods using both hardware address
 	and DUID from host backend (aka host data source) APIs.
