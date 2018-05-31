@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -765,7 +765,7 @@ Dhcpv4Srv::run_one() {
         // we were interrupted. And we don't want to print a message every
         // second.
 
-    } catch (const SignalInterruptOnSelect) {
+    } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
