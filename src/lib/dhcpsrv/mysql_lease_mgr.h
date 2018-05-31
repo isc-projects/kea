@@ -475,7 +475,7 @@ public:
     ///
     /// The method is called by the constructor after opening the database
     /// but prior to preparing SQL statements, to verify that the schema version
-    /// is correct. Thus it does not rely on a pre-prepared statement or
+    /// is correct. Thus it must not rely on a pre-prepared statement or
     /// formal statement execution error checking.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
