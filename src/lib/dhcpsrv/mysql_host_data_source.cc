@@ -2305,7 +2305,7 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
 
     // Test schema version before we try to prepare statements.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
-    MYSQL_SCHEMA_VERSION_MINOR);
+                                               MYSQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
         isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "

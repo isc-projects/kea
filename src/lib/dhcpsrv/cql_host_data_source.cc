@@ -1612,9 +1612,21 @@ CqlHostDataSourceImpl::CqlHostDataSourceImpl(const CqlConnection::ParameterMap& 
     // Open the database.
     dbconn_.openDatabase();
 
+    // Prepare the version exchange first.
+    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
+
+    // Validate the schema version.
+    std::pair<uint32_t, uint32_t> code_version(CQL_SCHEMA_VERSION_MAJOR,
+                                               CQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError, "Cassandra schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << ".");
+    }
+
     // Prepare all possible statements.
     dbconn_.prepareStatements(CqlHostExchange::tagged_statements_);
-    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
 }
 
 CqlHostDataSourceImpl::~CqlHostDataSourceImpl() {

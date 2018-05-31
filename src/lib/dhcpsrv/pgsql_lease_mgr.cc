@@ -996,8 +996,10 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
     conn_.openDatabase();
 
-    pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
-    pair<uint32_t, uint32_t> db_version = getVersion();
+    // Validate schema version first.
+    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
+                                               PG_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
@@ -1006,6 +1008,7 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
                       << db_version.second);
     }
 
+    // Now prepare the SQL statements.
     int i = 0;
     for( ; tagged_statements[i].text != NULL ; ++i) {
         conn_.prepareStatement(tagged_statements[i]);
