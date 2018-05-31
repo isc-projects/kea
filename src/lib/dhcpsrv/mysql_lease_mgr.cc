@@ -1500,13 +1500,15 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     conn_.openDatabase();
 
     // Test schema version before we try to prepare statements.
-    std::pair<uint32_t, uint32_t> version = getVersion();
-    if (version.first != MYSQL_SCHEMA_VERSION_MAJOR ||
-        version.second != MYSQL_SCHEMA_VERSION_MINOR) {
-        isc_throw(DbOpenError, "MySQL schema version is: "
-                  << version.first << "." << version.second << ", need version: "
-                  << MYSQL_SCHEMA_VERSION_MAJOR << "."
-                  << MYSQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                               MYSQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError,
+                  "MySQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
     }
 
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
@@ -2400,8 +2402,8 @@ MySqlLeaseMgr::getVersion() const {
 
     // Execute the prepared statement.
     if (mysql_stmt_execute(stmt) != 0) {
-        isc_throw(DbOperationError, "cannot execute schema version query:"
-                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_) << ")");
+        isc_throw(DbOperationError, "cannot execute schema version query <"
+                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
     }
 
     // Bind the output of the statement to the appropriate variables.
@@ -2421,15 +2423,15 @@ MySqlLeaseMgr::getVersion() const {
     bind[1].buffer_length = sizeof(minor);
 
     if (mysql_stmt_bind_result(stmt, bind)) {
-        isc_throw(DbOperationError, "unable to bind result set for:"
-                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_) << ")");
+        isc_throw(DbOperationError, "unable to bind result set for <"
+                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
     }
 
     // Fetch the data.
     if (mysql_stmt_fetch(stmt)) {
         mysql_stmt_close(stmt);
-        isc_throw(DbOperationError, "unable to bind result set for:"
-                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_) << ")");
+        isc_throw(DbOperationError, "unable to bind result set for <"
+                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
     }
 
     // Discard the statement and its resources
