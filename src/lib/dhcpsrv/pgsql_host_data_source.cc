@@ -1700,8 +1700,10 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
     // Open the database.
     conn_.openDatabase();
 
-    pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
-    pair<uint32_t, uint32_t> db_version = getVersion();
+    // Validate the schema version first.
+    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
+                                               PG_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
@@ -1710,6 +1712,7 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
                       << db_version.second);
     }
 
+    // Now prepare the SQL statements.
     conn_.prepareStatements(tagged_statements.begin(),
                             tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
