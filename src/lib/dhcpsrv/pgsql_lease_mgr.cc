@@ -1680,7 +1680,7 @@ PgSqlLeaseMgr::getVersion() const {
     const char* version_sql =  "SELECT version, minor FROM schema_version;";
     PgSqlResult r(PQexec(conn_, version_sql));
     if(PQresultStatus(r) != PGRES_TUPLES_OK) {
-        isc_throw(DbOperationError, "unable to execute PostgreSQL statement: "
+        isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
                   << version_sql << ", reason: " << PQerrorMessage(conn_));
     }
 
