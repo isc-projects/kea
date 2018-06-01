@@ -11,8 +11,11 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <botan/version.h>
+#include <botan/botan.h>
 #include <botan/hmac.h>
-#include <botan/lookup.h>
+#include <botan/hash.h>
+#include <botan/types.h>
 
 #include <cryptolink/botan_common.h>
 
@@ -37,13 +40,7 @@ public:
         try {
             const std::string& name =
                 btn::getHashAlgorithmName(hash_algorithm);
-            std::unique_ptr<Botan::HashFunction> hash_ptr =
-                Botan::HashFunction::create(name);
-            if (hash_ptr) {
-                hash = hash_ptr.release();
-            } else {
-                throw Botan::Algorithm_Not_Found(name);
-            }
+            hash = Botan::get_hash(name);
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
@@ -59,9 +56,15 @@ public:
         try {
             // use a temp var so we don't have blocks spanning
             // preprocessor directives
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
             size_t block_length = hash->hash_block_size();
+#else
+#error "Unsupported Botan version (need 1.9 or higher)"
+            // added to suppress irrelevant compiler errors
+            size_t block_length = 0;
+#endif
             if (secret_len > block_length) {
-                Botan::secure_vector<Botan::byte> hashed_key =
+                Botan::SecureVector<Botan::byte> hashed_key =
                     hash->process(static_cast<const Botan::byte*>(secret),
                                   secret_len);
                 hmac_->set_key(&hashed_key[0], hashed_key.size());
@@ -94,7 +97,13 @@ public:
     ///
     /// @return output size of the digest
     size_t getOutputLength() const {
+#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
         return (hmac_->output_length());
+#else
+#error "Unsupported Botan version (need 1.9 or higher)"
+        // added to suppress irrelevant compiler errors
+        return 0;
+#endif
     }
 
     /// @brief Add data to digest
@@ -113,7 +122,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     void sign(isc::util::OutputBuffer& result, size_t len) {
         try {
-            Botan::secure_vector<Botan::byte> b_result(hmac_->final());
+            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
 
             if (len > b_result.size()) {
                 len = b_result.size();
@@ -129,7 +138,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     void sign(void* result, size_t len) {
         try {
-            Botan::secure_vector<Botan::byte> b_result(hmac_->final());
+            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
             size_t output_size = getOutputLength();
             if (output_size > len) {
                 output_size = len;
@@ -145,7 +154,7 @@ public:
     /// See @ref isc::cryptolink::HMAC::sign() for details.
     std::vector<uint8_t> sign(size_t len) {
         try {
-            Botan::secure_vector<Botan::byte> b_result(hmac_->final());
+            Botan::SecureVector<Botan::byte> b_result(hmac_->final());
             if (len > b_result.size()) {
                 len = b_result.size();
             }
@@ -190,7 +199,7 @@ private:
     boost::scoped_ptr<Botan::HMAC> hmac_;
 
     /// @brief The digest cache for multiple verify
-    Botan::secure_vector<Botan::byte> digest_;
+    Botan::SecureVector<Botan::byte> digest_;
 };
 
 HMAC::HMAC(const void* secret, size_t secret_length,
