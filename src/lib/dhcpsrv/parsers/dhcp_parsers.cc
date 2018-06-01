@@ -567,7 +567,26 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // Try to create the address object. It also validates that
     // the address syntax is ok.
     isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
-    uint8_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+    // Now parse out the prefix length.
+    unsigned int len;
+    try {
+        len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+    } catch (const boost::bad_lexical_cast) {
+        ConstElementPtr elem = params->get("subnet");
+        isc_throw(DhcpConfigError, "prefix length: '" <<
+                  subnet_txt.substr(pos+1) << "' is not an integer ("
+                  << elem->getPosition() << ")");
+    }
+
+    // Sanity check the prefix length
+    if ((addr.isV6() && len > 128) ||
+        (addr.isV4() && len > 32)) {
+        ConstElementPtr elem = params->get("subnet");
+        isc_throw(BadValue,
+                  "Invalid prefix length specified for subnet: " << len
+                  << " (" <<  elem->getPosition() << ")");
+    }
 
     // Call the subclass's method to instantiate the subnet
     initSubnet(params, addr, len);
