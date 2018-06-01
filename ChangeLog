@@ -1,3 +1,11 @@
+1415.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now validate the schema version
+	of lease and host back ends after establishing a connection.
+	If a schema version does not match the version the server
+	expects, the server will emit an error log and close
+	the connection. This applies to MySQL, PostgreSQL, and Cassandra.
+	(Trac #5629, git 15c34afdba45be609e35284a209ad18ed66605f8)
+
 1414.	[bug]		tmark
 	kea-dhcp4 parsing now treats renew-timer and rebind-timer
 	as optional with no defaults. The logic for sending them
