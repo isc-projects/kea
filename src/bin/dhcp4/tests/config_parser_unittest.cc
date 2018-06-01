@@ -1815,23 +1815,73 @@ TEST_F(Dhcp4ParserTest, noPools) {
 }
 
 // Goal of this test is to verify that invalid subnet fails to be parsed.
-TEST_F(Dhcp4ParserTest, badSubnet) {
+TEST_F(Dhcp4ParserTest, badSubnetValues) {
 
-    // Configuration string.
-    string config = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"pools\": [ ],"
+    // Contains parts needed for a single test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string config_json_;
+        std::string exp_error_msg_;
+    };
+
+    // Vector of scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+        "IP is not an address",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"not an address/24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Failed to convert string to address 'notanaddress': Invalid argument"
+        },
+        {
+        "IP is Invalid",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"256.16.1.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Failed to convert string to address '256.16.1.0': Invalid argument"
+        },
+        {
+        "Missing prefix",
+        "{ \"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0\" } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Invalid subnet syntax (prefix/len expected):192.0.2.0 (<string>:1:32)"
+        },
+        {
+        "Prefix not an integer (2 slashes)",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0//24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "prefix length: '/24' is not an integer (<string>:1:32)"
+        },
+        {
+        "Prefix value is insane",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0/45938\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Invalid prefix length specified for subnet: 45938 (<string>:1:32)"
+        }
+    };
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    checkResult(status, 1);
-    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+    // Iterate over the list of scenarios.  Each should fail to parse with
+    // a specific error message.
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        {
+            SCOPED_TRACE((*scenario).description_);
+            ConstElementPtr config;
+            ASSERT_NO_THROW(config = parseDHCP4((*scenario).config_json_))
+                            << "invalid json, broken test";
+            ConstElementPtr status;
+            EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+            checkResult(status, 1);
+            EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
+        }
+    }
 }
 
 // Goal of this test is to verify that unknown interface fails
