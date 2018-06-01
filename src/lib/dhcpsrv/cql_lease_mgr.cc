@@ -1863,10 +1863,10 @@ CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
                                                CQL_SCHEMA_VERSION_MINOR);
     std::pair<uint32_t, uint32_t> db_version = getVersion();
     if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "Cassandra schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << ".");
+        isc_throw(DbOpenError, "Cassandra schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << "."
+                  << db_version.second);
     }
 
     // Now prepare the rest of the exchanges.

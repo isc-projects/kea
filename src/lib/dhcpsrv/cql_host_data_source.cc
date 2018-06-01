@@ -1622,7 +1622,8 @@ CqlHostDataSourceImpl::CqlHostDataSourceImpl(const CqlConnection::ParameterMap& 
     if (code_version != db_version) {
         isc_throw(DbOpenError, "Cassandra schema version mismatch: need version: "
                   << code_version.first << "." << code_version.second
-                  << " found version:  " << db_version.first << ".");
+                  << " found version:  " << db_version.first << "."
+                  << db_version.second);
     }
 
     // Prepare all possible statements.
