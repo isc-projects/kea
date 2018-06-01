@@ -1259,7 +1259,6 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
-        GET_VERSION,            // Obtain version number
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_HOST_OPTION,  // Insert DHCPv4 option
@@ -1606,14 +1605,6 @@ TaggedStatementArray tagged_statements = { {
      "ORDER BY h.host_id, o.option_id, r.reservation_id"
     },
 
-    // PgSqlHostDataSourceImpl::GET_VERSION
-    // Retrieves PgSQL schema version.
-    {0,
-     { OID_NONE },
-     "get_version",
-     "SELECT version, minor FROM schema_version"
-    },
-
     // PgSqlHostDataSourceImpl::INSERT_HOST
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
     {12,
@@ -1709,6 +1700,19 @@ PgSqlHostDataSourceImpl(const PgSqlConnection::ParameterMap& parameters)
     // Open the database.
     conn_.openDatabase();
 
+    // Validate the schema version first.
+    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
+                                               PG_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError,
+                  "PostgreSQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
+    }
+
+    // Now prepare the SQL statements.
     conn_.prepareStatements(tagged_statements.begin(),
                             tagged_statements.begin() + WRITE_STMTS_BEGIN);
 
@@ -1896,15 +1900,18 @@ getHost(const SubnetID& subnet_id,
 std::pair<uint32_t, uint32_t> PgSqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
-
-    PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
-    conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
+    const char* version_sql =  "SELECT version, minor FROM schema_version;";
+    PgSqlResult r(PQexec(conn_, version_sql));
+    if(PQresultStatus(r) != PGRES_TUPLES_OK) {
+        isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
+                  << version_sql << ">, reason: " << PQerrorMessage(conn_));
+    }
 
     uint32_t version;
     PgSqlExchange::getColumnValue(r, 0, 0, version);
 
     uint32_t minor;
-    PgSqlExchange::getColumnValue(r, 0, 0, minor);
+    PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
     return (std::make_pair(version, minor));
 }

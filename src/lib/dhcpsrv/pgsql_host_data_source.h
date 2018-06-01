@@ -257,6 +257,11 @@ public:
 
     /// @brief Returns backend version.
     ///
+    /// The method is called by the constructor after opening the database
+    /// but prior to preparing SQL statements, to verify that the schema version
+    /// is correct. Thus it must not rely on a pre-prepared statement or
+    /// formal statement execution error checking.
+    ///
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.

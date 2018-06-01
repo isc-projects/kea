@@ -49,7 +49,8 @@ public:
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
+    /// @throw isc::dhcp::DbOpenError Error opening the database or the
+    /// schema version is invalid.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     MySqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);

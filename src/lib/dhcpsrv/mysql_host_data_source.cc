@@ -1906,7 +1906,6 @@ public:
         GET_HOST_SUBID_ADDR,    // Gets host by IPv4 SubnetID and IPv4 address
         GET_HOST_PREFIX,        // Gets host by IPv6 prefix
         GET_HOST_SUBID6_ADDR,   // Gets host by IPv6 SubnetID and IPv6 prefix
-        GET_VERSION,            // Obtain version number
         INSERT_HOST,            // Insert new host to collection
         INSERT_V6_RESRV,        // Insert v6 reservation
         INSERT_V4_OPTION,       // Insert DHCPv4 option
@@ -1932,6 +1931,21 @@ public:
 
     /// @brief Destructor.
     ~MySqlHostDataSourceImpl();
+
+    /// @brief Returns backend version.
+    ///
+    /// The method is called by the constructor after opening the database
+    /// but prior to preparing SQL statements, to verify that the schema version
+    /// is correct. Thus it must not rely on a pre-prepared statement or
+    /// formal statement execution error checking.
+    //
+    /// @return Version number stored in the database, as a pair of unsigned
+    ///         integers. "first" is the major version number, "second" the
+    ///         minor number.
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    ///        has failed.
+    std::pair<uint32_t, uint32_t> getVersion() const;
 
     /// @brief Executes statements which inserts a row into one of the tables.
     ///
@@ -2232,10 +2246,6 @@ TaggedStatementArray tagged_statements = { {
             "WHERE h.dhcp6_subnet_id = ? AND r.address = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
-    // Retrieves MySQL schema version.
-    {MySqlHostDataSourceImpl::GET_VERSION,
-            "SELECT version, minor FROM schema_version"},
-
     // Inserts a host into the 'hosts' table.
     {MySqlHostDataSourceImpl::INSERT_HOST,
          "INSERT INTO hosts(host_id, dhcp_identifier, dhcp_identifier_type, "
@@ -2293,6 +2303,17 @@ MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
     // Open the database.
     conn_.openDatabase();
 
+    // Test schema version before we try to prepare statements.
+    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                               MYSQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << "."
+                  << db_version.second);
+    }
+
     // Enable autocommit. In case transaction is explicitly used, this
     // setting will be overwritten for the transaction. However, there are
     // cases when lack of autocommit could cause transactions to hang
@@ -2340,6 +2361,67 @@ MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
     // There is no need to close the database in this destructor: it is
     // closed in the destructor of the mysql_ member variable.
 }
+
+std::pair<uint32_t, uint32_t>
+MySqlHostDataSourceImpl::getVersion() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
+
+    // Allocate a new statement.
+    MYSQL_STMT *stmt = mysql_stmt_init(conn_.mysql_);
+    if (stmt == NULL) {
+        isc_throw(DbOperationError, "unable to allocate MySQL prepared "
+                  "statement structure, reason: " << mysql_error(conn_.mysql_));
+    }
+
+    // Prepare the statement from SQL text.
+    const char* version_sql = "SELECT version, minor FROM schema_version";
+    int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
+    if (status != 0) {
+        isc_throw(DbOperationError, "unable to prepare MySQL statement <"
+                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
+
+    // Execute the prepared statement.
+    if (mysql_stmt_execute(stmt) != 0) {
+        isc_throw(DbOperationError, "cannot execute schema version query <"
+                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
+
+    // Bind the output of the statement to the appropriate variables.
+    MYSQL_BIND bind[2];
+    memset(bind, 0, sizeof(bind));
+
+    uint32_t major;
+    bind[0].buffer_type = MYSQL_TYPE_LONG;
+    bind[0].is_unsigned = 1;
+    bind[0].buffer = &major;
+    bind[0].buffer_length = sizeof(major);
+
+    uint32_t minor;
+    bind[1].buffer_type = MYSQL_TYPE_LONG;
+    bind[1].is_unsigned = 1;
+    bind[1].buffer = &minor;
+    bind[1].buffer_length = sizeof(minor);
+
+    if (mysql_stmt_bind_result(stmt, bind)) {
+        isc_throw(DbOperationError, "unable to bind result set for <"
+                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
+
+    // Fetch the data.
+    if (mysql_stmt_fetch(stmt)) {
+        mysql_stmt_close(stmt);
+        isc_throw(DbOperationError, "unable to bind result set for <"
+                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
+
+    // Discard the statement and its resources
+    mysql_stmt_close(stmt);
+
+    return (std::make_pair(major, minor));
+}
+
 
 void
 MySqlHostDataSourceImpl::addStatement(StatementIndex stindex,
@@ -2907,54 +2989,7 @@ std::string MySqlHostDataSource::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
-    const MySqlHostDataSourceImpl::StatementIndex stindex =
-        MySqlHostDataSourceImpl::GET_VERSION;
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
-
-    uint32_t major;      // Major version number
-    uint32_t minor;      // Minor version number
-
-    // Execute the prepared statement
-    int status = mysql_stmt_execute(impl_->conn_.statements_[stindex]);
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to execute <"
-                  << impl_->conn_.text_statements_[stindex]
-                  << "> - reason: " << mysql_error(impl_->conn_.mysql_));
-    }
-
-    // Bind the output of the statement to the appropriate variables.
-    MYSQL_BIND bind[2];
-    memset(bind, 0, sizeof(bind));
-
-    bind[0].buffer_type = MYSQL_TYPE_LONG;
-    bind[0].is_unsigned = 1;
-    bind[0].buffer = &major;
-    bind[0].buffer_length = sizeof(major);
-
-    bind[1].buffer_type = MYSQL_TYPE_LONG;
-    bind[1].is_unsigned = 1;
-    bind[1].buffer = &minor;
-    bind[1].buffer_length = sizeof(minor);
-
-    status = mysql_stmt_bind_result(impl_->conn_.statements_[stindex], bind);
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to bind result set: "
-                  << mysql_error(impl_->conn_.mysql_));
-    }
-
-    // Fetch the data and set up the "release" object to release associated
-    // resources when this method exits then retrieve the data.
-    // mysql_stmt_fetch return value other than 0 means error occurrence.
-    MySqlFreeResult fetch_release(impl_->conn_.statements_[stindex]);
-    status = mysql_stmt_fetch(impl_->conn_.statements_[stindex]);
-    if (status != 0) {
-        isc_throw(DbOperationError, "unable to obtain result set: "
-                  << mysql_error(impl_->conn_.mysql_));
-    }
-
-    return (std::make_pair(major, minor));
+    return(impl_->getVersion());
 }
 
 void
