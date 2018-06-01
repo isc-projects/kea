@@ -1546,7 +1546,7 @@ public:
     ///
     /// @param connection connection used to communicate with the Cassandra
     /// database
-    /// @param where_values array of bound objects used to filter the results
+    /// @param data array of bound objects used to filter the results
     /// @param statement_tag prepared statement being executed
     ///
     /// @throw DbOperationError
