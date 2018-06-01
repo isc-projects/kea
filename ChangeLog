@@ -1,7 +1,7 @@
 1416.	[bug]		fdupont
 	Added support of recent Botan 2.x crypto backend.
 	Note that Botan 1.[9-11] is still supported but not recommended.
-	(Trac #5382, git xxx)
+	(Trac #5382, git 22651b1935a2397edfbddb9b8873c353c090f18e)
 
 1415.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 now validate the schema version
