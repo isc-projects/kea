@@ -413,7 +413,6 @@ else
    else
       CRYPTO_CFLAGS=""
       CRYPTO_INCLUDES="-I${use_openssl}/include"
-      OPENSSL_LIBDIR="${use_openssl}/lib"
       DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl=${use_openssl}"
       case $host in
           *-solaris*)
@@ -496,6 +495,5 @@ AC_SUBST(CRYPTO_LDFLAGS)
 AC_SUBST(CRYPTO_PACKAGE)
 AC_SUBST(CRYPTO_RPATH)
 AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
-AC_SUBST(OPENSSL_LIBDIR)
 ]
 )
