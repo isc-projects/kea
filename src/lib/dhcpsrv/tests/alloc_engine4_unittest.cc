@@ -9,6 +9,8 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
 #include <stats/stats_mgr.h>
 
 using namespace std;
@@ -78,6 +80,32 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 
     // Assigned addresses should have incremented.
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr2, IOAddress("0.0.0.0"),
+                                     false, true, "anotherhost.example.com.",
+                                     false);
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    ctx2.callout_handle_ = HooksManager::createCalloutHandle();
+    ctx2.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+    pool_->resetLastAllocated();
+
+    lease = engine->allocateLease4(ctx2);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx2.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
 }
 
 // This test checks if the fake allocation (for DHCPDISCOVER) can succeed
