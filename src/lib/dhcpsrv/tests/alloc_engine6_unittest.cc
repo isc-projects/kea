@@ -76,6 +76,19 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     // We should have bumped the assigned counter by 1
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+
+    // Reset last allocated address to check that the other client will
+    // be refused the already allocated address and will get the one
+    // available.
+    pool_->resetLastAllocated();
+
+    // Simulate another client. This client should be assigned a different
+    // address.
+    DuidPtr duid(new DUID(std::vector<uint8_t>(8, 0x84)));
+    simpleAlloc6Test(pool_, duid, IOAddress("::"), false);
+
+    // We should have bumped the assigned counter by 2
+    EXPECT_TRUE(testStatistics("assigned-nas", 2, subnet_->getID()));
 }
 
 // This test checks if the simple PD allocation (REQUEST) can succeed
@@ -749,7 +762,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
 
     // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -847,7 +860,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
@@ -2098,7 +2111,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6) {
     EXPECT_EQ(addr, assigned->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(assigned, Lease::TYPE_NA, 128);
+    checkLease6(duid_, assigned, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     testReuseLease6(engine, declined, addr_txt, true, SHOULD_PASS, assigned);

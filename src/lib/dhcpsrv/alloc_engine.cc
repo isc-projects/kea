@@ -919,6 +919,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
         Network::HRMode hr_mode = subnet->getHostReservationMode();
 
+        // Set the default status code in case the lease6_select callouts
+        // do not exist and the callout handle has a status returned by
+        // any of the callouts already invoked for this packet.
+        if (ctx.callout_handle_) {
+            ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        }
+
         for (uint64_t i = 0; i < max_attempts; ++i) {
 
             ++total_attempts;
@@ -967,6 +974,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                     leases.push_back(lease);
                     return (leases);
+
                 } else if (ctx.callout_handle_ &&
                            (ctx.callout_handle_->getStatus() !=
                             CalloutHandle::NEXT_STEP_CONTINUE)) {
