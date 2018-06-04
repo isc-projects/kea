@@ -272,4 +272,15 @@ TEST_F(HttpRequestTest, clientRequestNoBody) {
               request_.toString());
 }
 
+TEST_F(HttpRequestTest, toBriefString) {
+    // Create the request.
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 1));
+    // Add headers.
+    request_.context()->headers_.push_back(HttpHeaderContext("Content-Type", "application/json"));
+    // Must be finalized before can be used.
+    ASSERT_NO_THROW(request_.finalize());
+    // Check that the brief string is correct.
+    EXPECT_EQ("POST /isc/org HTTP/1.1", request_.toBriefString());
+}
+
 }
