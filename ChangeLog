@@ -1,3 +1,8 @@
+1417.	[bug]		marcin
+	Improved logging in the HTTP library both for the server and
+	the client.
+	(Trac #5205, git fd0bec610c89084d5a5d43ef032c9875c3e6ad46)
+
 1416.	[bug]		fdupont
 	Added support of recent Botan 2.x crypto backend.
 	Note that Botan 1.[9-11] is still supported but not recommended.
