@@ -15,6 +15,15 @@
 
 using namespace isc::asiolink;
 
+namespace {
+
+/// @brief Maximum size of the HTTP message that can be logged.
+///
+/// The part of the HTTP message beyond this value is truncated.
+constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
+
+}
+
 namespace isc {
 namespace http {
 
@@ -205,19 +214,42 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
         doRead();
 
     } else {
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTP_REQUEST_RECEIVED)
-            .arg(getRemoteEndpointAddressAsText());
         try {
             request_->finalize();
-        } catch (...) {
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                      HTTP_CLIENT_REQUEST_RECEIVED)
+                .arg(getRemoteEndpointAddressAsText());
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                      HTTP_CLIENT_REQUEST_RECEIVED_DETAILS)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+
+        } catch (const std::exception& ex) {
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                      HTTP_BAD_CLIENT_REQUEST_RECEIVED)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(ex.what());
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                      HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
         }
 
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTP_RESPONSE_SEND)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_SERVER_RESPONSE_SEND)
             .arg(response->toBriefString())
             .arg(getRemoteEndpointAddressAsText());
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                  HTTP_SERVER_RESPONSE_SEND_DETAILS)
+            .arg(getRemoteEndpointAddressAsText())
+            .arg(HttpMessageParserBase::logFormatHttpMessage(response->toString(),
+                                                             MAX_LOGGED_MESSAGE_SIZE));
+
         asyncSendResponse(response);
     }
 }
@@ -293,7 +325,7 @@ HttpConnection::setupIdleTimer() {
 void
 HttpConnection::requestTimeoutCallback() {
     LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-              HTTP_REQUEST_TIMEOUT_OCCURRED)
+              HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
     HttpResponsePtr response =
         response_creator_->createStockHttpResponse(request_,
