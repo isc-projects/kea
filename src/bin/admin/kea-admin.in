@@ -635,7 +635,7 @@ pgsql_upgrade() {
 
     # Postgres psql does not accept pw on command line, but can do it
     # thru an env
-    export $db_password
+    export db_password
 
     for script in ${scripts_dir}/pgsql/upgrade*.sh
     do
@@ -667,7 +667,7 @@ pgsql_config_upgrade() {
 
     # Postgres psql does not accept pw on command line, but can do it
     # thru an env
-    export $db_password
+    export db_password
 
     for script in ${scripts_dir}/pgsql/config_upgrade*.sh
     do
@@ -699,7 +699,7 @@ pgsql_master_upgrade() {
 
     # Postgres psql does not accept pw on command line, but can do it
     # thru an env
-    export $db_password
+    export db_password
 
     for script in ${scripts_dir}/pgsql/master_upgrade*.sh
     do
@@ -1030,7 +1030,7 @@ mysql_create_database_and_users() {
 }
 
 pgsql_create_database_and_users() {
-    export ${db_password}
+    export db_password
     query="DO
 \$body\$
 BEGIN
