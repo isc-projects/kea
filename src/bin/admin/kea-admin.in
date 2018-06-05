@@ -1030,7 +1030,7 @@ mysql_create_database_and_users() {
 }
 
 pgsql_create_database_and_users() {
-    export PGPASSWORD=${db_password}
+    export ${db_password}
     query="DO
 \$body\$
 BEGIN
