@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,30 +175,34 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
 
     // Verify that hosts can be retrieved.
     for (unsigned i = 0; i < 25; ++i) {
-        // Get host by HW address. The DUID is non-null but the reservation
-        // should be returned for the HW address because there are no
-        // reservations for the DUIDs from the range of 25 to 49.
-        HostCollection hosts = cfg.getAll(hwaddrs_[i], duids_[i + 25]);
+        // Get host by HW address.
+        HostCollection hosts = cfg.getAll(Host::IDENT_HWADDR,
+                                          &hwaddrs_[i]->hwaddr_[0],
+                                          hwaddrs_[i]->hwaddr_.size());
         ASSERT_EQ(2, hosts.size());
         EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ(addressesa_[i], hosts[0]->getIPv4Reservation().toText());
         EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
         EXPECT_EQ(addressesb_[i], hosts[1]->getIPv4Reservation().toText());
 
-        // Get host by DUID. The HW address is non-null but the reservation
-        // should be returned for the DUID because there are no
-        // reservations for the HW addresses from the range of 25 to 49.
-        hosts = cfg.getAll(hwaddrs_[i + 25], duids_[i]);
-        ASSERT_EQ(2, hosts.size());
-        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-        EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
-    }
+        // The HW address is non-null but there are no reservations
+        // for the HW addresses from the range of 25 to 49.
+        hosts = cfg.getAll(Host::IDENT_HWADDR,
+                           &hwaddrs_[i + 25]->hwaddr_[0],
+                           hwaddrs_[i + 25]->hwaddr_.size());
+        EXPECT_TRUE(hosts.empty());
 
-    // The getAll function should return empty containers for the HW addresses
-    //  and DUIDs for which the reservations haven't been added.
-    for (int i = 25; i < 50; ++i) {
-        EXPECT_TRUE(cfg.getAll(hwaddrs_[i]).empty());
-        EXPECT_TRUE(cfg.getAll(HWAddrPtr(), duids_[i]).empty());
+        // Get host by DUID.
+        hosts = cfg.getAll(Host::IDENT_DUID,
+                           &duids_[i]->getDuid()[0],
+                           duids_[i]->getDuid().size());
+
+        // The DUID is non-null but there are no reservations
+        // for the DUIDs from the range of 25 to 49.
+        hosts = cfg.getAll(Host::IDENT_DUID,
+                           &duids_[i + 25]->getDuid()[0],
+                           duids_[i + 25]->getDuid().size());
+        EXPECT_TRUE(hosts.empty());
     }
 }
 

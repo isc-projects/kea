@@ -1061,15 +1061,9 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // Fetch the host via:
-    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
-    ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
-
-    // Fetch the host via:
     // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
     //       const size_t identifier_len) const;
-    hosts_by_id =
+    ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
@@ -1082,17 +1076,10 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
-    // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-    //     const DuidPtr& duid = DuidPtr()) const;
-    ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
-    ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
-
-    // Fetch the host via
     // get4(const SubnetID& subnet_id, const Host::IdentifierType&
     // identifier_type,
     //     const uint8_t* identifier_begin, const size_t identifier_len) const;
-    from_hds =
+    ConstHostPtr from_hds =
         hdsptr_->get4(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
     ASSERT_TRUE(from_hds);
@@ -1125,33 +1112,20 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv6SubnetID();
 
-    // Fetch the host via:
-    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
-    ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
-
     // getAll(const Host::IdentifierType& identifier_type,
     //        const uint8_t* identifier_begin,
     //        const size_t identifier_len) const;
-    hosts_by_id =
+    ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
-    // get6(const SubnetID& subnet_id, const DuidPtr& duid,
-    //      const HWAddrPtr& hwaddr = HWAddrPtr()) const;
-    ConstHostPtr from_hds =
-        hdsptr_->get6(subnet_id, DuidPtr(), host->getHWAddress());
-    ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
-
     // Fetch the host via:
     // get6(const SubnetID& subnet_id, const Host::IdentifierType&
     // identifier_type,
     //     const uint8_t* identifier_begin, const size_t identifier_len) const;
-    from_hds =
+    ConstHostPtr from_hds =
         hdsptr_->get6(subnet_id, Host::IDENT_HWADDR, &host->getIdentifier()[0],
                       host->getIdentifier().size());
     ASSERT_TRUE(from_hds);
@@ -1224,15 +1198,9 @@ GenericHostDataSourceTest::testMessageFields4() {
     SubnetID subnet_id = host->getIPv4SubnetID();
 
     // Fetch the host via:
-    // getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-    ConstHostCollection hosts_by_id = hdsptr_->getAll(host->getHWAddress());
-    ASSERT_EQ(1, hosts_by_id.size());
-    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
-
-    // Fetch the host via:
     // getAll(const Host::IdentifierType, const uint8_t* identifier_begin,
     //       const size_t identifier_len) const;
-    hosts_by_id =
+    ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
     ASSERT_EQ(1, hosts_by_id.size());
@@ -1245,17 +1213,10 @@ GenericHostDataSourceTest::testMessageFields4() {
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
-    // get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-    //     const DuidPtr& duid = DuidPtr()) const;
-    ConstHostPtr from_hds = hdsptr_->get4(subnet_id, host->getHWAddress());
-    ASSERT_TRUE(from_hds);
-    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, from_hds));
-
-    // Fetch the host via
     // get4(const SubnetID& subnet_id, const Host::IdentifierType&
     // identifier_type,
     //     const uint8_t* identifier_begin, const size_t identifier_len) const;
-    from_hds =
+    ConstHostPtr from_hds =
         hdsptr_->get4(subnet_id, host->getIdentifierType(),
                       &host->getIdentifier()[0], host->getIdentifier().size());
     ASSERT_TRUE(from_hds);

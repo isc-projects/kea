@@ -209,8 +209,6 @@ tagged_statements = { {
                             "WHERE state != ? AND expire < ? "
                             "ORDER BY expire ASC "
                             "LIMIT ?"},
-    {MySqlLeaseMgr::GET_VERSION,
-                    "SELECT version, minor FROM schema_version"},
     {MySqlLeaseMgr::INSERT_LEASE4,
                     "INSERT INTO lease4(address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -1501,6 +1499,18 @@ MySqlLeaseMgr::MySqlLeaseMgr(const MySqlConnection::ParameterMap& parameters)
     // Open the database.
     conn_.openDatabase();
 
+    // Test schema version before we try to prepare statements.
+    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                               MYSQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError,
+                  "MySQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
+    }
+
     // Enable autocommit.  To avoid a flush to disk on every commit, the global
     // parameter innodb_flush_log_at_trx_commit should be set to 2.  This will
     // cause the changes to be written to the log, but flushed to disk in the
@@ -2372,40 +2382,60 @@ MySqlLeaseMgr::getDescription() const {
 
 VersionPair
 MySqlLeaseMgr::getVersion() const {
-    const StatementIndex stindex = GET_VERSION;
-
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_VERSION);
 
-    uint32_t    major;      // Major version number
-    uint32_t    minor;      // Minor version number
+    // Allocate a new statement.
+    MYSQL_STMT *stmt = mysql_stmt_init(conn_.mysql_);
+    if (stmt == NULL) {
+        isc_throw(DbOperationError, "unable to allocate MySQL prepared "
+                "statement structure, reason: " << mysql_error(conn_.mysql_));
+    }
 
-    // Execute the prepared statement
-    int status = mysql_stmt_execute(conn_.statements_[stindex]);
-    checkError(status, stindex, "unable to execute statement");
+    // Prepare the statement from SQL text.
+    const char* version_sql = "SELECT version, minor FROM schema_version";
+    int status = mysql_stmt_prepare(stmt, version_sql, strlen(version_sql));
+    if (status != 0) {
+        isc_throw(DbOperationError, "unable to prepare MySQL statement <"
+                  << version_sql << ">, reason: " << mysql_error(conn_.mysql_));
+    }
+
+    // Execute the prepared statement.
+    if (mysql_stmt_execute(stmt) != 0) {
+        isc_throw(DbOperationError, "cannot execute schema version query <"
+                  << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
 
     // Bind the output of the statement to the appropriate variables.
     MYSQL_BIND bind[2];
     memset(bind, 0, sizeof(bind));
 
+    uint32_t major;
     bind[0].buffer_type = MYSQL_TYPE_LONG;
     bind[0].is_unsigned = 1;
     bind[0].buffer = &major;
     bind[0].buffer_length = sizeof(major);
 
+    uint32_t minor;
     bind[1].buffer_type = MYSQL_TYPE_LONG;
     bind[1].is_unsigned = 1;
     bind[1].buffer = &minor;
     bind[1].buffer_length = sizeof(minor);
 
-    status = mysql_stmt_bind_result(conn_.statements_[stindex], bind);
-    checkError(status, stindex, "unable to bind result set");
+    if (mysql_stmt_bind_result(stmt, bind)) {
+        isc_throw(DbOperationError, "unable to bind result set for <"
+                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
 
-    // Fetch the data and set up the "release" object to release associated
-    // resources when this method exits then retrieve the data.
-    MySqlFreeResult fetch_release(conn_.statements_[stindex]);
-    status = mysql_stmt_fetch(conn_.statements_[stindex]);
-    checkError(status, stindex, "unable to fetch result set");
+    // Fetch the data.
+    if (mysql_stmt_fetch(stmt)) {
+        mysql_stmt_close(stmt);
+        isc_throw(DbOperationError, "unable to bind result set for <"
+                << version_sql << ">, reason: " << mysql_errno(conn_.mysql_));
+    }
+
+    // Discard the statement and its resources
+    mysql_stmt_close(stmt);
 
     return (std::make_pair(major, minor));
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -168,7 +168,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     // when the connection is established or if an error occurs.
     bool connect_handler_invoked = false;
     ASSERT_NO_THROW(socket.asyncConnect(unixSocketFilePath(),
-        [this, &connect_handler_invoked](const boost::system::error_code& ec) {
+        [&connect_handler_invoked](const boost::system::error_code& ec) {
             // Indicate that the handler has been called so as the loop below gets
             // interrupted.
             connect_handler_invoked = true;
@@ -189,7 +189,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     const std::string outbound_data = "foo";
     size_t sent_size = 0;
     ASSERT_NO_THROW(socket.asyncSend(outbound_data.c_str(), outbound_data.size(),
-        [this, &sent_size](const boost::system::error_code& ec, size_t length) {
+        [&sent_size](const boost::system::error_code& ec, size_t length) {
         // If we have been successful sending the data, record the number of
         // bytes we have sent.
         if (!ec) {
@@ -257,7 +257,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
     // Connect
     bool connect_handler_invoked = false;
     socket.asyncConnect(unixSocketFilePath(),
-        [this, &connect_handler_invoked](const boost::system::error_code& ec) {
+        [&connect_handler_invoked](const boost::system::error_code& ec) {
         connect_handler_invoked = true;
         EXPECT_TRUE(ec);
     });
@@ -269,7 +269,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
     const std::string outbound_data = "foo";
     bool send_handler_invoked = false;
     socket.asyncSend(outbound_data.c_str(), outbound_data.size(),
-        [this, &send_handler_invoked]
+        [&send_handler_invoked]
         (const boost::system::error_code& ec, size_t length) {
         send_handler_invoked = true;
         EXPECT_TRUE(ec);
@@ -282,7 +282,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
     bool receive_handler_invoked = false;
     std::array<char, 1024> read_buf;
     socket.asyncReceive(&read_buf[0], read_buf.size(),
-        [this, &receive_handler_invoked]
+        [&receive_handler_invoked]
         (const boost::system::error_code& ec, size_t length) {
         receive_handler_invoked = true;
         EXPECT_TRUE(ec);

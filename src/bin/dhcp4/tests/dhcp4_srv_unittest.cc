@@ -760,25 +760,24 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     checkClientId(offer, clientid);
 }
 
-// Check that option 58 and 59 are not included if they are not specified.
-TEST_F(Dhcpv4SrvTest, DiscoverNoTimers) {
+// Check that option 58 and 59 are only included if they were specified
+// and T2 is less than valid lft;  T1 is less than T2 (if given) or valid
+// lft if T2 is not given.
+TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
-    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
-    dis->setRemoteAddr(IOAddress("192.0.2.1"));
-    OptionPtr clientid = generateClientId();
-    dis->addOption(clientid);
-    dis->setIface("eth1");
-
-    // Recreate a subnet but set T1 and T2 to "unspecified".
+    // Recreate subnet
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(1000);
     subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
-                              Triplet<uint32_t>(),
-                              Triplet<uint32_t>(),
-                              3000));
+                              unspecified,
+                              unspecified,
+                              valid_lft));
+
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
@@ -786,19 +785,130 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoTimers) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
     CfgMgr::instance().commit();
 
-    // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv->processDiscover(dis);
+    // Struct for describing an individual timer test scenario
+    struct TimerTest {
+        // logged test description
+        std::string description_;
+        // configured value for subnet's T1
+        Triplet<uint32_t> cfg_t1_;
+        // configured value for subnet's T1
+        Triplet<uint32_t> cfg_t2_;
+        // True if Offer should contain Subnet's T1 value
+        bool exp_t1_;
+        // True if Offer should contain Subnet's T2 value
+        bool exp_t2_;
+    };
 
-    // Check if we get response at all
-    checkResponse(offer, DHCPOFFER, 1234);
+    // Convenience constants
+    bool T1 = true;
+    bool T2 = true;
 
-    // T1 and T2 timers must not be present.
-    checkAddressParams(offer, subnet_, false, false);
+    // Test scenarios
+    std::vector<TimerTest> tests = {
+    {
+        "T1:unspecified, T2:unspecified",
+        unspecified, unspecified,
+        // Client should neither.
+        !T1, !T2
+    },
+    {
+        "T1 unspecified, T2 < VALID",
+        unspecified, valid_lft - 1,
+        // Client should only get T2.
+        !T1, T2
+    },
+    {
+        "T1:unspecified, T2 = VALID",
+        unspecified, valid_lft,
+        // Client should get neither.
+        !T1, !T2
+    },
+    {
+        "T1:unspecified, T2 > VALID",
+        unspecified, valid_lft + 1,
+        // Client should get neither.
+        !T1, !T2
+    },
 
-    // Check identifiers
-    checkServerId(offer, srv->getServerID());
-    checkClientId(offer, clientid);
+    {
+        "T1 < VALID, T2:unspecified",
+        valid_lft - 1, unspecified,
+        // Client should only get T1.
+        T1, !T2
+    },
+    {
+        "T1 = VALID, T2:unspecified",
+        valid_lft, unspecified,
+        // Client should get neither.
+        !T1, !T2
+    },
+    {
+        "T1 > VALID, T2:unspecified",
+        valid_lft + 1, unspecified,
+        // Client should get neither.
+        !T1, !T2
+    },
+    {
+        "T1 < T2 < VALID",
+        valid_lft - 2, valid_lft - 1,
+        // Client should get both.
+        T1, T2
+    },
+    {
+        "T1 = T2 < VALID",
+        valid_lft - 1, valid_lft - 1,
+        // Client should only get T2.
+        !T1, T2
+    },
+    {
+        "T1 > T2 < VALID",
+        valid_lft - 1, valid_lft - 2,
+        // Client should only get T2.
+        !T1, T2
+    },
+    {
+       "T1 = T2 = VALID",
+        valid_lft, valid_lft,
+        // Client should get neither.
+        !T1, !T2
+    },
+    {
+       "T1 > VALID < T2, T2 > VALID",
+        valid_lft + 1, valid_lft + 2,
+        // Client should get neither.
+        !T1, !T2
+    }
+    };
+
+    // Create a discover packet to use
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+
+    // Iterate over the test scenarios.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE((*test).description_);
+            // Configure sunbet's timer values
+            subnet_->setT1((*test).cfg_t1_);
+            subnet_->setT2((*test).cfg_t2_);
+
+            // Discover/Offer exchange with the server
+            Pkt4Ptr offer = srv->processDiscover(dis);
+
+            // Verify we have an offer
+            checkResponse(offer, DHCPOFFER, 1234);
+
+            // Verify the timers are as expected.
+            checkAddressParams(offer, subnet_,
+                               (*test).exp_t1_, (*test).exp_t2_);
+        }
+    }
+
 }
+
 
 // This test verifies that incoming DISCOVER can be handled properly, that an
 // OFFER is generated, that the response has an address and that address
@@ -4297,7 +4407,6 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     Pkt4Ptr offer = srv.fake_sent_.front();
     ASSERT_TRUE(offer);
 }
-
 
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.

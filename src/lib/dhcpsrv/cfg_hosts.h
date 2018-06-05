@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,6 @@
 
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
-#include <dhcp/duid.h>
-#include <dhcp/hwaddr.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_container.h>
@@ -158,36 +156,6 @@ public:
     virtual HostCollection
     getAll6(const asiolink::IOAddress& address);
 
-    /// @brief Returns a host connected to the IPv4 subnet and matching
-    /// specified identifiers.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available.
-    ///
-    /// @return Const @c Host object using a specified HW address or DUID.
-    /// @throw isc::dhcp::DuplicateHost if more than one candidate host has
-    /// been found.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-         const DuidPtr& duid = DuidPtr()) const;
-
-    /// @brief Returns a host connected to the IPv4 subnet and matching
-    /// specified identifiers.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available.
-    ///
-    /// @return Non-const @c Host object using a specified HW address or DUID.
-    /// @throw isc::dhcp::DuplicateHost if more than one candidate host has
-    /// been found.
-    virtual HostPtr
-    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-         const DuidPtr& duid = DuidPtr());
-
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
     /// @param subnet_id Subnet identifier.
@@ -225,36 +193,6 @@ public:
     /// @return Const @c Host object using a specified IPv4 address.
     virtual ConstHostPtr
     get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
-
-    /// @brief Returns a host connected to the IPv6 subnet and matching
-    /// the specified identifiers.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid DUID or NULL if not available.
-    ///
-    /// @return Const @c Host object using a specified HW address or DUID.
-    /// @throw isc::dhcp::DuplicateHost if more than one candidate host has
-    /// been found.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const DuidPtr& duid,
-         const HWAddrPtr& hwaddr = HWAddrPtr()) const;
-
-    /// @brief Returns a host connected to the IPv6 subnet and matching the
-    /// specified identifiers.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid DUID or NULL if not available.
-    ///
-    /// @return Non-const @c Host object using a specified HW address or DUID.
-    /// @throw isc::dhcp::DuplicateHost if more than one candidate host has
-    /// been found.
-    virtual HostPtr
-    get6(const SubnetID& subnet_id, const DuidPtr& duid,
-         const HWAddrPtr& hwaddr = HWAddrPtr());
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
@@ -414,21 +352,6 @@ private:
     void getAllInternal(const Host::IdentifierType& identifier_type,
                         const uint8_t* identifier,
                         const size_t identifier_len,
-                        Storage& storage) const;
-
-    /// @brief Returns @c Host objects for the specified HW address or DUID.
-    ///
-    /// This private method is called by the @c CfgHosts::getAll methods to
-    /// retrieve the @c Host objects using HW address or DUID. The retrieved
-    /// objects are appended to the @c storage container.
-    ///
-    /// @param hwaddr HW address identifying a host.
-    /// @param duid DUID identifying a host.
-    /// @param [out] storage Container to which the retrieved objects are
-    /// appended.
-    /// @tparam One of the @c ConstHostCollection or @c HostCollection.
-    template<typename Storage>
-    void getAllInternal(const HWAddrPtr& hwaddr, const DuidPtr& duid,
                         Storage& storage) const;
 
     /// @brief Returns @c Host objects for the specified IPv4 address.
