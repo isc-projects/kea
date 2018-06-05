@@ -2137,21 +2137,32 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Subnet mask (type 1)
         resp->addOption(getNetmaskOption(subnet));
 
-        // renewal-timer (type 58)
-        if (!subnet->getT1().unspecified()) {
+        // rebind timer (type 59) - if specified then send it only it if
+        // it is less than lease lifetime.  Note we "sanity" check T1
+        // and T2 against lease lifetime here in event the lifetime has
+        // been altered somewhere along the line.
+        uint32_t timer_ceiling = lease->valid_lft_;
+        if ((!subnet->getT2().unspecified()) &&
+            (subnet->getT2() <  timer_ceiling)) {
+            OptionUint32Ptr t2(new OptionUint32(Option::V4,
+                                                DHO_DHCP_REBINDING_TIME,
+                                                subnet->getT2()));
+            resp->addOption(t2);
+
+            // If T2 is specified, then it becomes the ceiling for T1
+            timer_ceiling = subnet->getT2();
+        }
+
+        // renewal-timer (type 58) - if specified then send it only if
+        // it is less than the ceiling (T2 if given, lease life time if not)
+        if ((!subnet->getT1().unspecified()) &&
+            (subnet->getT1() <  timer_ceiling)) {
             OptionUint32Ptr t1(new OptionUint32(Option::V4,
                                                 DHO_DHCP_RENEWAL_TIME,
                                                 subnet->getT1()));
             resp->addOption(t1);
         }
 
-        // rebind timer (type 59)
-        if (!subnet->getT2().unspecified()) {
-            OptionUint32Ptr t2(new OptionUint32(Option::V4,
-                                                DHO_DHCP_REBINDING_TIME,
-                                                subnet->getT2()));
-            resp->addOption(t2);
-        }
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
