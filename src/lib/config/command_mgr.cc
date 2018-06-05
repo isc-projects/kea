@@ -258,11 +258,19 @@ Connection::receiveHandler(const boost::system::error_code& ec,
                            size_t bytes_transferred) {
     if (ec) {
         if (ec.value() == boost::asio::error::eof) {
+            std::stringstream os;
+            if (feed_.getProcessedText().empty()) {
+               os << "no input data to discard";
+            }
+            else {
+               os << "discarding partial command of "
+                  << feed_.getProcessedText().size() << " bytes";
+            }
+
             // Foreign host has closed the connection. We should remove it from the
             // connection pool.
             LOG_INFO(command_logger, COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST)
-                .arg(socket_->getNative());
-
+                .arg(socket_->getNative()).arg(os.str());
         } else if (ec.value() != boost::asio::error::operation_aborted) {
             LOG_ERROR(command_logger, COMMAND_SOCKET_READ_FAIL)
                 .arg(ec.value()).arg(socket_->getNative());
@@ -384,8 +392,14 @@ Connection::timeoutHandler() {
             .arg(ex.what());
     }
 
-    ConstElementPtr rsp = createAnswer(CONTROL_RESULT_ERROR, "Connection over"
-                                       " control channel timed out");
+    std::stringstream os;
+    os << "Connection over control channel timed out";
+    if (!feed_.getProcessedText().empty()) {
+        os << ", discarded partial command of "
+           << feed_.getProcessedText().size() << " bytes";
+    }
+
+    ConstElementPtr rsp = createAnswer(CONTROL_RESULT_ERROR, os.str());
     response_ = rsp->str();
     doSend();
 }
