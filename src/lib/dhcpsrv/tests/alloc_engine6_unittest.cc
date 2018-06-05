@@ -67,8 +67,16 @@ TEST_F(AllocEngine6Test, constructor) {
     EXPECT_THROW(x->getAllocator(Lease::TYPE_V4), BadValue);
 }
 
-// This test checks if the simple allocation (REQUEST) can succeed
-// and the stats counter is properly bumped by 1
+// This test checks if two simple IPv6 allocations succeed and that the
+// statistics is properly updated. Prior to the second allocation it
+// resets the pointer to the last allocated address within the address
+// pool. This causes the engine to walk over the already allocated
+// address and then pick the first available address for the second
+// allocation. Because the allocation engine checks the callouts next
+// step status after each attempt to allocate an address, this test
+// also sets this status to non-default value prior to the second
+// allocation attempt, to make sure that this unexpected status will
+// not interfere with the allocation.
 TEST_F(AllocEngine6Test, simpleAlloc6) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -76,6 +84,19 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     // We should have bumped the assigned counter by 1
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+
+    // Reset last allocated address to check that the other client will
+    // be refused the already allocated address and will get the one
+    // available.
+    pool_->resetLastAllocated();
+
+    // Simulate another client. This client should be assigned a different
+    // address.
+    DuidPtr duid(new DUID(std::vector<uint8_t>(8, 0x84)));
+    simpleAlloc6Test(pool_, duid, IOAddress("::"), false);
+
+    // We should have bumped the assigned counter by 2
+    EXPECT_TRUE(testStatistics("assigned-nas", 2, subnet_->getID()));
 }
 
 // This test checks if the simple PD allocation (REQUEST) can succeed
@@ -749,7 +770,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
 
     // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -847,7 +868,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
@@ -2098,7 +2119,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6) {
     EXPECT_EQ(addr, assigned->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(assigned, Lease::TYPE_NA, 128);
+    checkLease6(duid_, assigned, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     testReuseLease6(engine, declined, addr_txt, true, SHOULD_PASS, assigned);
