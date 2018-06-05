@@ -204,7 +204,7 @@ HttpResponse::toBriefString() const {
     // HTTP version number and status code.
     s << "HTTP/" << http_version_.major_ << "." << http_version_.minor_;
     s << " " << context_->status_code_;
-    s << " " << statusCodeToString(static_cast<HttpStatusCode>(context_->status_code_)) << crlf;
+    s << " " << statusCodeToString(static_cast<HttpStatusCode>(context_->status_code_));
     return (s.str());
 }
 
@@ -213,7 +213,7 @@ HttpResponse::toString() const {
 
     std::ostringstream s;
     // HTTP version number and status code.
-    s << toBriefString();
+    s << toBriefString() << crlf;
 
     for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
          ++header_it) {

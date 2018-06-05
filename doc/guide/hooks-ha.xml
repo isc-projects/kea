@@ -96,6 +96,41 @@
       </section>
 
       <section>
+        <title>Clocks on Active Servers</title>
+        <para>Synchronized clocks are essential for the HA setup to operate
+        reliably. The servers share lease information via lease updates and
+        during synchronization of the databases. The lease information includes
+        the time when the lease has been allocated and when it expires. Some
+        clock skew between the servers participating the HA setup would usually
+        exist. This is acceptable as long as the clock skew is relatively low,
+        comparing to the lease lifetimes. However, if the clock skew becomes too
+        high, the different notions of time for the lease expiration by different
+        servers may cause the HA system to malfuction. For example, one server
+        may consider a valid lease to be expired. As a consequence, the lease
+        reclamation process may remove a name associated with this lease from
+        the DNS, even though the lease may later get renewed by a client.</para>
+
+        <para>Each active server monitors the clock skew by comparing its current
+        time with the time returned by its partner in response to the heartbeat
+        command. This gives a good approximation of the clock skew, although it
+        doesn't take into account the time between sending the response by the
+        partner and receiving this response by the server which sent the
+        heartbeat command. If the clock skew exceeds 30 seconds, a warning log
+        message is issued. The administrator may correct this problem by
+        synchronizing the clocks (e.g. using NTP). The servers should notice
+        the clock skew correction and stop issuing the warning</para>
+
+        <para>If the clock skew is not corrected and it exceeds 60 seconds, the
+        HA service on each of the servers is terminated, i.e. the state
+        machine enters the <command>terminated</command> state. The servers
+        will continue to respond to the DHCP clients (as in the load-balancing
+        or hot-standby mode), but will neither exchange lease updates nor
+        heartbeats and their lease databases will diverge. In this case, the
+        administrator should synchronize the clocks and restart the servers.
+        </para>
+      </section>
+
+      <section>
         <title>Server States</title>
         <para>The DHCP server operating within an HA setup runs a state machine
         and the state of the server can be retrieved by its peers using the
@@ -167,6 +202,26 @@
           answer from the partner and is not doing anything else while the
           leases synchronization takes place.</para></listitem>
 
+          <listitem><para><command>terminated</command> - an active server
+          transitions to this state when the High Availability  hooks library
+          is unable to further provide reliable service and a manual
+          intervention of the administrator is required to correct the problem.
+          It is envisaged that various issues with the HA setup may cause the
+          server to transition to this state in the future. As of Kea 1.4.0
+          release, the only issue causing the HA service to terminate is
+          unacceptably high clock skew between the active servers, i.e. if the
+          clocks on respective servers are more than 60 seconds apart.
+          While in this state, the server will continue responding to the
+          DHCP clients based on the HA mode selected (load balancing or
+          hot standby), but the lease updates won't be exchanged and the
+          heartbeats won't be sent. Once a server has entered the
+          "terminated" state it will remain in this state until it is
+          restarted. The administrator must correct the issue which caused
+          this situation prior to restarting the server (e.g. synchronize clocks).
+          Otherwise, the server will return to the "terminated" state as
+          soon as it finds that the clock skew is still too high.
+          </para></listitem>
+
           <listitem><para><command>waiting</command> - each started server
           instance enters this state. The backup server will transition
           directly from this state to the <command>backup</command> state.
@@ -179,9 +234,16 @@
           synchronize first. The secondary or standby server will remain
           in the <command>waiting</command> state until the primary
           synchronizes the database.</para></listitem>.
-        </itemizedlist>
+        </itemizedlist></para>
 
-        Whether the server responds to the DHCP queries and which
+        <note>
+          <para>Currently, restarting the HA service being in the
+          <command>terminated</command> state requires restarting the
+          DHCP server or reloading its configuration. In the future, we will
+          provide a command to restart the HA service.</para>
+        </note>
+
+        <para>Whether the server responds to the DHCP queries and which
         queries it responds to is a matter of the server's state, if no
         administrative action is performed to configure the server
         otherwise. The following table provides the default behavior for
@@ -219,13 +281,13 @@
                   <entry>hot-standby</entry>
                   <entry>primary or standby (hot standby mode)</entry>
                   <entry>enabled</entry>
-                  <entry><command>ha_server1</command> if primary, none otherwise</entry>
+                  <entry><command>HA_server1</command> if primary, none otherwise</entry>
                 </row>
                 <row>
                   <entry>load-balancing</entry>
                   <entry>primary or secondary (load balancing mode)</entry>
                   <entry>enabled</entry>
-                  <entry><command>ha_server1</command> or <command>ha_server2</command></entry>
+                  <entry><command>HA_server1</command> or <command>HA_server2</command></entry>
                 </row>
                 <row>
                   <entry>partner-down</entry>
@@ -244,6 +306,12 @@
                   <entry>active server</entry>
                   <entry>disabled</entry>
                   <entry>none</entry>
+                </row>
+                <row>
+                  <entry>terminated</entry>
+                  <entry>active server</entry>
+                  <entry>enabled</entry>
+                  <entry>same as in the load-balancing or hot-standby state</entry>
                 </row>
                 <row>
                   <entry>waiting</entry>
@@ -265,16 +333,16 @@
         any names can be used as long as they remain unique.</para>
 
         <para>In the load balancing mode there are two scopes named after
-        the active servers: <command>ha_server1</command> and <command>
-        ha_server2</command>. The DHCP queries load balanced to the
-        <command>server1</command> belong to the <command>ha_server1</command>
+        the active servers: <command>HA_server1</command> and <command>
+        HA_server2</command>. The DHCP queries load balanced to the
+        <command>server1</command> belong to the <command>HA_server1</command>
         scope and the queries load balanced to the <command>server2</command>
-        belong to the <command>ha_server2</command> scope. If any of the
+        belong to the <command>HA_server2</command> scope. If any of the
         servers is in the <command>partner-down</command> state, it is
         responsible for serving both scopes.</para>
 
         <para>In the hot standby mode, there is only one scope <command>
-        ha_server1</command> because only the <command>server1</command>
+        HA_server1</command> because only the <command>server1</command>
         is responding to the DHCP queries. If that server becomes unavailable,
         the <command>server2</command> becomes responsible for this scope.
         </para>
@@ -385,11 +453,11 @@
             "pools": [
                 {
                     "pool": "192.0.3.100 - 192.0.3.150",
-                    "client-class": "ha_server1"
+                    "client-class": "HA_server1"
                 },
                 {
                     "pool": "192.0.3.200 - 192.0.3.250",
-                    "client-class": "ha_server2"
+                    "client-class": "HA_server2"
                 }
             ],
 
@@ -567,7 +635,7 @@
         <title>Load Balancing with Advanced Classification</title>
         <para>In the previous section we have provided an example which demonstrated
         the load balancing configuration with the client classification limited
-        to the use of <command>ha_server1</command> and <command>ha_server2</command>
+        to the use of <command>HA_server1</command> and <command>HA_server2</command>
         classes, which are dynamically assigned to the received DHCP queries.
         In many cases it will be required to use HA in deployments which already
         use some client classification.
@@ -580,8 +648,8 @@
           is expected to result in further split of each of those pools, so as
           each of the servers can allocate leases for some part of the phones
           and part of the laptops. This requires that each of the existing pools
-          should be split between the <command>ha_server1</command> and
-          <command>ha_server2</command>, so we end up with the following classes:
+          should be split between the <command>HA_server1</command> and
+          <command>HA_server2</command>, so we end up with the following classes:
 
           <itemizedlist>
             <listitem><simpara>phones_server1</simpara></listitem>
@@ -600,16 +668,6 @@
 
     "client-classes": [
         {
-            // No test expression for this class. Incoming packets will be
-            // assigned to that class dynamically by the HA Hook library.
-            "name": "ha_server1"
-        },
-        {
-            // No test expression for this class. Incoming packets will be
-            // assigned to that class dynamically by the HA Hook library.
-            "name": "ha_server2"
-        },
-        {
             "name": "phones",
             "test": "substring(option[60].hex,0,6) == 'Aastra'",
         },
@@ -619,19 +677,19 @@
         },
         {
             "name": "phones_server1",
-            "test": "member('phones') and member('ha_server1')"
+            "test": "member('phones') and member('HA_server1')"
         },
         {
             "name": "phones_server2",
-            "test": "member('phones') and member('ha_server2')"
+            "test": "member('phones') and member('HA_server2')"
         },
         {
             "name": "laptops_server1",
-            "test": "member('laptops') and member('ha_server1')"
+            "test": "member('laptops') and member('HA_server1')"
         },
         {
             "name": "laptops_server2",
-            "test": "member('laptops') and member('ha_server2')"
+            "test": "member('laptops') and member('HA_server2')"
         }
     ],
 
@@ -697,17 +755,14 @@
         four pools. Two pools are dedicated to server1 and two are dedicated for
         server2. Each server can assign leases to both phones and laptops.
         Both groups of devices are assigned addresses from different pools.
-        Note that definition of classes <command>ha_server1</command> and
-        <command>ha_server2</command> is required because other classes
-        refer to them via <command>member</command> expression. These classes
-        do not include <command>test</command> parameter because they are
-        not evaluated with other classes. They are assigned dynamically
-        by the HA hook library as a result of load balancing algorithm.
-        The <command>phones_*</command> and <command>laptop_*</command>
-        evaluate to "true" when the query belongs to a given combination
-        of other classes, e.g. <command>ha_server1</command> and
-        <command>phones</command>. The pool will be selected accordingly
-        as a result of such evaluation.
+        The <command>HA_server1</command> and <command>HA_server2</command>
+        are builtin classes (see <xref linkend="classification-using-vendor"/>)
+        and they don't need to be declared. They are assigned dynamically by
+        the HA hook library as a result of load balancing algorithm. The
+        <command>phones_*</command> and <command>laptop_*</command> evaluate to
+        "true" when the query belongs to a given combination of other classes,
+        e.g. <command>HA_server1</command> and <command>phones</command>.
+        The pool will be selected accordingly as a result of such evaluation.
         </para>
 
         <para>Consult <xref linkend="classify"/> for details on how to use
@@ -771,7 +826,7 @@
             "pools": [
                 {
                     "pool": "192.0.3.100 - 192.0.3.250",
-                    "client-class": "ha_server1"
+                    "client-class": "HA_server1"
                 }
             ],
 
@@ -810,7 +865,7 @@
         active server is set to.</para>
 
         <para>Finally, because there is always one server responding to the
-        DHCP queries, there is only one scope <command>ha_server1</command>
+        DHCP queries, there is only one scope <command>HA_server1</command>
         in use within pools definitions. In fact, the <command>client-class</command>
         parameter could be removed from this configuration without harm,
         because there are no conflicts in lease allocations by different
@@ -1015,14 +1070,14 @@
     "command": "ha-scopes",
     "service": [ "dhcp4 "],
     "arguments": {
-        "scopes": [ "ha_server1", "ha_server2" ]
+        "scopes": [ "HA_server1", "HA_server2" ]
     }
 }
 </screen>
           </para>
 
           <para>This command configures the server to handle traffic from
-          both <command>ha_server1</command> and <command>ha_server2</command>
+          both <command>HA_server1</command> and <command>HA_server2</command>
           scopes. In order to disable all scopes specify an empty list:
 
 <screen>
