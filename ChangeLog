@@ -1,3 +1,11 @@
+1418.	[bug]		marcin
+	Corrected bug in the allocation engine which caused occasional
+	lease allocation failures when a loaded hooks library set the
+	callout status to non default value, e.g. "skip" rather than
+	"continue". In such cases, the server reported that it failed
+	to allocate a lease "after 0 attempts".
+	(Trac #5638, git f2e9b686ae52e1b06f660e1b522588b1440e2620)
+
 1417.	[bug]		marcin
 	Improved logging in the HTTP library both for the server and
 	the client.
