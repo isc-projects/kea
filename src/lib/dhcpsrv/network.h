@@ -109,7 +109,7 @@ public:
 
     /// @brief Constructor.
     Network()
-        : iface_name_(), client_class_(""), t1_(0), t2_(0), valid_(0),
+        : iface_name_(), client_class_(""), t1_(), t2_(), valid_(),
           host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
     }
 

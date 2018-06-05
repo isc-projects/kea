@@ -4,10 +4,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/tcp_socket.h>
 #include <http/client.h>
+#include <http/http_log.h>
+#include <http/http_messages.h>
 #include <http/response_json.h>
 #include <http/response_parser.h>
 #include <boost/bind.hpp>
@@ -24,6 +28,11 @@ using namespace isc::asiolink;
 using namespace http;
 
 namespace {
+
+/// @brief Maximum size of the HTTP message that can be logged.
+///
+/// The part of the HTTP message beyond this value is truncated.
+constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 
 /// @brief TCP socket callback function type.
 typedef boost::function<void(boost::system::error_code ec, size_t length)>
@@ -442,6 +451,17 @@ Connection::doTransaction(const HttpRequestPtr& request,
             socket_.close();
         }
 
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                  HTTP_CLIENT_REQUEST_SEND)
+            .arg(request->toBriefString())
+            .arg(url_.toText());
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                  HTTP_CLIENT_REQUEST_SEND_DETAILS)
+            .arg(url_.toText())
+            .arg(HttpMessageParserBase::logFormatHttpMessage(request->toString(),
+                                                             MAX_LOGGED_MESSAGE_SIZE));
+
         /// @todo We're getting a hostname but in fact it is expected to be an IP address.
         /// We should extend the TCPEndpoint to also accept names. Currently, it will fall
         /// over for names.
@@ -482,6 +502,33 @@ Connection::terminate(const boost::system::error_code& ec,
 
     if (!ec && current_response_->isFinalized()) {
         response = current_response_;
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_SERVER_RESPONSE_RECEIVED)
+            .arg(url_.toText());
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                  HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
+            .arg(url_.toText())
+            .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+
+    } else {
+        std::string err = parsing_error.empty() ? ec.message() : parsing_error;
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_BAD_SERVER_RESPONSE_RECEIVED)
+            .arg(url_.toText())
+            .arg(err);
+
+        // Only log the details if we have received anything and tried
+        // to parse it.
+        if (!parsing_error.empty()) {
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                      HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
+                .arg(url_.toText())
+                .arg(parser_->getBufferAsString());
+        }
+
     }
 
     try {

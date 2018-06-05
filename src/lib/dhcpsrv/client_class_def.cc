@@ -305,7 +305,7 @@ builtinNames = {
 
 std::list<std::string>
 builtinPrefixes = {
-    "VENDOR_CLASS_", "AFTER_", "EXTERNAL_"
+    "VENDOR_CLASS_", "HA_", "AFTER_", "EXTERNAL_"
 };
 
 bool

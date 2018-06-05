@@ -6,6 +6,8 @@
 //
 
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 #include <config/command_mgr.h>

@@ -10,15 +10,16 @@
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
 
-#include <botan/exceptn.h>
-#include <botan/version.h>
+#include <botan/botan.h>
+#include <botan/init.h>
 
 namespace isc {
 namespace cryptolink {
 
 // For Botan, we use the CryptoLink class object in RAII style
 class CryptoLinkImpl {
-    // empty class
+private:
+    Botan::LibraryInitializer botan_init_;
 };
 
 CryptoLink::~CryptoLink() {
