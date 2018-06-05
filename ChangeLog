@@ -1,3 +1,8 @@
+1419.	[doc]		marcin
+	Documented "sync-leases" configuration parameter of the HA
+	hooks library in the Kea Administrator's Manual.
+	(Trac #5621, git 4ebac3a411aa02d1cc3d74e7eaf3212ad208159a)
+
 1418.	[bug]		marcin
 	Corrected bug in the allocation engine which caused occasional
 	lease allocation failures when a loaded hooks library set the
