@@ -48,9 +48,10 @@ This error indicates that the server detected incoming connection and executed
 accept system call on said socket, but this call returned an error. Additional
 information may be provided by the system as second parameter.
 
-% COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST Closed command socket %1 by foreign host
+% COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST Closed command socket %1 by foreign host, %2
 This is an information message indicating that the command connection has been
-closed by a command control client.
+closed by a command control client, and whether or not any partially read data
+was discarded.
 
 % COMMAND_SOCKET_CONNECTION_CANCEL_FAIL Failed to cancel read operation on socket %1: %2
 This error message is issued to indicate an error to cancel asynchronous read
