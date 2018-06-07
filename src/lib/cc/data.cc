@@ -608,7 +608,7 @@ Element::nameToType(const std::string& type_name) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
+Element::fromJSON(std::istream& in, bool preproc) {
 
     int line = 1, pos = 1;
     stringstream filtered;
@@ -623,7 +623,6 @@ Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
-    throw(JSONError)
 {
     int line = 1, pos = 1;
     stringstream filtered;
@@ -635,7 +634,7 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file, int& line,
-                  int& pos) throw(JSONError)
+                  int& pos)
 {
     int c = 0;
     ElementPtr element;
