@@ -1085,7 +1085,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     EXPECT_TRUE(ia_na3->getOption(D6O_IAADDR));
 }
 
-// Checks if the KNOWN built-in class is indeed used for pool selection.
+// Checks if the [UN]KNOWN built-in classes is indeed used for pool selection.
 TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1096,10 +1096,6 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     std::string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
-        "\"client-classes\": [ {"
-        "    \"name\": \"unknown\", "
-        "    \"test\": \"not member('KNOWN')\" "
-        "} ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1111,7 +1107,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
         "    }, "
         "    { "
         "       \"pool\": \"2001:db8:2::/64\", "
-        "       \"client-class\": \"unknown\" "
+        "       \"client-class\": \"UNKNOWN\" "
         "    } "
         "   ], "
         "   \"subnet\": \"2001:db8:2::/40\", "

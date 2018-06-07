@@ -44,12 +44,6 @@
         "re-detect": true
     },
 
-    // Define the unknown client class.
-    "client-classes": [ {
-        "name": "unknown",
-        "test": "not member('KNOWN')"
-    } ],
-
     // Option 43 last resort definition can make well-formed messages
     // to be rejected because they use not compatible "raw" value,
     // and different vendors may define different sub-options.
@@ -152,14 +146,16 @@
         {
             // This subnet is divided in two pools for unknown and
             // known (i.e. which have a reservation) clients.
-            // The built-in KNOWN class is set or not at host reservation
-            // lookup and client classes depending on it are evaluated.
+            // The built-in KNOWN and UNKNOWN classes are set or not
+            // at host reservation lookup (KNOWN if this returns something,
+            // UNKNOWN if this finds nothing) and client classes depending
+            // on it are evaluated.
             // This happens after subnet selection and before address
             // allocation from pools.
             "pools": [
                 {
                    "pool": "192.0.8.100 - 192.0.8.200",
-                   "client-class": "unknown"
+                   "client-class": "UNKNOWN"
                 },
                 {
                    "pool": "192.0.9.100 - 192.0.9.200",

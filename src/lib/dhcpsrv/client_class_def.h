@@ -211,7 +211,7 @@ private:
     /// two other conditions stand the expression is evaluated later when
     /// the host reservation membership was determined.
     /// This flag is set to true during the match expression parsing if
-    /// direct or indirect dependency on the builtin KNOWN class is
+    /// direct or indirect dependency on the builtin [UN]KNOWN classes is
     /// detected.
     bool depend_on_known_;
 
@@ -365,7 +365,7 @@ private:
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
 
 /// @brief List of built-in client class names.
-/// i.e. ALL and KNOWN.
+/// i.e. ALL, KNOWN and UNKNOWN.
 extern std::list<std::string> builtinNames;
 
 /// @brief List of built-in client class prefixes
@@ -383,7 +383,8 @@ bool isClientClassBuiltIn(const ClientClass& client_class);
 /// i.e. is built-in or in the dictionary,
 ///
 /// The reference to depend on known flag is set to true if the class
-/// is KNOWN (direct dependency) or has this flag set (indirect dependency).
+/// is KNOWN or UNKNOWN (direct dependency) or has this flag set
+/// (indirect dependency).
 ///
 /// @param class_dictionary A class dictionary where to look for.
 /// @param depend_on_known A reference to depend on known flag.
