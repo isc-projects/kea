@@ -756,7 +756,7 @@ Dhcpv4Srv::run_one() {
         // we were interrupted. And we don't want to print a message every
         // second.
 
-    } catch (const SignalInterruptOnSelect) {
+    } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
