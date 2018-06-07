@@ -679,8 +679,8 @@ protected:
     /// @note Second part of the classification.
     ///
     /// @param pkt packet to be classified.
-    /// @param depend_on_known if false classes depending on the KNOWN
-    /// class are skipped, if true only these classes are evaluated.
+    /// @param depend_on_known if false classes depending on the KNOWN or
+    /// UNKNOWN classes are skipped, if true only these classes are evaluated.
     void evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known);
 
     /// @brief Assigns classes retrieved from host reservation database.

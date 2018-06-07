@@ -989,6 +989,10 @@ TEST_F(ClientClassDefListParserTest, dependOnKnown) {
         "   { \n"
         "       \"name\": \"delta\", \n"
         "       \"test\": \"member('beta') and member('gamma')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"zeta\", \n"
+        "       \"test\": \"not member('UNKNOWN') and member('alpha')\" \n"
         "   } \n"
         "] \n";
 
@@ -997,8 +1001,8 @@ TEST_F(ClientClassDefListParserTest, dependOnKnown) {
     EXPECT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6));
     ASSERT_TRUE(dictionary);
 
-    // We should have four classes in the dictionary.
-    EXPECT_EQ(4, dictionary->getClasses()->size());
+    // We should have five classes in the dictionary.
+    EXPECT_EQ(5, dictionary->getClasses()->size());
 
     // Check alpha.
     ClientClassDefPtr cclass;
@@ -1023,6 +1027,13 @@ TEST_F(ClientClassDefListParserTest, dependOnKnown) {
     ASSERT_NO_THROW(cclass = dictionary->findClass("delta"));
     ASSERT_TRUE(cclass);
     EXPECT_EQ("delta", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+
+    // Check that zeta which directly depends on UNKNOWN.
+    // (and yes I know that I skipped epsilon)
+    ASSERT_NO_THROW(cclass = dictionary->findClass("zeta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("zeta", cclass->getName());
     EXPECT_TRUE(cclass->getDependOnKnown());
 }
 

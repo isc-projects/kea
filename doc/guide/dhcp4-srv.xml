@@ -2240,7 +2240,8 @@ It is merely echoed by the server
 
       <para>
       In a similar way a pool can be constrained to serve only known clients,
-      i.e. clients which have a reservation, using the build-n "KNOWN" class.
+      i.e. clients which have a reservation, using the build-n "KNOWN" or
+      "UNKNOWN" classes.
       One can assign addresses to registered clients without giving a
       different address per reservations, for instance when there is
       not enough available addresses.
@@ -2253,8 +2254,8 @@ It is merely echoed by the server
       The second step is to choose a subnet, possibly based on the
       class information.
       The next step is to evaluate class expressions depending on the
-      built-in "KNOWN" class after host reservation lookup, and to
-      assign classes from host reservations.
+      built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
+      using them for pool selection and to assign classes from host reservations.
       After the list of required classes is built and each class of the list
       has its expression evaluated: when it returns true the packet is added
       as a member of the class.
@@ -3623,9 +3624,9 @@ It is merely echoed by the server
 </screen>
 
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions. The "KNOWN" builtin class is
-    added to the packet and any class depending on it directly or indirectly
-    and not only-if-required is evaluated.
+    with classification using expressions. The "KNOWN" or "UNKNOWN" builtin
+    class is added to the packet and any class depending on it directly or
+    indirectly and not only-if-required is evaluated.
     </para>
 
     <note>

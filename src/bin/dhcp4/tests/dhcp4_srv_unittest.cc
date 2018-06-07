@@ -2466,7 +2466,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     EXPECT_FALSE(offer->getYiaddr().isV4Zero());
 }
 
-// Checks if the KNOWN built-in class is indeed used for pool selection.
+// Checks if the [UN]KNOWN built-in classes is indeed used for pool selection.
 TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -2478,10 +2478,6 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
-        "\"client-classes\": [ {"
-        "    \"name\": \"unknown\", "
-        "    \"test\": \"not member('KNOWN')\" "
-        "} ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -2489,7 +2485,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
         "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
         "      \"client-class\": \"KNOWN\" }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
-        "      \"client-class\": \"unknown\" } ], "
+        "      \"client-class\": \"UNKNOWN\" } ], "
         "    \"subnet\": \"192.0.0.0/16\" } "
         "],"
         "\"valid-lifetime\": 4000 }";

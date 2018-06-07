@@ -314,7 +314,7 @@ ClientClassDictionary::toElement() const {
 
 std::list<std::string>
 builtinNames = {
-    "ALL", "KNOWN"
+    "ALL", "KNOWN", "UNKNOWN"
 };
 
 std::list<std::string>
@@ -351,8 +351,8 @@ isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
                      const ClientClass& client_class) {
     // First check built-in classes
     if (isClientClassBuiltIn(client_class)) {
-        // Check direct dependency on KNOWN
-        if (client_class == "KNOWN") {
+        // Check direct dependency on [UN]KNOWN
+        if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
             depend_on_known = true;
         }
         return (true);
@@ -361,7 +361,7 @@ isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
     // Second check already defined, i.e. in the dictionary
     ClientClassDefPtr def = class_dictionary->findClass(client_class);
     if (def) {
-        // Check indirect dependency on KNOWN
+        // Check indirect dependency on [UN]KNOWN
         if (def->getDependOnKnown()) {
             depend_on_known = true;
         }

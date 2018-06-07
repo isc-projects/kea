@@ -160,16 +160,18 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
 
             // Check for static reservations.
             alloc_engine->findReservation(*context_);
-
-            // Set known builtin class if something was found.
-            if (!context_->hosts_.empty()) {
-                query->addClass("KNOWN");
-            }
         }
-
-        // Perform second pass of classification.
-        Dhcpv4Srv::evaluateClasses(query, true);
     }
+
+    // Set KNOWN builtin class if something was found, UNKNOWN if not.
+    if (!context_->hosts_.empty()) {
+        query->addClass("KNOWN");
+    } else {
+        query->addClass("UNKNOWN");
+    }
+
+    // Perform second pass of classification.
+    Dhcpv4Srv::evaluateClasses(query, true);
 
     const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
@@ -3197,7 +3199,7 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // First: built-in vendor class processing.
     classifyByVendor(pkt);
 
-    // Run match expressions on classes not depending on KNOWN.
+    // Run match expressions on classes not depending on KNOWN/UNKNOWN.
     evaluateClasses(pkt, false);
 }
 

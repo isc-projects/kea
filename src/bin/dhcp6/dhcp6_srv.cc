@@ -378,15 +378,17 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
 
         // Find host reservations using specified identifiers.
         alloc_engine_->findReservation(ctx);
-
-        // Set known builtin class if something was found.
-        if (!ctx.hosts_.empty()) {
-            pkt->addClass("KNOWN");
-        }
-
-        // Perform second pass of classification.
-        evaluateClasses(pkt, true);
     }
+
+    // Set KNOWN builtin class if something was found, UNKNOWN if not.
+    if (!ctx.hosts_.empty()) {
+        pkt->addClass("KNOWN");
+    } else {
+        pkt->addClass("UNKNOWN");
+    }
+
+    // Perform second pass of classification.
+    evaluateClasses(pkt, true);
 }
 
 bool Dhcpv6Srv::run() {
@@ -3272,7 +3274,7 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     // First: built-in vendor class processing
     classifyByVendor(pkt, classes);
 
-    // Run match expressions on classes not depending on KNOWN.
+    // Run match expressions on classes not depending on KNOWN/UNKNOWN.
     evaluateClasses(pkt, false);
 }
 
