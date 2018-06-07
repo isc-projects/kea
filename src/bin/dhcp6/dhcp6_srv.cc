@@ -441,7 +441,7 @@ void Dhcpv6Srv::run_one() {
         // second.
 
 
-    } catch (const SignalInterruptOnSelect) {
+    } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
         // SIGINT or SIGHUP which are handled by the server. For signals
