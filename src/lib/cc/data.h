@@ -425,10 +425,10 @@ public:
     /// @param in The string to parse the element from
     /// @param preproc specified whether preprocessing (e.g. comment removal)
     ///                should be performed
+    /// @throw JSONError
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
-    static ElementPtr fromJSON(std::istream& in, bool preproc = false)
-        throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, bool preproc = false);
 
     /// Creates an Element from the given input stream containing JSON
     /// formatted data.
@@ -437,11 +437,11 @@ public:
     /// @param file_name specified input file name (used in error reporting)
     /// @param preproc specified whether preprocessing (e.g. comment removal)
     ///                should be performed
+    /// @throw JSONError
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     static ElementPtr fromJSON(std::istream& in, const std::string& file_name,
-                               bool preproc = false)
-        throw(JSONError);
+                               bool preproc = false);
 
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
@@ -452,12 +452,12 @@ public:
     /// track of the current line.
     /// @param pos A reference to the int where the function keeps
     /// track of the current position within the current line.
+    /// @throw JSONError
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
-                               int& line, int &pos)
-        throw(JSONError);
+                               int& line, int &pos);
 
     /// Reads contents of specified file and interprets it as JSON.
     ///
