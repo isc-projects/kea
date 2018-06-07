@@ -1,3 +1,9 @@
+1420.	[doc]		marcin
+	Updated list of loggers in the Kea Administrator's Manual.
+	The updated list contains all loggers, including those
+	from supported hooks libraries.
+	(Trac #5622, git bd94afc0af7183452c94f3b5768c6138f79d3b60)
+
 1419.	[doc]		marcin
 	Documented "sync-leases" configuration parameter of the HA
 	hooks library in the Kea Administrator's Manual.
