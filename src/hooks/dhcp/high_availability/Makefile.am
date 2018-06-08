@@ -16,6 +16,7 @@ BUILT_SOURCES = ha_messages.h ha_messages.cc
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = ha_messages.mes
+EXTRA_DIST += ha.dox
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda ha_messages.h ha_messages.cc s-messages
@@ -67,13 +68,3 @@ libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-
-EXTRA_DIST += ha.dox Doxyfile Doxyfile-xml
-
-devel:
-	mkdir -p html
-	(cat Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > html/doxygen.log 2> html/doxygen-error.log
-	echo `grep -i ": warning:" html/doxygen-error.log | wc -l` warnings/errors detected.
-
-clean-local:
-	rm -rf html
