@@ -1260,17 +1260,22 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                        RequirementLevel serverid) {
     OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
     switch (clientid) {
-    case MANDATORY:
+    case MANDATORY: {
         if (client_ids.size() != 1) {
             isc_throw(RFCViolation, "Exactly 1 client-id option expected in "
                       << pkt->getName() << ", but " << client_ids.size()
                       << " received");
         }
+        sanityCheckDUID(client_ids.begin()->second, "client-id");
         break;
+    }
     case OPTIONAL:
         if (client_ids.size() > 1) {
             isc_throw(RFCViolation, "Too many (" << client_ids.size()
                       << ") client-id options received in " << pkt->getName());
+        }
+        if (!client_ids.empty()) {
+            sanityCheckDUID(client_ids.begin()->second, "client-id");
         }
         break;
 
@@ -1294,6 +1299,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                       << server_ids.size() << "), exactly 1 expected in message "
                       << pkt->getName());
         }
+        sanityCheckDUID(server_ids.begin()->second, "server-id");
         break;
 
     case OPTIONAL:
@@ -1301,6 +1307,23 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
             isc_throw(RFCViolation, "Too many (" << server_ids.size()
                       << ") server-id options received in " << pkt->getName());
         }
+        if (!server_ids.empty()) {
+            sanityCheckDUID(server_ids.begin()->second, "server-id");
+        }
+    }
+}
+
+void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_name) {
+    if (!opt) {
+        isc_throw(RFCViolation, "Unable to find expected option " << opt_name);
+    }
+
+    // The client-id or server-id has to have at least 3 bytes of useful data:
+    // two for duid type and one more for actual duid value.
+    uint16_t len = opt->len() - opt->getHeaderLen();
+    if (len < 3) {
+        isc_throw(RFCViolation, "Received empty or truncated " << opt_name << " option: "
+                  << len << " byte(s) only");
     }
 }
 
