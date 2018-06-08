@@ -225,6 +225,13 @@ protected:
     void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                      RequirementLevel serverid);
 
+    /// @brief verifies if received DUID option (client-id or server-id) is sane
+    ///
+    /// @param opt option to be checked
+    /// @param opt_name text name to be printed
+    /// @throw RFCViolation if any issues are detected
+    void sanityCheckDUID(const OptionPtr& opt, const std::string& opt_name);
+
     /// @brief Processes incoming Solicit and returns response.
     ///
     /// Processes received Solicit message and verifies that its sender
