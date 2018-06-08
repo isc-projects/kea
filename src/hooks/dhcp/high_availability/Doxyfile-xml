@@ -1,0 +1,7 @@
+# This is a doxygen configuration for generating XML output as well as HTML.
+#
+# Inherit everything from our default Doxyfile except GENERATE_XML, which
+# will be reset to YES
+
+@INCLUDE = Doxyfile
+GENERATE_XML           = YES
