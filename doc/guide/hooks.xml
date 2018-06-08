@@ -428,7 +428,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
 
             <row>
               <entry>High Availability</entry>
-              <entry>Support customers</entry>
+              <entry>Kea sources</entry>
               <entry>Kea 1.4.0</entry>
               <entry>Minimizing a risk of DHCP service unavailability is
               achieved by setting up a pair of the DHCP servers in a network.
