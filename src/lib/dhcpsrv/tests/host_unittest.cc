@@ -13,6 +13,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdlib>
+#include <unordered_map>
 #include <sstream>
 
 using namespace isc;
@@ -34,6 +35,14 @@ TEST(IPv6ResrvTest, constructorAddress) {
     EXPECT_EQ("2001:db8:1::cafe", resrv.getPrefix().toText());
     EXPECT_EQ(128, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
+    EXPECT_EQ("", resrv.getKeys());
+
+    //create reservation with keys
+    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"), "#ssd@@dce3");
+    EXPECT_EQ("2001:db8:1::cafe", resrv_keys.getPrefix().toText());
+    EXPECT_EQ(128, resrv_keys.getPrefixLen());
+    EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv_keys.getType());
+    EXPECT_EQ("#ssd@@dce3", resrv_keys.getKeys());
 }
 
 // This test verifies that it is possible to create IPv6 prefix
@@ -43,9 +52,18 @@ TEST(IPv6ResrvTest, constructorPrefix) {
     EXPECT_EQ("2001:db8:1::", resrv.getPrefix().toText());
     EXPECT_EQ(64, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
+    EXPECT_EQ("", resrv.getKeys());
+    
+    //create reservation with keys
+    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), "#ssd@@dce3", 64);
+    EXPECT_EQ("2001:db8:1::", resrv_keys.getPrefix().toText());
+    EXPECT_EQ(64, resrv_keys.getPrefixLen());
+    EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv_keys.getType());
+    EXPECT_EQ("#ssd@@dce3", resrv_keys.getKeys());
 }
 
 // This test verifies that the toText() function prints correctly.
+// @todo: Add test to keys once toText() for keys is implemented.
 TEST(IPv6ResrvTest, toText) {
     IPv6Resrv resrv_prefix(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 64);
     EXPECT_EQ("2001:db8:1::/64", resrv_prefix.toText());
@@ -102,6 +120,39 @@ TEST(IPv6ResrvTest, setPrefix) {
                  isc::BadValue);
 }
 
+// This test verifies that it is possible to modify the keys  
+// 
+TEST(IPv6ResrvTest, setKeys) {
+    // Create an address reservation without assigning keys.
+    IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
+    ASSERT_EQ(128, resrv.getPrefixLen());
+    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
+    ASSERT_EQ("", resrv.getKeys());
+
+    // Replace default keys with new value. 
+    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128, "first_set_keys_#");
+    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
+    ASSERT_EQ(128, resrv.getPrefixLen());
+    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
+    ASSERT_EQ("first_set_keys_#", resrv.getKeys());
+
+    // Modify an existing key for the reservation 
+    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128, "second_set_keys_#");
+    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
+    ASSERT_EQ(128, resrv.getPrefixLen());
+    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
+    ASSERT_EQ("second_set_keys_#", resrv.getKeys());
+
+    // Enusre not including the key parameter won't affect
+    // the current configured keys
+    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128);
+    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
+    ASSERT_EQ(128, resrv.getPrefixLen());
+    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
+    ASSERT_EQ("second_set_keys_#", resrv.getKeys());
+}
+
 // This test checks that the equality operators work fine.
 TEST(IPv6ResrvTest, equal) {
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) ==
@@ -130,6 +181,23 @@ TEST(IPv6ResrvTest, equal) {
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"), 128) !=
                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
 
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
+                "key##1", 128) ==
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
+                "key##1", 128));
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
+                "key##1", 128) !=
+                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
+                "key##1", 128));
+
+    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
+                "key##1", 128) ==
+                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
+                "key##2", 128));
+    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
+                "key##1", 128) !=
+                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
+                "key##2", 128));
 }
 
 /// @brief Test fixture class for @c Host.
@@ -607,12 +675,12 @@ TEST_F(HostTest, addReservations) {
 
     EXPECT_FALSE(host->hasIPv6Reservation());
 
-    // Add 4 reservations: 2 for NAs, 2 for PDs.
+    // Add 4 reservations: 2 for NAs, 2 for PDs
     ASSERT_NO_THROW(
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                       IOAddress("2001:db8:1::cafe")));
+                                       IOAddress("2001:db8:1::cafe"), "key##1"));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                       IOAddress("2001:db8:1:1::"), 64));
+                                       IOAddress("2001:db8:1:1::"), "key##2", 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                        IOAddress("2001:db8:1:2::"), 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
@@ -623,9 +691,9 @@ TEST_F(HostTest, addReservations) {
 
     // Check that reservations exist.
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                               IOAddress("2001:db8:1::cafe"))));
+                                               IOAddress("2001:db8:1::cafe"), "key##1")));
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                               IOAddress("2001:db8:1:1::"),
+                                               IOAddress("2001:db8:1:1::"), "key##2",
                                                64)));
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                                IOAddress("2001:db8:1:2::"),
@@ -637,7 +705,7 @@ TEST_F(HostTest, addReservations) {
     IPv6ResrvRange addresses = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                            IOAddress("2001:db8:1::cafe")),
+                                            IOAddress("2001:db8:1::cafe"), "key##1"),
                                   addresses));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                             IOAddress("2001:db8:1::1")),
@@ -648,7 +716,7 @@ TEST_F(HostTest, addReservations) {
     IPv6ResrvRange prefixes = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(2, std::distance(prefixes.first, prefixes.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                            IOAddress("2001:db8:1:1::"), 64),
+                                            IOAddress("2001:db8:1:1::"),"key##2", 64),
                                   prefixes));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                             IOAddress("2001:db8:1:2::"), 64),
@@ -1038,6 +1106,7 @@ TEST_F(HostTest, toText) {
 }
 
 // This test checks that Host object is correctly unparsed,
+// @todo: add support for keys
 TEST_F(HostTest, unparse) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
@@ -1209,4 +1278,32 @@ TEST_F(HostTest, hostId) {
     EXPECT_EQ(12345, host->getHostId());
 }
 
+// Test verifies if getRandomKeyString can generate  1000 keys which are random
+TEST_F(HostTest, randomKeys) {
+    //use hashtable and set size to 1000
+    std::unordered_map<std::string, int> key_map;
+    
+    int dup_element = 0;
+    const uint16_t max_iter = 1000;
+    uint16_t iter_num = 0;
+    size_t max_hash_size = 1000;
+
+    key_map.reserve(max_hash_size);
+
+    for (iter_num = 0; iter_num < max_iter; iter_num++) {
+        std::string key = IPv6Resrv::getRandomKeyString();
+        if (key_map[key]) {
+            dup_element++;
+            break;
+        }
+
+        key_map[key] = 1;
+    }
+
+    EXPECT_EQ(0, dup_element);
+}
+
+
 } // end of anonymous namespace
+
+// Test verifies if 

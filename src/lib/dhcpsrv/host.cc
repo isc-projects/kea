@@ -10,6 +10,8 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
 #include <sstream>
 
@@ -22,14 +24,26 @@ namespace dhcp {
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
-    : type_(type), prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
+    : type_(type), prefix_(asiolink::IOAddress("::")), 
+      prefix_len_(128), keys_("") {
     // Validate and set the actual values.
     set(type, prefix, prefix_len);
 }
 
+
+IPv6Resrv::IPv6Resrv(const Type& type,
+                     const asiolink::IOAddress& prefix,
+                     const std::string& keys,
+                     const uint8_t prefix_len)
+    : type_(type), prefix_(asiolink::IOAddress("::")), 
+      prefix_len_(128), keys_("") {
+    // Validate and set the actual values.
+    set(type, prefix, prefix_len, keys);
+}
+
 void
 IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
-               const uint8_t prefix_len) {
+               const uint8_t prefix_len, const std::string& keys) {
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
                   << "' for new IPv6 reservation");
@@ -43,6 +57,9 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
         isc_throw(isc::BadValue, "invalid prefix length '"
                   << static_cast<int>(prefix_len)
                   << "' for reserved IPv6 address, expected 128");
+    } else if (!keys.empty()) {
+    //Don't overwrite with an empty string
+        keys_ = keys;
     }
 
     type_ = type;
@@ -51,10 +68,26 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
 }
 
 std::string
+IPv6Resrv::getRandomKeyString() 
+{
+    std::array <char, 128> randomString;
+    
+    std::random_device rd;
+    boost::random::mt19937 gen(rd());
+
+    std::for_each(randomString.begin(), randomString.end() - 1,
+        [&gen](char& a){ boost::random::uniform_int_distribution<char> dist('!', '~');
+        a = dist(gen); } );
+
+    return std::string(randomString.begin(), randomString.end());
+}
+
+std::string
 IPv6Resrv::toText() const {
     std::ostringstream s;
     s << prefix_;
     // For PD, append prefix length.
+    // @todo: add to text for keys
     if (getType() == TYPE_PD) {
         s << "/" << static_cast<int>(prefix_len_);
     }
@@ -65,7 +98,8 @@ bool
 IPv6Resrv::operator==(const IPv6Resrv& other) const {
     return (type_ == other.type_ &&
             prefix_ == other.prefix_ &&
-            prefix_len_ == other.prefix_len_);
+            prefix_len_ == other.prefix_len_ &&
+            keys_ == other.keys_ );
 }
 
 bool

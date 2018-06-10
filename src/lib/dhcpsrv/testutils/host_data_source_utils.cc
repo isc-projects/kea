@@ -81,9 +81,10 @@ HostDataSourceUtils::initializeHost4(const std::string& address,
 }
 
 HostPtr
-HostDataSourceUtils::initializeHost6(std::string address,
+HostDataSourceUtils::initializeHost6(const std::string address,
                                      Host::IdentifierType identifier,
                                      bool prefix,
+                                     const std::string& key,
                                      bool new_identifier) {
     std::vector<uint8_t> ident;
     switch (identifier) {
@@ -111,11 +112,11 @@ HostDataSourceUtils::initializeHost6(std::string address,
 
     if (!prefix) {
         // Create IPv6 reservation (for an address)
-        IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), 128);
+        IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), key, 128);
         host->addReservation(resv);
     } else {
         // Create IPv6 reservation for a /64 prefix
-        IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(address), 64);
+        IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(address), key, 64);
         host->addReservation(resv);
     }
     return (host);

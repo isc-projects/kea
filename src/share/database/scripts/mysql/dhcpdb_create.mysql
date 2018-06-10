@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS ipv6_reservations (
     prefix_len TINYINT(3) UNSIGNED NOT NULL DEFAULT 128,
     type TINYINT(4) UNSIGNED NOT NULL DEFAULT 0,
     dhcp6_iaid INT UNSIGNED NULL,
+    auth_key VARCHAR(128) NOT NULL,
     host_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (reservation_id),
     INDEX fk_ipv6_reservations_host_idx (host_id ASC),

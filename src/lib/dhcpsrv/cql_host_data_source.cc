@@ -116,6 +116,7 @@ static constexpr char NULL_USER_CONTEXT[] = "";
 static constexpr char NULL_RESERVED_IPV6_PREFIX_ADDRESS[] = "::";
 static constexpr cass_int32_t NULL_RESERVED_IPV6_PREFIX_LENGTH = 0;
 static constexpr cass_int32_t NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE = -1;
+static constexpr char NULL_RESERVED_KEY[] = "";
 static constexpr cass_int32_t NULL_IAID = -1;
 static constexpr cass_int32_t NULL_OPTION_UNIVERSE = -1;
 static constexpr cass_int32_t NULL_OPTION_CODE = -1;
@@ -372,6 +373,9 @@ private:
     /// This value corresponds to the @ref Host::IdentifierType value.
     cass_int32_t reserved_ipv6_prefix_address_type_;
 
+    /// @brief Key for authentication
+    std::string reserved_key_;
+
     /// @brief The reservation's IAID
     cass_int32_t iaid_;
 
@@ -438,6 +442,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -455,7 +460,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       // host
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
       // denormalized reservation, option
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "
      }},
@@ -479,6 +484,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -512,6 +518,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -548,6 +555,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -583,6 +591,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -620,6 +629,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -657,6 +667,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -693,6 +704,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -729,6 +741,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
+      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -811,6 +824,8 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&reserved_ipv6_prefix_length_);
     // reserved_ipv6_prefix_address_type: int
     data.add(&reserved_ipv6_prefix_address_type_);
+    // reserved_key: text
+    data.add(&reserved_key_);
     // iaid: int
     data.add(&iaid_);
     /// @}
@@ -929,6 +944,8 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
             reserved_ipv6_prefix_length_ = NULL_RESERVED_IPV6_PREFIX_LENGTH;
             // reserved_ipv6_prefix_address_type: int
             reserved_ipv6_prefix_address_type_ = NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE;
+            // reserved_key: text
+            key_ = NULL_RESERVED_KEY;
             iaid_ = NULL_IAID;
         } else {
             // reserved_ipv6_prefix_address: text
@@ -941,6 +958,9 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
             reserved_ipv6_prefix_address_type_ =
                 reservation->getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
 
+            // reserved_key: text
+            reserved_key_ = reservation->getKeys();
+            
             // iaid: int
             /// @todo: We don't support iaid in the IPv6Resrv yet.
             iaid_ = 0;
@@ -1060,6 +1080,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         data.add(&reserved_ipv6_prefix_address_);
         data.add(&reserved_ipv6_prefix_length_);
         data.add(&reserved_ipv6_prefix_address_type_);
+        data.add(&reserved_key_);
         data.add(&iaid_);
 
         // Option
@@ -1227,7 +1248,7 @@ CqlHostExchange::retrieveReservation() const {
     }
 
     return (IPv6Resrv(type, IOAddress(reserved_ipv6_prefix_address_),
-                      reserved_ipv6_prefix_length_));
+                      reserved_ipv6_prefix_length_, reserved_key_));
 }
 
 const OptionWrapper
