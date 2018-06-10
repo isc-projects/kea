@@ -901,6 +901,7 @@ public:
     static constexpr StatementTag DELETE_LEASE6 = "DELETE_LEASE6";
     static constexpr StatementTag GET_LEASE6_EXPIRE = "GET_LEASE6_EXPIRE";
     static constexpr StatementTag GET_LEASE6_ADDR = "GET_LEASE6_ADDR";
+    static constexpr StatementTag GET_LEASE6_DUID = "GET_LEASE6_DUID";
     static constexpr StatementTag GET_LEASE6_DUID_IAID = "GET_LEASE6_DUID_IAID";
     static constexpr StatementTag GET_LEASE6_DUID_IAID_SUBID = "GET_LEASE6_DUID_IAID_SUBID";
     static constexpr StatementTag GET_LEASE6_LIMIT = "GET_LEASE6_LIMIT";
@@ -1003,7 +1004,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "LIMIT ? "
       "ALLOW FILTERING "}},
 
-    // Gets an IPv6 lease with specified IPv4 address
+    // Gets an IPv6 lease with specified IPv6 address
     {GET_LEASE6_ADDR,
      {GET_LEASE6_ADDR,
       "SELECT "
@@ -1013,6 +1014,17 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "FROM lease6 "
       "WHERE address = ? "
       "AND lease_type = ? "
+      "ALLOW FILTERING "}},
+
+    // Gets an IPv6 lease with specified duid
+    {GET_LEASE6_DUID,
+     {GET_LEASE6_DUID,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state "
+      "FROM lease6 "
+      "WHERE duid = ? "
       "ALLOW FILTERING "}},
 
     // Gets an IPv6 lease(s) with specified duid and iaid
@@ -2276,6 +2288,27 @@ CqlLeaseMgr::getLease6(Lease::Type lease_type, const IOAddress &addr) const {
     Lease6Ptr result;
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLease(CqlLease6Exchange::GET_LEASE6_ADDR, data, result);
+
+    return (result);
+}
+
+Lease6Ptr
+CqlLeaseMgr::getLease6(const DUID& duid) const {
+    std::string duid_data = duid.toText();
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_DUID)
+        .arg(duid_data);
+
+    // Set up the WHERE clause value
+    AnyArray data;
+    
+    CassBlob duid_data(duid.getDuid());
+
+    data.add(&duid_data);
+
+    // Get the data.
+    Lease6Collection result;
+    std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
+    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID, data, result);
 
     return (result);
 }

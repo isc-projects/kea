@@ -585,7 +585,7 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     destroyCqlSchema(false, true);
 
     // Create a host with a reservation.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false, "key##1");
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
