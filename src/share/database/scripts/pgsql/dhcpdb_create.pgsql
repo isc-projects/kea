@@ -335,6 +335,7 @@ CREATE TABLE ipv6_reservations (
   prefix_len SMALLINT NOT NULL DEFAULT '128',
   type SMALLINT NOT NULL DEFAULT '0',
   dhcp6_iaid INT DEFAULT NULL,
+  auth_key VARCHAR(128) NOT NULL,
   host_id INT NOT NULL,
   CONSTRAINT key_dhcp6_address_prefix_len UNIQUE (address, prefix_len),
   CONSTRAINT fk_ipv6_reservations_host FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE

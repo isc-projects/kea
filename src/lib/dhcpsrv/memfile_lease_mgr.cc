@@ -981,6 +981,19 @@ Memfile_LeaseMgr::getLeases6() const {
    return (collection);
 }
 
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(const DUID& duid) const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6);
+
+   Lease6Collection collection;
+   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
+       if ( (**lease).duid_->getDuid() == duid.getDuid() )
+            collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   }
+
+   return (collection);
+}
+
 void
 Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                     const size_t max_leases) const {

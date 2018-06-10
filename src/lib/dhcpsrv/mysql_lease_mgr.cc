@@ -170,7 +170,7 @@ tagged_statements = { {
                         "state "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
-    {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
+       {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
@@ -2054,6 +2054,23 @@ MySqlLeaseMgr::getLeases6() const {
 
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6, 0, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6(const DUID& duid) const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID);
+   
+    Lease6Collection result =  getLeases6();
+    
+    //erase the ones not containing the matching DUID
+    for (auto iter = result.begin(); iter != result.end();
+            iter++) {
+        if ((*iter)->duid_->getDuid() != duid.getDuid()) {
+            result.erase(iter);
+        }
+    }
 
     return (result);
 }
