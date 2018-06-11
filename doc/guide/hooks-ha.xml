@@ -12,7 +12,8 @@
         This section describes the High Availability hooks library, which can be
         loaded on a pair of DHCPv4 or DHCPv6 servers to increase reliability of
         the DHCP service in case of outage of one of the servers. This library
-        is only available to ISC customers.
+        used to be only available to ISC customers, but is now part of
+        the open source Kea, available to all users.
       </para>
       <para>
         High Availability (HA) of the DHCP service is provided by running multiple
