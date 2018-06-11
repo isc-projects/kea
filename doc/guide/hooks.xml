@@ -312,19 +312,18 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
       </para></note>
 
       <para>The following table provides a list of libraries currently available
-      from ISC. It is important to pay attention which process a library should
-      be loaded to. It is a common error to load a library to the
-      <command>kea-ctrl-agent</command> (Control Agent) process rather than to the
-      <command>kea-dhcp4</command> or <command>kea-dhcp6</command> processes.
-      If the library from ISC doesn't work as expected, please make sure that
-      it has been loaded to the appropriate process (consult the table below to
-      see which processes are supported by which hooks libraries).
+      from ISC. It is important to pay attention to which libraries may be loaded
+      by which Kea processes. It is a common mistake to configure the <command>
+      kea-ctrl-agent</command> process to load libraries that should, in fact,
+      be loaded by the <command>kea-dhcp4 </command> or <command>kea-dhcp6</command>
+      processes.  If a library from ISC doesn't work as expected, please make sure
+      that it has been loaded by the correct process per the table below.
 
       <warning>
         <para>
-          Even though the Kea Control Agent includes the "hooks" functionality,
-          i.e. hooks libraries can be attached to this process, currently ISC
-          supplies no hooks libraries to be attched to the Control Agent.
+          While the Kea Control Agent includes the "hooks" functionality,
+          (i.e. hooks libraries can be loaded by this process), none of ISC's
+          current hooks libraries should be loaded by the Control Agent.
         </para>
       </warning>
 
@@ -340,7 +339,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Name</entry>
               <entry>Availability</entry>
               <entry>Since</entry>
-              <entry>Load to process</entry>
+              <entry>Load by process</entry>
               <entry>Description</entry>
             </row>
           </thead>
