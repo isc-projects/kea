@@ -28,7 +28,7 @@
         load the libraries.
       </para>
       <para>
-      Hooks libraries are attached to individual Kea processes, not to
+      Hooks libraries are loaded by individual Kea processes, not to
       Kea as a whole.  This means (for example) that it is possible
       to associate one set of libraries with the DHCP4 server and a
       different set to the DHCP6 server.
@@ -668,7 +668,7 @@ and may have the zero or more of the following entries:
         is only available to ISC customers with a support contract.
 
         <note>
-          <para>This library may only be attached to <command>kea-dhcp4</command>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
           or <command>kea-dhcp6</command> process.
           </para>
         </note>
@@ -1115,7 +1115,7 @@ $
         support contract.
 
         <note>
-          <para>This library may only be attached to <command>kea-dhcp4</command>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
           or <command>kea-dhcp6</command> process.
           </para>
         </note>
@@ -1360,7 +1360,7 @@ $
         support contract.
 
         <note>
-          <para>This library may only be attached to <command>kea-dhcp4</command>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
           or <command>kea-dhcp6</command> process.
           </para>
         </note>
@@ -1664,7 +1664,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           of the subnet to which it is supposed to belong.
 
           <note>
-            <para>This library may only be attached to <command>kea-dhcp4</command>
+            <para>This library may only be loaded by <command>kea-dhcp4</command>
             or <command>kea-dhcp6</command> process.
             </para>
           </note>
@@ -2261,7 +2261,7 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
         support contract.
 
         <note>
-          <para>This library may only be attached to <command>kea-dhcp4</command>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
           or <command>kea-dhcp6</command> process.
           </para>
         </note>
