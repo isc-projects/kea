@@ -1,3 +1,8 @@
+1423.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now retain and emit global, scalar
+	parameters specified in their configuration.
+	(Trac #5378, git 4d05122f03d00b10a888c768fe1725cae9d6aea6)
+
 1422.	[build]		fdupont
 	Commented out BOOST_ASIO_DISABLE_THREADS in configure to reflect
 	the current use of threads by boost ASIO in Kea.
