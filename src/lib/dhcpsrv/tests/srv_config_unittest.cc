@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -503,7 +503,8 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
     defaults += "\"hooks-libraries\": [ ],\n";
-    defaults += "\"dhcp-ddns\": \n"; defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
+    defaults += "\"dhcp-ddns\": \n";
+    defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
 
     std::string defaults4 = "\"echo-client-id\": true,\n";
     defaults4 += "\"shared-networks\": [ ],\n";
