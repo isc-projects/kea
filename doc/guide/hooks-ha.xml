@@ -14,6 +14,12 @@
         the DHCP service in case of outage of one of the servers. This library
         used to be only available to ISC customers, but is now part of
         the open source Kea, available to all users.
+
+        <note>
+          <para>This library may only be attached to <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
       </para>
       <para>
         High Availability (HA) of the DHCP service is provided by running multiple
