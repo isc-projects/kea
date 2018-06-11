@@ -44,19 +44,16 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-boost::scoped_ptr<SrvConfigMgr>&
-SrvConfigMgrFactory::getConfigurationMgrPtr() {
+boost::scoped_ptr<SrvConfigMgr>& SrvConfigMgrFactory::getConfigurationMgrPtr() {
     static boost::scoped_ptr<SrvConfigMgr> configurationMgrPtr;
     return (configurationMgrPtr);
 }
 
-void
-SrvConfigMgrFactory::create(const std::string& dbaccess) {
+void SrvConfigMgrFactory::create(const std::string& dbaccess) {
     const std::string type = "type";
 
     // Parse the access string and create a redacted string for logging.
-    DatabaseConnection::ParameterMap parameters =
-        DatabaseConnection::parse(dbaccess);
+    DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(dbaccess);
     std::string redacted = DatabaseConnection::redactedAccessString(parameters);
 
     // Is "type" present?
@@ -95,8 +92,7 @@ SrvConfigMgrFactory::create(const std::string& dbaccess) {
                            "not specify a supported database backend");
 }
 
-void
-SrvConfigMgrFactory::destroy() {
+void SrvConfigMgrFactory::destroy() {
     // Destroy current lease manager.  This is a no-op if no lease manager
     // is available.
     if (getConfigurationMgrPtr()) {
@@ -106,18 +102,15 @@ SrvConfigMgrFactory::destroy() {
     getConfigurationMgrPtr().reset();
 }
 
-SrvConfigMgr&
-SrvConfigMgrFactory::instance() {
+SrvConfigMgr& SrvConfigMgrFactory::instance() {
     SrvConfigMgr* cfgptr = getConfigurationMgrPtr().get();
     if (cfgptr == NULL) {
-        isc_throw(NoServerConfigManager,
-                  "no current server configuration manager is available");
+        isc_throw(NoServerConfigManager, "no current server configuration manager is available");
     }
     return (*cfgptr);
 }
 
-bool
-SrvConfigMgrFactory::initialized() {
+bool SrvConfigMgrFactory::initialized() {
     SrvConfigMgr* cfgptr = getConfigurationMgrPtr().get();
     return (cfgptr != NULL);
 }

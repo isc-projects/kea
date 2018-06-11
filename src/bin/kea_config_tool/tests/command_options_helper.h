@@ -84,7 +84,7 @@ public:
 
     public:
         char** argv_;  ///< array of C-strings being wrapped.
-        int argc_;     ///< number of C-strings.
+        int argc_;  ///< number of C-strings.
     };
 
     /// \brief Parse command line provided as string.

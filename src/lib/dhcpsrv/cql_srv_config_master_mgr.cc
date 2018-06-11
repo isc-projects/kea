@@ -23,13 +23,13 @@
 
 #include <boost/smart_ptr/make_shared.hpp>
 
-#include <sys/types.h>        // for int32_t
+#include <sys/types.h>  // for int32_t
 
 namespace isc {
 namespace dhcp {
 
 StatementMap CqlMasterConfigVersionExchange::tagged_statements_ = {
-    {GET_VERSION,   //
+    {GET_VERSION,  //
      {GET_VERSION,  //
       "SELECT "
       "version, minor "
@@ -153,7 +153,7 @@ constexpr StatementTag CqlMasterConfigExchange::GET_SERVERS_CONFIG4_SHARDS_NAME;
 constexpr StatementTag CqlMasterConfigExchange::GET_SERVERS_CONFIG6_SHARDS_NAME;
 
 StatementMap CqlMasterConfigExchange::tagged_statements_ = {
-    {INSERT_SERVER_CONFIG4,   //
+    {INSERT_SERVER_CONFIG4,  //
      {INSERT_SERVER_CONFIG4,  //
       "INSERT INTO server_configuration4 "
       "(instance_id, timestamp, server_config, config_database, config_database_name) "
@@ -161,7 +161,7 @@ StatementMap CqlMasterConfigExchange::tagged_statements_ = {
       "IF NOT EXISTS "
      }},
 
-    {INSERT_SERVER_CONFIG6,   //
+    {INSERT_SERVER_CONFIG6,  //
      {INSERT_SERVER_CONFIG6,  //
       "INSERT INTO server_configuration6 "
       "(instance_id, timestamp, server_config, config_database, config_database_name) "
@@ -169,81 +169,81 @@ StatementMap CqlMasterConfigExchange::tagged_statements_ = {
       "IF NOT EXISTS "
      }},
 
-    {GET_CONFIGURATION4_BY_SRV_ID,   //
+    {GET_CONFIGURATION4_BY_SRV_ID,  //
      {GET_CONFIGURATION4_BY_SRV_ID,  //
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration4 "
       "WHERE instance_id = ? "
      }},
 
-    {GET_CONFIGURATION6_BY_SRV_ID,   //
+    {GET_CONFIGURATION6_BY_SRV_ID,  //
      {GET_CONFIGURATION6_BY_SRV_ID,  //
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration6 "
       "WHERE instance_id = ? "
      }},
 
-    {GET_CONFIGURATION4_BY_SHARD_DB,   //
+    {GET_CONFIGURATION4_BY_SHARD_DB,  //
      {GET_CONFIGURATION4_BY_SHARD_DB,  //
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration4 "
       "WHERE config_database_name = ? ALLOW FILTERING "
      }},
 
-    {GET_CONFIGURATION6_BY_SHARD_DB,   //
+    {GET_CONFIGURATION6_BY_SHARD_DB,  //
      {GET_CONFIGURATION6_BY_SHARD_DB,  //
       "SELECT instance_id, timestamp, server_config, config_database, config_database_name "
       "FROM server_configuration6 "
       "WHERE config_database_name = ? ALLOW FILTERING "
      }},
 
-    {GET_CONFIGURATION4_TIMESTAMP,   //
+    {GET_CONFIGURATION4_TIMESTAMP,  //
      {GET_CONFIGURATION4_TIMESTAMP,  //
       "SELECT instance_id, timestamp "
       "FROM server_configuration4 "
       "WHERE instance_id = ? "
      }},
 
-    {GET_CONFIGURATION6_TIMESTAMP,   //
+    {GET_CONFIGURATION6_TIMESTAMP,  //
      {GET_CONFIGURATION6_TIMESTAMP,  //
       "SELECT instance_id, timestamp "
       "FROM server_configuration6 "
       "WHERE instance_id = ? "
      }},
 
-    {GET_SERVERS_CONFIG4,   //
+    {GET_SERVERS_CONFIG4,  //
      {GET_SERVERS_CONFIG4,  //
       "SELECT instance_id "
       "FROM server_configuration4 "
      }},
 
-    {GET_SERVERS_CONFIG6,   //
+    {GET_SERVERS_CONFIG6,  //
      {GET_SERVERS_CONFIG6,  //
       "SELECT instance_id "
       "FROM server_configuration6 "
      }},
 
-    {DELETE_SERVER_CONFIG4,   //
+    {DELETE_SERVER_CONFIG4,  //
      {DELETE_SERVER_CONFIG4,  //
       "DELETE FROM server_configuration4 "
       "WHERE instance_id = ? "
       "IF EXISTS "
      }},
 
-    {DELETE_SERVER_CONFIG6,   //
+    {DELETE_SERVER_CONFIG6,  //
      {DELETE_SERVER_CONFIG6,  //
       "DELETE FROM server_configuration6 "
       "WHERE instance_id = ? "
       "IF EXISTS "
      }},
 
-    {GET_SERVERS_CONFIG4_SHARDS_NAME,   //
+    {GET_SERVERS_CONFIG4_SHARDS_NAME,  //
      {GET_SERVERS_CONFIG4_SHARDS_NAME,  //
       "SELECT config_database_name "
       "FROM server_configuration4 "
      }},
 
-    {GET_SERVERS_CONFIG6_SHARDS_NAME,   //
+    {GET_SERVERS_CONFIG6_SHARDS_NAME,  //
      {GET_SERVERS_CONFIG6_SHARDS_NAME,  //
       "SELECT config_database_name "
       "FROM server_configuration6 "

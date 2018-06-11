@@ -105,16 +105,10 @@ std::array<PgSqlTaggedStatement, PgSqlSrvConfigMasterMgr::NUM_STATEMENTS> tagged
      " WHERE instance_id = $1"},
 
     // DELETE_SERVER_CONFIG4
-    {0,
-     {OID_NONE},
-     "DELETE_SERVER_CONFIG4",
-     "TRUNCATE server_configuration4"},
+    {0, {OID_NONE}, "DELETE_SERVER_CONFIG4", "TRUNCATE server_configuration4"},
 
     // DELETE_SERVER_CONFIG6,
-    {0,
-     {OID_NONE},
-     "DELETE_SERVER_CONFIG6",
-     "TRUNCATE server_configuration6"},
+    {0, {OID_NONE}, "DELETE_SERVER_CONFIG6", "TRUNCATE server_configuration6"},
 
     // GET_SERVERS_CONFIG4_SHARDS_NAME
     {0,
@@ -200,7 +194,8 @@ public:
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError, "Could not create bind array for "
                                         "server_configuration[4|6] with server ID: "
-                                            << instance_id << ", shard name: " << config_database_name
+                                            << instance_id
+                                            << ", shard name: " << config_database_name
                                             << ", server configuration: " << server_config
                                             << ", reason: " << ex.what());
         }
@@ -340,8 +335,8 @@ bool PgSqlSrvConfigMasterMgr::addServerConfig4(const std::string& instance_id,
         .arg(config_database_name);
 
     const StatementIndex statement_index = PgSqlSrvConfigMasterMgr::INSERT_SERVER_CONFIG4;
-    return addCommonServerConfiguration(statement_index, instance_id, server_config, config_database,
-                                        config_database_name);
+    return addCommonServerConfiguration(statement_index, instance_id, server_config,
+                                        config_database, config_database_name);
 }
 
 bool PgSqlSrvConfigMasterMgr::addServerConfig6(const std::string& instance_id,
@@ -353,8 +348,8 @@ bool PgSqlSrvConfigMasterMgr::addServerConfig6(const std::string& instance_id,
         .arg(config_database_name);
 
     const StatementIndex statement_index = PgSqlSrvConfigMasterMgr::INSERT_SERVER_CONFIG6;
-    return addCommonServerConfiguration(statement_index, instance_id, server_config, config_database,
-                                        config_database_name);
+    return addCommonServerConfiguration(statement_index, instance_id, server_config,
+                                        config_database, config_database_name);
 }
 
 bool PgSqlSrvConfigMasterMgr::clearServersConfig4() const {

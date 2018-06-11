@@ -31,11 +31,11 @@ public:
         UNKNOWN = 0,
         // the configuration is read from the provided configuration file
         FILE = 1,
-        //the configuration is read from the master database specified in the
-        //provided configuration file
+        // the configuration is read from the master database specified in the
+        // provided configuration file
         MASTER_DATABASE = 2,
-        //the configuration is read from a configuration database specified in the
-        //provided configuration file. There is no need of master database
+        // the configuration is read from a configuration database specified in the
+        // provided configuration file. There is no need of master database
         CONFIG_DATABASE = 3
     };
 

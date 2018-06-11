@@ -21,12 +21,12 @@
 
 #include <dhcpsrv/dhcpsrv_log.h>
 
-#include <stddef.h>     // for NULL
+#include <stddef.h>  // for NULL
 #include <sys/types.h>  // for int32_t, int64_t
 
-#include <boost/assert.hpp>                 // for BOOST_ASSERT
+#include <boost/assert.hpp>  // for BOOST_ASSERT
 #include <boost/uuid/random_generator.hpp>  // for boost::uuids::random_generator
-#include <boost/uuid/uuid.hpp>              // for boost::uuid
+#include <boost/uuid/uuid.hpp>  // for boost::uuid
 #include <boost/uuid/uuid_io.hpp>
 
 #include <string>  // for std::string
@@ -35,7 +35,7 @@ namespace isc {
 namespace dhcp {
 
 StatementMap CqlConfigVersionExchange::tagged_statements_ = {
-    {GET_VERSION,   //
+    {GET_VERSION,  //
      {GET_VERSION,  //
       "SELECT "
       "version, minor "
@@ -47,35 +47,25 @@ public:
     /// @brief Statement tags definitions
     /// @{
     // Get the timestamp of the v4 stored configuration
-    static constexpr StatementTag GET_CONFIGURATION4_TIMESTAMP =
-        "GET_CONFIGURATION4_TIMESTAMP";
+    static constexpr StatementTag GET_CONFIGURATION4_TIMESTAMP = "GET_CONFIGURATION4_TIMESTAMP";
     // Get the timestamp of the v6 stored configuration
-    static constexpr StatementTag GET_CONFIGURATION6_TIMESTAMP =
-        "GET_CONFIGURATION6_TIMESTAMP";
+    static constexpr StatementTag GET_CONFIGURATION6_TIMESTAMP = "GET_CONFIGURATION6_TIMESTAMP";
     // Get only GENERIC server configuration v4
-    static constexpr StatementTag GET_GENERIC_CONFIGURATION4 =
-        "GET_GENERIC_CONFIGURATION4";
+    static constexpr StatementTag GET_GENERIC_CONFIGURATION4 = "GET_GENERIC_CONFIGURATION4";
     // Get only GENERIC server configuration v6
-    static constexpr StatementTag GET_GENERIC_CONFIGURATION6 =
-        "GET_GENERIC_CONFIGURATION6";
+    static constexpr StatementTag GET_GENERIC_CONFIGURATION6 = "GET_GENERIC_CONFIGURATION6";
     // Get only JSON server configuration v4
-    static constexpr StatementTag GET_JSON_CONFIGURATION4 =
-        "GET_JSON_CONFIGURATION4";
+    static constexpr StatementTag GET_JSON_CONFIGURATION4 = "GET_JSON_CONFIGURATION4";
     // Get only JSON server configuration v6
-    static constexpr StatementTag GET_JSON_CONFIGURATION6 =
-        "GET_JSON_CONFIGURATION6";
+    static constexpr StatementTag GET_JSON_CONFIGURATION6 = "GET_JSON_CONFIGURATION6";
     // Add server configuration v4
-    static constexpr StatementTag INSERT_CONFIGURATION4 =
-        "INSERT_CONFIGURATION4";
+    static constexpr StatementTag INSERT_CONFIGURATION4 = "INSERT_CONFIGURATION4";
     // Add server configuration v6
-    static constexpr StatementTag INSERT_CONFIGURATION6 =
-        "INSERT_CONFIGURATION6";
+    static constexpr StatementTag INSERT_CONFIGURATION6 = "INSERT_CONFIGURATION6";
     // Update server configuration v4
-    static constexpr StatementTag UPDATE_CONFIGURATION4 =
-        "UPDATE_CONFIGURATION4";
+    static constexpr StatementTag UPDATE_CONFIGURATION4 = "UPDATE_CONFIGURATION4";
     // Update server configuration v6
-    static constexpr StatementTag UPDATE_CONFIGURATION6 =
-        "UPDATE_CONFIGURATION6";
+    static constexpr StatementTag UPDATE_CONFIGURATION6 = "UPDATE_CONFIGURATION6";
     /// @}
 
     /// @brief Constructor
@@ -94,8 +84,7 @@ public:
     /// @param data array of bound objects representing data to be retrieved.
     /// @param statement_tag prepared statement being executed; defaults to an
     /// invalid index
-    void createBindForSelect(AnyArray& data,
-                             StatementTag statement_tag = NULL) override;
+    void createBindForSelect(AnyArray& data, StatementTag statement_tag = NULL) override;
 
     /// @brief Copy received data into @ref SrvConfigInfo object
     ///
@@ -119,8 +108,7 @@ public:
     /// @param statement_tag prepared Cassandra statement being executed
     ///
     /// @return true if statement has been [applied], false otherwise.
-    SrvConfigInfoCollection getCommon(CqlConnection& connection,
-                                      StatementTag statement_tag);
+    SrvConfigInfoCollection getCommon(CqlConnection& connection, StatementTag statement_tag);
 
     /// @brief Common method of executing INSERT statements for the shard
     ///     database in the Cassandra database.
@@ -177,7 +165,7 @@ constexpr StatementTag CqlConfigExchange::UPDATE_CONFIGURATION4;
 constexpr StatementTag CqlConfigExchange::UPDATE_CONFIGURATION6;
 
 StatementMap CqlConfigExchange::tagged_statements_ = {
-    {GET_CONFIGURATION4_TIMESTAMP,   //
+    {GET_CONFIGURATION4_TIMESTAMP,  //
      {GET_CONFIGURATION4_TIMESTAMP,  //
       "SELECT config_id, timestamp "
       "FROM server_configuration4 "
@@ -185,7 +173,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // GET_CONFIGURATION6_TIMESTAMP
-    {GET_CONFIGURATION6_TIMESTAMP,   //
+    {GET_CONFIGURATION6_TIMESTAMP,  //
      {GET_CONFIGURATION6_TIMESTAMP,  //
       "SELECT config_id, timestamp "
       "FROM server_configuration6 "
@@ -193,7 +181,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // GET_GENERIC_CONFIGURATION4
-    {GET_GENERIC_CONFIGURATION4,   //
+    {GET_GENERIC_CONFIGURATION4,  //
      {GET_GENERIC_CONFIGURATION4,  //
       "SELECT config_id, timestamp, generic_data "
       "FROM server_configuration4 "
@@ -201,14 +189,14 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // GET_GENERIC_CONFIGURATION6
-    {GET_GENERIC_CONFIGURATION6,   //
+    {GET_GENERIC_CONFIGURATION6,  //
      {GET_GENERIC_CONFIGURATION6,  //
       "SELECT config_id, timestamp, generic_data "
       "FROM server_configuration6 LIMIT 1 "
      }},
 
     // GET_JSON_CONFIGURATION4
-    {GET_JSON_CONFIGURATION4,   //
+    {GET_JSON_CONFIGURATION4,  //
      {GET_JSON_CONFIGURATION4,  //
       "SELECT config_id, timestamp, json_data "
       "FROM server_configuration4 "
@@ -216,7 +204,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // GET_JSON_CONFIGURATION6
-    {GET_JSON_CONFIGURATION6,   //
+    {GET_JSON_CONFIGURATION6,  //
      {GET_JSON_CONFIGURATION6,  //
       "SELECT config_id, timestamp, json_data "
       "FROM server_configuration6 "
@@ -224,7 +212,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // INSERT_CONFIGURATION4
-    {INSERT_CONFIGURATION4,   //
+    {INSERT_CONFIGURATION4,  //
      {INSERT_CONFIGURATION4,  //
       "INSERT INTO server_configuration4 "
       "(config_id, timestamp, json_data, generic_data) "
@@ -232,7 +220,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // INSERT_CONFIGURATION6
-    {INSERT_CONFIGURATION6,   //
+    {INSERT_CONFIGURATION6,  //
      {INSERT_CONFIGURATION6,  //
       "INSERT INTO server_configuration6 "
       "(config_id, timestamp, json_data, generic_data) "
@@ -240,7 +228,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // UPDATE_CONFIGURATION4
-    {UPDATE_CONFIGURATION4,   //
+    {UPDATE_CONFIGURATION4,  //
      {UPDATE_CONFIGURATION4,  //
       "UPDATE server_configuration4 "
       "SET timestamp = ?, json_data = ?, "
@@ -249,7 +237,7 @@ StatementMap CqlConfigExchange::tagged_statements_ = {
      }},
 
     // UPDATE_CONFIGURATION6
-    {UPDATE_CONFIGURATION6,   //
+    {UPDATE_CONFIGURATION6,  //
      {UPDATE_CONFIGURATION6,  //
       "UPDATE server_configuration6 "
       "SET timestamp = ?, json_data = ?, "
@@ -264,9 +252,8 @@ CqlConfigExchange::CqlConfigExchange() : config_data_(new SrvConfigInfo()) {
 CqlConfigExchange::~CqlConfigExchange() {
 }
 
-void
-CqlConfigExchange::createBindForSelect(
-    AnyArray& data, StatementTag statement_tag /* = NULL */) {
+void CqlConfigExchange::createBindForSelect(AnyArray& data,
+                                            StatementTag statement_tag /* = NULL */) {
     // Start with a fresh array.
     data.clear();
 
@@ -281,29 +268,25 @@ CqlConfigExchange::createBindForSelect(
     }
 }
 
-boost::any
-CqlConfigExchange::retrieve() {
+boost::any CqlConfigExchange::retrieve() {
     SrvConfigInfoPtr config(new SrvConfigInfo(*config_data_));
     return config;
 }
 
-std::string
-CqlConfigExchange::generateUuid() {
+std::string CqlConfigExchange::generateUuid() {
     boost::uuids::random_generator gen;
     boost::uuids::uuid unique_id = gen();
     std::string config_id = boost::lexical_cast<std::string>(unique_id);
     return config_id;
 }
 
-SrvConfigInfoCollection
-CqlConfigExchange::getCommon(CqlConnection& connection,
-                             StatementTag statement_tag) {
+SrvConfigInfoCollection CqlConfigExchange::getCommon(CqlConnection& connection,
+                                                     StatementTag statement_tag) {
 
     // Bind to array.
     AnyArray where_values;
 
-    AnyArray collection =
-        executeSelect(connection, where_values, statement_tag, true);
+    AnyArray collection = executeSelect(connection, where_values, statement_tag, true);
 
     SrvConfigInfoCollection result;
 
@@ -319,12 +302,11 @@ CqlConfigExchange::getCommon(CqlConnection& connection,
     return result;
 }
 
-bool
-CqlConfigExchange::insertCommon(CqlConnection& connection,
-                                const std::string& config_id,
-                                const std::string& json_data,
-                                const std::string& generic_data,
-                                StatementTag statement_tag) {
+bool CqlConfigExchange::insertCommon(CqlConnection& connection,
+                                     const std::string& config_id,
+                                     const std::string& json_data,
+                                     const std::string& generic_data,
+                                     StatementTag statement_tag) {
 
     cass_int64_t config_timestamp = static_cast<cass_int64_t>(time(NULL));
 
@@ -340,18 +322,16 @@ CqlConfigExchange::insertCommon(CqlConnection& connection,
     return true;
 }
 
-bool
-CqlConfigExchange::updateCommon(CqlConnection& connection,
-                                const std::string& config_id,
-                                const int64_t old_timestamp,
-                                const std::string& json_data,
-                                const std::string& generic_data,
-                                StatementTag statement_tag) {
+bool CqlConfigExchange::updateCommon(CqlConnection& connection,
+                                     const std::string& config_id,
+                                     const int64_t old_timestamp,
+                                     const std::string& json_data,
+                                     const std::string& generic_data,
+                                     StatementTag statement_tag) {
 
     // config_timestamp
     cass_int64_t config_timestamp = static_cast<cass_int64_t>(time(NULL));
-    cass_int64_t old_config_timestamp =
-        static_cast<cass_int64_t>(old_timestamp);
+    cass_int64_t old_config_timestamp = static_cast<cass_int64_t>(old_timestamp);
 
     // Bind to array.
     AnyArray data;
@@ -366,8 +346,7 @@ CqlConfigExchange::updateCommon(CqlConnection& connection,
     return true;
 }
 
-CqlSrvConfigMgr::CqlSrvConfigMgr(
-    const DatabaseConnection::ParameterMap& parameters)
+CqlSrvConfigMgr::CqlSrvConfigMgr(const DatabaseConnection::ParameterMap& parameters)
     : SrvConfigMgr(), dbconn_(parameters) {
     dbconn_.openDatabase();
     dbconn_.prepareStatements(CqlConfigExchange::tagged_statements_);
@@ -377,13 +356,11 @@ CqlSrvConfigMgr::CqlSrvConfigMgr(
 CqlSrvConfigMgr::~CqlSrvConfigMgr() {
 }
 
-SrvConfigInfoPtr
-CqlSrvConfigMgr::getConfig4Timestamp() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_SRV_CONFIG4_TIMESTAMP);
+SrvConfigInfoPtr CqlSrvConfigMgr::getConfig4Timestamp() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_CONFIG4_TIMESTAMP);
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
-    SrvConfigInfoCollection collection = config_exchange->getCommon(
-        dbconn_, CqlConfigExchange::GET_CONFIGURATION4_TIMESTAMP);
+    SrvConfigInfoCollection collection =
+        config_exchange->getCommon(dbconn_, CqlConfigExchange::GET_CONFIGURATION4_TIMESTAMP);
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -393,13 +370,11 @@ CqlSrvConfigMgr::getConfig4Timestamp() const {
     return result;
 }
 
-SrvConfigInfoPtr
-CqlSrvConfigMgr::getConfig6Timestamp() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_SRV_CONFIG6_TIMESTAMP);
+SrvConfigInfoPtr CqlSrvConfigMgr::getConfig6Timestamp() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_CONFIG6_TIMESTAMP);
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
-    SrvConfigInfoCollection collection = config_exchange->getCommon(
-        dbconn_, CqlConfigExchange::GET_CONFIGURATION6_TIMESTAMP);
+    SrvConfigInfoCollection collection =
+        config_exchange->getCommon(dbconn_, CqlConfigExchange::GET_CONFIGURATION6_TIMESTAMP);
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -409,13 +384,11 @@ CqlSrvConfigMgr::getConfig6Timestamp() const {
     return result;
 }
 
-SrvConfigInfoPtr
-CqlSrvConfigMgr::getGenericConfig4() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_SRV_CONFIG4_GENERIC);
+SrvConfigInfoPtr CqlSrvConfigMgr::getGenericConfig4() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_CONFIG4_GENERIC);
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
-    SrvConfigInfoCollection collection = config_exchange->getCommon(
-        dbconn_, CqlConfigExchange::GET_GENERIC_CONFIGURATION4);
+    SrvConfigInfoCollection collection =
+        config_exchange->getCommon(dbconn_, CqlConfigExchange::GET_GENERIC_CONFIGURATION4);
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -425,13 +398,11 @@ CqlSrvConfigMgr::getGenericConfig4() const {
     return result;
 }
 
-SrvConfigInfoPtr
-CqlSrvConfigMgr::getGenericConfig6() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_SRV_CONFIG6_GENERIC);
+SrvConfigInfoPtr CqlSrvConfigMgr::getGenericConfig6() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_CONFIG6_GENERIC);
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
-    SrvConfigInfoCollection collection = config_exchange->getCommon(
-        dbconn_, CqlConfigExchange::GET_GENERIC_CONFIGURATION6);
+    SrvConfigInfoCollection collection =
+        config_exchange->getCommon(dbconn_, CqlConfigExchange::GET_GENERIC_CONFIGURATION6);
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -441,13 +412,11 @@ CqlSrvConfigMgr::getGenericConfig6() const {
     return result;
 }
 
-SrvConfigInfoPtr
-CqlSrvConfigMgr::getJsonConfig4() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_SRV_CONFIG4_JSON);
+SrvConfigInfoPtr CqlSrvConfigMgr::getJsonConfig4() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_CONFIG4_JSON);
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
-    SrvConfigInfoCollection collection = config_exchange->getCommon(
-        dbconn_, CqlConfigExchange::GET_JSON_CONFIGURATION4);
+    SrvConfigInfoCollection collection =
+        config_exchange->getCommon(dbconn_, CqlConfigExchange::GET_JSON_CONFIGURATION4);
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -457,13 +426,11 @@ CqlSrvConfigMgr::getJsonConfig4() const {
     return result;
 }
 
-SrvConfigInfoPtr
-CqlSrvConfigMgr::getJsonConfig6() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_SRV_CONFIG6_JSON);
+SrvConfigInfoPtr CqlSrvConfigMgr::getJsonConfig6() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_SRV_CONFIG6_JSON);
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
-    SrvConfigInfoCollection collection = config_exchange->getCommon(
-        dbconn_, CqlConfigExchange::GET_JSON_CONFIGURATION6);
+    SrvConfigInfoCollection collection =
+        config_exchange->getCommon(dbconn_, CqlConfigExchange::GET_JSON_CONFIGURATION6);
 
     SrvConfigInfoPtr result;
     if (!collection.empty()) {
@@ -473,23 +440,18 @@ CqlSrvConfigMgr::getJsonConfig6() const {
     return result;
 }
 
-std::string
-CqlSrvConfigMgr::getType() const {
+std::string CqlSrvConfigMgr::getType() const {
     return std::string("cql");
 }
 
-VersionPair
-CqlSrvConfigMgr::getVersion() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_GET_VERSION);
+VersionPair CqlSrvConfigMgr::getVersion() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_VERSION);
 
-    std::unique_ptr<CqlVersionExchange> version_exchange(
-        new CqlVersionExchange());
+    std::unique_ptr<CqlVersionExchange> version_exchange(new CqlVersionExchange());
     return version_exchange->retrieveVersion(dbconn_);
 }
 
-std::string
-CqlSrvConfigMgr::getDBVersion() {
+std::string CqlSrvConfigMgr::getDBVersion() {
     std::stringstream tmp;
     tmp << "CQL backend " << CQL_SCHEMA_VERSION_MAJOR;
     tmp << "." << CQL_SCHEMA_VERSION_MINOR;
@@ -499,12 +461,10 @@ CqlSrvConfigMgr::getDBVersion() {
     return tmp.str();
 }
 
-bool
-CqlSrvConfigMgr::updateConfig4(const int64_t config_timestamp,
-                               const std::string& json_data,
-                               const std::string& generic_data) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_REQUEST_UPDATE_SRV_CONFIG4);
+bool CqlSrvConfigMgr::updateConfig4(const int64_t config_timestamp,
+                                    const std::string& json_data,
+                                    const std::string& generic_data) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_REQUEST_UPDATE_SRV_CONFIG4);
 
     // Initiate CQL transaction as we will have to update the config
     // from two steps and we don't want anybody else to write another
@@ -526,13 +486,11 @@ CqlSrvConfigMgr::updateConfig4(const int64_t config_timestamp,
         return false;
     }
 
-    if (!updateConfig4(current_config->config_id_, config_timestamp, json_data,
-                       generic_data)) {
+    if (!updateConfig4(current_config->config_id_, config_timestamp, json_data, generic_data)) {
         // The configuration timestamp has been changed since the last
         // configuration read until this update.
 
-        LOG_WARN(dhcpsrv_logger,
-                 DHCPSRV_CQL_UPDATE_SRV_CONFIG4_TIMESTAMP_CHANGED)
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CQL_UPDATE_SRV_CONFIG4_TIMESTAMP_CHANGED)
             .arg(config_timestamp)
             .arg(current_config->timestamp_);
 
@@ -542,12 +500,10 @@ CqlSrvConfigMgr::updateConfig4(const int64_t config_timestamp,
     return true;
 }
 
-bool
-CqlSrvConfigMgr::updateConfig6(const int64_t config_timestamp,
-                               const std::string& json_data,
-                               const std::string& generic_data) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_REQUEST_UPDATE_SRV_CONFIG6);
+bool CqlSrvConfigMgr::updateConfig6(const int64_t config_timestamp,
+                                    const std::string& json_data,
+                                    const std::string& generic_data) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_REQUEST_UPDATE_SRV_CONFIG6);
 
     // Initiate CQL transaction as we will have to update the config
     // from two steps and we don't want anybody else to write another
@@ -569,12 +525,10 @@ CqlSrvConfigMgr::updateConfig6(const int64_t config_timestamp,
         return false;
     }
 
-    if (!updateConfig6(current_config->config_id_, config_timestamp, json_data,
-                       generic_data)) {
+    if (!updateConfig6(current_config->config_id_, config_timestamp, json_data, generic_data)) {
         // The configuration timestamp has been changed since the last
         // configuration read until this update.
-        LOG_WARN(dhcpsrv_logger,
-                 DHCPSRV_CQL_UPDATE_SRV_CONFIG6_TIMESTAMP_CHANGED)
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CQL_UPDATE_SRV_CONFIG6_TIMESTAMP_CHANGED)
             .arg(config_timestamp)
             .arg(current_config->timestamp_);
 
@@ -584,20 +538,17 @@ CqlSrvConfigMgr::updateConfig6(const int64_t config_timestamp,
     return true;
 }
 
-bool
-CqlSrvConfigMgr::insertConfig4(const std::string& json_data,
-                               const std::string& generic_data) const {
+bool CqlSrvConfigMgr::insertConfig4(const std::string& json_data,
+                                    const std::string& generic_data) const {
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     const std::string config_id = config_exchange->generateUuid();
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_INSERT_SRV_CONFIG4)
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_INSERT_SRV_CONFIG4)
         .arg(config_id);
 
     try {
 
-        config_exchange->insertCommon(dbconn_, config_id, json_data,
-                                      generic_data,
+        config_exchange->insertCommon(dbconn_, config_id, json_data, generic_data,
                                       CqlConfigExchange::INSERT_CONFIGURATION4);
 
     } catch (const Exception&) {
@@ -607,19 +558,16 @@ CqlSrvConfigMgr::insertConfig4(const std::string& json_data,
     return true;
 }
 
-bool
-CqlSrvConfigMgr::insertConfig6(const std::string& json_data,
-                               const std::string& generic_data) const {
+bool CqlSrvConfigMgr::insertConfig6(const std::string& json_data,
+                                    const std::string& generic_data) const {
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     const std::string config_id = config_exchange->generateUuid();
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_INSERT_SRV_CONFIG6)
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_INSERT_SRV_CONFIG6)
         .arg(config_id);
 
     try {
-        config_exchange->insertCommon(dbconn_, config_id, json_data,
-                                      generic_data,
+        config_exchange->insertCommon(dbconn_, config_id, json_data, generic_data,
                                       CqlConfigExchange::INSERT_CONFIGURATION6);
     } catch (const Exception&) {
         return false;
@@ -628,19 +576,16 @@ CqlSrvConfigMgr::insertConfig6(const std::string& json_data,
     return true;
 }
 
-bool
-CqlSrvConfigMgr::updateConfig4(const std::string& config_id,
-                               const int64_t old_timestamp,
-                               const std::string& json_data,
-                               const std::string& generic_data) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_UPDATE_SRV_CONFIG4)
+bool CqlSrvConfigMgr::updateConfig4(const std::string& config_id,
+                                    const int64_t old_timestamp,
+                                    const std::string& json_data,
+                                    const std::string& generic_data) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_UPDATE_SRV_CONFIG4)
         .arg(config_id);
 
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     try {
-        config_exchange->updateCommon(dbconn_, config_id, old_timestamp,
-                                      json_data, generic_data,
+        config_exchange->updateCommon(dbconn_, config_id, old_timestamp, json_data, generic_data,
                                       CqlConfigExchange::UPDATE_CONFIGURATION4);
     } catch (const Exception&) {
         return false;
@@ -649,19 +594,16 @@ CqlSrvConfigMgr::updateConfig4(const std::string& config_id,
     return true;
 }
 
-bool
-CqlSrvConfigMgr::updateConfig6(const std::string& config_id,
-                               const int64_t old_timestamp,
-                               const std::string& json_data,
-                               const std::string& generic_data) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_UPDATE_SRV_CONFIG6)
+bool CqlSrvConfigMgr::updateConfig6(const std::string& config_id,
+                                    const int64_t old_timestamp,
+                                    const std::string& json_data,
+                                    const std::string& generic_data) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_UPDATE_SRV_CONFIG6)
         .arg(config_id);
 
     std::unique_ptr<CqlConfigExchange> config_exchange(new CqlConfigExchange());
     try {
-        config_exchange->updateCommon(dbconn_, config_id, old_timestamp,
-                                      json_data, generic_data,
+        config_exchange->updateCommon(dbconn_, config_id, old_timestamp, json_data, generic_data,
                                       CqlConfigExchange::UPDATE_CONFIGURATION6);
     } catch (const Exception&) {
         return false;
@@ -670,22 +612,18 @@ CqlSrvConfigMgr::updateConfig6(const std::string& config_id,
     return true;
 }
 
-bool
-CqlSrvConfigMgr::startTransaction() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_CQL_BEGIN_TRANSACTION);
+bool CqlSrvConfigMgr::startTransaction() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_BEGIN_TRANSACTION);
     dbconn_.startTransaction();
     return true;
 }
 
-void
-CqlSrvConfigMgr::commit() {
+void CqlSrvConfigMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_COMMIT);
     dbconn_.commit();
 }
 
-void
-CqlSrvConfigMgr::rollback() {
+void CqlSrvConfigMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ROLLBACK);
     dbconn_.rollback();
 }

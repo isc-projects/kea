@@ -114,4 +114,4 @@ private:
 }  // namespace dhcp
 }  // namespace isc
 
-#endif // SRV_CONFIG_MGR_FACTORY_H
+#endif  // SRV_CONFIG_MGR_FACTORY_H

@@ -35,8 +35,7 @@ class CqlConfigExchange;
 class CqlSrvConfigMgr : public SrvConfigMgr {
 public:
     /// @brief Constructor
-    explicit CqlSrvConfigMgr(
-        const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlSrvConfigMgr(const DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor
     virtual ~CqlSrvConfigMgr();
@@ -133,8 +132,7 @@ private:
     /// CQL error.
     ///
     /// @return true if the configuration was added, false if not.
-    bool insertConfig4(const std::string& json_data,
-                       const std::string& generic_data) const;
+    bool insertConfig4(const std::string& json_data, const std::string& generic_data) const;
 
     /// @brief Inserts a new DHCPv6 server configuration.
     ///
@@ -148,8 +146,7 @@ private:
     /// CQL error.
     ///
     /// @return true if the configuration was added, false if not.
-    bool insertConfig6(const std::string& json_data,
-                       const std::string& generic_data) const;
+    bool insertConfig6(const std::string& json_data, const std::string& generic_data) const;
 
     /// @brief Updates an existing DHCPv4 server configuration.
     ///

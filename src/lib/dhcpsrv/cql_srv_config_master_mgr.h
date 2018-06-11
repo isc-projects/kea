@@ -111,7 +111,8 @@ public:
     /// @param[out] server_configurations a list of server configurations being retrieved
     ///
     /// @return true if server configuration has been successfully retrieved, false otherwise
-    virtual bool getConfig4(const std::string& config_database_name,
+    virtual bool
+    getConfig4(const std::string& config_database_name,
                std::vector<SrvConfigMasterInfoPtr>& server_configurations) const override;
 
     /// @brief Retrieves configurations of DHCPv6 servers belonging to a given
@@ -121,7 +122,8 @@ public:
     /// @param[out] server_configurations a list of server configurations being retrieved
     ///
     /// @return true if server configuration has been successfully retrieved, false otherwise
-    virtual bool getConfig6(const std::string& config_database_name,
+    virtual bool
+    getConfig6(const std::string& config_database_name,
                std::vector<SrvConfigMasterInfoPtr>& server_configurations) const override;
 
     /// @brief Retrieves timestamp for a DHCPv4 shard server configuration.

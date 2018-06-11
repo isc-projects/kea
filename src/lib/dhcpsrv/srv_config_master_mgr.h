@@ -95,8 +95,7 @@ public:
     ///
     /// @return smart pointer to the configuration (or NULL if a configuration
     /// is not found)
-    virtual SrvConfigMasterInfoPtr
-    getConfig4(const std::string& instance_id) const = 0;
+    virtual SrvConfigMasterInfoPtr getConfig4(const std::string& instance_id) const = 0;
 
     /// @brief Returns DHCPv6 instance configuration information
     ///
@@ -104,16 +103,13 @@ public:
     ///
     /// @return smart pointer to the configuration (or NULL if a configuration
     /// is not found)
-    virtual SrvConfigMasterInfoPtr
-    getConfig6(const std::string& instance_id) const = 0;
+    virtual SrvConfigMasterInfoPtr getConfig6(const std::string& instance_id) const = 0;
 
-    virtual bool
-    getConfig4(const std::string& config_database_name,
-               std::vector<SrvConfigMasterInfoPtr>& serverInfo) const = 0;
+    virtual bool getConfig4(const std::string& config_database_name,
+                            std::vector<SrvConfigMasterInfoPtr>& serverInfo) const = 0;
 
-    virtual bool
-    getConfig6(const std::string& config_database_name,
-               std::vector<SrvConfigMasterInfoPtr>& serverInfo) const = 0;
+    virtual bool getConfig6(const std::string& config_database_name,
+                            std::vector<SrvConfigMasterInfoPtr>& serverInfo) const = 0;
 
     virtual SrvConfigMasterInfoPtr
     getMasterConfig4Timestamp(const std::string& instance_id) const = 0;
@@ -121,11 +117,9 @@ public:
     virtual SrvConfigMasterInfoPtr
     getMasterConfig6Timestamp(const std::string& instance_id) const = 0;
 
-    virtual bool
-    getServersConfig4ShardsName(std::set<std::string>& shards_list) const = 0;
+    virtual bool getServersConfig4ShardsName(std::set<std::string>& shards_list) const = 0;
 
-    virtual bool
-    getServersConfig6ShardsName(std::set<std::string>& shards_list) const = 0;
+    virtual bool getServersConfig6ShardsName(std::set<std::string>& shards_list) const = 0;
 
     /// @brief Start Transaction
     ///

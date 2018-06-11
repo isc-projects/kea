@@ -71,33 +71,26 @@ std::array<TaggedStatement, MySqlSrvConfigMasterMgr::NUM_STATEMENTS> tagged_stat
      " FROM server_configuration6"
      " WHERE config_database_name = ?"},
 
-    {MySqlSrvConfigMasterMgr::GET_CONFIGURATION4_TIMESTAMP,
-     "SELECT instance_id, timestamp"
-     " FROM server_configuration4"
-     " WHERE instance_id = ? "},
+    {MySqlSrvConfigMasterMgr::GET_CONFIGURATION4_TIMESTAMP, "SELECT instance_id, timestamp"
+                                                            " FROM server_configuration4"
+                                                            " WHERE instance_id = ? "},
 
-    {MySqlSrvConfigMasterMgr::GET_CONFIGURATION6_TIMESTAMP,
-     "SELECT instance_id, timestamp"
-     " FROM server_configuration6"
-     " WHERE instance_id = ? "},
+    {MySqlSrvConfigMasterMgr::GET_CONFIGURATION6_TIMESTAMP, "SELECT instance_id, timestamp"
+                                                            " FROM server_configuration6"
+                                                            " WHERE instance_id = ? "},
 
-    {MySqlSrvConfigMasterMgr::DELETE_SERVER_CONFIG4,
-     "TRUNCATE server_configuration4 "},
+    {MySqlSrvConfigMasterMgr::DELETE_SERVER_CONFIG4, "TRUNCATE server_configuration4 "},
 
-    {MySqlSrvConfigMasterMgr::DELETE_SERVER_CONFIG6,
-     "TRUNCATE server_configuration6 "},
+    {MySqlSrvConfigMasterMgr::DELETE_SERVER_CONFIG6, "TRUNCATE server_configuration6 "},
 
-    {MySqlSrvConfigMasterMgr::GET_SERVERS_CONFIG4_SHARDS_NAME,
-     "SELECT config_database_name"
-     " FROM server_configuration4"},
+    {MySqlSrvConfigMasterMgr::GET_SERVERS_CONFIG4_SHARDS_NAME, "SELECT config_database_name"
+                                                               " FROM server_configuration4"},
 
-    {MySqlSrvConfigMasterMgr::GET_SERVERS_CONFIG6_SHARDS_NAME,
-     "SELECT config_database_name"
-     " FROM server_configuration6"},
+    {MySqlSrvConfigMasterMgr::GET_SERVERS_CONFIG6_SHARDS_NAME, "SELECT config_database_name"
+                                                               " FROM server_configuration6"},
 
-    {MySqlSrvConfigMasterMgr::GET_VERSION,
-     "SELECT version, minor"
-     " FROM master_schema_version"},
+    {MySqlSrvConfigMasterMgr::GET_VERSION, "SELECT version, minor"
+                                           " FROM master_schema_version"},
 }};
 
 }  // namespace
@@ -512,8 +505,8 @@ bool MySqlSrvConfigMasterMgr::addServerConfig4(const std::string& instance_id,
         .arg(config_database_name);
 
     const StatementIndex statement_index = MySqlSrvConfigMasterMgr::INSERT_SERVER_CONFIG4;
-    return addCommonServerConfiguration(statement_index, instance_id, server_config, config_database,
-                                        config_database_name);
+    return addCommonServerConfiguration(statement_index, instance_id, server_config,
+                                        config_database, config_database_name);
 }
 
 bool MySqlSrvConfigMasterMgr::addServerConfig6(const std::string& instance_id,
@@ -525,8 +518,8 @@ bool MySqlSrvConfigMasterMgr::addServerConfig6(const std::string& instance_id,
         .arg(config_database_name);
 
     const StatementIndex statement_index = MySqlSrvConfigMasterMgr::INSERT_SERVER_CONFIG6;
-    return addCommonServerConfiguration(statement_index, instance_id, server_config, config_database,
-                                        config_database_name);
+    return addCommonServerConfiguration(statement_index, instance_id, server_config,
+                                        config_database, config_database_name);
 }
 
 bool MySqlSrvConfigMasterMgr::clearServersConfig4() const {

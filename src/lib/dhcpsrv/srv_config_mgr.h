@@ -187,4 +187,4 @@ public:
 }  // namespace dhcp
 }  // namespace isc
 
-#endif // SRV_CONFIG_MGR_H
+#endif  // SRV_CONFIG_MGR_H

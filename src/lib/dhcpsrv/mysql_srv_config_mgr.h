@@ -181,20 +181,20 @@ public:
     ///
     /// The contents of the enum are indexes into the list of SQL statements
     enum StatementIndex {
-        GET_VERSION,                   // Obtain version number
+        GET_VERSION,  // Obtain version number
         GET_CONFIGURATION4_TIMESTAMP,  // Get the timestamp of the v4 stored
                                        // configuration
         GET_CONFIGURATION6_TIMESTAMP,  // Get the timestamp of the v6 stored
                                        // configuration
-        GET_JSON_CONFIGURATION4,       // Get only JSON server configuration v4
-        GET_JSON_CONFIGURATION6,       // Get only JSON server configuration v6
-        GET_GENERIC_CONFIGURATION4,    // Get only GENERIC server configuration v4
-        GET_GENERIC_CONFIGURATION6,    // Get only GENERIC server configuration v6
-        INSERT_CONFIGURATION4,         // Add server configuration v4
-        INSERT_CONFIGURATION6,         // Add server configuration v6
-        UPDATE_CONFIGURATION4,         // Update server configuration v4
-        UPDATE_CONFIGURATION6,         // Update server configuration v6
-        NUM_STATEMENTS                 // Number of statements
+        GET_JSON_CONFIGURATION4,  // Get only JSON server configuration v4
+        GET_JSON_CONFIGURATION6,  // Get only JSON server configuration v6
+        GET_GENERIC_CONFIGURATION4,  // Get only GENERIC server configuration v4
+        GET_GENERIC_CONFIGURATION6,  // Get only GENERIC server configuration v6
+        INSERT_CONFIGURATION4,  // Add server configuration v4
+        INSERT_CONFIGURATION6,  // Add server configuration v6
+        UPDATE_CONFIGURATION4,  // Update server configuration v4
+        UPDATE_CONFIGURATION6,  // Update server configuration v6
+        NUM_STATEMENTS  // Number of statements
     };
 
 private:
