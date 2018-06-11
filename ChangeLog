@@ -1,3 +1,10 @@
+1424.	[doc]		marcin
+	List of hooks libraries provided by ISC includes an
+	information which Kea servers the libraries can be attached
+	to. The detailed description of each supported hooks library
+	also contains this information.
+	(Trac #5613, git 9d6f8de3d988c42c413a7d628e31854e9c80d8c9)
+
 1423.	[bug]		tmark
 	kea-dhcp4 and kea-dhcp6 now retain and emit global, scalar
 	parameters specified in their configuration.
