@@ -26,7 +26,7 @@
     directly. That is the goal this library intends to fulfill.
 
     <note>
-      <para>This library may only be attached to <command>kea-dhcp4</command>
+      <para>This library may only be loaded by <command>kea-dhcp4</command>
       or <command>kea-dhcp6</command> process.
       </para>
     </note>
