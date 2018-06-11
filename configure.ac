@@ -1176,7 +1176,8 @@ fi
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
 # Disable threads: they seems to break things on some systems
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+# As now we use threads in boost ASIO this is commented out...
+# CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
 
 # We tried to stay header only
 if test "x${BOOST_LIBS}" = "x"; then

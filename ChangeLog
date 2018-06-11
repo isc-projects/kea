@@ -1,3 +1,8 @@
+1422.	[build]		fdupont
+	Commented out BOOST_ASIO_DISABLE_THREADS in configure to reflect
+	the current use of threads by boost ASIO in Kea.
+	(Trac #5615, git xxx)
+
 1421.	[build]		marcin
 	Moved libdhcp_ha (High Availability) hooks library from
 	premium to main Kea repository and changed its license to
