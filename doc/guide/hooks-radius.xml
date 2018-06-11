@@ -24,6 +24,12 @@
     receive additional RADIUS attributes. As such, the alternative
     looks more appealing: to extend DHCP server to talk to RADIUS
     directly. That is the goal this library intends to fulfill.
+
+    <note>
+      <para>This library may only be attached to <command>kea-dhcp4</command>
+      or <command>kea-dhcp6</command> process.
+      </para>
+    </note>
   </para>
   <para>
     The major feature of the library is the ability to use RADIUS
