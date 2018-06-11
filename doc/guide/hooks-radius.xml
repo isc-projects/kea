@@ -233,7 +233,7 @@ C++ Compiler:
   CXX_VERSION:     g++ (GCC) 4.8.5 20150623 (Red Hat 4.8.5-16)
   CXX_STANDARD:    201103
   DEFS:            -DHAVE_CONFIG_H
-  CPPFLAGS:         -DOS_LINUX  -DBOOST_ASIO_HEADER_ONLY -DBOOST_ASIO_DISABLE_THREADS=1
+  CPPFLAGS:         -DOS_LINUX  -DBOOST_ASIO_HEADER_ONLY
   CXXFLAGS:        -g -O2
   LDFLAGS:          -lpthread
   KEA_CXXFLAGS:     -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare -pthread -Wno-missing-field-initializers -fPIC
