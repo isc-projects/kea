@@ -561,6 +561,7 @@ TEST_F(SrvConfigTest, unparse) {
 // Verifies that the toElement method does not miss host reservations
 TEST_F(SrvConfigTest, unparseHR) {
     // DHCPv4 version
+    CfgMgr::instance().setFamily(AF_INET);
     SrvConfig conf4(32);
 
     // Add a plain subnet
