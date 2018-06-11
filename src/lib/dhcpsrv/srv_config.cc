@@ -34,7 +34,8 @@ SrvConfig::SrvConfig()
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
-      d2_client_config_(new D2ClientConfig()) {
+      d2_client_config_(new D2ClientConfig()),
+      configured_globals_(Element::createMap()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -50,7 +51,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       cfg_host_operations6_(CfgHostOperations::createConfig6()),
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
-      d2_client_config_(new D2ClientConfig()) {
+      d2_client_config_(new D2ClientConfig()),
+      configured_globals_(Element::createMap()) {
 }
 
 std::string
@@ -206,6 +208,21 @@ SrvConfig::updateStatistics() {
     }
 }
 
+void 
+SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
+    if (config->getType() != Element::map) {
+        isc_throw(BadValue, "extractConfiguredGlobals must be given a map element");
+    }
+
+    const std::map<std::string, ConstElementPtr>& values = config->mapValue();
+    for (auto value = values.begin(); value != values.end(); ++value) {
+        if (value->second->getType() != Element::list &&
+            value->second->getType() != Element::map) {
+                addConfiguredGlobal(value->first, value->second);
+        }
+    }
+}
+
 ElementPtr
 SrvConfig::toElement() const {
     // Get family for the configuration manager
@@ -214,8 +231,13 @@ SrvConfig::toElement() const {
     ElementPtr result = Element::createMap();
     // DhcpX global map
     ElementPtr dhcp = Element::createMap();
+
+    // Add in explicitly configured globals.
+    dhcp->setValue(configured_globals_->mapValue()); 
+
     // Set user-context
     contextToElement(dhcp);
+
     // Set decline-probation-period
     dhcp->set("decline-probation-period",
               Element::create(static_cast<long long>(decline_timer_)));
@@ -226,6 +248,7 @@ SrvConfig::toElement() const {
     // Set dhcp4o6-port
     dhcp->set("dhcp4o6-port",
               Element::create(static_cast<int>(dhcp4o6_port_)));
+
     // Set dhcp-ddns
     dhcp->set("dhcp-ddns", d2_client_config_->toElement());
     // Set interfaces-config
