@@ -28,7 +28,7 @@
         load the libraries.
       </para>
       <para>
-      Hooks libraries are attached to individual Kea processes, not to
+      Hooks libraries are loaded by individual Kea processes, not to
       Kea as a whole.  This means (for example) that it is possible
       to associate one set of libraries with the DHCP4 server and a
       different set to the DHCP6 server.
@@ -311,19 +311,35 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
       making Kea sustainable in the long term.
       </para></note>
 
-      <para>Currently the following libraries are available or planned from ISC:
+      <para>The following table provides a list of libraries currently available
+      from ISC. It is important to pay attention to which libraries may be loaded
+      by which Kea processes. It is a common mistake to configure the <command>
+      kea-ctrl-agent</command> process to load libraries that should, in fact,
+      be loaded by the <command>kea-dhcp4 </command> or <command>kea-dhcp6</command>
+      processes.  If a library from ISC doesn't work as expected, please make sure
+      that it has been loaded by the correct process per the table below.
+
+      <warning>
+        <para>
+          While the Kea Control Agent includes the "hooks" functionality,
+          (i.e. hooks libraries can be loaded by this process), none of ISC's
+          current hooks libraries should be loaded by the Control Agent.
+        </para>
+      </warning>
 
         <table frame="all" xml:id="hook-libs">
           <title>List of available hooks libraries</title>
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="avail"/>
+          <colspec colname="module"/>
           <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
               <entry>Availability</entry>
               <entry>Since</entry>
+              <entry>Load by process</entry>
               <entry>Description</entry>
             </row>
           </thead>
@@ -333,6 +349,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>user_chk</entry>
               <entry>Kea sources</entry>
               <entry>Kea 0.8</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Reads known users list from a file. Unknown users
               will be assigned a
               lease from the last subnet defined in the configuration file,
@@ -345,6 +367,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Forensic Logging</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.1.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>This library provides hooks that record a detailed log of
               lease assignments and renewals into a set of log files. In many
               legal jurisdictions companies, especially ISPs, must record
@@ -359,6 +387,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Flexible Identifier</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.2.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Kea software provides a way to handle host reservations
               that include addresses, prefixes, options, client classes and
               other features. The reservation can be based on hardware address,
@@ -379,6 +413,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Host Commands</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.2.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Kea provides a way to store host reservations in a
               database. In many larger deployments it is useful to be able to
               manage that information while the server is running. This library
@@ -396,6 +436,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Subnet Commands</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.3.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>In deployments in which subnet configuration needs to
               be frequently updated, it is a hard requirement that such updates be
               performed without the need for a full DHCP server reconfiguration
@@ -412,6 +458,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Lease Commands</entry>
               <entry>Kea sources</entry>
               <entry>Kea 1.3.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>The lease commands hook library offers a number of new
               commands used to manage leases. Kea provides a way to store lease
               information in various backends: memfile, MySQL, PostgreSQL and
@@ -430,6 +482,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>High Availability</entry>
               <entry>Kea sources</entry>
               <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Minimizing a risk of DHCP service unavailability is
               achieved by setting up a pair of the DHCP servers in a network.
               Two modes of operation are supported. The first one is called load
@@ -455,6 +513,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Radius</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>The RADIUS Hook library allows Kea to interact with the
               RADIUS servers using access and accounting mechanisms. The access
               mechanism may be used for access control, assigning specific IPv4
@@ -468,6 +532,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Host Cache</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-&#xFEFF;dhcp4</member>
+                  <member>kea-&#xFEFF;dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Some of the database backends, such as RADIUS, are
               considered slow and may take a long time to respond. Since Kea in
               general is synchronous, the backend performance directly affects
@@ -596,6 +666,12 @@ and may have the zero or more of the following entries:
         provides hooks that record a detailed log of lease assignments
         and renewals into a set of log files.  Currently this library
         is only available to ISC customers with a support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
         </para>
         <para>
         In many legal jurisdictions companies, especially ISPs, must record
@@ -1036,7 +1112,14 @@ $
         hook application.</para>
 
         <para>Currently this library is only available to ISC customers with a
-        support contract.</para>
+        support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+      </para>
 
         <para>The library allows for defining an expression, using notation
         initially used for client classification only. See <xref linkend="classification-using-expressions"/> for detailed description
@@ -1274,7 +1357,14 @@ $
         </para>
 
         <para>Currently this library is only available to ISC customers with a
-        support contract.</para>
+        support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+        </para>
 
         <para>
           Currently three commands are supported: reservation-add (which adds
@@ -1572,6 +1662,12 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           errors, like adding a lease with subnet-id that does not exist in the
           configuration or configuring a lease to use an address that is outside
           of the subnet to which it is supposed to belong.
+
+          <note>
+            <para>This library may only be loaded by <command>kea-dhcp4</command>
+            or <command>kea-dhcp6</command> process.
+            </para>
+          </note>
         </para>
 
         <para>There are many use cases when an administrative command may be
@@ -2162,7 +2258,14 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
         </para>
 
         <para>Currently this library is only available to ISC customers with a
-        support contract.</para>
+        support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+        </para>
 
         <para>The following commands are currently supported:
         <itemizedlist mark="bullet">
