@@ -10,6 +10,7 @@ DOCBOOK += keactrl.xml dhcp4-srv.xml dhcp6-srv.xml lease-expiration.xml logging.
 DOCBOOK += ddns.xml hooks.xml hooks-ha.xml hooks-host-cache.xml hooks-lease-cmds.xml
 DOCBOOK += hooks-radius.xml hooks-stat-cmds.xml libdhcp.xml lfc.xml stats.xml
 DOCBOOK += ctrl-channel.xml faq.xml classify.xml shell.xml agent.xml netconf.xml
+DOCBOOK += api.xml
 
 EXTRA_DIST = $(DOCBOOK)
 
