@@ -30,6 +30,7 @@ libkea_eval_la_LIBADD   = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
