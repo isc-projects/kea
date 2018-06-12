@@ -1,3 +1,9 @@
+1425.	[bug]		marcin
+	Improved performance of the DHCP server running in High
+	Availability configuration by optimizing the management of
+	CalloutHandle objects passed to the callouts.
+	(Trac #5647, git eea88d5c8f4d8efb6c5bfdfbf4e070a90069db5d)
+
 1424.	[doc]		marcin
 	List of hooks libraries provided by ISC includes an
 	information which Kea servers the libraries can be attached
