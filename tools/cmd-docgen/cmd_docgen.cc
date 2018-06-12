@@ -131,15 +131,18 @@ public:
         f << "  <title>API Reference</title>" << endl;
 
         // Generate initial list of commands
-        f << "  <para>Kea currently supports " << cmds_.size() << " commands:" << endl
-          << "    <orderedlist>" << endl;
+        f << "  <para>Kea currently supports " << cmds_.size() << " commands:" << endl;
 
+        bool first = true;
         for (auto cmd : cmds_) {
-            f << "      <listitem><simpara>" << cmd.first << "</simpara></listitem>" << endl;
+            if (!first) {
+                f << ", ";
+            }
+            f << "<command>" << cmd.first << "</command>" << endl;
+            first = false;
         }
 
-        f << "    </orderedlist>" << endl;
-        f << "  </para>" << endl;
+        f << ".</para>" << endl;
 
         // Generate actual commands references.
         generateCommands(f);
