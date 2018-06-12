@@ -101,9 +101,9 @@
       <listitem><para>
       Host reservations are looked for. If an identifier from the
       incoming packet matches a host reservation in the subnet or
-      shared network, the packet is associated with either the KNOWN
-      or the UNKNOWN builtin classes and all classes of the host
-      reservation.
+      shared network, the packet is associated with the KNOWN class
+      and all classes of the host reservation. If a reservation is not
+      found, the packet is assigned to UNKNOWN class.
       </para></listitem>
       <listitem><para>
       Classes with matching expressions using directly or indirectly
@@ -111,7 +111,10 @@
       request") evaluation are processed in the order they are defined
       in the configuration: the boolean expression is evaluated and
       when it returns true ("match") the incoming packet is associated
-      to the class.
+      to the class. The determination whether there is a reservation
+      for a given client is made after a subnet is selected. As such, it
+      is not possible to use KNOWN/UNKNOWN classes to select a shared
+      network or a subnet.
       </para></listitem>
       <listitem><para>
       If needed, addresses and prefixes from pools are assigned,
