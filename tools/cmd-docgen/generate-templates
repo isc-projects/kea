@@ -1,0 +1,18 @@
+#!/bin/bash
+while read -r LINE; do
+    F=$LINE.json
+    echo "{" > $F
+    echo "    \"name\": \"$LINE\",\n" >> $F
+    echo "    \"brief\": \"a sentence or two explaining what this command does\",\n" >> $F
+    echo "    \"support\": [ \"kea-dhcp4\", \"kea-dhcp6\" ],\n" >> $F
+    echo "    \"avail\": \"first version, possible a hook library name and (premium) if applicable\",\n" >> $F
+
+    echo "    \"cmd-syntax\": \"Syntax of the command\",\n" >> $F
+    echo "    \"cmd-comment\": \"Possibly some extra comments after the syntax.\",\n" >> $F
+
+    echo "    \"resp-syntax\": \"Syntax of the response\",\n" >> $F
+    echo "    \"resp-comment\": \"Optional extra comments after the respone syntax.\"\n" >> $F
+    echo "}" >> $F
+
+    echo "$LINE generated."
+done < cmds-list
