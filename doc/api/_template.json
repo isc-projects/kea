@@ -1,0 +1,12 @@
+{
+    "name": "template-command",
+    "brief": "a sentence or two explaining what it is",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "first version, possible a hook library name and (premium) if applicable",
+
+    "cmd-syntax": "Syntax of the command",
+    "cmd-comment": "Possibly some extra comments after the syntax.",
+
+    "resp-syntax": "Syntax of the response",
+    "resp-comment": "Optional extra comments after the respone syntax."
+}
