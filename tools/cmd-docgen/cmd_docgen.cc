@@ -16,7 +16,7 @@ using namespace isc::data;
 class DocGen {
 public:
 
-    const string OUTPUT = "../guide/api.xml";
+    const string OUTPUT = "../../doc/guide/api.xml";
 
     void loadFiles(const vector<string>& files) {
 
@@ -101,9 +101,11 @@ public:
         requireString(x, "avail", fname);
         requireString(x, "brief", fname);
         requireString(x, "cmd-syntax", fname);
-        requireString(x, "cmd-comment", fname);
-        requireString(x, "resp-comment", fname);
-        requireString(x, "resp-syntax", fname);
+
+        // They're optional.
+        //requireString(x, "cmd-comment", fname);
+        //requireString(x, "resp-syntax", fname);
+        //requireString(x, "resp-comment", fname);
     }
 
     void generateCopyright(stringstream& f) {
@@ -126,7 +128,7 @@ public:
 
         f << "<chapter xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\" xml:id=\"api\">"
           << endl;
-        f << "  <title>Management API Reference</title>" << endl;
+        f << "  <title>API Reference</title>" << endl;
 
         // Generate initial list of commands
         f << "  <para>Kea currently supports " << cmds_.size() << " commands:" << endl
@@ -181,6 +183,32 @@ string escapeString(string txt) {
     return (txt);
 }
 
+string standardResponseSyntax() {
+    stringstream t;
+
+    t << "{" << endl
+      << "    \"result\": <integer>," << endl
+      << "    \"text\": <string>" << endl
+      << "}" << endl;
+    return (t.str());
+}
+
+string standardResponseComment() {
+    stringstream t;
+
+    t << "Result is an integer representation of the status. Currently supported"
+      << " statuses are:" << endl
+      << "<itemizedlist>" << endl
+      << "  <listitem><para>0 - success</para></listitem>" << endl
+      << "  <listitem><para>1 - error</para></listitem>" << endl
+      << "  <listitem><para>2 - unsupported</para></listitem>" << endl
+      << "  <listitem><para>3 - empty (command was completed successfully, but "
+      <<                        "no data was affected or returned)</para>"
+      <<                        "</listitem>" << endl
+      << "</itemizedlist>" << endl;
+    return (t.str());
+}
+
 void generateCommand(stringstream& f, const ElementPtr& cmd) {
 
     // command overview
@@ -211,15 +239,28 @@ void generateCommand(stringstream& f, const ElementPtr& cmd) {
     f << "<para>Command syntax:" << endl
       << "  <screen>" << escapeString(cmd->get("cmd-syntax")->stringValue())
       << "</screen>"
-      << endl
-      << cmd->get("cmd-comment")->stringValue() << "</para>" << endl << endl;
+      << endl;
+    if (cmd->get("cmd-comment")) {
+        f << cmd->get("cmd-comment")->stringValue();
+    }
+    f << "</para>" << endl << endl;
 
     // Response syntax
     f << "<para>Response syntax:" << endl
-      << "  <screen>" << escapeString(cmd->get("resp-syntax")->stringValue())
-      << "</screen>"
-      << endl
-      << cmd->get("resp-comment")->stringValue() << "</para>" << endl << endl;
+      << "  <screen>";
+    if (cmd->get("resp->syntax")) {
+        f << escapeString(cmd->get("resp-syntax")->stringValue());
+    } else {
+        f << escapeString(standardResponseSyntax());
+    }
+    f << "</screen>" << endl;
+
+    if (cmd->contains("resp-comment")) {
+        f << cmd->get("resp-comment")->stringValue();
+    } else {
+        f << standardResponseComment();
+    }
+    f << "</para>" << endl << endl;
 }
 
     map<string, ElementPtr> cmds_;
