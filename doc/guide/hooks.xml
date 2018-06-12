@@ -1432,7 +1432,7 @@ Requirements </link> document.</para>
         </para>
         </section>
 
-        <section>
+        <section xml:id="cmd-reservation-add">
           <title>reservation-add command</title>
         <para>
           <command>reservation-add</command> allows for the insertion of a new host.  It
@@ -1524,7 +1524,7 @@ Here is an example of complex IPv6 reservation:
         </para>
         </section>
 
-        <section>
+        <section xml:id="cmd-reservation-get">
           <title>reservation-get command</title>
           <para><command>reservation-get</command> can be used to query the host
           database and retrieve existing reservations. There are two types of
@@ -1560,7 +1560,7 @@ An example query by (subnet-id, identifier-type, identifier) looks as follows:
 <screen>
 {
     "command": "reservation-get",
-    "arguments":
+    "arguments": {
         "subnet-id": 4,
         "identifier-type": "hw-address",
         "identifier": "01:02:03:04:05:06"
@@ -1602,7 +1602,7 @@ An example result returned when the query was malformed:<screen>
 
         </section>
 
-        <section>
+        <section xml:id="cmd-reservation-del">
           <title>reservation-del command</title>
           <para><command>reservation-del</command> can be used to delete a
           reservation from the host database. There are two types of parameters
@@ -2568,4 +2568,4 @@ both the command and the response.
         of server id which is DHCPv6 only.
       </para>
     </section>
-   </chapter>
+</chapter>
