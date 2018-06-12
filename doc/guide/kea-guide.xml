@@ -92,6 +92,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="netconf.xml"/>
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
 
   <chapter xml:id="acknowledgments">
