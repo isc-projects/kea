@@ -1,8 +1,9 @@
 INSTALLATION INSTRUCTIONS
 
-1. Generate the configure script.  If you downloaded the source from
-git you will need to run run autoreconf to generate the configure script
-as shown below.  If you are building from a tarball you may skip this step.
+1. Generate the configure script.  If you downloaded the source from git or
+compiling with premium hook package, you will need to run autoreconf to
+generate the configure script as shown below.  If you are building from a
+tarball you may skip this step.
 
    $ autoreconf --install
 
@@ -24,9 +25,10 @@ parallel execution to speed things along:
 
   $ make
 
-4. Install it by running:
+4. Install it. Depending on your target directory, this step will likely require
+a root privileges. You can install the software by running:
 
-  $ make install
+  $ sudo make install
 
 Kea depends on C++ compiler, make, libtool, boost (at least includes, but many
 OSes require boost-system library), log4cplus and one crypto library (either
