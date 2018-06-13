@@ -1344,6 +1344,14 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       </para>
+     <para>
+       Options can be specified also in class of host reservation scope.
+       In Kea 1.4 options precedence order is (from most important):
+       host reservation, pool, subnet, shared network, class, global.
+       In Kea 1.5 order will be changed to:
+       host reservation, class, pool, subnet, shared network, global OR it will
+       be fully configurable.
+     </para>
 
       <para>
         The currently supported standard DHCPv4 options are
@@ -1966,7 +1974,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-      Another possibility, added in Kea 1.3, is to redefine the option,
+      Another possibility, since Kea 1.3, is to redefine the option,
       see <xref linkend="dhcp4-private-opts"/>.
       </para>
     </section>

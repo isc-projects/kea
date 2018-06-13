@@ -189,7 +189,7 @@ drwxr-xr-x  14 thomson  staff     476 Apr 26 19:04 tools
 </screen>
 
 The next step is to configure Kea. There are several essential steps necessary here.
-The --with-tier2=yes flag is necessary to compile premium package that contains
+Running autoreconf -if is necessary to compile premium package that contains
 RADIUS. Also, --with-freeradius option is necessary to tell Kea where the FreeRADIUS
 client sources can be found. Also, since the non-standard boost is used, the path
 to it has to be specified.</para>
@@ -210,8 +210,7 @@ should look as follows:</para>
 <screen>
 ./configure --with-freeradius=/usr/local \
             --with-boost-include=/home/thomson/devel/boost_1_65_1 \
-            --with-boost-lib-dir=/home/thomson/devel/boost_1_65_1/stage/lib \
-            --with-tier2=yes
+            --with-boost-lib-dir=/home/thomson/devel/boost_1_65_1/stage/lib
 </screen>
 
 <para>
@@ -225,14 +224,13 @@ should look as follows:</para>
 
 Package:
   Name:              kea
-  Version:           1.3.0-git
-  Extended version:  1.3.0-git (git c494c28cc958bb21a9c6cb0f8dc805a721c69893)
+  Version:           1.4.0-git
+  Extended version:  1.4.0-git (git ab3cb8afbb7a4cdaa9cbb279fd783aa126a7912a)
   OS Family:         Linux
-  Using GNU sed:     yes
-  Premium package:   yes
-  Tier1 Packages:    host_cmds flex_id legal_log
-  Tier2 Packages:    high_availability subnet_cmds radius
-  Included Packages: host_cmds flex_id legal_log high_availability subnet_cmds radius
+
+  Hooks directory:   /usr/local/lib/hooks
+  Premium hooks:     yes
+  Included Hooks:    forensic_log flex_id host_cmds subnet_cmds radius host_cache
 
 C++ Compiler:
   CXX:             g++ --std=c++11
@@ -304,7 +302,7 @@ Developer:
 Please make sure that your compilation has the following:
 
 <itemizedlist>
-  <listitem>radius listed in tier 2 packages</listitem>
+  <listitem>radius listed in Included Hooks</listitem>
   <listitem>FreeRadius client directories printed and pointing to the right
   directories</listitem>
   <listitem>Boost version is at least 1.65.1. The versions available
