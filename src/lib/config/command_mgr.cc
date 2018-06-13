@@ -75,8 +75,7 @@ public:
         feed_.initModel();
 
         // Start timer for detecting timeouts.
-        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
-                             timeout_ * 1000, IntervalTimer::ONE_SHOT);
+        scheduleTimer();
     }
 
     /// @brief Destructor.
@@ -84,6 +83,12 @@ public:
     /// Cancels timeout timer if one is scheduled.
     ~Connection() {
         timeout_timer_.cancel();
+    }
+
+    /// @brief This method schedules timer or reschedules existing timer.
+    void scheduleTimer() {
+        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
+                             timeout_ * 1000, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Close current connection.
@@ -288,6 +293,9 @@ Connection::receiveHandler(const boost::system::error_code& ec,
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ)
         .arg(bytes_transferred).arg(socket_->getNative());
 
+    // Reschedule the timer because the transaction is ongoing.
+    scheduleTimer();
+
     ConstElementPtr rsp;
 
     try {
@@ -305,6 +313,10 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         if (feed_.feedOk()) {
             ConstElementPtr cmd = feed_.toElement();
             response_in_progress_ = true;
+
+            // Cancel the timer to make sure that long lasting command
+            // processing doesn't cause the timeout.
+            timeout_timer_.cancel();
 
             // If successful, then process it as a command.
             rsp = CommandMgr::instance().processCommand(cmd);
@@ -331,6 +343,10 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
     } else {
 
+        // Reschedule the timer as it may be either canceled or need to be
+        // updated to not timeout before we manage to the send the reply.
+        scheduleTimer();
+
         // Let's convert JSON response to text. Note that at this stage
         // the rsp pointer is always set.
         response_ = rsp->str();
@@ -354,6 +370,10 @@ Connection::sendHandler(const boost::system::error_code& ec,
         }
 
     } else {
+
+        // Reschedule the timer because the transaction is ongoing.
+        scheduleTimer();
+
         // No error. We are in a process of sending a response. Need to
         // remove the chunk that we have managed to sent with the previous
         // attempt.
