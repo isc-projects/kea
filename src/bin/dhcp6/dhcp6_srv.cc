@@ -383,8 +383,14 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
     if (!ctx.hosts_.empty()) {
         pkt->addClass("KNOWN");
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+          .arg(pkt->getLabel())
+          .arg("KNOWN");
     } else {
         pkt->addClass("UNKNOWN");
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+          .arg(pkt->getLabel())
+          .arg("UNKNOWN");
     }
 
     // Perform second pass of classification.

@@ -166,8 +166,14 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
     if (!context_->hosts_.empty()) {
         query->addClass("KNOWN");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query->getLabel())
+            .arg("KNOWN");
     } else {
         query->addClass("UNKNOWN");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query->getLabel())
+            .arg("UNKNOWN");
     }
 
     // Perform second pass of classification.
