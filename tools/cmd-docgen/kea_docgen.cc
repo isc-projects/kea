@@ -235,7 +235,7 @@ void generateCommand(stringstream& f, const ElementPtr& cmd) {
       << endl << endl;
 
     // description and examples
-    f << "<para>Description and examples: See <xref linkend=\"cmd-"
+    f << "<para>Description and examples: See <xref linkend=\"command-"
       << cmd->get("name")->stringValue() << "\"/></para>" << endl << endl;
 
     // Command syntax:
@@ -243,7 +243,7 @@ void generateCommand(stringstream& f, const ElementPtr& cmd) {
       << "  <screen>" << escapeString(cmd->get("cmd-syntax")->stringValue())
       << "</screen>"
       << endl;
-    if (cmd->get("cmd-comment")) {
+    if (cmd->contains("cmd-comment")) {
         f << cmd->get("cmd-comment")->stringValue();
     }
     f << "</para>" << endl << endl;
@@ -251,7 +251,8 @@ void generateCommand(stringstream& f, const ElementPtr& cmd) {
     // Response syntax
     f << "<para>Response syntax:" << endl
       << "  <screen>";
-    if (cmd->get("resp->syntax")) {
+
+    if (cmd->contains("resp-syntax")) {
         f << escapeString(cmd->get("resp-syntax")->stringValue());
     } else {
         f << escapeString(standardResponseSyntax());
