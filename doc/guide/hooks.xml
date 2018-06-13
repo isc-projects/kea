@@ -1524,7 +1524,7 @@ Here is an example of complex IPv6 reservation:
         </para>
         </section>
 
-        <section xml:id="cmd-reservation-get">
+        <section xml:id="command-reservation-get">
           <title>reservation-get command</title>
           <para><command>reservation-get</command> can be used to query the host
           database and retrieve existing reservations. There are two types of
@@ -1602,7 +1602,7 @@ An example result returned when the query was malformed:<screen>
 
         </section>
 
-        <section xml:id="cmd-reservation-del">
+        <section xml:id="command-reservation-del">
           <title>reservation-del command</title>
           <para><command>reservation-del</command> can be used to delete a
           reservation from the host database. There are two types of parameters
