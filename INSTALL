@@ -1,7 +1,7 @@
 INSTALLATION INSTRUCTIONS
 
 1. Generate the configure script.  If you downloaded the source from git or
-compiling with premium hook package, you will need to run autoreconf to
+are compiling with premium hook packages, you will need to run autoreconf to
 generate the configure script as shown below.  If you are building from a
 tarball you may skip this step.
 
