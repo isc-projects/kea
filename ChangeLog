@@ -5,7 +5,7 @@
 	expressions depending directly or indirectly on these classes are
 	evaluated. Note these classes may be used to select a pool but
 	they may not to select a subnet.
-	(Trac #5549, git xxx)
+	(Trac #5549, git 6a856ed9722b918a65dca15ff44314e28897784e)
 
 1425.	[bug]		marcin
 	Improved performance of the DHCP server running in High
