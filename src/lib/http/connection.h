@@ -200,8 +200,6 @@ private:
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
 
-    bool request_timer_setup_;
-
     /// @brief Configured Request Timeout in milliseconds.
     long request_timeout_;
 
