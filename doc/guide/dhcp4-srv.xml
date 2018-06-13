@@ -2241,7 +2241,7 @@ It is merely echoed by the server
       <para>
       In a similar way a pool can be constrained to serve only known
       clients, i.e. clients which have a reservation, using the
-      build-n "KNOWN" or "UNKNOWN" classes.  One can assign addresses
+      built-in "KNOWN" or "UNKNOWN" classes.  One can assign addresses
       to registered clients without giving a different address per
       reservations, for instance when there is not enough available
       addresses. The determination whether there is a reservation

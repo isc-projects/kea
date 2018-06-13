@@ -77,12 +77,6 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                   << getPosition("name", class_def_cfg) << ")");
     }
 
-    // Let's try to parse the only-if-required flag
-    bool required = false;
-    if (class_def_cfg->contains("only-if-required")) {
-        required = getBoolean(class_def_cfg, "only-if-required");
-    }
-
     // Parse matching expression
     ExpressionPtr match_expr;
     ConstElementPtr test_cfg = class_def_cfg->get("test");
@@ -147,6 +141,12 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Parse user context
     ConstElementPtr user_context = class_def_cfg->get("user-context");
+
+    // Let's try to parse the only-if-required flag
+    bool required = false;
+    if (class_def_cfg->contains("only-if-required")) {
+        required = getBoolean(class_def_cfg, "only-if-required");
+    }
 
     // Let's try to parse the next-server field
     IOAddress next_server("0.0.0.0");

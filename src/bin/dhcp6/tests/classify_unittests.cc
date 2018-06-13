@@ -1031,7 +1031,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
         "       \"client-class\": \"xyzzy\" "
         "    } "
         "   ], "
-        "   \"subnet\": \"2001:db8:2::/40\" "
+        "   \"subnet\": \"2001:db8::/40\" "
         " } "
         "], "
         "\"valid-lifetime\": 4000 }";
@@ -1110,7 +1110,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
         "       \"client-class\": \"UNKNOWN\" "
         "    } "
         "   ], "
-        "   \"subnet\": \"2001:db8:2::/40\", "
+        "   \"subnet\": \"2001:db8::/40\", "
         "   \"reservations\": [ "
         "      { \"duid\": \"01:02:03:04\", \"hostname\": \"foo\" } ] "
         " } "

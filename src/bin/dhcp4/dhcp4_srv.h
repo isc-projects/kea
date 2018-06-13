@@ -856,6 +856,9 @@ public:
     ///
     /// @note Second part of the classification.
     ///
+    /// Evaluate expressions of client classes: if it returns true the class
+    /// is added to the incoming packet.
+    ///
     /// @param pkt packet to be classified.
     /// @param depend_on_known if false classes depending on the KNOWN or
     /// UNKNOWN classes are skipped, if true only these classes are evaluated.
