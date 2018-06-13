@@ -850,6 +850,22 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
 
+public:
+
+    /// @brief Evaluate classes.
+    ///
+    /// @note Second part of the classification.
+    ///
+    /// Evaluate expressions of client classes: if it returns true the class
+    /// is added to the incoming packet.
+    ///
+    /// @param pkt packet to be classified.
+    /// @param depend_on_known if false classes depending on the KNOWN or
+    /// UNKNOWN classes are skipped, if true only these classes are evaluated.
+    static void evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known);
+
+protected:
+
     /// @brief Assigns incoming packet to zero or more classes (required pass).
     ///
     /// @note This required classification evaluates all classes which
