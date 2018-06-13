@@ -239,6 +239,9 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
                 .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
         }
 
+        // Don't want to timeout if creation of the response takes long.
+        request_timer_.cancel();
+
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_SERVER_RESPONSE_SEND)
@@ -250,6 +253,9 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
             .arg(getRemoteEndpointAddressAsText())
             .arg(HttpMessageParserBase::logFormatHttpMessage(response->toString(),
                                                              MAX_LOGGED_MESSAGE_SIZE));
+
+        // Response created. Active timer again.
+        setupRequestTimer();
 
         asyncSendResponse(response);
     }

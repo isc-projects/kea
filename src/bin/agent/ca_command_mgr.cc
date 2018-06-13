@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,7 +34,7 @@ namespace {
 
 /// @brief Client side connection timeout.
 /// @todo Make it configurable.
-const long CONNECTION_TIMEOUT = 5000;
+const long CONNECTION_TIMEOUT = 10000;
 
 }
 
