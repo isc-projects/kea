@@ -1,3 +1,12 @@
+1426.	[func]		fdupont
+	Added KNOWN and UNKNOWN built-in client classes: after host lookup
+	if a matching host entry is found the incoming packet is added to
+	the KNOWN class, if none is found to the UNKNOWN class. Then
+	expressions depending directly or indirectly on these classes are
+	evaluated. Note these classes may be used to select a pool but
+	they may not to select a subnet.
+	(Trac #5549, git xxx)
+
 1425.	[bug]		marcin
 	Improved performance of the DHCP server running in High
 	Availability configuration by optimizing the management of
