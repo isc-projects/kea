@@ -87,7 +87,17 @@ public:
     bool getRequired() const;
 
     /// @brief Sets the only if required flag
+    ///
+    /// @param required the value of the only if required flag
     void setRequired(bool required);
+
+    /// @brief Fetches the depend on known flag aka use host flag
+    bool getDependOnKnown() const;
+
+    /// @brief Sets the depend on known flag aka use host flag
+    ///
+    /// @param depend_on_known the value of the depend on known flag
+    void setDependOnKnown(bool depend_on_known);
 
     /// @brief Fetches the class's option definitions
     const CfgOptionDefPtr& getCfgOptionDef() const;
@@ -195,6 +205,16 @@ private:
     /// only when required and is usable only for option configuration.
     bool required_;
 
+    /// @brief The depend on known aka use host flag: when false (the default),
+    /// the required flag is false and the class has a match expression
+    /// the expression is evaluated in the first pass. When true and the
+    /// two other conditions stand the expression is evaluated later when
+    /// the host reservation membership was determined.
+    /// This flag is set to true during the match expression parsing if
+    /// direct or indirect dependency on the builtin [UN]KNOWN classes is
+    /// detected.
+    bool depend_on_known_;
+
     /// @brief The option definition configuration for this class
     CfgOptionDefPtr cfg_option_def_;
 
@@ -253,6 +273,7 @@ public:
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
     /// @param required Original value of the only if required flag
+    /// @param depend_on_known Using host so will be evaluated later
     /// @param options Collection of options members should be given
     /// @param defs Option definitions (optional)
     /// @param user_context User context (optional)
@@ -264,7 +285,7 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const std::string& test, bool required,
+                  const std::string& test, bool required, bool depend_on_known,
                   const CfgOptionPtr& options,
                   CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),
@@ -344,7 +365,7 @@ private:
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
 
 /// @brief List of built-in client class names.
-/// i.e. ALL and KNOWN.
+/// i.e. ALL, KNOWN and UNKNOWN.
 extern std::list<std::string> builtinNames;
 
 /// @brief List of built-in client class prefixes
@@ -361,10 +382,16 @@ bool isClientClassBuiltIn(const ClientClass& client_class);
 /// @brief Check if a client class name is already defined,
 /// i.e. is built-in or in the dictionary,
 ///
+/// The reference to depend on known flag is set to true if the class
+/// is KNOWN or UNKNOWN (direct dependency) or has this flag set
+/// (indirect dependency).
+///
 /// @param class_dictionary A class dictionary where to look for.
+/// @param depend_on_known A reference to depend on known flag.
 /// @param client_class A client class name to look for.
 /// @return true if defined or built-in, false if not.
 bool isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                          bool& depend_on_known,
                           const ClientClass& client_class);
 
 } // namespace isc::dhcp

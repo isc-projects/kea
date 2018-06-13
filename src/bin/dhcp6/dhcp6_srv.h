@@ -681,6 +681,18 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt6Ptr& pkt);
 
+    /// @brief Evaluate classes.
+    ///
+    /// @note Second part of the classification.
+    ///
+    /// Evaluate expressions of client classes: if it returns true the class
+    /// is added to the incoming packet.
+    ///
+    /// @param pkt packet to be classified.
+    /// @param depend_on_known if false classes depending on the KNOWN or
+    /// UNKNOWN classes are skipped, if true only these classes are evaluated.
+    void evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known);
+
     /// @brief Assigns classes retrieved from host reservation database.
     ///
     /// @param pkt Pointer to the packet to which classes will be assigned.
