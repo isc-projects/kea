@@ -367,6 +367,9 @@ void ConfigToolController::getShardsConfig(DhcpSpaceType dhcp_space,
         isc_throw(RunTimeFail, "unknown configuration type");
     }
 
+    std::string const tab = "    ";
+    std::string const tabs[] = {"", tab, tab + tab, tab + tab + tab};
+
     for (std::string const& shard_name : filtered_shards_list) {
         std::string output_config_path = output_shards_directory_path;
 
@@ -409,6 +412,23 @@ void ConfigToolController::getShardsConfig(DhcpSpaceType dhcp_space,
 
         getShardGenericConfig(dhcp_space, shard_name, credentials_config, output_config_path);
         getShardJsonConfig(dhcp_space, shard_name, credentials_config, output_config_path);
+
+        std::ostringstream json_data;
+        json_data << "{" << std::endl
+                  << tabs[1] << "\"config-database\": " << credentials_config << std::endl
+                  << "}" << std::endl;
+
+        boost::filesystem::path fileFullPath(output_config_path);
+        boost::filesystem::path credentialsFileFullPath = fileFullPath;
+        credentialsFileFullPath += "/credentials.json";
+
+        std::ofstream credentials_file(credentialsFileFullPath.c_str());
+        // Check for permissions to write into the file
+        if (!credentials_file.is_open()) {
+            isc_throw(RunTimeFail, "cannot write the configuration file in the specified path.");
+        }
+        credentials_file << json_data.str();
+        credentials_file.close();
     }
 }
 
