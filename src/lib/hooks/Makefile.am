@@ -65,6 +65,7 @@ libkea_hooks_la_LIBADD += $(LOG4CPLUS_LIBS)
 libkea_hooks_includedir = $(pkgincludedir)/hooks
 libkea_hooks_include_HEADERS = \
 	callout_handle.h \
+	callout_handle_associate.h \
 	callout_manager.h \
 	hooks.h \
 	hooks_config.h \
