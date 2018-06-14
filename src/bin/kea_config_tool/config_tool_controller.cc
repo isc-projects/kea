@@ -213,7 +213,8 @@ void ConfigToolController::setShardsConfig(DhcpSpaceType dhcp_space,
     isc::data::ConstElementPtr dhcp_config =
         ConfigToolController::configureConfigToolConfigSource(dhcp_space, master_config_file);
     SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
-    if (srv_cfg->getConfigurationType().type_ == CfgSrvConfigType::MASTER_DATABASE) {
+    CfgSrvConfigType::ConfigurationType data_type = srv_cfg->getConfigurationType().type_;
+    if (data_type == CfgSrvConfigType::MASTER_DATABASE) {
         if (!ConfigToolController::configureConfigToolId(dhcp_config)) {
             isc_throw(RunTimeFail, "config tool id not set in configuration as"
                                    " mandatory 'instance-id' parameter is missing");
@@ -228,7 +229,7 @@ void ConfigToolController::setShardsConfig(DhcpSpaceType dhcp_space,
             isc_throw(isc::BadValue, "invalid DHCP space type");
         }
         cfg_db->createSrvMasterCfgManagers();
-    } else if (srv_cfg->getConfigurationType().type_ == CfgSrvConfigType::CONFIG_DATABASE) {
+    } else if (data_type == CfgSrvConfigType::CONFIG_DATABASE) {
         // Get 'config-database' component from the config.
         auto config_database = dhcp_config->get("config-database");
         if (!config_database) {
@@ -286,7 +287,7 @@ void ConfigToolController::setShardsConfig(DhcpSpaceType dhcp_space,
         std::string generic_cfg_file = shard_cfg_path + "/config.generic";
         std::string timestamp_file = shard_cfg_path + "/config.timestamp";
 
-        if (srv_cfg->getConfigurationType().type_ == CfgSrvConfigType::MASTER_DATABASE) {
+        if (data_type == CfgSrvConfigType::MASTER_DATABASE) {
             parseMasterCredentialsJson(shard_name, credentials_cfg_file, credentials_config);
         }
 
@@ -315,7 +316,8 @@ void ConfigToolController::getShardsConfig(DhcpSpaceType dhcp_space,
     isc::data::ConstElementPtr dhcp_config =
         ConfigToolController::configureConfigToolConfigSource(dhcp_space, master_config_file);
     SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
-    if (srv_cfg->getConfigurationType().type_ == CfgSrvConfigType::MASTER_DATABASE) {
+    CfgSrvConfigType::ConfigurationType data_type = srv_cfg->getConfigurationType().type_;
+    if (data_type == CfgSrvConfigType::MASTER_DATABASE) {
         if (!ConfigToolController::configureConfigToolId(dhcp_config)) {
             isc_throw(RunTimeFail, "config tool id not set in configuration as"
                                    " mandatory 'instance-id' parameter is missing");
@@ -331,7 +333,7 @@ void ConfigToolController::getShardsConfig(DhcpSpaceType dhcp_space,
         }
         cfg_db->createSrvMasterCfgManagers();
         filtered_shards_list = shards_list;
-    } else if (srv_cfg->getConfigurationType().type_ == CfgSrvConfigType::CONFIG_DATABASE) {
+    } else if (data_type == CfgSrvConfigType::CONFIG_DATABASE) {
         // Get 'config-database' component from the config.
         auto config_database = dhcp_config->get("config-database");
         if (!config_database) {
@@ -373,7 +375,7 @@ void ConfigToolController::getShardsConfig(DhcpSpaceType dhcp_space,
     for (std::string const& shard_name : filtered_shards_list) {
         std::string output_config_path = output_shards_directory_path;
 
-        if (srv_cfg->getConfigurationType().type_ == CfgSrvConfigType::MASTER_DATABASE) {
+        if (data_type == CfgSrvConfigType::MASTER_DATABASE) {
             std::string tool_id = CfgMgr::instance().getStagingCfg()->getInstanceId();
 
             // Read the contents from database
