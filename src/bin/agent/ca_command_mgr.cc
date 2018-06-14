@@ -34,7 +34,7 @@ namespace {
 
 /// @brief Client side connection timeout.
 /// @todo Make it configurable.
-const long CONNECTION_TIMEOUT = 10000;
+const long CONNECTION_TIMEOUT = 60000;
 
 }
 
