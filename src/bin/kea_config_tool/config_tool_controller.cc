@@ -565,6 +565,8 @@ void ConfigToolController::updateShardConfig(DhcpSpaceType dhcp_space,
 
     IfaceMgr::instance().setServerMode(false);
 
+    CfgMgr::instance().clear();
+
     isc::data::ConstElementPtr answer, dhcp_element, json;
 
     json = isc::data::Element::fromJSON(json_config, true);
