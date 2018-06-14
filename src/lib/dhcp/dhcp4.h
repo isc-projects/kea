@@ -210,7 +210,7 @@ enum DHCPOptionType {
     DHO_V4_CAPTIVE_PORTAL            = 160,
     // 161-209 are removed/unassigned
 //  DHO_PATH_PREFIX                  = 210,
-//  DHO_REBOOT_TIME                  = 211,    
+//  DHO_REBOOT_TIME                  = 211,
     DHO_6RD                          = 212,
     DHO_V4_ACCESS_DOMAIN             = 213,
     // 214-219 are removed/unassigned

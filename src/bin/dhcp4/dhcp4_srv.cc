@@ -169,7 +169,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             .arg(query_->getLabel())
             .arg(classes.toText());
     }
-};
+}
 
 void
 Dhcpv4Exchange::initResponse() {
