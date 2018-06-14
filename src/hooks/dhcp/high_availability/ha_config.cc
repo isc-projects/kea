@@ -78,8 +78,9 @@ HAConfig::PeerConfig::roleToString(const HAConfig::PeerConfig::Role& role) {
 
 HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
-      sync_leases_(true), heartbeat_delay_(10), max_response_delay_(60),
-      max_ack_delay_(10), max_unacked_clients_(10), peers_() {
+      sync_leases_(true), sync_timeout_(60000), heartbeat_delay_(10000),
+      max_response_delay_(60000), max_ack_delay_(10000), max_unacked_clients_(10),
+      peers_() {
 }
 
 HAConfig::PeerConfigPtr
