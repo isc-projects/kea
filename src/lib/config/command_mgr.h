@@ -56,8 +56,8 @@ public:
 
     /// @brief Override default connection timeout.
     ///
-    /// @param timeout New connection timeout in seconds.
-    void setConnectionTimeout(const unsigned short timeout);
+    /// @param timeout New connection timeout in milliseconds.
+    void setConnectionTimeout(const long timeout);
 
     /// @brief Opens control socket with parameters specified in socket_info
     ///

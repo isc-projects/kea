@@ -252,6 +252,20 @@ public:
         sync_leases_ = sync_leases;
     }
 
+    /// @brief Returns timeout for lease database synchronization.
+    ///
+    /// @return Timeout in milliseconds.
+    long getSyncTimeout() const {
+        return (sync_timeout_);
+    }
+
+    /// @brief Sets new lease database syncing timeout in milliseconds.
+    ///
+    /// @param sync_timeout new timeout for lease database synchornization.
+    void setSyncTimeout(const long sync_timeout) {
+        sync_timeout_ = sync_timeout;
+    }
+
     /// @brief Returns heartbeat delay in milliseconds.
     ///
     /// This value indicates the delay in sending a heartbeat command after
@@ -377,6 +391,7 @@ private:
     HAMode ha_mode_;               ///< Mode of operation.
     bool send_lease_updates_;      ///< Send lease updates to partner?
     bool sync_leases_;             ///< Synchronize databases on startup?
+    long sync_timeout_;            ///< Timeout for syncing lease database (ms)
     uint32_t heartbeat_delay_;     ///< Heartbeat delay in milliseconds.
     uint32_t max_response_delay_;  ///< Max delay in response to heartbeats.
     uint32_t max_ack_delay_;       ///< Maximum DHCP message ack delay.
