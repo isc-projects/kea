@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.4.0-beta, kea-dev@lists.isc.org)
+AC_INIT(kea,1.4.0, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -783,27 +783,41 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+# allow building kea programs with static link to cassandra cpp-driver.
+AC_ARG_ENABLE([cql-static-lib],
+AS_HELP_STRING([--enable-cql-static-lib],
+    [build programs with cassandra cpp driver static library [[default=no]]]),
+    [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
+AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
+#AC_DEFINE USE_CQL_STATIC_LIB? (unused)
+
+cql_lib="cassandra"
+if test "${enable_cql_static_lib}" = "yes" ; then
+    cql_lib="${cql_lib}_static"
+fi
+
 cql_config="no"
 AC_ARG_WITH([cql],
   AC_HELP_STRING([--with-cql=PATH],
-    [path to the Cassandra CQL 'cql_config' script]),
+    [path to pkg-config or the Cassandra CQL 'cql_config' script]),
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    CQL_CONFIG="/usr/bin/cql_config"
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+    CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
 fi
 
 if test "$CQL_CONFIG" != "" ; then
     if test -d "$CQL_CONFIG" -o ! -x "$CQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-cql should point to a cql_config program])
+        AC_MSG_ERROR([--with-cql should point to a pkg-config or cql_config program])
     fi
 
-    CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
-    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra -luv"
-    CQL_VERSION=`$CQL_CONFIG --version`
+    CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
+    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
+    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"    
+    CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
     AC_SUBST(CQL_CPPFLAGS)
     AC_SUBST(CQL_LIBS)
@@ -1162,7 +1176,8 @@ fi
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
 # Disable threads: they seems to break things on some systems
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+# As now we use threads in boost ASIO this is commented out...
+# CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
 
 # We tried to stay header only
 if test "x${BOOST_LIBS}" = "x"; then
@@ -1395,6 +1410,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/shell/tests/shell_unittest.py
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/high_availability/Makefile
+                 src/hooks/dhcp/high_availability/tests/Makefile
                  src/hooks/dhcp/lease_cmds/Makefile
                  src/hooks/dhcp/lease_cmds/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile

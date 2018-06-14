@@ -61,11 +61,6 @@ This debug message is issued when found host with the reservation
 for the specified IPv6 address. The arguments specify the IPv6 address
 and the detailed description of the host found.
 
-% HOSTS_CFG_GET_ALL_HWADDR_DUID get all hosts with reservations for HWADDR %1 and DUID %2
-This debug message is issued when starting to retrieve reservations for all hosts
-using specific HW address or DUID. The arguments specify the HW address and
-DUID respectively. The argument specify the HW address and DUID respectively.
-
 % HOSTS_CFG_GET_ALL_IDENTIFIER get all hosts with reservations using identifier: %1
 This debug message is issued when starting to retrieve reservations for all hosts
 identified by HW address or DUID. The argument holds both the identifier
@@ -156,12 +151,6 @@ host connected to the specific subnet and having the reservation for
 the specific IPv4 address, and it is starting to search for this host
 in alternate host data sources.
 
-% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID trying alternate sources for host using subnet id %1, HWADDR %2, DUID%3
-This debug message is issued when the Host Manager doesn't find the
-host connected to the specific subnet and identified by the HW address
-or DUID, and it is starting to search for this host in alternate
-host data sources.
-
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER get one host with IPv4 reservation for subnet id %1, identified by %2
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
@@ -187,12 +176,6 @@ This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specified IPv6 address, and it is starting to search for this
 host in alternate host data sources.
-
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_DUID_HWADDR trying alternate sources for host using subnet id %1, DUID %2, HWADDR %3
-This debug message is issued when the Host Manager doesn't find the
-host connected to the specific subnet and identified by the specified
-DUID or HW Address, and it is starting to search for this host in
-alternate host data sources.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER get one host with IPv6 reservation for subnet id %1, identified by %2
 This debug message is issued when starting to retrieve a host holding
