@@ -97,3 +97,21 @@ over command socket identifier by the specified file descriptor.
 % COMMAND_SOCKET_WRITE_FAIL Error while writing to command socket %1 : %2
 This error message indicates that an error was encountered while
 attempting to send a response to the command socket.
+
+% COMMAND_WATCH_SOCKET_CLEAR_ERROR watch socket failed to clear: %1
+This error message is issued when the command manager was unable to reset
+the ready status after completing a send. This is a programmatic error
+that should be reported. The command manager may or may not continue
+to operate correctly.
+
+% COMMAND_WATCH_SOCKET_CLOSE_ERROR watch socket failed to close: %1
+This error message is issued when command manager attempted to close the
+socket used for indicating the ready status for send operations. This
+should not have any negative impact on the operation of the command
+manager as it happens when the connection is being terminated.
+
+% COMMAND_WATCH_SOCKET_MARK_READY_ERROR watch socket failed to mark ready: %1
+This error message is issued when the command manager was unable to set
+ready status after scheduling asynchronous send. This is programmatic error
+that should be reported. The command manager may or may not continue
+to operate correctly.
