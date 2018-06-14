@@ -987,9 +987,10 @@
         response and sending it to the synchronizing server may take from
         several seconds to tens of seconds. The default timeout value for
         such communication is set to 60 seconds. However, the server
-        administrator may need to extend this timeout of necessary. The
+        administrator may need to extend this timeout if necessary. The
         following configuration snippet demonstrates how to extend this
-        timeout to 90 seconds with the <command>sync-timeout</command>:
+        timeout to 90 seconds with the <command>sync-timeout</command>
+        parameter:
 <screen>
 {
 "Dhcp4": {
