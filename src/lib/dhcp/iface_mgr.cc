@@ -958,8 +958,7 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // Let's find out which socket has the data
     BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-        if ((!FD_ISSET(s.socket_, &sockets) &&
-             (!FD_ISSET(s.socket_, &write_sockets)))) {
+        if (!FD_ISSET(s.socket_, &sockets)) {
             continue;
         }
 
@@ -1069,8 +1068,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // Let's find out which socket has the data
     BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-        if ((!FD_ISSET(s.socket_, &sockets) &&
-             (!FD_ISSET(s.socket_, &write_sockets)))) {
+        if (!FD_ISSET(s.socket_, &sockets)) {
             continue;
         }
 
