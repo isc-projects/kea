@@ -665,43 +665,43 @@ OptionDefinition::writeToBuffer(Option::Universe u,
         }
     case OPT_PSID_TYPE:
         {
-        std::string txt = value;
+            std::string txt = value;
 
-        // first let's remove any whitespaces
-        boost::erase_all(txt, " "); // space
-        boost::erase_all(txt, "\t"); // tabulation
+            // first let's remove any whitespaces
+            boost::erase_all(txt, " "); // space
+            boost::erase_all(txt, "\t"); // tabulation
 
-        // Is this prefix/len notation?
-        size_t pos = txt.find("/");
+            // Is this prefix/len notation?
+            size_t pos = txt.find("/");
 
-        if (pos == string::npos) {
-            isc_throw(BadDataTypeCast, "provided PSID value "
-                      << value << " is not valid");
+            if (pos == string::npos) {
+                isc_throw(BadDataTypeCast, "provided PSID value "
+                          << value << " is not valid");
+            }
+
+            const std::string txt_psid = txt.substr(0, pos);
+            const std::string txt_psid_len = txt.substr(pos + 1);
+
+            uint16_t psid = 0;
+            uint8_t psid_len = 0;
+
+            try {
+                psid = lexicalCastWithRangeCheck<uint16_t>(txt_psid);
+            } catch (...)  {
+                isc_throw(BadDataTypeCast, "provided PSID "
+                          << txt_psid << " is not valid");
+            }
+
+            try {
+                psid_len = lexicalCastWithRangeCheck<uint8_t>(txt_psid_len);
+            } catch (...)  {
+                isc_throw(BadDataTypeCast, "provided PSID length "
+                          << txt_psid_len << " is not valid");
+            }
+
+            OptionDataTypeUtil::writePsid(PSIDLen(psid_len), PSID(psid), buf);
+            return;
         }
-
-        const std::string txt_psid = txt.substr(0, pos);
-        const std::string txt_psid_len = txt.substr(pos + 1);
-
-        uint16_t psid = 0;
-        uint8_t psid_len = 0;
-
-        try {
-            psid = lexicalCastWithRangeCheck<uint16_t>(txt_psid);
-        } catch (...)  {
-            isc_throw(BadDataTypeCast, "provided PSID "
-                      << txt_psid << " is not valid");
-        }
-
-        try {
-            psid_len = lexicalCastWithRangeCheck<uint8_t>(txt_psid_len);
-        } catch (...)  {
-            isc_throw(BadDataTypeCast, "provided PSID length "
-                      << txt_psid_len << " is not valid");
-        }
-
-        OptionDataTypeUtil::writePsid(PSIDLen(psid_len), PSID(psid), buf);
-        return;
-    }
     case OPT_STRING_TYPE:
         OptionDataTypeUtil::writeString(value, buf);
         return;
@@ -709,12 +709,12 @@ OptionDefinition::writeToBuffer(Option::Universe u,
         OptionDataTypeUtil::writeFqdn(value, buf);
         return;
     case OPT_TUPLE_TYPE:
-    {
-        OpaqueDataTuple::LengthFieldType lft = u == Option::V4 ?
-            OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
-        OptionDataTypeUtil::writeTuple(value, lft, buf);
-        return;
-    }
+        {
+            OpaqueDataTuple::LengthFieldType lft = u == Option::V4 ?
+                OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+            OptionDataTypeUtil::writeTuple(value, lft, buf);
+            return;
+        }
     default:
         // We hit this point because invalid option data type has been specified
         // This may be the case because 'empty' or 'record' data type has been
