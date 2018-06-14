@@ -18,6 +18,8 @@
 #include <cc/json_feed.h>
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
+#include <config/timeouts.h>
+#include <util/watch_socket.h>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <array>
@@ -31,10 +33,7 @@ using namespace isc::data;
 namespace {
 
 /// @brief Maximum size of the data chunk sent/received over the socket.
-const size_t BUF_SIZE = 8192;
-
-/// @brief Default connection timeout in seconds.
-const unsigned short DEFAULT_CONNECTION_TIMEOUT = 10;
+const size_t BUF_SIZE = 32768;
 
 class ConnectionPool;
 
@@ -51,6 +50,11 @@ public:
     /// Manager to cause the blocking call to @c select() to return as soon as
     /// a transmission over the control socket is received.
     ///
+    /// It installs two external sockets on the @IfaceMgr to break synchronous
+    /// calls to @select(). The @c WatchSocket is used for send operations
+    /// over the connection. The native socket is used for signaling reads
+    /// over the connection.
+    ///
     /// @param io_service IOService object used to handle the asio operations
     /// @param socket Pointer to the object representing a socket which is used
     /// for data transmission.
@@ -60,23 +64,24 @@ public:
     Connection(const IOServicePtr& io_service,
                const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool,
-               const unsigned short timeout)
+               const long timeout)
         : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
-          response_in_progress_(false) {
+          response_in_progress_(false), watch_socket_(new util::WatchSocket()) {
 
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_OPENED)
             .arg(socket_->getNative());
 
         // Callback value of 0 is used to indicate that callback function is
         // not installed.
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(watch_socket_->getSelectFd(), 0);
         isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
+
         // Initialize state model for receiving and preparsing commands.
         feed_.initModel();
 
         // Start timer for detecting timeouts.
-        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
-                             timeout_ * 1000, IntervalTimer::ONE_SHOT);
+        scheduleTimer();
     }
 
     /// @brief Destructor.
@@ -84,6 +89,12 @@ public:
     /// Cancels timeout timer if one is scheduled.
     ~Connection() {
         timeout_timer_.cancel();
+    }
+
+    /// @brief This method schedules timer or reschedules existing timer.
+    void scheduleTimer() {
+        timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
+                             timeout_, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Close current connection.
@@ -97,7 +108,16 @@ public:
             LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_CLOSED)
                 .arg(socket_->getNative());
 
+            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
             isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+
+            // Close watch socket and log errors if occur.
+            std::string watch_error;
+            if (!watch_socket_->closeSocket(watch_error)) {
+                LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_CLOSE_ERROR)
+                    .arg(watch_error);
+            }
+
             socket_->close();
             timeout_timer_.cancel();
         }
@@ -118,8 +138,6 @@ public:
         socket_->asyncReceive(&buf_[0], sizeof(buf_),
                               boost::bind(&Connection::receiveHandler,
                                           shared_from_this(), _1, _2));
-
-
     }
 
     /// @brief Starts asynchronous send over the unix domain socket.
@@ -133,6 +151,17 @@ public:
         size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
         socket_->asyncSend(&response_[0], chunk_size,
            boost::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
+
+        // Asynchronous send has been scheduled and we need to indicate this
+        // to break the synchronous select(). The handler should clear this
+        // status when invoked.
+        try {
+            watch_socket_->markReady();
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_MARK_READY_ERROR)
+                .arg(ex.what());
+        }
     }
 
     /// @brief Handler invoked when the data is received over the control
@@ -176,8 +205,8 @@ private:
     /// @brief Interval timer used to detect connection timeouts.
     IntervalTimer timeout_timer_;
 
-    /// @brief Connection timeout (in seconds)
-    unsigned short timeout_;
+    /// @brief Connection timeout (in milliseconds)
+    long timeout_;
 
     /// @brief Buffer used for received data.
     std::array<char, BUF_SIZE> buf_;
@@ -196,6 +225,9 @@ private:
     /// result of server reconfiguration.
     bool response_in_progress_;
 
+    /// @brief Pointer to watch socket instance used to signal that the socket
+    /// is ready for read or write.
+    util::WatchSocketPtr watch_socket_;
 };
 
 /// @brief Pointer to the @c Connection.
@@ -288,6 +320,9 @@ Connection::receiveHandler(const boost::system::error_code& ec,
     LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_READ)
         .arg(bytes_transferred).arg(socket_->getNative());
 
+    // Reschedule the timer because the transaction is ongoing.
+    scheduleTimer();
+
     ConstElementPtr rsp;
 
     try {
@@ -305,6 +340,10 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         if (feed_.feedOk()) {
             ConstElementPtr cmd = feed_.toElement();
             response_in_progress_ = true;
+
+            // Cancel the timer to make sure that long lasting command
+            // processing doesn't cause the timeout.
+            timeout_timer_.cancel();
 
             // If successful, then process it as a command.
             rsp = CommandMgr::instance().processCommand(cmd);
@@ -331,6 +370,10 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
     } else {
 
+        // Reschedule the timer as it may be either canceled or need to be
+        // updated to not timeout before we manage to the send the reply.
+        scheduleTimer();
+
         // Let's convert JSON response to text. Note that at this stage
         // the rsp pointer is always set.
         response_ = rsp->str();
@@ -346,6 +389,16 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 void
 Connection::sendHandler(const boost::system::error_code& ec,
                         size_t bytes_transferred) {
+    // Clear the watch socket so as the future send operation can mark it
+    // again to interrupt the synchronous select() call.
+    try {
+        watch_socket_->clearReady();
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_CLEAR_ERROR)
+            .arg(ex.what());
+    }
+
     if (ec) {
         // If an error occurred, log this error and stop the connection.
         if (ec.value() != boost::asio::error::operation_aborted) {
@@ -354,6 +407,10 @@ Connection::sendHandler(const boost::system::error_code& ec,
         }
 
     } else {
+
+        // Reschedule the timer because the transaction is ongoing.
+        scheduleTimer();
+
         // No error. We are in a process of sending a response. Need to
         // remove the chunk that we have managed to sent with the previous
         // attempt.
@@ -417,7 +474,7 @@ public:
     /// @brief Constructor.
     CommandMgrImpl()
         : io_service_(), acceptor_(), socket_(), socket_name_(),
-          connection_pool_(), timeout_(DEFAULT_CONNECTION_TIMEOUT) {
+          connection_pool_(), timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND) {
     }
 
     /// @brief Opens acceptor service allowing the control clients to connect.
@@ -449,7 +506,7 @@ public:
     ConnectionPool connection_pool_;
 
     /// @brief Connection timeout
-    unsigned short timeout_;
+    long timeout_;
 };
 
 void
@@ -568,7 +625,7 @@ CommandMgr::setIOService(const IOServicePtr& io_service) {
 }
 
 void
-CommandMgr::setConnectionTimeout(const unsigned short timeout) {
+CommandMgr::setConnectionTimeout(const long timeout) {
     impl_->timeout_ = timeout;
 }
 
