@@ -111,7 +111,7 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     config_storage->setSyncLeases(getBoolean(c, "sync-leases"));
 
     // Get 'sync-timeout'.
-    uint16_t sync_timeout = getAndValidateInteger<uint16_t>(c, "sync-timeout");
+    uint32_t sync_timeout = getAndValidateInteger<uint32_t>(c, "sync-timeout");
     config_storage->setSyncTimeout(sync_timeout);
 
     // Get 'heartbeat-delay'.
