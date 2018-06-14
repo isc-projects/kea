@@ -18,6 +18,7 @@
 #include <cc/data.h>
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
+#include <config/timeouts.h>
 #include <boost/pointer_cast.hpp>
 #include <iterator>
 #include <sstream>
@@ -29,14 +30,6 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
-
-namespace {
-
-/// @brief Client side connection timeout.
-/// @todo Make it configurable.
-const long CONNECTION_TIMEOUT = 60000;
-
-}
 
 namespace isc {
 namespace agent {
@@ -241,7 +234,7 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
                    // Got the IO service so stop IO service. This causes to
                    // stop IO service when all handlers have been invoked.
                    io_service->stopWork();
-               }, ClientConnection::Timeout(CONNECTION_TIMEOUT));
+               }, ClientConnection::Timeout(TIMEOUT_AGENT_FORWARD_COMMAND));
     io_service->run();
 
     if (received_ec) {
