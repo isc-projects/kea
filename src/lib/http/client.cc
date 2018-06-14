@@ -230,7 +230,7 @@ private:
     std::string buf_;
 
     /// @brief Input buffer.
-    std::array<char, 4096> input_buf_;
+    std::array<char, 32768> input_buf_;
 };
 
 /// @brief Shared pointer to the connection.

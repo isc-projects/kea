@@ -106,7 +106,7 @@ private:
     std::string current_command_;
 
     /// @brief Buffer into which chunks of the response are received.
-    std::array<char, 1024> read_buf_;
+    std::array<char, 32768> read_buf_;
 
     /// @brief Instance of the interval timer protecting against timeouts.
     IntervalTimer timer_;
