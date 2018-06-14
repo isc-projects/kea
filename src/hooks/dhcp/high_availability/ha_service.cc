@@ -33,18 +33,6 @@ using namespace isc::http;
 using namespace isc::log;
 using namespace isc::util;
 
-namespace {
-
-/// @brief Timeout for synchronization of leases with partner.
-///
-/// This timeout is very high because in some cases the number of
-/// gathered leases is huge. Syncing should not really take that
-/// long, but if the partner doesn't respond we can't do anything
-/// useful anyway. So, it doesn't really matter.
-const long HA_SYNC_TIMEOUT = 60000;
-
-}
-
 namespace isc {
 namespace ha {
 
@@ -1227,7 +1215,7 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                 post_sync_action(error_message.empty(),
                                  error_message);
             }
-    }, HttpClient::RequestTimeout(HA_SYNC_TIMEOUT));
+    });
 }
 
 ConstElementPtr
