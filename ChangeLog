@@ -1,3 +1,5 @@
+Kea 1.4.0 released on June 15, 2018
+
 1427.	[bug]		marcin
 	Resolved multiple problems causing slow synchronization of
 	leases in the HA hooks library, including adjusting
