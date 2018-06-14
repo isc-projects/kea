@@ -1215,7 +1215,7 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                 post_sync_action(error_message.empty(),
                                  error_message);
             }
-    });
+    }, HttpClient::RequestTimeout(config_->getSyncTimeout()));
 }
 
 ConstElementPtr
