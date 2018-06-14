@@ -33,7 +33,7 @@ using namespace isc::data;
 namespace {
 
 /// @brief Maximum size of the data chunk sent/received over the socket.
-const size_t BUF_SIZE = 8192;
+const size_t BUF_SIZE = 32768;
 
 class ConnectionPool;
 

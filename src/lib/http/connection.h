@@ -230,7 +230,7 @@ private:
     HttpAcceptorCallback acceptor_callback_;
 
     /// @brief Buffer for received data.
-    std::array<char, 4096> buf_;
+    std::array<char, 32768> buf_;
 
     /// @brief Buffer used for outbound data.
     std::string output_buf_;
