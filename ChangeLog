@@ -1,3 +1,13 @@
+1427.	[bug]		marcin
+	Resolved multiple problems causing slow synchronization of
+	leases in the HA hooks library, including adjusting
+	timeouts in control channel and improving performance of
+	responses sent by the Command Manager to Control Agent.
+	Also, introduced 'sync-timeout' configuration parameter
+	into HA hooks library to control lease database
+	synchronization timeout.
+	(Trac #5649, git cbc29128863916a13364749bf681586aea2aa51e)
+
 1426.	[func]		fdupont
 	Added KNOWN and UNKNOWN built-in client classes: after host lookup
 	if a matching host entry is found the incoming packet is added to
