@@ -18,6 +18,7 @@
 #include <cc/json_feed.h>
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
+#include <util/watch_socket.h>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <array>
@@ -51,6 +52,11 @@ public:
     /// Manager to cause the blocking call to @c select() to return as soon as
     /// a transmission over the control socket is received.
     ///
+    /// It installs two external sockets on the @IfaceMgr to break synchronous
+    /// calls to @select(). The @c WatchSocket is used for send operations
+    /// over the connection. The native socket is used for signaling reads
+    /// over the connection.
+    ///
     /// @param io_service IOService object used to handle the asio operations
     /// @param socket Pointer to the object representing a socket which is used
     /// for data transmission.
@@ -63,14 +69,16 @@ public:
                const unsigned short timeout)
         : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
-          response_in_progress_(false) {
+          response_in_progress_(false), watch_socket_(new util::WatchSocket()) {
 
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_OPENED)
             .arg(socket_->getNative());
 
         // Callback value of 0 is used to indicate that callback function is
         // not installed.
+        isc::dhcp::IfaceMgr::instance().addExternalSocket(watch_socket_->getSelectFd(), 0);
         isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
+
         // Initialize state model for receiving and preparsing commands.
         feed_.initModel();
 
@@ -102,7 +110,16 @@ public:
             LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_CLOSED)
                 .arg(socket_->getNative());
 
+            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
             isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+
+            // Close watch socket and log errors if occur.
+            std::string watch_error;
+            if (!watch_socket_->closeSocket(watch_error)) {
+                LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_CLOSE_ERROR)
+                    .arg(watch_error);
+            }
+
             socket_->close();
             timeout_timer_.cancel();
         }
@@ -123,8 +140,6 @@ public:
         socket_->asyncReceive(&buf_[0], sizeof(buf_),
                               boost::bind(&Connection::receiveHandler,
                                           shared_from_this(), _1, _2));
-
-
     }
 
     /// @brief Starts asynchronous send over the unix domain socket.
@@ -138,6 +153,17 @@ public:
         size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
         socket_->asyncSend(&response_[0], chunk_size,
            boost::bind(&Connection::sendHandler, shared_from_this(), _1, _2));
+
+        // Asynchronous send has been scheduled and we need to indicate this
+        // to break the synchronous select(). The handler should clear this
+        // status when invoked.
+        try {
+            watch_socket_->markReady();
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_MARK_READY_ERROR)
+                .arg(ex.what());
+        }
     }
 
     /// @brief Handler invoked when the data is received over the control
@@ -201,6 +227,9 @@ private:
     /// result of server reconfiguration.
     bool response_in_progress_;
 
+    /// @brief Pointer to watch socket instance used to signal that the socket
+    /// is ready for read or write.
+    util::WatchSocketPtr watch_socket_;
 };
 
 /// @brief Pointer to the @c Connection.
@@ -362,6 +391,16 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 void
 Connection::sendHandler(const boost::system::error_code& ec,
                         size_t bytes_transferred) {
+    // Clear the watch socket so as the future send operation can mark it
+    // again to interrupt the synchronous select() call.
+    try {
+        watch_socket_->clearReady();
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_CLEAR_ERROR)
+            .arg(ex.what());
+    }
+
     if (ec) {
         // If an error occurred, log this error and stop the connection.
         if (ec.value() != boost::asio::error::operation_aborted) {
