@@ -896,11 +896,9 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     boost::scoped_ptr<SocketInfo> candidate;
     IfacePtr iface;
     fd_set sockets;
-    fd_set write_sockets;
     int maxfd = 0;
 
     FD_ZERO(&sockets);
-    FD_ZERO(&write_sockets);
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
@@ -924,17 +922,6 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             FD_SET(s.socket_, &sockets);
-
-            // Sometimes we want to react to socket writes, not only to reads.
-            // However, current use cases are limited to CommandMgr which
-            // doesn't trigger any callbacks. For all use cases that install
-            // callbacks we don't react to socket reads being afraid what we
-            // can break.
-            /// @todo This whole solution is temporary and implemented for
-            /// #5649.
-            if (!s.callback_) {
-                FD_SET(s.socket_, &write_sockets);
-            }
             if (maxfd < s.socket_) {
                 maxfd = s.socket_;
             }
@@ -948,7 +935,7 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, &write_sockets, NULL, &select_timeout);
+    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
     if (result == 0) {
         // nothing received and timeout has been reached
@@ -1019,11 +1006,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     boost::scoped_ptr<SocketInfo> candidate;
     fd_set sockets;
-    fd_set write_sockets;
     int maxfd = 0;
 
     FD_ZERO(&sockets);
-    FD_ZERO(&write_sockets);
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
@@ -1048,17 +1033,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             // Add it to the set as well
             FD_SET(s.socket_, &sockets);
-
-            // Sometimes we want to react to socket writes, not only to reads.
-            // However, current use cases are limited to CommandMgr which
-            // doesn't trigger any callbacks. For all use cases that install
-            // callbacks we don't react to socket reads being afraid what we
-            // can break.
-            /// @todo This whole solution is temporary and implemented for
-            /// #5649.
-            if (!s.callback_) {
-                FD_SET(s.socket_, &write_sockets);
-            }
             if (maxfd < s.socket_) {
                 maxfd = s.socket_;
             }
@@ -1072,7 +1046,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, &write_sockets, NULL, &select_timeout);
+    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
     if (result == 0) {
         // nothing received and timeout has been reached

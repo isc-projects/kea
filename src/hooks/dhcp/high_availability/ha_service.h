@@ -540,7 +540,7 @@ protected:
     ///
     /// If there is an error while inserting or updating any of the leases
     /// a warning message is logged and the process continues for the
-    /// remaining leases. The timeout for synchronization is set to 1 minute.
+    /// remaining leases.
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
