@@ -18,6 +18,7 @@
 #include <cc/json_feed.h>
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
+#include <config/timeouts.h>
 #include <util/watch_socket.h>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -33,9 +34,6 @@ namespace {
 
 /// @brief Maximum size of the data chunk sent/received over the socket.
 const size_t BUF_SIZE = 8192;
-
-/// @brief Default connection timeout in seconds.
-const unsigned short DEFAULT_CONNECTION_TIMEOUT = 10;
 
 class ConnectionPool;
 
@@ -66,7 +64,7 @@ public:
     Connection(const IOServicePtr& io_service,
                const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool,
-               const unsigned short timeout)
+               const long timeout)
         : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
           response_in_progress_(false), watch_socket_(new util::WatchSocket()) {
@@ -96,7 +94,7 @@ public:
     /// @brief This method schedules timer or reschedules existing timer.
     void scheduleTimer() {
         timeout_timer_.setup(boost::bind(&Connection::timeoutHandler, this),
-                             timeout_ * 1000, IntervalTimer::ONE_SHOT);
+                             timeout_, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Close current connection.
@@ -207,8 +205,8 @@ private:
     /// @brief Interval timer used to detect connection timeouts.
     IntervalTimer timeout_timer_;
 
-    /// @brief Connection timeout (in seconds)
-    unsigned short timeout_;
+    /// @brief Connection timeout (in milliseconds)
+    long timeout_;
 
     /// @brief Buffer used for received data.
     std::array<char, BUF_SIZE> buf_;
@@ -476,7 +474,7 @@ public:
     /// @brief Constructor.
     CommandMgrImpl()
         : io_service_(), acceptor_(), socket_(), socket_name_(),
-          connection_pool_(), timeout_(DEFAULT_CONNECTION_TIMEOUT) {
+          connection_pool_(), timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND) {
     }
 
     /// @brief Opens acceptor service allowing the control clients to connect.
@@ -508,7 +506,7 @@ public:
     ConnectionPool connection_pool_;
 
     /// @brief Connection timeout
-    unsigned short timeout_;
+    long timeout_;
 };
 
 void
@@ -627,7 +625,7 @@ CommandMgr::setIOService(const IOServicePtr& io_service) {
 }
 
 void
-CommandMgr::setConnectionTimeout(const unsigned short timeout) {
+CommandMgr::setConnectionTimeout(const long timeout) {
     impl_->timeout_ = timeout;
 }
 
