@@ -1587,7 +1587,7 @@ It is merely echoed by the server
             <row><entry>Name</entry><entry>Meaning</entry></row>
           </thead>
           <tbody>
-            <row><entry>hex</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
+            <row><entry>binary</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
             <row><entry>boolean</entry><entry>Boolean value with allowed values true or false</entry></row>
             <row><entry>empty</entry><entry>No value, data is carried in suboptions</entry></row>
             <row><entry>fqdn</entry><entry>Fully qualified domain name (e.g. www.example.com)</entry></row>
