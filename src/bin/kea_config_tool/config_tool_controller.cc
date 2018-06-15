@@ -991,6 +991,16 @@ void ConfigToolController::parseMasterServersJson(
                              "to add { } around your configuration?");
         }
 
+        // Get 'master-config' component from the config.
+        auto master_config_node = json->get("master-config");
+        if (!master_config_node) {
+            isc_throw(isc::BadValue, "no mandatory 'master-config' entry in the configuration");
+        }
+
+        if (!master_config_node->listValue().size()) {
+            return;
+        }
+
         // Get 'config-database' component from the config.
         auto config_database = json->get("config-database");
         if (!config_database) {
@@ -1015,12 +1025,6 @@ void ConfigToolController::parseMasterServersJson(
                                          << "' should be the same as the shard's database name "
                                          << database_name_node->stringValue()
                                          << "' specified in `config-database`.");
-        }
-
-        // Get 'master-config' component from the config.
-        auto master_config_node = json->get("master-config");
-        if (!master_config_node) {
-            isc_throw(isc::BadValue, "no mandatory 'master-config' entry in the configuration");
         }
 
         for (isc::data::ConstElementPtr server_config_node : master_config_node->listValue()) {
@@ -1162,6 +1166,10 @@ ConfigToolController::masterSrvConfigDataToJSON(std::vector<SrvConfigMasterInfoP
                   << tabs[3] << "\"update_timestamp\": \"" << server->timestamp_ << "\""
                   << std::endl
                   << tabs[2] << "}";
+    }
+
+    if (config_database.empty()) {
+        config_database = "{}";
     }
 
     // End serializing root-level JSON.
