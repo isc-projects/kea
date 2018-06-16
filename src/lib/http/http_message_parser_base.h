@@ -11,8 +11,8 @@
 #include <http/http_message.h>
 #include <util/state_model.h>
 #include <boost/function.hpp>
-#include <list>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace http {
@@ -142,6 +142,27 @@ public:
     /// @param buf_size Size of the data within the buffer.
     void postBuffer(const void* buf, const size_t buf_size);
 
+    /// @brief Returns parser's input buffer as string.
+    ///
+    /// @param limit Maximum length of the buffer to be output. If the limit is 0,
+    /// the length of the output is unlimited.
+    /// @return Textual representation of the input buffer.
+    std::string getBufferAsString(const size_t limit = 0) const;
+
+    /// @brief Formats provided HTTP message for logging.
+    ///
+    /// This method is useful in cases when there is a need to log a HTTP message
+    /// (as text). If the @c limit is specified the message output is limited to
+    /// this size. If the @c limit is set to 0 (default), the whole message is
+    /// output. The @c getBufferAsString method calls this method internally.
+    ///
+    /// @param message HTTP message to be logged.
+    /// @param limit Maximum length of the buffer to be output. If the limit is 0,
+    /// the length of the output is unlimited.
+    /// @return HTTP message formatted for logging.
+    static std::string logFormatHttpMessage(const std::string& message,
+                                            const size_t limit = 0);
+
 private:
 
     /// @brief Make @ref runModel private to make sure that the caller uses
@@ -257,7 +278,10 @@ protected:
     HttpMessage& message_;
 
     /// @brief Internal buffer from which parser reads data.
-    std::list<char> buffer_;
+    std::vector<char> buffer_;
+
+    /// @brief Position of the next character to read from the buffer.
+    size_t buffer_pos_;
 
     /// @brief Error message set by @ref onModelFailure.
     std::string error_message_;
