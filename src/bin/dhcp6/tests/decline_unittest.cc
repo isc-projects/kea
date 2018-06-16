@@ -142,8 +142,11 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     // Use the second duid
     client.setDUID(duid2);
 
-    // Use the second IAID
-    client.config_.leases_[0].iaid_ = iaid2;
+    // Use the second IAID (but not in NO_IA which has cleared leases)
+    if (addr_type != NO_IA) {
+        ASSERT_NE(0, client.config_.leases_.size());
+        client.config_.leases_[0].iaid_ = iaid2;
+    }
 
     // Ok, let's decline the lease.
     ASSERT_NO_THROW(client.doDecline(include_address_));

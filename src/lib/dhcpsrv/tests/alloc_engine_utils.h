@@ -163,13 +163,15 @@ public:
 
     /// @brief checks if Lease6 matches expected configuration
     ///
+    /// @param duid pointer to the client's DUID.
     /// @param lease lease to be checked
     /// @param exp_type expected lease type
     /// @param exp_pd_len expected prefix length
     /// @param expected_in_subnet whether the lease is expected to be in subnet
     /// @param expected_in_pool whether the lease is expected to be in dynamic
-    void checkLease6(const Lease6Ptr& lease, Lease::Type exp_type,
-                     uint8_t exp_pd_len = 128, bool expected_in_subnet = true,
+    void checkLease6(const DuidPtr& duid, const Lease6Ptr& lease,
+                     Lease::Type exp_type, uint8_t exp_pd_len = 128,
+                     bool expected_in_subnet = true,
                      bool expected_in_pool = true) {
 
         // that is belongs to the right subnet
@@ -198,7 +200,7 @@ public:
         EXPECT_EQ(fqdn_fwd_, lease->fqdn_fwd_);
         EXPECT_EQ(fqdn_rev_, lease->fqdn_rev_);
         EXPECT_EQ(hostname_, lease->hostname_);
-        EXPECT_TRUE(*lease->duid_ == *duid_);
+        EXPECT_TRUE(*lease->duid_ == *duid);
         /// @todo: check cltt
     }
 
@@ -246,7 +248,7 @@ public:
 
     /// @brief Checks if the simple allocation can succeed
     ///
-    /// The type of lease is determined by pool type (pool->getType()
+    /// The type of lease is determined by pool type (pool->getType())
     ///
     /// @param pool pool from which the lease will be allocated from
     /// @param hint address to be used as a hint
@@ -256,6 +258,21 @@ public:
     Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint,
                                bool fake, bool in_pool = true);
+
+    /// @brief Checks if the simple allocation can succeed for custom DUID.
+    ///
+    /// The type of lease is determined by pool type (pool->getType())
+    ///
+    /// @param pool pool from which the lease will be allocated from
+    /// @param duid pointer to the DUID used for allocation.
+    /// @param hint address to be used as a hint
+    /// @param fake true - this is fake allocation (SOLICIT)
+    /// @param in_pool specifies whether the lease is expected to be in pool
+    /// @return allocated lease (or NULL)
+    Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
+                               const asiolink::IOAddress& hint,
+                               bool fake, bool in_pool = true);
+
 
     /// @brief Checks if the allocation can succeed.
     ///

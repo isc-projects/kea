@@ -1,15 +1,42 @@
-If using git (not the tarball), build the "configure" file:
-    autoreconf --install
+INSTALLATION INSTRUCTIONS
 
-To then build from source:
-    ./configure
-    make
+1. Generate the configure script.  If you downloaded the source from git or
+are compiling with premium hook packages, you will need to run autoreconf to
+generate the configure script as shown below.  If you are building from a
+tarball you may skip this step.
+
+   $ autoreconf --install
+
+2. Run the configure script.  If you want to alter Kea's installation path, or
+need to include capabilities (e.g. enabling MySQL or PostgreSQL) you will need
+to specify these as options to the configure script (run ./configure -h for
+list of options).
+
+   $ ./configure
+
+If your environment is missing dependencies, the configure script will exit
+with error and should emit sufficient information to guide you on how to
+proceed.  A detailed account of the configure process is captured in
+./config.log.
+
+3. Build it. Once you've successfully configured the source tree, run "make" to
+build it.  You may wish to include the -j<n> command line option to specify
+parallel execution to speed things along:
+
+  $ make
+
+4. Install it. Depending on your target directory, this step will likely require
+a root privileges. You can install the software by running:
+
+  $ sudo make install
 
 Kea depends on C++ compiler, make, libtool, boost (at least includes, but many
 OSes require boost-system library), log4cplus and one crypto library (either
 OpenSSL or Botan) for compilation.  Optional backends (MySQL, PostgreSQL and
 Cassandra) have additional dependencies. For detailed installation directions,
-see the guide at doc/guide/kea-guide.txt or doc/guide/kea-guide.html.
+see the guide at doc/guide/kea-guide.txt or doc/guide/kea-guide.html or on
+the Kea wiki: http://kea.isc.org/docs/kea-guide.html#installation
 
 You can find user-contributed OS-specific build/installation
 instructions on the Kea wiki: http://kea.isc.org/wiki/Install
+

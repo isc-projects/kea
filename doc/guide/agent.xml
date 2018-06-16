@@ -21,7 +21,7 @@
     included in the command from the controlling client. The details of the
     supported commands as well as their structures are provided in
     <xref linkend="ctrl-channel"/>.</para>
-    <para>Hook libraries can be attached to the CA to provide support for
+    <para>Hook libraries can be loaded by the CA to provide support for
     additional commands or custom behavior of existing commands. Such hook
     libraries must implement callouts for 'control_command_receive' hook point.
     Details about creating new hook libraries and supported hook points can be
@@ -167,7 +167,7 @@
     </para>
 
     <para>
-      Hooks libraries can be attached to the Control Agent just like to
+      Hooks libraries can be loaded by the Control Agent just like to
       DHCPv4 and DHCPv6 servers. It currently supports one hook point
       'control_command_receive' which makes it possible to delegate
       processing of some commands to the hooks library. The

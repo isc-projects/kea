@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,9 +117,11 @@ public:
     /// sent to the remote endpoint. When the entire command has been sent,
     /// the response is read asynchronously, possibly in multiple chunks.
     ///
-    /// The timeout is specified for the entire transaction in milliseconds.
-    /// If the transaction takes longer than the timeout value the connection
-    /// is closed and the callback is called with the error code of
+    /// The timeout is specified in milliseconds. The corresponding timer
+    /// measures the connection idle time. If the transaction is progressing,
+    /// the timer is updated accordingly. If the connection idle time is
+    /// longer than the timeout value the connection is closed and the
+    /// callback is called with the error code of
     /// @c boost::asio::error::timed_out.
     ///
     /// In other cases, the callback is called with the error code returned
