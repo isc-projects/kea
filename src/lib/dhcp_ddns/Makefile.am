@@ -43,6 +43,7 @@ libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.l
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
