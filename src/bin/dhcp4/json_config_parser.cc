@@ -312,6 +312,11 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // Print the list of known backends.
     HostDataSourceFactory::printRegistered();
 
+    // This is a way to convert ConstElementPtr to ElementPtr.
+    // We need a config that can be edited, because we will insert
+    // default values and will insert derived values as well.
+    ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+
     // Answer will hold the result.
     ConstElementPtr answer;
     // Rollback informs whether error occurred and original data
@@ -325,10 +330,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
         SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
 
-        // This is a way to convert ConstElementPtr to ElementPtr.
-        // We need a config that can be edited, because we will insert
-        // default values and will insert derived values as well.
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+        // Preserve all scalar global parameters
+        srv_config->extractConfiguredGlobals(config_set);
+
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
 

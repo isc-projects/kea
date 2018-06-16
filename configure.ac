@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.4.0-beta-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.4.0-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -1176,7 +1176,8 @@ fi
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
 # Disable threads: they seems to break things on some systems
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+# As now we use threads in boost ASIO this is commented out...
+# CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
 
 # We tried to stay header only
 if test "x${BOOST_LIBS}" = "x"; then
@@ -1411,6 +1412,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/shell/tests/shell_unittest.py
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/high_availability/Makefile
+                 src/hooks/dhcp/high_availability/tests/Makefile
                  src/hooks/dhcp/lease_cmds/Makefile
                  src/hooks/dhcp/lease_cmds/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile
