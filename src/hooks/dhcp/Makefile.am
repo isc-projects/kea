@@ -1,1 +1,1 @@
-SUBDIRS = user_chk lease_cmds stat_cmds
+SUBDIRS = high_availability lease_cmds stat_cmds user_chk

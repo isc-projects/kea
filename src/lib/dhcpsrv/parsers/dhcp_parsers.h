@@ -414,7 +414,7 @@ public:
     ///
     /// @param name name of the element supplying the address string, (either
     /// "ip-address" or "ip-addresses")
-    /// @param address string form of the IP address to add
+    /// @param address_str string form of the IP address to add
     /// @param relay_elem parent relay element (needed for position info)
     /// @param relay_info RelayInfo to which the address should be added
     /// @throw isc::dhcp::DhcpConfigError if the address string is not a valid

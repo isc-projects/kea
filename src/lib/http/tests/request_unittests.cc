@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -270,6 +270,17 @@ TEST_F(HttpRequestTest, clientRequestNoBody) {
               "Content-Type: text/html\r\n"
               "\r\n",
               request_.toString());
+}
+
+TEST_F(HttpRequestTest, toBriefString) {
+    // Create the request.
+    setContextBasics("POST", "/isc/org", HttpVersion(1, 1));
+    // Add headers.
+    request_.context()->headers_.push_back(HttpHeaderContext("Content-Type", "application/json"));
+    // Must be finalized before can be used.
+    ASSERT_NO_THROW(request_.finalize());
+    // Check that the brief string is correct.
+    EXPECT_EQ("POST /isc/org HTTP/1.1", request_.toBriefString());
 }
 
 }
