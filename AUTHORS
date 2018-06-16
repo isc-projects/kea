@@ -5,12 +5,12 @@
 Primary developers:
  - Tomek Mrugalski (lead developer: DHCPv4, DHCPv6 components, prefix
                     delegation, memfile, database interface, core libdhcp++,
-                    host reservation, MAC extraction in DHCPv6, statistics manager,
-                    kea-shell)
+                    host reservation, MAC extraction in DHCPv6,
+                    statistics manager, kea-shell)
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
-		     host reservation, lease file cleanup, lease expiration,
-                     control agent, shared networks)
+                     host reservation, lease file cleanup, lease expiration,
+                     control agent, shared networks, high availability)
  - Thomas Markwalder (DDNS, user_chk)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)

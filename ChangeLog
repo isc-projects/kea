@@ -1,3 +1,73 @@
+Kea 1.4.0 released on June 15, 2018
+
+1427.	[bug]		marcin
+	Resolved multiple problems causing slow synchronization of
+	leases in the HA hooks library, including adjusting
+	timeouts in control channel and improving performance of
+	responses sent by the Command Manager to Control Agent.
+	Also, introduced 'sync-timeout' configuration parameter
+	into HA hooks library to control lease database
+	synchronization timeout.
+	(Trac #5649, git cbc29128863916a13364749bf681586aea2aa51e)
+
+1426.	[func]		fdupont
+	Added KNOWN and UNKNOWN built-in client classes: after host lookup
+	if a matching host entry is found the incoming packet is added to
+	the KNOWN class, if none is found to the UNKNOWN class. Then
+	expressions depending directly or indirectly on these classes are
+	evaluated. Note these classes may be used to select a pool but
+	they may not to select a subnet.
+	(Trac #5549, git 6a856ed9722b918a65dca15ff44314e28897784e)
+
+1425.	[bug]		marcin
+	Improved performance of the DHCP server running in High
+	Availability configuration by optimizing the management of
+	CalloutHandle objects passed to the callouts.
+	(Trac #5647, git eea88d5c8f4d8efb6c5bfdfbf4e070a90069db5d)
+
+1424.	[doc]		marcin
+	List of hooks libraries provided by ISC includes an
+	information which Kea servers the libraries can be attached
+	to. The detailed description of each supported hooks library
+	also contains this information.
+	(Trac #5613, git 9d6f8de3d988c42c413a7d628e31854e9c80d8c9)
+
+1423.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now retain and emit global, scalar
+	parameters specified in their configuration.
+	(Trac #5378, git 4d05122f03d00b10a888c768fe1725cae9d6aea6)
+
+1422.	[build]		fdupont
+	Commented out BOOST_ASIO_DISABLE_THREADS in configure to reflect
+	the current use of threads by boost ASIO in Kea.
+	(Trac #5615, git f3fc8b1a4257a42a97aaf88a36287bbe33d1f65b)
+
+1421.	[build]		marcin
+	Moved libdhcp_ha (High Availability) hooks library from
+	premium to main Kea repository and changed its license to
+	MPLv2.0. Future ChangeLog entries for this library will be
+	tracked in the Kea ChangeLog file.
+	(Trac #5645, git 19b2553d4869bdd52b63b6f7969052d8a724f78d)
+
+1420.	[doc]		marcin
+	Updated list of loggers in the Kea Administrator's Manual.
+	The updated list contains all loggers, including those
+	from supported hooks libraries.
+	(Trac #5622, git bd94afc0af7183452c94f3b5768c6138f79d3b60)
+
+1419.	[doc]		marcin
+	Documented "sync-leases" configuration parameter of the HA
+	hooks library in the Kea Administrator's Manual.
+	(Trac #5621, git 4ebac3a411aa02d1cc3d74e7eaf3212ad208159a)
+
+1418.	[bug]		marcin
+	Corrected bug in the allocation engine which caused occasional
+	lease allocation failures when a loaded hooks library set the
+	callout status to non default value, e.g. "skip" rather than
+	"continue". In such cases, the server reported that it failed
+	to allocate a lease "after 0 attempts".
+	(Trac #5638, git f2e9b686ae52e1b06f660e1b522588b1440e2620)
+
 1417.	[bug]		marcin
 	Improved logging in the HTTP library both for the server and
 	the client.
