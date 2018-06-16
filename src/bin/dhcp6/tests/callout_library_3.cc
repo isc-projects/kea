@@ -9,6 +9,8 @@
 /// hook point.
 ///
 static const int LIBRARY_NUMBER = 3;
+#include <config.h>
+
 #include <dhcp6/tests/callout_library_common.h>
 #include <string>
 #include <vector>

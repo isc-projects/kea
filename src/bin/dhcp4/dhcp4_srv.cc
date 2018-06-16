@@ -163,6 +163,22 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         }
     }
 
+    // Set KNOWN builtin class if something was found, UNKNOWN if not.
+    if (!context_->hosts_.empty()) {
+        query->addClass("KNOWN");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query->getLabel())
+            .arg("KNOWN");
+    } else {
+        query->addClass("UNKNOWN");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query->getLabel())
+            .arg("UNKNOWN");
+    }
+
+    // Perform second pass of classification.
+    Dhcpv4Srv::evaluateClasses(query, true);
+
     const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
@@ -756,7 +772,7 @@ Dhcpv4Srv::run_one() {
         // we were interrupted. And we don't want to print a message every
         // second.
 
-    } catch (const SignalInterruptOnSelect) {
+    } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
@@ -2137,21 +2153,32 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Subnet mask (type 1)
         resp->addOption(getNetmaskOption(subnet));
 
-        // renewal-timer (type 58)
-        if (!subnet->getT1().unspecified()) {
+        // rebind timer (type 59) - if specified then send it only it if
+        // it is less than lease lifetime.  Note we "sanity" check T1
+        // and T2 against lease lifetime here in event the lifetime has
+        // been altered somewhere along the line.
+        uint32_t timer_ceiling = lease->valid_lft_;
+        if ((!subnet->getT2().unspecified()) &&
+            (subnet->getT2() <  timer_ceiling)) {
+            OptionUint32Ptr t2(new OptionUint32(Option::V4,
+                                                DHO_DHCP_REBINDING_TIME,
+                                                subnet->getT2()));
+            resp->addOption(t2);
+
+            // If T2 is specified, then it becomes the ceiling for T1
+            timer_ceiling = subnet->getT2();
+        }
+
+        // renewal-timer (type 58) - if specified then send it only if
+        // it is less than the ceiling (T2 if given, lease life time if not)
+        if ((!subnet->getT1().unspecified()) &&
+            (subnet->getT1() <  timer_ceiling)) {
             OptionUint32Ptr t1(new OptionUint32(Option::V4,
                                                 DHO_DHCP_RENEWAL_TIME,
                                                 subnet->getT1()));
             resp->addOption(t1);
         }
 
-        // rebind timer (type 59)
-        if (!subnet->getT2().unspecified()) {
-            OptionUint32Ptr t2(new OptionUint32(Option::V4,
-                                                DHO_DHCP_REBINDING_TIME,
-                                                subnet->getT2()));
-            resp->addOption(t2);
-        }
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
@@ -3186,10 +3213,14 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // All packets belongs to ALL.
     pkt->addClass("ALL");
 
-    // First phase: built-in vendor class processing
+    // First: built-in vendor class processing.
     classifyByVendor(pkt);
 
-    // Run match expressions
+    // Run match expressions on classes not depending on KNOWN/UNKNOWN.
+    evaluateClasses(pkt, false);
+}
+
+void Dhcpv4Srv::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
@@ -3204,6 +3235,10 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         }
         // Not the right time if only when required
         if ((*it)->getRequired()) {
+            continue;
+        }
+        // Not the right pass.
+        if ((*it)->getDependOnKnown() != depend_on_known) {
             continue;
         }
         // Evaluate the expression which can return false (no match),

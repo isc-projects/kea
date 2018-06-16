@@ -970,4 +970,71 @@ TEST_F(ClientClassDefListParserTest, dependentBackward) {
     EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
 }
 
+// Verifies that the depend on known flag is correctly handled.
+TEST_F(ClientClassDefListParserTest, dependOnKnown) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"alpha\", \n"
+        "       \"test\": \"member('ALL')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"beta\", \n"
+        "       \"test\": \"member('alpha')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"gamma\", \n"
+        "       \"test\": \"member('KNOWN') and member('alpha')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"delta\", \n"
+        "       \"test\": \"member('beta') and member('gamma')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"zeta\", \n"
+        "       \"test\": \"not member('UNKNOWN') and member('alpha')\" \n"
+        "   } \n"
+        "] \n";
+
+    // Parsing the list should succeed.
+    ClientClassDictionaryPtr dictionary;
+    EXPECT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6));
+    ASSERT_TRUE(dictionary);
+
+    // We should have five classes in the dictionary.
+    EXPECT_EQ(5, dictionary->getClasses()->size());
+
+    // Check alpha.
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = dictionary->findClass("alpha"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("alpha", cclass->getName());
+    EXPECT_FALSE(cclass->getDependOnKnown());
+
+    // Check beta.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("beta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("beta", cclass->getName());
+    EXPECT_FALSE(cclass->getDependOnKnown());
+
+    // Check gamma which directly depends on KNOWN.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("gamma"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("gamma", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+
+    // Check delta which indirectly depends on KNOWN.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("delta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("delta", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+
+    // Check that zeta which directly depends on UNKNOWN.
+    // (and yes I know that I skipped epsilon)
+    ASSERT_NO_THROW(cclass = dictionary->findClass("zeta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("zeta", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+}
+
 } // end of anonymous namespace

@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
@@ -26,6 +28,13 @@ public:
     ///
     /// @param io_service Reference to the IO service.
     explicit ClientConnectionImpl(IOService& io_service);
+
+    /// @brief This method schedules timer or reschedules existing timer.
+    ///
+    /// @param handler Pointer to the user supplied callback function which
+    /// should be invoked when transaction completes or when an error has
+    /// occurred during the transaction.
+    void scheduleTimer(ClientConnection::Handler handler);
 
     /// @brief Starts asynchronous transaction with a remote endpoint.
     ///
@@ -97,14 +106,27 @@ private:
     std::string current_command_;
 
     /// @brief Buffer into which chunks of the response are received.
-    std::array<char, 1024> read_buf_;
+    std::array<char, 32768> read_buf_;
 
     /// @brief Instance of the interval timer protecting against timeouts.
     IntervalTimer timer_;
+
+    /// @brief Timeout value used for the timer.
+    long timeout_;
 };
 
 ClientConnectionImpl::ClientConnectionImpl(IOService& io_service)
-    : socket_(io_service), feed_(), current_command_(), timer_(io_service) {
+    : socket_(io_service), feed_(), current_command_(), timer_(io_service),
+      timeout_(0) {
+}
+
+void
+ClientConnectionImpl::scheduleTimer(ClientConnection::Handler handler) {
+    if (timeout_ > 0) {
+        timer_.setup(boost::bind(&ClientConnectionImpl::timeoutCallback,
+                                 this, handler),
+                     timeout_, IntervalTimer::ONE_SHOT);
+    }
 }
 
 void
@@ -113,9 +135,8 @@ ClientConnectionImpl::start(const ClientConnection::SocketPath& socket_path,
                             ClientConnection::Handler handler,
                             const ClientConnection::Timeout& timeout) {
     // Start the timer protecting against timeouts.
-    timer_.setup(boost::bind(&ClientConnectionImpl::timeoutCallback,
-                             this, handler),
-                 timeout.timeout_, IntervalTimer::ONE_SHOT);
+    timeout_ = timeout.timeout_;
+    scheduleTimer(handler);
 
     // Store the command in the class member to make sure it is valid
     // the entire time.
@@ -160,6 +181,9 @@ ClientConnectionImpl::doSend(const void* buffer, const size_t length,
             terminate(ec, handler);
 
         } else {
+            // Sending is in progress, so push back the timeout.
+            scheduleTimer(handler);
+
             // If the number of bytes we have managed to send so far is
             // lower than the amount of data we're trying to send, we
             // have to schedule another send to deliver the rest of
@@ -191,6 +215,9 @@ ClientConnectionImpl::doReceive(ClientConnection::Handler handler) {
             terminate(ec, handler);
 
         } else {
+            // Receiving is in progress, so push back the timeout.
+            scheduleTimer(handler);
+
             std::string x(&read_buf_[0], length);
             // Lazy initialization of the JSONFeed. The feed will be "parsing"
             // received JSON stream and will detect when the whole response

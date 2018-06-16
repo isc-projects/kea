@@ -137,7 +137,7 @@
         {
             // This section specifies configuration of the HA hooks library specific
             // logger.
-            "name": "kea-dhcp4.ha_hooks",
+            "name": "kea-dhcp4.ha-hooks",
             "output_options": [
                 {
                     "output": "stdout"

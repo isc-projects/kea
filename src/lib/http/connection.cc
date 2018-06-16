@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <http/connection.h>
 #include <http/connection_pool.h>
@@ -12,6 +14,15 @@
 #include <boost/bind.hpp>
 
 using namespace isc::asiolink;
+
+namespace {
+
+/// @brief Maximum size of the HTTP message that can be logged.
+///
+/// The part of the HTTP message beyond this value is truncated.
+constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
+
+}
 
 namespace isc {
 namespace http {
@@ -33,7 +44,6 @@ HttpConnection:: HttpConnection(asiolink::IOService& io_service,
                                 const long request_timeout,
                                 const long idle_timeout)
     : request_timer_(io_service),
-      request_timer_setup_(false),
       request_timeout_(request_timeout),
       idle_timeout_(idle_timeout),
       socket_(io_service),
@@ -54,7 +64,6 @@ HttpConnection::~HttpConnection() {
 
 void
 HttpConnection::close() {
-    request_timer_setup_ = false;
     request_timer_.cancel();
     socket_.close();
 }
@@ -188,6 +197,9 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
         }
     }
 
+    // Receiving is in progress, so push back the timeout.
+    setupRequestTimer();
+
     if (length != 0) {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
                   HTTP_DATA_RECEIVED)
@@ -203,19 +215,48 @@ HttpConnection::socketReadCallback(boost::system::error_code ec, size_t length) 
         doRead();
 
     } else {
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTP_REQUEST_RECEIVED)
-            .arg(getRemoteEndpointAddressAsText());
         try {
             request_->finalize();
-        } catch (...) {
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                      HTTP_CLIENT_REQUEST_RECEIVED)
+                .arg(getRemoteEndpointAddressAsText());
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                      HTTP_CLIENT_REQUEST_RECEIVED_DETAILS)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+
+        } catch (const std::exception& ex) {
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                      HTTP_BAD_CLIENT_REQUEST_RECEIVED)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(ex.what());
+
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                      HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS)
+                .arg(getRemoteEndpointAddressAsText())
+                .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
         }
 
+        // Don't want to timeout if creation of the response takes long.
+        request_timer_.cancel();
+
         HttpResponsePtr response = response_creator_->createHttpResponse(request_);
-        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                  HTTP_RESPONSE_SEND)
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_SERVER_RESPONSE_SEND)
             .arg(response->toBriefString())
             .arg(getRemoteEndpointAddressAsText());
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                  HTTP_SERVER_RESPONSE_SEND_DETAILS)
+            .arg(getRemoteEndpointAddressAsText())
+            .arg(HttpMessageParserBase::logFormatHttpMessage(response->toString(),
+                                                             MAX_LOGGED_MESSAGE_SIZE));
+
+        // Response created. Active timer again.
+        setupRequestTimer();
+
         asyncSendResponse(response);
     }
 }
@@ -237,11 +278,18 @@ HttpConnection::socketWriteCallback(boost::system::error_code ec, size_t length)
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
         // read something from the socket on the next attempt.
         } else {
+            // Sending is in progress, so push back the timeout.
+            setupRequestTimer();
+
             doWrite();
         }
     }
 
+
     if (length <= output_buf_.size()) {
+        // Sending is in progress, so push back the timeout.
+        setupRequestTimer();
+
         output_buf_.erase(0, length);
         doWrite();
 
@@ -272,17 +320,13 @@ HttpConnection::setupRequestTimer() {
     // because IntervalTimer already passes shared pointer to the
     // IntervalTimerImpl to make sure that the callback remains
     // valid.
-    if (!request_timer_setup_) {
-        request_timer_setup_ = true;
-        request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
-                                         this),
-                             request_timeout_, IntervalTimer::ONE_SHOT);
-    }
+    request_timer_.setup(boost::bind(&HttpConnection::requestTimeoutCallback,
+                                     this),
+                         request_timeout_, IntervalTimer::ONE_SHOT);
 }
 
 void
 HttpConnection::setupIdleTimer() {
-    request_timer_setup_ = false;
     request_timer_.setup(boost::bind(&HttpConnection::idleTimeoutCallback,
                                      this),
                          idle_timeout_, IntervalTimer::ONE_SHOT);
@@ -291,7 +335,7 @@ HttpConnection::setupIdleTimer() {
 void
 HttpConnection::requestTimeoutCallback() {
     LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
-              HTTP_REQUEST_TIMEOUT_OCCURRED)
+              HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED)
         .arg(getRemoteEndpointAddressAsText());
     HttpResponsePtr response =
         response_creator_->createStockHttpResponse(request_,

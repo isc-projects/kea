@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,11 +40,11 @@ public:
         ASSERT_NO_THROW(response.finalize());
         std::ostringstream response_string;
         response_string << "HTTP/1.0 " << static_cast<uint16_t>(status_code)
-            << " " << status_message << "\r\n";
+            << " " << status_message;
         EXPECT_EQ(response_string.str(), response.toBriefString());
 
         response_string
-            << "Content-Length: 0\r\n"
+            << "\r\nContent-Length: 0\r\n"
             << "Content-Type: text/html\r\n"
             << "Date: " << response.getDateHeaderValue() << "\r\n\r\n";
         EXPECT_EQ(response_string.str(), response.toString());

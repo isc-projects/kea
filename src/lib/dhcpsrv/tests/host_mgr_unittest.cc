@@ -210,7 +210,10 @@ void
 HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
                         BaseHostDataSource& data_source2) {
     // Initially, no reservations should be present.
-    ConstHostCollection hosts = HostMgr::instance().getAll(hwaddrs_[0]);
+    ConstHostCollection hosts = 
+        HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                   &hwaddrs_[1]->hwaddr_[0],
+                                   hwaddrs_[1]->hwaddr_.size());
     ASSERT_TRUE(hosts.empty());
 
     // Add two reservations for the same HW address. They differ by the IP
@@ -293,7 +296,10 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
 void
 HostMgrTest::testGet4(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
-    ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), hwaddrs_[0]);
+    ConstHostPtr host =
+        HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                 &hwaddrs_[0]->hwaddr_[0],
+                                 hwaddrs_[0]->hwaddr_.size());
     ASSERT_FALSE(host);
 
     // Add new host to the database.
@@ -367,7 +373,10 @@ HostMgrTest::testGet4Any() {
 void
 HostMgrTest::testGet6(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
-    ConstHostPtr host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
+    ConstHostPtr host =
+        HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
+                                 &duids_[0]->getDuid()[0],
+                                 duids_[0]->getDuid().size());
     ASSERT_FALSE(host);
 
     // Add new host to the database.
@@ -574,6 +583,7 @@ public:
     /// string
     virtual std::string validConnectString() = 0;
 
+#if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
     /// This function creates a host manager with an alternate data source
@@ -585,6 +595,7 @@ public:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     void testDbLostCallback();
+#endif
 
     /// @brief Callback function registered with the host manager
     bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
@@ -595,7 +606,7 @@ public:
     bool callback_called_;
 };
 
-
+#if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
 void
 HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Create the HostMgr.
@@ -633,6 +644,7 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
 }
+#endif
 
 // The following tests require MySQL enabled.
 #if defined HAVE_MYSQL
