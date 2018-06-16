@@ -9,6 +9,8 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
 #include <stats/stats_mgr.h>
 
 using namespace std;
@@ -45,7 +47,16 @@ TEST_F(AllocEngine4Test, constructor) {
     EXPECT_THROW(x->getAllocator(Lease::TYPE_PD), BadValue);
 }
 
-// This test checks if the simple IPv4 allocation can succeed
+// This test checks if two simple IPv4 allocations succeed and that the
+// statistics is properly updated. Prior to the second allocation it
+// resets the pointer to the last allocated address within the address
+// pool. This causes the engine to walk over the already allocated
+// address and then pick the first available address for the second
+// allocation. Because the allocation engine checks the callouts next
+// step status after each attempt to allocate an address, this test
+// also sets this status to non-default value prior to the second
+// allocation attempt, to make sure that this unexpected status will
+// not interfere with the allocation.
 TEST_F(AllocEngine4Test, simpleAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
@@ -78,6 +89,42 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 
     // Assigned addresses should have incremented.
     EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+
+    // Second allocation starts here.
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    AllocEngine::ClientContext4 ctx2(subnet_, ClientIdPtr(), hwaddr2, IOAddress("0.0.0.0"),
+                                     false, true, "anotherhost.example.com.",
+                                     false);
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+
+    // Set the next step to non-default value to verify that it doesn't
+    // affect the allocation.
+    ctx2.callout_handle_ = HooksManager::createCalloutHandle();
+    ctx2.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+    // Set the last allocated to the beginning of the pool. The allocation
+    // engine should detect that the first address is already allocated and
+    // assign the first available one.
+    pool_->resetLastAllocated();
+
+    lease = engine->allocateLease4(ctx2);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(ctx2.old_lease_);
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // Assigned addresses should have incremented.
+    EXPECT_TRUE(testStatistics("assigned-addresses", 2, subnet_->getID()));
 }
 
 // This test checks if the fake allocation (for DHCPDISCOVER) can succeed

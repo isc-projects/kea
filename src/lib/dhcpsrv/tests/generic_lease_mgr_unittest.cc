@@ -2847,16 +2847,19 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
     // Clear the callback invocation marker.
     callback_called_ = false;
 
-    // Verify we can execute a query.
+    // Verify we can execute a query.  We do not care if
+    // we find a lease or not.
     LeaseMgr& lm = LeaseMgrFactory::instance();
-    pair<uint32_t, uint32_t> version;
-    ASSERT_NO_THROW(version = lm.getVersion());
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")));
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbOperationError.
-    ASSERT_THROW(version = lm.getVersion(), DbOperationError);
+    ASSERT_THROW(lease = lm.getLease4(IOAddress("192.0.1.0")),
+                 DbOperationError);
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,7 @@ public:
     /// @param opt option
     /// @param persist if true option is always sent.
     /// @param formatted_value option value in the textual format. Default
+    /// @param user_context user context (optional).
     /// value is empty indicating that the value is not set.
     OptionDescriptor(const OptionPtr& opt, bool persist,
                      const std::string& formatted_value = "",

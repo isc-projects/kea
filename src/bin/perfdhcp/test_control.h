@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -938,6 +938,26 @@ protected:
     /// \param pkt reference to packet to be configured.
     void setDefaults6(const TestControlSocket& socket,
                       const dhcp::Pkt6Ptr& pkt);
+
+    /// @brief Inserts extra options specified by user.
+    ///
+    /// Note: addExtraOpts for v4 and v6 could easily be turned into a template.
+    /// However, this would require putting code here that uses CommandOptions,
+    /// and that would create dependency between test_control.h and
+    /// command_options.h.
+    ///
+    /// @param pkt4 options will be added here
+    void addExtraOpts(const dhcp::Pkt4Ptr& pkt4);
+
+    /// @brief Inserts extra options specified by user.
+    ///
+    /// Note: addExtraOpts for v4 and v6 could easily be turned into a template.
+    /// However, this would require putting code here that uses CommandOptions,
+    /// and that would create dependency between test_control.h and
+    /// command_options.h.
+    ///
+    /// @param pkt6 options will be added here
+    void addExtraOpts(const dhcp::Pkt6Ptr& pkt6);
 
     /// \brief Find if diagnostic flag has been set.
     ///

@@ -202,11 +202,6 @@ PgSqlTaggedStatement tagged_statements[] = {
       "ORDER BY expire "
       "LIMIT $3"},
 
-    // GET_VERSION
-    { 0, { OID_NONE },
-      "get_version",
-      "SELECT version, minor FROM schema_version"},
-
     // INSERT_LEASE4
     { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
@@ -1000,6 +995,20 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     : LeaseMgr(), exchange4_(new PgSqlLease4Exchange()),
     exchange6_(new PgSqlLease6Exchange()), conn_(parameters) {
     conn_.openDatabase();
+
+    // Validate schema version first.
+    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
+                                               PG_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError,
+                  "PostgreSQL schema version mismatch: need version: "
+                      << code_version.first << "." << code_version.second
+                      << " found version:  " << db_version.first << "."
+                      << db_version.second);
+    }
+
+    // Now prepare the SQL statements.
     int i = 0;
     for( ; tagged_statements[i].text != NULL ; ++i) {
         conn_.prepareStatement(tagged_statements[i]);
@@ -1009,16 +1018,6 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     if (i != NUM_STATEMENTS) {
         isc_throw(DbOpenError, "Number of statements prepared: " << i
                   << " does not match expected count:" << NUM_STATEMENTS);
-    }
-
-    pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
-    pair<uint32_t, uint32_t> db_version = getVersion();
-    if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "PostgreSQL schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
-                      << db_version.second);
     }
 }
 
@@ -1692,8 +1691,12 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
-    PgSqlResult r(PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0));
-    conn_.checkStatementError(r, tagged_statements[GET_VERSION]);
+    const char* version_sql =  "SELECT version, minor FROM schema_version;";
+    PgSqlResult r(PQexec(conn_, version_sql));
+    if(PQresultStatus(r) != PGRES_TUPLES_OK) {
+        isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
+                  << version_sql << ", reason: " << PQerrorMessage(conn_));
+    }
 
     istringstream tmp;
     uint32_t version;

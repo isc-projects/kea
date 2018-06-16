@@ -53,7 +53,8 @@ public:
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
+    /// @throw isc::dhcp::DbOpenError Error opening the database or the schema
+    /// version is incorrect.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
@@ -475,6 +476,11 @@ public:
 
     /// @brief Returns backend version.
     ///
+    /// The method is called by the constructor after opening the database
+    /// but prior to preparing SQL statements, to verify that the schema version
+    /// is correct. Thus it must not rely on a pre-prepared statement or
+    /// formal statement execution error checking.
+    ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
@@ -520,7 +526,6 @@ public:
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
-        GET_VERSION,                 // Obtain version number
         INSERT_LEASE4,               // Add entry to lease4 table
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry

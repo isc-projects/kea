@@ -1,3 +1,132 @@
+Kea 1.4.0 released on June 15, 2018
+
+1427.	[bug]		marcin
+	Resolved multiple problems causing slow synchronization of
+	leases in the HA hooks library, including adjusting
+	timeouts in control channel and improving performance of
+	responses sent by the Command Manager to Control Agent.
+	Also, introduced 'sync-timeout' configuration parameter
+	into HA hooks library to control lease database
+	synchronization timeout.
+	(Trac #5649, git cbc29128863916a13364749bf681586aea2aa51e)
+
+1426.	[func]		fdupont
+	Added KNOWN and UNKNOWN built-in client classes: after host lookup
+	if a matching host entry is found the incoming packet is added to
+	the KNOWN class, if none is found to the UNKNOWN class. Then
+	expressions depending directly or indirectly on these classes are
+	evaluated. Note these classes may be used to select a pool but
+	they may not to select a subnet.
+	(Trac #5549, git 6a856ed9722b918a65dca15ff44314e28897784e)
+
+1425.	[bug]		marcin
+	Improved performance of the DHCP server running in High
+	Availability configuration by optimizing the management of
+	CalloutHandle objects passed to the callouts.
+	(Trac #5647, git eea88d5c8f4d8efb6c5bfdfbf4e070a90069db5d)
+
+1424.	[doc]		marcin
+	List of hooks libraries provided by ISC includes an
+	information which Kea servers the libraries can be attached
+	to. The detailed description of each supported hooks library
+	also contains this information.
+	(Trac #5613, git 9d6f8de3d988c42c413a7d628e31854e9c80d8c9)
+
+1423.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now retain and emit global, scalar
+	parameters specified in their configuration.
+	(Trac #5378, git 4d05122f03d00b10a888c768fe1725cae9d6aea6)
+
+1422.	[build]		fdupont
+	Commented out BOOST_ASIO_DISABLE_THREADS in configure to reflect
+	the current use of threads by boost ASIO in Kea.
+	(Trac #5615, git f3fc8b1a4257a42a97aaf88a36287bbe33d1f65b)
+
+1421.	[build]		marcin
+	Moved libdhcp_ha (High Availability) hooks library from
+	premium to main Kea repository and changed its license to
+	MPLv2.0. Future ChangeLog entries for this library will be
+	tracked in the Kea ChangeLog file.
+	(Trac #5645, git 19b2553d4869bdd52b63b6f7969052d8a724f78d)
+
+1420.	[doc]		marcin
+	Updated list of loggers in the Kea Administrator's Manual.
+	The updated list contains all loggers, including those
+	from supported hooks libraries.
+	(Trac #5622, git bd94afc0af7183452c94f3b5768c6138f79d3b60)
+
+1419.	[doc]		marcin
+	Documented "sync-leases" configuration parameter of the HA
+	hooks library in the Kea Administrator's Manual.
+	(Trac #5621, git 4ebac3a411aa02d1cc3d74e7eaf3212ad208159a)
+
+1418.	[bug]		marcin
+	Corrected bug in the allocation engine which caused occasional
+	lease allocation failures when a loaded hooks library set the
+	callout status to non default value, e.g. "skip" rather than
+	"continue". In such cases, the server reported that it failed
+	to allocate a lease "after 0 attempts".
+	(Trac #5638, git f2e9b686ae52e1b06f660e1b522588b1440e2620)
+
+1417.	[bug]		marcin
+	Improved logging in the HTTP library both for the server and
+	the client.
+	(Trac #5205, git fd0bec610c89084d5a5d43ef032c9875c3e6ad46)
+
+1416.	[bug]		fdupont
+	Added support of recent Botan 2.x crypto backend.
+	Note that Botan 1.[9-11] is still supported but not recommended.
+	(Trac #5382, git 22651b1935a2397edfbddb9b8873c353c090f18e)
+
+1415.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now validate the schema version
+	of lease and host back ends after establishing a connection.
+	If a schema version does not match the version the server
+	expects, the server will emit an error log and close
+	the connection. This applies to MySQL, PostgreSQL, and Cassandra.
+	(Trac #5629, git 15c34afdba45be609e35284a209ad18ed66605f8)
+
+1414.	[bug]		tmark
+	kea-dhcp4 parsing now treats renew-timer and rebind-timer
+	as optional with no defaults. The logic for sending them
+	to the client was changed to: send rebind-timer only
+	when it is less than the lease lifetime; and send renew-timer
+	only when it less than either the rebind-timer if specified,
+	or lease lifetime in the absence of rebind-timer.
+	(Trac #5596, git 38426e16ec04a786e35a65d27cbcb7dbabfe79b5)
+
+1413.	[func]		fdupont
+	Removed getAll, get4 and get6 methods using both hardware address
+	and DUID from host backend (aka host data source) APIs.
+	This is an *incompatible* change.
+	(Trac #5563, git db4c34b069f114f93d9f29cdeb02b536a0fbc982)
+
+1412.	[func]*		marcin
+	The client classes used by the High Availability hook library
+	use upper case "HA_" prefix and they are now built-in classes.
+	This means that those classes do not need to be	declared in the
+	server configuration.
+	(Trac #5632, git 2d590bfd7d1b0eca377eb99eef83a3083a1d7399)
+
+1411.	[bug]		fdupont
+	Fixed warnings about lambda's not using captured variables.
+	(Trac #5591, git f88a505823d39faec7dc5f647f40e6454e5dfc74)
+
+1410.	[bug]		marcin
+	Fixed multiple hanging Control Agent unittests.
+	(Trac #5576, git 310af68101cba74220652ec2b403520fc5666dc0)
+
+1409.	[doc]		marcin
+	Documented in the User's Guide how Kea HA service behaves
+	when the clock skew between active servers becomes too
+	high.
+	(Trac #5603, git ffaff4d2a03600bb4f81d335b49a840e31d03c8c)
+
+1408.	[func]		tomek
+	perfdhcp now supports -o option that adds DHCP options.
+	This may be used to simulate various clients.
+	(github #77, git b81dedb7f0a2516130e7bd799d9084c63f0e844c)
+
 1407.	[bug]		tmark
 	Corrected an issue where the destruction of loggers
 	prior to the destruction of the TimerMgr singleton
