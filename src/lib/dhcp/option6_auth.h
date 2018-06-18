@@ -25,8 +25,9 @@ class Option6Auth: public Option {
 
 public:
     
-     static const uint8_t OPTION6_AUTH_MIN_LEN  = 11;
-     static const uint8_t OPTION6_HASH_MSG_LEN  = 16;
+    static const uint8_t OPTION6_AUTH_MIN_LEN  = 11;
+    static const uint8_t OPTION6_HASH_MSG_LEN  = 16;
+    static const uint8_t OPTION6_HDR = 4; 
     /// @brief Constructor, used for auth options while transmitting
     ///
     /// @param proto protocol type
