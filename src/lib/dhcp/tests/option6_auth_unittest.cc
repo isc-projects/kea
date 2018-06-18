@@ -95,7 +95,7 @@ TEST_F(Option6AuthTest, setFields) {
     std::vector<uint8_t> test_buf(16,0xa8);
     auth.reset(new Option6Auth(1,2,0,0x0090000000000000,test_buf));
     
-    isc::util::OutputBuffer buf(29);//2 header + fixed 11 and key 16
+    isc::util::OutputBuffer buf(31);//4 header + fixed 11 and key 16
     ASSERT_NO_THROW(auth->pack(buf));
 
     const uint8_t ref_data[] = {
@@ -118,14 +118,14 @@ TEST_F(Option6AuthTest, checkHashInput) {
     
     std::vector<uint8_t> test_buf(16,0xa8);
     std::vector<uint8_t> hash_op(16,0x00);
-    auth.reset(new Option6Auth(1,2,0,0x0090000000000000,test_buf));
+    auth.reset(new Option6Auth(1,2,0,0x0102030405060708,test_buf));
 
-    isc::util::OutputBuffer buf(29); 
-    auth->packHashInput(buf);  
-   //auth info must be 0 for calculating the checksum 
+    isc::util::OutputBuffer buf(31); 
+    ASSERT_NO_THROW(auth->packHashInput(buf));
+   //auth info must be 0 for calculating the checksum
     const uint8_t ref_data[] = {
         0, 11, 0, 27, 1, 2, 0, //header , proto algo method
-        0, 0x90, 0, 0, 0, 0, 0, 0, //64 bit rdm field
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, //64 bit rdm field
         0x00, 0x00, 0x00, 0x00, //128 bits/16 byte key
         0x00, 0x00, 0x00, 0x00, //128 bits/16 byte key
         0x00, 0x00, 0x00, 0x00, //128 bits/16 byte key
@@ -136,6 +136,19 @@ TEST_F(Option6AuthTest, checkHashInput) {
 
     //evaluate the contents of the option byte by byte
     ASSERT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
+}
+
+TEST_F(Option6AuthTest, negativeCase) {
+     scoped_ptr<Option6Auth> auth;
+
+     std::vector<uint8_t> test_buf(16,0xa8);
+     auth.reset(new Option6Auth(1,2,0,0x0102030405060708,test_buf));
+     //allocate less space to force an exception to be thrown
+     isc::util::OutputBuffer buf(20);
+
+     ASSERT_THROW(auth->pack(buf), isc::OutOfRange);
+     ASSERT_THROW(auth->packHashInput(buf), isc::OutOfRange);
+
 }
 
 } //end namespace

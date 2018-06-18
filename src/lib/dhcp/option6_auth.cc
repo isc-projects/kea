@@ -37,9 +37,9 @@ Option6Auth::clone() const {
 
 void
 Option6Auth::pack(isc::util::OutputBuffer& buf) const {
-    if (buf.getCapacity() < (OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN)) {
-       isc_throw(OutOfRange, "Option " << type_ << "No space for"
-               "computing packing data");
+    if (buf.getCapacity() < (OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN + OPTION6_HDR)) {
+       isc_throw(OutOfRange, "Option " << type_ << "Buffer too small for"
+               "packing data");
     }
     
     //header = option code + length 
@@ -64,8 +64,8 @@ Option6Auth::pack(isc::util::OutputBuffer& buf) const {
 
 void
 Option6Auth::packHashInput(isc::util::OutputBuffer& buf) const {
-    if (buf.getCapacity() < (OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN)) {
-       isc_throw(OutOfRange, "Option " << type_ << "No space for"
+    if (buf.getCapacity() < (OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN + OPTION6_HDR)) {
+       isc_throw(OutOfRange, "Option " << type_ << "Buffer too small for"
                "computing hash input");
     }
 
@@ -120,7 +120,7 @@ Option6Auth::toText(int indent) const {
     
     output << in << "protocol= " << protocol_ << "algorithm= " << algorithm_ 
            << "rdm method= " << rdm_method_ << "rdm value= " << rdm_value_ ;
-    return std::string(output);
+    return output.str();
 }
 
 } // end  namespace dhcp
