@@ -919,6 +919,13 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
         uint64_t max_attempts = (attempts_ > 0 ? attempts_  : possible_attempts);
         Network::HRMode hr_mode = subnet->getHostReservationMode();
 
+        // Set the default status code in case the lease6_select callouts
+        // do not exist and the callout handle has a status returned by
+        // any of the callouts already invoked for this packet.
+        if (ctx.callout_handle_) {
+            ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        }
+
         for (uint64_t i = 0; i < max_attempts; ++i) {
 
             ++total_attempts;
@@ -967,6 +974,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                     leases.push_back(lease);
                     return (leases);
+
                 } else if (ctx.callout_handle_ &&
                            (ctx.callout_handle_->getStatus() !=
                             CalloutHandle::NEXT_STEP_CONTINUE)) {
@@ -3649,6 +3657,13 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             max_attempts = 0;
         }
 
+        // Set the default status code in case the lease4_select callouts
+        // do not exist and the callout handle has a status returned by
+        // any of the callouts already invoked for this packet.
+        if (ctx.callout_handle_) {
+            ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        }
+
         for (uint64_t i = 0; i < max_attempts; ++i) {
             IOAddress candidate = allocator->pickAddress(subnet,
                                                          ctx.query_->getClasses(),
@@ -3656,12 +3671,14 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                                                          ctx.requested_address_);
             // If address is not reserved for another client, try to allocate it.
             if (!addressReserved(candidate, ctx)) {
+
                 // The call below will return the non-NULL pointer if we
                 // successfully allocate this lease. This means that the
                 // address is not in use by another client.
                 new_lease = allocateOrReuseLease4(candidate, ctx);
                 if (new_lease) {
                     return (new_lease);
+
                 } else if (ctx.callout_handle_ &&
                            (ctx.callout_handle_->getStatus() !=
                             CalloutHandle::NEXT_STEP_CONTINUE)) {

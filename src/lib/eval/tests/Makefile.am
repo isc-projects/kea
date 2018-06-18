@@ -33,6 +33,7 @@ libeval_unittests_LDADD   += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libeval_unittests_LDADD   += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/log/libkea-log.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/util/libkea-util.la

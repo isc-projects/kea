@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -189,7 +189,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(lease);
 
     // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
