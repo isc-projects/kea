@@ -93,6 +93,37 @@ readUint32(const uint8_t* buffer, size_t length) {
     return (result);
 }
 
+/// \brief Read Unsigned 64-Bit Integer from Buffer
+///
+/// \param buffer Data buffer at least four bytes long of which the first four
+///        bytes are assumed to represent a 64-bit integer in network-byte
+///        order.
+/// \param length Length of the data buffer.
+///
+/// \return Value of 64-bit unsigned integer
+inline uint64_t
+readUint64(const uint8_t* buffer, size_t length) {
+    if (length < sizeof(uint64_t)) {
+        isc_throw(isc::OutOfRange,
+                  "Length (" << length << ") of buffer is insufficient " <<
+                  "to read a uint64_t");
+    }
+
+    const uint8_t* byte_buffer = static_cast<const uint8_t*>(buffer);
+
+    uint64_t result = (static_cast<uint64_t>(byte_buffer[0])) << 56;
+    result |= (static_cast<uint64_t>(byte_buffer[1])) << 48;
+    result |= (static_cast<uint64_t>(byte_buffer[2])) << 40;
+    result |= (static_cast<uint64_t>(byte_buffer[3])) << 32;
+    result |= (static_cast<uint64_t>(byte_buffer[4])) << 24;
+    result |= (static_cast<uint64_t>(byte_buffer[5])) << 16;
+    result |= (static_cast<uint64_t>(byte_buffer[6])) << 8;
+    result |= (static_cast<uint64_t>(byte_buffer[7]));
+
+
+    return (result);
+}
+
 /// \brief Write Unsigned 32-Bit Integer to Buffer
 ///
 /// \param value 32-bit value to convert
