@@ -100,7 +100,7 @@ TEST(Element, from_and_to_json) {
     // We should confirm that our string handling is 8-bit clean.
     // At one point we were using char-length data and comparing to EOF,
     // which means that character '\xFF' would not parse properly.
-    sv.push_back("\"\xFF\"");
+    sv.push_back("\"\\u00ff\"");
 
     BOOST_FOREACH(const std::string& s, sv) {
         // Test two types of fromJSON(): with string and istream.
@@ -150,7 +150,12 @@ TEST(Element, from_and_to_json) {
     // String not delimited correctly
     sv.push_back("\"hello");
     sv.push_back("hello\"");
-
+    // Bad unicode
+    sv.push_back("\"\\u123\"");
+    sv.push_back("\"\\u1234\"");
+    sv.push_back("\"\\u0123\"");
+    sv.push_back("\"\\u00ag\"");
+    sv.push_back("\"\\u00BH\"");
 
     BOOST_FOREACH(std::string s, sv) {
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
@@ -550,11 +555,21 @@ TEST(Element, escape) {
     escapeHelper("foo\nbar", "\"foo\\nbar\"");
     escapeHelper("foo\rbar", "\"foo\\rbar\"");
     escapeHelper("foo\tbar", "\"foo\\tbar\"");
+    escapeHelper("foo\u001fbar", "\"foo\\u001fbar\"");
     // Bad escapes
     EXPECT_THROW(Element::fromJSON("\\a"), JSONError);
     EXPECT_THROW(Element::fromJSON("\\"), JSONError);
     // Can't have escaped quotes outside strings
     EXPECT_THROW(Element::fromJSON("\\\"\\\""), JSONError);
+    // Unicode use lower u and 4 hexa, only 00 prefix is supported
+    EXPECT_THROW(Element::fromJSON("\\U0020"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u002"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u0123"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u1023"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u00ag"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u00ga"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u00BH"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\u00HB"), JSONError);
     // Inside strings is OK
     EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
     // A whitespace test
@@ -565,6 +580,19 @@ TEST(Element, escape) {
     // Control characters
     StringElement bell("foo\abar");
     EXPECT_EQ("\"foo\\u0007bar\"", bell.str());
+    // 8 bit escape
+    StringElement ab("foo\253bar");
+    EXPECT_EQ("\"foo\\u00abbar\"", ab.str());
+    ASSERT_NO_THROW(Element::fromJSON("\"foo\\u00abbar\""));
+    EXPECT_TRUE(ab.equals(*Element::fromJSON("\"foo\\u00abbar\"")));
+    ASSERT_NO_THROW(Element::fromJSON("\"foo\\u00ABbar\""));
+    EXPECT_TRUE(ab.equals(*Element::fromJSON("\"foo\\u00ABbar\"")));
+    StringElement f1("foo\361bar");
+    EXPECT_EQ("\"foo\\u00f1bar\"", f1.str());
+    ASSERT_NO_THROW(Element::fromJSON("\"foo\\u00f1bar\""));
+    EXPECT_TRUE(f1.equals(*Element::fromJSON("\"foo\\u00f1bar\"")));
+    ASSERT_NO_THROW(Element::fromJSON("\"foo\\u00F1bar\""));
+    EXPECT_TRUE(f1.equals(*Element::fromJSON("\"foo\\u00F1bar\"")));
 }
 
 // This test verifies that strings are copied.
