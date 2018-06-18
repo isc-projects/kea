@@ -714,48 +714,29 @@ memfile_create_database_and_users() {
 }
 
 mysql_create_database_and_users() {
-    mysql_execute "GRANT ALL ON *.* TO keatest IDENTIFIED BY 'keatest';" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
-    mysql_execute "CREATE DATABASE keatest;" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
-    mysql_execute "GRANT SELECT ON keatest.* TO keatest_readonly IDENTIFIED BY 'keatest';" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
-    exit 0
+    for query in "GRANT ALL ON *.* TO keatest IDENTIFIED BY 'keatest';"                   \
+                 "CREATE DATABASE keatest;"                                               \
+                 "CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';"    \
+                 "GRANT SELECT ON keatest.* TO keatest_readonly IDENTIFIED BY 'keatest';" \
+    ; do
+        mysql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --user=root --password=${db_password}
+    done
 }
 
 pgsql_create_database_and_users() {
     export db_password
-    query="DO
-\$body\$
-BEGIN
-   IF NOT EXISTS (
-      SELECT usename
-      FROM pg_catalog.pg_user
-      WHERE usename = 'keatest') THEN
-      CREATE ROLE keatest LOGIN PASSWORD 'keatest';
-      ALTER USER keatest CREATEDB;
-   END IF;
-END
-\$body\$;"
-    pgsql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --username=postgres
-    pgsql_execute "CREATE DATABASE keatest;" --host=${db_server_address} --port=${db_server_port} --username=postgres
-    pgsql_execute "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;" --host=${db_server_address} --port=${db_server_port} --username=postgres
-    query="DO
-\$body\$
-BEGIN
-   IF NOT EXISTS (
-      SELECT usename
-      FROM pg_catalog.pg_user
-      WHERE usename = 'keatest_readonly') THEN
-      CREATE ROLE keatest_readonly LOGIN PASSWORD 'keatest';
-   END IF;
-END
-\$body\$;"
-    pgsql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --username=postgres
-    pgsql_execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;" --host=${db_server_address} --port=${db_server_port} --username=postgres
-    exit 0
+    for query in "CREATE USER keatest WITH PASSWORD 'keatest';"          \
+                 "CREATE DATABASE keatest;"                              \
+                 "GRANT ALL ON DATABASE keatest TO keatest;"             \
+                 "CREATE USER keatest_readonly WITH PASSWORD 'keatest';" \
+    ; do
+        pgsql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --username=postgres
+    done
+    pgsql_execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;" --host=${db_server_address} --port=${db_server_port} --username=keatest
 }
 
 cql_create_database_and_users() {
     cql_execute_no_keyspace "CREATE KEYSPACE keatest WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1}"
-    exit 0
 }
 
 ### Script starts here ###
