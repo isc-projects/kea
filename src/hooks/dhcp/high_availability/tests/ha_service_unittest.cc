@@ -2736,7 +2736,9 @@ public:
                 << "'";
         }
         // Verify if the DHCP service is enabled or disabled.
-        EXPECT_EQ(dhcp_enabled, service_->network_state_->isServiceEnabled());
+        EXPECT_EQ(dhcp_enabled, service_->network_state_->isServiceEnabled())
+            << "test failed for state '" << service_->getStateLabel(my_state.state_)
+            << "'";
     }
 
     /// @brief Transitions the server to the specified state and checks if the
@@ -2865,6 +2867,118 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     // handled. Since this is so unusual situation we transition to the waiting
     // state to synchronize the database and gracefully transition to the load
     // balancing state.
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+}
+
+// Test the following scenario:
+// 1. I show up in waiting state and look around.
+// 2. My partner is offline and is not responding over the control channel.
+// 3. I can't communicate with the partner so I transition to the partner-down
+//    state.
+// 4. Partner shows up and eventually transitions to the ready state.
+// 5. I can communicate with the partner so I transition to the hot-standby
+//    state as a standby server.
+// 6. Patrtner stops responding again.
+// 7. I monitor communication with the patner and eventually consider the
+//    communication to be interrupted.
+// 8. I start monitoring the DHCP traffic directed to the partner and observe
+//    delays in responses.
+// 9. I transition to the partner-down state again seeing that the certain
+//    number of clients can't communicate with the partner.
+// 10. The partner unexpectedly shows up in the hot-standby mode, which causes
+//     me to transition to the waiting state and then synchronize my lease
+//     database.
+TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
+    HAConfigPtr valid_config = createValidConfiguration();
+
+    // Turn it into hot-standby configuration.
+    valid_config->setThisServerName("server2");
+    valid_config->setHAMode("hot-standby");
+    valid_config->getPeerConfig("server2")->setRole("standby");
+
+    // Start the server: offline ---> WAITING state.
+    startService(valid_config);
+
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+
+    // WAITING state: no heartbeat reponse for a long period of time.
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    simulateNoCommunication();
+    ASSERT_TRUE(isDoingHeartbeat());
+
+    // WAITING state: communication interrupted. In this state we don't analyze
+    // packets ('secs' field) because the DHCP service is disabled.
+    // WAITING ---> PARTNER DOWN
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+
+    // PARTNER DOWN state: still no response from the partner.
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
+
+    // Partner shows up and (eventually) transitions to READY state.
+    partner_.reset(new HAPartner(listener_, factory_, "ready"));
+    partner_->startup();
+
+    // PARTNER DOWN state: receive a response from the partner indicating that
+    // the partner is in READY state.
+    // PARTNER DOWN ---> HOT STANDBY
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_HOT_STANDBY_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // Crash the partner and see whether our server can return to the partner
+    // down state.
+    partner_->setControlResult(CONTROL_RESULT_ERROR);
+
+    // HOT STANDBY state: wait for the next heartbeat to occur and make
+    // sure that a single heartbeat loss is not yet causing us to assume
+    // partner down condition.
+    ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
+    EXPECT_EQ(HA_HOT_STANDBY_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_FALSE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // HOT STANDBY state: simulate lack of communication for a longer
+    // period of time. We should still be in the hot standby state
+    // because we still need to wait for unanswered DHCP traffic.
+    simulateNoCommunication();
+    EXPECT_EQ(HA_HOT_STANDBY_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_TRUE(isCommunicationInterrupted());
+    ASSERT_FALSE(isFailureDetected());
+
+    // HOT STANDBY state: simulate a lot of unanswered DHCP messages to
+    // the partner. This server should detect that the partner is not
+    // answering and transition to partner down state.
+    // HOT STANDBY ---> PARTNER DOWN
+    simulateDroppedQueries();
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service_->getCurrState());
+    ASSERT_TRUE(isDoingHeartbeat());
+    ASSERT_TRUE(isCommunicationInterrupted());
+    ASSERT_TRUE(isFailureDetected());
+
+    // Start the partner again and transition it to the hot standby state.
+    partner_->setControlResult(CONTROL_RESULT_SUCCESS);
+    partner_->transition("hot-standby");
+
+    // HOT STANDBY state: it is weird situation that the partner shows up in
+    // the hot-standby state, but you can't really preclude that. Our server
+    // would rather expect it to be in the waiting or syncing state after being
+    // down but we need to deal with any status returned. If the other server
+    // is in hot standby then the queries sent to our server aren't handled.
+    // Since this is so unusual situation we transition to the waiting
+    // state to synchronize the database and gracefully transition to the hot
+    // standby state.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
     ASSERT_TRUE(isDoingHeartbeat());
@@ -3954,9 +4068,13 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandby) {
 
     startService(valid_config);
 
-    // HOT STANDBY and TERMINATED: serving no scopes becuase server 2 is active.
-    expectScopes(MyState(HA_HOT_STANDBY_ST), { }, false);
-    expectScopes(MyState(HA_TERMINATED_ST), { }, false);
+    // HOT STANDBY: serving no scopes because the primary is active.
+    // The DHCP is enabled to be able to monitor activity of the
+    // primary.
+    expectScopes(MyState(HA_HOT_STANDBY_ST), { }, true);
+
+    // TERMINATED: serving no scopes because the primary is active.
+    expectScopes(MyState(HA_TERMINATED_ST), { }, true);
 
     // PARTNER DOWN: serving server1's scope.
     expectScopes(MyState(HA_PARTNER_DOWN_ST), { "server1" }, true);
@@ -3981,13 +4099,17 @@ TEST_F(HAServiceStateMachineTest, scopesServingHotStandbyStandbyNoFailover) {
 
     startService(valid_config);
 
-    // HOT STANDBY and TERMINATED: serving no scopes becuase server 2 is active.
-    expectScopes(MyState(HA_HOT_STANDBY_ST), { }, false);
-    expectScopes(MyState(HA_TERMINATED_ST), { }, false);
+    // HOT STANDBY: serving no scopes because the primary is active.
+    // The DHCP is enabled to be able to monitor activity of the
+    // primary.
+    expectScopes(MyState(HA_HOT_STANDBY_ST), { }, true);
+
+    // TERMINATED: serving no scopes because the primary is active.
+    expectScopes(MyState(HA_TERMINATED_ST), { }, true);
 
     // PARTNER DOWN: still serving no scopes because auto-failover is
     // set to false.
-    expectScopes(MyState(HA_PARTNER_DOWN_ST), { }, false);
+    expectScopes(MyState(HA_PARTNER_DOWN_ST), { }, true);
 
     // READY & WAITING: serving no scopes.
     expectScopes(MyState(HA_READY_ST), { }, false);
