@@ -1,3 +1,4 @@
+-- Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 -- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -272,3 +273,27 @@ DELETE FROM schema_version WHERE version=1;
 INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line concludes database upgrade to version 2.0
+
+-- This line starts database upgrade to version 2.1
+
+-- Add a column holding leases for user context.
+ALTER TABLE lease4 ADD user_context text;
+ALTER TABLE lease6 ADD user_context text;
+
+-- -----------------------------------------------------
+-- Table `logs`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS logs (
+    timeuuid timeuuid,  -- creation timeuuid, use dateOf() to get timestamp
+    address varchar,    -- address or prefix
+    log text,           -- the log itself
+    PRIMARY KEY ((timeuuid))
+);
+
+-- Create search index for logs table
+CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
+
+DELETE FROM schema_version WHERE version=2;
+INSERT INTO schema_version (version, minor) VALUES(2, 1);
+
+-- This line concludes database upgrade to version 2.1

@@ -754,6 +754,30 @@ UPDATE schema_version
 
 -- Schema 4.0 specification ends here.
 
+-- Upgrade to schema 4.1 begins here:
+
+-- Add a column holding leases for user context.
+ALTER TABLE lease4 ADD COLUMN user_context TEXT;
+ALTER TABLE lease6 ADD COLUMN user_context TEXT;
+
+-- Create logs table
+CREATE TABLE logs (
+    timestamp TIMESTAMP WITH TIME ZONE
+    DEFAULT CURRENT_TIMESTAMP,          -- creation timestamp
+    address VARCHAR(43) NULL,           -- address or prefix
+    log TEXT NOT NULL                   -- the log itself
+    );
+
+-- Create search indexes
+CREATE INDEX timestamp_id ON logs (timestamp);
+CREATE INDEX address_id ON logs (address);
+
+-- Set 4.1 schema version.
+UPDATE schema_version
+    SET version = '4', minor = '1';
+
+-- Schema 4.1 specification ends here.
+
 -- Commit the script transaction.
 COMMIT;
 

@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2015-2017 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -48,10 +49,10 @@ constexpr uint32_t CQL_DRIVER_VERSION_MAJOR = CASS_VERSION_MAJOR;
 constexpr uint32_t CQL_DRIVER_VERSION_MINOR = CASS_VERSION_MINOR;
 /// @}
 
-/// Define CQL schema version: 2.0
+/// Define CQL schema version: 2.1
 /// @{
 constexpr uint32_t CQL_SCHEMA_VERSION_MAJOR = 2u;
-constexpr uint32_t CQL_SCHEMA_VERSION_MINOR = 0u;
+constexpr uint32_t CQL_SCHEMA_VERSION_MINOR = 1u;
 /// @}
 
 /// @brief Defines a single statement or query

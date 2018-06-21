@@ -100,14 +100,14 @@ void
 CSVLeaseFile6Test::writeSampleFile() const {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr,state\n"
+                  "fqdn_rev,hostname,hwaddr,state,user_context\n"
                   "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,1\n"
-                  "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n"
+                  "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1,\n"
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
-                  "0,8,0,0,0,,,1\n"
+                  "0,8,0,0,0,,,1,\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
-                  "16,64,0,0,,,1\n");
+                  "16,64,0,0,,,1,\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -268,13 +268,13 @@ TEST_F(CSVLeaseFile6Test, recreate) {
 
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
-              "state\n"
+              "state,user_context\n"
               "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "200,200,8,100,0,7,128,1,1,host.example.com,,0\n"
+              "200,200,8,100,0,7,128,1,1,host.example.com,,0,\n"
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
-              ",300,300,6,150,0,8,128,0,0,,,0\n"
+              ",300,300,6,150,0,8,128,0,0,,,0,\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,,,0\n",
+              "300,300,10,150,2,7,64,0,0,,,0,\n",
               io_.readFile());
 }
 
@@ -395,7 +395,7 @@ TEST_F(CSVLeaseFile6Test, tooFewHeaderColumns) {
 TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
     io_.writeFile("address,BOGUS,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-              "hwaddr,state\n");
+              "hwaddr,state,user_context\n");
 
     // Open should fail.
     CSVLeaseFile6 lf(filename_);
@@ -410,11 +410,11 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
              // schema 1.0 header
               "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-              "hwaddr,state,FUTURE_COL\n"
+              "hwaddr,state,user_context,FUTURE_COL\n"
 
               // schema 3.0 record - has hwaddr and state
               "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
-              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,,"
               "BOGUS\n");
 
     // Open should succeed in the event someone is downgrading.
@@ -457,13 +457,13 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
 TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr,state\n"
+                  "fqdn_rev,hostname,hwaddr,state,user_context\n"
                   "2001:db8:1::1,00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,\n"
                   "2001:db8:1::1,,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0\n"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,\n"
                   "2001:db8:1::1,00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,1\n");
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n");
 
     CSVLeaseFile6 lf(filename_);
     ASSERT_NO_THROW(lf.open());

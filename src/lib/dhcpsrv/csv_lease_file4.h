@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,6 +95,7 @@ private:
     /// - fqdn_rev
     /// - hostname
     /// - state
+    /// - user_context
     void initColumns();
 
     ///
@@ -151,6 +152,11 @@ private:
     ///
     /// @param row CSV file row holding lease information.
     uint32_t readState(const util::CSVRow& row);
+
+    /// @brief Reads lease user context from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information.
+    data::ConstElementPtr readContext(const util::CSVRow& row);
     //@}
 
 };
