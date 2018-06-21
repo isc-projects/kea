@@ -760,6 +760,100 @@ UPDATE schema_version
 ALTER TABLE lease4 ADD COLUMN user_context TEXT;
 ALTER TABLE lease6 ADD COLUMN user_context TEXT;
 
+--
+DROP FUNCTION IF EXISTS lease4DumpHeader();
+CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+DROP FUNCTION IF EXISTS lease4DumpData();
+CREATE FUNCTION lease4DumpData() RETURNS
+    table (address inet,
+           hwaddr text,
+           client_id text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text,
+           state text,
+           user_context text
+    ) as $$
+    SELECT ('0.0.0.0'::inet + l.address),
+            encode(l.hwaddr,'hex'),
+            encode(l.client_id,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name,
+            l.user_context
+    FROM lease4 l
+         left outer join lease_state s on (l.state = s.state)
+    ORDER BY l.address;
+$$ LANGUAGE SQL;
+--
+
+--
+DROP FUNCTION IF EXISTS lease6DumpHeader();
+CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,user_context,hwaddr,hwtype,hwaddr_source' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+DROP FUNCTION IF EXISTS lease6DumpData();
+CREATE FUNCTION lease6DumpData() RETURNS
+    TABLE (
+           address text,
+           duid text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           pref_lifetime bigint,
+           name text,
+           iaid integer,
+           prefix_len smallint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text,
+           state text,
+           user_context text,
+           hwaddr text,
+           hwtype smallint,
+           hwaddr_source text
+    ) AS $$
+    SELECT (l.address,
+            encode(l.duid,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.pref_lifetime,
+            t.name,
+            l.iaid,
+            l.prefix_len,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name,
+            l.user_context,
+            encode(l.hwaddr,'hex'),
+            l.hwtype,
+            h.name
+     )
+     FROM lease6 l
+         left outer join lease6_types t on (l.lease_type = t.lease_type)
+         left outer join lease_state s on (l.state = s.state)
+         left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+     ORDER BY l.address;
+$$ LANGUAGE SQL;
+--
+
 -- Create logs table
 CREATE TABLE logs (
     timestamp TIMESTAMP WITH TIME ZONE

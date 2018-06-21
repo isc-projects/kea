@@ -504,14 +504,14 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // one lease, but two entries. One of the entries should be removed
     // as a result of lease file cleanup.
     std::string current_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,\n"
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{ \"foo\": true }\n"
         "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1,\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
         "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,\n";
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,{ \"bar\": true }\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile4_0.csv.2"));
     previous_file.writeFile(previous_file_contents);
 
@@ -556,7 +556,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,\n";
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,{ \"bar\": true }\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile4_0.csv.2
@@ -584,13 +584,13 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
         "8,100,0,7,0,1,1,,,1,\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,200,"
-        "8,100,0,7,0,1,1,,,1,\n"
+        "8,100,0,7,0,1,1,,,1,{ \"bar\": true }\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
         "8,100,0,7,0,1,1,,,1,\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"));
@@ -639,7 +639,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n"
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
         "8,100,0,7,0,1,1,,,1,\n";
 
@@ -771,7 +771,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
         "8,100,0,7,0,1,1,,,1,\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -781,7 +781,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // the same.
     std::string input_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true }\n";
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
     input_file.writeFile(input_file_contents);
 

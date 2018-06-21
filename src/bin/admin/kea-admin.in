@@ -490,9 +490,9 @@ cql_dump() {
     # Get the query appropriate to lease version. Explicitly specify all columns
     # so that they are returned in expected order.
     if [ $dump_type -eq 4 ]; then
-        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM lease4"
+        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context FROM lease4"
     elif [ $dump_type -eq 6 ]; then
-        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM lease6"
+        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context FROM lease6"
     else
         log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
         usage
