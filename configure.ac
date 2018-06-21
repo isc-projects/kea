@@ -1492,7 +1492,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/Makefile
                  src/share/database/scripts/cql/Makefile
                  src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
-                 src/share/database/scripts/cql/upgrade_2.0_to_2.1.sh
+                 src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
