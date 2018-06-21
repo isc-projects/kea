@@ -222,6 +222,9 @@ struct Lease : public UserContext, public isc::data::CfgToElement {
     /// @param probation_period lease lifetime will be set to this value
     virtual void decline(uint32_t probation_period) = 0;
 
+    /// Avoid a clang spurious error
+    using isc::data::CfgToElement::toElement;
+
 protected:
 
     /// @brief Sets common (for v4 and v6) properties of the lease object.

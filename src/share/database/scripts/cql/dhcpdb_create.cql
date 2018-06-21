@@ -274,7 +274,7 @@ INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line concludes database upgrade to version 2.0
 
--- This line starts database upgrade to version 2.1
+-- This line starts database upgrade to version 3.0
 
 -- Add a column holding leases for user context.
 ALTER TABLE lease4 ADD user_context text;
@@ -293,7 +293,8 @@ CREATE TABLE IF NOT EXISTS logs (
 -- Create search index for logs table
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
 
+-- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;
-INSERT INTO schema_version (version, minor) VALUES(2, 1);
+INSERT INTO schema_version (version, minor) VALUES(3, 0);
 
--- This line concludes database upgrade to version 2.1
+-- This line concludes database upgrade to version 3.0
