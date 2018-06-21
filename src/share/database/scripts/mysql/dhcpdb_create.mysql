@@ -677,6 +677,26 @@ SET version = '6', minor = '0';
 
 # This line concludes database upgrade to version 6.0.
 
+# Add user context into tables holding leases
+ALTER TABLE lease4 ADD COLUMN user_context TEXT NULL;
+ALTER TABLE lease6 ADD COLUMN user_context TEXT NULL;
+
+# Create logs table
+CREATE TABLE logs (
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  # creation timestamp
+    address VARCHAR(43) NULL,                       # address or prefix
+    log TEXT NOT NULL                               # the log itself
+    ) ENGINE = INNODB;
+
+# Create search index
+CREATE INDEX timestamp_index ON logs (timestamp);
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '6', minor = '1';
+
+# This line concludes database upgrade to version 6.1.
+
 # Notes:
 #
 # Indexes
