@@ -676,8 +676,10 @@ CqlLease4Exchange::retrieve() {
         ConstElementPtr ctx;
         if (!user_context_.empty()) {
             ctx = Element::fromJSON(user_context_);
-            isc_throw(BadValue, "user context '" << user_context_
-                      << "' is not a JSON map");
+            if (!ctx || (ctx->getType() != Element::map)) {
+                isc_throw(BadValue, "user context '" << user_context_
+                          << "' is not a JSON map");
+            }
         }
 
         Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
@@ -1424,8 +1426,10 @@ CqlLease6Exchange::retrieve() {
         ConstElementPtr ctx;
         if (!user_context_.empty()) {
             ctx = Element::fromJSON(user_context_);
-            isc_throw(BadValue, "user context '" << user_context_
-                      << "' is not a JSON map");
+            if (!ctx ||(ctx->getType() != Element::map)) {
+                isc_throw(BadValue, "user context '" << user_context_
+                          << "' is not a JSON map");
+            }
         }
 
         // Create the lease and set the cltt (after converting from the

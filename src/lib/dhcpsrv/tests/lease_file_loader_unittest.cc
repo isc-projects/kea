@@ -18,6 +18,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -171,9 +172,11 @@ LeaseFileLoaderTest::absolutePath(const std::string& filename) {
 TEST_F(LeaseFileLoaderTest, loadWrite4) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com,1,\n";
+                      "200,200,8,1,1,host.example.com,1,"
+                      "{ \"foobar\": true }\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,500,8,1,1,host.example.com,1,\n";
+                      "200,500,8,1,1,host.example.com,1,"
+                      "{ \"foobar\": true }\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
                       "100,100,7,0,0,,1,\n";
@@ -212,6 +215,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(300, lease->cltt_);
 
+    // The lease for 192.0.2.1 should have user context.
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
+
     // The invalid entry should not be loaded.
     lease = getLease<Lease4Ptr>("192.0.2.3", storage);
     ASSERT_FALSE(lease);
@@ -222,6 +229,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     lease = getLease<Lease4Ptr>("192.0.3.15", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(35, lease->cltt_);
+    EXPECT_FALSE(lease->getContext());
 
     test_str = v4_hdr_ + a_2 + b_2;
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
@@ -297,12 +305,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
 TEST_F(LeaseFileLoaderTest, loadWrite6) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,"
+                      "{ \"foobar\": true }\n";
     std::string a_2 = "2001:db8:1::1,,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,"
+                      "{ \"foobar\": true }\n";
     std::string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,400,8,100,0,7,0,1,1,host.example.com,,1,\n";
-
+                      "200,400,8,100,0,7,0,1,1,host.example.com,,1,"
+                      "{ \"foobar\": true }\n";
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
                       "300,300,6,150,0,8,0,0,0,,,1,\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
@@ -310,7 +320,6 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
 
     std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                       "100,200,8,0,2,16,64,0,0,,,1,\n";
-
 
 
     // Create a lease file with three valid leases: 2001:db8:1::1,
@@ -341,16 +350,22 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(200, lease->cltt_);
 
+    // The 2001:db8:1::1 should have user context.
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
+
     // The 3000:1:: lease should be present.
     lease = getLease<Lease6Ptr>("3000:1::", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(100, lease->cltt_);
+    EXPECT_FALSE(lease->getContext());
 
     // The 2001:db8:2::10 should be present and the cltt should be
     // calculated according to the last entry in the lease file.
     lease = getLease<Lease6Ptr>("2001:db8:2::10", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(500, lease->cltt_);
+    EXPECT_FALSE(lease->getContext());
 
     test_str = v6_hdr_ + a_3 + b_2 + c_1;
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);

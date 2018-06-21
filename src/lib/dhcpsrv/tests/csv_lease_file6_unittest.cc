@@ -15,6 +15,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -107,7 +108,7 @@ CSVLeaseFile6Test::writeSampleFile() const {
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
                   "0,8,0,0,0,,,1,\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
-                  "16,64,0,0,,,1,\n");
+                  "16,64,0,0,,,1,{ \"foobar\": true }\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -147,6 +148,8 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     // Second lease is malformed - DUID is empty.
@@ -178,6 +181,8 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     // Reading the fourth lease should be successful.
@@ -201,6 +206,9 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 
     // There are no more leases. Reading should cause no error, but the returned
@@ -260,6 +268,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
                            7, 150, 300, 40, 70, 10, false, false,
                            "", HWAddrPtr(), 64));
     lease->cltt_ = 0;
+    lease->setContext(Element::fromJSON("{ \"foobar\": true }"));
     {
     SCOPED_TRACE("Third write");
     ASSERT_NO_THROW(lf.append(*lease));
@@ -274,7 +283,7 @@ TEST_F(CSVLeaseFile6Test, recreate) {
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
               ",300,300,6,150,0,8,128,0,0,,,0,\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,,,0,\n",
+              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true }\n",
               io_.readFile());
 }
 
@@ -296,7 +305,12 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
 
               // schema 3.0 record - has hwaddr and state
               "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
-              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1\n");
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1\n"
+
+              // schema 3.1 record - has hwaddr, state and user context
+              "2001:db8:1::4,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
+              "{ \"foobar\": true }\n");
 
     // Open the lease file.
     CSVLeaseFile6 lf(filename_);
@@ -326,6 +340,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_FALSE(lease->hwaddr_);
     // Verify that added state is STATE_DEFAULT
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     {
@@ -351,6 +366,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ("01:02:03:04:05", lease->hwaddr_->toText(false));
     // Verify that added state is STATE_DEFAULT
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     {
@@ -375,6 +391,33 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    EXPECT_FALSE(lease->getContext());
+    }
+
+    {
+    SCOPED_TRACE("Forth lease valid");
+    EXPECT_TRUE(lf.next(lease));
+    ASSERT_TRUE(lease);
+
+    // Verify that the lease attributes are correct.
+    EXPECT_EQ("2001:db8:1::4", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("three.example.com", lease->hostname_);
+    ASSERT_TRUE(lease->hwaddr_);
+    EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
+    EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 
 }
@@ -412,10 +455,10 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
               "hwaddr,state,user_context,FUTURE_COL\n"
 
-              // schema 3.0 record - has hwaddr and state
+              // schema 3.1 record - has hwaddr, state and user context
               "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
-              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,,"
-              "BOGUS\n");
+              "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
+              "{ \"foobar\": true },BOGUS\n");
 
     // Open should succeed in the event someone is downgrading.
     CSVLeaseFile6 lf(filename_);
@@ -448,6 +491,8 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("0a:0b:0c:0d:0e", lease->hwaddr_->toText(false));
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 }
 

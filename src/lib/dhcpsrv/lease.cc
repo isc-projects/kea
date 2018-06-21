@@ -545,7 +545,7 @@ Lease6::toText() const {
            << "State:         " << statesToText(state_) << "\n";
 
     if (getContext()) {
-        stream << "User context:  " << getContext() << "\n";
+        stream << "User context:  " << getContext()->str() << "\n";
     }
 
     return (stream.str());
@@ -566,7 +566,7 @@ Lease4::toText() const {
            << "State:         " << statesToText(state_) << "\n";
 
     if (getContext()) {
-        stream << "User context:  " << getContext() << "\n";
+        stream << "User context:  " << getContext()->str() << "\n";
     }
 
     return (stream.str());
