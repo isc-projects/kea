@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,6 +128,11 @@ ElementPtr moveComments(ElementPtr element) {
     return (result.get());
 }
 
+ConstElementPtr moveComments(ConstElementPtr element) {
+    Value<ConstElementPtr> result = moveComments1(element);
+    return (result.get());
+}
+
 }; // end of isc::test namespace
 }; // end of isc namespace
 
@@ -228,6 +233,11 @@ namespace test {
 
 ElementPtr extractComments(ElementPtr element) {
     Value<ElementPtr> result = extractComments1(element);
+    return (result.get());
+}
+
+ConstElementPtr extractComments(ConstElementPtr element) {
+    Value<ConstElementPtr> result = extractComments1(element);
     return (result.get());
 }
 
