@@ -473,22 +473,6 @@ public:
         // Check that there are no v4 specific fields.
         EXPECT_FALSE(l->contains("client-id"));
     }
-
-    /// @brief Checks if specified response contains user context
-    ///
-    /// @param lease Element tree that represents a lease
-    /// @param expected expected user context in textual form
-    void checkContext(ConstElementPtr lease, std::string expected) {
-        ASSERT_TRUE(lease);
-        ConstElementPtr moved = moveComments(lease);
-        ConstElementPtr ctx = moved->get("user-context");
-        if (!expected.empty()) {
-            ASSERT_TRUE(ctx);
-            EXPECT_EQ(expected, ctx->str());
-        } else {
-            EXPECT_FALSE(ctx);
-        }
-    }
 };
 
 // Simple test that checks the library really registers the commands.
@@ -642,6 +626,22 @@ TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
         "}";
     exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a simple, well formed lease4 can be added.
@@ -730,6 +730,40 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
     EXPECT_EQ("urania.example.org", l->hostname_);
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
+}
+
+// Check that a well formed lease4 with a comment can be added.
+TEST_F(LeaseCmdsTest, Lease4AddComment) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"comment\": \"a comment\"\n"
+        "    }\n"
+            "}";
+        string exp_rsp = "Lease added.";
+        testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        // Now check that the lease is really there.
+        Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+        ASSERT_TRUE(l);
+
+        // Make sure the lease have proper value set.
+        ASSERT_TRUE(l->hwaddr_);
+        EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+        ASSERT_TRUE(l->getContext());
+        EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
 // Check that lease6-add with missing parameters will fail.
@@ -895,6 +929,23 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "}";
     exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a simple, well formed lease6 can be added.
@@ -1007,6 +1058,39 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
     EXPECT_EQ("urania.example.org", l->hostname_);
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
+}
+
+// Check that a well formed lease6 with a comment can be added.
+TEST_F(LeaseCmdsTest, Lease6AddComment) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234,\n"
+        "        \"comment\": \"a comment\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease have proper value set.
+    ASSERT_TRUE(l->getContext());
+    EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
 // Checks that lease6-get can handle a situation when the query is
@@ -1966,6 +2050,22 @@ TEST_F(LeaseCmdsTest, Lease4UpdateBadParams) {
         "}";
     exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that lease4-update correctly handles case when there is
@@ -2090,6 +2190,49 @@ TEST_F(LeaseCmdsTest, Lease4UpdateDoNotForceCreate) {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+// Check that a lease4 can be updated. We're adding a comment and an user
+// context.
+TEST_F(LeaseCmdsTest, Lease4UpdateComment) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"comment\": \"a comment\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it's been updated.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("42:42:42:42:42:42:42:42", l->hwaddr_->toText(false));
+
+    // Check user context.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(2, ctx->size());
+    ASSERT_TRUE(ctx->contains("comment"));
+    EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
+    ASSERT_TRUE(ctx->contains("foobar"));
+    EXPECT_EQ("true", ctx->get("foobar")->str());
+}
+
 // Test checks if lease6-update handler refuses calls with missing parameters.
 TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
     // Initialize lease manager (true = v6, true = add a lease)
@@ -2208,6 +2351,23 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "}";
     exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Check that a lease6 can be updated. We're changing hw-address
@@ -2245,6 +2405,49 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_EQ(7654321, l->iaid_);
     EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease6 can be updated. We're adding a comment and an user
+// context.
+TEST_F(LeaseCmdsTest, Lease6UpdateComment) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 42,\n"
+        "        \"duid\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"comment\": \"a comment\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->duid_);
+
+    // Check user context.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(2, ctx->size());
+    ASSERT_TRUE(ctx->contains("comment"));
+    EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
+    ASSERT_TRUE(ctx->contains("foobar"));
+    EXPECT_EQ("true", ctx->get("foobar")->str());
 }
 
 

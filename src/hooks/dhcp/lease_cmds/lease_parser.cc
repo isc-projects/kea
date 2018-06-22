@@ -117,6 +117,23 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                   << "' is not a JSON map.");
     }
 
+    // Handle comment.
+    ConstElementPtr comment = lease_info->get("comment");
+    if (comment) {
+        if (ctx && ctx->contains("comment")) {
+            isc_throw(BadValue, "Duplicated comment entry '" << comment->str()
+                      << "' in user context '" << ctx->str() << "'");
+        }
+        ElementPtr copied;
+        if (ctx) {
+            copied = copy(ctx, 0);
+        } else {
+            copied = Element::createMap();
+        }
+        copied->set("comment", comment);
+        ctx = copied;
+    }
+
     // Let's fabricate some data and we're ready to go.
     uint32_t t1 = subnet->getT1();
     uint32_t t2 = subnet->getT2();
@@ -264,6 +281,23 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     if (ctx && (ctx->getType() != Element::map)) {
         isc_throw(BadValue, "Invalid user context '" << ctx->str()
                   << "' is not a JSON map.");
+    }
+
+    // Handle comment.
+    ConstElementPtr comment = lease_info->get("comment");
+    if (comment) {
+        if (ctx && ctx->contains("comment")) {
+            isc_throw(BadValue, "Duplicated comment entry '" << comment->str()
+                      << "' in user context '" << ctx->str() << "'");
+        }
+        ElementPtr copied;
+        if (ctx) {
+            copied = copy(ctx, 0);
+        } else {
+            copied = Element::createMap();
+        }
+        copied->set("comment", comment);
+        ctx = copied;
     }
 
     // Let's fabricate some data and we're ready to go.
