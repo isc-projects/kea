@@ -110,6 +110,13 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                   "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
     }
 
+    // Handle user context.
+    ConstElementPtr ctx = lease_info->get("user-context");
+    if (ctx && (ctx->getType() != Element::map)) {
+        isc_throw(BadValue, "Invalid user context '" << ctx->str()
+                  << "' is not a JSON map.");
+    }
+
     // Let's fabricate some data and we're ready to go.
     uint32_t t1 = subnet->getT1();
     uint32_t t2 = subnet->getT2();
@@ -118,6 +125,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                            cltt, subnet_id,
                            fqdn_fwd, fqdn_rev, hostname));
     l->state_ = state;
+    l->setContext(ctx);
 
     // Retrieve the optional flag indicating if the lease must be created when it
     // doesn't exist during the update.
@@ -251,6 +259,13 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                   "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
     }
 
+    // Handle user context.
+    ConstElementPtr ctx = lease_info->get("user-context");
+    if (ctx && (ctx->getType() != Element::map)) {
+        isc_throw(BadValue, "Invalid user context '" << ctx->str()
+                  << "' is not a JSON map.");
+    }
+
     // Let's fabricate some data and we're ready to go.
     uint32_t t1 = subnet->getT1();
     uint32_t t2 = subnet->getT2();
@@ -260,6 +275,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                            hwaddr_ptr, prefix_len));
     l->cltt_ = cltt;
     l->state_ = state;
+    l->setContext(ctx);
 
     // Retrieve the optional flag indicating if the lease must be created when it
     // doesn't exist during the update.
