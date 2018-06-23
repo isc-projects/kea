@@ -412,6 +412,29 @@ public:
 
     }
 
+    // Create a message holding an empty Hostname option.
+    Pkt4Ptr generatePktWithEmptyHostname(const uint8_t msg_type) {
+
+        Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
+        pkt->setRemoteAddr(IOAddress("192.0.2.3"));
+        // For DISCOVER we don't include server id, because client broadcasts
+        // the message to all servers.
+        if (msg_type != DHCPDISCOVER) {
+            pkt->addOption(srv_->getServerID());
+        }
+
+        pkt->addOption(generateClientId());
+
+        // Create Hostname option.
+        std::string hostname(" ");
+        OptionPtr opt = createHostname(hostname);
+        opt->setData(hostname.begin(), hostname.begin());
+        pkt->addOption(opt);
+
+        return (pkt);
+
+    }
+
     // Create a message holding of a given type
     Pkt4Ptr generatePkt(const uint8_t msg_type) {
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
@@ -808,6 +831,15 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateWrongHostname) {
     Pkt4Ptr query;
     ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
                                                     "abc..example.com"));
+    OptionStringPtr hostname;
+    ASSERT_NO_THROW(hostname = processHostname(query));
+    EXPECT_FALSE(hostname);
+}
+
+// Test that the server skips processing of an empty Hostname option.
+TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithEmptyHostname(DHCPREQUEST));
     OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname = processHostname(query));
     EXPECT_FALSE(hostname);

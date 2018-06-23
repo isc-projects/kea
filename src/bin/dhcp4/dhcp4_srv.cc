@@ -1679,6 +1679,13 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     OptionStringPtr opt_hostname = boost::dynamic_pointer_cast<OptionString>
         (ex.getQuery()->getOption(DHO_HOST_NAME));
 
+    // Ignore empty/bogus Hostname option.
+    if (opt_hostname && opt_hostname->getValue().empty()) {
+        opt_hostname.reset();
+        LOG_INFO(ddns4_logger, DHCP4_CLIENT_HOSTNAME_EMPTY)
+            .arg(ex.getQuery()->getLabel());
+    }
+
     if (opt_hostname) {
         LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_HOSTNAME_DATA)
             .arg(ex.getQuery()->getLabel())
