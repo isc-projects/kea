@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <config/command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
@@ -13,6 +14,7 @@
 #include <stdlib.h>
 
 using namespace isc::process;
+using namespace isc::config;
 
 namespace isc {
 namespace d2 {
@@ -43,7 +45,8 @@ DProcessBase* D2Controller::createProcess() {
 }
 
 D2Controller::D2Controller()
-    : DControllerBase(d2_app_name_, d2_bin_name_) {
+    : DControllerBase(d2_app_name_, d2_bin_name_),
+      has_command_channel_(false) {
 }
 
 isc::data::ConstElementPtr 
@@ -61,6 +64,10 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
+    if (has_command_channel_) {
+        has_command_channel_ = false;
+        deregisterCommands();
+    }
 }
 
 std::string
@@ -70,6 +77,48 @@ D2Controller::getVersionAddendum() {
     stream << isc::cryptolink::CryptoLink::getVersion() << std::endl;
     return (stream.str());
 
+}
+
+void
+D2Controller::registerCommands() {
+    has_command_channel_ = true;
+
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    CommandMgr::instance().setIOService(getIOService());
+
+    // These are the commands always supported by the D2 server.
+    // Please keep the list in alphabetic order.
+    CommandMgr::instance().registerCommand("build-report",
+        boost::bind(&D2Controller::buildReportHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("config-get",
+        boost::bind(&D2Controller::configGetHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("config-test",
+        boost::bind(&D2Controller::configTestHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("config-write",
+        boost::bind(&D2Controller::configWriteHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("shutdown",
+        boost::bind(&D2Controller::shutdownHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("version-get",
+        boost::bind(&D2Controller::versionGetHandler, this, _1, _2));
+}
+
+void
+D2Controller::deregisterCommands() {
+    // Close the command socket (if it exists).
+    CommandMgr::instance().closeCommandSocket();
+
+    // Deregister any registered commands (please keep in alphabetic order)
+    CommandMgr::instance().deregisterCommand("build-report");
+    CommandMgr::instance().deregisterCommand("config-get");
+    CommandMgr::instance().deregisterCommand("config-test");
+    CommandMgr::instance().deregisterCommand("config-write");
+    CommandMgr::instance().deregisterCommand("shutdown");
+    CommandMgr::instance().deregisterCommand("version-get");
 }
 
 }; // end namespace isc::d2

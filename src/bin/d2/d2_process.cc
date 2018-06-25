@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_process.h>
@@ -215,6 +216,9 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         return (answer);
     }
 
+    // Set the command channel.
+    configureCommandChannel();
+
     // Set the reconf_queue_flag to indicate that we need to reconfigure
     // the queue manager.  Reconfiguring the queue manager may be asynchronous
     // and require one or more events to occur, therefore we set a flag
@@ -232,6 +236,23 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     // and therefore contained no invalid values.
     // Return the success answer from above.
     return (answer);
+}
+
+void
+D2Process::configureCommandChannel() {
+    D2CfgMgrPtr mgr = getD2CfgMgr();
+    if (!mgr) {
+        return;
+    }
+    D2CfgContextPtr ctx = mgr->getD2CfgContext();
+    if (!ctx) {
+        return;
+    }
+    isc::data::ConstElementPtr sock_cfg = ctx->getControlSocketInfo();
+    if (sock_cfg) {
+        // Assume that CommandMgr works with D2 I/O.
+        isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+    }
 }
 
 void

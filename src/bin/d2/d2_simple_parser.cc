@@ -265,6 +265,11 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         ctx->setContext(user);
     }
 
+    ConstElementPtr socket = config->get("control-socket");
+    if (socket) {
+        ctx->setControlSocketInfo(socket);
+    }
+
     // Attempt to create the new client config. This ought to fly as
     // we already validated everything.
     D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,

@@ -42,6 +42,12 @@ public:
     /// by convention this should match the executable name.
     static const char* d2_bin_name_;
 
+    /// @brief Register commands.
+    void registerCommands();
+
+    /// @brief Deregister commands.
+    void deregisterCommands();
+
 protected:
     /// @brief Returns version info specific to D2
     virtual std::string getVersionAddendum();
@@ -68,15 +74,12 @@ private:
     /// @throw BadValue if the file is empty
     virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
 
-    /// @brief Register commands.
-    void registerCommands();
-
-    /// @brief Deregister commands.
-    void deregisterCommands();
-
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.
     D2Controller();
+
+    /// @brief Flag set to true when command channel is enabled.
+    bool has_command_channel_;
 };
 
 }; // namespace isc::d2

@@ -34,7 +34,8 @@ D2CfgContext::D2CfgContext()
     : d2_params_(new D2Params()),
       forward_mgr_(new DdnsDomainListMgr("forward-ddns")),
       reverse_mgr_(new DdnsDomainListMgr("reverse-ddns")),
-      keys_(new TSIGKeyInfoMap()) {
+      keys_(new TSIGKeyInfoMap()),
+      control_socket_(ConstElementPtr()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
@@ -50,6 +51,8 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
     }
 
     keys_ = rhs.keys_;
+
+    control_socket_ = rhs.control_socket_;
 }
 
 D2CfgContext::~D2CfgContext() {
@@ -66,6 +69,10 @@ D2CfgContext::toElement() const {
     // Set port
     size_t port = d2_params_->getPort();
     d2->set("port", Element::create(static_cast<int64_t>(port)));
+    // Set control-socket (skip if null as empty is not legal)
+    if (!isNull(control_socket_)) {
+        d2->set("control-socket", UserContext::toElement(control_socket_));
+    }
     // Set dns-server-timeout
     size_t dns_server_timeout = d2_params_->getDnsServerTimeout();
     d2->set("dns-server-timeout",
