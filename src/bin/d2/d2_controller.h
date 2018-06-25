@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,6 +67,12 @@ private:
     /// @return pointer to the map of elements created
     /// @throw BadValue if the file is empty
     virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
+
+    /// @brief Register commands.
+    void registerCommands();
+
+    /// @brief Deregister commands.
+    void deregisterCommands();
 
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.
