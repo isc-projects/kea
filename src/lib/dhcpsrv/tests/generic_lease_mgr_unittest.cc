@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -15,9 +16,11 @@
 #include <stats/stats_mgr.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <sstream>
 
 using namespace std;
@@ -1243,6 +1246,102 @@ GenericLeaseMgrTest::testGetLeases4() {
     // All leases should be returned.
     Lease4Collection returned = lmptr_->getLeases4();
     ASSERT_EQ(leases.size(), returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases4Paged() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease4Collection all_leases;
+
+    IOAddress last_address = IOAddress("0.0.0.0");
+    for (auto i = 0; i < 1000; ++i) {
+        Lease4Collection page = lmptr_->getLeases4(last_address, LeasePageSize(3));
+
+        // Collect leases in a common structure. They may be out of order.
+        for (Lease4Ptr lease : page) {
+            all_leases.push_back(lease);
+        }
+
+        // Empty page means there are no more leases.
+        if (page.empty()) {
+            break;
+
+        } else {
+            // Record last returned address because it is going to be used
+            // as an argument for the next call.
+            last_address = page[page.size() - 1]->addr_;
+        }
+    }
+
+    // Make sure that we got exactly the number of leases that we earlier
+    // stored in the database.
+    EXPECT_EQ(leases.size(), all_leases.size());
+
+    // Make sure that all leases that we stored in the lease database
+    // have been retrieved.
+    for (Lease4Ptr lease : leases) {
+        bool found = false;
+        for (Lease4Ptr returned_lease : all_leases) {
+            if (lease->addr_ == returned_lease->addr_) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found) << "lease for address " << lease->addr_.toText()
+            << " was not returned in any of the pages";
+    }
+
+    boost::scoped_ptr<LeasePageSize> lease_page_size;
+
+    // The maximum allowed value for the limit is max for uint32_t.
+    size_t oor = static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 1;
+    EXPECT_THROW(lease_page_size.reset(new LeasePageSize(oor)), OutOfRange);
+
+    // Zero page size is illegal too.
+    EXPECT_THROW(lease_page_size.reset(new LeasePageSize(0)), OutOfRange);
+}
+
+void
+GenericLeaseMgrTest::testGetLeases4Range() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // All addresses in the specified range should be returned.
+    Lease4Collection returned = lmptr_->getLeases4(IOAddress("192.0.2.2"),
+                                                   IOAddress("192.0.2.6"));
+    EXPECT_EQ(5, returned.size());
+
+    // The lower bound address is below the range, so the first two addresses
+    // in the database should be returned.
+    returned = lmptr_->getLeases4(IOAddress("192.0.1.0"), IOAddress("192.0.2.1"));
+    EXPECT_EQ(2, returned.size());
+
+    // The lower bound address is the last address in the database, so only this
+    // address should be returned.
+    returned = lmptr_->getLeases4(IOAddress("192.0.2.7"), IOAddress("192.0.2.15"));
+    EXPECT_EQ(1, returned.size());
+
+    // The lower bound is below the range and the upper bound is above the range,
+    // so the whole range should be returned.
+    returned = lmptr_->getLeases4(IOAddress("192.0.1.7"), IOAddress("192.0.2.15"));
+    EXPECT_EQ(8, returned.size());
+
+    // No addresses should be returned because our desired range does not
+    // overlap with leases in the database.
+    returned = lmptr_->getLeases4(IOAddress("192.0.2.8"), IOAddress("192.0.2.15"));
+    EXPECT_TRUE(returned.empty());
+
+    // Swapping the lower bound and upper bound should cause an error.
+    EXPECT_THROW(lmptr_->getLeases4(IOAddress("192.0.2.8"), IOAddress("192.0.2.1")),
+                 InvalidRange);
 }
 
 void
@@ -2858,6 +2957,17 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
+}
+
+void
+GenericLeaseMgrTest::checkLeaseRange(const Lease4Collection& returned,
+                                     const std::vector<std::string>& expected_addresses) {
+    ASSERT_EQ(expected_addresses.size(), returned.size());
+
+    for (auto a = returned.cbegin(); a != returned.cend(); ++a) {
+        EXPECT_EQ(expected_addresses[std::distance(returned.cbegin(), a)],
+                  (*a)->addr_.toText());
+    }
 }
 
 void

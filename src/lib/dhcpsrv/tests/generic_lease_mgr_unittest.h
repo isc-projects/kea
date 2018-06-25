@@ -203,6 +203,12 @@ public:
     /// @brief Test method which returns all IPv4 leases.
     void testGetLeases4();
 
+    /// @brief Test method which returns range of IPv4 leases with paging.
+    void testGetLeases4Paged();
+
+    /// @brief Test method which returns range of IPv4 leases.
+    void testGetLeases4Range();
+
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
@@ -425,6 +431,13 @@ public:
     /// @param qry - a started LeaseStatsQuery
     /// @param row_set - set of rows expected to be found in the query rows
     void checkQueryAgainstRowSet(const LeaseStatsQueryPtr& qry, const RowSet& row_set);
+
+    /// @brief Checks if specified range of leases was returned.
+    ///
+    /// @param returned collection of leases returned.
+    /// @param expected_addresses ordered collection of expected addresses.
+    void checkLeaseRange(const Lease4Collection& returned,
+                         const std::vector<std::string>& expected_addresses);
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

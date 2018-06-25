@@ -25,6 +25,7 @@
 #include <time.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace std;
 
@@ -137,6 +138,22 @@ tagged_statements = { {
                         "state "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_PAGE,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state "
+                            "FROM lease4 "
+                            "WHERE address > ? "
+                            "ORDER BY address "
+                            "LIMIT ?"},
+    {MySqlLeaseMgr::GET_LEASE4_RANGE,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state "
+                            "FROM lease4 "
+                            "WHERE address >= ? AND address <= ?"},
     {MySqlLeaseMgr::GET_LEASE4_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -1898,6 +1915,71 @@ MySqlLeaseMgr::getLeases4() const {
 
     Lease4Collection result;
     getLeaseCollection(GET_LEASE4, 0, result);
+
+    return (result);
+}
+
+Lease4Collection
+MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind lower bound address
+    uint32_t lb_address_data = lower_bound_address.toUint32();
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&lb_address_data);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind page size value
+    size_t* ps = const_cast<size_t*>(&page_size.page_size_);
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(ps);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Get the leases
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_PAGE, inbind, result);
+
+    return (result);
+}
+
+Lease4Collection
+MySqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
+                          const IOAddress& upper_bound_address) const {
+    if (upper_bound_address < lower_bound_address) {
+        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
+                  << " is lower than lower bound address " << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR_RANGE4)
+        .arg(lower_bound_address.toText())
+        .arg(upper_bound_address.toText());
+
+    // Prepare WHERE clause
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind lower bound address as uint32 value
+    uint32_t lb_address_data = lower_bound_address.toUint32();
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&lb_address_data);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind upper bound address as uint32 value
+    uint32_t ub_address_data = upper_bound_address.toUint32();
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&ub_address_data);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Get the leases
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_RANGE, inbind, result);
 
     return (result);
 }

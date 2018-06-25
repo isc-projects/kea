@@ -21,6 +21,7 @@
 #include <time.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace std;
 
@@ -110,6 +111,28 @@ PgSqlTaggedStatement tagged_statements[] = {
         "state "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
+
+    // GET_LEASE4_PAGE
+    { 2, { OID_INT8, OID_INT8 },
+      "get_lease4_page",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
+      "FROM lease4 "
+      "WHERE address > $1 "
+      "ORDER BY address "
+      "LIMIT $2"},
+
+    // GET_LEASE4_RANGE
+    { 2, { OID_INT8, OID_INT8 },
+      "get_lease4_range",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state "
+      "FROM lease4 "
+      "WHERE address >= $1 AND address <= $2"},
 
     // GET_LEASE4_SUBID
     { 1, { OID_INT8 },
@@ -1290,6 +1313,64 @@ PgSqlLeaseMgr::getLeases4() const {
     PsqlBindArray bind_array;
     Lease4Collection result;
     getLeaseCollection(GET_LEASE4, bind_array, result);
+
+    return (result);
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind lower bound address
+    std::string lb_address_data = boost::lexical_cast<std::string>
+        (lower_bound_address.toUint32());
+    bind_array.add(lb_address_data);
+
+    // Bind page size value
+    std::string page_size_data = boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    // Get the leases
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_PAGE, bind_array, result);
+
+    return (result);
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
+                          const IOAddress& upper_bound_address) const {
+    if (upper_bound_address < lower_bound_address) {
+        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
+                  << " is lower than lower bound address " << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR_RANGE4)
+        .arg(lower_bound_address.toText())
+        .arg(upper_bound_address.toText());
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind lower bound address
+    std::string lb_address_data = boost::lexical_cast<std::string>
+        (lower_bound_address.toUint32());
+    bind_array.add(lb_address_data);
+
+    // Bind upper bound address
+    std::string ub_address_data = boost::lexical_cast<std::string>
+        (upper_bound_address.toUint32());
+    bind_array.add(ub_address_data);
+
+    // Get the leases
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_RANGE, bind_array, result);
 
     return (result);
 }
