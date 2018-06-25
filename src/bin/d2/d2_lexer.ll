@@ -390,6 +390,30 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"control-socket\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_CONTROL_SOCKET(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("control-socket", driver.loc_);
+}
+
+\"socket-type\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET
+        return isc::d2::D2Parser::make_SOCKET_TYPE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("socket-type", driver.loc_);
+}
+
+\"socket-name\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET
+        return isc::d2::D2Parser::make_SOCKET_NAME(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("socket-name", driver.loc_);
+}
+
 
 \"Logging\" {
     switch(driver.ctx_) {
