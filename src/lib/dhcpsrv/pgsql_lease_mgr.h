@@ -187,6 +187,50 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     virtual Lease4Collection getLeases4() const;
 
+    /// @brief Returns range of IPv4 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv4 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv4 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const;
+
+    /// @brief Returns a range of IPv4 leases.
+    ///
+    /// Returned leases are ordered by IPv4 addresses.
+    ///
+    /// @param lower_bound_address IPv4 address used as a lower bound for the
+    /// returned range. The lease for this address is included in the returned
+    /// range if the lease exists.
+    /// @param upper_bound_address IPv4 address used as an upper bound for the
+    /// returned range. The lease for this address is included in the returned
+    /// range if the lease exists.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& lower_bound_address,
+               const asiolink::IOAddress& upper_bound_address) const;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
@@ -483,6 +527,8 @@ public:
         GET_LEASE4_CLIENTID_SUBID,  // Get lease4 by client ID & subnet ID
         GET_LEASE4_HWADDR,          // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,    // Get lease4 by HW address & subnet ID
+        GET_LEASE4_PAGE,            // Get page of leases beginning with an address
+        GET_LEASE4_RANGE,           // Get range of leases between addresses
         GET_LEASE4_SUBID,           // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,          // Get expired lease4
         GET_LEASE6,                 // Get all IPv6 leases

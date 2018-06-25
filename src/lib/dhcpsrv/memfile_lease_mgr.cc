@@ -38,6 +38,7 @@ const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 
 } // end of anonymous namespace
 
+using namespace isc::asiolink;
 using namespace isc::util;
 
 namespace isc {
@@ -881,6 +882,59 @@ Memfile_LeaseMgr::getLeases4() const {
    }
 
    return (collection);
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    Lease4Collection collection;
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    Lease4StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
+
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
+    // Return all other leases being within the page size.
+    for (auto lease = lb;
+         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+
+    return (collection);
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(const IOAddress& lower_bound_address,
+                             const IOAddress& upper_bound_address) const {
+    // Check if the range boundaries aren't swapped.
+    if (upper_bound_address < lower_bound_address) {
+        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
+                  << " is lower than lower bound address " << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_ADDR_RANGE4)
+        .arg(lower_bound_address.toText())
+        .arg(upper_bound_address.toText());
+
+    Lease4Collection collection;
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    std::pair<Lease4StorageAddressIndex::const_iterator,
+              Lease4StorageAddressIndex::const_iterator> l =
+        std::make_pair(idx.lower_bound(lower_bound_address),
+                       idx.upper_bound(upper_bound_address));
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+
+    return (collection);
 }
 
 Lease6Ptr

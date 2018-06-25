@@ -587,6 +587,16 @@ TEST_F(CqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases4Paged) {
+    testGetLeases4Paged();
+}
+
+// Test that a range of IPv4 leases is returmed.
+TEST_F(CqlLeaseMgrTest, getLeases4Range) {
+    testGetLeases4Range();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
