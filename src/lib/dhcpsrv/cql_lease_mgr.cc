@@ -879,6 +879,9 @@ public:
     static constexpr StatementTag GET_LEASE6_ADDR = "GET_LEASE6_ADDR";
     static constexpr StatementTag GET_LEASE6_DUID_IAID = "GET_LEASE6_DUID_IAID";
     static constexpr StatementTag GET_LEASE6_DUID_IAID_SUBID = "GET_LEASE6_DUID_IAID_SUBID";
+    static constexpr StatementTag GET_LEASE6_LIMIT = "GET_LEASE6_LIMIT";
+    static constexpr StatementTag GET_LEASE6_PAGE = "GET_LEASE6_PAGE";
+    static constexpr StatementTag GET_LEASE6_RANGE = "GET_LEASE6_RANGE";
     // @}
 
 private:
@@ -917,6 +920,9 @@ constexpr StatementTag CqlLease6Exchange::GET_LEASE6_EXPIRE;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_ADDR;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_LIMIT;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_PAGE;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_RANGE;
 
 StatementMap CqlLease6Exchange::tagged_statements_ = {
 
@@ -1011,6 +1017,40 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "AND subnet_id = ? "
       "ALLOW FILTERING "}},
 
+    // Get range of IPv6 leases from first lease with a limit (paging)
+    {GET_LEASE6_LIMIT,
+     {GET_LEASE6_LIMIT,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state "
+      "FROM lease6 "
+      "LIMIT ? "
+      "ALLOW FILTERING "}},
+
+    // Get range of IPv6 leases from address with a limit (paging)
+    {GET_LEASE6_PAGE,
+     {GET_LEASE6_PAGE,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state "
+      "FROM lease6 "
+      "WHERE TOKEN(address) > TOKEN(?) "
+      "LIMIT ? "
+      "ALLOW FILTERING "}},
+
+    // Get range of IPv6 leases between two addresses
+    {GET_LEASE6_RANGE,
+     {GET_LEASE6_RANGE,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state "
+      "FROM lease6 "
+      "WHERE address >= ? "
+      "AND address <= ? "
+      "ALLOW FILTERING "}},
 };
 
 CqlLease6Exchange::CqlLease6Exchange(const CqlConnection &connection)
@@ -1427,9 +1467,6 @@ CqlLease6Exchange::retrieve() {
 void
 CqlLease6Exchange::getLeaseCollection(StatementTag &statement_tag, AnyArray &data,
                                       Lease6Collection &result) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_ADDR4)
-        .arg(statement_tag);
-
     AnyArray collection = executeSelect(connection_, data, statement_tag);
 
     // Transfer Lease6 objects to result.
@@ -2287,6 +2324,52 @@ CqlLeaseMgr::getLeases6(SubnetID) const {
 Lease6Collection
 CqlLeaseMgr::getLeases6() const {
     isc_throw(NotImplemented, "getLeases6() is not implemented");
+}
+
+Lease6Collection
+CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size) const {
+    if (page_size.page_size_ == 0) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be 0");
+    }
+
+    if (page_size.page_size_ > std::numeric_limits<uint32_t>::max()) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be greater than "
+                  << std::numeric_limits<uint32_t>::max());
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    AnyArray data;
+
+    std::string lb_address_data;
+    if (!lower_bound_address.isV6Zero()) {
+        lb_address_data = lower_bound_address.toText();
+        if (lb_address_data.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue,
+                      "CqlLeaseMgr::getLeases6(lower_bound_address, page_size): "
+                      "address "
+                      << lb_address_data << " of length " << lb_address_data.size()
+                      << " exceeds maximum allowed length of "
+                      << ADDRESS6_TEXT_MAX_LEN);
+        }
+        data.add(&lb_address_data);
+    }
+
+    cass_int32_t page_size_data = static_cast<cass_int32_t>(page_size.page_size_);
+    data.add(&page_size_data);
+
+    // Get the leases.
+    Lease6Collection result;
+    std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
+    exchange6->getLeaseCollection(lower_bound_address.isV6Zero() ?
+                                  CqlLease6Exchange::GET_LEASE6_LIMIT :
+                                  CqlLease6Exchange::GET_LEASE6_PAGE,
+                                  data, result);
+
+    return (result);
 }
 
 void

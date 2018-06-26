@@ -1259,7 +1259,7 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
     Lease4Collection all_leases;
 
     IOAddress last_address = IOAddress("0.0.0.0");
-    for (auto i = 0; i < 1000; ++i) {
+    for (auto i = 0; i < 4; ++i) {
         Lease4Collection page = lmptr_->getLeases4(last_address, LeasePageSize(3));
 
         // Collect leases in a common structure. They may be out of order.
@@ -1369,6 +1369,55 @@ GenericLeaseMgrTest::testGetLeases6() {
     // All leases should be returned.
     Lease6Collection returned = lmptr_->getLeases6();
     ASSERT_EQ(leases.size(), returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases6Paged() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease6Collection all_leases;
+
+    IOAddress last_address = IOAddress::IPV6_ZERO_ADDRESS();
+    for (auto i = 0; i < 4; ++i) {
+        Lease6Collection page = lmptr_->getLeases6(last_address, LeasePageSize(3));
+
+        // Collect leases in a common structure. They may be out of order.
+        for (Lease6Ptr lease : page) {
+            all_leases.push_back(lease);
+        }
+
+        // Empty page means there are no more leases.
+        if (page.empty()) {
+            break;
+
+        } else {
+            // Record last returned address because it is going to be used
+            // as an argument for the next call.
+            last_address = page[page.size() - 1]->addr_;
+        }
+    }
+
+    // Make sure that we got exactly the number of leases that we earlier
+    // stored in the database.
+    EXPECT_EQ(leases.size(), all_leases.size());
+
+    // Make sure that all leases that we stored in the lease database
+    // have been retrieved.
+    for (Lease6Ptr lease : leases) {
+        bool found = false;
+        for (Lease6Ptr returned_lease : all_leases) {
+            if (lease->addr_ == returned_lease->addr_) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found) << "lease for address " << lease->addr_.toText()
+            << " was not returned in any of the pages";
+    }
 }
 
 void
