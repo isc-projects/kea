@@ -1,3 +1,4 @@
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -2149,6 +2150,13 @@ CqlLeaseMgr::getLeases4() const {
 Lease4Collection
 CqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
                         const LeasePageSize& page_size) const {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
     if (page_size.page_size_ == 0) {
         isc_throw(OutOfRange, "page size of retrieved leases must not be 0");
     }
@@ -2187,6 +2195,13 @@ CqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 Lease4Collection
 CqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
                         const IOAddress& upper_bound_address) const {
+    // Expecting two IPv4 addresses.
+    if (!lower_bound_address.isV4() || !upper_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected two IPv4 addresses for "
+                  "retrieving a range of leases, got "
+                  << lower_bound_address << " and " << upper_bound_address);
+    }
+
     if (upper_bound_address < lower_bound_address) {
         isc_throw(InvalidRange, "upper bound address " << upper_bound_address
                   << " is lower than lower bound address " << lower_bound_address);
@@ -2315,6 +2330,13 @@ CqlLeaseMgr::getLeases6() const {
 Lease6Collection
 CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                         const LeasePageSize& page_size) const {
+    // Expecting IPv6 address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
     if (page_size.page_size_ == 0) {
         isc_throw(OutOfRange, "page size of retrieved leases must not be 0");
     }

@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
@@ -1304,6 +1305,10 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
 
     // Zero page size is illegal too.
     EXPECT_THROW(lease_page_size.reset(new LeasePageSize(0)), OutOfRange);
+
+    // Only IPv4 address can be used.
+    EXPECT_THROW(lmptr_->getLeases4(IOAddress("2001:db8::1"), LeasePageSize(3)),
+                 InvalidAddressFamily);
 }
 
 void
@@ -1342,6 +1347,13 @@ GenericLeaseMgrTest::testGetLeases4Range() {
     // Swapping the lower bound and upper bound should cause an error.
     EXPECT_THROW(lmptr_->getLeases4(IOAddress("192.0.2.8"), IOAddress("192.0.2.1")),
                  InvalidRange);
+
+    // Both must be IPv4 addresses.
+    EXPECT_THROW(lmptr_->getLeases4(IOAddress("192.0.2.3"), IOAddress("2001:db8::8")),
+                 InvalidAddressFamily);
+
+    EXPECT_THROW(lmptr_->getLeases4(IOAddress("2001:db8::2"), IOAddress("192.0.2.7")),
+                 InvalidAddressFamily);
 }
 
 void
@@ -1418,6 +1430,11 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
         EXPECT_TRUE(found) << "lease for address " << lease->addr_.toText()
             << " was not returned in any of the pages";
     }
+
+    // Only IPv6 address can be used.
+    EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.0"), LeasePageSize(3)),
+                 InvalidAddressFamily);
+                 
 }
 
 void
@@ -1456,6 +1473,13 @@ GenericLeaseMgrTest::testGetLeases6Range() {
     // Swapping the lower bound and upper bound should cause an error.
     EXPECT_THROW(lmptr_->getLeases6(IOAddress("2001:db8::8"), IOAddress("2001:db8::1")),
                  InvalidRange);
+
+    // Both must be IPv6 addresses.
+    EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.3"), IOAddress("2001:db8::8")),
+                 InvalidAddressFamily);
+
+    EXPECT_THROW(lmptr_->getLeases6(IOAddress("2001:db8::2"), IOAddress("192.0.2.7")),
+                 InvalidAddressFamily);
 }
 
 void
