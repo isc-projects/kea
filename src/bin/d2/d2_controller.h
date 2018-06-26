@@ -12,6 +12,10 @@
 namespace isc {
 namespace d2 {
 
+class D2Controller;
+/// @brief Pointer to a process controller.
+typedef boost::shared_ptr<D2Controller> D2ControllerPtr;
+
 /// @brief Process Controller for D2 Process
 /// This class is the DHCP-DDNS specific derivation of DControllerBase. It
 /// creates and manages an instance of the DHCP-DDNS application process,

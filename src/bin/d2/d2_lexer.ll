@@ -269,6 +269,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::d2::D2ParserContext::DNS_SERVERS:
     case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
     case isc::d2::D2ParserContext::LOGGERS:
         return isc::d2::D2Parser::make_USER_CONTEXT(driver.loc_);
     default:
@@ -285,6 +286,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::d2::D2ParserContext::DNS_SERVERS:
     case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
     case isc::d2::D2ParserContext::LOGGERS:
         return isc::d2::D2Parser::make_COMMENT(driver.loc_);
     default:

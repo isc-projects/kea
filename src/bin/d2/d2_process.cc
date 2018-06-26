@@ -10,6 +10,7 @@
 #include <config/command_mgr.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
+#include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 
 using namespace isc::process;
@@ -248,10 +249,17 @@ D2Process::configureCommandChannel() {
     if (!ctx) {
         return;
     }
+    D2ControllerPtr ctrl =
+        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
+    if (!ctrl) {
+        return;
+    }
     isc::data::ConstElementPtr sock_cfg = ctx->getControlSocketInfo();
-    if (sock_cfg) {
+    if (sock_cfg && (sock_cfg->size() > 0)) {
         // Assume that CommandMgr works with D2 I/O.
+        isc::config::CommandMgr::instance().setIOService(getIoService());
         isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        ctrl->registerCommands();
     }
 }
 

@@ -120,6 +120,13 @@ D2SimpleParser::setAllDefaults(isc::data::ElementPtr global) {
     // Set global defaults first.
     cnt = setDefaults(global, D2_GLOBAL_DEFAULTS);
 
+    // If the control socket is no present, set it to empty map.
+    if (!global->find("control-socket")) {
+        ConstElementPtr map(new MapElement());
+        global->set("control-socket", map);
+        cnt++;
+    }
+
     // If the key list is present, set its members' defaults
     if (global->find("tsig-keys")) {
         ConstElementPtr keys = global->get("tsig-keys");

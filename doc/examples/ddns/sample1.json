@@ -29,6 +29,15 @@
 
     "user-context": { "version": 1 },
 
+//
+// ----------------- Control Socket -----------------
+//
+
+    "control-socket":
+    {
+        "socket-type": "unix",
+        "socket-name": "/tmp/d2-ctrl-socket"
+    },
 
 //
 // ----------------- Forward DDNS  ------------------

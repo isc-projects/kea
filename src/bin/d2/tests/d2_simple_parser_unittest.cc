@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,8 +70,22 @@ void checkStringValue(const ConstElementPtr& element,
     ASSERT_EQ(Element::string, element->getType());
 
     // Verify it has the expected value
-        EXPECT_EQ(deflt.value_, element->stringValue());
-    }
+    EXPECT_EQ(deflt.value_, element->stringValue());
+}
+
+/// @brief Checks if specified element is a map
+///
+/// @param element defaulted element to check
+/// @param deflt expected size
+void checkMap(const ConstElementPtr& element, size_t deflt) {
+    ASSERT_TRUE(element);
+
+    // Verify it's a map
+    ASSERT_EQ(Element::map, element->getType());
+
+    // verify the map size
+    EXPECT_EQ(deflt, element->size());
+}
 
 /// TSIGKeyInfo against the given set of values, and that the TSIGKey
 /// member points to a key.
@@ -273,8 +287,8 @@ TEST_F(D2SimpleParserTest, globalD2Defaults) {
 
     EXPECT_NO_THROW(num = D2SimpleParser::setAllDefaults(empty));
 
-    // We expect 5 parameters to be inserted.
-    EXPECT_EQ(num, 8);
+    // We expect 9 parameters to be inserted.
+    EXPECT_EQ(num, 9);
 
     // Let's go over all parameters we have defaults for.
     BOOST_FOREACH(SimpleDefault deflt, D2SimpleParser::D2_GLOBAL_DEFAULTS) {
@@ -296,6 +310,9 @@ TEST_F(D2SimpleParserTest, globalD2Defaults) {
             }
         }
     }
+
+    // Check control-socket
+    checkMap(empty->get("control-socket"), 0);
 }
 
 /// @brief Test fixture class for testing TSIGKeyInfo parsing.
