@@ -1061,6 +1061,33 @@ Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     return (collection);
 }
 
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                             const asiolink::IOAddress& upper_bound_address) const {
+    // Check if the range boundaries aren't swapped.
+    if (upper_bound_address < lower_bound_address) {
+        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
+                  << " is lower than lower bound address " << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_ADDR_RANGE6)
+        .arg(lower_bound_address.toText())
+        .arg(upper_bound_address.toText());
+
+    Lease6Collection collection;
+    const Lease6StorageAddressIndex& idx = storage6_.get<AddressIndexTag>();
+    std::pair<Lease6StorageAddressIndex::const_iterator,
+              Lease6StorageAddressIndex::const_iterator> l =
+        std::make_pair(idx.lower_bound(lower_bound_address),
+                       idx.upper_bound(upper_bound_address));
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+
+    return (collection);
+}
+
 void
 Memfile_LeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                     const size_t max_leases) const {

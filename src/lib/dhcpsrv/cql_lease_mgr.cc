@@ -881,7 +881,6 @@ public:
     static constexpr StatementTag GET_LEASE6_DUID_IAID_SUBID = "GET_LEASE6_DUID_IAID_SUBID";
     static constexpr StatementTag GET_LEASE6_LIMIT = "GET_LEASE6_LIMIT";
     static constexpr StatementTag GET_LEASE6_PAGE = "GET_LEASE6_PAGE";
-    static constexpr StatementTag GET_LEASE6_RANGE = "GET_LEASE6_RANGE";
     // @}
 
 private:
@@ -922,7 +921,6 @@ constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_LIMIT;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_PAGE;
-constexpr StatementTag CqlLease6Exchange::GET_LEASE6_RANGE;
 
 StatementMap CqlLease6Exchange::tagged_statements_ = {
 
@@ -1038,19 +1036,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "FROM lease6 "
       "WHERE TOKEN(address) > TOKEN(?) "
       "LIMIT ? "
-      "ALLOW FILTERING "}},
-
-    // Get range of IPv6 leases between two addresses
-    {GET_LEASE6_RANGE,
-     {GET_LEASE6_RANGE,
-      "SELECT "
-      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
-      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
-      "FROM lease6 "
-      "WHERE address >= ? "
-      "AND address <= ? "
-      "ALLOW FILTERING "}},
+      "ALLOW FILTERING "}}
 };
 
 CqlLease6Exchange::CqlLease6Exchange(const CqlConnection &connection)
@@ -2370,6 +2356,13 @@ CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                                   data, result);
 
     return (result);
+}
+
+Lease6Collection
+CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                        const asiolink::IOAddress& upper_bound_address) const {
+    isc_throw(NotImplemented, "getLeases6(lower_bound_address, upper_bound_address) "
+              "is not implemented");
 }
 
 void

@@ -222,7 +222,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state "
       "FROM lease6 "
-      "WHERE address >= $1 AND address <= $2"},
+      "WHERE INET(address) >= INET($1) AND INET(address) <= INET($2)"},
 
     // GET_LEASE6_SUBID
     { 1, { OID_INT8 },
@@ -1543,6 +1543,34 @@ PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     // Get the leases
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_PAGE, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                          const asiolink::IOAddress& upper_bound_address) const {
+    if (upper_bound_address < lower_bound_address) {
+        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
+                  << " is lower than lower bound address " << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR_RANGE6)
+        .arg(lower_bound_address.toText())
+        .arg(upper_bound_address.toText());
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    std::string lb_address_data = lower_bound_address.toText();
+    bind_array.add(lb_address_data);
+
+    std::string ub_address_data = upper_bound_address.toText();
+    bind_array.add(ub_address_data);
+
+    // Get the leases
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_RANGE, bind_array, result);
 
     return (result);
 }

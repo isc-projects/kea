@@ -279,10 +279,6 @@ A debug message issued when the server is attempting to obtain an IPv6
 lease from the Cassandra database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
 
-% DHCPSRV_CQL_GET_ADDR_RANGE4 obtaining all IPv4 leases with addresses in range from %1 to %2
-A debug message issued when the server is attempting to obtain leases
-with addresses in the specified range.
-
 % DHCPSRV_CQL_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
 A debug message issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
@@ -290,6 +286,10 @@ of leases beginning with the specified address.
 % DHCPSRV_CQL_GET_PAGE6 obtaining at most %1 IPv6 leases starting from address %2
 A debug message issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
+
+% DHCPSRV_CQL_GET_ADDR_RANGE4 obtaining all IPv4 leases with addresses in range from %1 to %2
+A debug message issued when the server is attempting to obtain leases
+with addresses in the specified range.
 
 % DHCPSRV_CQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
@@ -490,6 +490,10 @@ A debug message issued when the server is attempting to obtain all IPv4
 leases from the memory file database.
 
 % DHCPSRV_MEMFILE_GET_ADDR_RANGE4 obtaining all IPv4 leases with addresses in range from %1 to %2
+A debug message issued when the server is attempting to obtain leases
+with addresses in the specified range.
+
+% DHCPSRV_MEMFILE_GET_ADDR_RANGE6 obtaining all IPv6 leases with addresses in range from %1 to %2
 A debug message issued when the server is attempting to obtain leases
 with addresses in the specified range.
 
@@ -757,6 +761,10 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to obtain leases
 with addresses in the specified range.
 
+% DHCPSRV_MYSQL_GET_ADDR_RANGE6 obtaining all IPv6 leases with addresses in range from %1 to %2
+A debug message issued when the server is attempting to obtain leases
+with addresses in the specified range.
+
 % DHCPSRV_MYSQL_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
 A debug message issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
@@ -942,6 +950,10 @@ A debug message issued when the server is attempting to obtain an IPv6
 lease from the PostgreSQL database for the specified address.
 
 % DHCPSRV_PGSQL_GET_ADDR_RANGE4 obtaining all IPv4 leases with addresses in range from %1 to %2
+A debug message issued when the server is attempting to obtain leases
+with addresses in the specified range.
+
+% DHCPSRV_PGSQL_GET_ADDR_RANGE6 obtaining all IPv6 leases with addresses in range from %1 to %2
 A debug message issued when the server is attempting to obtain leases
 with addresses in the specified range.
 
