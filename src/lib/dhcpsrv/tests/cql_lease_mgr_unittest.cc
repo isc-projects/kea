@@ -697,6 +697,11 @@ TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
 
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
+}
+
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.

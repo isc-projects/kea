@@ -954,6 +954,12 @@ TEST_F(MemfileLeaseMgrTest, getLeases6) {
     testGetLeases6();
 }
 
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(MemfileLeaseMgrTest, getLeases6Paged) {
+    startBackend(V6);
+    testGetLeases6Paged();
+}
+
 /// @brief Basic Lease6 Checks
 ///
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an

@@ -375,6 +375,11 @@ TEST_F(MySqlLeaseMgrTest, getLeases6) {
     testGetLeases6();
 }
 
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(MySqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),

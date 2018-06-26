@@ -200,6 +200,30 @@ PgSqlTaggedStatement tagged_statements[] = {
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
 
+    // GET_LEASE6_PAGE
+    { 2, { OID_VARCHAR, OID_INT8 },
+      "get_lease6_page",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state "
+      "FROM lease6 "
+      "WHERE address > $1 "
+      "ORDER BY address "
+      "LIMIT $2"},
+
+    // GET_LEASE6_RANGE
+    { 2, { OID_VARCHAR, OID_VARCHAR },
+      "get_lease6_range",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state "
+      "FROM lease6 "
+      "WHERE address >= $1 AND address <= $2"},
+
     // GET_LEASE6_SUBID
     { 1, { OID_INT8 },
       "get_lease6_subid",
@@ -1487,6 +1511,38 @@ PgSqlLeaseMgr::getLeases6() const {
     PsqlBindArray bind_array;
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // In IPv6 we compare addresses represented as strings. The IPv6 zero address
+    // is ::, so it is greater than any other address. In this special case, we
+    // just use 0 for comparison which should be lower than any real IPv6 address.
+    std::string lb_address_data = "0";
+    if (!lower_bound_address.isV6Zero()) {
+        lb_address_data = lower_bound_address.toText();
+    }
+
+    // Bind lower bound address
+    bind_array.add(lb_address_data);
+
+    // Bind page size value
+    std::string page_size_data = boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    // Get the leases
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_PAGE, bind_array, result);
 
     return (result);
 }
