@@ -380,6 +380,11 @@ TEST_F(MySqlLeaseMgrTest, getLeases6Paged) {
     testGetLeases6Paged();
 }
 
+// Test that a range of IPv6 leases is returmed.
+TEST_F(MySqlLeaseMgrTest, getLeases6Range) {
+    testGetLeases6Range();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),

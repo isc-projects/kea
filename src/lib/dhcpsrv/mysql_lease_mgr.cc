@@ -225,7 +225,8 @@ tagged_statements = { {
                         "hwaddr, hwtype, hwaddr_source, "
                         "state "
                             "FROM lease6 "
-                            "WHERE address >= ? AND address <= ?"},
+                            "WHERE INET6_ATON(address) >= INET6_ATON(?) "
+                                "AND INET6_ATON(address) <= INET6_ATON(?)"},
     {MySqlLeaseMgr::GET_LEASE6_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -2195,6 +2196,45 @@ MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     // Get the leases
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_PAGE, inbind, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
+                          const IOAddress& upper_bound_address) const {
+    if (upper_bound_address < lower_bound_address) {
+        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
+                  << " is lower than lower bound address " << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR_RANGE6)
+        .arg(lower_bound_address.toText())
+        .arg(upper_bound_address.toText());
+
+    // Prepare WHERE clause
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind lower bound address
+    std::string lb_address_data = lower_bound_address.toText();
+    unsigned long lb_address_data_size = lb_address_data.size();
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(lb_address_data.c_str());
+    inbind[0].buffer_length = lb_address_data_size;
+    inbind[0].length = &lb_address_data_size;
+
+    // Bind upper bound address
+    std::string ub_address_data = upper_bound_address.toText();
+    unsigned long ub_address_data_size = ub_address_data.size();
+    inbind[1].buffer_type = MYSQL_TYPE_STRING;
+    inbind[1].buffer = const_cast<char*>(ub_address_data.c_str());
+    inbind[1].buffer_length = ub_address_data_size;
+    inbind[1].length = &ub_address_data_size;
+
+    // Get the leases
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_RANGE, inbind, result);
 
     return (result);
 }

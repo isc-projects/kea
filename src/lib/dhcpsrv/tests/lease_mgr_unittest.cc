@@ -242,6 +242,22 @@ public:
         return (Lease6Collection());
     }
 
+    /// @brief Returns a range of IPv6 leases.
+    ///
+    /// @param lower_bound_address IPv6 address used as a lower bound for the
+    /// returned range. The lease for this address is included in the returned
+    /// range if the lease exists.
+    /// @param upper_bound_address IPv6 address used as an upper bound for the
+    /// returned range. The lease for this address is included in the returned
+    /// range if the lease exists.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection
+    getLeases6(const asiolink::IOAddress& /* lower_bound_address */,
+               const asiolink::IOAddress& /* upper_bound_address */) const {
+        return (Lease6Collection());
+    }
+
     /// @brief Returns range of IPv6 leases using paging.
     ///
     /// This method implements paged browsing of the lease database. The first
