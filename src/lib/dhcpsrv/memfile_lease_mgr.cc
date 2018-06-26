@@ -887,6 +887,13 @@ Memfile_LeaseMgr::getLeases4() const {
 Lease4Collection
 Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size) const {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_PAGE4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText());
@@ -913,6 +920,13 @@ Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
 Lease4Collection
 Memfile_LeaseMgr::getLeases4(const IOAddress& lower_bound_address,
                              const IOAddress& upper_bound_address) const {
+    // Expecting two IPv4 addresses.
+    if (!lower_bound_address.isV4() || !upper_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected two IPv4 addresses for "
+                  "retrieving a range of leases, got "
+                  << lower_bound_address << " and " << upper_bound_address);
+    }
+
     // Check if the range boundaries aren't swapped.
     if (upper_bound_address < lower_bound_address) {
         isc_throw(InvalidRange, "upper bound address " << upper_bound_address
@@ -1038,6 +1052,13 @@ Memfile_LeaseMgr::getLeases6() const {
 Lease6Collection
 Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size) const {
+    // Expecting IPv6 address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_PAGE6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText());
@@ -1064,6 +1085,13 @@ Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
 Lease6Collection
 Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                              const asiolink::IOAddress& upper_bound_address) const {
+    // Expecting two IPv6 addresses.
+    if (!lower_bound_address.isV6() || !upper_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected two IPv6 addresses for "
+                  "retrieving a range of leases, got "
+                  << lower_bound_address << " and " << upper_bound_address);
+    }
+
     // Check if the range boundaries aren't swapped.
     if (upper_bound_address < lower_bound_address) {
         isc_throw(InvalidRange, "upper bound address " << upper_bound_address

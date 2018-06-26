@@ -67,6 +67,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid address family used as input to Lease Manager.
+class InvalidAddressFamily : public Exception {
+public:
+    InvalidAddressFamily(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 }  // namespace isc
 }  // namespace dhcp
 
