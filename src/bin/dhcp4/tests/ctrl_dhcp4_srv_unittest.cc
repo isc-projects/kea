@@ -90,7 +90,7 @@ public:
     using Dhcpv4Srv::network_state_;
 };
 
-/// @brief Fixture class intended for testin control channel in the DHCPv4Srv
+/// @brief Fixture class intended for testing control channel in the DHCPv4Srv
 class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
 public:
 
