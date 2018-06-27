@@ -2793,7 +2793,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     startService(createValidConfiguration());
     EXPECT_EQ(HA_WAITING_ST, service_->getCurrState());
 
-    // WAITING state: no heartbeat reponse for a long period of time.
+    // WAITING state: no heartbeat response for a long period of time.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     simulateNoCommunication();
     ASSERT_TRUE(isDoingHeartbeat());
@@ -2883,7 +2883,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 // 5. I can communicate with the partner so I transition to the hot-standby
 //    state as a standby server.
 // 6. Patrtner stops responding again.
-// 7. I monitor communication with the patner and eventually consider the
+// 7. I monitor communication with the partner and eventually consider the
 //    communication to be interrupted.
 // 8. I start monitoring the DHCP traffic directed to the partner and observe
 //    delays in responses.
