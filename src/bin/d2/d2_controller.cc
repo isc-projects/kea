@@ -64,10 +64,7 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
-    if (has_command_channel_) {
-        has_command_channel_ = false;
-        deregisterCommands();
-    }
+    deregisterCommands();
 }
 
 std::string
@@ -81,6 +78,10 @@ D2Controller::getVersionAddendum() {
 
 void
 D2Controller::registerCommands() {
+    // Call once.
+    if (has_command_channel_) {
+        return;
+    }
     has_command_channel_ = true;
 
     // CommandMgr uses IO service to run asynchronous socket operations.
@@ -109,6 +110,12 @@ D2Controller::registerCommands() {
 
 void
 D2Controller::deregisterCommands() {
+    // Call once.
+    if (!has_command_channel_) {
+        return;
+    }
+    has_command_channel_ = false;
+
     // Close the command socket (if it exists).
     CommandMgr::instance().closeCommandSocket();
 

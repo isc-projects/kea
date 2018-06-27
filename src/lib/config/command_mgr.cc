@@ -61,21 +61,26 @@ public:
     /// @param connection_pool Reference to the connection pool to which this
     /// connection belongs.
     /// @param timeout Connection timeout (in seconds).
+    /// @param direct Use I/O service (vs. interface manager).
     Connection(const IOServicePtr& io_service,
                const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool,
-               const long timeout)
+               const long timeout,
+               bool direct = false)
         : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
-          response_in_progress_(false), watch_socket_(new util::WatchSocket()) {
+          response_in_progress_(false), watch_socket_(new util::WatchSocket()),
+          direct_(direct) {
 
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_OPENED)
             .arg(socket_->getNative());
 
         // Callback value of 0 is used to indicate that callback function is
         // not installed.
-        isc::dhcp::IfaceMgr::instance().addExternalSocket(watch_socket_->getSelectFd(), 0);
-        isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
+        if (!direct_) {
+            isc::dhcp::IfaceMgr::instance().addExternalSocket(watch_socket_->getSelectFd(), 0);
+            isc::dhcp::IfaceMgr::instance().addExternalSocket(socket_->getNative(), 0);
+        }
 
         // Initialize state model for receiving and preparsing commands.
         feed_.initModel();
@@ -108,8 +113,10 @@ public:
             LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_CLOSED)
                 .arg(socket_->getNative());
 
-            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
-            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+            if (!direct_) {
+                isc::dhcp::IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
+                isc::dhcp::IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+            }
 
             // Close watch socket and log errors if occur.
             std::string watch_error;
@@ -228,6 +235,9 @@ private:
     /// @brief Pointer to watch socket instance used to signal that the socket
     /// is ready for read or write.
     util::WatchSocketPtr watch_socket_;
+
+    /// @brief Direct Use I/O service (vs. interface manager).
+    bool direct_;
 };
 
 /// @brief Pointer to the @c Connection.
@@ -474,15 +484,18 @@ public:
     /// @brief Constructor.
     CommandMgrImpl()
         : io_service_(), acceptor_(), socket_(), socket_name_(),
-          connection_pool_(), timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND) {
+          connection_pool_(), timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND),
+          direct_(false) {
     }
 
     /// @brief Opens acceptor service allowing the control clients to connect.
     ///
     /// @param socket_info Configuration information for the control socket.
+    /// @param direct Use I/O service (vs. interface manager).
     /// @throw BadSocketInfo When socket configuration is invalid.
     /// @throw SocketError When socket operation fails.
-    void openCommandSocket(const isc::data::ConstElementPtr& socket_info);
+    void openCommandSocket(const isc::data::ConstElementPtr& socket_info,
+                           bool direct = false);
 
     /// @brief Asynchronously accepts next connection.
     void doAccept();
@@ -507,13 +520,19 @@ public:
 
     /// @brief Connection timeout
     long timeout_;
+
+    /// @brief Direct Use I/O service (vs. interface manager).
+    bool direct_;
 };
 
 void
-CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
+CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info,
+                                  bool direct) {
+    direct_ = direct;
+
     socket_name_.clear();
 
-    if(!socket_info) {
+    if (!socket_info) {
         isc_throw(BadSocketInfo, "Missing socket_info parameters, can't create socket.");
     }
 
@@ -553,7 +572,9 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
         acceptor_->listen();
 
         // Install this socket in Interface Manager.
-        isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+        if (!direct_) {
+            isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+        }
 
         doAccept();
 
@@ -571,7 +592,7 @@ CommandMgrImpl::doAccept() {
             // New connection is arriving. Start asynchronous transmission.
             ConnectionPtr connection(new Connection(io_service_, socket_,
                                                     connection_pool_,
-                                                    timeout_));
+                                                    timeout_, direct_));
             connection_pool_.start(connection);
 
         } else if (ec.value() != boost::asio::error::operation_aborted) {
@@ -591,14 +612,17 @@ CommandMgr::CommandMgr()
 }
 
 void
-CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
-    impl_->openCommandSocket(socket_info);
+    CommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info,
+                                  bool direct) {
+    impl_->openCommandSocket(socket_info, direct);
 }
 
 void CommandMgr::closeCommandSocket() {
     // Close acceptor if the acceptor is open.
     if (impl_->acceptor_ && impl_->acceptor_->isOpen()) {
-        isc::dhcp::IfaceMgr::instance().deleteExternalSocket(impl_->acceptor_->getNative());
+        if (!impl_->direct_) {
+            isc::dhcp::IfaceMgr::instance().deleteExternalSocket(impl_->acceptor_->getNative());
+        }
         impl_->acceptor_->close();
         static_cast<void>(::remove(impl_->socket_name_.c_str()));
     }

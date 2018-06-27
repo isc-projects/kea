@@ -68,8 +68,9 @@ public:
     /// @throw SocketError When socket operation fails.
     ///
     /// @param socket_info Configuration information for the control socket.
+    /// @param direct Use I/O service (vs. interface manager).
     void
-    openCommandSocket(const isc::data::ConstElementPtr& socket_info);
+    openCommandSocket(const isc::data::ConstElementPtr& socket_info, bool direct = false);
 
     /// @brief Shuts down any open control sockets
     void closeCommandSocket();

@@ -218,7 +218,12 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     }
 
     // Set the command channel.
-    configureCommandChannel();
+    try {
+        configureCommandChannel();
+    } catch (const isc::Exception& ex) {
+        answer = isc::config::createAnswer(2, ex.what());
+        return (answer);
+    }
 
     // Set the reconf_queue_flag to indicate that we need to reconfigure
     // the queue manager.  Reconfiguring the queue manager may be asynchronous
@@ -254,12 +259,31 @@ D2Process::configureCommandChannel() {
     if (!ctrl) {
         return;
     }
+
+    // Get the previous config.
+    isc::data::ConstElementPtr old_sock_cfg = ctx->getControlSocketInfo(true);
+
+    // Get the new config.
     isc::data::ConstElementPtr sock_cfg = ctx->getControlSocketInfo();
-    if (sock_cfg && (sock_cfg->size() > 0)) {
+
+    // Determine if the socket configuration has changed. It has if
+    // both old and new configuration is specified but respective
+    // data elements aren't equal.
+    bool sock_changed = (old_sock_cfg && (old_sock_cfg->size() > 0) &&
+                         sock_cfg && (sock_cfg->size() > 0) &&
+                         !sock_cfg->equals(*old_sock_cfg));
+    if (old_sock_cfg && (old_sock_cfg->size() > 0) &&
+        (!sock_cfg || (sock_cfg->size() == 0) || sock_changed)) {
+        // Close the existing socket.
+        isc::config::CommandMgr::instance().closeCommandSocket();
+        ctx->setControlSocketInfo(isc::data::ConstElementPtr(), true);
+    }
+    if (sock_cfg && (sock_cfg->size() > 0) &&
+        (!old_sock_cfg || (old_sock_cfg->size() == 0) || sock_changed)) {
         // Assume that CommandMgr works with D2 I/O.
-        isc::config::CommandMgr::instance().setIOService(getIoService());
-        isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
         ctrl->registerCommands();
+        isc::config::CommandMgr::instance().openCommandSocket(sock_cfg, true);
+        ctx->setControlSocketInfo(sock_cfg, true);
     }
 }
 

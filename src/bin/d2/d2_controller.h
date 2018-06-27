@@ -53,10 +53,6 @@ public:
     void deregisterCommands();
 
 protected:
-    /// @brief Returns version info specific to D2
-    virtual std::string getVersionAddendum();
-
-private:
     /// @brief Creates an instance of the DHCP-DDNS specific application
     /// process.  This method is invoked during the process initialization
     /// step of the controller launch.
@@ -67,6 +63,14 @@ private:
     /// pointer.
     virtual process::DProcessBase* createProcess();
 
+    /// @brief Returns version info specific to D2
+    virtual std::string getVersionAddendum();
+
+    /// @brief Constructor is declared protected to maintain the integrity of
+    /// the singleton instance.
+    D2Controller();
+
+private:
     ///@brief Parse a given file into Elements
     ///
     /// Uses bison parsing to parse a JSON configuration file into an
@@ -77,10 +81,6 @@ private:
     /// @return pointer to the map of elements created
     /// @throw BadValue if the file is empty
     virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
-
-    /// @brief Constructor is declared private to maintain the integrity of
-    /// the singleton instance.
-    D2Controller();
 
     /// @brief Flag set to true when command channel is enabled.
     bool has_command_channel_;

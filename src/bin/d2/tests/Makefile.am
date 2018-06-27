@@ -58,6 +58,7 @@ d2_unittests_SOURCES += d2_controller_unittests.cc
 d2_unittests_SOURCES += d2_simple_parser_unittest.cc
 d2_unittests_SOURCES += parser_unittest.cc parser_unittest.h
 d2_unittests_SOURCES += get_config_unittest.cc
+d2_unittests_SOURCES += d2_command_unittest.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)

@@ -91,15 +91,27 @@ public:
     }
 
     /// @brief Returns information about control socket
+    ///
+    /// @param old When true returns the "old" value
     /// @return pointer to the Element that holds control-socket map
-    const isc::data::ConstElementPtr getControlSocketInfo() const {
-        return (control_socket_);
+    const isc::data::ConstElementPtr getControlSocketInfo(bool old = false) const {
+        if (!old) {
+            return (control_socket_);
+        } else {
+            return (old_control_socket_);
+        }
     }
 
     /// @brief Sets information about the control socket
     /// @param control_socket Element that holds control-socket map
-    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
-        control_socket_ = control_socket;
+    /// @param old When true sets the "old" value.
+    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket,
+                              bool old = false) {
+        if (!old) {
+            control_socket_ = control_socket;
+        } else {
+            old_control_socket_ = control_socket;
+        }
     }
 
     /// @brief Unparse a configuration object
@@ -129,6 +141,9 @@ private:
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Pointer to the old control-socket information
+    isc::data::ConstElementPtr old_control_socket_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.
