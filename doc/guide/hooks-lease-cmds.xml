@@ -484,7 +484,7 @@ An example result returned when the host was found:
     "command": "lease4-get-page",
     "arguments": {
         "from": "start",
-        "count": 1024
+        "limit": 1024
     }
 }
 </screen>
@@ -498,7 +498,7 @@ An example result returned when the host was found:
     "command": "lease4-get-page",
     "arguments": {
         "from": "0.0.0.0",
-        "count": 1024
+        "limit": 1024
     }
 }
 </screen>
@@ -511,7 +511,7 @@ An example result returned when the host was found:
     "command": "lease6-get-page",
     "arguments": {
         "from": "::",
-        "count": 6
+        "limit": 6
     }
 }
 </screen>
@@ -548,8 +548,7 @@ An example result returned when the host was found:
             }
 
         ],
-        "count": 6,
-        "total-count": 5000
+        "count": 6
     },
     "result": 0,
     "text": "6 IPv6 lease(s) found."
@@ -568,15 +567,7 @@ An example result returned when the host was found:
           or even impossible.</para>
 
           <para>The <command>count</command> parameter contains a number of returned
-          leases on the page. The <command>total-count</command> parameter contains
-          the total number of leases in the database. The client can use this value
-          to estimate progress in fetching leases from the database and output
-          progress percentage in the log file. For example: a server participating
-          in High Availability configuration needs to fetch all leases from the
-          partner server. If the number of leases is high, this may take considerable
-          amount of time during which both servers do not respond to the DHCP queries.
-          In such cases it may be useful for the administrator to know how the
-          database synchronization is progressing.
+          leases on the page.
           </para>
 
           <para>In order to fetch next page the client must use the last address
