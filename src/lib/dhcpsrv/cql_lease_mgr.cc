@@ -706,9 +706,6 @@ CqlLease4Exchange::retrieve() {
 void
 CqlLease4Exchange::getLeaseCollection(StatementTag &statement_tag, AnyArray &data,
                                       Lease4Collection &result) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_ADDR4)
-        .arg(statement_tag);
-
     AnyArray collection = executeSelect(connection_, data, statement_tag);
 
     // Transfer Lease4 objects to result.
