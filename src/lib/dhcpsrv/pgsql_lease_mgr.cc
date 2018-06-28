@@ -124,16 +124,6 @@ PgSqlTaggedStatement tagged_statements[] = {
       "ORDER BY address "
       "LIMIT $2"},
 
-    // GET_LEASE4_RANGE
-    { 2, { OID_INT8, OID_INT8 },
-      "get_lease4_range",
-      "SELECT address, hwaddr, client_id, "
-        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
-        "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
-      "FROM lease4 "
-      "WHERE address >= $1 AND address <= $2"},
-
     // GET_LEASE4_SUBID
     { 1, { OID_INT8 },
       "get_lease4_subid",
@@ -212,17 +202,6 @@ PgSqlTaggedStatement tagged_statements[] = {
       "WHERE address > $1 "
       "ORDER BY address "
       "LIMIT $2"},
-
-    // GET_LEASE6_RANGE
-    { 2, { OID_VARCHAR, OID_VARCHAR },
-      "get_lease6_range",
-      "SELECT address, duid, valid_lifetime, "
-        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
-        "hwaddr, hwtype, hwaddr_source, "
-        "state "
-      "FROM lease6 "
-      "WHERE INET(address) >= INET($1) AND INET(address) <= INET($2)"},
 
     // GET_LEASE6_SUBID
     { 1, { OID_INT8 },

@@ -222,8 +222,6 @@ public:
     static constexpr StatementTag GET_LEASE4_LIMIT = "GET_LEASE4_LIMIT";
     // Get range of lease4 from address with limit (paging)
     static constexpr StatementTag GET_LEASE4_PAGE = "GET_LEASE4_PAGE";
-    // Get range of lease4 between two addresses
-    static constexpr StatementTag GET_LEASE4_RANGE = "GET_LEASE4_RANGE";
     // Get lease4 by subnet ID
     static constexpr StatementTag GET_LEASE4_SUBID = "GET_LEASE4_SUBID";
     /// @}
@@ -249,7 +247,6 @@ constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR_SUBID;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_LIMIT;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_PAGE;
-constexpr StatementTag CqlLease4Exchange::GET_LEASE4_RANGE;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_SUBID;
 
 StatementMap CqlLease4Exchange::tagged_statements_{
@@ -378,17 +375,6 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "FROM lease4 "
       "WHERE TOKEN(address) > TOKEN(?) "
       "LIMIT ? "
-      "ALLOW FILTERING "}},
-
-    // Get range of lease4 between two addresses
-    {GET_LEASE4_RANGE,
-     {GET_LEASE4_RANGE,
-      "SELECT "
-      "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
-      "FROM lease4 "
-      "WHERE address >= ? "
-      "AND address <= ? "
       "ALLOW FILTERING "}},
 
      // Gets an IPv4 lease(s) with specified subnet-id

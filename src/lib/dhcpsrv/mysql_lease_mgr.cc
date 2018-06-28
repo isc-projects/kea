@@ -147,13 +147,6 @@ tagged_statements = { {
                             "WHERE address > ? "
                             "ORDER BY address "
                             "LIMIT ?"},
-    {MySqlLeaseMgr::GET_LEASE4_RANGE,
-                    "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id, "
-                        "fqdn_fwd, fqdn_rev, hostname, "
-                        "state "
-                            "FROM lease4 "
-                            "WHERE address >= ? AND address <= ?"},
     {MySqlLeaseMgr::GET_LEASE4_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -217,16 +210,6 @@ tagged_statements = { {
                             "WHERE address > ? "
                             "ORDER BY address "
                             "LIMIT ?"},
-    {MySqlLeaseMgr::GET_LEASE6_RANGE,
-                    "SELECT address, duid, valid_lifetime, "
-                        "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname, "
-                        "hwaddr, hwtype, hwaddr_source, "
-                        "state "
-                            "FROM lease6 "
-                            "WHERE INET6_ATON(address) >= INET6_ATON(?) "
-                                "AND INET6_ATON(address) <= INET6_ATON(?)"},
     {MySqlLeaseMgr::GET_LEASE6_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
