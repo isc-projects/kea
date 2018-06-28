@@ -64,13 +64,11 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
-    cerr << "dtor\n";
     deregisterCommands();
 }
 
 void
 D2Controller::d2ShutdownHandler() {
-    cerr << "shutting down\n";
     deregisterCommands();
 
     isc::data::ConstElementPtr args;
