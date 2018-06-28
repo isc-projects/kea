@@ -572,7 +572,6 @@ public:
         GET_LEASE4_HWADDR,           // Get lease4 by HW address
         GET_LEASE4_HWADDR_SUBID,     // Get lease4 by HW address & subnet ID
         GET_LEASE4_PAGE,             // Get page of leases beginning with an address
-        GET_LEASE4_RANGE,            // Get range of leases between addresses
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
         GET_LEASE6,                  // Get all IPv6 leases
@@ -580,7 +579,6 @@ public:
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address
-        GET_LEASE6_RANGE,            // Get range of leases between addresses
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
         INSERT_LEASE4,               // Add entry to lease4 table
