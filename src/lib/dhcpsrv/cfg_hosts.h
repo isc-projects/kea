@@ -50,34 +50,6 @@ public:
     /// @return Collection of const @c Host objects.
     virtual HostCollection getAll() const;
 
-    /// @brief Return all hosts for the specified HW address or DUID.
-    ///
-    /// This method returns all @c Host objects which represent reservations
-    /// for the specified HW address or DUID. Note, that this method may
-    /// return multiple reservations because a particular client may have
-    /// reservations in multiple subnets and the same client may be identified
-    /// by HW address or DUID. The server is unable to verify that the specific
-    /// DUID and HW address belong to the same client, until the client sends
-    /// a DHCP message.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
-    ///
-    /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-
-    /// @brief Non-const version of the @c getAll const method.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
-    ///
-    /// @return Collection of non-const @c Host objects.
-    virtual HostCollection
-    getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr());
-
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
     ///
