@@ -917,40 +917,6 @@ Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
     return (collection);
 }
 
-Lease4Collection
-Memfile_LeaseMgr::getLeases4(const IOAddress& lower_bound_address,
-                             const IOAddress& upper_bound_address) const {
-    // Expecting two IPv4 addresses.
-    if (!lower_bound_address.isV4() || !upper_bound_address.isV4()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv4 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    // Check if the range boundaries aren't swapped.
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_ADDR_RANGE4)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    Lease4Collection collection;
-    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
-    std::pair<Lease4StorageAddressIndex::const_iterator,
-              Lease4StorageAddressIndex::const_iterator> l =
-        std::make_pair(idx.lower_bound(lower_bound_address),
-                       idx.upper_bound(upper_bound_address));
-
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
-    }
-
-    return (collection);
-}
-
 Lease6Ptr
 Memfile_LeaseMgr::getLease6(Lease::Type type,
                             const isc::asiolink::IOAddress& addr) const {
@@ -1076,40 +1042,6 @@ Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     for (auto lease = lb;
          (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
          ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
-    }
-
-    return (collection);
-}
-
-Lease6Collection
-Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
-                             const asiolink::IOAddress& upper_bound_address) const {
-    // Expecting two IPv6 addresses.
-    if (!lower_bound_address.isV6() || !upper_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv6 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    // Check if the range boundaries aren't swapped.
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_ADDR_RANGE6)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    Lease6Collection collection;
-    const Lease6StorageAddressIndex& idx = storage6_.get<AddressIndexTag>();
-    std::pair<Lease6StorageAddressIndex::const_iterator,
-              Lease6StorageAddressIndex::const_iterator> l =
-        std::make_pair(idx.lower_bound(lower_bound_address),
-                       idx.upper_bound(upper_bound_address));
-
-    for (auto lease = l.first; lease != l.second; ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
 

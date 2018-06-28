@@ -1638,15 +1638,7 @@ TEST_F(LeaseCmdsTest, Lease4GetPaged) {
         ASSERT_TRUE(args);
         ASSERT_EQ(Element::map, args->getType());
 
-        // Each response must include total number of leases to allow the
-        // controlling client to track progress (e.g. percentage of leases
-        // already viewed).
-        ConstElementPtr total_count = args->get("total-count");
-        ASSERT_TRUE(total_count);
-        ASSERT_EQ(Element::integer, total_count->getType());
-        EXPECT_EQ(4, total_count->intValue());
-
-        // For convenience, we also return the number of returned leases,
+        // For convenience, we return the number of returned leases,
         // so as the client can check whether there was anything returned
         // before parsing the leases structure.
         ConstElementPtr page_count = args->get("count");
@@ -1981,15 +1973,7 @@ TEST_F(LeaseCmdsTest, Lease6GetPaged) {
         ASSERT_TRUE(args);
         ASSERT_EQ(Element::map, args->getType());
 
-        // Each response must include total number of leases to allow the
-        // controlling client to track progress (e.g. percentage of leases
-        // already viewed).
-        ConstElementPtr total_count = args->get("total-count");
-        ASSERT_TRUE(total_count);
-        ASSERT_EQ(Element::integer, total_count->getType());
-        EXPECT_EQ(4, total_count->intValue());
-
-        // For convenience, we also return the number of returned leases,
+        // For convenience, we return the number of returned leases,
         // so as the client can check whether there was anything returned
         // before parsing the leases structure.
         ConstElementPtr page_count = args->get("count");

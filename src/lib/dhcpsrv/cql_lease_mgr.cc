@@ -2192,42 +2192,6 @@ CqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
     return (result);
 }
 
-Lease4Collection
-CqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
-                        const IOAddress& upper_bound_address) const {
-    // Expecting two IPv4 addresses.
-    if (!lower_bound_address.isV4() || !upper_bound_address.isV4()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv4 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_ADDR_RANGE4)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    // Set up the WHERE clause value
-    AnyArray data;
-
-    cass_int32_t lb_address_data = static_cast<cass_int32_t>(lower_bound_address.toUint32());
-    data.add(&lb_address_data);
-
-    cass_int32_t ub_address_data = static_cast<cass_int32_t>(upper_bound_address.toUint32());
-    data.add(&ub_address_data);
-
-    // Get the data.
-    Lease4Collection result;
-    std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
-    exchange4->getLeaseCollection(CqlLease4Exchange::GET_LEASE4_RANGE, data, result);
-
-    return (result);
-}
-
 Lease6Ptr
 CqlLeaseMgr::getLease6(Lease::Type lease_type, const IOAddress &addr) const {
     std::string addr_data = addr.toText();
@@ -2378,13 +2342,6 @@ CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                                   data, result);
 
     return (result);
-}
-
-Lease6Collection
-CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
-                        const asiolink::IOAddress& upper_bound_address) const {
-    isc_throw(NotImplemented, "getLeases6(lower_bound_address, upper_bound_address) "
-              "is not implemented");
 }
 
 void

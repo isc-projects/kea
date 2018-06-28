@@ -206,9 +206,6 @@ public:
     /// @brief Test method which returns range of IPv4 leases with paging.
     void testGetLeases4Paged();
 
-    /// @brief Test method which returns range of IPv4 leases.
-    void testGetLeases4Range();
-
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
@@ -217,9 +214,6 @@ public:
 
     /// @brief Test method which returns range of IPv6 leases with paging.
     void testGetLeases6Paged();
-
-    /// @brief Test method which returns range of IPv6 leases.
-    void testGetLeases6Range();
 
     /// @brief Basic Lease4 Checks
     ///

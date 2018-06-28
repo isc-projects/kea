@@ -1312,51 +1312,6 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
 }
 
 void
-GenericLeaseMgrTest::testGetLeases4Range() {
-    // Get the leases to be used for the test and add to the database.
-    vector<Lease4Ptr> leases = createLeases4();
-    for (size_t i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // All addresses in the specified range should be returned.
-    Lease4Collection returned = lmptr_->getLeases4(IOAddress("192.0.2.2"),
-                                                   IOAddress("192.0.2.6"));
-    EXPECT_EQ(5, returned.size());
-
-    // The lower bound address is below the range, so the first two addresses
-    // in the database should be returned.
-    returned = lmptr_->getLeases4(IOAddress("192.0.1.0"), IOAddress("192.0.2.1"));
-    EXPECT_EQ(2, returned.size());
-
-    // The lower bound address is the last address in the database, so only this
-    // address should be returned.
-    returned = lmptr_->getLeases4(IOAddress("192.0.2.7"), IOAddress("192.0.2.15"));
-    EXPECT_EQ(1, returned.size());
-
-    // The lower bound is below the range and the upper bound is above the range,
-    // so the whole range should be returned.
-    returned = lmptr_->getLeases4(IOAddress("192.0.1.7"), IOAddress("192.0.2.15"));
-    EXPECT_EQ(8, returned.size());
-
-    // No addresses should be returned because our desired range does not
-    // overlap with leases in the database.
-    returned = lmptr_->getLeases4(IOAddress("192.0.2.8"), IOAddress("192.0.2.15"));
-    EXPECT_TRUE(returned.empty());
-
-    // Swapping the lower bound and upper bound should cause an error.
-    EXPECT_THROW(lmptr_->getLeases4(IOAddress("192.0.2.8"), IOAddress("192.0.2.1")),
-                 InvalidRange);
-
-    // Both must be IPv4 addresses.
-    EXPECT_THROW(lmptr_->getLeases4(IOAddress("192.0.2.3"), IOAddress("2001:db8::8")),
-                 InvalidAddressFamily);
-
-    EXPECT_THROW(lmptr_->getLeases4(IOAddress("2001:db8::2"), IOAddress("192.0.2.7")),
-                 InvalidAddressFamily);
-}
-
-void
 GenericLeaseMgrTest::testGetLeases6SubnetId() {
     // Get the leases to be used for the test and add to the database.
     vector<Lease6Ptr> leases = createLeases6();
@@ -1435,51 +1390,6 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
     EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.0"), LeasePageSize(3)),
                  InvalidAddressFamily);
                  
-}
-
-void
-GenericLeaseMgrTest::testGetLeases6Range() {
-    // Get the leases to be used for the test and add to the database.
-    vector<Lease6Ptr> leases = createLeases6();
-    for (size_t i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // All addresses in the specified range should be returned.
-    Lease6Collection returned = lmptr_->getLeases6(IOAddress("2001:db8::2"),
-                                                   IOAddress("2001:db8::6"));
-    EXPECT_EQ(5, returned.size());
-
-    // The lower bound address is below the range, so the first two addresses
-    // in the database should be returned.
-    returned = lmptr_->getLeases6(IOAddress("2001::"), IOAddress("2001:db8::1"));
-    EXPECT_EQ(2, returned.size());
-
-    // The lower bound address is the last address in the database, so only this
-    // address should be returned.
-    returned = lmptr_->getLeases6(IOAddress("2001:db8::7"), IOAddress("2001:db8::15"));
-    EXPECT_EQ(1, returned.size());
-
-    // The lower bound is below the range and the upper bound is above the range,
-    // so the whole range should be returned.
-    returned = lmptr_->getLeases6(IOAddress("2001::"), IOAddress("2001:db8::15"));
-    EXPECT_EQ(8, returned.size());
-
-    // No addresses should be returned because our desired range does not
-    // overlap with leases in the database.
-    returned = lmptr_->getLeases6(IOAddress("2001:db8::8"), IOAddress("2001:db8::15"));
-    EXPECT_TRUE(returned.empty());
-
-    // Swapping the lower bound and upper bound should cause an error.
-    EXPECT_THROW(lmptr_->getLeases6(IOAddress("2001:db8::8"), IOAddress("2001:db8::1")),
-                 InvalidRange);
-
-    // Both must be IPv6 addresses.
-    EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.3"), IOAddress("2001:db8::8")),
-                 InvalidAddressFamily);
-
-    EXPECT_THROW(lmptr_->getLeases6(IOAddress("2001:db8::2"), IOAddress("192.0.2.7")),
-                 InvalidAddressFamily);
 }
 
 void

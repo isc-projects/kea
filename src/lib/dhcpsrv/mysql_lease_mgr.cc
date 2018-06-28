@@ -1977,48 +1977,6 @@ MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
     return (result);
 }
 
-Lease4Collection
-MySqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
-                          const IOAddress& upper_bound_address) const {
-    // Expecting two IPv4 addresses.
-    if (!lower_bound_address.isV4() || !upper_bound_address.isV4()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv4 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR_RANGE4)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    // Prepare WHERE clause
-    MYSQL_BIND inbind[2];
-    memset(inbind, 0, sizeof(inbind));
-
-    // Bind lower bound address as uint32 value
-    uint32_t lb_address_data = lower_bound_address.toUint32();
-    inbind[0].buffer_type = MYSQL_TYPE_LONG;
-    inbind[0].buffer = reinterpret_cast<char*>(&lb_address_data);
-    inbind[0].is_unsigned = MLM_TRUE;
-
-    // Bind upper bound address as uint32 value
-    uint32_t ub_address_data = upper_bound_address.toUint32();
-    inbind[1].buffer_type = MYSQL_TYPE_LONG;
-    inbind[1].buffer = reinterpret_cast<char*>(&ub_address_data);
-    inbind[1].is_unsigned = MLM_TRUE;
-
-    // Get the leases
-    Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_RANGE, inbind, result);
-
-    return (result);
-}
-
 Lease6Ptr
 MySqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
@@ -2217,52 +2175,6 @@ MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     // Get the leases
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_PAGE, inbind, result);
-
-    return (result);
-}
-
-Lease6Collection
-MySqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
-                          const IOAddress& upper_bound_address) const {
-    // Expecting two IPv6 addresses.
-    if (!lower_bound_address.isV6() || !upper_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv6 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_ADDR_RANGE6)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    // Prepare WHERE clause
-    MYSQL_BIND inbind[2];
-    memset(inbind, 0, sizeof(inbind));
-
-    // Bind lower bound address
-    std::string lb_address_data = lower_bound_address.toText();
-    unsigned long lb_address_data_size = lb_address_data.size();
-    inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = const_cast<char*>(lb_address_data.c_str());
-    inbind[0].buffer_length = lb_address_data_size;
-    inbind[0].length = &lb_address_data_size;
-
-    // Bind upper bound address
-    std::string ub_address_data = upper_bound_address.toText();
-    unsigned long ub_address_data_size = ub_address_data.size();
-    inbind[1].buffer_type = MYSQL_TYPE_STRING;
-    inbind[1].buffer = const_cast<char*>(ub_address_data.c_str());
-    inbind[1].buffer_length = ub_address_data_size;
-    inbind[1].length = &ub_address_data_size;
-
-    // Get the leases
-    Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_RANGE, inbind, result);
 
     return (result);
 }
