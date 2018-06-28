@@ -53,6 +53,14 @@ public:
     void deregisterCommands();
 
 protected:
+    /// @brief Returns version info specific to D2
+    virtual std::string getVersionAddendum();
+
+    /// @brief Constructor is declared protected to maintain the integrity of
+    /// the singleton instance.
+    D2Controller();
+
+private:
     /// @brief Creates an instance of the DHCP-DDNS specific application
     /// process.  This method is invoked during the process initialization
     /// step of the controller launch.
@@ -63,14 +71,6 @@ protected:
     /// pointer.
     virtual process::DProcessBase* createProcess();
 
-    /// @brief Returns version info specific to D2
-    virtual std::string getVersionAddendum();
-
-    /// @brief Constructor is declared protected to maintain the integrity of
-    /// the singleton instance.
-    D2Controller();
-
-private:
     ///@brief Parse a given file into Elements
     ///
     /// Uses bison parsing to parse a JSON configuration file into an

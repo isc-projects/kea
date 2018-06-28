@@ -296,12 +296,27 @@ TEST_F(CtrlAgentCommandMgrTest, forwardToDHCPv6Server) {
     testForward("dhcp6", "dhcp6", isc::config::CONTROL_RESULT_SUCCESS);
 }
 
+/// Check that control command is successfully forwarded to the D2 server.
+TEST_F(CtrlAgentCommandMgrTest, forwardToD2Server) {
+    testForward("d2", "d2", isc::config::CONTROL_RESULT_SUCCESS);
+}
+
 /// Check that the same command is forwarded to multiple servers.
 TEST_F(CtrlAgentCommandMgrTest, forwardToBothDHCPServers) {
     configureControlSocket("dhcp6");
 
     testForward("dhcp4", "dhcp4,dhcp6", isc::config::CONTROL_RESULT_SUCCESS,
                 isc::config::CONTROL_RESULT_SUCCESS, -1, 2);
+}
+
+/// Check that the same command is forwarded to all servers.
+TEST_F(CtrlAgentCommandMgrTest, forwardToAllServers) {
+    configureControlSocket("dhcp6");
+    configureControlSocket("d2");
+
+    testForward("dhcp4", "dhcp4,dhcp6,d2", isc::config::CONTROL_RESULT_SUCCESS,
+                isc::config::CONTROL_RESULT_SUCCESS,
+                isc::config::CONTROL_RESULT_SUCCESS, 3);
 }
 
 /// Check that the command may forwarded to the second server even if
