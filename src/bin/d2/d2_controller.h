@@ -62,10 +62,6 @@ protected:
     /// @brief Returns version info specific to D2
     virtual std::string getVersionAddendum();
 
-    /// @brief Constructor is declared protected to maintain the integrity of
-    /// the singleton instance.
-    D2Controller();
-
 private:
     /// @brief Creates an instance of the DHCP-DDNS specific application
     /// process.  This method is invoked during the process initialization
@@ -88,8 +84,15 @@ private:
     /// @throw BadValue if the file is empty
     virtual isc::data::ConstElementPtr parseFile(const std::string& file_name);
 
+    /// @brief Constructor is declared protected to maintain the integrity of
+    /// the singleton instance.
+    D2Controller();
+
     /// @brief Flag set to true when command channel is enabled.
     bool has_command_channel_;
+
+    /// To facilitate unit testing.
+    friend class NakedD2Controller;
 };
 
 }; // namespace isc::d2

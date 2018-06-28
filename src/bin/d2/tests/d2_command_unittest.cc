@@ -33,6 +33,40 @@ using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace boost::asio;
 
+namespace isc {
+namespace d2 {
+
+class NakedD2Controller;
+typedef boost::shared_ptr<NakedD2Controller> NakedD2ControllerPtr;
+
+class NakedD2Controller : public D2Controller {
+    // "Naked" D2 controller, exposes internal methods.
+public:
+    static DControllerBasePtr& instance() {
+        if (!getController()) {
+            DControllerBasePtr controller_ptr(new NakedD2Controller());
+            setController(controller_ptr);
+        }
+
+        return (getController());
+    }
+
+    virtual ~NakedD2Controller() { }
+
+    using DControllerBase::getIOService;
+    using DControllerBase::initProcess;
+
+    D2ProcessPtr getProcess() {
+        return (boost::dynamic_pointer_cast<D2Process>(DControllerBase::getProcess()));
+    }
+
+private:
+    NakedD2Controller() { }
+};
+
+}; // namespace isc::d2
+}; // namespace isc
+
 namespace {
 
 /// @brief Simple RAII class which stops IO service upon destruction
@@ -61,31 +95,6 @@ private:
 
 };
 
-class NakedD2Controller;
-typedef boost::shared_ptr<NakedD2Controller> NakedD2ControllerPtr;
-
-class NakedD2Controller : public D2Controller {
-    // "Naked" D2 controller, exposes internal methods.
-public:
-    static DControllerBasePtr& instance() {
-        if (!getController()) {
-            DControllerBasePtr controller_ptr(new NakedD2Controller());
-            setController(controller_ptr);
-        }
-
-        return (getController());
-    }
-
-    virtual ~NakedD2Controller() { }
-
-    using DControllerBase::getIOService;
-    using DControllerBase::initProcess;
-    using DControllerBase::getProcess;
-
-private:
-    NakedD2Controller() { }
-};
-
 /// @brief Fixture class intended for testin control channel in D2.
 class CtrlChannelD2Test : public ::testing::Test {
 public:
@@ -97,7 +106,7 @@ public:
     DControllerBasePtr& server_;
 
     /// @brief Cast controller object.
-    NakedD2Controller* get() {
+    NakedD2Controller* d2Controller() {
         return (dynamic_cast<NakedD2Controller*>(server_.get()));
     }
 
@@ -137,7 +146,7 @@ public:
     /// @return Pointer to the server's IO service or null pointer if the
     /// hasn't been created server.
     IOServicePtr getIOService() {
-        return (server_ ? get()->getIOService() : IOServicePtr());
+        return (server_ ? d2Controller()->getIOService() : IOServicePtr());
     }
 
     /// @brief Runs parser in DHCPDDNS mode
@@ -188,8 +197,8 @@ public:
 
         ConstElementPtr config;
         ASSERT_NO_THROW(config = parseDHCPDDNS(config_txt, true));
-        ASSERT_NO_THROW(get()->initProcess());
-        D2ProcessPtr proc = boost::dynamic_pointer_cast<D2Process>(get()->getProcess());
+        ASSERT_NO_THROW(d2Controller()->initProcess());
+        D2ProcessPtr proc = d2Controller()->getProcess();
         ASSERT_TRUE(proc);
         ConstElementPtr answer = proc->configure(config, false);
         ASSERT_TRUE(answer);
@@ -412,8 +421,8 @@ TEST_F(CtrlChannelD2Test, parser) {
 // Test bad syntax rejected by the process.
 TEST_F(CtrlChannelD2Test, configure) {
     ASSERT_TRUE(server_);
-    ASSERT_NO_THROW(get()->initProcess());
-    D2ProcessPtr proc = boost::dynamic_pointer_cast<D2Process>(get()->getProcess());
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
     ASSERT_TRUE(proc);
 
     // no type.
@@ -670,8 +679,8 @@ TEST_F(CtrlChannelD2Test, configTest) {
 
     ConstElementPtr config;
     ASSERT_NO_THROW(config = parseDHCPDDNS(os.str(), true));
-    ASSERT_NO_THROW(get()->initProcess());
-    D2ProcessPtr proc = boost::dynamic_pointer_cast<D2Process>(get()->getProcess());
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
