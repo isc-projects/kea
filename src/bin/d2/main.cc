@@ -10,7 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
-
+#include <boost/pointer_cast.hpp>
 #include <iostream>
 
 using namespace isc::d2;
@@ -25,12 +25,12 @@ using namespace std;
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
 
+    // Instantiate/fetch the DHCP-DDNS application controller singleton.
+    DControllerBasePtr& controller = D2Controller::instance();
+
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
-        // Instantiate/fetch the DHCP-DDNS application controller singleton.
-        DControllerBasePtr& controller = D2Controller::instance();
-
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);
     } catch (const VersionMessage& ex) {
@@ -48,6 +48,8 @@ int main(int argc, char* argv[]) {
         std::cerr << "Service failed: " << ex.what() << std::endl;
         ret = EXIT_FAILURE;
     }
+
+    boost::dynamic_pointer_cast<D2Controller>(controller)->d2ShutdownHandler();
 
     return (ret);
 }

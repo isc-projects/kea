@@ -64,7 +64,17 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
+    cerr << "dtor\n";
     deregisterCommands();
+}
+
+void
+D2Controller::d2ShutdownHandler() {
+    cerr << "shutting down\n";
+    deregisterCommands();
+
+    isc::data::ConstElementPtr args;
+    DControllerBase::shutdownHandler("shutdown", args);
 }
 
 std::string
@@ -115,6 +125,8 @@ D2Controller::deregisterCommands() {
         return;
     }
     has_command_channel_ = false;
+
+    // Assume that command manager was not destroyed first...
 
     // Close the command socket (if it exists).
     CommandMgr::instance().closeCommandSocket();

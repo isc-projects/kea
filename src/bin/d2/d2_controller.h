@@ -46,6 +46,12 @@ public:
     /// by convention this should match the executable name.
     static const char* d2_bin_name_;
 
+    /// @brief handler for 'shutdown' command.
+    ///
+    /// This method handles shutdown command. It initiates the smooth shutdown
+    /// procedure using CPL methods.
+    void d2ShutdownHandler();
+
     /// @brief Register commands.
     void registerCommands();
 
