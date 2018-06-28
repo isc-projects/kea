@@ -1613,7 +1613,7 @@ TEST_F(LeaseCmdsTest, Lease4GetPaged) {
             "    \"command\": \"lease4-get-page\",\n"
             "    \"arguments\": {"
             "        \"from\": \"" + last_address + "\","
-            "        \"count\": 2"
+            "        \"limit\": 2"
             "    }"
             "}";
 
@@ -1697,7 +1697,7 @@ TEST_F(LeaseCmdsTest, Lease4GetPagedZeroAddress) {
         "    \"command\": \"lease4-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"0.0.0.0\","
-        "        \"count\": 2"
+        "        \"limit\": 2"
         "    }"
         "}";
 
@@ -1717,7 +1717,7 @@ TEST_F(LeaseCmdsTest, Lease4GetPagedIPv4Address) {
         "    \"command\": \"lease4-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"2001:db8::1\","
-        "        \"count\": 2"
+        "        \"limit\": 2"
         "    }"
         "}";
 
@@ -1948,7 +1948,7 @@ TEST_F(LeaseCmdsTest, Lease6GetPaged) {
             "    \"command\": \"lease6-get-page\",\n"
             "    \"arguments\": {"
             "        \"from\": \"" + last_address + "\","
-            "        \"count\": 2"
+            "        \"limit\": 2"
             "    }"
             "}";
 
@@ -2033,7 +2033,7 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedZeroAddress) {
         "    \"command\": \"lease6-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"::\","
-        "        \"count\": 2"
+        "        \"limit\": 2"
         "    }"
         "}";
 
@@ -2053,7 +2053,7 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedIPv4Address) {
         "    \"command\": \"lease6-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"192.0.2.3\","
-        "        \"count\": 2"
+        "        \"limit\": 2"
         "    }"
         "}";
 
@@ -2074,7 +2074,7 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedInvalidFrom) {
         "    \"command\": \"lease6-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"foo\","
-        "        \"count\": 2"
+        "        \"limit\": 2"
         "    }"
         "}";
 
@@ -2083,8 +2083,8 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedInvalidFrom) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that count is mandatory.
-TEST_F(LeaseCmdsTest, Lease6GetPagedNoCount) {
+// Verifies that limit is mandatory.
+TEST_F(LeaseCmdsTest, Lease6GetPagedNoLimit) {
 
     // Initialize lease manager (true = v6, true = add a lease)
     initLeaseMgr(true, true);
@@ -2098,12 +2098,12 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedNoCount) {
         "    }"
         "}";
 
-    string exp_rsp = "'count' parameter not specified";
+    string exp_rsp = "'limit' parameter not specified";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that the count must be a number.
-TEST_F(LeaseCmdsTest, Lease6GetPagedCountNotNumber) {
+// Verifies that the limit must be a number.
+TEST_F(LeaseCmdsTest, Lease6GetPagedLimitNotNumber) {
 
     // Initialize lease manager (true = v6, true = add a lease)
     initLeaseMgr(true, true);
@@ -2114,16 +2114,16 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedCountNotNumber) {
         "    \"command\": \"lease6-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"start\","
-        "        \"count\": false"
+        "        \"limit\": false"
         "    }"
         "}";
 
-    string exp_rsp = "'count' parameter must be a number";
+    string exp_rsp = "'limit' parameter must be a number";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-// Verifies that the count of 0 is rejected.
-TEST_F(LeaseCmdsTest, Lease6GetPagedCountIsZero) {
+// Verifies that the limit of 0 is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedLimitIsZero) {
 
     // Initialize lease manager (true = v6, true = add a lease)
     initLeaseMgr(true, true);
@@ -2134,7 +2134,7 @@ TEST_F(LeaseCmdsTest, Lease6GetPagedCountIsZero) {
         "    \"command\": \"lease6-get-page\",\n"
         "    \"arguments\": {"
         "        \"from\": \"start\","
-        "        \"count\": 0"
+        "        \"limit\": 0"
         "    }"
         "}";
 
