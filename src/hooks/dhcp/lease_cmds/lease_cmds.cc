@@ -624,34 +624,27 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
                       << " is not an IPv6 address");
         }
 
-        // The 'count' is a desired page size. It must always be present.
-        ConstElementPtr page_count = cmd_args_->get("count");
-        if (!page_count) {
-            isc_throw(BadValue, "'count' parameter not specified");
+        // The 'limit' is a desired page size. It must always be present.
+        ConstElementPtr page_limit = cmd_args_->get("limit");
+        if (!page_limit) {
+            isc_throw(BadValue, "'limit' parameter not specified");
         }
 
-        // The 'count' must be a number.
-        if (page_count->getType() != Element::integer) {
-            isc_throw(BadValue, "'count' parameter must be a number");
+        // The 'limit' must be a number.
+        if (page_limit->getType() != Element::integer) {
+            isc_throw(BadValue, "'limit' parameter must be a number");
         }
 
         // Retrieve the desired page size.
-        size_t page_count_value = static_cast<size_t>(page_count->intValue());
+        size_t page_limit_value = static_cast<size_t>(page_limit->intValue());
 
         ElementPtr leases_json = Element::createList();
 
-        // Use lease stats function to retrieve the total number of leases.
-        // Total number of leases is returned apart from the leases list
-        // so as the controlling client can track the progress of leases
-        // viewed vs all leases count.
-        LeaseStatsQueryPtr query;
         if (v4) {
             // Get page of IPv4 leases.
             Lease4Collection leases =
                 LeaseMgrFactory::instance().getLeases4(*from_address,
-                                                       LeasePageSize(page_count_value));
-            // Get the total lease count.
-            query = LeaseMgrFactory::instance().startLeaseStatsQuery4();
+                                                       LeasePageSize(page_limit_value));
 
             // Convert leases into JSON list.
             for (auto lease : leases) {
@@ -663,22 +656,12 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
             // Get page of IPv6 leases.
             Lease6Collection leases =
                 LeaseMgrFactory::instance().getLeases6(*from_address,
-                                                       LeasePageSize(page_count_value));
-            // Get the total lease count.
-            query = LeaseMgrFactory::instance().startLeaseStatsQuery6();
-
+                                                       LeasePageSize(page_limit_value));
             // Convert leases into JSON list.
             for (auto lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
-        }
-
-        // Sum up lease counters for various lease states.
-        LeaseStatsRow row;
-        int64_t total_leases = 0;
-        while (query->getNextRow(row)) {
-            total_leases += row.state_count_;
         }
 
         // Prepare textual status.
