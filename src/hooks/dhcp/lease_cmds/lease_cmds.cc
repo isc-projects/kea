@@ -691,7 +691,6 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
         // Put gathered data into arguments map.
         args->set("leases", leases_json);
         args->set("count", Element::create(static_cast<int64_t>(leases_json->size())));
-        args->set("total-count", Element::create(total_leases));
 
         // Create the response.
         ConstElementPtr response =

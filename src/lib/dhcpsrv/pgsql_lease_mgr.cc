@@ -1374,45 +1374,6 @@ PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
     return (result);
 }
 
-Lease4Collection
-PgSqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
-                          const IOAddress& upper_bound_address) const {
-    // Expecting two IPv4 addresses.
-    if (!lower_bound_address.isV4() || !upper_bound_address.isV4()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv4 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR_RANGE4)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    // Prepare WHERE clause
-    PsqlBindArray bind_array;
-
-    // Bind lower bound address
-    std::string lb_address_data = boost::lexical_cast<std::string>
-        (lower_bound_address.toUint32());
-    bind_array.add(lb_address_data);
-
-    // Bind upper bound address
-    std::string ub_address_data = boost::lexical_cast<std::string>
-        (upper_bound_address.toUint32());
-    bind_array.add(ub_address_data);
-
-    // Get the leases
-    Lease4Collection result;
-    getLeaseCollection(GET_LEASE4_RANGE, bind_array, result);
-
-    return (result);
-}
-
 Lease6Ptr
 PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
@@ -1531,7 +1492,7 @@ PgSqlLeaseMgr::getLeases6() const {
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
-                             const LeasePageSize& page_size) const {
+                          const LeasePageSize& page_size) const {
     // Expecting IPv6 address.
     if (!lower_bound_address.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 address while "
@@ -1564,41 +1525,6 @@ PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     // Get the leases
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_PAGE, bind_array, result);
-
-    return (result);
-}
-
-Lease6Collection
-PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
-                          const asiolink::IOAddress& upper_bound_address) const {
-    // Expecting two IPv6 addresses.
-    if (!lower_bound_address.isV6() || !upper_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected two IPv6 addresses for "
-                  "retrieving a range of leases, got "
-                  << lower_bound_address << " and " << upper_bound_address);
-    }
-
-    if (upper_bound_address < lower_bound_address) {
-        isc_throw(InvalidRange, "upper bound address " << upper_bound_address
-                  << " is lower than lower bound address " << lower_bound_address);
-    }
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR_RANGE6)
-        .arg(lower_bound_address.toText())
-        .arg(upper_bound_address.toText());
-
-    // Prepare WHERE clause
-    PsqlBindArray bind_array;
-
-    std::string lb_address_data = lower_bound_address.toText();
-    bind_array.add(lb_address_data);
-
-    std::string ub_address_data = upper_bound_address.toText();
-    bind_array.add(ub_address_data);
-
-    // Get the leases
-    Lease6Collection result;
-    getLeaseCollection(GET_LEASE6_RANGE, bind_array, result);
 
     return (result);
 }

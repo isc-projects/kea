@@ -175,24 +175,6 @@ public:
         return (Lease4Collection());
     }
 
-    /// @brief Returns a range of IPv4 leases.
-    ///
-    /// Returned leases are ordered by IPv4 addresses.
-    ///
-    /// @param lower_bound_address IPv4 address used as a lower bound for the
-    /// returned range. The lease for this address is included in the returned
-    /// range if the lease exists.
-    /// @param upper_bound_address IPv4 address used as an upper bound for the
-    /// returned range. The lease for this address is included in the returned
-    /// range if the lease exists.
-    ///
-    /// @return Lease collection (may be empty if no IPv4 lease found).
-    virtual Lease4Collection
-    getLeases4(const asiolink::IOAddress& /* lower_bound_address */,
-               const asiolink::IOAddress& /* upper_bound_address */) const {
-        return (Lease4Collection());
-    }
-
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// @param addr address of the searched lease
@@ -239,22 +221,6 @@ public:
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6() const {
-        return (Lease6Collection());
-    }
-
-    /// @brief Returns a range of IPv6 leases.
-    ///
-    /// @param lower_bound_address IPv6 address used as a lower bound for the
-    /// returned range. The lease for this address is included in the returned
-    /// range if the lease exists.
-    /// @param upper_bound_address IPv6 address used as an upper bound for the
-    /// returned range. The lease for this address is included in the returned
-    /// range if the lease exists.
-    ///
-    /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection
-    getLeases6(const asiolink::IOAddress& /* lower_bound_address */,
-               const asiolink::IOAddress& /* upper_bound_address */) const {
         return (Lease6Collection());
     }
 
