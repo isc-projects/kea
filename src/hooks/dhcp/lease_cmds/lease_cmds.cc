@@ -146,13 +146,13 @@ public:
 
     /// @brief lease4-get-page, lease6-get-page commands handler
     ///
-    /// These commands attempt to retrieve 1 page of all IPv4 or IPv6
-    /// leases. The size of the page is specified by the caller. The
-    /// caller also specifies the last address returned in the previous
-    /// page. The new page starts from the first address following the
-    /// address specified by the caller. If the first page should be
-    /// returned the IPv4 zero address, IPv6 zero address or the keyword
-    /// "begin" should be provided instead of the last address.
+    /// These commands attempt to retrieve 1 page of leases. The maximum size
+    /// of the page is specified by the caller. The caller also specifies
+    /// the last address returned in the previous page. The new page
+    /// starts from the first address following the address specified by
+    /// the caller. If the first page should be returned the IPv4
+    /// zero address, IPv6 zero address or the keyword "start" should
+    /// be provided instead of the last address.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// get commands JSON text in the "command" argument.
