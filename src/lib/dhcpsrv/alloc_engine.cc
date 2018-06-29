@@ -1446,8 +1446,11 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
@@ -1532,8 +1535,11 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
@@ -1780,8 +1786,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     if (HooksManager::calloutsPresent(hook_point)) {
         CalloutHandlePtr callout_handle = ctx.callout_handle_;
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
@@ -2199,6 +2208,13 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
     // will not update DNS nor update the database.
     bool skipped = false;
     if (callout_handle) {
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         callout_handle->deleteAllArguments();
         callout_handle->setArgument("lease6", lease);
         callout_handle->setArgument("remove_lease", reclaim_mode == DB_RECLAIM_REMOVE);
@@ -2289,7 +2305,13 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
     // will not update DNS nor update the database.
     bool skipped = false;
     if (callout_handle) {
-        callout_handle->deleteAllArguments();
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         callout_handle->setArgument("lease4", lease);
         callout_handle->setArgument("remove_lease", reclaim_mode == DB_RECLAIM_REMOVE);
 
@@ -2390,8 +2412,11 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
             callout_handle = HooksManager::createCalloutHandle();
         }
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Pass necessary arguments
         callout_handle->setArgument("lease4", lease);
@@ -2448,8 +2473,11 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
             callout_handle = HooksManager::createCalloutHandle();
         }
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Pass necessary arguments
         callout_handle->setArgument("lease6", lease);
@@ -3226,8 +3254,11 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
@@ -3331,8 +3362,11 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     if (HooksManager::getHooksManager().
         calloutsPresent(Hooks.hook_index_lease4_renew_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
@@ -3426,8 +3460,11 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Pass necessary arguments
         // Pass the original client query
