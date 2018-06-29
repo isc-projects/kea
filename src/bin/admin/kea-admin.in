@@ -1033,6 +1033,7 @@ pgsql_create_database_and_users() {
     ; do
         pgsql_execute "${query}" --host=${db_server_address} --port=${db_server_port} --username=postgres
     done
+    export db_password="keatest"
     pgsql_execute "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;" --host=${db_server_address} --port=${db_server_port} --username=keatest
 }
 
