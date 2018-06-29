@@ -318,6 +318,46 @@ TEST_F(CalloutHandleTest, StatusField) {
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
 }
 
+// Tests that ScopedCalloutHandleState object resets CalloutHandle state
+// during construction and destruction.
+TEST_F(CalloutHandleTest, scopedState) {
+    // Create pointer to the handle to be wrapped.
+    CalloutHandlePtr handle(new CalloutHandle(getCalloutManager()));
+
+    // Set two arguments and the non-default status.
+    int one = 1;
+    int two = 2;
+    handle->setArgument("one", one);
+    handle->setArgument("two", two);
+    handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+    int value = 0;
+
+    {
+        // Wrap the callout handle with the scoped state object, which should
+        // reset the state of the handle.
+        ScopedCalloutHandleState scoped_state(handle);
+
+        // When state is reset, all arguments should be removed and the
+        // default status should be set.
+        EXPECT_THROW(handle->getArgument("one", value), NoSuchArgument);
+        EXPECT_THROW(handle->getArgument("two", value), NoSuchArgument);
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle->getStatus());
+
+        // Set the arguments and status again prior to the destruction of
+        // the wrapper.
+        handle->setArgument("one", one);
+        handle->setArgument("two", two);
+        handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
+    }
+
+    // Arguments should be gone again and the status should be set to
+    // a default value.
+    EXPECT_THROW(handle->getArgument("one", value), NoSuchArgument);
+    EXPECT_THROW(handle->getArgument("two", value), NoSuchArgument);
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle->getStatus());
+}
+
 // Further tests of the "skip" flag and tests of getting the name of the
 // hook to which the current callout is attached is in the "handles_unittest"
 // module.
