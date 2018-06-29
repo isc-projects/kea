@@ -419,14 +419,14 @@ typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
 /// resets handle's state.
 ///
 /// The Kea servers often require to associate processed packets with
-/// @c CalloutHandle instances. This is to faciliate the case when the
+/// @c CalloutHandle instances. This is to facilitate the case when the
 /// hooks library passes information between the callouts using the
 /// 'context' stored in the callout handle. The callouts invoked throughout
 /// the packet lifetime have access to the context information for the
 /// given packet.
 ///
 /// The association between the packets and the callout handles is
-/// achived by giving the ownership of the @c CalloutHandle objects to
+/// achieved by giving the ownership of the @c CalloutHandle objects to
 /// the @c Pkt objects. When the @c Pkt object goes out of scope, it should
 /// also release the pointer to the owned @c CalloutHandle object.
 /// However, this causes a risk of circular dependency between the shared
