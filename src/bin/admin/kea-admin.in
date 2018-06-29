@@ -359,14 +359,6 @@ cql_db_create() {
     strategy="SimpleStrategy"
     replication="1"
 
-    #loading the keyspace strategy and replication from file
-    . "$scripts_dir/cql/masterdb_create_config.sh"
-    ERRCODE=$?
-    if [ "$ERRCODE" -ne 0 ]; then
-        log_error "Could not execute script 'masterdb_create_config.sh' file, status code: $ERRCODE?"
-        exit 1
-    fi
-
     for name in $(echo $db_name  | tr "," "\n")
     do
         printf "Creating '$name' keyspace\n"
