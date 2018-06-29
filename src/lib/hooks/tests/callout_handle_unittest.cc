@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -333,7 +333,12 @@ TEST_F(CalloutHandleTest, scopedState) {
     handle->setContext("three", three);
     handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
 
+
     int value = 0;
+    EXPECT_NO_THROW(handle->getArgument("one", value));
+    EXPECT_NO_THROW(handle->getArgument("two", value));
+    EXPECT_NO_THROW(handle->getContext("three", value));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, handle->getStatus());
 
     {
         // Wrap the callout handle with the scoped state object, which should
@@ -355,6 +360,10 @@ TEST_F(CalloutHandleTest, scopedState) {
         handle->setArgument("one", one);
         handle->setArgument("two", two);
         handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        EXPECT_NO_THROW(handle->getArgument("one", value));
+        EXPECT_NO_THROW(handle->getArgument("two", value));
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, handle->getStatus());
     }
 
     // Arguments should be gone again and the status should be set to
