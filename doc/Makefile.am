@@ -57,12 +57,18 @@ nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
-nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-mysql.conf
-nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-pgsql.conf
-nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-cql.conf
-nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-mysql.conf
-nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-pgsql.conf
-nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-cql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-master-mysql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-master-pgsql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-master-cql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-shard-mysql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-shard-pgsql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea4/kea4-shard-cql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-master-mysql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-master-pgsql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-master-cql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-shard-mysql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-shard-pgsql.conf
+nobase_dist_doc_DATA += examples/kea-config-tool/local/kea6/kea6-shard-cql.conf
 nobase_dist_doc_DATA += examples/kea-config-tool/initial-config-mysql/kea4/kea_shard/config.generic
 nobase_dist_doc_DATA += examples/kea-config-tool/initial-config-mysql/kea4/kea_shard/config.json
 nobase_dist_doc_DATA += examples/kea-config-tool/initial-config-mysql/kea4/kea_shard/servers.json
@@ -90,6 +96,9 @@ nobase_dist_doc_DATA += examples/kea-config-tool/initial-config-cql/kea6/kea_sha
 nobase_dist_doc_DATA += examples/kea-config-tool/master-db-connect-mysql.ini
 nobase_dist_doc_DATA += examples/kea-config-tool/master-db-connect-pgsql.ini
 nobase_dist_doc_DATA += examples/kea-config-tool/master-db-connect-cql.ini
+nobase_dist_doc_DATA += examples/kea-config-tool/shard-db-connect-mysql.ini
+nobase_dist_doc_DATA += examples/kea-config-tool/shard-db-connect-pgsql.ini
+nobase_dist_doc_DATA += examples/kea-config-tool/shard-db-connect-cql.ini
 
 devel:
 	mkdir -p html
