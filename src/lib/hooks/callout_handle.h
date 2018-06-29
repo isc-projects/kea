@@ -462,7 +462,7 @@ public:
     /// @param callout_handle reference to the pointer to the callout
     /// handle which state should be reset.
     /// @throw isc::BadValue if the callout handle is null.
-    explicit ScopedCalloutHandleState(CalloutHandlePtr& callout_handle);
+    explicit ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle);
 
     /// @brief Destructor.
     ///

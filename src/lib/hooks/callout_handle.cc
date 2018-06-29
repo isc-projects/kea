@@ -158,7 +158,8 @@ CalloutHandle::getHookName() const {
     return (hook);
 }
 
-ScopedCalloutHandleState::ScopedCalloutHandleState(CalloutHandlePtr& callout_handle)
+ScopedCalloutHandleState::
+ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle)
     : callout_handle_(callout_handle) {
     if (!callout_handle_) {
         isc_throw(BadValue, "callout_handle argument must not be null");
