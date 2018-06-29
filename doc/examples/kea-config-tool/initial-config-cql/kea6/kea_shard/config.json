@@ -10,9 +10,9 @@
       "contact-points": "127.0.0.1",
       "keyspace": "kea_shard",
       "max-statement-tries": 1,
-      "password": "",
+      "password": "keatest",
       "type": "cql",
-      "user": ""
+      "user": "keatest"
     },
     "expired-leases-processing": {
       "flush-reclaimed-timer-wait-time": 25,
