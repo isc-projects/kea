@@ -448,10 +448,11 @@ typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
 /// - the next step status is set to @c CalloutHandle::NEXT_STEP CONTINUE
 ///
 /// This class must never be modified to also delete the context
-/// information from the callout handle, because retaining this information
-/// is one of the primary reasons why this class is created. Otherwise,
-/// we could simply re-create the callout handle for each hook point
-/// without the need to reset the state like we do.
+/// information from the callout handle. The context is intended
+/// to be used to share stateful data across callouts and hook points
+/// and its contents must exist for the duration of the packet lifecycle.
+/// Otherwise, we could simply re-create the callout handle for
+/// each hook point and we wouldn't need this RAII class.
 class ScopedCalloutHandleState {
 public:
 
