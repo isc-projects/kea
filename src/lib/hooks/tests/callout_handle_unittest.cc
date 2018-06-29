@@ -327,8 +327,10 @@ TEST_F(CalloutHandleTest, scopedState) {
     // Set two arguments and the non-default status.
     int one = 1;
     int two = 2;
+    int three = 3;
     handle->setArgument("one", one);
     handle->setArgument("two", two);
+    handle->setContext("three", three);
     handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
 
     int value = 0;
@@ -344,6 +346,10 @@ TEST_F(CalloutHandleTest, scopedState) {
         EXPECT_THROW(handle->getArgument("two", value), NoSuchArgument);
         EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle->getStatus());
 
+        // Context should be intact.
+        ASSERT_NO_THROW(handle->getContext("three", value));
+        EXPECT_EQ(three, value);
+
         // Set the arguments and status again prior to the destruction of
         // the wrapper.
         handle->setArgument("one", one);
@@ -356,6 +362,10 @@ TEST_F(CalloutHandleTest, scopedState) {
     EXPECT_THROW(handle->getArgument("one", value), NoSuchArgument);
     EXPECT_THROW(handle->getArgument("two", value), NoSuchArgument);
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle->getStatus());
+
+    // Context should be intact.
+    ASSERT_NO_THROW(handle->getContext("three", value));
+    EXPECT_EQ(three, value);
 }
 
 // Further tests of the "skip" flag and tests of getting the name of the
