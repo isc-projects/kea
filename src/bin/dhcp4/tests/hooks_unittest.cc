@@ -207,6 +207,21 @@ public:
         return (dis);
     }
 
+    /// @brief Checks if the state of the callout handle associated with a query
+    /// was reset after the callout invocation.
+    ///
+    /// The check includes verification if the status was set to 'continue' and
+    /// that all arguments were deleted.
+    ///
+    /// @param query pointer to the query which callout handle is associated
+    /// with.
+    void checkCalloutHandleReset(const Pkt4Ptr& query) {
+        CalloutHandlePtr callout_handle = query->getCalloutHandle();
+        ASSERT_TRUE(callout_handle);
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+        EXPECT_TRUE(callout_handle->getArgumentNames().empty());
+    }
+
     /// Test callback that stores received callout name and pkt4 value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -909,6 +924,9 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(dis);
 }
 
 // Checks if callouts installed on buffer4_receive is able to change
@@ -948,6 +966,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
     // ... and check if it is the modified value
     ASSERT_FALSE(hwaddr->hwaddr_.empty()); // there must be a MAC address
     EXPECT_EQ(0xff, hwaddr->hwaddr_[0]); // check that its first byte was modified
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_receive is able to set skip flag that
@@ -976,6 +997,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 
     // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_receive is able to set drop flag that
@@ -1002,6 +1026,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
 
     // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on pkt4_receive are indeed called and the
@@ -1043,6 +1070,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_received is able to change
@@ -1080,6 +1110,9 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
     // ... and check if it is the modified value
     OptionPtr expected = createOption(DHO_DHCP_CLIENT_IDENTIFIER);
     EXPECT_TRUE(clientid->equals(expected));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_received is able to delete
@@ -1107,6 +1140,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
 
     // Check that the server dropped the packet and did not send a response
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_received is able to set skip flag that
@@ -1133,6 +1169,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
 
     // check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_received is able to set drop flag that
@@ -1159,6 +1198,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
 
     // check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 
@@ -1210,6 +1252,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
     EXPECT_TRUE(callback_resp_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_send is able to change
@@ -1247,6 +1292,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
     // ... and check if it is the modified value
     OptionPtr expected = createOption(DHO_DHCP_SERVER_IDENTIFIER);
     EXPECT_TRUE(clientid->equals(expected));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_send is able to delete
@@ -1282,6 +1330,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
 
     // Make sure that it does not have server-id
     EXPECT_FALSE(adv->getOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_skip is able to set skip flag that
@@ -1313,6 +1364,9 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
     // did not do packing on its own)
     Pkt4Ptr sent = srv_->fake_sent_.front();
     EXPECT_EQ(0, sent->getBuffer().getLength());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on pkt4_drop is able to set drop flag that
@@ -1344,6 +1398,9 @@ TEST_F(HooksDhcpv4SrvTest, drop_pkt4_send) {
     // did not do packing on its own)
     Pkt4Ptr sent = srv_->fake_sent_.front();
     EXPECT_EQ(0, sent->getBuffer().getLength());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callouts installed on buffer4_send are indeed called and the
@@ -1385,6 +1442,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_resp_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_send are indeed called and that
@@ -1416,6 +1476,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
     // The callout is supposed to fill the output buffer with dummyFile content
     ASSERT_EQ(sizeof(dummyFile), adv->getBuffer().getLength());
     EXPECT_EQ(0, memcmp(adv->getBuffer().getData(), dummyFile, sizeof(dummyFile)));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_send can set skip flag and that flag
@@ -1442,6 +1505,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
 
     // Check that there is no packet sent.
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 // Checks if callouts installed on buffer4_send can set drop flag and that flag
@@ -1468,6 +1534,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendDrop) {
 
     // Check that there is no packet sent.
     ASSERT_EQ(0, srv_->fake_sent_.size());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(discover);
 }
 
 
@@ -1548,6 +1617,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // This test checks if callout installed on subnet4_select hook point can pick
@@ -1615,6 +1687,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr));
     EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_V4, addr));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // This test verifies that the leases4_committed hook point is not triggered
@@ -1636,6 +1711,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDiscover) {
 
     // Make sure that the callout wasn't called.
     EXPECT_TRUE(callback_name_.empty());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // This test verifies that the leases4_committed hook point is not triggered
@@ -1657,6 +1735,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedInform) {
 
     // Make sure that the callout wasn't called.
     EXPECT_TRUE(callback_name_.empty());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled
@@ -1755,6 +1836,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(req);
 }
 
 // This test verifies that a callout installed on lease4_renew can trigger
@@ -1825,6 +1909,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     EXPECT_EQ(temp_timestamp, l->cltt_);
 
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(req);
 }
 
 // This test verifies that the callout installed on the leases4_committed hook
@@ -1867,6 +1954,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+
     resetCalloutBuffers();
 
     // Renew the lease and make sure that the callout has been executed.
@@ -1888,6 +1978,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 
     resetCalloutBuffers();
 
@@ -1914,6 +2007,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+
     resetCalloutBuffers();
 
     // Now request an address that can't be allocated. The client should receive
@@ -1930,6 +2026,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
 
     EXPECT_FALSE(callback_lease4_);
     EXPECT_FALSE(callback_deleted_lease4_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // This test verifies that it is possible to park a packet as a result of
@@ -1975,6 +2074,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
 
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client1.getContext().query_);
+
     // Reset all indicators because we'll be now creating a second client.
     resetCalloutBuffers();
 
@@ -2008,6 +2110,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     rsp = client2.getContext().response_;
     EXPECT_EQ(DHCPACK, rsp->getType());
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client2.getContext().query_);
 }
 
 // This test verifies that valid RELEASE triggers lease4_release callouts
@@ -2097,6 +2202,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(rel);
 }
 
 // This test verifies that skip flag returned by a callout installed on the
@@ -2162,6 +2270,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     // Try by client-id, should be successful as well.
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
     EXPECT_EQ(leases.size(), 1);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(rel);
 }
 
 // This test verifies that the leases4_committed callout is executed
@@ -2206,6 +2317,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // This test verifies that drop flag returned by a callout installed on the
@@ -2271,6 +2385,9 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
     // Try by client-id, should be successful as well.
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
     EXPECT_EQ(leases.size(), 1);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(rel);
 }
 
 // Checks that decline4 hooks (lease4_decline) are triggered properly.
@@ -2320,6 +2437,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDecline) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // Checks that decline4 hook is able to skip the packet.
@@ -2368,6 +2488,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineSkip) {
     // lease returned and lease from the lease manager) all match.
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease4_->addr_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // Checks that decline4 hook is able to drop the packet.
@@ -2416,6 +2539,9 @@ TEST_F(HooksDhcpv4SrvTest, HooksDeclineDrop) {
     // lease returned and lease from the lease manager) all match.
     EXPECT_EQ(addr, from_mgr->addr_);
     EXPECT_EQ(addr, callback_lease4_->addr_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // This test verifies that the leases4_committed callout is executed
@@ -2461,6 +2587,9 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
 }
 
 // Checks if callout installed on host4_identifier can generate an
@@ -2529,6 +2658,9 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier) {
 
     // Make sure the address offered is the one that was reserved.
     EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 // Checks if callout installed on host4_identifier can generate identifier of
@@ -2597,6 +2729,9 @@ TEST_F(HooksDhcpv4SrvTest, host4_identifier_hwaddr) {
 
     // Make sure the address offered is the one that was reserved.
     EXPECT_EQ("192.0.2.201", adv->getYiaddr().toText());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(sol);
 }
 
 

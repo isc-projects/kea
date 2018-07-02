@@ -346,8 +346,11 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
                     Host::IdentifierType type = Host::IDENT_FLEX;
                     std::vector<uint8_t> id;
 
-                    // Delete previously set arguments
-                    callout_handle->deleteAllArguments();
+                    // Use the RAII wrapper to make sure that the callout handle state is
+                    // reset when this object goes out of scope. All hook points must do
+                    // it to prevent possible circular dependency between the callout
+                    // handle and its arguments.
+                    ScopedCalloutHandleState callout_handle_state(callout_handle);
 
                     // Pass incoming packet as argument
                     callout_handle->setArgument("query6", pkt);
@@ -520,11 +523,14 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
-
-        // Delete previously set arguments
-        callout_handle->deleteAllArguments();
 
         // Pass incoming packet as argument
         callout_handle->setArgument("query6", query);
@@ -637,8 +643,11 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // Delete previously set arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
@@ -784,11 +793,11 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         HooksManager::calloutsPresent(Hooks.hook_index_leases6_committed_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
-
-        // Clear skip flag if it was set in previous callouts
-        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
 
@@ -888,11 +897,14 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
     // Execute all callouts registered for packet6_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
 
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         // Enable copying options from the packets within hook library.
         ScopedEnableOptionsCopy<Pkt6> query_resp_options_copy(query, rsp);
-
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
 
         // Pass incoming packet as argument
         callout_handle->setArgument("query6", query);
@@ -948,8 +960,11 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
         // Let's execute all callouts registered for buffer6_send
         if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
 
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
+            // Use the RAII wrapper to make sure that the callout handle state is
+            // reset when this object goes out of scope. All hook points must do
+            // it to prevent possible circular dependency between the callout
+            // handle and its arguments.
+            ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Enable copying options from the packet within hook library.
             ScopedEnableOptionsCopy<Pkt6> response6_options_copy(rsp);
@@ -1354,8 +1369,11 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
     if (HooksManager::calloutsPresent(Hooks.hook_index_subnet6_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
-        // We're reusing callout_handle from previous calls
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(question);
@@ -2451,6 +2469,12 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_release_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
 
@@ -2614,8 +2638,11 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_release_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(query);
@@ -3155,8 +3182,11 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_decline_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(decline);
 
-        // Delete previously set arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(decline);
