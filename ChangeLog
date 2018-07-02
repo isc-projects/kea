@@ -1,3 +1,8 @@
+1428.	[bug]		marcin
+	Removed memory leak in the DHCPv4 and DHCPv6 servers which
+	occurred when hooks  libraries where loaded.
+	(Trac #5664, git 81e3dfff3e01c327ef7e70919dbb310b2a0a6ac7)
+
 Kea 1.4.0 released on June 15, 2018
 
 1427.	[bug]		marcin
