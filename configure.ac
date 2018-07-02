@@ -8,7 +8,8 @@ AC_PREREQ([2.69])
 # version that was used as a base + changes that were made later, but
 # are not released yet.
 # For patch releases, this is x.y.x-Pn, where x.y.z denotes the release
-# that was used as the base and n is the patch number.
+# that was used as the base and n is the patch number. Patchlevel
+# counts from 1.
 AC_INIT(kea,1.4.0-P1, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
