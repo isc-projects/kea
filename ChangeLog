@@ -1,3 +1,8 @@
+1429.	[bug]		marcin
+	Removed memory leak in the DHCPv4 and DHCPv6 servers which
+	occurred when hooks libraries where loaded.
+	(Trac #5664, git 2584b902d2617089bfa7238133490ddd855aa77a)
+
 1428.	[bug]		marcin
 	Corrected behavior of the standby server in the HA hot-standby
 	mode, which failed to monitor delays in responses to the
