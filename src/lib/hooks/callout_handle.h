@@ -415,6 +415,72 @@ private:
 /// A shared pointer to a CalloutHandle object.
 typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
 
+/// @brief Wrapper class around callout handle which automatically
+/// resets handle's state.
+///
+/// The Kea servers often require to associate processed packets with
+/// @c CalloutHandle instances. This is to facilitate the case when the
+/// hooks library passes information between the callouts using the
+/// 'context' stored in the callout handle. The callouts invoked throughout
+/// the packet lifetime have access to the context information for the
+/// given packet.
+///
+/// The association between the packets and the callout handles is
+/// achieved by giving the ownership of the @c CalloutHandle objects to
+/// the @c Pkt objects. When the @c Pkt object goes out of scope, it should
+/// also release the pointer to the owned @c CalloutHandle object.
+/// However, this causes a risk of circular dependency between the shared
+/// pointer to the @c Pkt object and the shared pointer to the
+/// @c CalloutHandle it owns, because the pointer to the packet is often
+/// set as an argument of the callout handle prior to invoking a callout.
+///
+/// In order to break the circular dependency, the arguments of the
+/// callout handle must be deleted as soon as they are not needed
+/// anymore. This class is a wrapper around the callout handle object,
+/// which resets its state during construction and destruction. All
+/// Kea hook points must use this class within the scope where the
+/// @c HooksManager::callCallouts is invoked to reset the state of the
+/// callout handle. The state is reset when this object goes out of
+/// scope.
+///
+/// Currently, the following operations are performed during the reset:
+/// - all arguments of the callout handle are deleted,
+/// - the next step status is set to @c CalloutHandle::NEXT_STEP CONTINUE
+///
+/// This class must never be modified to also delete the context
+/// information from the callout handle. The context is intended
+/// to be used to share stateful data across callouts and hook points
+/// and its contents must exist for the duration of the packet lifecycle.
+/// Otherwise, we could simply re-create the callout handle for
+/// each hook point and we wouldn't need this RAII class.
+class ScopedCalloutHandleState {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Resets state of the callout handle.
+    ///
+    /// @param callout_handle reference to the pointer to the callout
+    /// handle which state should be reset.
+    /// @throw isc::BadValue if the callout handle is null.
+    explicit ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle);
+
+    /// @brief Destructor.
+    ///
+    /// Resets state of the callout handle.
+    ~ScopedCalloutHandleState();
+
+private:
+
+    /// @brief Resets the callout handle state.
+    ///
+    /// It is used internally by the constructor and destructor.
+    void resetState();
+
+    /// @brief Holds pointer to the wrapped callout handle.
+    CalloutHandlePtr callout_handle_;
+};
+
 } // namespace hooks
 } // namespace isc
 
