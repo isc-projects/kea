@@ -41,6 +41,10 @@ void destroyPgSQLSchema(bool show_err = false);
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/dhcpdb_create.pgsql
 ///
+///  and the configuration upgrade script:
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/configdb_create.pgsql
+///
 /// to the unit test Postgresql database. If the script fails, the invoking
 /// test will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
@@ -61,8 +65,8 @@ void createPgSQLSchema(bool show_err = false);
 void runPgSQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

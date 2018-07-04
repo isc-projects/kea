@@ -40,9 +40,9 @@ prefixLessThanFirstAddress(const IOAddress& prefix, const PoolPtr& pool) {
 bool
 comparePoolFirstAddress(const PoolPtr& pool1, const PoolPtr& pool2) {
     return (pool1->getFirstAddress() < pool2->getFirstAddress());
-};
-
 }
+
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -749,5 +749,5 @@ Subnet6::toElement() const {
 }
 
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

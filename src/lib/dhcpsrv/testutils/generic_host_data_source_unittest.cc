@@ -290,7 +290,8 @@ GenericHostDataSourceTest::testMaxSubnetId4() {
     EXPECT_FALSE(host_by_id);
 }
 
-void GenericHostDataSourceTest::testMaxSubnetId6() {
+void
+GenericHostDataSourceTest::testMaxSubnetId6() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
@@ -971,7 +972,8 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
                                               host2->getIPv6Reservations());
 }
 
-void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
+void
+GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
                                                          ConstElementPtr user_context) {
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
@@ -999,7 +1001,8 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_addr));
 }
 
-void GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
+void
+GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
                                                          ConstElementPtr user_context) {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
@@ -1296,7 +1299,8 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
               << std::endl;
 }
 
-void GenericHostDataSourceTest::testDeleteByAddr4() {
+void
+GenericHostDataSourceTest::testDeleteByAddr4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1323,7 +1327,8 @@ void GenericHostDataSourceTest::testDeleteByAddr4() {
     EXPECT_FALSE(after);
 }
 
-void GenericHostDataSourceTest::testDeleteById4() {
+void
+GenericHostDataSourceTest::testDeleteById4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1360,7 +1365,8 @@ void GenericHostDataSourceTest::testDeleteById4() {
 
 // Test checks when a IPv4 host with options is deleted that the options are
 // deleted as well.
-void GenericHostDataSourceTest::testDeleteById4Options() {
+void
+GenericHostDataSourceTest::testDeleteById4Options() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1405,7 +1411,8 @@ void GenericHostDataSourceTest::testDeleteById4Options() {
     EXPECT_EQ(0, countDBOptions4());
 }
 
-void GenericHostDataSourceTest::testDeleteById6() {
+void
+GenericHostDataSourceTest::testDeleteById6() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1440,7 +1447,8 @@ void GenericHostDataSourceTest::testDeleteById6() {
     EXPECT_FALSE(after);
 }
 
-void GenericHostDataSourceTest::testDeleteById6Options() {
+void
+GenericHostDataSourceTest::testDeleteById6Options() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 

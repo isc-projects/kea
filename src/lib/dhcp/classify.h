@@ -7,6 +7,7 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <algorithm>
 #include <string>
 #include <iterator>
 #include <list>
@@ -101,6 +102,13 @@ namespace dhcp {
             set_.clear();
         }
 
+        /// @brief Removes an element from both containers.
+        void erase(const ClientClass& class_name) {
+            auto it = std::find(list_.begin(), list_.end(), class_name);
+            list_.erase(it);
+            set_.erase(class_name);
+        }
+
         /// @brief Returns all class names as text
         ///
         /// @param separator Separator to be used between class names. The
@@ -116,8 +124,8 @@ namespace dhcp {
         std::unordered_set<ClientClass> set_;
     };
 
-};
+}
 
-};
+}
 
 #endif /* CLASSIFY_H */

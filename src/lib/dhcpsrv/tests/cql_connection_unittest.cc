@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,11 +51,11 @@ TEST(CqlConnection, statementMapHash) {
     map.insert({tag2, CqlTaggedStatement(tag2, "DELETE FROM world.evil")});
 
     // Make sure the first one was overwritten.
-    char const* const tag1_text = map.find(tag1)->second.text_;
-    char const* const tag2_text = map.find(tag2)->second.text_;
-    EXPECT_TRUE(tag1_text);
-    EXPECT_TRUE(tag2_text);
-    ASSERT_EQ(std::strcmp(tag1_text, tag2_text), 0);
+    std::string const tag1_text = map.find(tag1)->second.text_;
+    std::string const tag2_text = map.find(tag2)->second.text_;
+    EXPECT_NE(tag1_text.size(), 0);
+    EXPECT_NE(tag2_text.size(), 0);
+    ASSERT_EQ(tag1_text, tag2_text);
     ASSERT_EQ(map.size(), 1u);
 }
 

@@ -214,6 +214,12 @@ public:
         /// Used while parsing Dhcp4/interfaces structures.
         INTERFACES_CONFIG,
 
+        /// Used while parsing Dhcp4/master-database structures.
+        MASTER_DATABASE,
+
+        /// Used while parsing Dhcp4/config-database structures.
+        CONFIG_DATABASE,
+
         /// Used while parsing Dhcp4/interfaces/dhcp-socket-type structures.
         DHCP_SOCKET_TYPE,
 
@@ -225,6 +231,12 @@ public:
 
         /// Used while parsing Dhcp4/hosts-database[s] structures.
         HOSTS_DATABASE,
+
+        /// Used while parsing Dhcp4/configuration-type structures.
+        CONFIGURATION_TYPE,
+
+        /// Used while parsing Dhcp4/instance-id structures.
+        INSTANCE_ID,
 
         /// Used while parsing Dhcp4/*-database/type.
         DATABASE_TYPE,
@@ -364,7 +376,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+}  // namespace eval
+}  // namespace isc
 
 #endif

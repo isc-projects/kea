@@ -18,12 +18,34 @@
 mysql_execute() {
     QUERY=$1
     shift
-    if [ $# -gt 1 ]; then
-        mysql -N -B "$@" -e "${QUERY}"
+    if [ $# -gt 0 ]; then
+        cmdline=$(mysql_compose_connect_cmd_line)
+        cmdline="$cmdline $* -e \"$QUERY\""
+        eval "mysql " $cmdline
         retcode=$?
     else
-        mysql -N -B --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
-        retcode=$?
+        cmdline=$(mysql_compose_connect_cmd_line)
+        cmdline="$cmdline -e \"$QUERY\" $db_name"
+        eval "mysql " $cmdline
+        retcode="$?"
+    fi
+
+    return $retcode
+}
+
+mysql_execute_no_dbname() {
+    QUERY=$1
+    shift
+
+    cmdline=$(mysql_compose_connect_cmd_line)
+    cmdline="$cmdline -e \"$QUERY\""
+
+    eval "mysql " $cmdline
+    retcode="$?"
+
+    if [ $retcode -ne 0 ]; then
+        printf "mysql returned with exit status $retcode\n"
+        exit $retcode
     fi
 
     return $retcode
@@ -32,20 +54,78 @@ mysql_execute() {
 mysql_execute_script() {
     file=$1
     shift
-    if [ $# -ge 1 ]; then
-        mysql -N -B "$@" < "${file}"
+    if [ $# -gt 0 ]; then
+        cmdline=$(mysql_compose_connect_cmd_line)
+        eval "mysql " $cmdline $* < ${file}
         retcode=$?
     else
-        mysql -N -B --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
-        retcode=$?
+        cmdline=$(mysql_compose_connect_cmd_line)
+        eval "mysql "$cmdline $db_name < ${file}
+        retcode="$?"
     fi
 
     return $retcode
 }
 
 mysql_version() {
-    mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version" "$@"
+    mysql_execute "SELECT CONCAT_WS('.', version, minor) FROM schema_version;" "$@"
     return $?
+}
+
+mysql_config_version() {
+    VERSION="0.0"
+
+    RESULT=$(mysql_execute "SHOW TABLES;" "$@")
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "mysql_config_version table query failed, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    COUNT=$(echo $RESULT | grep config_schema_version | wc -w)
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "mysql_config_version table query failed, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    if [ $COUNT -gt 0 ]; then
+        VERSION=$(mysql_execute "SELECT CONCAT(version,'.',minor) FROM config_schema_version;" "$@")
+    fi
+    ERRCODE=$?
+    echo $VERSION
+
+    return $ERRCODE
+}
+
+mysql_master_version() {
+    VERSION="0.0"
+
+    RESULT=`mysql_execute "SHOW TABLES;" "$@"`
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "mysql_master_version table query failed, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    COUNT=`echo $RESULT | grep master_schema_version | wc -w`
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "mysql_master_version table query failed, mysql status = $ERRCODE"
+        exit 1
+    fi
+
+    if [ $COUNT -gt 0 ]; then
+        VERSION=$(mysql_execute "SELECT CONCAT(version,'.',minor) FROM master_schema_version;" "$@")
+    fi
+    ERRCODE=$?
+    echo $VERSION
+
+    return $ERRCODE
 }
 
 # Submits given SQL text to PostgreSQL
@@ -62,13 +142,35 @@ pgsql_execute() {
     QUERY=$1
     shift
     if [ $# -gt 0 ]; then
-        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "$@"
+        export PGPASSWORD=$db_password
+        cmdline=$(pgsql_compose_connect_cmd_line)
+        cmdline="$cmdline $*"
+        echo $QUERY | psql $cmdline
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U "${db_user}" -d "${db_name}"
+        cmdline=$(pgsql_compose_connect_cmd_line)
+        cmdline="$cmdline -d $db_name"
+        echo $QUERY | psql $cmdline
         retcode=$?
     fi
+    return $retcode
+}
+
+pgsql_execute_no_dbname() {
+    QUERY=$1
+    shift
+    export PGPASSWORD=$db_password
+    cmdline=$(pgsql_compose_connect_cmd_line)
+#   Sometimes we don't need to connect to a specific database
+#   (e.g. when we want to create a new one)
+#   Postgresql client requires to connect all the time a database.
+#   The first database is always created by the initdb command when
+#   the data storage area is initialized is called postgres.
+#   So we will connect to the default database "postgres")
+    cmdline="$cmdline -d postgres"
+    echo $QUERY | psql $cmdline
+    retcode=$?
     return $retcode
 }
 
@@ -86,11 +188,16 @@ pgsql_execute_script() {
     file=$1
     shift
     if [ $# -gt 0 ]; then
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f "${file}" "$@"
+        export PGPASSWORD=$db_password
+        cmdline=$(pgsql_compose_connect_cmd_line)
+        cmdline="$cmdline -d $db_name -f $file $*"
+        eval "psql "$cmdline
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U "${db_user}" -d "${db_name}" -f "${file}"
+        cmdline=$(pgsql_compose_connect_cmd_line)
+        cmdline="$cmdline -d $db_name -f $file"
+        eval "psql "$cmdline
         retcode=$?
     fi
     return $retcode
@@ -101,14 +208,74 @@ pgsql_version() {
     return $?
 }
 
+pgsql_config_version() {
+    VERSION="0.0"
+
+    RESULT=`pgsql_execute "\d" "$@"`
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "pgsql_config_version table query failed, pgsql status = $ERRCODE"
+        exit 1
+    fi
+
+    COUNT=`echo $RESULT | grep config_schema_version | wc -w`
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "pgsql_config_version table query failed, pgsql status = $ERRCODE"
+        exit 1
+    fi
+
+    if [ $COUNT -gt 0 ]; then
+        VERSION=`pgsql_execute "SELECT version || '.' || minor FROM config_schema_version" "$@"`
+    fi
+    ERRCODE=$?
+    echo $VERSION
+
+    return $ERRCODE
+}
+
+pgsql_master_version() {
+    VERSION="0.0"
+
+    RESULT=`pgsql_execute "\d" "$@"`
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "pgsql_master_version table query failed, pgsql status = $ERRCODE"
+        exit 1
+    fi
+
+    COUNT=`echo $RESULT | grep master_schema_version | wc -w`
+    ERRCODE=$?
+    if [ $ERRCODE -ne 0 ]
+    then
+        printf "pgsql_master_version table query failed, pgsql status = $ERRCODE"
+        exit 1
+    fi
+
+    if [ $COUNT -gt 0 ]; then
+        VERSION=`pgsql_execute "SELECT version || '.' || minor FROM master_schema_version" "$@"`
+    fi
+    ERRCODE=$?
+    echo $VERSION
+
+    return $ERRCODE
+}
+
 cql_execute() {
     query=$1
     shift
-    if [ $# -gt 1 ]; then
-        cqlsh "$@" -e "$query"
+    if [ $# -gt 0 ]; then
+        cmdline=$(cql_compose_connect_cmd_line)
+        cmdline="$cmdline $* -e \"$query\""
+        eval "cqlsh " $cmdline
         retcode=$?
     else
-        cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -e "${query}"
+        cmdline=$(cql_compose_connect_cmd_line)
+        cmdline="$cmdline -k $db_name -e \"$query\""
+        eval "cqlsh " $cmdline
         retcode=$?
     fi
 
@@ -120,14 +287,35 @@ cql_execute() {
     return $retcode
 }
 
+cql_execute_no_keyspace() {
+    query=$1
+    shift
+
+    cmdline=$(cql_compose_connect_cmd_line)
+    cmdline="$cmdline -e \"$query\""
+    eval "cqlsh " $cmdline
+    retcode=$?
+
+    if [ $retcode -ne 0 ]; then
+        printf "cqlsh returned with exit status $retcode\n"
+        exit $retcode
+    fi
+
+    return $retcode
+}
+
 cql_execute_script() {
     file=$1
     shift
-    if [ $# -gt 1 ]; then
-        cqlsh "$@" -e "$file"
+    if [ $# -gt 0 ]; then
+        cmdline=$(cql_compose_connect_cmd_line)
+        cmdline="$cmdline $* -f \"$file\""
+        eval "cqlsh " $cmdline
         retcode=$?
     else
-        cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -f "${file}"
+        cmdline=$(cql_compose_connect_cmd_line)
+        cmdline="$cmdline -k $db_name -f \"$file\""
+        eval "cqlsh " $cmdline
         retcode=$?
     fi
 
@@ -143,6 +331,117 @@ cql_version() {
     version=$(cql_execute "SELECT version, minor FROM schema_version" "$@")
     error=$?
     version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 | tr "|" ".")
-    echo "$version"
+    echo $version
     return $error
+}
+
+cql_config_version() {
+    version="0.0"
+    result=$(cql_execute "DESCRIBE tables;" "$@")
+    count=$(echo $result | grep config_schema_version | wc -w)
+    if [ $count -gt 0 ]; then
+        version=$(cql_execute "SELECT version, minor FROM config_schema_version" "$@")
+        version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter=".")
+    fi
+    error=$?
+    echo $version
+    return $error
+}
+
+cql_master_version() {
+    version="0.0"
+    result=$(cql_execute "DESCRIBE tables;" "$@")
+    count=$(echo $result | grep master_schema_version | wc -w)
+    if [ $count -gt 0 ]; then
+        version=$(cql_execute "SELECT version, minor FROM master_schema_version" "$@")
+        version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter=".")
+    fi
+    error=$?
+    echo $version
+    return $error
+}
+
+mysql_compose_connect_cmd_line() {
+    local line="-N -B"
+
+    if [ -n "$db_server_address" ]; then
+        line="$line --host=$db_server_address"
+    fi
+
+    if [ -n "$db_server_port" ]; then
+        line="$line --port=$db_server_port"
+    fi
+
+    if [ -n "$db_user" ]; then
+        line="$line --user=$db_user"
+    fi
+
+    if [ -n "$db_password" ]; then
+        line="$line --password=$db_password"
+    fi
+
+    if [ -n "$db_host" ]; then
+        line="$line --host=$db_host"
+    fi
+
+    echo $line
+}
+
+pgsql_compose_connect_cmd_line() {
+    local line="--set ON_ERROR_STOP=1 -A -t -q"
+
+    if [ -n "$db_server_address" ]
+    then
+        line="$line -h $db_server_address"
+    else
+        if [ -n "$db_host" ]; then
+            line="$line -h $db_host"
+        else
+            line="$line -h localhost"
+        fi
+    fi
+
+    if [ -n "$db_server_port" ]; then
+        line="$line -p $db_server_port"
+    fi
+
+    if [ -n "$db_user" ]; then
+        line="$line -U $db_user"
+    fi
+
+    if [ -n "$db_host" ]; then
+        line="$line -h $db_host"
+    fi
+
+    echo $line
+}
+
+cql_compose_connect_cmd_line() {
+    local line=""
+
+    if [ -n "$db_server_address" ]; then
+        line=$line" "$db_server_address
+    fi
+
+    if [ -n "$db_server_port" ]; then
+        line=$line" "$db_server_port
+    fi
+
+    if [ -n "$db_server_version" ]; then
+        line=$line" --cqlversion="$db_server_version
+    fi
+
+    if [ -n "$db_user" ]; then
+        line=$line" -u "$db_user
+    fi
+
+    if [ -n "$db_password" ]; then
+        line=$line" -p "$db_password
+    fi
+
+    if [ -n "$db_use_ssl" ]; then
+        line=$line" --ssl"
+    fi
+
+    echo $line
 }

@@ -661,7 +661,7 @@ private:
 };
 
 
-} // isc::dhcp namespace
-} // isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // OPTION_DATA_TYPES_H

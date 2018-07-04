@@ -19,11 +19,11 @@ namespace dhcp {
 /// Note that higher numbers equate to more verbose (and detailed) output.
 
 // The first level traces normal operations,
-const int EVAL_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int EVAL_DBG_TRACE;
 
 // Additional information on the calls.  Report the values that were
 // popped from or pushed to the value stack.
-const int EVAL_DBG_STACK = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int EVAL_DBG_STACK;
 
 /// @brief Eval Logger
 ///
@@ -32,7 +32,7 @@ const int EVAL_DBG_STACK = isc::log::DBGLVL_TRACE_DETAIL_DATA;
 /// space.
 extern isc::log::Logger eval_logger;
 
-} // namespace dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // EVAL_LOG_H

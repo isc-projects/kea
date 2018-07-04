@@ -228,5 +228,5 @@ size_t SimpleParser4::deriveParameters(isc::data::ElementPtr global) {
     return (cnt);
 }
 
-};
-};
+}  // namespace dhcp
+}  // namespace isc

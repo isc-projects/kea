@@ -9,7 +9,10 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/host.h>
+#include <dhcpsrv/sql_common.h>
 #include <exceptions/exceptions.h>
+#include <stdint.h>
+
 #include <boost/shared_ptr.hpp>
 
 #include <vector>
@@ -245,6 +248,12 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     virtual void rollback() {};
+
+    /// @brief Sync database tables with kea.conf
+    ///
+    /// Truncates database tables, retrieves reservations read from kea.conf and
+    /// inserts coresponding hosts, reservations and options in the database.
+    virtual void syncReservations() {};
 };
 
 /// @brief HostDataSource pointer
@@ -253,7 +262,7 @@ typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
 /// @brief HostDataSource list
 typedef std::vector<HostDataSourcePtr> HostDataSourceList;
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // BASE_HOST_DATA_SOURCE_H

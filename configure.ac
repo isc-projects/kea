@@ -62,15 +62,15 @@ AC_SUBST(SEP)
 # If cross compiling assume the message compiler executable was
 # magically already in place...
 if test "$cross_compiling" = "yes"; then
-        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
-	if test -x "${srcdir}/src/lib/log/compiler/message"; then
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN("you must install a message compiler in:")
-		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
-		AC_MSG_WARN("compiled for build ($build).")
-	fi
+    AC_MSG_CHECKING("build (vs. host) compiled message compiler")
+    if test -x "${srcdir}/src/lib/log/compiler/message"; then
+        AC_MSG_RESULT(yes)
+    else
+        AC_MSG_RESULT(no)
+        AC_MSG_WARN("you must install a message compiler in:")
+        AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
+        AC_MSG_WARN("compiled for build ($build).")
+    fi
 fi
 AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
 
@@ -410,7 +410,7 @@ case "$host" in
         ;;
 esac
 if [ test $kea_undefined_pthread_behavior = "yes" ]; then
-   AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
+    AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 fi
 
 # Our experiments have shown Solaris 10 has broken support for the
@@ -816,7 +816,7 @@ if test "$CQL_CONFIG" != "" ; then
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
     CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
-    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"    
+    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
     CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
     AC_SUBST(CQL_CPPFLAGS)
@@ -1403,6 +1403,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
+                 src/bin/kea_config_tool/Makefile
+                 src/bin/kea_config_tool/tests/Makefile
                  src/bin/shell/Makefile
                  src/bin/shell/kea-shell
                  src/bin/shell/tests/Makefile
@@ -1492,6 +1494,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/Makefile
                  src/share/database/scripts/cql/Makefile
                  src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
+                 src/share/database/scripts/cql/config_upgrade_0.0_to_1.0.sh
+                 src/share/database/scripts/cql/master_upgrade_0.0_to_1.0.sh
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
@@ -1501,6 +1505,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
                  src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
                  src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
+                 src/share/database/scripts/mysql/config_upgrade_0.0_to_1.0.sh
+                 src/share/database/scripts/mysql/master_upgrade_0.0_to_1.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
@@ -1508,6 +1514,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
                  src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
                  src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
+                 src/share/database/scripts/pgsql/config_upgrade_0.0_to_1.0.sh
+                 src/share/database/scripts/pgsql/master_upgrade_0.0_to_1.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1672,9 +1680,9 @@ if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
 Cassandra CQL:
-  CQL_VERSION:     ${CQL_VERSION}
-  CQL_CPPFLAGS:    ${CQL_CPPFLAGS}
-  CQL_LIBS:        ${CQL_LIBS}
+  CQL_VERSION:                  ${CQL_VERSION}
+  CQL_CPPFLAGS:                 ${CQL_CPPFLAGS}
+  CQL_LIBS:                     ${CQL_LIBS}
 END
 else
 cat >> config.report << END
@@ -1696,6 +1704,7 @@ Google Test:
 END
 else
 cat >> config.report << END
+
 Google Test:
   no
 END
@@ -1714,6 +1723,7 @@ Google Benchmark:
 END
 else
 cat >> config.report << END
+
 Google Benchmark:
   no
 END

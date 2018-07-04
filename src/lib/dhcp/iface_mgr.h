@@ -595,6 +595,20 @@ public:
         return (test_mode_);
     }
 
+    /// @param server_mode A flag which indicates that the @c IfaceMgr is initialized
+    /// in the server daemon (if true), or not (if false).
+    void setServerMode(const bool server_mode) {
+        server_mode_ = server_mode;
+    }
+
+    /// @brief Checks if the @c IfaceMgr is initialized in the server daemon.
+    ///
+    /// @return true if the @c IfaceMgr is initialized in the server daemon,
+    /// false otherwise.
+    bool isServerMode() const {
+        return (server_mode_);
+    }
+
     /// @brief Allows or disallows the loopback interface
     ///
     /// By default the loopback interface is not considered when opening
@@ -1227,11 +1241,14 @@ private:
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
 
+    /// @brief Indicates if the IfaceMgr is initialized in the server daemon.
+    bool server_mode_;
+
     /// @brief Allows to use loopback
     bool allow_loopback_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // IFACE_MGR_H

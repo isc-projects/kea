@@ -218,11 +218,23 @@ public:
         /// Used while parsing Dhcp6/interfaces structures.
         INTERFACES_CONFIG,
 
+        /// Used while parsing Dhcp6/master-database structures.
+        MASTER_DATABASE,
+
+        /// Used while parsing Dhcp6/config-database structures.
+        CONFIG_DATABASE,
+
         /// Used while parsing Dhcp6/lease-database structures.
         LEASE_DATABASE,
 
         /// Used while parsing Dhcp6/hosts-database[s] structures.
         HOSTS_DATABASE,
+
+        /// Used while parsing Dhcp6/configuration-type structures.
+        CONFIGURATION_TYPE,
+
+        /// Used while parsing Dhcp6/instance-id structures.
+        INSTANCE_ID,
 
         /// Used while parsing Dhcp6/*-database/type.
         DATABASE_TYPE,
@@ -371,7 +383,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+}  // namespace eval
+}  // namespace isc
 
 #endif

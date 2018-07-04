@@ -64,6 +64,9 @@ libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
 libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
 libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+
+libdhcp6_la_LIBADD = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
@@ -119,6 +122,7 @@ parser: dhcp6_lexer.cc location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_pa
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h: dhcp6_parser.yy
 	$(YACC) --defines=dhcp6_parser.h --report=all --report-file=dhcp6_parser.report -o dhcp6_parser.cc dhcp6_parser.yy
+	$(YACC) --graph --defines=dhcp6_parser.h --report=all --report-file=dhcp6_parser.report -o dhcp6_parser.cc dhcp6_parser.yy
 
 dhcp6_lexer.cc: dhcp6_lexer.ll
 	$(LEX) --prefix parser6_ -o dhcp6_lexer.cc dhcp6_lexer.ll

@@ -1,0 +1,46 @@
+{
+  "Dhcp6": {
+    "server-id": {
+      "htype": 1,
+      "identifier": "56847afe6699",
+      "time": 512640186,
+      "type": "LLT"
+    },
+    "lease-database": {
+      "host": "127.0.0.1",
+      "name": "kea_shard",
+      "password": "keatest",
+      "type": "mysql",
+      "user": "keatest"
+    },
+    "expired-leases-processing": {
+      "flush-reclaimed-timer-wait-time": 25,
+      "hold-reclaimed-time": 3600,
+      "max-reclaim-leases": 100,
+      "max-reclaim-time": 250,
+      "reclaim-timer-wait-time": 10,
+      "unwarned-reclaim-cycles": 5
+    },
+    "preferred-lifetime": 30,
+    "valid-lifetime": 40,
+    "renew-timer": 10,
+    "rebind-timer": 20,
+    "subnet6": [
+      {
+        "subnet": "3001:db8:1::/48",
+        "pools": [
+          {
+            "pool": "3001:db8:1::/80"
+          }
+        ],
+        "pd-pools": [
+          {
+            "prefix": "3001:db8:1:1::",
+            "prefix-len": 80,
+            "delegated-len": 96
+          }
+        ]
+      }
+    ]
+  }
+}

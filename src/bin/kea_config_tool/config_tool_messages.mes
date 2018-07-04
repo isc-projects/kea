@@ -1,0 +1,62 @@
+# Copyright (C) 2016-2018 Deutsche Telekom AG.
+#
+# Author: Cristian Secareanu <cristian.secareanu@qualitance.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#           http:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+$NAMESPACE isc::config_tool
+% CONFIG_TOOL_FAIL_PROCESS : An error has occurred: %1, exiting with code %2
+This message is issued if KEA Config Tool has detected a failure when trying
+to process the files. It includes a more specific error string.
+
+% CONFIG_TOOL_INVALID_USAGE : Invalid usage: %1, exiting with code %2
+This message is issued when the Kea Config Tool is used with improper
+parameters. It includes a more specific error string.
+
+
+% CONFIG_TOOL_GET_SHARDS_CONFIG Starting to retrieve the configuration of the provided shards
+This message is issued as the the Kea config tool starts to retrieve the
+JSON and GENERIC configuration from the provided shards databases.
+
+% CONFIG_TOOL_GET_GENERIC_CONFIG Starting to download the GENERIC configuration
+This message is issued as the the Kea Config Tool starts to download the GENERIC
+configuration.
+
+% CONFIG_TOOL_GET_JSON_CONFIG Starting to download the JSON configuration
+This message is issued as the the Kea Config Tool starts to download the JSON
+configuration.
+
+% CONFIG_TOOL_UPDATE_SHARDS_CONFIG Starting to update the configuration of the provided shards
+This message is issued as the the Kea config tool starts to update the
+JSON and GENERIC configuration into the provided shards databases.
+
+% CONFIG_TOOL_UPDATE_CONFIG Starting to update the shard '%1' configuration into database
+This message is issued as the the Kea config tool starts to update the
+JSON and GENERIC configuration into database.
+
+% CONFIG_TOOL_RUN_KEAADMIN Starting to run the kea-admin script
+This message is issued as the the Kea config tool starts to execute the kea-admin
+script in order to initialize de database backend.
+
+% CONFIG_TOOL_TERMINATE KEA Config Tool finished processing, exiting with code %1
+This message is issued when the KEA Config Tool process completes. It indicates
+if the process was successful or not and that it has finished.
+
+% CONFIG_TOOL_MASTER_UPDATE_SERVERS Starting to update the servers configuration on the master database
+This message is issued as the the Kea config tool starts to update the
+master database configuration with the specified servers.
+
+% CONFIG_TOOL_MASTER_GET_SERVERS Starting to obtain the servers configuration from the master database
+This message is issued as the the Kea config tool starts to retrieve the
+master database servers configuration for all or the specified shards
+

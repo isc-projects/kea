@@ -339,6 +339,6 @@ private:
 std::ostream&
 operator<<(std::ostream& os, const IOAddress& address);
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 #endif // IO_ADDRESS_H

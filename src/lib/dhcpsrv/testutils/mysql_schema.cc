@@ -35,6 +35,7 @@ void destroyMySQLSchema(bool show_err) {
 
 void createMySQLSchema(bool show_err) {
     runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql", show_err);
+    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/configdb_create.mysql", show_err);
 }
 
 void runMySQLScript(const std::string& path, const std::string& script_name,

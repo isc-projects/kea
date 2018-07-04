@@ -36,7 +36,7 @@ const uint32_t MAX_LEASE_ERRORS = 100;
 /// Kea installation directory.
 const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 
-} // end of anonymous namespace
+}  // namespace
 
 using namespace isc::util;
 
@@ -1218,6 +1218,12 @@ Memfile_LeaseMgr::getDescription() const {
     return (std::string("In memory database with leases stored in a CSV file."));
 }
 
+bool
+Memfile_LeaseMgr::startTransaction() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_BEGIN_TRANSACTION);
+    return true;
+}
+
 void
 Memfile_LeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_COMMIT);
@@ -1582,6 +1588,6 @@ size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
     return (num);
 }
 
+}  // namespace dhcp
+}  // namespace isc
 
-} // end of namespace isc::dhcp
-} // end of namespace isc

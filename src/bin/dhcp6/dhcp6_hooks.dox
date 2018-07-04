@@ -327,7 +327,7 @@ to the end of this list.
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when server's response
-   is about to be send back to the client. The sole argument "response6"
+   is about to be sent back to the client. The sole argument "response6"
    contains a pointer to an @c isc::dhcp::Pkt6 object that contains the
    packet, with set source and destination addresses, interface over which
    it will be send, list of all options and relay information.  All fields
@@ -350,7 +350,7 @@ to the end of this list.
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when server's response is
-   assembled into binary form and is about to be send back to the
+   assembled into binary form and is about to be sent back to the
    client. The sole argument "response6" contains a pointer to an
    @c isc::dhcp::Pkt6 object that contains the packet, with set source and
    destination addresses, interface over which it will be sent, list of

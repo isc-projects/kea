@@ -165,6 +165,15 @@ CqlConnection::openDatabase() {
         // No tcp-nodelay. Fine, we'll use the default false.
     }
 
+    const char* max_statement_tries = NULL;
+    std::string smax_statement_tries;
+    try {
+        smax_statement_tries = getParameter("max-statement-tries");
+        max_statement_tries = smax_statement_tries.c_str();
+    } catch (...) {
+        // No max statement tries. Fine, we'll use the default 1.
+    }
+
     cluster_ = cass_cluster_new();
     cass_cluster_set_contact_points(cluster_, contact_points);
 
@@ -284,6 +293,27 @@ CqlConnection::openDatabase() {
 
     session_ = cass_session_new();
 
+    if (max_statement_tries) {
+        int32_t max_statement_tries_number;
+        try {
+            max_statement_tries_number =
+                boost::lexical_cast<int32_t>(max_statement_tries);
+            if (max_statement_tries_number < 0) {
+                isc_throw(DbOperationError,
+                          "CqlConnection::openDatabase(): invalid reconnect "
+                          "wait time, expected positive number, instead got "
+                              << max_statement_tries);
+            }
+        } catch (const boost::bad_lexical_cast& ex) {
+            isc_throw(DbOperationError,
+                      "CqlConnection::openDatabase(): "
+                      "invalid reconnect wait time, expected "
+                      "castable to int, instead got \""
+                          << max_statement_tries << "\", " << ex.what());
+        }
+        max_statement_tries_ = max_statement_tries_number;
+    }
+
     CassFuture* connect_future =
         cass_session_connect_keyspace(session_, cluster_, keyspace);
     cass_future_wait(connect_future);
@@ -381,7 +411,7 @@ CqlConnection::checkFutureError(const std::string& what,
         stream << "Session action ";
     }
     if (cass_error == CASS_OK) {
-        stream << " executed succesfully.";
+        stream << " executed successfully.";
     } else {
         stream << " failed, Kea error: " << what
                << ", Cassandra error code: " << cass_error_desc(cass_error)

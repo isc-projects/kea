@@ -851,6 +851,6 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     }
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

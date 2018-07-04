@@ -562,6 +562,6 @@ Pkt4::isRelayed() const {
     return (!giaddr_.isV4Zero() && !giaddr_.isV4Bcast());
 }
 
-} // end of namespace isc::dhcp
+}  // namespace dhcp
 
-} // end of namespace isc
+}  // namespace isc

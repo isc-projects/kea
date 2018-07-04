@@ -14,6 +14,8 @@
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcpsrv/srv_config_mgr_factory.h>
+#include <dhcpsrv/srv_config_master_mgr_factory.h>
 
 namespace isc {
 namespace dhcp {
@@ -31,7 +33,7 @@ public:
     ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief Destructor.
-    ~ControlledDhcpv4Srv();
+    virtual ~ControlledDhcpv4Srv();
 
     /// @brief Initializes the server.
     ///
@@ -41,12 +43,12 @@ public:
     /// This method may throw if initialization fails.
     void init(const std::string& config_file);
 
-    /// @brief Loads specific config file
+    /// @brief Loads specific configuration file
     ///
     /// This utility method is called whenever we know a filename of the config
     /// and need to load it. It calls config-set command once the content of
     /// the file has been loaded and verified to be a sane JSON configuration.
-    /// config-set handler will process the config file (load it as current
+    /// config-set handler will process the config file (apply it as current
     /// configuration).
     ///
     /// @param file_name name of the file to be loaded
@@ -119,12 +121,44 @@ public:
         return (server_);
     }
 
-
 private:
+    /// @brief Retrieves the server configuration information from the master database.
+    ///
+    /// Retrieves the server configuration information from the master database.
+    /// The information contains server specific settings and the shard credentials
+    /// where resides the rest of the configuration (common configuration for all servers)
+    ///
+    ///
+    /// @param dhcp4_config On input contains the current dhcp4 configuration in json format.
+    /// On output contains the new configuration read from database (also in json format)
+    ///
+    /// @return answer that contains result of the reconfiguration.
+    /// @throw Dhcp4ConfigError if trying to create a parser for NULL config.
+    static isc::data::ConstElementPtr
+    readDhcpv4SrvConfigFromMasterDatabase(isc::data::ElementPtr& db_local_config,
+                                          data::ElementPtr& db_logging,
+                                          SrvConfigMasterInfoPtr& configData);
+
+    /// @brief Retrieves the server configuration information from database
+    /// and updates the current configuration.
+    ///
+    /// Retrieves the server configuration information from database
+    /// and replaces the current configuration received as paramater with the
+    /// new one.
+    ///
+    ///
+    /// @param db_config On input contains the current dhcp4 configuration in json format.
+    /// On output contains the new configuration read from database (also in json format)
+    ///
+    /// @return answer that contains result of the reconfiguration.
+    /// @throw Dhcp4ConfigError if trying to create a parser for NULL config.
+    static isc::data::ConstElementPtr
+    readDhcpv4SrvConfigFromDatabase(isc::data::ElementPtr& db_config);
+
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
-    /// This static callback method is called from IfaceMgr::receive6() method,
+    /// This static callback method is called from IfaceMgr::receive4() method,
     /// when there is a new command or configuration sent over control socket
     /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);
@@ -245,7 +279,6 @@ private:
     commandDhcpEnableHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
-
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
@@ -361,7 +394,7 @@ private:
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
-    /// the server
+    /// the server. Some of them need to be static methods.
     static ControlledDhcpv4Srv* server_;
 
     /// @brief IOService object, used for all ASIO operations.
@@ -374,7 +407,7 @@ private:
     TimerMgrPtr timer_mgr_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

@@ -1,0 +1,280 @@
+<!-- Converted by db4-upgrade version 1.0 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config-tool"><info><title>Kea Config Tool</title></info>
+
+    <para>Kea Configuration Tool is a tool used by system administrators to
+    initialize and maintain Kea server configuration when the server uses
+    database backend for leases, reservations and stateless configuration.
+    </para>
+
+    <para>The tool can be used to manage both DHCPv4 and DHCPv6 server
+    configurations.</para>
+
+    <para>The executable file's name is <command>kea-config-tool</command>.
+    </para>
+
+    <para>The dependencies are statically linked so no Kea libraries are
+    required in order to run it.</para>
+
+<section xml:id="kea-config-tool-usage"><info><title>Usage</title></info>
+
+
+    <para>There are three types of commands supported by the tool:
+        <itemizedlist>
+            <listitem><command>-dbinit</command>:
+                Database initialization</listitem>
+            <listitem><command>-shard</command>:
+                Operations with shards databases</listitem>
+            <listitem><command>-master</command>:
+                Operations with the master database</listitem>
+        </itemizedlist>
+    </para>
+
+    <section xml:id="dbinit-command"><info><title><command>-dbinit</command> command</title></info>
+
+
+        <para>The <command>-dbinit</command> command is a wrapper for <command>
+        kea-admin</command>. When passed as argument to <command>
+        kea-config-tool</command>, it executes the <command>kea-admin</command>
+        and returns it’s exit status.</para>
+
+        <para> It can be used to create and delete databases, intialize tables
+        that store leases, hosts, reservations or any other usual Kea table.
+        Also, this supports creation of server configuration tables in shard
+        databases and master database.</para>
+    </section>
+
+    <section xml:id="shard-command"><info><title><command>-shard</command> command</title></info>
+
+
+        <para>This command is able to write server configuration data into
+        shards and save server configuration data from shards.</para>
+
+        <section xml:id="shard-command-format"><info><title>Command format</title></info>
+
+            <para>To write the provided server configuration into shards:
+            <command>-shard -set-config -4|-6 master-config-file
+            input-shards-directory-path [list-of-shards]</command></para>
+            <para>To retrieve server configuration from shards and writes them
+            locally: <command>-shard -get-config -4|-6 master-config-file
+            output-shards-directory-path list-of-shards</command></para>
+        </section>
+
+        <section xml:id="shard-command-options"><info><title>Command options</title></info>
+
+            <itemizedlist>
+                <listitem><command>-4|-6</command>: specifies if the operation
+                applies either to the DHCPv4 server or to the DHCPv6 server
+                </listitem>
+                <listitem><para><command>master-config-file</command>:
+                configuration file which provides backend credentials to the
+                master database.</para>
+                <para>The following is a DHCPv4 configuration example:</para>
+<screen>
+{
+  "Dhcp4": {
+    "configuration-type": "database",
+    "master-database": {
+      "type": "cql",
+      "keyspace": "kea_master",
+      "contact-points": "127.0.0.1",
+      "max-statement-tries": 1,
+      "name": "keatest",
+      "user": "keatest",
+      "password": "keatest",
+      "port": "9042"
+    }
+  }
+}
+</screen>
+                <para>And a DHCPv6 configuration example:</para>
+<screen>
+{
+  "Dhcp6": {
+    "configuration-type": "database",
+    "master-database": {
+      "type": "cql",
+      "keyspace": "kea_master",
+      "contact-points": "127.0.0.1",
+      "max-statement-tries": 1,
+      "name": "keatest",
+      "user": "keatest",
+      "password": "keatest",
+      "port": "9042"
+    }
+  }
+}
+</screen>
+                </listitem>
+                <listitem><command>input-shards-directory-path</command>: the path
+                to the shards configuration directory. The directory must
+                contain one directory for each shard database. It is mandatory
+                that the shard directory has the same name as the shard
+                database. The directory should contain the following shard
+                configuration files: <emphasis>config.json</emphasis>,
+                <emphasis>config.generic</emphasis>, <emphasis>config.timestamp
+                </emphasis>. The <emphasis>config.json</emphasis> file contains
+                the JSON server configuration data and is required by the Kea
+                server. The <emphasis>config.generic</emphasis> file may contain
+                generic data (i.e. YAML or other format) used by system
+                administrators to generate the JSON configuration data. The
+                <emphasis>config.timestamp</emphasis> file contains the
+                timestamp of the database record. If the <emphasis>
+                config.timestamp</emphasis> file is missing then the timestamp
+                of the configuration is considered zero.</listitem>
+                <listitem><command>output-shards-directory-path</command>: the path
+                where the shards configuration files will be stored. A directory
+                structure containing shard settings is created.</listitem>
+                <listitem><command>list-of-shards</command>: comma-separated
+                shards' names for which the command is applied (for the case
+                when <command>list-of-shards</command> is optional and no value
+                is provided then the command is executed for all found shards).
+                </listitem>
+            </itemizedlist>
+        </section>
+    </section>
+
+    <section xml:id="master-command"><info><title><command>-master</command> command</title></info>
+
+
+        <para>This command is able to write server configuration data into the
+        master database and save server configuration data from the master
+        database.</para>
+
+        <section xml:id="master-command-format"><info><title>Command format</title></info>
+
+
+            <para>To write the provided server configuration into shards:
+            <command>-master -set-servers -4|-6 master-config-file
+            input-shards-directory-path [list-of-shards]</command></para>
+            <para>To retrieve server configuration locally from shards:
+            <command>-master -get-servers -4|-6 master-config-file
+            output-shards-directory-path list-of-shards</command></para>
+        </section>
+
+        <section xml:id="master-command-options"><info><title>Command options</title></info>
+
+            <itemizedlist>
+                <listitem><command>-4|-6</command>: specifies if the operation
+                applies either to the DHCPv4 server or to the DHCPv6 server
+                </listitem>
+                <listitem><command>master-config-file</command>: configuration
+                file which provides backend credentials to the master database.
+                <para>The following is a DHCPv4 configuration example:</para>
+<screen>
+{
+  "Dhcp4": {
+    "configuration-type": "database",
+    "master-database": {
+      "type": "cql",
+      "keyspace": "kea_master",
+      "contact-points": "127.0.0.1",
+      "max-statement-tries": 1,
+      "name": "keatest",
+      "user": "keatest",
+      "password": "keatest",
+      "port": "9042"
+    }
+  }
+}
+</screen>
+                <para>And a DHCPv6 configuration example:</para>
+<screen>
+{
+  "Dhcp6": {
+    "configuration-type": "database",
+    "master-database": {
+      "type": "cql",
+      "keyspace": "kea_master",
+      "contact-points": "127.0.0.1",
+      "max-statement-tries": 1,
+      "name": "keatest",
+      "user": "keatest",
+      "password": "keatest",
+      "port": "9042"
+    }
+  }
+}
+</screen>
+                </listitem>
+                <listitem><command>input-shards-directory-path</command>: the path
+                to the shards configuration directory. The directory must
+                contain one directory for each shard database. It is mandatory
+                that the shard directory has the same name as the shard
+                database. The directory should contain the following shard
+                configuration files: <emphasis>config.json</emphasis>,
+                <emphasis>config.generic</emphasis>, <emphasis>config.timestamp
+                </emphasis>. The <emphasis>config.json</emphasis> file contains
+                the JSON server configuration data and is required by the Kea
+                server. The <emphasis>config.generic</emphasis> file may contain
+                generic data (i.e. YAML or other format) used by system
+                administrators to generate the JSON configuration data. The
+                <emphasis>config.timestamp</emphasis> file contains the
+                timestamp of the database record. If the <emphasis>
+                config.timestamp</emphasis> file is missing then the timestamp
+                of the configuration is considered zero.</listitem>
+                <listitem><command>output-shards-directory-path</command>: the path
+                where the shards configuration files will be stored. A directory
+                structure containing shard settings is created.</listitem>
+                <listitem><command>list-of-shards</command>: comma-separated
+                shards' names for which the command is applied (for the case
+                when <command>list-of-shards</command> is optional and no value
+                is provided then the command is executed for all found shards).
+                </listitem>
+            </itemizedlist>
+        </section>
+    </section>
+</section>
+<section xml:id="kea-config-tool-build-tutorial"><info><title>Building with DataStax Cassandra C++ Driver</title></info>
+
+        <para>Package dependencies:
+            <itemizedlist>
+                <listitem>autoconf</listitem>
+                <listitem>automake</listitem>
+                <listitem>autotools-dev</listitem>
+                <listitem>g++</listitem>
+                <listitem>libboost-system-dev</listitem>
+                <listitem>liblog4cplus</listitem>
+                <listitem>libtool</listitem>
+                <listitem>libuv0</listitem>
+                <listitem>libuv-dev</listitem>
+                <listitem>m4</listitem>
+                <listitem>make</listitem>
+                <listitem>python-support</listitem>
+            </itemizedlist>
+        </para>
+
+        <para>Get the sources from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="">
+            https://gitlab.qualitance.com/terastream/dhcp/tree/kea-datastax
+        </link> into <command><userinput>/path/to/kea/sources</userinput>
+        </command>.</para>
+
+        <para>Download <command>datastax_scripts.tar</command>.</para>
+
+        <para>Untar <command>datastax_scripts.tar</command>:
+            <command>tar -fvxz datastax_scripts.tar</command></para>
+
+        <para>Download the DataStax C++ driver from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="">
+            https://github.com/datastax/cpp-driver</link>.</para>
+
+        <para>Set the path to the DataStax cpp driver in <command>
+            datastax_cassandra_config_defines.sh</command> configuration file:
+        <command>DSC_PATH="<userinput>/path/to/datastax/cpp/driver</userinput>"
+        </command></para>
+
+        <para>Run build and install commands:
+            <itemizedlist>
+                <listitem><command>mkdir /usr/kea</command></listitem>
+                <listitem><command>cd <userinput>/path/to/kea/sources
+                </userinput></command></listitem>
+                <listitem><command>autoreconf --install</command></listitem>
+                <listitem><command>./configure --enable-static-link
+                --enable-static
+                --with-cql=/path/to/datastax/script/directory/datastax_cassandra_config.sh
+                --prefix=/usr/kea</command></listitem>
+                <listitem><command>make</command></listitem>
+                <listitem><command>sudo make install</command></listitem>
+            </itemizedlist>
+        </para>
+    </section>
+
+</chapter>

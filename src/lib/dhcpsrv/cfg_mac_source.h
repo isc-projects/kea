@@ -80,7 +80,7 @@ class CfgMACSource : public isc::data::CfgToElement {
 
 };
 
-};
-};
+}
+}
 
 #endif

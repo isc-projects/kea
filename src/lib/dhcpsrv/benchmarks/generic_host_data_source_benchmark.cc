@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
 //

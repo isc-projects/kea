@@ -427,7 +427,7 @@ const char* NETWORKS_CONFIG[] = {
     "        }"
     "    ],"
     "    \"subnet6\": ["
-    "        \{"
+    "        {"
     "            \"subnet\": \"3000::/96\","
     "            \"id\": 1000,"
     "            \"interface\": \"eth0\","

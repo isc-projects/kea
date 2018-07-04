@@ -183,7 +183,7 @@ private:
     uint32_t enterprise_number_; ///< IANA assigned enterprise number.
 };
 
-} // namespace isc::dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // OPTION_SPACE_H

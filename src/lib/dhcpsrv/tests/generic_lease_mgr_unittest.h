@@ -67,7 +67,8 @@ public:
     ///
     /// @param address Address to use for the initialization
     ///
-    /// @return Lease6Ptr.  This will not point to anything if the initialization
+    /// @return Lease6Ptr.  This will not point to anything if the
+    /// initialization
     ///         failed (e.g. unknown address).
     Lease6Ptr initializeLease6(std::string address);
 
@@ -211,8 +212,9 @@ public:
 
     /// @brief Basic Lease4 Checks
     ///
-    /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-    /// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+    /// Checks that the addLease, getLease4(by address),
+    /// getLease4(hwaddr,subnet_id), updateLease4() and
+    /// deleteLease can handle NULL client-id.
     /// (client-id is optional and may not be present)
     ///
     /// @todo: check if it does overlap with @ref testGetLease4NullClientId()
@@ -227,14 +229,15 @@ public:
 
     /// @brief Basic Lease6 Checks
     ///
-    /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
-    /// IPv6 address) works.
+    /// Checks that the addLease, getLease6 (by address) and deleteLease (with
+    ///     an IPv6 address) works.
     void testBasicLease6();
 
     /// @brief Checks that invalid dates are safely handled.
     void testMaxDate6();
 
-    /// @brief Checks that Lease6 can be stored with and without a hardware address.
+    /// @brief Checks that Lease6 can be stored with and without a hardware
+    ///     address.
     void testLease6MAC();
 
     /// @brief Checks that Lease6 stores hardware type and hardware source.
@@ -333,7 +336,8 @@ public:
     /// - reclaimed leases are not returned.
     void testGetExpiredLeases6();
 
-    /// @brief Checks that declined IPv4 leases that have expired can be retrieved.
+    /// @brief Checks that declined IPv4 leases that have expired can be
+    ///     retrieved.
     ///
     /// This test checks that the following:
     /// - all expired and not reclaimed leases are returned, regardless if
@@ -343,7 +347,8 @@ public:
     ///   expired
     void testGetDeclinedLeases4();
 
-    /// @brief Checks that declined IPv6 leases that have expired can be retrieved.
+    /// @brief Checks that declined IPv6 leases that have expired can be
+    ///     retrieved.
     ///
     /// This test checks that the following:
     /// - all expired and not reclaimed leases are returned, regardless if
@@ -354,7 +359,7 @@ public:
     void testGetDeclinedLeases6();
 
     /// @brief Checks that selected expired-reclaimed IPv6 leases
-    /// are removed.
+    ///     are removed.
     ///
     /// This creates a number of DHCPv6 leases and marks some of them
     /// as expired-reclaimed. It later verifies that the expired-reclaimed
@@ -362,7 +367,7 @@ public:
     void testDeleteExpiredReclaimedLeases6();
 
     /// @brief Checks that selected expired-reclaimed IPv4 leases
-    /// are removed.
+    ///     are removed.
     ///
     /// This creates a number of DHCPv4 leases and marks some of them
     /// as expired-reclaimed. It later verifies that the expired-reclaimed
@@ -427,13 +432,13 @@ public:
     void checkQueryAgainstRowSet(const LeaseStatsQueryPtr& qry, const RowSet& row_set);
 
     /// @brief String forms of IPv4 addresses
-    std::vector<std::string>  straddress4_;
+    std::vector<std::string> straddress4_;
 
     /// @brief IOAddress forms of IPv4 addresses
     std::vector<isc::asiolink::IOAddress> ioaddress4_;
 
     /// @brief String forms of IPv6 addresses
-    std::vector<std::string>  straddress6_;
+    std::vector<std::string> straddress6_;
 
     /// @brief Types of IPv6 Leases
     std::vector<Lease::Type> leasetype6_;
@@ -483,7 +488,7 @@ public:
 
     /// @brief Verifies open failures do NOT invoke db lost callback
     ///
-    /// The db lost callback should only be invoked after succesfully
+    /// The db lost callback should only be invoked after successfully
     /// opening the DB and then subsequently losing it. Failing to
     /// open should be handled directly by the application layer.
     void testNoCallbackOnOpenFailure();
@@ -510,8 +515,8 @@ public:
 
 };
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

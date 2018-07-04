@@ -1,4 +1,4 @@
--- Copyright (C) 2015-2017 Deutsche Telekom AG.
+-- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -46,3 +46,8 @@ DROP INDEX IF EXISTS host_reservationsindex4;
 DROP INDEX IF EXISTS host_reservationsindex5;
 DROP INDEX IF EXISTS host_reservationsindex6;
 DROP INDEX IF EXISTS host_reservationsindex7;
+
+DROP TABLE IF EXISTS server_configuration4;
+DROP TABLE IF EXISTS server_configuration6;
+DROP TABLE IF EXISTS config_schema_version;
+DROP TABLE IF EXISTS master_schema_version;

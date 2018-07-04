@@ -133,7 +133,7 @@ TEST_F(AllocEngine6Test, pdFakeAlloc6) {
 
     // We should not have bumped the assigned counter
     EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
-};
+}
 
 // This test checks if the allocation with a hint that is valid (in range,
 // in pool and free) can succeed
@@ -2717,6 +2717,6 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
     EXPECT_TRUE(leases.empty());
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

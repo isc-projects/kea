@@ -14,6 +14,15 @@
 namespace isc {
 namespace dhcp {
 
+const int DBG_DHCP6_START = isc::log::DBGLVL_START_SHUT;
+const int DBG_DHCP6_SHUT = isc::log::DBGLVL_START_SHUT;
+const int DBG_DHCP6_COMMAND = isc::log::DBGLVL_COMMAND;
+const int DBG_DHCP6_BASIC = isc::log::DBGLVL_TRACE_BASIC;
+const int DBG_DHCP6_HOOKS = isc::log::DBGLVL_TRACE_BASIC;
+const int DBG_DHCP6_BASIC_DATA = isc::log::DBGLVL_TRACE_BASIC_DATA;
+const int DBG_DHCP6_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+const int DBG_DHCP6_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+
 const char* DHCP6_ROOT_LOGGER_NAME = "kea-dhcp6";
 const char* DHCP6_APP_LOGGER_NAME = "dhcp6";
 const char* DHCP6_BAD_PACKET_LOGGER_NAME = "bad-packets";
@@ -29,6 +38,6 @@ isc::log::Logger options6_logger(DHCP6_OPTIONS_LOGGER_NAME);
 isc::log::Logger ddns6_logger(DHCP6_DDNS_LOGGER_NAME);
 isc::log::Logger lease6_logger(DHCP6_LEASE_LOGGER_NAME);
 
-} // namespace dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 

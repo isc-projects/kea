@@ -1,0 +1,36 @@
+#  -----------------------------------------------------
+#  Table `server_configuration4`
+#  -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS server_configuration4 (
+  instance_id VARCHAR(128) NOT NULL,
+  timestamp TIMESTAMP NOT NULL,
+  server_config TEXT NOT NULL,
+  config_database TEXT NOT NULL,
+  config_database_name VARCHAR(128) NOT NULL,
+  PRIMARY KEY (instance_id),
+  KEY `idx_server_configuration4_config_database_name` (`config_database_name`)
+) ENGINE=InnoDB;
+
+#  -----------------------------------------------------
+#  Table `server_configuration6`
+#  -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS server_configuration6 (
+  instance_id VARCHAR(128) NOT NULL,
+  timestamp TIMESTAMP NOT NULL,
+  server_config TEXT NOT NULL,
+  config_database TEXT NOT NULL,
+  config_database_name VARCHAR(128) NOT NULL,
+  PRIMARY KEY (instance_id),
+  KEY `idx_server_configuration6_config_database_name` (`config_database_name`)
+) ENGINE=InnoDB;
+
+# Finally, the version of the schema.  We start at 1.0 during development.
+# This table is only modified during schema upgrades.  For historical reasons
+# (related to the names of the columns in the BIND 10 DNS database file), the
+# first column is called "version" and not "major".
+CREATE TABLE IF NOT EXISTS master_schema_version (
+  version int,
+  minor int,
+  PRIMARY KEY (version)
+);
+INSERT INTO master_schema_version (version, minor) VALUES (1, 0);

@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -20,6 +20,7 @@
 #include <dhcpsrv/benchmarks/generic_host_data_source_benchmark.h>
 #include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <iostream>
 
@@ -41,13 +42,13 @@ public:
         destroyMySQLSchema(false);
         createMySQLSchema(false);
         try {
-            HostDataSourceFactory::destroy();
-            HostDataSourceFactory::create(validMySQLConnectionString());
+            HostMgr::delBackend("mysql");
+            HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             cerr << "ERROR: unable to open database" << endl;
             throw;
         }
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief Cleans up after the test.
@@ -59,7 +60,7 @@ public:
                     " is opened in read-only mode, continuing..."
                  << endl;
         }
-        HostDataSourceFactory::destroy();
+        HostMgr::delBackend("mysql");
         destroyMySQLSchema(false);
     }
 };

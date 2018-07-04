@@ -2156,4 +2156,4 @@ TEST_F(LibDhcpTest, sw46options) {
     EXPECT_EQ("type=00093, len=00004: 8 (uint8) len=6,psid=63 (psid)", portparam->toText());
 }
 
-} // end of anonymous space
+}  // end of anonymous space

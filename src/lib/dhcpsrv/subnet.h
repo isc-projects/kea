@@ -787,7 +787,7 @@ typedef boost::multi_index_container<
 
 //@}
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // SUBNET_H

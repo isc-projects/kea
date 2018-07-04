@@ -403,5 +403,5 @@ CfgSubnets4::toElement() const {
     return (result);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // namespace isc

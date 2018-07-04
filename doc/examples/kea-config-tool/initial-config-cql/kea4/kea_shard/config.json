@@ -1,0 +1,35 @@
+{
+  "Dhcp4": {
+    "lease-database": {
+      "contact-points": "127.0.0.1",
+      "keyspace": "kea_shard",
+      "max-statement-tries": 1,
+      "password": "keatest",
+      "type": "cql",
+      "user": "keatest"
+    },
+    "expired-leases-processing": {
+      "flush-reclaimed-timer-wait-time": 25,
+      "hold-reclaimed-time": 3600,
+      "max-reclaim-leases": 100,
+      "max-reclaim-time": 250,
+      "reclaim-timer-wait-time": 10,
+      "unwarned-reclaim-cycles": 5
+    },
+    "valid-lifetime": 40,
+    "renew-timer": 10,
+    "subnet4": [
+      {
+        "subnet": "192.0.2.0/24",
+        "pools": [
+          {
+            "pool": "192.0.2.16 - 192.0.2.128"
+          }
+        ],
+        "relay": {
+          "ip-address": "192.0.2.1"
+        }
+      }
+    ]
+  }
+}

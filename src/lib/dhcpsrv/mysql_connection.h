@@ -436,7 +436,7 @@ public:
     MySqlHolder mysql_;
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // MYSQL_CONNECTION_H

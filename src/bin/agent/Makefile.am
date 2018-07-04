@@ -19,7 +19,7 @@ EXTRA_DIST += agent.dox agent_hooks.dox
 if GENERATE_DOCS
 kea-ctrl-agent.8: kea-ctrl-agent.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-ctrl-agent.xml
 
 else
@@ -109,6 +109,7 @@ parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_pa
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
 	$(YACC) --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
+	$(YACC) --graph --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
 
 agent_lexer.cc: agent_lexer.ll
 	$(LEX) --prefix agent_ -o agent_lexer.cc agent_lexer.ll

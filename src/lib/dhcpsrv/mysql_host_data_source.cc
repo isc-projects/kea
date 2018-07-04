@@ -9,12 +9,11 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <util/buffer.h>
 #include <util/optional_value.h>
 
@@ -27,8 +26,9 @@
 #include <mysql.h>
 #include <mysqld_error.h>
 
-#include <stdint.h>
+#include <list>
 #include <string>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -1883,7 +1883,7 @@ private:
     MYSQL_BIND bind_[OPTION_COLUMNS];
 };
 
-} // end of anonymous namespace
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -1945,7 +1945,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
-    std::pair<uint32_t, uint32_t> getVersion() const;
+    VersionPair getVersion() const;
 
     /// @brief Executes statements which inserts a row into one of the tables.
     ///
@@ -2232,7 +2232,6 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-
                 "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context, "
@@ -2279,11 +2278,11 @@ TaggedStatementArray tagged_statements = { {
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
 
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
-     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
+     "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type = ? "
      "AND dhcp_identifier = ?"},
 
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
-     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
+     "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type = ? "
      "AND dhcp_identifier = ?"}
 
     }
@@ -2362,7 +2361,7 @@ MySqlHostDataSourceImpl::~MySqlHostDataSourceImpl() {
     // closed in the destructor of the mysql_ member variable.
 }
 
-std::pair<uint32_t, uint32_t>
+VersionPair
 MySqlHostDataSourceImpl::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
@@ -2973,7 +2972,8 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
 
 // Miscellaneous database methods.
 
-std::string MySqlHostDataSource::getName() const {
+std::string
+MySqlHostDataSource::getName() const {
     std::string name = "";
     try {
         name = impl_->conn_.getParameter("name");
@@ -2983,12 +2983,14 @@ std::string MySqlHostDataSource::getName() const {
     return (name);
 }
 
-std::string MySqlHostDataSource::getDescription() const {
+std::string
+MySqlHostDataSource::getDescription() const {
     return (std::string("Host data source that stores host information"
                         "in MySQL database"));
 }
 
-std::pair<uint32_t, uint32_t> MySqlHostDataSource::getVersion() const {
+VersionPair
+MySqlHostDataSource::getVersion() const {
     return(impl_->getVersion());
 }
 
@@ -3006,5 +3008,19 @@ MySqlHostDataSource::rollback() {
     impl_->conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+void
+MySqlHostDataSource::syncReservations() {
+    HostCollection hosts =
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->getAll();
+    for (HostCollection::const_iterator it = hosts.begin();
+        it != hosts.end(); ++it) {
+        try {
+            add(*it);
+        } catch(const DuplicateEntry& exception) {
+            // Don't insert duplicates.
+        }
+    }
+}
+
+}  // namespace dhcp
+}  // namespace isc

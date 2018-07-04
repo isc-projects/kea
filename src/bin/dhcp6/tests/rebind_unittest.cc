@@ -473,6 +473,7 @@ TEST_F(RebindTest, directClientLostLease) {
     // The lease has been acquired. Now, let's explicitly remove it from the
     // lease database.
     LeaseMgrFactory::instance().deleteLease(lease_client.addr_);
+
     // Send Rebind.
     ASSERT_NO_THROW(client.doRebind());
 
@@ -1144,5 +1145,4 @@ TEST_F(RebindTest, optionsInheritance) {
     ASSERT_TRUE(client.hasOptionWithAddress(D6O_SNTP_SERVERS, "3000:2::2"));
 }
 
-
-} // end of anonymous namespace
+}  // namespace

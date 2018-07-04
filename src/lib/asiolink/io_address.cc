@@ -173,5 +173,5 @@ IOAddress::increase(const IOAddress& addr) {
 }
 
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc

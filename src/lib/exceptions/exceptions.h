@@ -13,6 +13,28 @@
 
 namespace isc {
 
+class TransactionException : public std::exception {
+public:
+    TransactionException(const char* file, size_t line, const char* what) :
+        file_(file), line_(line), what_(what) {}
+    virtual ~TransactionException() throw() {}
+private:
+    void operator=(const TransactionException& src);
+public:
+    virtual const char* what() const throw() {
+        const char* whatstr = "Transaction Exception";
+        try {
+            whatstr = what_.c_str();
+        } catch (...) {
+        }
+        return (whatstr);
+    }
+private:
+    const char* const file_;
+    size_t line_;
+    const std::string what_;
+};
+
 ///
 /// This is a base class for exceptions thrown from the DNS library module.
 /// Normally, the exceptions are thrown via a convenient shortcut macro,

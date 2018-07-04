@@ -296,9 +296,15 @@ public:
     }
 
     /// @brief Returns backend version.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
+    virtual VersionPair getVersion() const {
         return (make_pair(uint32_t(0), uint32_t(0)));
     }
+
+    /// @brief Start Transaction
+    ///
+    /// Start transaction for database operations. On databases that don't
+    /// support transactions, this is a no-op.
+    virtual bool startTransaction() {return true;};
 
     /// @brief Commit transactions
     virtual void commit() {
@@ -413,4 +419,4 @@ TEST (LeaseStatsQueryTest, subnetRangeCtor) {
 // are purely virtual, so we would only call ConcreteLeaseMgr methods.
 // Those methods are just stubs that do not return anything.
 
-}; // end of anonymous namespace
+}  // namespace

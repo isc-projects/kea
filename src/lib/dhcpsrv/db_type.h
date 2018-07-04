@@ -13,7 +13,9 @@ namespace dhcp {
 /// @brief Specifies the database type.
 enum class DBType {
     LEASE_DB = 1,
-    HOSTS_DB = 2
+    HOSTS_DB = 2,
+    CONFIG_DB = 3,
+    MASTER_DB = 4
 };
 
 }  // namespace isc

@@ -36,7 +36,7 @@ typedef boost::shared_ptr<HookLibsCollection> HookLibsCollectionPtr;
 /// @brief Extracts library names from full library information structure
 std::vector<std::string> extractNames(const HookLibsCollection& libinfo);
 
-};
-};
+}
+}
 
 #endif

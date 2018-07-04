@@ -20,7 +20,7 @@ class CalloutManager;
 /// Typedef for a callout pointer.  (Callouts must have "C" linkage.)
 extern "C" {
     typedef int (*CalloutPtr)(CalloutHandle&);
-};
+}
 
 /// @brief Library handle
 ///

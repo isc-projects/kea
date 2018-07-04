@@ -25,7 +25,8 @@ const OptionDefParams DOCSIS3_V4_DEFS[] = {
 };
 
 /// Number of option definitions defined.
-const int DOCSIS3_V4_DEFS_SIZE  = sizeof(DOCSIS3_V4_DEFS) / sizeof(OptionDefParams);
+const int DOCSIS3_V4_DEFS_SIZE =
+    sizeof(DOCSIS3_V4_DEFS) / sizeof(DOCSIS3_V4_DEFS[0]);
 
 /// @todo define remaining docsis3 v6 codes
 #define DOCSIS3_V6_ORO 1
@@ -65,7 +66,7 @@ const int DOCSIS3_V6_DEFS_SIZE =
 extern const char* DOCSIS3_CLASS_EROUTER;
 extern const char* DOCSIS3_CLASS_MODEM;
 
-}; // isc::dhcp namespace
-}; // isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DOCSIS3_OPTION_DEFS_H

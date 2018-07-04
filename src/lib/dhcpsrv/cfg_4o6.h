@@ -99,7 +99,7 @@ private:
     OptionPtr interface_id_;
 };
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

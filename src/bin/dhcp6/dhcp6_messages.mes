@@ -827,3 +827,15 @@ such modification. The clients will remember previous server-id, and will
 use it to extend their leases. As a result, they will have to go through
 a rebinding phase to re-acquire their leases and associate them with a
 new server id.
+
+% DHCP6_TRANSACTION_FAILED transaction failed. error: %1
+The transaction failed with the error message.
+
+% DHCP6_FORCE_RELOAD_CONFIGURATION DHCPv6 force configuration reload.
+A force configuration reload event has been initiated.
+
+% DHCP6_SHARD_CONFIGURATION_CHANGED DHCPv6 shard configuration is different.
+A different shard configuration has been detected.
+
+% DHCP6_MASTER_CONFIGURATION_CHANGED DHCPv6 master configuration is different.
+A different master configuration has been detected.

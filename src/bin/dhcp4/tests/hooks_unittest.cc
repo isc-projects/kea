@@ -720,7 +720,7 @@ public:
         std::vector<uint8_t> id_test;
         handle.getArgument("id_value", id_test);
 
-        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f }; // foo
+        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f };  // foo
         handle.setArgument("id_value", id);
         handle.setArgument("id_type", Host::IDENT_FLEX);
 

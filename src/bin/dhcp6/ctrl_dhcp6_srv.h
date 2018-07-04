@@ -14,6 +14,8 @@
 #include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/srv_config_mgr_factory.h>
+#include <dhcpsrv/srv_config_master_mgr_factory.h>
 
 namespace isc {
 namespace dhcp {
@@ -63,7 +65,7 @@ public:
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     void shutdown();
 
-    /// @brief command processor
+    /// @brief Command processor
     ///
     /// This method is uniform for all config backends. It processes received
     /// command (as a string + JSON arguments). Internally, it's just a
@@ -73,9 +75,9 @@ public:
     /// Currently supported commands are:
     /// - config-reload
     /// - config-test
-    /// - leases-reclaim
-    /// - libreload
     /// - shutdown
+    /// - libreload
+    /// - leases-reclaim
     /// ...
     ///
     /// @note It never throws.
@@ -87,7 +89,7 @@ public:
     static isc::data::ConstElementPtr
     processCommand(const std::string& command, isc::data::ConstElementPtr args);
 
-    /// @brief configuration processor
+    /// @brief Configuration processor
     ///
     /// This is a method for handling incoming configuration updates.
     /// This method should be called by all configuration backends when the
@@ -112,7 +114,7 @@ public:
     isc::data::ConstElementPtr
     checkConfig(isc::data::ConstElementPtr new_config);
 
-    /// @brief returns pointer to the sole instance of Dhcpv6Srv
+    /// @brief Returns pointer to the sole instance of Dhcpv6Srv
     ///
     /// @return server instance (may return NULL, if called before server is spawned)
     static ControlledDhcpv6Srv* getInstance() {
@@ -120,6 +122,38 @@ public:
     }
 
 private:
+    /// @brief Retrieves the server configuration information from the master database.
+    ///
+    /// Retrieves the server configuration information from the master database.
+    /// The information contains server specific settings and the shard credentials
+    /// where resides the rest of the configuration (common configuration for all servers)
+    ///
+    ///
+    /// @param dhcp6_config On input contains the current dhcp6 configuration in json format.
+    /// On output contains the new configuration read from database (also in json format)
+    ///
+    /// @return answer that contains result of the reconfiguration.
+    /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
+    static isc::data::ConstElementPtr
+    readDhcpv6SrvConfigFromMasterDatabase(isc::data::ElementPtr& db_local_config,
+                                          data::ElementPtr& db_logging,
+                                          SrvConfigMasterInfoPtr& configData);
+
+    /// @brief Retrieves the server configuration information from database
+    /// and updates the current configuration.
+    ///
+    /// Retrieves the server configuration information from database
+    /// and replaces the current configuration received as paramater with the
+    /// new one.
+    ///
+    ///
+    /// @param db_config On input contains the current dhcp6 configuration in json format.
+    /// On output contains the new configuration read from database (also in json format)
+    ///
+    /// @return answer that contains result of the reconfiguration.
+    /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
+    static isc::data::ConstElementPtr
+    readDhcpv6SrvConfigFromDatabase(isc::data::ElementPtr& db_config);
 
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
@@ -129,7 +163,7 @@ private:
     /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);
 
-    /// @brief handler for processing 'shutdown' command
+    /// @brief Handler for processing 'shutdown' command
     ///
     /// This handler processes shutdown command, which initializes shutdown
     /// procedure.
@@ -141,7 +175,7 @@ private:
     commandShutdownHandler(const std::string& command,
                            isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'libreload' command
+    /// @brief Handler for processing 'libreload' command
     ///
     /// This handler processes libreload command, which unloads all hook
     /// libraries and reloads them.
@@ -154,7 +188,7 @@ private:
     commandLibReloadHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'config-reload' command
+    /// @brief Handler for processing 'config-reload' command
     ///
     /// This handler processes config-reload command, which processes
     /// configuration specified in args parameter.
@@ -307,7 +341,6 @@ private:
                               const bool remove_lease,
                               const uint16_t max_unwarned_cycles);
 
-
     /// @brief Deletes reclaimed leases and reschedules the timer.
     ///
     /// This is a wrapper method for @c AllocEngine::deleteExpiredReclaimed6.
@@ -332,6 +365,7 @@ private:
     ///
     /// If the maximum number of retries has been exhausted an error is logged
     /// and the server shuts down.
+    ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
     ///
@@ -353,6 +387,8 @@ private:
     ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
+    ///
+    /// @return false if reconnect is not configured, true otherwise
     bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Static pointer to the sole instance of the DHCP server.
@@ -371,7 +407,7 @@ private:
     TimerMgrPtr timer_mgr_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

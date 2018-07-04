@@ -778,7 +778,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
             options.insert(std::make_pair(opt_type, opt));
             offset += opt_len;
 
-        } // end of data-chunk
+        }  // end of data-chunk
 
         break; // end of the vendor block.
     }

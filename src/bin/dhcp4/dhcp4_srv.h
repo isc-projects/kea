@@ -29,6 +29,7 @@
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <boost/scoped_ptr.hpp>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in
@@ -281,8 +282,8 @@ public:
     ///
     /// @brief Get UDP port on which server should listen.
     ///
-    /// Typically, server listens on UDP port number 67. Other ports are used
-    /// for testing purposes only.
+    /// Typically, server listens on UDP port 67. Other ports are only
+    /// used for testing purposes.
     ///
     /// @return UDP port on which server should listen.
     uint16_t getPort() const {
@@ -931,7 +932,6 @@ private:
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
 
 protected:
-
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.
     NetworkStatePtr network_state_;
@@ -976,7 +976,7 @@ public:
     static int getHookIndexLease4Decline();
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP4_SRV_H

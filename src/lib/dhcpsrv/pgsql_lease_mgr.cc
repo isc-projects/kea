@@ -250,7 +250,7 @@ PgSqlTaggedStatement tagged_statements[] = {
     { 0, { OID_NONE },
       "all_lease4_stats",
       "SELECT subnet_id, state, leases as state_count"
-      "  FROM lease4_stat ORDER BY subnet_id, state"},
+      "  FROM lease4_stat ORDER BY subnet_id, state" },
 
     // SUBNET_LEASE4_STATS
     { 1, { OID_INT8 },
@@ -258,7 +258,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY state"},
+      "  ORDER BY state" },
 
     // SUBNET_RANGE_LEASE4_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -266,7 +266,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, state"},
+      "  ORDER BY subnet_id, state" },
 
     // ALL_LEASE6_STATS,
     { 0, { OID_NONE },
@@ -1675,7 +1675,7 @@ PgSqlLeaseMgr::getDescription() const {
     return (string("PostgreSQL Database"));
 }
 
-pair<uint32_t, uint32_t>
+VersionPair
 PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
@@ -1688,9 +1688,9 @@ PgSqlLeaseMgr::getVersion() const {
     }
 
     istringstream tmp;
-    uint32_t version;
+    uint32_t major;
     tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
+    tmp >> major;
     tmp.str("");
     tmp.clear();
 
@@ -1698,7 +1698,22 @@ PgSqlLeaseMgr::getVersion() const {
     tmp.str(PQgetvalue(r, 0, 1));
     tmp >> minor;
 
-    return (make_pair(version, minor));
+    return (make_pair(major, minor));
+}
+
+bool
+PgSqlLeaseMgr::startTransaction() {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_BEGIN_TRANSACTION);
+    PGresult* r = PQexec(conn_, "START TRANSACTION");
+    if (PQresultStatus(r) != PGRES_COMMAND_OK) {
+        const char* error_message = PQerrorMessage(conn_);
+        PQclear(r);
+        isc_throw(DbOperationError, "start transaction failed: " << error_message);
+    }
+
+    PQclear(r);
+
+    return true;
 }
 
 void
@@ -1711,5 +1726,5 @@ PgSqlLeaseMgr::rollback() {
     conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

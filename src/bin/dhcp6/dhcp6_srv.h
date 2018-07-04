@@ -28,6 +28,7 @@
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <boost/scoped_ptr.hpp>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in
@@ -50,7 +51,7 @@ public:
 
 /// @brief DHCPv6 server service.
 ///
-/// This class represents DHCPv6 server. It contains all
+/// This singleton class represents DHCPv6 server. It contains all
 /// top-level methods and routines necessary for server operation.
 /// In particular, it instantiates IfaceMgr, loads or generates DUID
 /// that is going to be used as server-identifier, receives incoming
@@ -971,7 +972,7 @@ protected:
 
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP6_SRV_H

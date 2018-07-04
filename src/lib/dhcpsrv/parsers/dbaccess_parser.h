@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/db_type.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
@@ -23,7 +24,7 @@ namespace dhcp {
 /// map under the top-level "lease-database" element, and comprises a map of
 /// strings.
 ///
-/// Only the "type" sub-element is mandatory: the remaining sub-elements 
+/// Only the "type" sub-element is mandatory: the remaining sub-elements
 /// depend on the database chosen.
 class DbAccessParser: public isc::data::SimpleParser {
 public:
@@ -95,8 +96,8 @@ private:
     DBType type_; ///< Database type (leases or hosts)
 };
 
-};  // namespace dhcp
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 
 #endif // DBACCESS_PARSER_H

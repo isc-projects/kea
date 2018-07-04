@@ -113,7 +113,7 @@ OptionCustom::addArrayDataField(const PSIDLen& psid_len, const PSID& psid) {
     checkArrayType();
 
     if (definition_.getType() != OPT_PSID_TYPE) {
-        isc_throw(BadDataTypeCast, "PSID value can be specified onlu for"
+        isc_throw(BadDataTypeCast, "PSID value can be specified only for"
                   " an option comprising an array of PSID length / value"
                   " tuples");
     }

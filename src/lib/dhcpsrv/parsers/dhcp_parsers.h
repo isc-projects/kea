@@ -853,7 +853,7 @@ private:
     getMode(isc::data::ConstElementPtr scope, const std::string& name);
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP_PARSERS_H

@@ -13,8 +13,14 @@
 namespace isc {
 namespace dhcp {
 
+const int DHCPSRV_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+const int DHCPSRV_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+const int DHCPSRV_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+const int DHCPSRV_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+const int DHCPSRV_DBG_HOOKS = isc::log::DBGLVL_TRACE_BASIC;
+
 isc::log::Logger dhcpsrv_logger("dhcpsrv");
 
-} // namespace dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 

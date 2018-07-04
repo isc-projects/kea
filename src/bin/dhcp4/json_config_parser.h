@@ -59,7 +59,33 @@ configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set,
                      bool check_only = false);
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+/// @brief Configures the server identifier.
+///
+/// This function is called every time a new configuration is received.
+///
+/// @return answer that contains result of the reconfiguration.
+isc::data::ConstElementPtr
+configureDhcp4ServerId(data::ConstElementPtr config_set);
+
+/// @brief Configures the location from where the server configuration should be
+/// read
+///
+/// This function is called every time a new configuration is received.
+///
+/// This method does not throw. It catches all exceptions and returns them as
+/// reconfiguration statuses. It may return the following response codes:
+/// 0 - configuration successful
+/// 1 - malformed configuration (parsing failed)
+/// 2 - commit failed (parsing was successful, but the values could not be
+/// stored in the configuration).
+///
+/// @param config_set a new configuration for DHCPv4 server.
+/// @return answer that contains result of the reconfiguration.
+/// @throw Dhcp4ConfigError if trying to create a parser for NULL config.
+isc::data::ConstElementPtr
+configureDhcp4ServerConfigSource(data::ConstElementPtr config_set);
+
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP4_CONFIG_PARSER_H

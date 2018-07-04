@@ -74,6 +74,35 @@
 
           <variablelist>
             <varlistentry>
+              <term>-h or --help</term>
+              <listitem>
+                <para>Displays help information.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>db-create</term>
+              <listitem>
+                <para>Creates new empty databases. Useful for first time
+                installation.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>db-remove</term>
+              <listitem>
+                <para>Removes an existing database.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>create-db-and-users</term>
+              <listitem>
+                <para>Internal use only.</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
               <term>lease-init</term>
               <listitem>
                 <para>Initializes a new lease database. Useful during first Kea

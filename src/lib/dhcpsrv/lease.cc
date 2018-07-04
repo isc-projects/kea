@@ -702,5 +702,5 @@ operator<<(std::ostream& os, const Lease& lease) {
     return (os);
 }
 
-} // namespace isc::dhcp
-} // namespace isc
+}  // namespace dhcp
+}  // namespace isc

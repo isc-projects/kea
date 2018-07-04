@@ -79,7 +79,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a MySQL database, Kea requires MySQL
+    In order to store lease information in a MySQL database, Kea requires MySQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without MySQL support.
             </simpara>
@@ -87,7 +87,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
+    In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without PostgreSQL support.
             </simpara>
@@ -95,7 +95,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a Cassandra  database (CQL), Kea
+    In order to store lease information in a Cassandra  database (CQL), Kea
     requires Cassandra headers and libraries. This is an optional dependency
     in that Kea can be built without Cassandra support.
             </simpara>
@@ -160,10 +160,17 @@
 
           <listitem>
             <simpara>
+              <command>kea-config-tool</command> —
+              A tool used to reconfigure a Kea server in realtime.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>kea-lfc</command> —
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
-              While it can be run standalone, it is normally run as and when 
+              While it can be run standalone, it is normally run as and when
               required by the Kea DHCP servers.
             </simpara>
           </listitem>

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -986,7 +986,7 @@ CqlVersionExchange::createBindForSelect(AnyArray& data, StatementTag) {
 
 boost::any
 CqlVersionExchange::retrieve() {
-    pair_ = VersionPair(version_, minor_);
+    pair_ = std::make_pair(version_, minor_);
     return &pair_;
 }
 
