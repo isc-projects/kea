@@ -1,3 +1,13 @@
+1428.	[bug]		marcin
+	Corrected behavior of the standby server in the HA hot-standby
+	mode, which failed to monitor delays in responses to the
+	DHCP queries sent to the primary server after the primary
+	server became unavailable. This resulted in transition of
+	the standby server to the partner-down state immediately
+	after detecting interruption in communication with the
+	primary over the control channel.
+	(Trac #5654, git 7a83f05fe40fb1b6812b055e2d6d633d9e00160c)
+
 Kea 1.4.0 released on June 15, 2018
 
 1427.	[bug]		marcin
