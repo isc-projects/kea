@@ -517,10 +517,13 @@ HAService::adjustNetworkState() {
     std::string current_state_name = getStateLabel(getCurrState());
     boost::to_upper(current_state_name);
 
-    // If the server is serving no scopes, it means that we're in the state
-    // in which DHCP service should be disabled.
-    if (query_filter_.getServedScopes().empty() &&
-        network_state_->isServiceEnabled()) {
+    // DHCP service should be enabled in the following states.
+    const bool should_enable = ((getCurrState() == HA_LOAD_BALANCING_ST) ||
+                                (getCurrState() == HA_HOT_STANDBY_ST) ||
+                                (getCurrState() == HA_PARTNER_DOWN_ST) ||
+                                (getCurrState() == HA_TERMINATED_ST));
+
+    if (!should_enable && network_state_->isServiceEnabled()) {
         std::string current_state_name = getStateLabel(getCurrState());
         boost::to_upper(current_state_name);
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_DISABLE)
@@ -528,8 +531,7 @@ HAService::adjustNetworkState() {
             .arg(current_state_name);
         network_state_->disableService();
 
-    } else if (!query_filter_.getServedScopes().empty() &&
-               !network_state_->isServiceEnabled()) {
+    } else if (should_enable && !network_state_->isServiceEnabled()) {
         std::string current_state_name = getStateLabel(getCurrState());
         boost::to_upper(current_state_name);
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_ENABLE)
