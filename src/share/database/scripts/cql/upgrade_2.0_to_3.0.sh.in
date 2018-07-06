@@ -24,7 +24,7 @@ ALTER TABLE lease4 ADD user_context text;
 ALTER TABLE lease6 ADD user_context text;
 
 -- -----------------------------------------------------
--- Table \`logs\`
+-- Table logs (it is used by forensic logging hook library)
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS logs (
     timeuuid timeuuid,  -- creation timeuuid, use dateOf() to get timestamp

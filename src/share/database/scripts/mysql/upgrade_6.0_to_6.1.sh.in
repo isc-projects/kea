@@ -92,7 +92,7 @@ ORDER BY l.address;
 END $$
 DELIMITER ;
 
-# Create logs table
+# Create logs table (logs table is used by forensic logging hook library)
 CREATE TABLE logs (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  # creation timestamp
     address VARCHAR(43) NULL,                       # address or prefix
