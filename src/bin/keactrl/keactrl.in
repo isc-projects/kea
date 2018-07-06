@@ -10,6 +10,8 @@
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
 
+VERSION=@PACKAGE_VERSION@
+
 ### Logging functions ###
 
 # Logs message at the error level.
@@ -280,6 +282,13 @@ if [ -z ${command} ]; then
     usage
     exit 1
 fi
+
+# Check if this is a simple question about version.
+if test "${command}" = "-v" || test "${command}" = "--version" ; then
+    echo "${VERSION}"
+    exit 0
+fi
+
 is_in_list "${command}" "start stop reload status"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
