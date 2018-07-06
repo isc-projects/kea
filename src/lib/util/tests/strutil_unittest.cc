@@ -471,6 +471,14 @@ TEST(StringUtilTest, sanitizeString) {
     ASSERT_THROW (sanitized = sanitizeString("just a string", "[bogus-regex",""),
                   BadValue);
 
+    // List of invalid chars should work: (b,c,2 are invalid)
+    ASSERT_NO_THROW (sanitized = sanitizeString("abc.123", "[b-c2]","*"));
+    EXPECT_EQ(sanitized, "a**.1*3");
+
+    // Inverted list for valid chars should work too: (b,c,2 are valid)
+    ASSERT_NO_THROW (sanitized = sanitizeString("abc.123", "[^b-c2]","*"));
+    EXPECT_EQ(sanitized, "*bc**2*");
+
     // A string of all valid chars should return an identical string.
     ASSERT_NO_THROW (sanitized = sanitizeString("-_A--B__Cabc34567_-", "[^A-Ca-c3-7_-]","x"));
     EXPECT_EQ(sanitized, "-_A--B__Cabc34567_-");
@@ -494,6 +502,10 @@ TEST(StringUtilTest, sanitizeString) {
     // Replacing with a string should work.
     ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]","xyz"));
     EXPECT_EQ(sanitized, "xyzxyzAxyzxyzBxyzxyzCxyzxyz");
+
+    // Dots as valid chars work.
+    ASSERT_NO_THROW (sanitized = sanitizeString("abc.123", "[^A-Za-z0-9_.]","*"));
+    EXPECT_EQ(sanitized, "abc.123");
 }
 
 } // end of anonymous namespace
