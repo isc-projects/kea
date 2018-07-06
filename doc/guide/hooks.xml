@@ -475,8 +475,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               errors, like adding a lease with subnet-id that does not exist in
               the configuration or configuring a lease to use an address that is
               outside of the subnet to which it is supposed to belong.
-              It provides a not programmatic way to manage user contexts
-              associated to leases.
+              It provides a way to manage user contexts associated with leases.
               </entry>
             </row>
 

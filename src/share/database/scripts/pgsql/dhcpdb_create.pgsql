@@ -854,7 +854,7 @@ CREATE FUNCTION lease6DumpData() RETURNS
 $$ LANGUAGE SQL;
 --
 
--- Create logs table
+-- Create logs table (logs table is used by forensic logging hook library)
 CREATE TABLE logs (
     timestamp TIMESTAMP WITH TIME ZONE
     DEFAULT CURRENT_TIMESTAMP,          -- creation timestamp
