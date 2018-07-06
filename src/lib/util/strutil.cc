@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +14,20 @@
 #include <boost/algorithm/string/split.hpp>
 
 #include <numeric>
+#include <iostream>
 #include <sstream>
-#include <string.h>
 
+// Early versions of C++11 regex were buggy, use it if we
+// can otherwise, we fall back to regcomp/regexec.  For more info see:
+// https://stackoverflow.com/questions/12530406/is-gcc-4-8-or-earlier-buggy-about-regular-expressions
+#ifdef USE_REGEX
+#include <regex>
+#else
+#include <sys/types.h>
+#include <regex.h>
+#endif
+
+#include <string.h>
 
 using namespace std;
 
@@ -286,6 +297,81 @@ decodeFormattedHexString(const std::string& hex_string,
                       " string of hexadecimal digits");
         }
     }
+}
+
+std::string
+sanitizeString(const std::string& original,
+                            const std::string& invalidChars,
+                            const std::string& replacement) {
+#ifdef USE_REGEX
+    std::regex rexpr;
+    try {
+        rexpr = std::regex(invalidChars, std::regex::extended);
+    } catch (const std::exception& ex) {
+        isc_throw(isc::BadValue, "invalid regex: '"
+                  << invalidChars << "', " << ex.what());
+    }
+
+    std::stringstream result;
+    try {
+        std::regex_replace(std::ostream_iterator<char>(result),
+                           original.begin(), original.end(),
+                           rexpr, replacement);
+    } catch (const std::exception& ex) {
+        isc_throw(isc::BadValue, "replacing '" << invalidChars << "' with '"
+                   << replacement << "' in '" << original << "' failed: ,"
+                   << ex.what());
+    }
+
+    return (result.str());
+#else
+    // Compile the expression.
+    regex_t rex;
+    int ec = regcomp(&rex, invalidChars.c_str(), REG_EXTENDED);
+    if (ec) {
+        char errbuf[512] = "";
+        static_cast<void>(regerror(ec, &rex, errbuf, sizeof(errbuf)));
+        isc_throw(isc::BadValue, "invalid regex: '" << invalidChars
+                  << "', " << errbuf);
+    }
+
+    // Iterate over original string, match by match.
+    const char* origStr = original.c_str();
+    const char* startFrom = origStr;
+    const char* endAt = origStr + strlen(origStr);
+    regmatch_t matches[2];  // n matches + 1
+    stringstream result;
+
+    while (startFrom < endAt) {
+        // Look for the next match
+        if (regexec(&rex, startFrom, 1, matches, 0) == REG_NOMATCH) {
+            // No matches, so add in the remainder
+            result << startFrom;
+            break;
+        }
+
+        // Shouldn't happen, but one never knows eh?
+        if (matches[0].rm_so == -1) {
+            isc_throw(isc::Unexpected, "matched but so is -1?");
+        }
+
+        // Add everything from starting point up to the current match
+        const char* matchAt = startFrom + matches[0].rm_so;
+        while (startFrom < matchAt) {
+            result << *startFrom;
+            ++startFrom;
+        }
+
+        // Add in the replacement
+        result << replacement;
+
+        // Move past the match.
+        ++startFrom;
+    }
+
+    regfree(&rex);
+    return (result.str());
+#endif
 }
 
 } // namespace str
