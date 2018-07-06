@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -461,6 +461,39 @@ TEST(StringUtilTest, decodeFormattedHexString) {
     // Invalid prefix again.
     EXPECT_THROW(decodeFormattedHexString("1x0102", decoded),
                  isc::BadValue);
+}
+
+// Verifies sanitizeString() function
+TEST(StringUtilTest, sanitizeString) {
+    std::string sanitized;
+
+    // Bad regular expression should throw.
+    ASSERT_THROW (sanitized = sanitizeString("just a string", "[bogus-regex",""),
+                  BadValue);
+
+    // A string of all valid chars should return an identical string.
+    ASSERT_NO_THROW (sanitized = sanitizeString("-_A--B__Cabc34567_-", "[^A-Ca-c3-7_-]","x"));
+    EXPECT_EQ(sanitized, "-_A--B__Cabc34567_-");
+
+    // Replacing with a character should work.
+    ASSERT_NO_THROW (sanitized = sanitizeString("A[b]c\12JoE3-_x!B$Y#e", "[^A-Za-z0-9_]","*"));
+    EXPECT_EQ(sanitized, "A*b*c*JoE3*_x*B*Y*e");
+
+    // Removing (i.e.replacing with an "empty" string) should work.
+    ASSERT_NO_THROW (sanitized = sanitizeString("A[b]c\12JoE3-_x!B$Y#e", "[^A-Za-z0-9_]",""));
+    EXPECT_EQ(sanitized, "AbcJoE3_xBYe");
+
+    // More than one non-matching in a row should work.
+    ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]","x"));
+    EXPECT_EQ(sanitized, "xxAxxBxxCxx");
+
+    // Removing than one non-matching in a row should work.
+    ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]",""));
+    EXPECT_EQ(sanitized, "ABC");
+
+    // Replacing with a string should work.
+    ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]","xyz"));
+    EXPECT_EQ(sanitized, "xyzxyzAxyzxyzBxyzxyzCxyzxyz");
 }
 
 } // end of anonymous namespace

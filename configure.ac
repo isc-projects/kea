@@ -571,6 +571,20 @@ AC_TRY_COMPILE([
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
 
+AC_MSG_CHECKING(for usuable C++11 regex)
+AC_TRY_RUN([
+#include <regex>
+#include <iostream>
+int main() {
+  const std::regex regex(".*");
+  const std::string string = "This should match!";
+  const auto result = std::regex_search(string, regex);
+  return result ? EXIT_SUCCESS : EXIT_FAILURE;
+}],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])],
+        AC_MSG_RESULT(no))
+
 enable_gtest="no"
 GTEST_INCLUDES=
 
