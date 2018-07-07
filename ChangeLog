@@ -2,7 +2,7 @@
 	Lease objects and lease backends are now able to store user
         context. User context can store an arbitrary data as long
         as it is in JSON format. Database schemas updated.
-	(Trac #5584, git xxx)
+	(Trac #5584, git b0b7a198b99fd417466708c80cb7cc2162ae480c)
 
 1429.	[bug]		marcin
 	Removed memory leak in the DHCPv4 and DHCPv6 servers which
