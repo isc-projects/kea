@@ -120,7 +120,7 @@ pgsql_lease_version_test() {
 
     # Verify that kea-admin lease-version returns the correct version
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "4.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "5.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe

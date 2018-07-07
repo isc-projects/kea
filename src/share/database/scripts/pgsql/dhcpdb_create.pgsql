@@ -335,7 +335,6 @@ CREATE TABLE ipv6_reservations (
   prefix_len SMALLINT NOT NULL DEFAULT '128',
   type SMALLINT NOT NULL DEFAULT '0',
   dhcp6_iaid INT DEFAULT NULL,
-  auth_key VARCHAR(128) NOT NULL,
   host_id INT NOT NULL,
   CONSTRAINT key_dhcp6_address_prefix_len UNIQUE (address, prefix_len),
   CONSTRAINT fk_ipv6_reservations_host FOREIGN KEY (host_id) REFERENCES hosts (host_id) ON DELETE CASCADE
@@ -754,6 +753,15 @@ UPDATE schema_version
     SET version = '4', minor = '0';
 
 -- Schema 4.0 specification ends here.
+
+-- Create auth_key in ipv6_reservations
+ALTER TABLE ipv6_reservations ADD COLUMN auth_key  VARCHAR(26) DEFAULT NULL;
+
+-- Set schema 5.0 version
+UPDATE schema_version
+   SET version = '5', minor = '0';
+
+-- Schema 5.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

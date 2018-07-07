@@ -176,7 +176,6 @@ CREATE TABLE IF NOT EXISTS ipv6_reservations (
     prefix_len TINYINT(3) UNSIGNED NOT NULL DEFAULT 128,
     type TINYINT(4) UNSIGNED NOT NULL DEFAULT 0,
     dhcp6_iaid INT UNSIGNED NULL,
-    auth_key VARCHAR(128) NOT NULL,
     host_id INT UNSIGNED NOT NULL,
     PRIMARY KEY (reservation_id),
     INDEX fk_ipv6_reservations_host_idx (host_id ASC),
@@ -470,6 +469,8 @@ ALTER TABLE dhcp6_options
 ALTER TABLE ipv6_reservations
     MODIFY reservation_id INT UNSIGNED NOT NULL AUTO_INCREMENT;
 
+# This line concludes database upgrade to version 7.0.
+
 # Add columns holding reservations for siaddr, sname and file fields
 # carried within DHCPv4 message.
 ALTER TABLE hosts ADD COLUMN dhcp4_next_server INT UNSIGNED NULL;
@@ -677,6 +678,14 @@ UPDATE schema_version
 SET version = '6', minor = '0';
 
 # This line concludes database upgrade to version 6.0.
+
+#add auth key for reconfiguration
+ALTER TABLE ipv6_reservations 
+    ADD COLUMN auth_key VARCHAR(16) NULL; 
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '7', minor = '0';
 
 # Notes:
 #

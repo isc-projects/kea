@@ -897,7 +897,7 @@ GenericHostDataSourceTest::testAddr6AndPrefix() {
                                                         true, "key##1", true);
 
     // Create IPv6 reservation (for an address) and add it to the host
-    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), "key##2", 128);
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), AuthKey("key##2"), 128);
     host->addReservation(resv);
 
     // Add this reservation
@@ -925,10 +925,10 @@ GenericHostDataSourceTest::testMultipleReservations() {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
 
     // Add some reservations
-    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), "key##1", len);
-    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), "key##2", len);
-    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), "key##3", len);
-    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), "key##4", len);
+    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), AuthKey("key##1"), len);
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), AuthKey("key##2"), len);
+    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), AuthKey("key##3"), len);
+    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), AuthKey("key##4"), len);
 
     host->addReservation(resv1);
     host->addReservation(resv2);
@@ -956,10 +956,10 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
 
     // Add some reservations
-    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), "key##1", len);
-    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), "key##2", len);
-    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), "key##3", len);
-    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), "key##4", len);
+    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), AuthKey("key##1"), len);
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), AuthKey("key##2"), len);
+    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), AuthKey("key##3"), len);
+    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), AuthKey("key##4"), len);
 
     host1->addReservation(resv1);
     host1->addReservation(resv2);

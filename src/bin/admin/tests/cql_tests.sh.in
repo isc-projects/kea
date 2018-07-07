@@ -82,7 +82,7 @@ cql_lease_version_test() {
 
     # Verify that kea-admin lease-version returns the correct version.
     version=$($keaadmin lease-version cql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "2.0" $version "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "3.0" $version "Expected kea-admin to return %s, returned value was %s"
 
     # Wipe the database.
     cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
