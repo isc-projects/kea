@@ -754,7 +754,7 @@ UPDATE schema_version
 
 -- Schema 4.0 specification ends here.
 
--- Upgrade to schema 4.1 begins here:
+-- Upgrade to schema 5.0 begins here:
 
 -- Add a column holding leases for user context.
 ALTER TABLE lease4 ADD COLUMN user_context TEXT;
@@ -802,7 +802,7 @@ $$ LANGUAGE SQL;
 --
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
-    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,user_context,hwaddr,hwtype,hwaddr_source' as text) as result;
+    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,hwaddr,hwtype,hwaddr_source,user_context' as text) as result;
 $$ LANGUAGE SQL;
 --
 
@@ -823,10 +823,10 @@ CREATE FUNCTION lease6DumpData() RETURNS
            fqdn_rev int,
            hostname text,
            state text,
-           user_context text,
            hwaddr text,
            hwtype smallint,
-           hwaddr_source text
+           hwaddr_source text,
+           user_context text
     ) AS $$
     SELECT (l.address,
             encode(l.duid,'hex'),
@@ -841,10 +841,11 @@ CREATE FUNCTION lease6DumpData() RETURNS
             l.fqdn_rev::int,
             l.hostname,
             s.name,
-            l.user_context,
             encode(l.hwaddr,'hex'),
             l.hwtype,
-            h.name
+            h.name,
+            l.user_context
+
      )
      FROM lease6 l
          left outer join lease6_types t on (l.lease_type = t.lease_type)
@@ -866,11 +867,11 @@ CREATE TABLE logs (
 CREATE INDEX timestamp_id ON logs (timestamp);
 CREATE INDEX address_id ON logs (address);
 
--- Set 4.1 schema version.
+-- Set 5.0 schema version.
 UPDATE schema_version
-    SET version = '4', minor = '1';
+    SET version = '5', minor = '0';
 
--- Schema 4.1 specification ends here.
+-- Schema 5.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

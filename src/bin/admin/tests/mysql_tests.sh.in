@@ -258,7 +258,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 6.1
+    # Ok, we have a 1.0 database. Let's upgrade it to 7.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -449,7 +449,7 @@ EOF
 
     # lease4/6_stats changes are tested separately
 
-    #table: user_context to lease4 and lease6 (upgrade 6.0 -> 6.1)
+    #table: user_context to lease4 and lease6 (upgrade 6.0 -> 7.0)
     # verify that lease4 table includes user_context
     qry="select user_context from lease4";
     count=`mysql_execute "${qry}"`
@@ -462,16 +462,16 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select user_context from lease6 failed. (expected status code %d, returned %d)"
 
-    #table: logs (upgrade 6.0 -> 6.1)
+    #table: logs (upgrade 6.0 -> 7.0)
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
     SELECT timestamp, address, log FROM logs;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
 
-    # Verify upgraded schema reports version 6.1
+    # Verify upgraded schema reports version 7.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "6.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
 
     # Let's wipe the whole database
