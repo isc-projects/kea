@@ -475,6 +475,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               errors, like adding a lease with subnet-id that does not exist in
               the configuration or configuring a lease to use an address that is
               outside of the subnet to which it is supposed to belong.
+              It provides a way to manage user contexts associated with leases.
               </entry>
             </row>
 
@@ -720,7 +721,7 @@ path/base-name.CCYYMMDD.txt
           An entry is a single string with no embedded end-of-line markers,
           a prepended timestamp and has the following sections:
 <screen>
-timestamp address duration device-id {client-info} {relay-info}
+timestamp address duration device-id {client-info} {relay-info} {user-context}
 </screen>
           </para>
           <para>
@@ -753,6 +754,9 @@ timestamp address duration device-id {client-info} {relay-info}
             remote-id and subscriber-id options (option 82 sub
             options: 1, 2 and 6) if present.
             The circuit id and remote id are presented as hex strings
+            </para></listitem>
+            <listitem><para>
+            user-context - the optional user context associated to the lease.
             </para></listitem>
           </itemizedlist>
           </para>
@@ -835,7 +839,7 @@ with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
           An entry is a single string with no embedded end-of-line markers,
           a prepended timestamp and has the following sections:
 <screen>
-timestamp address duration device-id {relay-info}*
+timestamp address duration device-id {relay-info}* {user-context}
 </screen>
           </para>
           <para>
@@ -867,6 +871,9 @@ timestamp address duration device-id {relay-info}*
             single link in your network, but it depends on your specific network
             topology. Nevertheless, this is useful information to better scope
             down the location of the device, so it is being recorded, if present.
+            </para></listitem>
+            <listitem><para>
+            user-context - the optional user context associated to the lease.
             </para></listitem>
           </itemizedlist>
           </para>
@@ -1063,20 +1070,7 @@ Examples:
           Please refer to <xref linkend="mysql-database"/> for MySQL,
           to <xref linkend="pgsql-database"/> for PostgreSQL or
           to <xref linkend="cql-database"/> for Cassandra CQL.
-          Scripts are in
-          <filename><replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts</filename> directory, for instance the PostgreSQL create schema
-          command is:
-<screen>
-$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts/pgsql/legldb_create.pgsql</userinput>
-Password for user <replaceable>user-name</replaceable>:
-START TRANSACTION
-CREATE TABLE
-CREATE INDEX
-CREATE TABLE
-INSERT 0 1
-COMMIT
-$
-</screen>
+          The logs table is part of the Kea database schemas.
           </para>
           <para>
           Configuration parameters are extended by standard lease database
@@ -1671,6 +1665,8 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           errors, like adding a lease with subnet-id that does not exist in the
           configuration or configuring a lease to use an address that is outside
           of the subnet to which it is supposed to belong.
+          It provides a not programmatic way to manage user contexts
+          associated to leases.
 
           <note>
             <para>This library may only be loaded by <command>kea-dhcp4</command>
@@ -1875,6 +1871,11 @@ The commands can take a number of additional optional parameters:
               configured for the subnet corresponding to the specified subnet-id
               is used. This parameter is not used in IPv4.</para>
             </listitem>
+            <listitem>
+              <para><command>user-context</command> - specifies the user
+              context to be associated with this lease. It must be a
+              JSON map.</para>
+              </listitem>
           </itemizedlist>
         </para>
 
@@ -1894,7 +1895,8 @@ The commands can take a number of additional optional parameters:
         "expire": 12345678,
         "fqdn-fwd": true,
         "fqdn-rev": true,
-        "hostname": "urania.example.org"
+        "hostname": "urania.example.org",
+        "user-context": { "version": 1 }
     }
 }
 </screen>
@@ -3136,6 +3138,7 @@ both the command and the response.
         host reservations, control socket, dhcp ddns, loggers and server id.
         These are supported in both DHCPv4 and DHCPv6 at the exception
         of server id which is DHCPv6 only.
+        Kea 1.5 added user contexts assocated with leases.
       </para>
     </section>
 

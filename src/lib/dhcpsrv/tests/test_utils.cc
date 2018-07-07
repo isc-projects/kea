@@ -54,6 +54,14 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
+    if (first->getContext()) {
+        EXPECT_TRUE(second->getContext());
+        if (second->getContext()) {
+            EXPECT_EQ(first->getContext()->str(), second->getContext()->str());
+        }
+    } else {
+        EXPECT_FALSE(second->getContext());
+    }
 }
 
 void
@@ -77,6 +85,14 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
+    if (first->getContext()) {
+        EXPECT_TRUE(second->getContext());
+        if (second->getContext()) {
+            EXPECT_EQ(first->getContext()->str(), second->getContext()->str());
+        }
+    } else {
+        EXPECT_FALSE(second->getContext());
+    }
 }
 
 int findLastSocketFd() {

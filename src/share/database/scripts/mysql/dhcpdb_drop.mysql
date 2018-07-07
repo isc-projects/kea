@@ -31,3 +31,4 @@ DROP TRIGGER IF EXISTS lease6_stat_insert;
 DROP TRIGGER IF EXISTS lease6_stat_update;
 DROP TRIGGER IF EXISTS lease6_stat_delete;
 DROP TABLE IF EXISTS lease6_stat;
+DROP TABLE IF EXISTS logs;

@@ -83,12 +83,13 @@ public:
     /// Version history:
     /// 1.0 - initial version (released in Kea 0.9)
     /// 2.0 - hwaddr column added (to be released in Kea 0.9.1)
+    /// 2.1 - user context column add (to be released in Kea 1.5)
     ///
     /// @{
     static const int MAJOR_VERSION = 2;
 
     /// Defines minor version of the memfile backend.
-    static const int MINOR_VERSION = 0;
+    static const int MINOR_VERSION = 1;
 
     /// @}
 

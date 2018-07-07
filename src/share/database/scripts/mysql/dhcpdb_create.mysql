@@ -677,6 +677,97 @@ SET version = '6', minor = '0';
 
 # This line concludes database upgrade to version 6.0.
 
+# Add user context into tables holding leases
+ALTER TABLE lease4 ADD COLUMN user_context TEXT NULL;
+ALTER TABLE lease6 ADD COLUMN user_context TEXT NULL;
+
+DROP PROCEDURE IF EXISTS lease4DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpHeader()
+BEGIN
+SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease4 dumps
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+SELECT
+    INET_NTOA(l.address),
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(HEX(l.client_id), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    s.name,
+    IFNULL(l.user_context, '')
+FROM
+    lease4 l
+    LEFT OUTER JOIN lease_state s on (l.state = s.state)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease6 dumps
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+SELECT
+    l.address,
+    IFNULL(HEX(l.duid), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.pref_lifetime,
+    IFNULL(t.name, ''),
+    l.iaid,
+    l.prefix_len,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(l.hwtype, ''),
+    IFNULL(h.name, ''),
+    IFNULL(s.name, ''),
+    IFNULL(l.user_context, '')
+FROM lease6 l
+    left outer join lease6_types t on (l.lease_type = t.lease_type)
+    left outer join lease_state s on (l.state = s.state)
+    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+# Create logs table (logs table is used by forensic logging hook library)
+CREATE TABLE logs (
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  # creation timestamp
+    address VARCHAR(43) NULL,                       # address or prefix
+    log TEXT NOT NULL                               # the log itself
+    ) ENGINE = INNODB;
+
+# Create search index
+CREATE INDEX timestamp_index ON logs (timestamp);
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '7', minor = '0';
+
+# This line concludes database upgrade to version 7.0.
+
 # Notes:
 #
 # Indexes
