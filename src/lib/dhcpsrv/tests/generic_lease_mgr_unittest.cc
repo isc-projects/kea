@@ -780,7 +780,6 @@ GenericLeaseMgrTest::testBasicLease4() {
     detailCompareLease(leases[3], l_returned);
 }
 
-
 void
 GenericLeaseMgrTest::testBasicLease6() {
     // Get the leases to be used for the test.
@@ -1082,7 +1081,6 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     EXPECT_THROW(returned = lmptr_->getLease4(*leases[1]->hwaddr_,
                                               leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
-
 }
 
 void
@@ -1343,7 +1341,6 @@ GenericLeaseMgrTest::testGetLeases6DuidSize() {
     // Don't bother to check DUIDs longer than the maximum - these cannot be
     // constructed, and that limitation is tested in the DUID/Client ID unit
     // tests.
-
 }
 
 void
@@ -1869,6 +1866,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
         int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1883,7 +1881,6 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
-
         } else {
             // Make sure remaining leases remain unexpired.
             leases[i]->cltt_ = current_time + 100;
@@ -1901,6 +1898,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     for (Lease6Collection::iterator lease = expired_leases.begin();
          lease != expired_leases.end(); ++lease) {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1920,6 +1918,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     for (Lease6Collection::iterator lease = expired_leases.begin();
          lease != expired_leases.end(); ++lease) {
         int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+        ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
     }
 
@@ -1999,6 +1998,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
             EXPECT_FALSE(lease) << "The following lease should have been"
                 " deleted: " << leases[i]->toText();
             ++should_delete_num;
+
         } else {
             // If the lease is not reclaimed or it has expired less than
             // 15 seconds ago, the lease should still be there.
@@ -2006,9 +2006,8 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
                 " deleted: " << leases[i]->toText();
         }
     }
-
-    // Check that the number of leases deleted is correct.
-    EXPECT_EQ(deleted_num, should_delete_num);
+    // Check that the number of deleted leases is correct.
+    EXPECT_EQ(should_delete_num, deleted_num);
 
     // Make sure we can make another attempt, when there are no more leases
     // to be deleted.
@@ -2544,7 +2543,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     subnet->addPool(pool);
     cfg->add(subnet);
 
-
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
     // Create the expected stats list.  At this point, the only stat
@@ -2615,7 +2613,6 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 }
 
-
 void
 GenericLeaseMgrTest::testRecountLeaseStats6() {
     using namespace stats;
@@ -2652,7 +2649,6 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     ASSERT_NO_THROW(CfgMgr::instance().commit());
 
-
     // Create the expected stats list.  At this point, the only stat
     // that should be non-zero is total-nas/total-pds.
     for (int i = 0; i < num_subnets; ++i) {
@@ -2665,7 +2661,6 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
-
 
     // Recount stats.  We should have the same results.
     ASSERT_NO_THROW(lmptr_->recountLeaseStats4());

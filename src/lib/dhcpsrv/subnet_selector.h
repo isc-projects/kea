@@ -51,6 +51,15 @@ struct SubnetSelector {
     /// @brief Specifies if the packet is DHCP4o6
     bool dhcp4o6_;
 
+    /// @brief Specifies if the packet contains address plus port information
+    bool address_plus_port_;
+
+    /// @brief Specifies the packet offset for address plus port
+    uint8_t psid_offset_;
+
+    /// @brief Specifies the packet psid-len for address plus port
+    uint8_t psid_len_;
+
     /// @brief Default constructor.
     ///
     /// Sets the default values for the @c Selector.
@@ -63,7 +72,8 @@ struct SubnetSelector {
           local_address_(asiolink::IOAddress("0.0.0.0")),
           remote_address_(asiolink::IOAddress("0.0.0.0")),
           client_classes_(), iface_name_(std::string()),
-          dhcp4o6_(false) {
+          dhcp4o6_(false), address_plus_port_(false),
+          psid_offset_(0), psid_len_(0) {
     }
 };
 

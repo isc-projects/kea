@@ -400,7 +400,7 @@ public:
 
         try {
             addr_str_ = boost::lexical_cast<std::string>
-                        (lease->addr_.toUint32());
+                        (lease->addr_.addressPlusPortToUint64());
             bind_array.add(addr_str_);
 
             if (lease->hwaddr_ && !lease->hwaddr_->hwaddr_.empty()) {
@@ -510,7 +510,7 @@ private:
     Lease4Ptr              lease_;
 
     /// @brief Lease4 specific members for binding and conversion.
-    uint32_t               addr4_;
+    uint64_t               addr4_;
     size_t                 hwaddr_length_;
     std::vector<uint8_t>   hwaddr_;
     uint8_t                hwaddr_buffer_[HWAddr::MAX_HWADDR_LEN];
@@ -1152,7 +1152,7 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
 
     // LEASE ADDRESS
     std::string addr_str = boost::lexical_cast<std::string>
-                           (addr.toUint32());
+                           (addr.addressPlusPortToUint64());
     bind_array.add(addr_str);
 
     // Get the data
@@ -1499,9 +1499,9 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
-                         (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    std::string addr4_str = boost::lexical_cast<std::string>
+                            (lease->addr_.addressPlusPortToUint64());
+    bind_array.add(addr4_str);
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease);
@@ -1551,7 +1551,7 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
     if (addr.isV4()) {
         std::string addr4_str = boost::lexical_cast<std::string>
-                                 (addr.toUint32());
+                                 (addr.addressPlusPortToUint64());
         bind_array.add(addr4_str);
         return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
     }

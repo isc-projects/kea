@@ -45,6 +45,8 @@
 #  endif
 # endif
 
+#include <config.h>
+
 #include "d2_parser.h"
 
 // User implementation prologue.

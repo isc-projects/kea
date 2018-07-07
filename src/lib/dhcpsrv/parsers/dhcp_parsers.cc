@@ -851,6 +851,32 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
 
+    // address plus port specific parameter: v4-psid-offset. If not explicitly specified,
+    // it will have the default value of "0".
+    uint8_t psid_offset = getInteger(params, "v4-psid-offset");
+    if (psid_offset) {
+        subnet4->get4o6().setPsidOffset(psid_offset);
+        subnet4->get4o6().enabled(true);
+    }
+
+    // address plus port specific parameter: v4-psid-len. If not explicitly
+    // specified,
+    // it will have the default value of "0".
+    uint8_t psid_len = getInteger(params, "v4-psid-len");
+    if (psid_len) {
+        subnet4->get4o6().setPsidLen(psid_len);
+        subnet4->get4o6().enabled(true);
+    }
+
+    ConstElementPtr excluded_psids = params->get("v4-excluded-psids");
+    if (excluded_psids) {
+        BOOST_FOREACH (ConstElementPtr psid, excluded_psids->listValue()) {
+            int64_t value;
+            psid->getValue(value);
+            subnet4->getExcludedPSIDs().insert(static_cast<uint16_t>(value));
+        }
+    }
+
     // Here globally defined options were merged to the subnet specific
     // options but this is no longer the case (they have a different
     // and not consecutive priority).
@@ -1329,7 +1355,7 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
             found_qualifying_suffix = true;
     }
 
-    IOAddress sender_ip(0);
+    IOAddress sender_ip(0U);
     if (sender_ip_str.empty()) {
         // The default sender IP depends on the server IP family
         sender_ip = (server_ip.isV4() ? IOAddress::IPV4_ZERO_ADDRESS() :

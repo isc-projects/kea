@@ -397,6 +397,46 @@ public:
         return (false);
     }
 
+    /// @brief Sets address plus port field.
+    ///
+    /// @param address_plus_port address plus port value to be set
+    void setAddressPlusPort(bool address_plus_port) { address_plus_port_ = address_plus_port; };
+
+    /// @brief Returns address plus port field.
+    ///
+    /// @return address plus port field
+    bool getAddressPlusPort() const { return (address_plus_port_); };
+
+    /// @brief Sets PSID offset.
+    ///
+    /// @param psid_offset PSID offset value to be set
+    void setPsidOffset(uint8_t psid_offset) { psid_offset_ = psid_offset; };
+
+    /// @brief Returns PSID offset.
+    ///
+    /// @return PSID offset field
+    uint8_t getPsidOffset() const { return (psid_offset_); };
+
+    /// @brief Sets PSID len.
+    ///
+    /// @param psid_len PSID len value to be set
+    void setPsidLen(uint8_t psid_len) { psid_len_ = psid_len; };
+
+    /// @brief Returns PSID len.
+    ///
+    /// @return PSID len field
+    uint8_t getPsidLen() const { return (psid_len_); };
+
+    /// @brief Sets PSID.
+    ///
+    /// @param psid PSID value to be set
+    void setPsid(uint16_t psid) { psid_ = psid; };
+
+    /// @brief Returns PSID.
+    ///
+    /// @return PSID field
+    uint16_t getPsid() const { return (psid_); };
+
 private:
 
     /// @brief Generic method that validates and sets HW address.
@@ -538,6 +578,18 @@ protected:
 
     /// file field (128 bytes)
     uint8_t file_[MAX_FILE_LEN];
+
+    /// @brief Specifies if the packet contains address plus port information
+    bool address_plus_port_;
+
+    /// @brief Specifies the packet offset for address plus port
+    uint8_t psid_offset_;
+
+    /// @brief Specifies the packet psid-len for address plus port
+    uint8_t psid_len_;
+
+    /// @brief Specifies the packet psid for address plus port
+    uint16_t psid_;
 
     // end of real DHCPv4 fields
 }; // Pkt4 class

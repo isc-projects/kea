@@ -209,8 +209,9 @@ enum DHCPOptionType {
     DHO_V4_PORTPARAMS                = 159,
     DHO_V4_CAPTIVE_PORTAL            = 160,
     // 161-209 are removed/unassigned
+    DHO_S46_SADDR                    = 201, /* draft-ietf-dhc-dhcp4o6-saddr-opt */
 //  DHO_PATH_PREFIX                  = 210,
-//  DHO_REBOOT_TIME                  = 211,    
+//  DHO_REBOOT_TIME                  = 211,
     DHO_6RD                          = 212,
     DHO_V4_ACCESS_DOMAIN             = 213,
     // 214-219 are removed/unassigned

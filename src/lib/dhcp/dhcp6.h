@@ -155,6 +155,7 @@ enum DHCPv6OptionType {
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
    // 136-142 unassigned
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
+   D60_S46_BIND_IPV6_PREFIX               = 200, /* draft-ietf-dhc-dhcp4o6-saddr-opt */
 
 // The following are EXPERIMENTAL and may change when IANA assigns official
 // values.

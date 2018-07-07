@@ -28,9 +28,9 @@ Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
              uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
              const bool fqdn_fwd, const bool fqdn_rev,
              const std::string& hostname, const HWAddrPtr& hwaddr)
-    :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
-     subnet_id_(subnet_id), hostname_(hostname), fqdn_fwd_(fqdn_fwd),
-    fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
+    : addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
+      subnet_id_(subnet_id), hostname_(hostname), fqdn_fwd_(fqdn_fwd),
+      fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
 
 
@@ -256,7 +256,8 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
 Lease4::Lease4(const Lease4& other)
     : Lease(other.addr_, other.t1_, other.t2_, other.valid_lft_,
             other.subnet_id_, other.cltt_, other.fqdn_fwd_,
-            other.fqdn_rev_, other.hostname_, other.hwaddr_) {
+            other.fqdn_rev_, other.hostname_, other.hwaddr_),
+            sw_4o6_src_address_(other.sw_4o6_src_address_) {
 
     // Copy over fields derived from Lease.
     state_ = other.state_;
@@ -291,7 +292,8 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
 
     : Lease(address, t1, t2, valid_lifetime, subnet_id, cltt, fqdn_fwd,
             fqdn_rev, hostname, hw_address),
-      client_id_(client_id) {
+      client_id_(client_id),
+      sw_4o6_src_address_(isc::asiolink::IOAddress::IPV6_ZERO_ADDRESS()) {
 }
 
 std::string
@@ -357,6 +359,7 @@ Lease4::operator=(const Lease4& other) {
         t2_ = other.t2_;
         valid_lft_ = other.valid_lft_;
         cltt_ = other.cltt_;
+        sw_4o6_src_address_ = other.sw_4o6_src_address_;
         subnet_id_ = other.subnet_id_;
         hostname_ = other.hostname_;
         fqdn_fwd_ = other.fqdn_fwd_;
@@ -557,6 +560,7 @@ Lease4::operator==(const Lease4& other) const {
             t2_ == other.t2_ &&
             valid_lft_ == other.valid_lft_ &&
             cltt_ == other.cltt_ &&
+            sw_4o6_src_address_ == other.sw_4o6_src_address_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&

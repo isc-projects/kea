@@ -8,6 +8,7 @@
 #define CFG_4OVER6_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/option_data_types.h>
 #include <cc/cfg_to_element.h>
 #include <string>
 
@@ -79,6 +80,30 @@ struct Cfg4o6 : public isc::data::CfgToElement {
         enabled_ = true;
     }
 
+    /// @brief Returns the offset for address plus port.
+    /// @return the offset for address plus port
+    uint8_t getPsidOffset() const {
+        return (psid_offset_.asUint8());
+    }
+
+    /// @brief Sets the offset for address plus port
+    /// @param offset the offset for address plus port
+    void setPsidOffset(const uint8_t offset) {
+        psid_offset_ = PSIDOffset(offset);
+    }
+
+    /// @brief Returns the psid-len for address plus port.
+    /// @return the psid-len for address plus port
+    uint8_t getPsidLen() const {
+        return (psid_len_.asUint8());
+    }
+
+    /// @brief Sets the psid-len for address plus port
+    /// @param psid_len the psid-len for address plus port
+    void setPsidLen(const uint8_t psid_len) {
+        psid_len_ = PSIDLen(psid_len);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -97,6 +122,12 @@ private:
 
     /// Specifies the v6 interface-id used for v4 subnet selection.
     OptionPtr interface_id_;
+
+    /// Specifies offset.
+    PSIDOffset psid_offset_;
+
+    /// Specifies PSID len.
+    PSIDLen psid_len_;
 };
 
 } // end of isc::dhcp namespace
