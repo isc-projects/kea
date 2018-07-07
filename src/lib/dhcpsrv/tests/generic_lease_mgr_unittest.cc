@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
@@ -156,6 +157,8 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
         lease->hostname_ = "otherhost.example.com.";
+        lease->setContext(Element::fromJSON("{ \"foo\": true }"));
+
     } else if (address == straddress4_[6]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x6e), HTYPE_ETHER));
         // Same ClientId as straddress4_1
@@ -177,6 +180,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->fqdn_rev_ = true;
         lease->fqdn_fwd_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->setContext(Element::fromJSON("{ \"bar\": false }"));
 
     } else {
         // Unknown address, return an empty pointer.
@@ -288,6 +292,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "hostname.example.com.";
+        lease->setContext(Element::fromJSON("{ \"foo\": true }"));
 
     } else if (address == straddress6_[6]) {
         // Same DUID as straddress6_1
@@ -317,6 +322,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "hostname.example.com.";
+        lease->setContext(Element::fromJSON("{ \"bar\": false }"));
 
     } else {
         // Unknown address, return an empty pointer.
@@ -533,6 +539,17 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
     // Should be three leases, matching leases[1], [3] and [5].
     ASSERT_EQ(3, returned.size());
 
+    // Check the lease[5] (and only this one) has an user context.
+    size_t contexts = 0;
+    for (Lease4Collection::const_iterator i = returned.begin();
+         i != returned.end(); ++i) {
+        if ((*i)->getContext()) {
+            ++contexts;
+            EXPECT_EQ("{ \"foo\": true }", (*i)->getContext()->str());
+        }
+    }
+    EXPECT_EQ(1, contexts);
+
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
     for (Lease4Collection::const_iterator i = returned.begin();
@@ -708,6 +725,7 @@ void
 GenericLeaseMgrTest::testBasicLease4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
+    leases[2]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
     // Start the tests.  Add three leases to the database, read them back and
     // check they are what we think they are.
@@ -785,6 +803,7 @@ void
 GenericLeaseMgrTest::testBasicLease6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
+    leases[2]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
     // Start the tests.  Add three leases to the database, read them back and
     // check they are what we think they are.
@@ -1122,6 +1141,17 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
 
     // Should be four leases, matching leases[1], [4], [5] and [6].
     ASSERT_EQ(4, returned.size());
+
+    // Check the lease[5] (and only this one) has an user context.
+    size_t contexts = 0;
+    for (Lease4Collection::const_iterator i = returned.begin();
+         i != returned.end(); ++i) {
+        if ((*i)->getContext()) {
+            ++contexts;
+            EXPECT_EQ("{ \"foo\": true }", (*i)->getContext()->str());
+        }
+    }
+    EXPECT_EQ(1, contexts);
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
@@ -1516,6 +1546,7 @@ GenericLeaseMgrTest::testUpdateLease4() {
     leases[1]->hostname_ = "modified.hostname.";
     leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
     leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
+    leases[1]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     lmptr_->updateLease4(leases[1]);
 
     // ... and check what is returned is what is expected.
@@ -1526,6 +1557,7 @@ GenericLeaseMgrTest::testUpdateLease4() {
     // Alter the lease again and check.
     ++leases[1]->subnet_id_;
     leases[1]->cltt_ += 6;
+    leases[1]->setContext(Element::fromJSON("{ \"foo\": \"bar\" }"));
     lmptr_->updateLease4(leases[1]);
 
     // Explicitly clear the returned pointer before getting new data to ensure
@@ -1572,6 +1604,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
     leases[1]->hostname_ = "modified.hostname.v6.";
     leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
     leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
+    leases[1]->setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     lmptr_->updateLease6(leases[1]);
     lmptr_->commit();
 
@@ -1586,6 +1619,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
     leases[1]->type_ = Lease::TYPE_TA;
     leases[1]->cltt_ += 6;
     leases[1]->prefixlen_ = 93;
+    leases[1]->setContext(Element::fromJSON("{ \"foo\": \"bar\" }"));
     lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
