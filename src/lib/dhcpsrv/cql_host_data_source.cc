@@ -374,7 +374,7 @@ private:
     cass_int32_t reserved_ipv6_prefix_address_type_;
 
     /// @brief Key for authentication
-    std::string reserved_key_;
+    std::string key_;
 
     /// @brief The reservation's IAID
     cass_int32_t iaid_;
@@ -825,7 +825,7 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     // reserved_ipv6_prefix_address_type: int
     data.add(&reserved_ipv6_prefix_address_type_);
     // reserved_key: text
-    data.add(&reserved_key_);
+    data.add(&key_);
     // iaid: int
     data.add(&iaid_);
     /// @}
@@ -959,7 +959,7 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
                 reservation->getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
 
             // reserved_key: text
-            reserved_key_ = reservation->getKeys();
+            key_ = reservation->getKey().getAuthKey();
             
             // iaid: int
             /// @todo: We don't support iaid in the IPv6Resrv yet.
@@ -1080,7 +1080,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         data.add(&reserved_ipv6_prefix_address_);
         data.add(&reserved_ipv6_prefix_length_);
         data.add(&reserved_ipv6_prefix_address_type_);
-        data.add(&reserved_key_);
+        data.add(&key_);
         data.add(&iaid_);
 
         // Option
@@ -1248,7 +1248,7 @@ CqlHostExchange::retrieveReservation() const {
     }
 
     return (IPv6Resrv(type, IOAddress(reserved_ipv6_prefix_address_),
-                      reserved_ipv6_prefix_length_, reserved_key_));
+                      reserved_ipv6_prefix_length_, key_));
 }
 
 const OptionWrapper

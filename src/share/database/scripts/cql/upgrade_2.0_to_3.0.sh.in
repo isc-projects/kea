@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS logs (
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
 
 -- Cql requires primary keys in the WHERE here.
+ALTER TABLE host_reservations ADD reserved_auth_key text;
+
 DELETE FROM schema_version WHERE version=2;
 INSERT INTO schema_version (version, minor) VALUES(3, 0);
 

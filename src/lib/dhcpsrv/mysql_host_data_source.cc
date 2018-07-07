@@ -74,7 +74,7 @@ const size_t SERVER_HOSTNAME_MAX_LEN = 64;
 const size_t BOOT_FILE_NAME_MAX_LEN = 128;
 
 /// @brief Maximum length of keys.
-const size_t KEY_MAX_LEN = 128;
+const size_t KEY_LEN = 16;
 
 /// @brief Numeric value representing last supported identifier.
 /// @brief Numeric value representing last supported identifier.
@@ -1537,7 +1537,7 @@ private:
     uint32_t iaid_;
 
     /// @brief Buffer length for holding keys in textual format.
-    char key_buffer_[KEY_MAX_LEN + 1];
+    char key_buffer_[KEY_LEN + 1];
 
     /// @brief Length of the keys
     unsigned long key_len_;
@@ -1671,7 +1671,7 @@ public:
 
             // key VARCHAR(128)
             // why we need member for len
-            key_ = resv.getKeys();
+            key_ = resv.getKey().getAuthKey();
             key_len_ = key_.length();
             bind_[5].buffer_type = MYSQL_TYPE_BLOB;
             bind_[5].buffer = reinterpret_cast<char*>

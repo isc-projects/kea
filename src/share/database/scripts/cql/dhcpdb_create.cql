@@ -293,8 +293,11 @@ CREATE TABLE IF NOT EXISTS logs (
 -- Create search index for logs table
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
 
+-- Add new field.
+ALTER TABLE host_reservations ADD reserved_auth_key text;
+
 -- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;
 INSERT INTO schema_version (version, minor) VALUES(3, 0);
-
+>>>>>>> [lib] Address review comments for #83
 -- This line concludes database upgrade to version 3.0
