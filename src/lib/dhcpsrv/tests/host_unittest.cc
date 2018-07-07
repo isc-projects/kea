@@ -35,14 +35,15 @@ TEST(IPv6ResrvTest, constructorAddress) {
     EXPECT_EQ("2001:db8:1::cafe", resrv.getPrefix().toText());
     EXPECT_EQ(128, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    EXPECT_EQ("", resrv.getKeys());
+    EXPECT_EQ("", resrv.getKey().getAuthKey());
 
     //create reservation with keys
-    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"), "#ssd@@dce3");
+    std::string key = "#ssd@@dce3";
+    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"), AuthKey(key));
     EXPECT_EQ("2001:db8:1::cafe", resrv_keys.getPrefix().toText());
     EXPECT_EQ(128, resrv_keys.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv_keys.getType());
-    EXPECT_EQ("#ssd@@dce3", resrv_keys.getKeys());
+    EXPECT_EQ(key, resrv_keys.getKey().getAuthKey());
 }
 
 // This test verifies that it is possible to create IPv6 prefix
@@ -52,14 +53,15 @@ TEST(IPv6ResrvTest, constructorPrefix) {
     EXPECT_EQ("2001:db8:1::", resrv.getPrefix().toText());
     EXPECT_EQ(64, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
-    EXPECT_EQ("", resrv.getKeys());
+    EXPECT_EQ("", resrv.getKey().getAuthKey());
     
     //create reservation with keys
-    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), "#ssd@@dce3", 64);
+    std::string key = "#ssd@@dce3";
+    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), AuthKey(key), 64);
     EXPECT_EQ("2001:db8:1::", resrv_keys.getPrefix().toText());
     EXPECT_EQ(64, resrv_keys.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv_keys.getType());
-    EXPECT_EQ("#ssd@@dce3", resrv_keys.getKeys());
+    EXPECT_EQ(key, resrv_keys.getKey().getAuthKey());
 }
 
 // This test verifies that the toText() function prints correctly.
@@ -128,21 +130,16 @@ TEST(IPv6ResrvTest, setKeys) {
     ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
     ASSERT_EQ(128, resrv.getPrefixLen());
     ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ("", resrv.getKeys());
-
-    // Replace default keys with new value. 
-    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128, "first_set_keys_#");
-    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
-    ASSERT_EQ(128, resrv.getPrefixLen());
-    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ("first_set_keys_#", resrv.getKeys());
+    ASSERT_EQ("", resrv.getKey().getAuthKey());
 
     // Modify an existing key for the reservation 
-    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128, "second_set_keys_#");
+    std::string key2 = "key2";
+    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 
+              128, AuthKey(key2));
     ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
     ASSERT_EQ(128, resrv.getPrefixLen());
     ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ("second_set_keys_#", resrv.getKeys());
+    ASSERT_EQ(key2, resrv.getKey().getAuthKey());
 
     // Enusre not including the key parameter won't affect
     // the current configured keys
@@ -150,7 +147,7 @@ TEST(IPv6ResrvTest, setKeys) {
     ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
     ASSERT_EQ(128, resrv.getPrefixLen());
     ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ("second_set_keys_#", resrv.getKeys());
+    ASSERT_EQ(key2, resrv.getKey().getAuthKey());
 }
 
 // This test checks that the equality operators work fine.
@@ -182,22 +179,22 @@ TEST(IPv6ResrvTest, equal) {
                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
 
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                "key##1", 128) ==
+                AuthKey("key##1"), 128) ==
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                "key##1", 128));
+                AuthKey("key##1"), 128));
     EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                "key##1", 128) !=
+                AuthKey("key##1"), 128) !=
                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                "key##1", 128));
+                AuthKey("key##1"), 128));
 
     EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                "key##1", 128) ==
+                AuthKey("key##1"), 128) ==
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                "key##2", 128));
+                AuthKey("key##2"), 128));
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                "key##1", 128) !=
+                AuthKey("key##1"), 128) !=
                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                "key##2", 128));
+                AuthKey("key##2"), 128));
 }
 
 /// @brief Test fixture class for @c Host.
@@ -678,9 +675,9 @@ TEST_F(HostTest, addReservations) {
     // Add 4 reservations: 2 for NAs, 2 for PDs
     ASSERT_NO_THROW(
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                       IOAddress("2001:db8:1::cafe"), "key##1"));
+                                       IOAddress("2001:db8:1::cafe"), AuthKey("key##1")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                       IOAddress("2001:db8:1:1::"), "key##2", 64));
+                                       IOAddress("2001:db8:1:1::"), AuthKey("key##2"), 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                        IOAddress("2001:db8:1:2::"), 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
@@ -691,9 +688,9 @@ TEST_F(HostTest, addReservations) {
 
     // Check that reservations exist.
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                               IOAddress("2001:db8:1::cafe"), "key##1")));
+                                               IOAddress("2001:db8:1::cafe"), AuthKey("key##1"))));
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                               IOAddress("2001:db8:1:1::"), "key##2",
+                                               IOAddress("2001:db8:1:1::"), AuthKey("key##2"),
                                                64)));
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                                IOAddress("2001:db8:1:2::"),
@@ -705,7 +702,7 @@ TEST_F(HostTest, addReservations) {
     IPv6ResrvRange addresses = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                            IOAddress("2001:db8:1::cafe"), "key##1"),
+                                            IOAddress("2001:db8:1::cafe"), AuthKey("key##1")),
                                   addresses));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                             IOAddress("2001:db8:1::1")),
@@ -716,7 +713,7 @@ TEST_F(HostTest, addReservations) {
     IPv6ResrvRange prefixes = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(2, std::distance(prefixes.first, prefixes.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                            IOAddress("2001:db8:1:1::"),"key##2", 64),
+                                            IOAddress("2001:db8:1:1::"), AuthKey("key##2"), 64),
                                   prefixes));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                             IOAddress("2001:db8:1:2::"), 64),
@@ -1291,7 +1288,7 @@ TEST_F(HostTest, randomKeys) {
     key_map.reserve(max_hash_size);
 
     for (iter_num = 0; iter_num < max_iter; iter_num++) {
-        std::string key = IPv6Resrv::getRandomKeyString();
+        std::string key = AuthKey::getRandomKeyString();
         if (key_map[key]) {
             dup_element++;
             break;
@@ -1303,6 +1300,31 @@ TEST_F(HostTest, randomKeys) {
     EXPECT_EQ(0, dup_element);
 }
 
+//Test performs basic functionality test of the AuthKey class
+TEST(AuthKeyTest, basicTest) {
+    //call the constructor with default argument
+    // Default constructor should generate random string of 16 bytes
+    AuthKey defaultKey;
+    ASSERT_EQ(16, defaultKey.getAuthKey().size());
+    
+    AuthKey longKey("someRandomStringGreaterThan16Bytes");
+    ASSERT_EQ(16, longKey.getAuthKey().size());
+
+    //check the setters for valid and invalid string
+    std::string key16ByteStr = "0123456789abcdef";
+    std::string key18ByteStr = "0123456789abcdefgh";
+    
+    AuthKey defaultTestKey;
+
+    defaultTestKey.setAuthKey(key16ByteStr);
+    ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
+    
+    defaultTestKey.setAuthKey(key18ByteStr);
+    ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
+
+}
 
 } // end of anonymous namespace
 
