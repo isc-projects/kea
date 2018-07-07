@@ -764,9 +764,9 @@ CREATE INDEX timestamp_index ON logs (timestamp);
 
 # Update the schema version number
 UPDATE schema_version
-SET version = '6', minor = '1';
+SET version = '7', minor = '0';
 
-# This line concludes database upgrade to version 6.1.
+# This line concludes database upgrade to version 7.0.
 
 # Notes:
 #
