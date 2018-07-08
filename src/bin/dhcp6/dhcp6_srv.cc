@@ -31,6 +31,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -64,6 +65,8 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
+#define ENABLE_RECONFIG 
+
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
@@ -81,6 +84,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::cryptolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
@@ -306,10 +310,24 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     ctx.duid_ = pkt->getClientId(),
     ctx.fwd_dns_update_ = false;
     ctx.rev_dns_update_ = false;
+    ctx.support_reconfig = false;
     ctx.hostname_ = "";
     ctx.query_ = pkt;
     ctx.callout_handle_ = getCalloutHandle(pkt);
     ctx.hwaddr_ = getMAC(pkt);
+
+    //set ctx.support_reconfig to true only for 
+    //request, renew or rebind.
+    //This will ensure that only in situations when lease is created, key and user context will be stored.
+
+    OptionPtr reconfigAccept = pkt->getOption(D6O_RECONF_ACCEPT);
+    if (reconfigAccept) {
+        if(pkt->getType() == DHCPV6_REQUEST ||
+           pkt->getType() == DHCPV6_RENEW ||
+           pkt->getType() == DHCPV6_REBIND) {
+           ctx.support_reconfig =  true;
+        }
+    }
 
     if (drop) {
         // Caller will immediately drop the packet so simply return now.
@@ -792,7 +810,6 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         (ctx.query_->getType() != DHCPV6_INFORMATION_REQUEST) &&
         HooksManager::calloutsPresent(Hooks.hook_index_leases6_committed_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
@@ -1044,6 +1061,10 @@ Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer,
                                 const CfgOptionList&) {
     // add server-id
     answer->addOption(getServerID());
+#ifdef ENABLE_RECONFIG 
+    OptionPtr reconfig_opt(new Option(Option::V6, D6O_RECONF_ACCEPT));
+    answer->addOption(reconfig_opt);
+#endif
 }
 
 void
@@ -2774,7 +2795,8 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
 
     processClientFqdn(request, reply, ctx);
     assignLeases(request, reply, ctx);
-
+    //check for reconfig options
+    updateReconfigInfo(request, ctx);
     setReservedClientClasses(request, ctx);
     requiredClassify(request, ctx);
 
@@ -2801,6 +2823,9 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(renew, reply, ctx);
     extendLeases(renew, reply, ctx);
 
+    //check for reconfig option
+    updateReconfigInfo(renew, ctx);
+    
     setReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
 
@@ -2827,6 +2852,9 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     processClientFqdn(rebind, reply, ctx);
     extendLeases(rebind, reply, ctx);
 
+    //check for reconfig option
+    updateReconfigInfo(rebind, ctx);
+    
     setReservedClientClasses(rebind, ctx);
     requiredClassify(rebind, ctx);
 
@@ -3818,11 +3846,90 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
     return (false);
 }
 
+void Dhcpv6Srv::updateHostKey(AllocEngine::ClientContext6& ctx) {
+    AuthKey default_key;
+
+    //check if reservation is present for the client
+    if (ctx.hosts_.empty()) {
+        //create and assign new reservation
+        HostPtr hptr(new Host(ctx.duid_->toText(), "duid",
+                    SubnetID(1), ctx.subnet_->getID(), IOAddress::IPV4_ZERO_ADDRESS()));
+
+        hptr->setKey(default_key);
+
+        //we are creating new host reservation
+        //ensure to add only if a backend is configured
+        //we dont want to enforce enabling backend 
+        if(!HostMgr::instance().getHostDataSourceList().empty()) { 
+            HostMgr::instance().add(hptr);
+		    ctx.hosts_[ctx.subnet_->getID()] = hptr;
+        }
+		// Now update the context with the new reservation
+	} else {
+        for (auto& host : ctx.hosts_) {
+            //first check if there are keys already stored 
+            if (host.second->getKey().ToText().empty()) {
+                HostPtr hostPtr = boost::const_pointer_cast<Host>(host.second);
+                //multiple host reservation are assigned the same key
+                //as they belong to the same client
+                hostPtr->setKey(default_key);
+            }
+        }
+   }
+}
+
+void Dhcpv6Srv::storeClientIntfInfo(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
+    //extract interface and ip address of the client
+    auto iface = pkt->getIface();
+    auto client_address = pkt->getRemoteAddr();
+    
+    // fetch leases from the DUID
+    Lease6Collection leases = LeaseMgrFactory::instance()
+                              .getLeases6(ctx.duid_->getDuid());
+
+    for (auto &lease: leases) {
+        ConstElementPtr client_context = lease->getContext();
+        ElementPtr ctx;
+
+        if (client_context) {
+            ctx = copy(client_context, 0);
+        } else {
+            ctx = Element::createMap();
+        }
+
+        ctx->set("client_interface", Element::create(iface));
+        ctx->set("client_address", Element::create(client_address.toText()));
+
+        lease->setContext(ctx);
+        
+        LeaseMgrFactory::instance().updateLease6(lease);
+    }
+}
+
 void Dhcpv6Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
     isc::dhcp::Pkt6Ptr pkt6ptr_empty;
     isc::dhcp::getCalloutHandle(pkt6ptr_empty);
     HooksManager::clearParkingLots();
+}
+
+void Dhcpv6Srv::updateReconfigInfo(const Pkt6Ptr& msg, AllocEngine::ClientContext6& ctx) {
+#ifdef ENABLE_RECONFIG 
+    if (ctx.support_reconfig &&
+        !ctx.fake_allocation_) {
+        //check if client has included reconfig accept only in
+        uint8_t msg_type = msg->getType();
+        
+        if (msg_type != DHCPV6_CONFIRM &&
+            msg_type != DHCPV6_RELEASE &&
+            msg_type != DHCPV6_DECLINE) {
+            //check if key is configured 
+            updateHostKey(ctx);
+            //store the client interface and linklocal address in the client context
+            storeClientIntfInfo(msg, ctx);
+        }
+    }
+#endif
 }
 
 };
