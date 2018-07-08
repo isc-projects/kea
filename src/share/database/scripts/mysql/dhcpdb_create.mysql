@@ -679,10 +679,6 @@ SET version = '6', minor = '0';
 
 # This line concludes database upgrade to version 6.0.
 
-#add auth key for reconfiguration
-ALTER TABLE hosts  
-    ADD COLUMN auth_key VARCHAR(16) NULL; 
-
 # Add user context into tables holding leases
 ALTER TABLE lease4 ADD COLUMN user_context TEXT NULL;
 ALTER TABLE lease6 ADD COLUMN user_context TEXT NULL;
