@@ -754,6 +754,15 @@ UPDATE schema_version
 
 -- Schema 4.0 specification ends here.
 
+-- Create auth_key in ipv6_reservations
+ALTER TABLE ipv6_reservations ADD COLUMN auth_key  VARCHAR(26) DEFAULT NULL;
+
+-- Set schema 5.0 version
+UPDATE schema_version
+   SET version = '5', minor = '0';
+
+-- Schema 5.0 specification ends here.
+
 -- Commit the script transaction.
 COMMIT;
 

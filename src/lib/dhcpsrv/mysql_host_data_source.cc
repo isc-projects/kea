@@ -73,6 +73,10 @@ const size_t SERVER_HOSTNAME_MAX_LEN = 64;
 /// @brief Maximum length of the boot file name.
 const size_t BOOT_FILE_NAME_MAX_LEN = 128;
 
+/// @brief Maximum length of keys.
+const size_t KEY_LEN = 16;
+
+/// @brief Numeric value representing last supported identifier.
 /// @brief Numeric value representing last supported identifier.
 ///
 /// This value is used to validate whether the identifier type stored in
@@ -1325,7 +1329,7 @@ class MySqlHostIPv6Exchange : public MySqlHostWithOptionsExchange {
 private:
 
     /// @brief Number of columns holding IPv6 reservation information.
-    static const size_t RESERVATION_COLUMNS = 5;
+    static const size_t RESERVATION_COLUMNS = 6;
 
 public:
 
@@ -1338,11 +1342,12 @@ public:
           reservation_id_(0),
           reserv_type_(0), reserv_type_null_(MLM_FALSE),
           ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0),
-          reservation_id_index_(findAvailColumn()),
+          key_len_(0),reservation_id_index_(findAvailColumn()),
           address_index_(reservation_id_index_ + 1),
           prefix_len_index_(reservation_id_index_ + 2),
           type_index_(reservation_id_index_ + 3),
           iaid_index_(reservation_id_index_ + 4),
+          key_index_(reservation_id_index_ + 5),
           most_recent_reservation_id_(0) {
 
         memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
@@ -1353,6 +1358,7 @@ public:
         columns_[prefix_len_index_] = "prefix_len";
         columns_[type_index_] = "type";
         columns_[iaid_index_] = "dhcp6_iaid";
+        columns_[key_index_] = "auth_key";
     }
 
     /// @brief Returns last fetched reservation id.
@@ -1393,7 +1399,11 @@ public:
 
         ipv6_address_buffer_[ipv6_address_buffer_len_] = '\0';
         std::string address = ipv6_address_buffer_;
-        IPv6Resrv r(type, IOAddress(address), prefix_len_);
+
+        key_buffer_[key_len_] = '\0';          
+        std::string key = key_buffer_;
+
+        IPv6Resrv r(type, IOAddress(address), key, prefix_len_);
         return (r);
     };
 
@@ -1487,6 +1497,13 @@ public:
         bind_[iaid_index_].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[iaid_index_].is_unsigned = MLM_TRUE;
 
+        // key for auth VARCHAR(128)
+        key_len_ = sizeof(key_buffer_) - 1;
+        bind_[key_index_].buffer_type = MYSQL_TYPE_STRING;
+        bind_[key_index_].buffer = key_buffer_;
+        bind_[key_index_].buffer_length = key_len_;
+        bind_[key_index_].length = &key_len_;
+
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -1519,6 +1536,12 @@ private:
     /// @brief IAID.
     uint32_t iaid_;
 
+    /// @brief Buffer length for holding keys in textual format.
+    char key_buffer_[KEY_LEN + 1];
+
+    /// @brief Length of the keys
+    unsigned long key_len_;
+
     /// @name Indexes of columns holding information about IPv6 reservations.
     //@{
     /// @brief Index of reservation_id column.
@@ -1536,6 +1559,9 @@ private:
     /// @brief Index of IAID column.
     size_t iaid_index_;
 
+    /// @brief Index of keys column.
+    size_t key_index_;
+
     //@}
 
     /// @brief Reservation id for last processed row.
@@ -1546,7 +1572,7 @@ private:
 ///
 /// This class is only used to insert IPv6 reservations into the
 /// ipv6_reservations table. It is not used to retrieve IPv6 reservations. To
-/// retrieve IPv6 reservation the @ref MySqlIPv6HostExchange class should be
+/// retrieve IPv6 reservation the @ref MySqlHostIPv6Exchange class should be
 /// used instead.
 ///
 /// When a new IPv6 reservation is inserted into the database, an appropriate
@@ -1556,7 +1582,7 @@ class MySqlIPv6ReservationExchange {
 private:
 
     /// @brief Set number of columns for ipv6_reservation table.
-    static const size_t RESRV_COLUMNS = 6;
+    static const size_t RESRV_COLUMNS = 7;
 
 public:
 
@@ -1576,6 +1602,7 @@ public:
         columns_[2] = "prefix_len";
         columns_[3] = "type";
         columns_[4] = "dhcp6_iaid";
+        columns_[5] = "auth_key";
         BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
     }
 
@@ -1642,6 +1669,16 @@ public:
             bind_[4].buffer = reinterpret_cast<char*>(&host_id_);
             bind_[4].is_unsigned = MLM_TRUE;
 
+            // key VARCHAR(128)
+            // why we need member for len
+            key_ = resv.getKey().getAuthKey();
+            key_len_ = key_.length();
+            bind_[5].buffer_type = MYSQL_TYPE_BLOB;
+            bind_[5].buffer = reinterpret_cast<char*>
+                (const_cast<char*>(key_.c_str()));
+            bind_[5].buffer_length = key_len_;
+            bind_[5].length = &key_len_;
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from IPv6 Reservation: "
@@ -1661,6 +1698,12 @@ private:
 
     /// @brief Address (or prefix).
     std::string address_;
+
+    /// @brief Keys for Authentication
+    std::string key_;
+
+    /// @brief length of keys for Authentication
+    unsigned long key_len_;
 
     /// @brief Length of the textual address representation.
     unsigned long address_len_;
@@ -2112,7 +2155,7 @@ TaggedStatementArray tagged_statements = { {
                 "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
                 "o6.persistent, o6.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.auth_key "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o4 "
                 "ON h.host_id = o4.host_id "
@@ -2168,7 +2211,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.auth_key "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2210,7 +2253,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context,"
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.auth_key "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2237,7 +2280,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.auth_key "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2258,8 +2301,8 @@ TaggedStatementArray tagged_statements = { {
     // Inserts a single IPv6 reservation into 'reservations' table.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
          "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-            "dhcp6_iaid, host_id) "
-         "VALUES (?,?,?,?,?)"},
+            "dhcp6_iaid, host_id, auth_key) "
+         "VALUES (?,?,?,?,?,?)"},
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.

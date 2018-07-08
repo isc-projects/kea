@@ -706,7 +706,7 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     for (int i = 0; i < subnets; ++i) {
         // Last boolean value set to false indicates that the same identifier
         // must be used for each generated host.
-        host = HostDataSourceUtils::initializeHost6(current_address.toText(), id, true, false);
+        host = HostDataSourceUtils::initializeHost6(current_address.toText(), id, true, "", false);
 
         host->setIPv4SubnetID(i + 1000);
         host->setIPv6SubnetID(i + 1000);
@@ -754,10 +754,14 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, prefix);
-    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, prefix);
-    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, prefix);
-    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, prefix);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1",
+                                                        id, prefix, "key##1");
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2",
+                                                        id, prefix, "key##2");
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3",
+                                                        id, prefix, "key##3");
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4",
+                                                        id, prefix, "key##4");
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -797,10 +801,10 @@ GenericHostDataSourceTest::testGetBySubnetIPv6() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true);
-    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8:2::", Host::IDENT_DUID, true);
-    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8:3::", Host::IDENT_DUID, true);
-    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8:4::", Host::IDENT_DUID, true);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8:1::", Host::IDENT_DUID, true, "key##1");
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8:2::", Host::IDENT_DUID, true, "key##2");
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8:3::", Host::IDENT_DUID, true, "key##3");
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8:4::", Host::IDENT_DUID, true, "key##4");
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -889,10 +893,11 @@ GenericHostDataSourceTest::testAddr6AndPrefix() {
     ASSERT_TRUE(hdsptr_);
 
     // Create a host reservations with prefix reservation (prefix = true)
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, true);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID,
+                                                        true, "key##1", true);
 
     // Create IPv6 reservation (for an address) and add it to the host
-    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), 128);
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::2"), AuthKey("key##2"), 128);
     host->addReservation(resv);
 
     // Add this reservation
@@ -920,10 +925,10 @@ GenericHostDataSourceTest::testMultipleReservations() {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
 
     // Add some reservations
-    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
-    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), len);
-    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), len);
-    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), len);
+    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), AuthKey("key##1"), len);
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), AuthKey("key##2"), len);
+    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), AuthKey("key##3"), len);
+    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), AuthKey("key##4"), len);
 
     host->addReservation(resv1);
     host->addReservation(resv2);
@@ -951,10 +956,10 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
 
     // Add some reservations
-    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
-    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), len);
-    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), len);
-    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), len);
+    IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), AuthKey("key##1"), len);
+    IPv6Resrv resv2(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::7"), AuthKey("key##2"), len);
+    IPv6Resrv resv3(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::8"), AuthKey("key##3"), len);
+    IPv6Resrv resv4(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::9"), AuthKey("key##4"), len);
 
     host1->addReservation(resv1);
     host1->addReservation(resv2);
@@ -1246,7 +1251,11 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
         ss >> n_host;
 
         const std::string prefix = std::string("2001:db8::") + n_host;
-        hosts.push_back(HostDataSourceUtils::initializeHost6(prefix, Host::IDENT_HWADDR, false));
+        const std::string keys = 
+            std::string("arbitary_long_enough_for_stress_test"
+                        "but_less_than_128_characters");
+        hosts.push_back(HostDataSourceUtils::initializeHost6(prefix, Host::IDENT_HWADDR, false, keys));
+        
         IPv6ResrvRange range = hosts.back()->getIPv6Reservations();
         ASSERT_EQ(1, std::distance(range.first, range.second));
         EXPECT_TRUE(HostDataSourceUtils::reservationExists
@@ -1410,7 +1419,7 @@ void GenericHostDataSourceTest::testDeleteById6() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v6 host...
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false, "key##1");
     SubnetID subnet1 = host1->getIPv6SubnetID();
 
     // ... and add it to the data source.

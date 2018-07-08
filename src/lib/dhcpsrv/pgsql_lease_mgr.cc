@@ -1398,6 +1398,25 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 }
 
 Lease6Collection
+PgSqlLeaseMgr::getLeases6( const DUID& duid ) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_DUID)
+              .arg(duid.toText());
+
+    Lease6Collection result = getLeases6();
+
+    //erase the ones not containing the matching DUID
+    for (auto iter = result.begin(); iter != result.end();
+            iter++) {
+        if ((*iter)->duid_->getDuid() != duid.getDuid()) {
+            result.erase(iter);
+        }
+    }
+
+    return (result);
+}
+
+Lease6Collection
 PgSqlLeaseMgr::getLeases6() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET6);
 

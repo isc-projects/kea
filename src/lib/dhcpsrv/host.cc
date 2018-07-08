@@ -10,6 +10,8 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
 #include <sstream>
 
@@ -19,17 +21,69 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
+
+AuthKey::AuthKey(const std::string key) {
+    setAuthKey(key);
+}
+
+AuthKey::AuthKey(void) {
+    authKey_ = AuthKey::getRandomKeyString();
+}
+
+std::string
+AuthKey::getRandomKeyString() {
+    std::array <char, AuthKey::KEY_LEN> randomString;
+    
+    std::random_device rd;
+    boost::random::mt19937 gen(rd());
+
+    std::for_each(randomString.begin(), randomString.end() - 1,
+        [&gen](char& a){ boost::random::uniform_int_distribution<char> dist('!', '~');
+        a = dist(gen); } );
+
+    return std::string(randomString.begin(), randomString.end());
+}
+
+void
+AuthKey::setAuthKey(const std::string& key) {
+    authKey_ = key;
+    if (authKey_.size() > AuthKey::KEY_LEN) {
+        authKey_.resize(AuthKey::KEY_LEN);
+    }
+}
+
+bool
+AuthKey::operator==(const AuthKey& other) const {
+    return (authKey_ == other.authKey_);
+}
+
+bool
+AuthKey::operator!=(const AuthKey& other) const {
+    return (authKey_ != other.authKey_);
+}
+
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
-    : type_(type), prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
+    : type_(type), prefix_(asiolink::IOAddress("::")), 
+      prefix_len_(128), key_("") {
     // Validate and set the actual values.
     set(type, prefix, prefix_len);
 }
 
+IPv6Resrv::IPv6Resrv(const Type& type,
+                     const asiolink::IOAddress& prefix,
+                     const AuthKey& key,
+                     const uint8_t prefix_len)
+    : type_(type), prefix_(asiolink::IOAddress("::")), 
+      prefix_len_(128), key_("") {
+    // Validate and set the actual values.
+    set(type, prefix, prefix_len, key);
+}
+
 void
 IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
-               const uint8_t prefix_len) {
+               const uint8_t prefix_len, const AuthKey& key) {
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
                   << "' for new IPv6 reservation");
@@ -45,6 +99,9 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
                   << "' for reserved IPv6 address, expected 128");
     }
 
+    if ( key.getAuthKey().size() != 0 ) {
+        key_ = key;
+    }
     type_ = type;
     prefix_ = prefix;
     prefix_len_ = prefix_len;
@@ -55,6 +112,7 @@ IPv6Resrv::toText() const {
     std::ostringstream s;
     s << prefix_;
     // For PD, append prefix length.
+    // @todo: add to text for key
     if (getType() == TYPE_PD) {
         s << "/" << static_cast<int>(prefix_len_);
     }
@@ -65,7 +123,8 @@ bool
 IPv6Resrv::operator==(const IPv6Resrv& other) const {
     return (type_ == other.type_ &&
             prefix_ == other.prefix_ &&
-            prefix_len_ == other.prefix_len_);
+            prefix_len_ == other.prefix_len_ &&
+            key_ == other.key_ );
 }
 
 bool

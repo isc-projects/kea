@@ -733,6 +733,10 @@ lease from the MySQL database for the specified address.
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for the specified address.
 
+% DHCPSRV_MYSQL_GET_DUID obtaining IPv6 lease for duid %1,
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for the specified duid.
+
 % DHCPSRV_MYSQL_GET_CLIENTID obtaining IPv4 leases for client ID %1
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
@@ -929,6 +933,10 @@ hardware address.
 A debug message issued when the server is attempting to obtain a set of IPv6
 leases from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
+
+% DHCPSRV_PGSQL_GET_DUID obtaining IPv6 leases for DUID %1,
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified DUID (DHCP Unique Identifier).
 
 % DHCPSRV_PGSQL_GET_IAID_SUBID_DUID obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
