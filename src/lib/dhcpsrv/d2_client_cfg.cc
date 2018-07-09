@@ -207,25 +207,25 @@ D2ClientConfig::toText() const {
 
     stream << "enable_updates: " << (enable_updates_ ? "yes" : "no");
     if (enable_updates_) {
-        stream << ", server_ip: " << server_ip_.toText()
-               << ", server_port: " << server_port_
-               << ", sender_ip: " << sender_ip_.toText()
-               << ", sender_port: " << sender_port_
-               << ", max_queue_size: " << max_queue_size_
-               << ", ncr_protocol: " << ncrProtocolToString(ncr_protocol_)
-               << ", ncr_format: " << ncrFormatToString(ncr_format_)
-               << ", always_include_fqdn: " << (always_include_fqdn_ ?
+        stream << ", server-ip: " << server_ip_.toText()
+               << ", server-port: " << server_port_
+               << ", sender-ip: " << sender_ip_.toText()
+               << ", sender-port: " << sender_port_
+               << ", max-queue-size: " << max_queue_size_
+               << ", ncr-protocol: " << ncrProtocolToString(ncr_protocol_)
+               << ", ncr-format: " << ncrFormatToString(ncr_format_)
+               << ", always-include-fqdn: " << (always_include_fqdn_ ?
                                                 "yes" : "no")
-               << ", override_no_update: " << (override_no_update_ ?
+               << ", override-no-update: " << (override_no_update_ ?
                                                "yes" : "no")
-               << ", override_client_update: " << (override_client_update_ ?
+               << ", override-client-update: " << (override_client_update_ ?
                                                    "yes" : "no")
-               << ", replace_client_name: "
+               << ", replace-client-name: "
                << replaceClientNameModeToString(replace_client_name_mode_)
-               << ", generated_prefix: [" << generated_prefix_ << "]"
-               << ", qualifying_suffix: [" << qualifying_suffix_ << "]"
-               << ", hostname_char_set: [" << hostname_char_set_ << "]"
-               << ", hostname_char_replacement: [" << hostname_char_replacement_ << "]";
+               << ", generated-prefix: [" << generated_prefix_ << "]"
+               << ", qualifying-suffix: [" << qualifying_suffix_ << "]"
+               << ", hostname-char-set: [" << hostname_char_set_ << "]"
+               << ", hostname-char-replacement: [" << hostname_char_replacement_ << "]";
     }
 
     return (stream.str());
