@@ -7,17 +7,21 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/database_connection.h>
+#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <stats/stats_mgr.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <sstream>
 
 using namespace std;
@@ -1276,6 +1280,68 @@ GenericLeaseMgrTest::testGetLeases4() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases4Paged() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease4Collection all_leases;
+
+    IOAddress last_address = IOAddress("0.0.0.0");
+    for (auto i = 0; i < 4; ++i) {
+        Lease4Collection page = lmptr_->getLeases4(last_address, LeasePageSize(3));
+
+        // Collect leases in a common structure. They may be out of order.
+        for (Lease4Ptr lease : page) {
+            all_leases.push_back(lease);
+        }
+
+        // Empty page means there are no more leases.
+        if (page.empty()) {
+            break;
+
+        } else {
+            // Record last returned address because it is going to be used
+            // as an argument for the next call.
+            last_address = page[page.size() - 1]->addr_;
+        }
+    }
+
+    // Make sure that we got exactly the number of leases that we earlier
+    // stored in the database.
+    EXPECT_EQ(leases.size(), all_leases.size());
+
+    // Make sure that all leases that we stored in the lease database
+    // have been retrieved.
+    for (Lease4Ptr lease : leases) {
+        bool found = false;
+        for (Lease4Ptr returned_lease : all_leases) {
+            if (lease->addr_ == returned_lease->addr_) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found) << "lease for address " << lease->addr_.toText()
+            << " was not returned in any of the pages";
+    }
+
+    boost::scoped_ptr<LeasePageSize> lease_page_size;
+
+    // The maximum allowed value for the limit is max for uint32_t.
+    size_t oor = static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 1;
+    EXPECT_THROW(lease_page_size.reset(new LeasePageSize(oor)), OutOfRange);
+
+    // Zero page size is illegal too.
+    EXPECT_THROW(lease_page_size.reset(new LeasePageSize(0)), OutOfRange);
+
+    // Only IPv4 address can be used.
+    EXPECT_THROW(lmptr_->getLeases4(IOAddress("2001:db8::1"), LeasePageSize(3)),
+                 InvalidAddressFamily);
+}
+
+void
 GenericLeaseMgrTest::testGetLeases6SubnetId() {
     // Get the leases to be used for the test and add to the database.
     vector<Lease6Ptr> leases = createLeases6();
@@ -1300,6 +1366,60 @@ GenericLeaseMgrTest::testGetLeases6() {
     // All leases should be returned.
     Lease6Collection returned = lmptr_->getLeases6();
     ASSERT_EQ(leases.size(), returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLeases6Paged() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease6Collection all_leases;
+
+    IOAddress last_address = IOAddress::IPV6_ZERO_ADDRESS();
+    for (auto i = 0; i < 4; ++i) {
+        Lease6Collection page = lmptr_->getLeases6(last_address, LeasePageSize(3));
+
+        // Collect leases in a common structure. They may be out of order.
+        for (Lease6Ptr lease : page) {
+            all_leases.push_back(lease);
+        }
+
+        // Empty page means there are no more leases.
+        if (page.empty()) {
+            break;
+
+        } else {
+            // Record last returned address because it is going to be used
+            // as an argument for the next call.
+            last_address = page[page.size() - 1]->addr_;
+        }
+    }
+
+    // Make sure that we got exactly the number of leases that we earlier
+    // stored in the database.
+    EXPECT_EQ(leases.size(), all_leases.size());
+
+    // Make sure that all leases that we stored in the lease database
+    // have been retrieved.
+    for (Lease6Ptr lease : leases) {
+        bool found = false;
+        for (Lease6Ptr returned_lease : all_leases) {
+            if (lease->addr_ == returned_lease->addr_) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found) << "lease for address " << lease->addr_.toText()
+            << " was not returned in any of the pages";
+    }
+
+    // Only IPv6 address can be used.
+    EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.0"), LeasePageSize(3)),
+                 InvalidAddressFamily);
+                 
 }
 
 void
@@ -2892,6 +3012,17 @@ LeaseMgrDbLostCallbackTest::testDbLostCallback() {
 
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
+}
+
+void
+GenericLeaseMgrTest::checkLeaseRange(const Lease4Collection& returned,
+                                     const std::vector<std::string>& expected_addresses) {
+    ASSERT_EQ(expected_addresses.size(), returned.size());
+
+    for (auto a = returned.cbegin(); a != returned.cend(); ++a) {
+        EXPECT_EQ(expected_addresses[std::distance(returned.cbegin(), a)],
+                  (*a)->addr_.toText());
+    }
 }
 
 void

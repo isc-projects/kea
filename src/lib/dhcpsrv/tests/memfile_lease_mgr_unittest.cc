@@ -930,6 +930,12 @@ TEST_F(MemfileLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(MemfileLeaseMgrTest, getLeases4Paged) {
+    startBackend(V4);
+    testGetLeases4Paged();
+}
+
 // This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     startBackend(V6);
@@ -940,6 +946,12 @@ TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
 TEST_F(MemfileLeaseMgrTest, getLeases6) {
     startBackend(V6);
     testGetLeases6();
+}
+
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(MemfileLeaseMgrTest, getLeases6Paged) {
+    startBackend(V6);
+    testGetLeases6Paged();
 }
 
 /// @brief Basic Lease6 Checks

@@ -24,6 +24,7 @@
 #include <util/strutil.h>
 
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <string>
 #include <sstream>
 
@@ -142,6 +143,23 @@ public:
     /// @return 0 upon success, non-zero otherwise.
     int
     leaseGetAllHandler(CalloutHandle& handle);
+
+    /// @brief lease4-get-page, lease6-get-page commands handler
+    ///
+    /// These commands attempt to retrieve 1 page of leases. The maximum size
+    /// of the page is specified by the caller. The caller also specifies
+    /// the last address returned in the previous page. The new page
+    /// starts from the first address following the address specified by
+    /// the caller. If the first page should be returned the IPv4
+    /// zero address, IPv6 zero address or the keyword "start" should
+    /// be provided instead of the last address.
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get commands JSON text in the "command" argument.
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetPageHandler(hooks::CalloutHandle& handle);
 
     /// @brief lease4-del command handler
     ///
@@ -555,6 +573,125 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
 }
 
 int
+LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
+    bool v4 = true;
+    try {
+        extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-page");
+
+        // arguments must always be present
+        if (!cmd_args_) {
+            isc_throw(BadValue, "no parameters specified for the " << cmd_name_
+                      << " command");
+        }
+
+        // The 'from' argument denotes from which lease we should start the
+        // results page. The results page excludes this lease.
+        ConstElementPtr from = cmd_args_->get("from");
+        if (!from) {
+            isc_throw(BadValue, "'from' parameter not specified");
+        }
+
+        // The 'from' argument is a string. It may contain a 'start' keyword or
+        // an IP address.
+        if (from->getType() != Element::string) {
+            isc_throw(BadValue, "'from' parameter must be a string");
+        }
+
+        boost::scoped_ptr<IOAddress> from_address;
+        try {
+            if (from->stringValue() == "start") {
+                from_address.reset(new IOAddress(v4 ? "0.0.0.0" : "::"));
+
+            } else {
+                // Conversion of a string to an IP address may throw.
+                from_address.reset(new IOAddress(from->stringValue()));
+            }
+
+        } catch (...) {
+            isc_throw(BadValue, "'from' parameter value is neither 'start' keyword nor "
+                      "a valid IPv" << (v4 ? "4" : "6") << " address");
+        }
+
+        // It must be either IPv4 address for lease4-get-page or IPv6 address for
+        // lease6-get-page.
+        if (v4 && (!from_address->isV4())) {
+            isc_throw(BadValue, "'from' parameter value " << from_address->toText()
+                      << " is not an IPv4 address");
+
+        } else if (!v4 && from_address->isV4()) {
+            isc_throw(BadValue, "'from' parameter value " << from_address->toText()
+                      << " is not an IPv6 address");
+        }
+
+        // The 'limit' is a desired page size. It must always be present.
+        ConstElementPtr page_limit = cmd_args_->get("limit");
+        if (!page_limit) {
+            isc_throw(BadValue, "'limit' parameter not specified");
+        }
+
+        // The 'limit' must be a number.
+        if (page_limit->getType() != Element::integer) {
+            isc_throw(BadValue, "'limit' parameter must be a number");
+        }
+
+        // Retrieve the desired page size.
+        size_t page_limit_value = static_cast<size_t>(page_limit->intValue());
+
+        ElementPtr leases_json = Element::createList();
+
+        if (v4) {
+            // Get page of IPv4 leases.
+            Lease4Collection leases =
+                LeaseMgrFactory::instance().getLeases4(*from_address,
+                                                       LeasePageSize(page_limit_value));
+
+            // Convert leases into JSON list.
+            for (auto lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+
+        } else {
+            // Get page of IPv6 leases.
+            Lease6Collection leases =
+                LeaseMgrFactory::instance().getLeases6(*from_address,
+                                                       LeasePageSize(page_limit_value));
+            // Convert leases into JSON list.
+            for (auto lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        }
+
+        // Prepare textual status.
+        std::ostringstream s;
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found.";
+        ElementPtr args = Element::createMap();
+
+        // Put gathered data into arguments map.
+        args->set("leases", leases_json);
+        args->set("count", Element::create(static_cast<int64_t>(leases_json->size())));
+
+        // Create the response.
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (CONTROL_RESULT_SUCCESS);
+}
+
+int
 LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
     Parameters p;
     Lease4Ptr lease4;
@@ -865,6 +1002,11 @@ LeaseCmds::leaseGetHandler(CalloutHandle& handle) {
 int
 LeaseCmds::leaseGetAllHandler(hooks::CalloutHandle& handle) {
     return (impl_->leaseGetAllHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetPageHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetPageHandler(handle));
 }
 
 int

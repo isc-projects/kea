@@ -25,6 +25,7 @@
 #include <time.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
@@ -141,6 +142,15 @@ tagged_statements = { {
                         "state, user_context "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_PAGE,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state, user_context "
+                            "FROM lease4 "
+                            "WHERE address > ? "
+                            "ORDER BY address "
+                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE4_SUBID,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -193,6 +203,17 @@ tagged_statements = { {
                             "FROM lease6 "
                             "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
                             "AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_PAGE,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context "
+                            "FROM lease6 "
+                            "WHERE address > ? "
+                            "ORDER BY address "
+                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -2006,6 +2027,43 @@ MySqlLeaseMgr::getLeases4() const {
     return (result);
 }
 
+Lease4Collection
+MySqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind lower bound address
+    uint32_t lb_address_data = lower_bound_address.toUint32();
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&lb_address_data);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind page size value
+    size_t* ps = const_cast<size_t*>(&page_size.page_size_);
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(ps);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Get the leases
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_PAGE, inbind, result);
+
+    return (result);
+}
+
 Lease6Ptr
 MySqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
@@ -2158,6 +2216,52 @@ MySqlLeaseMgr::getLeases6() const {
 
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6, 0, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    // Expecting IPv6 address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // In IPv6 we compare addresses represented as strings. The IPv6 zero address
+    // is ::, so it is greater than any other address. In this special case, we
+    // just use 0 for comparison which should be lower than any real IPv6 address.
+    std::string lb_address_data = "0";
+    if (!lower_bound_address.isV6Zero()) {
+        lb_address_data = lower_bound_address.toText();
+    }
+
+    // Bind lower bound address
+    unsigned long lb_address_data_size = lb_address_data.size();
+    inbind[0].buffer_type = MYSQL_TYPE_STRING;
+    inbind[0].buffer = const_cast<char*>(lb_address_data.c_str());
+    inbind[0].buffer_length = lb_address_data_size;
+    inbind[0].length = &lb_address_data_size;
+
+    // Bind page size value
+    size_t* ps = const_cast<size_t*>(&page_size.page_size_);
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(ps);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Get the leases
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_PAGE, inbind, result);
 
     return (result);
 }
