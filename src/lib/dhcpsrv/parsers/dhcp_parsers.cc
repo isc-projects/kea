@@ -1,11 +1,7 @@
 // Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
+// License, v. 2.0. If a copy of the MPL was not distributed with this // file, You can obtain one at http://mozilla.org/MPL/2.0/.  #include <config.h> 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -1321,6 +1317,12 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string generated_prefix =
         getString(client_config, "generated-prefix");
 
+    std::string hostname_char_set =
+        getString(client_config, "hostname-char-set");
+
+    std::string hostname_char_replacement =
+        getString(client_config, "hostname-char-replacement");
+
     // qualifying-suffix is the only parameter which has no default
     std::string qualifying_suffix = "";
     bool found_qualifying_suffix = false;
@@ -1402,8 +1404,9 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                                             override_client_update,
                                             replace_client_name_mode,
                                             generated_prefix,
-                                            qualifying_suffix));
-
+                                            qualifying_suffix,
+                                            hostname_char_set,
+                                            hostname_char_replacement));
     }  catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
@@ -1434,7 +1437,9 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "override-no-update", Element::boolean, "false" },
     { "override-client-update", Element::boolean, "false" },
     { "replace-client-name", Element::string, "never" },
-    { "generated-prefix", Element::string, "myhost" }
+    { "generated-prefix", Element::string, "myhost" },
+    { "hostname-char-set", Element::string, "" },
+    { "hostname-char-replacement", Element::string, "" }
     // qualifying-suffix has no default
 };
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
+/// These values need to match those used in D2ClientConfigParser::SimpleDefaults
 const char* D2ClientConfig::DFT_SERVER_IP = "127.0.0.1";
 const size_t D2ClientConfig::DFT_SERVER_PORT = 53001;
 const char* D2ClientConfig::DFT_V4_SENDER_IP = "0.0.0.0";
@@ -34,7 +35,8 @@ const bool D2ClientConfig::DFT_OVERRIDE_NO_UPDATE = false;
 const bool D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE = false;
 const char* D2ClientConfig::DFT_REPLACE_CLIENT_NAME_MODE = "NEVER";
 const char* D2ClientConfig::DFT_GENERATED_PREFIX = "myhost";
-
+const char* D2ClientConfig::DFT_HOSTNAME_CHAR_SET = "";
+const char* D2ClientConfig::DFT_HOSTNAME_CHAR_REPLACEMENT = "";
 
 D2ClientConfig::ReplaceClientNameMode
 D2ClientConfig::stringToReplaceClientNameMode(const std::string& mode_str) {
@@ -93,7 +95,9 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const bool override_client_update,
                                const ReplaceClientNameMode replace_client_name_mode,
                                const std::string& generated_prefix,
-                               const std::string& qualifying_suffix)
+                               const std::string& qualifying_suffix,
+                               const std::string& hostname_char_set,
+                               const std::string& hostname_char_replacement)
     : enable_updates_(enable_updates),
       server_ip_(server_ip),
       server_port_(server_port),
@@ -107,7 +111,9 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       override_client_update_(override_client_update),
       replace_client_name_mode_(replace_client_name_mode),
       generated_prefix_(generated_prefix),
-      qualifying_suffix_(qualifying_suffix) {
+      qualifying_suffix_(qualifying_suffix),
+      hostname_char_set_(hostname_char_set),
+      hostname_char_replacement_(hostname_char_replacement) {
     validateContents();
 }
 
@@ -125,7 +131,9 @@ D2ClientConfig::D2ClientConfig()
       override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
       replace_client_name_mode_(stringToReplaceClientNameMode(DFT_REPLACE_CLIENT_NAME_MODE)),
       generated_prefix_(DFT_GENERATED_PREFIX),
-      qualifying_suffix_("") {
+      qualifying_suffix_(""),
+      hostname_char_set_(DFT_HOSTNAME_CHAR_SET),
+      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET) {
     validateContents();
 }
 
@@ -183,7 +191,9 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (override_client_update_ == other.override_client_update_) &&
             (replace_client_name_mode_ == other.replace_client_name_mode_) &&
             (generated_prefix_ == other.generated_prefix_) &&
-            (qualifying_suffix_ == other.qualifying_suffix_));
+            (qualifying_suffix_ == other.qualifying_suffix_) &&
+            (hostname_char_set_ == other.hostname_char_set_) &&
+            (hostname_char_replacement_ == other.hostname_char_replacement_));
 }
 
 bool
@@ -213,7 +223,9 @@ D2ClientConfig::toText() const {
                << ", replace_client_name: "
                << replaceClientNameModeToString(replace_client_name_mode_)
                << ", generated_prefix: [" << generated_prefix_ << "]"
-               << ", qualifying_suffix: [" << qualifying_suffix_ << "]";
+               << ", qualifying_suffix: [" << qualifying_suffix_ << "]"
+               << ", hostname_char_set: [" << hostname_char_set_ << "]"
+               << ", hostname_char_replacement: [" << hostname_char_replacement_ << "]";
     }
 
     return (stream.str());
@@ -253,6 +265,10 @@ D2ClientConfig::toElement() const {
                 Element::create(replaceClientNameModeToString(replace_client_name_mode_)));
     // Set generated-prefix
     result->set("generated-prefix", Element::create(generated_prefix_));
+    // Set hostname-char-set
+    result->set("hostname-char-set", Element::create(hostname_char_set_));
+    // Set hostname-char-replacement
+    result->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
     return (result);
 }
 
