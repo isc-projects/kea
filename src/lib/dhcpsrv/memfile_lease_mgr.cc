@@ -38,6 +38,7 @@ const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 
 } // end of anonymous namespace
 
+using namespace isc::asiolink;
 using namespace isc::util;
 
 namespace isc {
@@ -883,6 +884,39 @@ Memfile_LeaseMgr::getLeases4() const {
    return (collection);
 }
 
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    Lease4Collection collection;
+    const Lease4StorageAddressIndex& idx = storage4_.get<AddressIndexTag>();
+    Lease4StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
+
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
+    // Return all other leases being within the page size.
+    for (auto lease = lb;
+         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         ++lease) {
+        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    }
+
+    return (collection);
+}
+
 Lease6Ptr
 Memfile_LeaseMgr::getLease6(Lease::Type type,
                             const isc::asiolink::IOAddress& addr) const {
@@ -979,6 +1013,39 @@ Memfile_LeaseMgr::getLeases6() const {
    }
 
    return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    // Expecting IPv6 address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    Lease6Collection collection;
+    const Lease6StorageAddressIndex& idx = storage6_.get<AddressIndexTag>();
+    Lease6StorageAddressIndex::const_iterator lb = idx.lower_bound(lower_bound_address);
+
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
+    // Return all other leases being within the page size.
+    for (auto lease = lb;
+         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+
+    return (collection);
 }
 
 void

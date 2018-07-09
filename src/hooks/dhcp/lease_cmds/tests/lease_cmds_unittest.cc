@@ -17,6 +17,7 @@
 #include <testutils/user_context_utils.h>
 #include <gtest/gtest.h>
 #include <errno.h>
+#include <set>
 
 using namespace std;
 using namespace isc;
@@ -478,11 +479,13 @@ public:
 // Simple test that checks the library really registers the commands.
 TEST_F(LeaseCmdsTest, commands) {
 
-    vector<string> cmds = { "lease4-add",    "lease6-add",
-                            "lease4-get",    "lease6-get",
-                            "lease4-del",    "lease6-del",
-                            "lease4-update", "lease6-update",
-                            "lease4-wipe",   "lease6-wipe" };
+    vector<string> cmds = { "lease4-add",      "lease6-add",
+                            "lease4-get",      "lease6-get",
+                            "lease4-get-all",  "lease6-get-all",
+                            "lease4-get-page", "lease6-get-page",
+                            "lease4-del",      "lease6-del",
+                            "lease4-update",   "lease6-update",
+                            "lease4-wipe",     "lease6-wipe" };
     testCommands(cmds);
 }
 
@@ -1731,6 +1734,139 @@ TEST_F(LeaseCmdsTest, Lease4GetBySubnetIdInvalidArguments) {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+// Checks that multiple calls to lease4-get-pages return all leases.
+TEST_F(LeaseCmdsTest, Lease4GetPaged) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Gather all returned addresses to verify that all were returned.
+    std::set<std::string> lease_addresses;
+
+    // Keyword start indicates that we want to retrieve the first page.
+    std::string last_address = "start";
+
+    // There are 4 leases in the database, so the first two pages should
+    // include leases and the 3 page should be empty.
+    for (auto i = 0; i < 3; ++i) {
+        // Query for a page of leases.
+        string cmd =
+            "{\n"
+            "    \"command\": \"lease4-get-page\",\n"
+            "    \"arguments\": {"
+            "        \"from\": \"" + last_address + "\","
+            "        \"limit\": 2"
+            "    }"
+            "}";
+
+        // For the first two pages we shuould get success. For the last
+        // one an empty status code.
+        ConstElementPtr rsp;
+        if (i < 2) {
+            string exp_rsp = "2 IPv4 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        } else {
+            string exp_rsp = "0 IPv4 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+        }
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+
+        // Arguments must exist.
+        ConstElementPtr args = rsp->get("arguments");
+        ASSERT_TRUE(args);
+        ASSERT_EQ(Element::map, args->getType());
+
+        // For convenience, we return the number of returned leases,
+        // so as the client can check whether there was anything returned
+        // before parsing the leases structure.
+        ConstElementPtr page_count = args->get("count");
+        ASSERT_TRUE(page_count);
+        ASSERT_EQ(Element::integer, page_count->getType());
+
+        // leases must exist, but may be empty.
+        ConstElementPtr leases = args->get("leases");
+        ASSERT_TRUE(leases);
+        ASSERT_EQ(Element::list, leases->getType());
+
+        if (!leases->empty()) {
+            EXPECT_EQ(2, page_count->intValue());
+
+            // Go over each lease and verify its correctness.
+            for (ConstElementPtr lease : leases->listValue()) {
+                ASSERT_EQ(Element::map, lease->getType());
+                ASSERT_TRUE(lease->contains("ip-address"));
+                ConstElementPtr ip_address = lease->get("ip-address");
+                ASSERT_EQ(Element::string, ip_address->getType());
+                last_address = ip_address->stringValue();
+
+                lease_addresses.insert(last_address);
+
+                // The easiest way to retrieve the subnet id and HW address is to
+                // ask the Lease Manager.
+                Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(IOAddress(last_address));
+                ASSERT_TRUE(from_mgr);
+                checkLease4(leases, last_address, from_mgr->subnet_id_,
+                            from_mgr->hwaddr_->toText(false), true);
+            }
+
+        } else {
+            // In the third iteration the page should be empty.
+            EXPECT_EQ(0, page_count->intValue());
+        }
+    }
+
+    // Check if all addresses were returned.
+    EXPECT_EQ(1, lease_addresses.count("192.0.2.1"));
+    EXPECT_EQ(1, lease_addresses.count("192.0.2.2"));
+    EXPECT_EQ(1, lease_addresses.count("192.0.3.1"));
+    EXPECT_EQ(1, lease_addresses.count("192.0.3.2"));
+}
+
+// Verifies that first page of IPv4 leases can be retrieved by specifying
+// zero IPv4 address.
+TEST_F(LeaseCmdsTest, Lease4GetPagedZeroAddress) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"0.0.0.0\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "2 IPv4 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+}
+
+// Verifies that IPv6 address as a start address is rejected.
+TEST_F(LeaseCmdsTest, Lease4GetPagedIPv4Address) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"2001:db8::1\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value 2001:db8::1 is not an IPv4 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 // Checks that lease6-get-all returns all leases.
 TEST_F(LeaseCmdsTest, Lease6GetAll) {
 
@@ -1930,6 +2066,221 @@ TEST_F(LeaseCmdsTest, Lease6GetBySubnetIdInvalidArguments) {
         "    }\n"
         "}";
     exp_rsp = "listed subnet identifiers must be numbers";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that multiple calls to lease6-get-page return all leases.
+TEST_F(LeaseCmdsTest, Lease6GetPaged) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Gather all returned addresses to verify that all were returned.
+    std::set<std::string> lease_addresses;
+
+    // Keyword start indicates that we want to retrieve the first page.
+    std::string last_address = "start";
+
+    // There are 4 leases in the database, so the first two pages should
+    // include leases and the 3 page should be empty.
+    for (auto i = 0; i < 3; ++i) {
+        // Query for a page of leases.
+        string cmd =
+            "{\n"
+            "    \"command\": \"lease6-get-page\",\n"
+            "    \"arguments\": {"
+            "        \"from\": \"" + last_address + "\","
+            "        \"limit\": 2"
+            "    }"
+            "}";
+
+        // For the first two pages we shuould get success. For the last
+        // one an empty status code.
+        ConstElementPtr rsp;
+        if (i < 2) {
+            string exp_rsp = "2 IPv6 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        } else {
+            string exp_rsp = "0 IPv6 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+        }
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+
+        // Arguments must exist.
+        ConstElementPtr args = rsp->get("arguments");
+        ASSERT_TRUE(args);
+        ASSERT_EQ(Element::map, args->getType());
+
+        // For convenience, we return the number of returned leases,
+        // so as the client can check whether there was anything returned
+        // before parsing the leases structure.
+        ConstElementPtr page_count = args->get("count");
+        ASSERT_TRUE(page_count);
+        ASSERT_EQ(Element::integer, page_count->getType());
+
+        // leases must exist, but may be empty.
+        ConstElementPtr leases = args->get("leases");
+        ASSERT_TRUE(leases);
+        ASSERT_EQ(Element::list, leases->getType());
+
+        if (!leases->empty()) {
+            EXPECT_EQ(2, page_count->intValue());
+
+            // Go over each lease and verify its correctness.
+            for (ConstElementPtr lease : leases->listValue()) {
+                ASSERT_EQ(Element::map, lease->getType());
+                ASSERT_TRUE(lease->contains("ip-address"));
+                ConstElementPtr ip_address = lease->get("ip-address");
+                ASSERT_EQ(Element::string, ip_address->getType());
+                last_address = ip_address->stringValue();
+
+                lease_addresses.insert(last_address);
+
+                // The easiest way to retrieve the subnet id and HW address is to
+                // ask the Lease Manager.
+                Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                           IOAddress(last_address));
+                ASSERT_TRUE(from_mgr);
+                checkLease6(leases, last_address, 0, from_mgr->subnet_id_,
+                            from_mgr->duid_->toText(), false);
+            }
+
+        } else {
+            // In the third iteration the page should be empty.
+            EXPECT_EQ(0, page_count->intValue());
+        }
+    }
+
+    // Check if all addresses were returned.
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:1::1"));
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:1::2"));
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:2::1"));
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:2::2"));
+}
+
+// Verifies that first page of IPv6 leases can be retrieved by specifying
+// zero IPv6 address.
+TEST_F(LeaseCmdsTest, Lease6GetPagedZeroAddress) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"::\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "2 IPv6 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+}
+
+// Verifies that IPv4 address as a start address is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedIPv4Address) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"192.0.2.3\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value 192.0.2.3 is not an IPv6 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that value of 'from' parameter other than 'start' or an IPv6
+// address is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedInvalidFrom) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"foo\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value is neither 'start' keyword "
+        "nor a valid IPv6 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that limit is mandatory.
+TEST_F(LeaseCmdsTest, Lease6GetPagedNoLimit) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\""
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that the limit must be a number.
+TEST_F(LeaseCmdsTest, Lease6GetPagedLimitNotNumber) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": false"
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter must be a number";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that the limit of 0 is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedLimitIsZero) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": 0"
+        "    }"
+        "}";
+
+    string exp_rsp = "page size of retrieved leases must not be 0";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
