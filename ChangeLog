@@ -1,3 +1,8 @@
+1431.	[func]		marcin
+	Implemented lease4-get-page and lease6-get-page commands
+	in lease_cmds hooks library.
+	(Trac #5651, git b056828212f7b206ff8bd07c097fd6f427d22d71)
+
 1430.	[func] 		fdupont
 	Lease objects and lease backends are now able to store user
         context. User context can store an arbitrary data as long
