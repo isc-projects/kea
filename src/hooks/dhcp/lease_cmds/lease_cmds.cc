@@ -70,7 +70,7 @@ public:
 
         /// @brief Attempts to covert text to one of specified types
         ///
-        /// Supported values are: "address", hw-address and duid.
+        /// Supported values are: "address", "hw-address", "duid" and "client-id".
         ///
         /// @param txt text to be converted
         /// @return value converted to Parameters::Type
@@ -87,7 +87,7 @@ public:
             } else {
                 isc_throw(BadValue, "Incorrect identifier type: "
                           << txt << ", the only supported values are: "
-                          "address, hw-address, duid");
+                          "address, hw-address, duid, client-id");
             }
         }
 
