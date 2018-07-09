@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,8 +52,6 @@ public:
 class D2ClientConfig : public UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Default configuration constants.
-    /// @todo For now these are hard-coded as configuration layer cannot
-    /// readily provide them (see Trac #3358).
     static const char* DFT_SERVER_IP;
     static const size_t DFT_SERVER_PORT;
     static const char* DFT_V4_SENDER_IP;
@@ -67,6 +65,8 @@ public:
     static const bool DFT_OVERRIDE_CLIENT_UPDATE;
     static const char* DFT_REPLACE_CLIENT_NAME_MODE;
     static const char* DFT_GENERATED_PREFIX;
+    static const char* DFT_HOSTNAME_CHAR_SET;
+    static const char* DFT_HOSTNAME_CHAR_REPLACEMENT;
 
     /// @brief Defines the client name replacement modes.
     enum ReplaceClientNameMode  {
@@ -116,7 +116,10 @@ public:
                    const bool override_client_update,
                    const ReplaceClientNameMode replace_client_name_mode,
                    const std::string& generated_prefix,
-                   const std::string& qualifying_suffix);
+                   const std::string& qualifying_suffix,
+                   const std::string& hostname_char_set,
+                   const std::string& hostname_char_replacement);
+
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -193,6 +196,16 @@ public:
     /// @brief Return the suffix to use to qualify partial domain-names.
     const std::string& getQualifyingSuffix() const {
         return(qualifying_suffix_);
+    }
+
+    /// @brief Return the char set regexp used to sanitize client hostnames.
+    const std::string& getHostnameCharSet() const {
+        return(hostname_char_set_);
+    }
+
+    /// @brief Return the invalid char replacement used to sanitize client hostnames.
+    const std::string& getHostnameCharReplacement() const {
+        return(hostname_char_replacement_);
     }
 
     /// @brief Compares two D2ClientConfigs for equality
@@ -291,6 +304,14 @@ private:
 
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     std::string qualifying_suffix_;
+
+    /// @brief Regular expression describing invalid characters for client hostnames.
+    /// If empty, host name scrubbing is not done.
+    std::string hostname_char_set_;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    std::string hostname_char_replacement_;
 };
 
 std::ostream&

@@ -1870,6 +1870,8 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
+        "     \"hostname-char-replacement\" : \"*\", "
         "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
@@ -1925,6 +1927,8 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"replace-client-name\" : \"never\", "
         "     \"generated-prefix\" : \"\", "
         "     \"qualifying-suffix\" : \"\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
+        "     \"hostname-char-replacement\" : \"*\", "
         "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
