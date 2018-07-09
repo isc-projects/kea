@@ -313,6 +313,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"hostname-char-set\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hostname-char-set", driver.loc_);
+    }
+}
+
+\"hostname-char-replacement\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hostname-char-replacement", driver.loc_);
+    }
+}
+
 (?i:\"UDP\") {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser6Context::NCR_PROTOCOL) {

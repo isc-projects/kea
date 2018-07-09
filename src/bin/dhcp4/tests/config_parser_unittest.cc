@@ -4021,7 +4021,9 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "     \"hostname-char-replacement\" : \"x\" }, "
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.

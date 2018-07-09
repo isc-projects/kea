@@ -243,7 +243,7 @@ public:
                                   ((mask & REPLACE_CLIENT_NAME) ?
                                     D2ClientConfig::RCM_WHEN_PRESENT
                                    : D2ClientConfig::RCM_NEVER),
-                                  "myhost", "example.com")));
+                                  "myhost", "example.com", "", "")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
     }

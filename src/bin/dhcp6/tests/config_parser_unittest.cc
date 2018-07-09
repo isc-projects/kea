@@ -4555,7 +4555,9 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "     \"hostname-char-replacement\" : \"x\" }, "
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
@@ -4592,6 +4594,8 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet());
+    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement());
 }
 
 // This test checks the ability of the server to handle a configuration

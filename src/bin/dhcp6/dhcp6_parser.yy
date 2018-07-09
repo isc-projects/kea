@@ -188,6 +188,8 @@ using namespace std;
   NEVER "never"
   ALWAYS "always"
   WHEN_NOT_PRESENT "when-not-present"
+  HOSTNAME_CHAR_SET "hostname-char-set"
+  HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -1908,6 +1910,8 @@ dhcp_ddns_param: enable_updates
                | override_client_update
                | replace_client_name
                | generated_prefix
+               | hostname_char_set
+               | hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry
@@ -2023,6 +2027,22 @@ generated_prefix: GENERATED_PREFIX {
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("generated-prefix", s);
+    ctx.leave();
+};
+
+hostname_char_set: HOSTNAME_CHAR_SET {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname-char-set", s);
+    ctx.leave();
+};
+
+hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
 };
 
