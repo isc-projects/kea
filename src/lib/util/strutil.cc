@@ -299,79 +299,111 @@ decodeFormattedHexString(const std::string& hex_string,
     }
 }
 
-std::string
-sanitizeString(const std::string& original,
-                            const std::string& invalidChars,
-                            const std::string& replacement) {
+class StringSanitizerImpl {
+public:
+    StringSanitizerImpl(const std::string& char_set, const std::string& char_replacement)
+        : char_set_(char_set), char_replacement_(char_replacement) {
 #ifdef USE_REGEX
-    std::regex rexpr;
-    try {
-        rexpr = std::regex(invalidChars, std::regex::extended);
-    } catch (const std::exception& ex) {
-        isc_throw(isc::BadValue, "invalid regex: '"
-                  << invalidChars << "', " << ex.what());
-    }
-
-    std::stringstream result;
-    try {
-        std::regex_replace(std::ostream_iterator<char>(result),
-                           original.begin(), original.end(),
-                           rexpr, replacement);
-    } catch (const std::exception& ex) {
-        isc_throw(isc::BadValue, "replacing '" << invalidChars << "' with '"
-                   << replacement << "' in '" << original << "' failed: ,"
-                   << ex.what());
-    }
-
-    return (result.str());
+        try {
+            scrub_exp_ = std::regex(char_set, std::regex::extended);
+        } catch (const std::exception& ex) {
+            isc_throw(isc::BadValue, "invalid regex: '"
+                      << char_set_ << "', " << ex.what());
+        }
 #else
-    // Compile the expression.
-    regex_t rex;
-    int ec = regcomp(&rex, invalidChars.c_str(), REG_EXTENDED);
-    if (ec) {
-        char errbuf[512] = "";
-        static_cast<void>(regerror(ec, &rex, errbuf, sizeof(errbuf)));
-        isc_throw(isc::BadValue, "invalid regex: '" << invalidChars
-                  << "', " << errbuf);
+        int ec = regcomp(&scrub_exp_, char_set_.c_str(), REG_EXTENDED);
+        if (ec) {
+            char errbuf[512] = "";
+            static_cast<void>(regerror(ec, &scrub_exp_, errbuf, sizeof(errbuf)));
+            regfree(&scrub_exp_);
+            isc_throw(isc::BadValue, "invalid regex: '" << char_set_ << "', " << errbuf);
+        }
+#endif
     }
 
-    // Iterate over original string, match by match.
-    const char* origStr = original.c_str();
-    const char* startFrom = origStr;
-    const char* endAt = origStr + strlen(origStr);
-    regmatch_t matches[2];  // n matches + 1
-    stringstream result;
+    /// @brief Destructor.
+    ~StringSanitizerImpl() {
+#ifndef USE_REGEX
+        regfree(&scrub_exp_);
+#endif
+    }
 
-    while (startFrom < endAt) {
-        // Look for the next match
-        if (regexec(&rex, startFrom, 1, matches, 0) == REG_NOMATCH) {
-            // No matches, so add in the remainder
-            result << startFrom;
-            break;
+    std::string scrub(const std::string& original) {
+#ifdef USE_REGEX
+        std::stringstream result;
+        try {
+            std::regex_replace(std::ostream_iterator<char>(result),
+                               original.begin(), original.end(),
+                               scrub_expr, char_replacement_);
+        } catch (const std::exception& ex) {
+            isc_throw(isc::BadValue, "replacing '" << char_set_ << "' with '"
+                   << char_replacement_ << "' in '" << original << "' failed: ,"
+                   << ex.what());
         }
 
-        // Shouldn't happen, but one never knows eh?
-        if (matches[0].rm_so == -1) {
-            isc_throw(isc::Unexpected, "matched but so is -1?");
-        }
+        return (result.str());
+#else
+        // Iterate over original string, match by match.
+        const char* origStr = original.c_str();
+        const char* startFrom = origStr;
+        const char* endAt = origStr + strlen(origStr);
+        regmatch_t matches[2];  // n matches + 1
+        stringstream result;
 
-        // Add everything from starting point up to the current match
-        const char* matchAt = startFrom + matches[0].rm_so;
-        while (startFrom < matchAt) {
-            result << *startFrom;
+        while (startFrom < endAt) {
+            // Look for the next match
+            if (regexec(&scrub_exp_, startFrom, 1, matches, 0) == REG_NOMATCH) {
+                // No matches, so add in the remainder
+                result << startFrom;
+                break;
+            }
+
+            // Shouldn't happen, but one never knows eh?
+            if (matches[0].rm_so == -1) {
+                isc_throw(isc::Unexpected, "matched but so is -1?");
+            }
+
+            // Add everything from starting point up to the current match
+            const char* matchAt = startFrom + matches[0].rm_so;
+            while (startFrom < matchAt) {
+                result << *startFrom;
+                ++startFrom;
+            }
+
+            // Add in the replacement
+            result << char_replacement_;
+
+            // Move past the match.
             ++startFrom;
         }
 
-        // Add in the replacement
-        result << replacement;
-
-        // Move past the match.
-        ++startFrom;
+        return (result.str());
+#endif
     }
 
-    regfree(&rex);
-    return (result.str());
+private:
+    std::string char_set_;
+    std::string char_replacement_;
+
+#ifdef USE_REGEX
+    regex scrub_exp_;
+#else
+    regex_t scrub_exp_;
 #endif
+};
+
+StringSanitizer::StringSanitizer(const std::string& char_set,
+                                 const std::string& char_replacement)
+    : impl_(new StringSanitizerImpl(char_set, char_replacement)) {
+}
+
+StringSanitizer::~StringSanitizer() {
+    delete impl_;
+}
+
+std::string
+StringSanitizer::scrub(const std::string& original) {
+    return (impl_->scrub(original));
 }
 
 } // namespace str

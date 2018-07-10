@@ -15,6 +15,7 @@
 #include <vector>
 #include <exceptions/exceptions.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {
@@ -255,25 +256,53 @@ void
 decodeFormattedHexString(const std::string& hex_string,
                          std::vector<uint8_t>& binary);
 
-/// \brief Replaces all occurences of a character set in a string
+/// @brief Forward declaration to the @c StringSanitizer implementation.
+class StringSanitizerImpl;
+
+/// @brief Implements a regular expression based string scrubber
 ///
-/// This function runs a given string through a regular expression,
-/// replacing all "matches" of that expression with the specified string.
-///
-/// \param original the string to sanitize
-/// \param invalidChars  string containing a regular expression (POSIX
-/// extended syntax) that describes the characters to replace.  If you
-/// wanted to sanitize hostnames for example, you could specify the
-/// inversion of valid characters "[^A-Za-z0-9_-]".
-/// \param replacement string of one or more characters to use as the
-/// replacement for invalid characters.
-/// \return the new, sanitized string
-/// \throw BadValue if given an invalid regular expression, Unexpected if
-/// an error occurs executing the expression
-std::string
-sanitizeString(const std::string& original,
-               const std::string& invalidChars,
-               const std::string& replacement);
+/// The implementation uses C++11 regex IF the environemnt supports it
+/// (tested in configure.ac). If not it falls back to C lib regcomp/regexec.
+/// Older compilers, such as  pre Gnu 4.9.0, provided only experimental
+/// implementations of regex which are recognized as buggy.
+class StringSanitizer {
+public:
+
+    /// Constructor
+    ///
+    /// Compiles the given character set into a regular expression, and
+    /// retains the given character replacement.  Thereafter, the instance
+    /// may be used to scrub an arbitrary number of strings.
+    ///
+    /// @param char_set string containing a regular expression (POSIX
+    /// extended syntax) that describes the characters to replace.  If you
+    /// wanted to sanitize hostnames for example, you could specify the
+    /// inversion of valid characters "[^A-Za-z0-9_-]".
+    /// @param char_replacement string of one or more characters to use as the
+    /// replacement for invalid characters.
+    /// @throw BadValue if given an invalid regular expression
+    StringSanitizer(const std::string& char_set,
+                    const std::string& char_replacement);
+
+    /// @brief Destructor.
+    ///
+    /// Destroys the implementation instance.
+    ~StringSanitizer();
+
+    /// Returns a scrubbed copy of a given string
+    ///
+    /// Replaces all occurrances of characters described by the regular
+    /// expression with the character replacement .
+    ///
+    /// @param original the string to scrub
+    /// @throw Unexpected if an error occurs during scrubbing
+    std::string scrub(const std::string& original);
+private:
+    /// @brief Pointer to the @c StringSanitizerImpl.
+    StringSanitizerImpl* impl_;
+};
+
+typedef boost::shared_ptr<StringSanitizer> StringSanitizerPtr;
 
 } // namespace str
 } // namespace util

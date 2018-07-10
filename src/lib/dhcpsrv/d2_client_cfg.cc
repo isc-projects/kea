@@ -113,7 +113,8 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       generated_prefix_(generated_prefix),
       qualifying_suffix_(qualifying_suffix),
       hostname_char_set_(hostname_char_set),
-      hostname_char_replacement_(hostname_char_replacement) {
+      hostname_char_replacement_(hostname_char_replacement),
+      hostname_sanitizer_(0) {
     validateContents();
 }
 
@@ -133,7 +134,8 @@ D2ClientConfig::D2ClientConfig()
       generated_prefix_(DFT_GENERATED_PREFIX),
       qualifying_suffix_(""),
       hostname_char_set_(DFT_HOSTNAME_CHAR_SET),
-      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET) {
+      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET),
+      hostname_sanitizer_(0) {
     validateContents();
 }
 
@@ -170,6 +172,16 @@ D2ClientConfig::validateContents() {
         isc_throw(D2ClientError, "D2ClientConfig: server and sender cannot"
                   " share the exact same IP address/port: "
                   << server_ip_.toText() << "/" << server_port_);
+    }
+
+    if (!hostname_char_set_.empty()) {
+        try {
+            hostname_sanitizer_.reset(new isc::util::str::StringSanitizer(hostname_char_set_,
+                                                                          hostname_char_replacement_));
+        } catch (const std::exception& ex) {
+            isc_throw(D2ClientError, "D2ClientConfig: hostname-char-set"
+                      " is not a valid regular expression");
+        }
     }
 
     /// @todo perhaps more validation we should do yet?
