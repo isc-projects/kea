@@ -209,6 +209,12 @@ public:
         return(hostname_char_replacement_);
     }
 
+    /// @brief Return pointer to compiled regular expression string sanitizer
+    /// Will be empty if hostname-char-set is empty.
+    util::str::StringSanitizerPtr getHostnameSanitizer() const {
+        return(hostname_sanitizer_);
+    }
+
     /// @brief Compares two D2ClientConfigs for equality
     bool operator == (const D2ClientConfig& other) const;
 

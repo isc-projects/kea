@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,7 @@ namespace {
 
 /// @brief Set of JSON configurations used by the FQDN tests.
 const char* CONFIGS[] = {
+    // 0
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -53,6 +54,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"\""
         "}"
     "}",
+    // 1
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -77,6 +79,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
+    // 2
     // Simple config with DDNS updates disabled.  Note pool is one address
     // large to ensure we get a specific address back.
     "{ \"interfaces-config\": {"
@@ -93,6 +96,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
+    // 3
     // Simple config with DDNS updates enabled.  Note pool is one address
     // large to ensure we get a specific address back.
     "{ \"interfaces-config\": {"
@@ -109,6 +113,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
+    // 4
     // Configuration which disables DNS updates but contains a reservation
     // for a hostname. Reserved hostname should be assigned to a client if
     // the client includes it in the Parameter Request List option.
@@ -136,6 +141,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"\""
         "}"
     "}",
+    // 5
     // Configuration which disables DNS updates but contains a reservation
     // for a hostname and the qualifying-suffix which should be appended to
     // the reserved hostname in the Hostname option returned to a client.
@@ -162,7 +168,35 @@ const char* CONFIGS[] = {
             "\"enable-updates\": false,"
             "\"qualifying-suffix\": \"example.isc.org\""
         "}"
-    "}"
+    "}",
+    // 6
+    // Configuration which enables DNS updates and hostname sanitization
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ],"
+        "    \"reservations\": ["
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"hostname\":   \"unique-xxx-host.example.org\""
+        "       }"
+        "    ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": true,"
+            "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
+            "\"hostname-char-replacement\" : \"x\","
+            "\"qualifying-suffix\": \"example.org\""
+        "}"
+    "}",
 };
 
 class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
@@ -425,7 +459,8 @@ public:
 
     // Test that the server's processes the hostname (or lack thereof)
     // in a client request correctly, according to the replace-client-name
-    // mode configuration parameter.
+    // mode configuration parameter.  We include hostname sanitizer to ensure
+    // it does not interfere with name replacement.
     //
     // @param mode - value to use for replace-client-name
     // @param client_name_flag - specifies whether or not the client request
@@ -449,6 +484,8 @@ public:
             "\"dhcp-ddns\": {"
             "\"enable-updates\": true,"
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\","
+            "\"hostname-char-set\": \"[^A-Za-z0-9.-]\","
+            "\"hostname-char-replacement\": \"x\","
             "\"replace-client-name\": \"%s\""
             "}}";
 
@@ -1661,5 +1698,67 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
     testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 }
+
+TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[6], *client.getServer());
+
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified host name with invalid characters",
+            "one-&$_-host",
+            "one-xxx-host.example.org"
+        },
+        {
+            "qualified host name with invalid characters",
+            "two-&$_-host.other.org",
+            "two-xxx-host.other.org"
+        },
+        {
+            "unqualified host name with all valid characters",
+            "three-ok-host",
+            "three-ok-host.example.org"
+        },
+        {
+            "qualified host name with valid characters",
+            "four-ok-host.other.org",
+            "four-ok-host.other.org"
+        }
+    };
+
+    Pkt4Ptr resp;
+    OptionStringPtr hostname;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+        // Set the hostname option.
+        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
+
+        // Send the DHCPDISCOVER and make sure that the server responded.
+        ASSERT_NO_THROW(client.doDiscover());
+        resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+        // Make sure the response hostname is what we expect.
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ((*scenario).sanitized_, hostname->getValue());
+        }
+    }
+}
+
 
 } // end of anonymous namespace

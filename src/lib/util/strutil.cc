@@ -334,7 +334,7 @@ public:
         try {
             std::regex_replace(std::ostream_iterator<char>(result),
                                original.begin(), original.end(),
-                               scrub_expr, char_replacement_);
+                               scrub_exp_, char_replacement_);
         } catch (const std::exception& ex) {
             isc_throw(isc::BadValue, "replacing '" << char_set_ << "' with '"
                    << char_replacement_ << "' in '" << original << "' failed: ,"
