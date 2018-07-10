@@ -5,6 +5,8 @@ if PERFDHCP
 SUBDIRS += perfdhcp
 endif
 
+SUBDIRS += slaac
+
 if KEA_SHELL
 SUBDIRS += shell
 endif
