@@ -45,7 +45,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
                      const HAConfigPtr& config, const HAServerType& server_type)
     : io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(*io_service), communication_state_(),
-      query_filter_(config), pending_requests_() {
+      query_filter_(config), state_machine_control_(config), pending_requests_() {
 
     if (server_type == HAServerType::DHCPv4) {
         communication_state_.reset(new CommunicationState4(io_service_, config));
@@ -130,9 +130,15 @@ HAService::normalStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
+        state_machine_control_.notify(getCurrState());
     }
 
     scheduleHeartbeat();
+
+    if (state_machine_control_.amPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -180,9 +186,16 @@ HAService::partnerDownStateHandler() {
             query_filter_.serveDefaultScopes();
         }
         adjustNetworkState();
+
+        state_machine_control_.notify(getCurrState());
     }
 
     scheduleHeartbeat();
+
+    if (state_machine_control_.amPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -220,9 +233,15 @@ HAService::readyStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        state_machine_control_.notify(getCurrState());
     }
 
     scheduleHeartbeat();
+
+    if (state_machine_control_.amPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -361,6 +380,17 @@ HAService::waitingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        state_machine_control_.notify(getCurrState());
+    }
+
+    // Only schedule the heartbeat for non-backup servers.
+    if (config_->getThisServerConfig()->getRole() != HAConfig::PeerConfig::BACKUP) {
+        scheduleHeartbeat();
+    }
+
+    if (state_machine_control_.amPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
     }
 
     // Backup server must remain in its own state.
@@ -368,8 +398,6 @@ HAService::waitingStateHandler() {
         verboseTransition(HA_BACKUP_ST);
         return;
     }
-
-    scheduleHeartbeat();
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -475,6 +503,11 @@ HAService::verboseTransition(const unsigned state) {
                 .arg(new_state_name);
         }
     }
+}
+
+void
+HAService::unpause() {
+    state_machine_control_.unpause();
 }
 
 void
