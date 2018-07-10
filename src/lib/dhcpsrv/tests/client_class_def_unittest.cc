@@ -226,65 +226,6 @@ TEST(ClientClassDef, copyAndEquality) {
     EXPECT_TRUE(*cclass != *cclass2);
 }
 
-// Verifies assignment.
-TEST(ClientClassDef, assign) {
-
-    boost::scoped_ptr<ClientClassDef> cclass;
-    ExpressionPtr expr;
-    CfgOptionPtr test_options;
-    OptionPtr opt;
-
-    // Make an expression
-    expr.reset(new Expression());
-    TokenPtr token(new TokenString("boo"));
-    expr->push_back(token);
-
-    // Create an option container with an option
-    OptionPtr option;
-    test_options.reset(new CfgOption());
-    option.reset(new Option(Option::V4, 17, OptionBuffer(10, 0xFF)));
-    ASSERT_NO_THROW(test_options->add(option, false, DHCP4_OPTION_SPACE));
-
-    // Now remake the client class with cfg_option
-    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class_one", expr,
-                                                    test_options)));
-
-    // Now lets assign a fresh definition to it;
-    boost::scoped_ptr<ClientClassDef> cclass2;
-    ExpressionPtr expr_empty;
-    ASSERT_NO_THROW(cclass2.reset(new ClientClassDef("another", expr_empty)));
-    ASSERT_NO_THROW(*cclass2 = *cclass);
-
-    // The allocated Expression pointers should  match
-    EXPECT_TRUE(cclass->getMatchExpr().get() ==
-                cclass2->getMatchExpr().get());
-
-    // The allocated CfgOption pointers should match
-    EXPECT_TRUE(cclass->getCfgOption().get() ==
-                cclass2->getCfgOption().get());
-
-    // Verify the equality tools reflect that the classes are equal.
-    EXPECT_TRUE(cclass->equals(*cclass2));
-    EXPECT_TRUE(*cclass == *cclass2);
-    EXPECT_FALSE(*cclass != *cclass2);
-
-    // Verify the required flag is enough to make classes not equal.
-    EXPECT_FALSE(cclass->getRequired());
-    cclass2->setRequired(true);
-    EXPECT_TRUE(cclass2->getRequired());
-    EXPECT_FALSE(*cclass == *cclass2);
-    EXPECT_TRUE(*cclass != *cclass2);
-    cclass2->setRequired(false);
-    EXPECT_TRUE(*cclass == *cclass2);
-
-    // Verify the depend on known flag is enough to make classes not equal.
-    EXPECT_FALSE(cclass->getDependOnKnown());
-    cclass2->setDependOnKnown(true);
-    EXPECT_TRUE(cclass2->getDependOnKnown());
-    EXPECT_FALSE(*cclass == *cclass2);
-    EXPECT_TRUE(*cclass != *cclass2);
-}
-
 // Tests dependency.
 TEST(ClientClassDef, dependency) {
     boost::scoped_ptr<ClientClassDef> cclass;
