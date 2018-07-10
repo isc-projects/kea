@@ -17,6 +17,7 @@
 #include <string>
 #include <unordered_map>
 #include <list>
+#include <vector>
 
 /// @file client_class_def.h
 ///
@@ -250,7 +251,7 @@ typedef std::unordered_map<std::string, ClientClassDefPtr> ClientClassDefMap;
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
 /// @brief Defines a list of ClientClassDefPtr's, using insert order.
-typedef std::list<ClientClassDefPtr> ClientClassDefList;
+typedef std::vector<ClientClassDefPtr> ClientClassDefList;
 
 /// @brief Defines a pointer to a ClientClassDefList
 typedef boost::shared_ptr<ClientClassDefList> ClientClassDefListPtr;
