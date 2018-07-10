@@ -116,6 +116,13 @@ public:
     /// @param cfg_option the option collection to assign the class
     void setCfgOption(const CfgOptionPtr& cfg_option);
 
+    /// @brief Checks direct dependency.
+    ///
+    /// @param name The client class name.
+    ///
+    /// @return true if the definition depends on the class name, false if not.
+    bool dependOnClass(const std::string& name) const;
+
     /// @brief Compares two @c ClientClassDef objects for equality.
     ///
     /// @param other Other client class definition to compare to.
@@ -322,6 +329,14 @@ public:
     ///
     /// @return ClientClassDefListPtr to the list of classes
     const ClientClassDefListPtr& getClasses() const;
+
+    /// @brief Checks direct dependency.
+    ///
+    /// @param name The client class name.
+    /// @param depend Set to the name of the first depending class.
+    ///
+    /// @return true if a definition depends on the class name, false if none.
+    bool dependOnClass(const std::string& name, std::string& depend) const;
 
     /// @brief Compares two @c ClientClassDictionary objects for equality.
     ///
