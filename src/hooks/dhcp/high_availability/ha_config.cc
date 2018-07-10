@@ -7,7 +7,23 @@
 #include <exceptions/exceptions.h>
 #include <util/strutil.h>
 #include <ha_config.h>
+#include <ha_service_states.h>
 #include <sstream>
+
+namespace {
+
+/// @brief Creates default state configuration.
+///
+/// @param [out] state_map map of state configurations into which the
+/// newly created configuration should be inserted.
+/// @param state state for which new configuration is to be created.
+void
+createStateConfig(isc::ha::HAConfig::StateConfigMap& state_map, const int state) {
+    isc::ha::HAConfig::StateConfigPtr cfg(new isc::ha::HAConfig::StateConfig(state));
+    state_map[state] = cfg;
+}
+
+} // end of anonymous namespace
 
 namespace isc {
 namespace ha {
@@ -76,11 +92,64 @@ HAConfig::PeerConfig::roleToString(const HAConfig::PeerConfig::Role& role) {
     return ("");
 }
 
+HAConfig::StateConfig::StateConfig(const int state)
+    : state_(state), pausing_(HAConfig::StateConfig::PAUSE_NEVER) {
+}
+
+void
+HAConfig::StateConfig::setPausing(const std::string& pausing) {
+    pausing_ = stringToPausing(pausing);
+}
+
+HAConfig::StateConfig::Pausing
+HAConfig::StateConfig::stringToPausing(const std::string& pausing) {
+    if (pausing == "always") {
+        return (HAConfig::StateConfig::PAUSE_ALWAYS);
+
+    } else if (pausing == "never") {
+        return (HAConfig::StateConfig::PAUSE_NEVER);
+
+    } else if (pausing == "once") {
+        return (HAConfig::StateConfig::PAUSE_ONCE);
+    }
+
+    isc_throw(BadValue, "unsupported value " << pausing << " of 'pause' parameter");
+}
+
+std::string
+HAConfig::StateConfig::pausingToString(const HAConfig::StateConfig::Pausing& pausing) {
+    switch (pausing) {
+    case HAConfig::StateConfig::PAUSE_ALWAYS:
+        return ("always");
+
+    case HAConfig::StateConfig::PAUSE_NEVER:
+        return ("never");
+
+    case HAConfig::StateConfig::PAUSE_ONCE:
+        return ("once");
+
+    default:
+        ;
+    }
+
+    isc_throw(BadValue, "unsupported pause enumeration " << static_cast<int>(pausing));
+}
+
 HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
       sync_leases_(true), sync_timeout_(60000), heartbeat_delay_(10000),
       max_response_delay_(60000), max_ack_delay_(10000), max_unacked_clients_(10),
-      peers_() {
+      peers_(), state_machine_() {
+
+    // Create default state configurations.
+    createStateConfig(state_machine_, HA_BACKUP_ST);
+    createStateConfig(state_machine_, HA_HOT_STANDBY_ST);
+    createStateConfig(state_machine_, HA_LOAD_BALANCING_ST);
+    createStateConfig(state_machine_, HA_PARTNER_DOWN_ST);
+    createStateConfig(state_machine_, HA_READY_ST);
+    createStateConfig(state_machine_, HA_SYNCING_ST);
+    createStateConfig(state_machine_, HA_TERMINATED_ST);
+    createStateConfig(state_machine_, HA_WAITING_ST);
 }
 
 HAConfig::PeerConfigPtr
@@ -176,6 +245,17 @@ HAConfig::getOtherServersConfig() const {
     PeerConfigMap copy = peers_;
     copy.erase(getThisServerName());
     return (copy);
+}
+
+HAConfig::StateConfigPtr
+HAConfig::getStateConfig(const int state) const {
+    auto state_config = state_machine_.find(state);
+    if (state_config == state_machine_.end()) {
+        isc_throw(BadValue, "no state machine configuration found for the "
+                  << "state identifier " << state);
+    }
+
+    return (state_config->second);
 }
 
 void
