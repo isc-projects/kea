@@ -463,49 +463,81 @@ TEST(StringUtilTest, decodeFormattedHexString) {
                  isc::BadValue);
 }
 
-// Verifies sanitizeString() function
-TEST(StringUtilTest, sanitizeString) {
+/// @brief Fucntion used to test StringSantitizer
+/// @param original - string to sanitize
+/// @param char_set - regular expression string describing invalid
+/// characters
+/// @param char_replacement - character(s) which replace invalid
+/// characters
+/// @param expected - expected sanitized string
+void sanitizeStringTest(
+    const std::string& original,
+    const std::string& char_set,
+    const std::string& char_replacement,
+    const std::string& expected) {
+
+    StringSanitizerPtr ss;
     std::string sanitized;
 
+    try {
+        ss.reset(new StringSanitizer(char_set, char_replacement));
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Could not construct sanitizer:" << ex.what();
+        return;
+    }
+
+    try {
+        sanitized = ss->scrub(original);
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Could not scrub string:" << ex.what();
+        return;
+    }
+
+    EXPECT_EQ(sanitized, expected);
+}
+
+// Verifies StringSantizer class
+TEST(StringUtilTest, stringSanitizer) {
+
     // Bad regular expression should throw.
-    ASSERT_THROW (sanitized = sanitizeString("just a string", "[bogus-regex",""),
-                  BadValue);
+    StringSanitizerPtr ss;
+    ASSERT_THROW (ss.reset(new StringSanitizer("[bogus-regex","")), BadValue);
 
     // List of invalid chars should work: (b,c,2 are invalid)
-    ASSERT_NO_THROW (sanitized = sanitizeString("abc.123", "[b-c2]","*"));
-    EXPECT_EQ(sanitized, "a**.1*3");
+    sanitizeStringTest("abc.123", "[b-c2]", "*",
+                       "a**.1*3");
 
-    // Inverted list for valid chars should work too: (b,c,2 are valid)
-    ASSERT_NO_THROW (sanitized = sanitizeString("abc.123", "[^b-c2]","*"));
-    EXPECT_EQ(sanitized, "*bc**2*");
+    // Inverted list of valid chars should work: (b,c,2 are invalid)
+    sanitizeStringTest("abc.123", "[^b-c2]", "*",
+                       "*bc**2*");
 
     // A string of all valid chars should return an identical string.
-    ASSERT_NO_THROW (sanitized = sanitizeString("-_A--B__Cabc34567_-", "[^A-Ca-c3-7_-]","x"));
-    EXPECT_EQ(sanitized, "-_A--B__Cabc34567_-");
+    sanitizeStringTest("-_A--B__Cabc34567_-", "[^A-Ca-c3-7_-]", "x",
+                       "-_A--B__Cabc34567_-");
 
     // Replacing with a character should work.
-    ASSERT_NO_THROW (sanitized = sanitizeString("A[b]c\12JoE3-_x!B$Y#e", "[^A-Za-z0-9_]","*"));
-    EXPECT_EQ(sanitized, "A*b*c*JoE3*_x*B*Y*e");
+    sanitizeStringTest("A[b]c\12JoE3-_x!B$Y#e", "[^A-Za-z0-9_]", "*",
+                       "A*b*c*JoE3*_x*B*Y*e");
 
     // Removing (i.e.replacing with an "empty" string) should work.
-    ASSERT_NO_THROW (sanitized = sanitizeString("A[b]c\12JoE3-_x!B$Y#e", "[^A-Za-z0-9_]",""));
-    EXPECT_EQ(sanitized, "AbcJoE3_xBYe");
+    sanitizeStringTest("A[b]c\12JoE3-_x!B$Y#e", "[^A-Za-z0-9_]", "",
+                       "AbcJoE3_xBYe");
 
     // More than one non-matching in a row should work.
-    ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]","x"));
-    EXPECT_EQ(sanitized, "xxAxxBxxCxx");
+    sanitizeStringTest("%%A%%B%%C%%", "[^A-Za-z0-9_]", "x",
+                       "xxAxxBxxCxx");
 
     // Removing than one non-matching in a row should work.
-    ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]",""));
-    EXPECT_EQ(sanitized, "ABC");
+    sanitizeStringTest("%%A%%B%%C%%", "[^A-Za-z0-9_]", "",
+                       "ABC");
 
     // Replacing with a string should work.
-    ASSERT_NO_THROW (sanitized = sanitizeString("%%A%%B%%C%%", "[^A-Za-z0-9_]","xyz"));
-    EXPECT_EQ(sanitized, "xyzxyzAxyzxyzBxyzxyzCxyzxyz");
+    sanitizeStringTest("%%A%%B%%C%%", "[^A-Za-z0-9_]", "xyz",
+                       "xyzxyzAxyzxyzBxyzxyzCxyzxyz");
 
     // Dots as valid chars work.
-    ASSERT_NO_THROW (sanitized = sanitizeString("abc.123", "[^A-Za-z0-9_.]","*"));
-    EXPECT_EQ(sanitized, "abc.123");
+    sanitizeStringTest("abc.123", "[^A-Za-z0-9_.]", "*",
+                       "abc.123");
 }
 
 } // end of anonymous namespace

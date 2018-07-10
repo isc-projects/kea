@@ -17,6 +17,7 @@
 #include <cc/user_context.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -312,6 +313,9 @@ private:
     /// @brief A string to replace invalid characters when scrubbing hostnames.
     /// Meaningful only if hostname_char_set_ is not empty.
     std::string hostname_char_replacement_;
+
+    /// @brief Pointer to compiled regular expression string sanitizer
+    util::str::StringSanitizerPtr hostname_sanitizer_;
 };
 
 std::ostream&
