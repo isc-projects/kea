@@ -160,6 +160,70 @@ public:
     /// @brief Map of the servers' configurations.
     typedef std::map<std::string, PeerConfigPtr> PeerConfigMap;
 
+
+    /// @brief Configuration specific to a single HA state.
+    class StateConfig {
+    public:
+
+        /// @brief State machine pausing modes.
+        ///
+        /// Supported modes are:
+        /// - always pause in the given state,
+        /// - never pause in the given state,
+        /// - pause upon first transition to the given state.
+        enum Pausing {
+            PAUSE_ALWAYS,
+            PAUSE_NEVER,
+            PAUSE_ONCE
+        };
+
+        /// @brief Constructor.
+        ///
+        /// @param state state identifier.
+        explicit StateConfig(const int state);
+
+        /// @brief Returns identifier of the state.
+        int getState() const {
+            return (state_);
+        }
+
+        /// @brief Returns pausing mode for the given state.
+        Pausing getPausing() const {
+            return (pausing_);
+        }
+
+        /// @brief Sets pausing mode for the gievn state.
+        ///
+        /// @param pausing new pausing mode in the textual form. Supported
+        /// values are: always, never, once.
+        void setPausing(const std::string& pausing);
+
+        /// @brief Converts pausing mode from the textual form.
+        ///
+        /// @param pausing pausing mode in the textual form. Supported
+        /// values are: always, never, once.
+        static Pausing stringToPausing(const std::string& pausing);
+
+        /// @brief Returns pausing mode in the textual form.
+        ///
+        /// @param pausing pausing mode.
+        static std::string pausingToString(const Pausing& pausing);
+
+    private:
+
+        /// @brief Idenitifier of state for which configuration is held.
+        int state_;
+
+        /// @brief Pausing mode in the given state.
+        Pausing pausing_;
+    };
+
+    /// @brief Pointer to the state configuration.
+    typedef boost::shared_ptr<StateConfig> StateConfigPtr;
+
+    /// @brief Map of configuration for supported states.
+    typedef std::map<int, StateConfigPtr> StateConfigMap;
+
     /// @brief Constructor.
     HAConfig();
 
@@ -380,12 +444,26 @@ public:
         return (peers_);
     }
 
+    /// @brief Returns HA state configuration by state identifier.
+    ///
+    /// @param state identifier of the state for which configuration should
+    /// be returned.
+    ///
+    /// @return Pointer to the state configuration.
+    /// @throw BadValue if there is no configuration found for the given state.
+    StateConfigPtr getStateConfig(const int state) const;
+
+    /// @brief Returns state machine configuration.
+    ///
+    /// @return Map of pointers to the configuration of all states.
+    StateConfigMap getStateMachineConfig() const {
+        return (state_machine_);
+    }
+
     /// @brief Validates configuration.
     ///
     /// @throw HAConfigValidationError if configuration is invalid.
     void validate() const;
-
-private:
 
     std::string this_server_name_; ///< This server name.
     HAMode ha_mode_;               ///< Mode of operation.
@@ -397,6 +475,7 @@ private:
     uint32_t max_ack_delay_;       ///< Maximum DHCP message ack delay.
     uint32_t max_unacked_clients_; ///< Maximum number of unacked clients.
     PeerConfigMap peers_;          ///< Map of peers' configurations.
+    StateConfigMap state_machine_; ///< Map of per states configurations.
 };
 
 /// @brief Pointer to the High Availability configuration structure.

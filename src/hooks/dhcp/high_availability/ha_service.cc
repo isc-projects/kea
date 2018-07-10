@@ -85,28 +85,28 @@ void
 HAService::defineStates() {
     StateModel::defineStates();
 
-    defineState(HA_BACKUP_ST, "backup",
+    defineState(HA_BACKUP_ST, stateToString(HA_BACKUP_ST),
                 boost::bind(&HAService::backupStateHandler, this));
 
-    defineState(HA_HOT_STANDBY_ST, "hot-standby",
+    defineState(HA_HOT_STANDBY_ST, stateToString(HA_HOT_STANDBY_ST),
                 boost::bind(&HAService::normalStateHandler, this));
 
-    defineState(HA_LOAD_BALANCING_ST, "load-balancing",
+    defineState(HA_LOAD_BALANCING_ST, stateToString(HA_LOAD_BALANCING_ST),
                 boost::bind(&HAService::normalStateHandler, this));
 
-    defineState(HA_PARTNER_DOWN_ST, "partner-down",
+    defineState(HA_PARTNER_DOWN_ST, stateToString(HA_PARTNER_DOWN_ST),
                 boost::bind(&HAService::partnerDownStateHandler, this));
 
-    defineState(HA_READY_ST, "ready",
+    defineState(HA_READY_ST, stateToString(HA_READY_ST),
                 boost::bind(&HAService::readyStateHandler, this));
 
-    defineState(HA_SYNCING_ST, "syncing",
+    defineState(HA_SYNCING_ST, stateToString(HA_SYNCING_ST),
                 boost::bind(&HAService::syncingStateHandler, this));
 
-    defineState(HA_TERMINATED_ST, "terminated",
+    defineState(HA_TERMINATED_ST, stateToString(HA_TERMINATED_ST),
                 boost::bind(&HAService::terminatedStateHandler, this));
 
-    defineState(HA_WAITING_ST, "waiting",
+    defineState(HA_WAITING_ST, stateToString(HA_WAITING_ST),
                 boost::bind(&HAService::waitingStateHandler, this));
 }
 

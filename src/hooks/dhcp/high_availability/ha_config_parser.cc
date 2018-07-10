@@ -8,8 +8,10 @@
 
 #include <ha_config_parser.h>
 #include <ha_log.h>
+#include <ha_service_states.h>
 #include <cc/dhcp_config_error.h>
 #include <limits>
+#include <set>
 
 using namespace isc::data;
 using namespace isc::http;
@@ -30,6 +32,11 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
 /// @brief Default values for HA peer configuration.
 const SimpleDefaults HA_CONFIG_PEER_DEFAULTS = {
     { "auto-failover", Element::boolean, "true" }
+};
+
+/// @brief Default values for HA state configuration.
+const SimpleDefaults HA_CONFIG_STATE_DEFAULTS = {
+    { "pause", Element::string, "never" }
 };
 
 } // end of anonymous namespace
@@ -96,6 +103,12 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         isc_throw(ConfigError, "'peers' parameter must be a list");
     }
 
+    // State machine configuration must be a list of maps.
+    ConstElementPtr state_machine = c->get("state-machine");
+    if (state_machine && state_machine->getType() != Element::list) {
+        isc_throw(ConfigError, "'state-machine' parameter must be a list");
+    }
+
     // We have made major sanity checks, so let's try to gather some values.
 
     // Get 'this-server-name'.
@@ -160,6 +173,37 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
 
         // Auto failover configuration.
         cfg->setAutoFailover(getBoolean(*p, "auto-failover"));
+    }
+
+    // Per state configuration is optional.
+    if (state_machine) {
+        const auto& state_machine_vec = state_machine->listValue();
+
+        std::set<int> configured_states;
+
+        // Go over per state configurations.
+        for (auto s = state_machine_vec.begin(); s != state_machine_vec.end(); ++s) {
+
+            // State configuration is held in map.
+            if ((*s)->getType() != Element::map) {
+                isc_throw(ConfigError, "state configuration must be a map");
+            }
+
+            setDefaults(*s, HA_CONFIG_STATE_DEFAULTS);
+
+            // Get state name and set per state configuration.
+            std::string state_name = getString(*s, "state");
+
+            int state = stringToState(state_name);
+            // Check that this configuration doesn't duplicate existing configuration.
+            if (configured_states.count(state) > 0) {
+                isc_throw(ConfigError, "duplicated configuration for the '"
+                          << state_name << "' state");
+            }
+            configured_states.insert(state);
+
+            config_storage->getStateConfig(state)->setPausing(getString(*s, "pause"));
+        }
     }
 
     // We have gone over the entire configuration and stored it in the configuration
