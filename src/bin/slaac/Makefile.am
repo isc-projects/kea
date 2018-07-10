@@ -11,13 +11,13 @@ endif
 
 CLEANFILES  = *.gcno *.gcda ca_messages.h ca_messages.cc s-messages
 
-man_MANS = kea-ctrl-agent.8
+man_MANS = kea-slaac.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-slaac.xml
 EXTRA_DIST += slaac.dox
 
 if GENERATE_DOCS
-kea-ctrl-agent.8: kea-slaac.xml
+kea-slaac.8: kea-slaac.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-slaac.xml
@@ -53,12 +53,12 @@ libslaac_la_SOURCES += slaac_log.cc slaac_log.h
 libslaac_la_SOURCES += slaac_process.cc slaac_process.h
 #libslaac_la_SOURCES += simple_parser.cc simple_parser.h
 #libslaac_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-#libslaac_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
+#libslaac_la_SOURCES += slaac_lexer.ll location.hh position.hh stack.hh
 
-nodist_libagent_la_SOURCES = slaac_messages.h slaac_messages.cc
+nodist_libslaac_la_SOURCES = slaac_messages.h slaac_messages.cc
 EXTRA_DIST += slaac_messages.mes
-#EXTRA_DIST += agent_lexer.ll
-#EXTRA_DIST += agent_parser.yy
+#EXTRA_DIST += slaac_lexer.ll
+#EXTRA_DIST += slaac_parser.yy
 
 sbin_PROGRAMS = kea-slaac
 
@@ -89,7 +89,7 @@ kea_slaac_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 if GENERATE_PARSER
 
-parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_parser.h
+parser: slaac_lexer.cc location.hh position.hh stack.hh slaac_parser.cc slaac_parser.h
 	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
@@ -101,15 +101,15 @@ parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_pa
 # Call flex with -s to check that the default rule can be suppressed
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
-location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
-	$(YACC) --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
+location.hh position.hh stack.hh slaac_parser.cc slaac_parser.h: slaac_parser.yy
+	$(YACC) --defines=slaac_parser.h --report=all --report-file=slaac_parser.report -o slaac_parser.cc slaac_parser.yy
 
-agent_lexer.cc: agent_lexer.ll
-	$(LEX) --prefix agent_ -o agent_lexer.cc agent_lexer.ll
+slaac_lexer.cc: slaac_lexer.ll
+	$(LEX) --prefix slaac_ -o slaac_lexer.cc slaac_lexer.ll
 
 else
 
-parser location.hh position.hh stack.hh agent_parser.cc agent_parser.h agent_lexer.cc:
+parser location.hh position.hh stack.hh slaac_parser.cc slaac_parser.h slaac_lexer.cc:
 	@echo Parser generation disabled. Configure with --enable-generate-parser to enable it.
 
 endif

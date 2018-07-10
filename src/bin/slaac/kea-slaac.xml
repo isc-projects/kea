@@ -1,0 +1,216 @@
+<!--
+ - Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Converted by db4-upgrade version 1.1 -->
+<refentry>
+
+  <info>
+    <productname>ISC Kea</productname>
+    <date>June 15, 2018</date>
+    <edition>1.4.0</edition>
+    <author>
+      <contrib>The Kea software has been written by a number of
+        engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
+        Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
+        Wlodek Wencel and Shawn Routhier.  That list is roughly in the
+        chronological order in which the authors made their first
+        contribution. For a complete list of authors and
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
+
+  <refmeta>
+    <refentrytitle>kea-ctrl-agent</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="manual">Kea</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>kea-ctrl-agent</refname>
+    <refpurpose>Control Agent process in Kea</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2016-2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>kea-ctrl-agent</command>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-W</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c<replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t<replaceable class="parameter">config-file</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      The <command>kea-ctrl-agent</command> provides a REST service for
+      controlling Kea services. The received HTTP requests are decapsulated
+      and forwarded to the respective Kea services in JSON format. Received
+      JSON responses are encapsulated within HTTP responses and returned to
+      the controlling entity. Some commands may be handled by the Control
+      Agent directly, and not forwarded to any Kea service.
+    </para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term><option>-v</option></term>
+        <listitem><para>
+          Display the version.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-V</option></term>
+        <listitem><para>
+          Display the extended version.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-W</option></term>
+        <listitem><para>
+          Display the configuration report.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-d</option></term>
+        <listitem><para>
+          Verbose mode sets the logging level to debug. This is primarily
+          for development purposes in stand-alone mode.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-c</option></term>
+        <listitem><para>
+          Configuration file including the configuration for the Control Agent
+          server. It may also contain configuration entries for other Kea
+          services.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-t</option></term>
+        <listitem><para>
+          Check the syntax of the configuration file and report the
+          first error if any. Note that not all parameters are
+          completely checked, in particular, service and client
+          sockets are not opened, and hook libraries are not loaded.
+        </para></listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>DOCUMENTATION</title>
+    <para>Kea comes with an extensive Kea User's Guide documentation
+      that covers all aspects of running the Kea software -
+      compilation, installation, configuration, configuration examples
+      and many more. Kea also features a Kea Messages Manual, which
+      lists all possible messages Kea can print with a brief
+      description for each of them. Both documents are typically
+      available in various formats (txt, html, pdf) with your Kea
+      distribution. The on-line version is available at
+      http://kea.isc.org/docs/.</para>
+    <para>
+      Kea source code is documented in the Kea Developer's Guide. It's
+      on-line version is available at http://kea.isc.org. Please
+      follow Developer's Guide link.
+    </para>
+    <para>
+      Kea project website is available at: http://kea.isc.org.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
+    <para>
+      There are two mailing lists available for Kea project. kea-users
+      (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
+      (kea-dev at lists.isc.org) is intended for Kea developers, prospective
+      contributors and other advanced users.  Both lists are available at
+      http://lists.isc.org. The community provides best effort type of support
+      on both of those lists.
+    </para>
+    <para>
+      ISC provides professional support for Kea services. See
+      https://www.isc.org/kea/ for details.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The <command>kea-ctrl-agent</command> was first coded in December 2016
+      by Marcin Siodelski.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>kea-dhcp4</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp6</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-dhcp-ddns</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>keactrl</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>perfdhcp</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-lfc</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citetitle>Kea Administrator's Guide</citetitle>.
+
+    </para>
+  </refsect1>
+
+</refentry>

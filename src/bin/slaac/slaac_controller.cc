@@ -12,14 +12,14 @@
 using namespace isc::process;
 
 namespace isc {
-namespace agent {
+namespace slaac {
 
 /// @brief Defines the application name, this is passed into base class
 /// it may be used to locate configuration data and appears in log statement.
-const char* SlaacController::agent_app_name_ = "Slaac";
+const char* SlaacController::slaac_app_name_ = "Slaac";
 
 /// @brief Defines the executable name. This is passed into the base class
-const char* SlaacController::agent_bin_name_ = "kea-slaac";
+const char* SlaacController::slaac_bin_name_ = "kea-slaac";
 
 DControllerBasePtr&
 SlaacController::instance() {
@@ -43,7 +43,7 @@ SlaacController::createProcess() {
 isc::data::ConstElementPtr
 SlaacController::parseFile(const std::string& name) {
     ParserContext parser;
-    return (parser.parseFile(name, ParserContext::PARSER_AGENT));
+    return (parser.parseFile(name, ParserContext::PARSER_SLAAC));
 }
 
 void
@@ -58,7 +58,7 @@ SlaacController::deregisterCommands() {
 }
 
 SlaacController::SlaacController()
-    : DControllerBase(agent_app_name_, agent_bin_name_) {
+    : DControllerBase(slaac_app_name_, slaac_bin_name_) {
 }
 
 SlaacController::~SlaacController() {
