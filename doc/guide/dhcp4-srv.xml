@@ -2579,8 +2579,15 @@ It is merely echoed by the server
       <listitem><simpara>
       <command>"replace-client-name": "never"</command>
       </simpara></listitem>
+
       <listitem><simpara>
       <command>"generated-prefix": "myhost"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-set": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-replacement": ""</command>
       </simpara></listitem>
       </itemizedlist>
       </para>
@@ -2908,6 +2915,50 @@ It is merely echoed by the server
         myhost-172-16-1-10.example.com.
       </para>
       </section>
+      <section xml:id="host-name-sanitization">
+        <title>Sanitizing Client host names</title>
+        It may be that some of your DHCP clients provide values in the Host Name
+        option (Option code 12), that contain undesirable characters.  It is possible
+        to configure kea-dhcp4 to sanitize these values.  The most typical use case
+        would be ensuring that only characters that are permitted by RFC 1035 be included:
+        A-Z,a-z,0-9, and '-'.
+
+        This may be accomplished with following two parameters:
+        <itemizedlist>
+        <listitem><simpara>
+        <command>hostname-char-set</command> - a regular expression describing the
+        invalid character set.  This can be any valid, regular expression using
+        POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]" would
+        replace any character other then the letters A through Z, a through, digits 0
+        through 9, and '-'.  If your clients include domain names, you will need to make
+        sure that the dot, '.', is included the your expression: "[^A-Za-z0-9.-]".
+        The default value is an empty string and disables sanitization.
+        </simpara></listitem>
+        <listitem><simpara>
+        <command>hostname-char-replacement</command> - a string of zero or more characters
+        with which to replace each invalid character in the host name.  The default value
+        is an empty string and will cause invalid characters to be OMITTED rather than
+        replaced.
+        </simpara></listitem>
+        </itemizedlist>
+        The following configuration, will replace anything other than a letter, digit,
+        hyphen, or dot with the letter 'x':
+<screen>
+"Dhcp4": {
+    "dhcp-ddns": {
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
+        ...
+    },
+    ...
+}
+</screen>
+        Thus, a client supplied value of "myhost-$[123.org" would become "myhost-xx123.org"
+        Note that sanitization is peformed only on the portion of the name supplied by the
+        Host Name option, and that this is done before applying the qualifying suffix (if
+        one is defined).
+      </section>
+
     </section>
 
     <section xml:id="dhcp4-next-server">

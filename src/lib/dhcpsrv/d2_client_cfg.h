@@ -99,6 +99,10 @@ public:
     /// supplied by the client with a generated name.
     /// @param generated_prefix Prefix to use when generating domain-names.
     /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
+    /// @param hostname_char_set regular expression string which describes invalid
+    /// characters to be scrubbed from client host names 
+    /// @param hostname_char_replacement string of zero or more characters to
+    /// replace invalid chars when sanitizing client host names
     ///
     /// @c enable_updates is mandatory, @c qualifying_suffix is mandatory
     /// when updates are enabled, other parameters are optional.
