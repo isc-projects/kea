@@ -35,6 +35,7 @@ libha_la_SOURCES += ha_log.cc ha_log.h
 libha_la_SOURCES += ha_server_type.h
 libha_la_SOURCES += ha_service.cc ha_service.h
 libha_la_SOURCES += ha_service_states.cc ha_service_states.h
+libha_la_SOURCES += ha_state_machine_control.cc ha_state_machine_control.h
 libha_la_SOURCES += query_filter.cc query_filter.h
 libha_la_SOURCES += version.cc
 
