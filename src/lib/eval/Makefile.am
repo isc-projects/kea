@@ -13,6 +13,7 @@ AM_CXXFLAGS += $(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
+libkea_eval_la_SOURCES += dependency.cc dependency.h
 libkea_eval_la_SOURCES += eval_log.cc eval_log.h
 libkea_eval_la_SOURCES += evaluate.cc evaluate.h
 libkea_eval_la_SOURCES += token.cc token.h

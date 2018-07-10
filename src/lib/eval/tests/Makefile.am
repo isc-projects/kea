@@ -22,6 +22,7 @@ TESTS += libeval_unittests
 
 libeval_unittests_SOURCES  = boolean_unittest.cc
 libeval_unittests_SOURCES += context_unittest.cc
+libeval_unittests_SOURCES += dependency_unittest.cc
 libeval_unittests_SOURCES += evaluate_unittest.cc
 libeval_unittests_SOURCES += token_unittest.cc
 libeval_unittests_SOURCES += run_unittests.cc
