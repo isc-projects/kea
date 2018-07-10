@@ -3547,6 +3547,71 @@ TEST_F(HAServiceStateMachineTest, syncingTransitionsLoadBalancing) {
     EXPECT_EQ(HAService::HA_SYNCING_SUCCEEDED_EVT, service_->getLastEvent());
 }
 
+// This test verifies that the HA state machine can be paused in certain states
+// when the server is operating in load balancing mode.
+TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
+    partner_->startup();
+
+    HAConfigPtr valid_config = createValidConfiguration();
+    auto state_configs = valid_config->getStateMachineConfig();
+
+    for (auto cfg = state_configs.begin(); cfg != state_configs.end(); ++cfg) {
+        cfg->second->setPausing("always");
+    }
+
+    startService(valid_config);
+
+    {
+        SCOPED_TRACE("LOAD BALANCING state transitions");
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
+
+        service_->unpause();
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+    }
+
+    {
+        SCOPED_TRACE("PARTNER DOWN state transitions");
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
+        service_->unpause();
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+    }
+
+
+    {
+        SCOPED_TRACE("READY state transitions");
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_READY_ST));
+
+        service_->unpause();
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
+    }
+
+
+    {
+        SCOPED_TRACE("WAITING state transitions");
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        service_->unpause();
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_SYNCING_ST));
+    }
+}
+
 // This test verifies that the server takes ownership of the given scopes
 // and whether the DHCP service is disabled or enabled in certain states.
 TEST_F(HAServiceStateMachineTest, scopesServingLoadBalancing) {

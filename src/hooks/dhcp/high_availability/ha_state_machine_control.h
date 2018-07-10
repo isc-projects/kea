@@ -8,6 +8,7 @@
 #define HA_STATE_MACHINE_CONTROL_H
 
 #include <ha_config.h>
+#include <boost/shared_ptr.hpp>
 #include <set>
 
 namespace isc {
@@ -72,6 +73,9 @@ private:
     /// @brief Keeps track of visited states.
     std::set<int> visited_states_;
 };
+
+/// @brief Shared pointer to the @c HAStateMachineControl.
+typedef boost::shared_ptr<HAStateMachineControl> HAStateMachineControlPtr;
 
 } // end of namespace isc::ha
 } // end of namespace isc
