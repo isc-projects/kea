@@ -128,6 +128,10 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getGeneratedPrefix(), generated_prefix);
     EXPECT_EQ(d2_client_config->getQualifyingSuffix(), qualifying_suffix);
 
+    EXPECT_EQ(d2_client_config->getHostnameCharSet(), hostname_char_set);
+    EXPECT_EQ(d2_client_config->getHostnameCharReplacement(), hostname_char_replacement);
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
     ASSERT_TRUE(d2_client_config->getContext());
     EXPECT_EQ(d2_client_config->getContext()->str(), user_context);
 
