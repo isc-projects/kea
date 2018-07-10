@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 #include <errno.h>
 #include <sstream>
 #include <string.h>
-#include <sys/select.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 namespace isc {
@@ -92,19 +92,11 @@ WatchSocket::isReady() {
         return (false);
     }
 
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-
-    // Add select_fd socket to listening set
-    FD_SET(sink_,  &read_fds);
-
-    // Set zero timeout (non-blocking).
-    struct timeval select_timeout;
-    select_timeout.tv_sec = 0;
-    select_timeout.tv_usec = 0;
-
+    // Use ioctl FIONREAD vs polling select as it is faster.
+    int len;
+    int result = ioctl(sink_, FIONREAD, &len);
     // Return true only if read ready, treat error same as not ready.
-    return (select(sink_ + 1, &read_fds, NULL, NULL, &select_timeout) > 0);
+    return ((result == 0) && (len > 0));
 }
 
 void
