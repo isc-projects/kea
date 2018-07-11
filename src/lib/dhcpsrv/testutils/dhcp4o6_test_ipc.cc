@@ -32,6 +32,12 @@ Dhcp4o6TestIpc::open() {
 }
 
 void
+Dhcp4o6TestIpc::close() {
+    // Use the base IPC to close the socket
+    Dhcp4o6IpcBase::close();
+}
+
+void
 Dhcp4o6TestIpc::receiveHandler() {
     pkt_received_ = receive();
 }

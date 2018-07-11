@@ -56,38 +56,6 @@ public:
     void remove(const size_t& index);
 };
 
-// @brief Representation of a Cassandra User Defined Type
-class Udt : public AnyArray {
-public:
-    /// @brief Parameterized constructor
-    Udt(const CqlConnection& connection, const std::string& name);
-
-    /// @brief Destructor
-    ~Udt();
-
-    /// @brief Frees the underlying container.
-    void freeUserType();
-
-    /// @brief Creates the underlying container.
-    void newUserType();
-
-    /// @brief Connection to the Cassandra database
-    const CqlConnection& connection_;
-
-    /// @brief Name of the UDT in the schema: CREATE TYPE ___ { ... }
-    const std::string name_;
-
-    /// @brief Internal Cassandra driver object representing a Cassandra data
-    ///     type
-    const CassDataType* cass_data_type_;
-
-    /// @brief Internal Cassandra driver object representing a user defined type
-    CassUserType* cass_user_type_;
-};
-
-/// @brief Defines an array of arbitrary objects (used by Cassandra backend)
-typedef AnyArray AnyCollection;
-
 /// @brief Binds a C++ object to a Cassandra statement's parameter. Used in all
 ///     statements.
 /// @param value the value to be set or retreived
@@ -96,20 +64,6 @@ typedef AnyArray AnyCollection;
 typedef CassError (*CqlBindFunction)(const boost::any& value,
                                      const size_t& index,
                                      CassStatement* statement);
-
-/// @brief Sets a member in a UDT. Used in INSERT & UPDATE statements.
-/// @param value the value to be set or retreived
-/// @param index offset of the value being processed
-/// @param cass_user_type pointer to the user type that uses this member
-typedef CassError (*CqlUdtSetFunction)(const boost::any& value,
-                                       const size_t& index,
-                                       CassUserType* cass_user_type);
-
-/// @brief Sets an item in a collection. Used in INSERT & UPDATE statements.
-/// @param value pointer to a value to be inserted or updated
-/// @param collection pointer to collection to be inserted or updated
-typedef CassError (*CqlCollectionAppendFunction)(const boost::any& value,
-                                                 CassCollection* collection);
 
 /// @brief Converts a single Cassandra column value to a C++ object. Used in
 ///     SELECT statements.
@@ -124,10 +78,6 @@ struct CqlFunction {
     /// @brief Binds a C++ object to a Cassandra statement's parameter. Used in
     ///     all statements.
     CqlBindFunction cqlBindFunction_;
-    /// @brief Sets a member in a UDT. Used in INSERT & UPDATE statements.
-    CqlUdtSetFunction cqlUdtSetFunction_;
-    /// @brief Sets an item in a collection. Used in INSERT & UPDATE statements.
-    CqlCollectionAppendFunction cqlCollectionAppendFunction_;
     /// @brief Converts a single Cassandra column value to a C++ object. Used in
     ///     SELECT statements.
     CqlGetFunction cqlGetFunction_;
@@ -313,10 +263,6 @@ public:
 /// @brief Determine exchange type based on boost::any type.
 ExchangeDataType
 exchangeType(const boost::any& object);
-
-/// @brief Determine exchange type based on CassValueType.
-ExchangeDataType
-exchangeType(const CassValueType& type);
 
 }  // namespace dhcp
 }  // namespace isc

@@ -43,6 +43,9 @@ public:
     /// over the socket.
     virtual void open();
 
+    /// @brief Close the IPC socket.
+    virtual void close();
+
     /// @brief Retrieve port which socket is bound to.
     uint16_t getPort() const {
         return (port_);

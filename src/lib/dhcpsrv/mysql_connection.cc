@@ -42,7 +42,10 @@ MySqlTransaction::~MySqlTransaction() {
     // Rollback if the MySqlTransaction::commit wasn't explicitly
     // called.
     if (!committed_) {
-        conn_.rollback();
+        try {
+            conn_.rollback();
+        } catch (...) {
+        }
     }
 }
 
@@ -131,10 +134,8 @@ MySqlConnection::openDatabase() {
         // No timeout parameter, we are going to use the default timeout.
         stimeout = "";
     }
-
     if (stimeout.size() > 0) {
         // Timeout was given, so try to convert it to an integer.
-
         try {
             connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
         } catch (...) {

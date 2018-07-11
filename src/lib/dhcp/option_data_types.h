@@ -197,6 +197,51 @@ struct OptionDataTypeTraits<std::string> {
     static const OptionDataType type = OPT_STRING_TYPE;
 };
 
+/// @brief Encapsulates PSID offset.
+class PSIDOffset {
+public:
+
+    /// @brief Default constructor.
+    PSIDOffset() : psid_offset_(0) { }
+
+    /// @brief Constructor.
+    ///
+    /// It checks that the specified value is not greater than
+    /// 16, which is a maximum value for the PSID offset.
+    ///
+    /// @param psid_offset PSID offset.
+    /// @throw isc::OutOfRange If specified PSID offset is greater than 16.
+    explicit PSIDOffset(const uint8_t psid_offset)
+        : psid_offset_(psid_offset) {
+        if (psid_offset_ > sizeof(uint16_t) * 8) {
+            isc_throw(isc::OutOfRange, "invalid value "
+                      << asUnsigned() << " of PSID offset");
+        }
+    }
+
+    /// @brief Returns PSID offset as uint8_t value.
+    uint8_t asUint8() const {
+        return (psid_offset_);
+    }
+
+    /// @brief Returns PSID offset as unsigned int.
+    ///
+    /// This is useful to convert the value to a numeric type which
+    /// can be logged directly. Note that the uint8_t value has to
+    /// be cast to an integer value to be logged as a number. This
+    /// is because the uint8_t is often implemented as char, in which
+    /// case directly logging an uint8_t value prints a character rather
+    /// than a number.
+    unsigned int asUnsigned() const {
+        return (static_cast<unsigned>(psid_offset_));
+    }
+
+private:
+
+    /// @brief PSID offset.
+    uint8_t psid_offset_;
+};
+
 /// @brief Encapsulates PSID length.
 class PSIDLen {
 public:

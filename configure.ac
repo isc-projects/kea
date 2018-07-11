@@ -62,15 +62,15 @@ AC_SUBST(SEP)
 # If cross compiling assume the message compiler executable was
 # magically already in place...
 if test "$cross_compiling" = "yes"; then
-        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
-	if test -x "${srcdir}/src/lib/log/compiler/message"; then
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN("you must install a message compiler in:")
-		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
-		AC_MSG_WARN("compiled for build ($build).")
-	fi
+    AC_MSG_CHECKING("build (vs. host) compiled message compiler")
+    if test -x "${srcdir}/src/lib/log/compiler/message"; then
+        AC_MSG_RESULT(yes)
+    else
+        AC_MSG_RESULT(no)
+        AC_MSG_WARN("you must install a message compiler in:")
+        AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
+        AC_MSG_WARN("compiled for build ($build).")
+    fi
 fi
 AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
 
@@ -1501,6 +1501,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
                  src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
                  src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
+                 src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
@@ -1672,9 +1673,9 @@ if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
 Cassandra CQL:
-  CQL_VERSION:     ${CQL_VERSION}
-  CQL_CPPFLAGS:    ${CQL_CPPFLAGS}
-  CQL_LIBS:        ${CQL_LIBS}
+  CQL_VERSION:                  ${CQL_VERSION}
+  CQL_CPPFLAGS:                 ${CQL_CPPFLAGS}
+  CQL_LIBS:                     ${CQL_LIBS}
 END
 else
 cat >> config.report << END

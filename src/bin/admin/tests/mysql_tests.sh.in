@@ -449,9 +449,16 @@ EOF
 
     # lease4/6_stats changes are tested separately
 
-    # Verify upgraded schema reports version 6.0
+    # table: lease4 (upgrade 6.0 -> 7.0)
+    qry="SELECT address FROM lease4"
+    text=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease4 table is missing or broken. (expected status code %d, returned %d)"
+
+    # Verify upgraded schema reports version 7.
+
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "6.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe

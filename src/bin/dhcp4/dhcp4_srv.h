@@ -271,6 +271,11 @@ public:
                        bool allow_packet_park = true);
 
 
+    /// @brief Update DHCPv4 packet with address plus port information.
+    ///
+    /// @param query A pointer to the packet to be updated.
+    void updateDhcpV4AddressPlusPortPacket(Pkt4Ptr& query);
+
     /// @brief Instructs the server to shut down.
     void shutdown();
 

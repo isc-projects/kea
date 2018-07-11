@@ -140,6 +140,14 @@ protected:
                         const ClientClasses& client_classes,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
+
+        virtual isc::asiolink::IOAddress
+            pickAddressInternal(const SubnetPtr& subnet,
+                                const ClientClasses& client_classes,
+                                const DuidPtr& duid,
+                                const isc::asiolink::IOAddress& hint,
+                                uint8_t psid_offset,
+                                uint8_t psid_len);
     protected:
 
         /// @brief Returns the next prefix
@@ -149,8 +157,8 @@ protected:
         /// increased by prefix length /32 will become 2001:db9::. This method
         /// is used to iterate over IPv6 prefix pools
         ///
-        /// @param prefix prefix to be increased
-        /// @param prefix_len length of the prefix to be increased
+        /// @param prefix prefix being increased
+        /// @param prefix_len length of the prefix being increased
         /// @return result prefix
         static isc::asiolink::IOAddress
         increasePrefix(const isc::asiolink::IOAddress& prefix,
@@ -167,7 +175,8 @@ protected:
         /// @return result address or prefix
         static isc::asiolink::IOAddress
         increaseAddress(const isc::asiolink::IOAddress& address,
-                        bool prefix, const uint8_t prefix_len);
+                        bool prefix, const uint8_t prefix_len,
+                        uint8_t psid_offset = 0, uint8_t psid_len = 0);
 
     };
 
