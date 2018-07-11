@@ -610,6 +610,11 @@ public:
     /// @return Pointer to the response to the ha-scopes command.
     data::ConstElementPtr processScopes(const std::vector<std::string>& scopes);
 
+    /// @brief Processes ha-continue command and returns a response.
+    ///
+    /// @return Pointer to the response to the ha-continue command.
+    data::ConstElementPtr processContinue();
+
 protected:
 
     /// @brief Checks if the response is valid or contains an error.

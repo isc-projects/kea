@@ -192,6 +192,7 @@ public:
     using HAService::config_;
     using HAService::communication_state_;
     using HAService::query_filter_;
+    using HAService::state_machine_control_;
     using HAService::pending_requests_;
 };
 
@@ -2318,6 +2319,49 @@ TEST_F(HAServiceTest, processScopes) {
     EXPECT_FALSE(service.query_filter_.amServingScope("server1"));
     EXPECT_FALSE(service.query_filter_.amServingScope("server2"));
     EXPECT_FALSE(service.query_filter_.amServingScope("server3"));
+}
+
+// This test verifies that the ha-continue command is processed successfully.
+TEST_F(HAServiceTest, processContinue) {
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // State machine is to be paused in the waiting state.
+    ASSERT_NO_THROW(config_storage->getStateConfig(HA_WAITING_ST)->setPausing("always"));
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Pause the state machine.
+    EXPECT_NO_THROW(service.state_machine_control_.notify(HA_WAITING_ST));
+    EXPECT_TRUE(service.state_machine_control_.amPaused());
+
+    // Process ha-continue command that should unpause the state machine.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processContinue());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine continues.");
+
+    // State machine should have been unpaused as a result of processing the
+    // command.
+    EXPECT_FALSE(service.state_machine_control_.amPaused());
+
+    // Response should include no arguments.
+    EXPECT_FALSE(rsp->get("arguments"));
+
+    // Sending ha-continue command again which should return success but
+    // slightly different textual status.
+    ASSERT_NO_THROW(rsp = service.processContinue());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
+
+    // The state machine should not be paused.
+    EXPECT_FALSE(service.state_machine_control_.amPaused());
+
+    // Response should include no arguments.
+    EXPECT_FALSE(rsp->get("arguments"));
 }
 
 /// @brief HA partner to the server under test.
