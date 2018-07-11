@@ -4,7 +4,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <ha_log.h>
+#include <ha_service_states.h>
 #include <ha_state_machine_control.h>
+#include <boost/algorithm/string.hpp>
 
 namespace isc {
 namespace ha {
@@ -33,8 +36,20 @@ HAStateMachineControl::notify(const int state) {
         if ((state_config->getPausing() == HAConfig::StateConfig::PAUSE_ALWAYS) ||
             ((state_config->getPausing() == HAConfig::StateConfig::PAUSE_ONCE) &&
              first_visit)) {
+            std::string state_name = stateToString(state);
+            boost::to_upper(state_name);
+            LOG_INFO(ha_logger, HA_STATE_MACHINE_PAUSED)
+                .arg(state_name);
             paused_ = true;
         }
+    }
+}
+
+void
+HAStateMachineControl::unpause() {
+    if (amPaused()) {
+        LOG_INFO(ha_logger, HA_STATE_MACHINE_CONTINUED);
+        paused_ = false;
     }
 }
 
