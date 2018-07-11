@@ -58,9 +58,7 @@ public:
     }
 
     /// @brief Clears flag indicating that the state machine is paused.
-    void unpause() {
-        paused_ = false;
-    }
+    void unpause();
 
 private:
 
