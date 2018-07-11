@@ -509,5 +509,29 @@ TEST_F(HAImplTest, synchronizeHandler) {
 
 }
 
+// Tests ha-continue command handler.
+TEST_F(HAImplTest, continueHandler) {
+    HAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
+                                         HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON("{ \"command\": \"ha-continue\" }");
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl.continueHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
+}
+
 
 }

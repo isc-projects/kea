@@ -190,6 +190,19 @@ int scopes_command(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief ha-continue command handler implementation.
+int continue_command(CalloutHandle& handle) {
+    try {
+        impl->continueHandler(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_CONTINUE_HANDLER_FAILED)
+            .arg(ex.what());
+    }
+
+    return (0);
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -208,6 +221,7 @@ int load(LibraryHandle& handle) {
         handle.registerCommandCallout("ha-heartbeat", heartbeat_command);
         handle.registerCommandCallout("ha-sync", sync_command);
         handle.registerCommandCallout("ha-scopes", scopes_command);
+        handle.registerCommandCallout("ha-continue", continue_command);
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_CONFIGURATION_FAILED)

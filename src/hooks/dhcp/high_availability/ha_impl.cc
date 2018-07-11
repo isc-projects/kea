@@ -390,5 +390,12 @@ HAImpl::scopesHandler(hooks::CalloutHandle& callout_handle) {
     callout_handle.setArgument("response", response);
 }
 
+void
+HAImpl::continueHandler(hooks::CalloutHandle& callout_handle) {
+    ConstElementPtr response = service_->processContinue();
+    callout_handle.setArgument("response", response);
+}
+
+
 } // end of namespace isc::ha
 } // end of namespace isc
