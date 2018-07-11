@@ -1384,6 +1384,14 @@ HAService::processScopes(const std::vector<std::string>& scopes) {
     return (createAnswer(CONTROL_RESULT_SUCCESS, "New HA scopes configured."));
 }
 
+data::ConstElementPtr
+HAService::processContinue() {
+    if (unpause()) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine continues."));
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine is not paused."));
+}
+
 ConstElementPtr
 HAService::verifyAsyncResponse(const HttpResponsePtr& response) {
     // The response must cast to JSON type.
