@@ -296,6 +296,12 @@ HAService::syncingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        state_machine_control_.notify(getCurrState());
+    }
+
+    if (state_machine_control_.amPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
     }
 
     // Check if the clock skew is still acceptable. If not, transition to
