@@ -115,6 +115,7 @@ HAService::backupStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        state_machine_control_.notify(getCurrState());
     }
 
     // There is nothing to do in that state. This server simply receives
@@ -368,6 +369,7 @@ HAService::terminatedStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
+        state_machine_control_.notify(getCurrState());
 
         // In the terminated state we don't send heartbeat.
         communication_state_->stopHeartbeat();
