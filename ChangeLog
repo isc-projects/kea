@@ -1,3 +1,8 @@
+1432.	[func]		MayyaSunil
+	Code added to handle Authentication option in DHCPv6. There
+	is no way to use this code yet.
+	(Github #93, git 022dae4393da9e714678d52886d4f478ba308ba9)
+
 1431.	[func]		marcin
 	Implemented lease4-get-page and lease6-get-page commands
 	in lease_cmds hooks library.
