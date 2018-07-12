@@ -51,6 +51,7 @@ libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option4_client_fqdn_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option6_client_fqdn_unittest.cc
+libdhcp___unittests_SOURCES += option6_auth_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaprefix_unittest.cc
