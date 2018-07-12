@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
+#include <util/encode/hex.h>
 
 #include <sstream>
 #include <stdint.h>
@@ -21,9 +22,9 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-    Option6Auth::Option6Auth(const uint8_t proto, const uint8_t algo, 
-                             const uint8_t method, const uint64_t rdm, 
-                             const std::vector<uint8_t>& info) 
+    Option6Auth::Option6Auth(const uint8_t proto, const uint8_t algo,
+                             const uint8_t method, const uint64_t rdm,
+                             const std::vector<uint8_t>& info)
     : Option(Option::V6, D6O_AUTH),
       protocol_(proto), algorithm_(algo),
       rdm_method_(method), rdm_value_(rdm),
@@ -32,7 +33,7 @@ namespace dhcp {
 
 OptionPtr
 Option6Auth::clone() const {
-    return (cloneInternal<Option6Auth>());    
+    return (cloneInternal<Option6Auth>());
 }
 
 void
@@ -41,8 +42,8 @@ Option6Auth::pack(isc::util::OutputBuffer& buf) const {
        isc_throw(OutOfRange, "Option " << type_ << "Buffer too small for"
                "packing data");
     }
-    
-    //header = option code + length 
+
+    //header = option code + length
     buf.writeUint16(type_);
     // length = 11 bytes fixed field length+ length of auth information
     buf.writeUint16(11 + uint16_t(auth_info_.size()));
@@ -55,7 +56,7 @@ Option6Auth::pack(isc::util::OutputBuffer& buf) const {
     // replay detection value
     buf.writeUint64( rdm_value_);
     // authentication information for reconfig msg
-    // should have zero 
+    // should have zero
 
     for (auto i : auth_info_) {
         buf.writeUint8(i);
@@ -69,7 +70,7 @@ Option6Auth::packHashInput(isc::util::OutputBuffer& buf) const {
                "computing hash input");
     }
 
-    //header = option code + length 
+    //header = option code + length
     buf.writeUint16(type_);
     // length = 11 bytes fixed field length+ length of auth information
     buf.writeUint16(OPTION6_AUTH_MIN_LEN + OPTION6_HASH_MSG_LEN);
@@ -82,7 +83,7 @@ Option6Auth::packHashInput(isc::util::OutputBuffer& buf) const {
     // replay detection value
     buf.writeUint64(rdm_value_);
     // authentication information for reconfig msg
-    // should have zero 
+    // should have zero
     for (uint8_t i = 0; i < OPTION6_HASH_MSG_LEN; i++) {
         buf.writeUint8(0);
     }
@@ -95,7 +96,7 @@ Option6Auth::unpack(OptionBufferConstIter begin,
    if (distance(begin, end) < Option6Auth::OPTION6_AUTH_MIN_LEN) {
        isc_throw(OutOfRange, "Option " << type_ << " truncated");
    }
- 
+
    protocol_ = *begin;
    begin += sizeof(uint8_t);
 
@@ -113,13 +114,17 @@ Option6Auth::unpack(OptionBufferConstIter begin,
                 {  auth_info_.push_back(msgdata); });
 }
 
-std::string 
+std::string
 Option6Auth::toText(int indent) const {
     stringstream output;
     std::string in(indent, ' '); //base indent
-    
-    output << in << "protocol= " << protocol_ << "algorithm= " << algorithm_ 
-           << "rdm method= " << rdm_method_ << "rdm value= " << rdm_value_ ;
+
+    output << in << "protocol=" << static_cast<int>(protocol_)
+           << ", algorithm=" << static_cast<int>(algorithm_)
+           << ", rdm method=" << static_cast<int>(rdm_method_)
+           << ", rdm value=" << rdm_value_
+           << ", value=" << isc::util::encode::encodeHex(auth_info_);
+
     return output.str();
 }
 
