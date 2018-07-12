@@ -137,7 +137,7 @@
         </para>
       </section>
 
-      <section>
+      <section xml:id="ha-server-states">
         <title>Server States</title>
         <para>The DHCP server operating within an HA setup runs a state machine
         and the state of the server can be retrieved by its peers using the
@@ -1047,6 +1047,176 @@
         </para>
       </section>
 
+      <section xml:id="ha-pause-state-machine">
+        <title>Pausing HA State Machine</title>
+        <para>The high availability state machine includes many different
+        states described in detail in <xref linkend="ha-server-states"/>.
+        The server enters each state when certain conditions are met, most
+        often taking into account the partner server's state. In some states
+        the server performs specific actions, e.g. synchronization of the
+        lease database in the <command>syncing</command> state or responding
+        to DHCP queries according to the configured mode of operation in the
+        <command>load-balancing</command> and <command>hot-standby</command>
+        states.
+        </para>
+        <para>
+          By default, transitions between the states are performed
+          automatically and the server administrator has no direct control
+          when the transitions take place and, in most cases, the
+          administrator doesn't need such control. In some situations,
+          however, the administrator may want to "pause" the HA state
+          machine in a selected state to perform some additional administrative
+          actions before the server transitions to the next state.
+        </para>
+
+        <para>Consider a server failure which results in a loss of entire lease
+        database. Typically, the server will rebuild its lease database
+        when it enters the <command>syncing</command> state by querying
+        the partner server for leases, but it is possible that the
+        partner was also experiencing a failure and lacks lease information.
+        In this case, it may be required to reconstruct lease databases on
+        both servers from some external source, e.g. a backup server. If the
+        lease database is going to be reconstructed via RESTful API, the
+        servers should be started in the initial, i.e. <command>waiting</command>
+        state and remain in this state while leases are being added. In
+        particular, the servers should not attempt to synchronize their lease
+        databases nor start serving DHCP clients.
+        </para>
+
+        <para>The HA hooks library provides configuration parameters and a
+        command to control when the HA state machine should be paused and
+        resumed. The following configuration will cause the HA state machine
+        to pause in the <command>waiting</command> state after server startup.
+<screen>
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ],
+                    "state-machine": [
+                        {
+                            "state": "waiting",
+                            "pause": "once"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>The <command>pause</command> parameter value <command>once</command>
+        denotes that the state machine should be paused upon the first transition
+        to the <command>waiting</command> state. Later transitions to this state
+        won't cause the state machine to pause. Two other supported values of the
+        <command>pause</command> parameter are: <command>always</command> and
+        <command>never</command>. The latter is the default value for each state,
+        which instructs the server to never pause the state machine.
+        </para>
+
+        <para>In order to "unpause" the state machine the <command>ha-continue</command>
+        command must be sent to the paused server. This command does not take
+        any arguments. See <xref linkend="ha-control-commands"/> for details
+        about commands specific for HA hooks library.
+        </para>
+
+        <para>It is possible to configure the state machine to pause in more than
+        one state. Consider the following configuration.
+<screen>
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ],
+                    "state-machine": [
+                        {
+                            "state": "ready",
+                            "pause": "always"
+                        },
+                        {
+                            "state": "partner-down",
+                            "pause": "once"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>This configuration instructs the server to pause the state
+        machine every time it transitions to the <command>ready</command> state
+        and upon the first transition to the <command>partner-down</command>
+        state.</para>
+
+        <para>Refer to the <xref linkend="ha-server-states"/> for a complete of
+        list of server states. The state machine can be paused in any of the
+        supported states, however it is not practical for the
+        <command>backup</command> and <command>terminated</command> states because
+        the server never transitions out of these states anyway.
+        </para>
+
+        <note><para>In the <command>syncing</command> state the server is paused
+        before it makes an attempt to synchronize lease database with a partner.
+        In order to pause the state machine after lease database synchronization,
+        use the <command>ready</command> state instead.
+        </para></note>
+      </section>
+
       <section xml:id="ha-ctrl-agent-config">
         <title>Control Agent Configuration</title>
         <para>The <xref linkend="kea-ctrl-agent"/> describes in detail the
@@ -1197,6 +1367,19 @@
 </screen>
           </para>
         </section> <!-- ha-scopes-command -->
+
+        <section xml:id="ha-continue-command">
+        <title>ha-continue command</title>
+        <para>This command is used to resume the operation of the paused HA
+        state machine as described in the <xref linkend="ha-pause-state-machine"/>.
+        It takes no arguments, so the command structure is as simple as:
+<screen>
+{
+    "command": "ha-continue"
+}
+</screen>
+      </para>
+        </section> <!-- ha-continue-command -->
 
       </section> <!-- ha-control-commands -->
 
