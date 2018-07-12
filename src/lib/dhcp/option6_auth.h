@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,10 +21,12 @@ class Option6Auth;
 /// A pointer to the @c isc::dhcp::Option6Auth object.
 typedef boost::shared_ptr<Option6Auth> Option6AuthPtr;
 
+/// @brief This class represents Authentication (11) DHCPv6 option.
+///
+/// For details, see draft-ietf-rfc3315bis-13, Section 21.11.
 class Option6Auth: public Option {
 
 public:
-    
     static const uint8_t OPTION6_AUTH_MIN_LEN  = 11;
     static const uint8_t OPTION6_HASH_MSG_LEN  = 16;
     static const uint8_t OPTION6_HDR = 4; 
@@ -56,7 +58,6 @@ public:
     void packHashInput(isc::util::OutputBuffer& buf) const;
 
     /// @brief Parses received buffer
-    /// @brief Parses received buffer
     ///
     /// Parses received buffer and returns offset to the first unused byte after
     /// parsed option.
@@ -85,12 +86,12 @@ public:
     /// Set replay detection method type
     ///
     /// @param method replay detection method to be set
-    void setRplyDtctnMthd(uint8_t method) { rdm_method_ = method; }
+    void setReplyDetectionMethod(uint8_t method) { rdm_method_ = method; }
 
     /// Set replay detection method value
     ///
     /// @param rdm replay detection method value to be set
-    void setRplyDtctnValue(uint64_t value) { rdm_value_ = value; }
+    void setReplyDetectionValue(uint64_t value) { rdm_value_ = value; }
     /// Set authentication information 
     ///
     /// @param auth_info authentication information to be set
@@ -109,12 +110,12 @@ public:
     /// Returns replay detection method type
     ///
     /// @return replay detection method type value
-    uint8_t getRplyDtctnMthd() const { return rdm_method_; }
+    uint8_t getReplyDetectionMethod() const { return rdm_method_; }
 
     /// Return replay detection mechanism 
     ///
     /// @return replay detection method value
-    uint64_t getRplyDtctnValue() const { return rdm_value_; }
+    uint64_t getReplyDetectionValue() const { return rdm_value_; }
     
     /// Return authentication information 
     ///

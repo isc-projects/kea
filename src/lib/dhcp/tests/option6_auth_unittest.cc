@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,22 +37,22 @@ TEST_F(Option6AuthTest, basic) {
 
     ASSERT_EQ(1, auth->getProtocol());
     ASSERT_EQ(2, auth->getHashAlgo());
-    ASSERT_EQ(0, auth->getRplyDtctnMthd());
-    ASSERT_EQ(0x9000, auth->getRplyDtctnValue());
+    ASSERT_EQ(0, auth->getReplyDetectionMethod());
+    ASSERT_EQ(0x9000, auth->getReplyDetectionValue());
     
     std::vector<uint8_t> test_buf = {'a','b','c','d'};
     ASSERT_EQ(test_buf, auth->getAuthInfo());
 
     auth->setProtocol(2);
     auth->setHashAlgo(3);
-    auth->setRplyDtctnMthd(1);
-    auth->setRplyDtctnValue(109034830);
+    auth->setReplyDetectionMethod(1);
+    auth->setReplyDetectionValue(109034830);
     auth->setAuthInfo({1,2,3,4});
 
     ASSERT_EQ(2, auth->getProtocol());
     ASSERT_EQ(3, auth->getHashAlgo());
-    ASSERT_EQ(1, auth->getRplyDtctnMthd());
-    ASSERT_EQ(109034830, auth->getRplyDtctnValue());
+    ASSERT_EQ(1, auth->getReplyDetectionMethod());
+    ASSERT_EQ(109034830, auth->getReplyDetectionValue());
     
     test_buf = {1,2,3,4};
     ASSERT_EQ(test_buf, auth->getAuthInfo());
@@ -84,8 +84,8 @@ TEST_F(Option6AuthTest, parseFields) {
     std::vector<uint8_t> test_buf(16,0xa8);
     ASSERT_EQ(0xa1, auth->getProtocol());
     ASSERT_EQ(0xa2, auth->getHashAlgo());
-    ASSERT_EQ(0xa3, auth->getRplyDtctnMthd());
-    ASSERT_EQ(0xa4a5a6a7a8a9aaab, auth->getRplyDtctnValue());
+    ASSERT_EQ(0xa3, auth->getReplyDetectionMethod());
+    ASSERT_EQ(0xa4a5a6a7a8a9aaab, auth->getReplyDetectionValue());
     ASSERT_EQ(test_buf, auth->getAuthInfo());
 }
 
@@ -148,6 +148,16 @@ TEST_F(Option6AuthTest, negativeCase) {
 
      ASSERT_THROW(auth->pack(buf), isc::OutOfRange);
      ASSERT_THROW(auth->packHashInput(buf), isc::OutOfRange);
+}
+
+// Checks whether the to text conversion is working ok.
+TEST_F(Option6AuthTest, toText) {
+    scoped_ptr<Option6Auth> auth;
+    auth.reset(new Option6Auth(1,2,0,9000,{'a','b','c','d'}));
+
+    string exp_txt = "  protocol=1, algorithm=2, rdm method=0, rdm value=9000, value=61626364";
+
+    std::cout << auth->toText(2) << std::endl;
 
 }
 
