@@ -1,0 +1,253 @@
+module ietf-dhcpv4-options {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:ietf-dhcpv4-options";
+  prefix "dhcpv4-options";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import ietf-dhcpv4-types {
+    prefix dhcpv4-types;
+  }
+
+  organization "DHC WG";
+  contact
+   "cuiyong@tsinghua.edu.cn
+    wangh13@mails.tsinghua.edu.cn
+    lh.sunlinh@gmail.com
+    ian.farrer@telekom.de
+    sladjana.zechlin@telekom.de
+    hezihao9512@gmail.com";
+  description "This model defines a YANG data model that can be
+    used to configure DHCPv4 options.";
+
+  revision 2018-07-14 {
+    description "Initial revision";
+    reference "I-D: draft-ietf-dhc-dhcpv4-yang";
+  }
+
+  /*
+   * Features
+   */
+
+  //  features for server options
+  feature router-op {
+    description "Support for Router Option";
+  }
+  feature time-server-op {
+    description "Support for Time Server Option";
+  }
+  feature domain-server-op {
+    description "Support for Domain Server Option";
+  }
+  feature log-server-op {
+    description "Support for Log Server Option";
+  }
+  feature hostname-op {
+    description "Support for Hostname Option";
+  }
+  feature domain-name-op {
+    description "Support for Domain Name Option";
+  }
+  feature broadcast-op {
+    description "Support for Broadcast Address Option";
+  }
+  feature ntp-server-op {
+    description "Support for NTP Servers Option";
+  }
+  feature server-name-op {
+    description "Support for Server-Name Option";
+  }
+  feature bootfile-name-op {
+    description "Support for Bootfile-Name Option";
+  }
+
+  /*
+   * Groupings
+   */
+
+  grouping server-option-definitions {
+    description "Contains definitions for options configured on the
+      DHCPv4 server which will be supplied to clients.";
+
+    container router-option {
+      // if-feature router-op
+      // presence "Enable this option";
+      description "Router (3) Router addresses";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      list router {
+        key router-id;
+        description "Router info";
+        leaf router-id {
+          type uint8;
+          mandatory true;
+          description "Router list entry ID";
+        }
+        leaf router-addr {
+          type inet:ipv4-address;
+          mandatory true;
+          desctiption "Router address";
+        }
+      }
+    }
+    container time-server-option {
+      // if-feature time-server-op
+      // presence "Enable this option";
+      description "Time Server (4) Timeserver addresses";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      list time-server {
+        key time-server-id;
+        description "Time Server info";
+        leaf time-server-id {
+          type uint8;
+          mandatory true;
+          description "Time Server list entry ID";
+        }
+        leaf time-server-addr {
+          type inet:ipv4-address;
+          mandatory true;
+          desctiption "Time Server address";
+        }
+      }
+    }
+    container domain-server-option {
+      // if-feature domain-server-op
+      // presence "Enable this option";
+      description "Domain Server (6) DNS Server addresses";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      list domain-server {
+        key domain-server-id;
+        description "DNS Server info";
+        leaf domain-server-id {
+          type uint8;
+          mandatory true;
+          description "DNS Server list entry ID";
+        }
+        leaf domain-server-addr {
+          type inet:ipv4-address;
+          mandatory true;
+          desctiption "DNS Server address";
+        }
+      }
+    }
+    container log-server-option {
+      // if-feature log-server-op
+      // presence "Enable this option";
+      description "Log Server (7) Logging Server addresses";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      list log-server {
+        key log-server-id;
+        description "Logging Server info";
+        leaf log-server-id {
+          type uint8;
+          mandatory true;
+          description "Logging Server list entry ID";
+        }
+        leaf log-server-addr {
+          type inet:ipv4-address;
+          mandatory true;
+          desctiption "Logging Server address";
+        }
+      }
+    }
+    container hostname-option {
+      // if-feature hostname-op;
+      // presence "Enable this option";
+      description "Hostname (12) Hostname string";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      leaf hostname {
+        type string;
+        mandatory true;
+        description "Hostname";
+      }
+    }
+    container domain-name-option {
+      // if-feature domain-name-op;
+      // presence "Enable this option";
+      description "Domain Name (15) The DNS domain name of the client";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      leaf domain-name {
+        type string;
+        mandatory true;
+        description "Domain Name";
+      }
+    }
+    container broadcast-option {
+      // if-feature broadcast-op
+      // presence "Enable this option";
+      description "Broadcast Address (28) Broadcast Address";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      leaf broadcast-addr {
+        type inet:ipv4-address;
+        mandatory true;
+        desctiption "Broadcast address";
+      }
+    }
+    container ntp-server-option {
+      // if-feature ntp-server-op
+      // presence "Enable this option";
+      description "NTP Servers (42) NTP Server addresses";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      list ntp-server {
+        key ntp-server-id;
+        description "NTP Server info";
+        leaf ntp-server-id {
+          type uint8;
+          mandatory true;
+          description "NTP Server list entry ID";
+        }
+        leaf ntp-server-addr {
+          type inet:ipv4-address;
+          mandatory true;
+          desctiption "NTP Server address";
+        }
+      }
+    }
+    container server-name-option {
+      // if-feature server-name-op;
+      // presence "Enable this option";
+      description "Server-Name (66) TFTP Server Name";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      leaf server-name {
+        type string;
+        mandatory true;
+        description "TFTP Server Name";
+      }
+    }
+    container bootfile-name-option {
+      // if-feature bootfile-name-op;
+      // presence "Enable this option";
+      description "Bootfile-Name (67) Boot File Name";
+      reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
+      leaf bootfile-name {
+        type string;
+        mandatory true;
+        description "Boot File Name";
+      }
+    }
+    container domain-search-option {
+      // if-feature domain-search-op;
+      // presence "Enable this option";
+      description "Domain Search (119) DNS domain search list";
+      reference "RFC3397: Dynamic Host Configuration Protocol
+        (DHCP) Domain Search Option";
+      list domain-search {
+        key domain-search-id;
+        description "Domain Search info";
+        leaf domain-search-id {
+          type uint8;
+          mandatory true;
+          description "Domain Search entry ID";
+        }
+        leaf domain-search-entry {
+          type string;
+          mandatory true;
+          description "Domain Search list entry";
+        }
+      }
+    }
+  }
+}
