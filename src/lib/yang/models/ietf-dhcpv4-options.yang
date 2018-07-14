@@ -15,18 +15,12 @@ module ietf-dhcpv4-options {
 
   organization "DHC WG";
   contact
-   "cuiyong@tsinghua.edu.cn
-    wangh13@mails.tsinghua.edu.cn
-    lh.sunlinh@gmail.com
-    ian.farrer@telekom.de
-    sladjana.zechlin@telekom.de
-    hezihao9512@gmail.com";
+    "piotr.strzyzewski@polsl.pl";
   description "This model defines a YANG data model that can be
     used to configure DHCPv4 options.";
 
   revision 2018-07-14 {
     description "Initial revision";
-    reference "I-D: draft-ietf-dhc-dhcpv4-yang";
   }
 
   /*
@@ -89,7 +83,7 @@ module ietf-dhcpv4-options {
         leaf router-addr {
           type inet:ipv4-address;
           mandatory true;
-          desctiption "Router address";
+          description "Router address";
         }
       }
     }
@@ -109,7 +103,7 @@ module ietf-dhcpv4-options {
         leaf time-server-addr {
           type inet:ipv4-address;
           mandatory true;
-          desctiption "Time Server address";
+          description "Time Server address";
         }
       }
     }
@@ -129,7 +123,7 @@ module ietf-dhcpv4-options {
         leaf domain-server-addr {
           type inet:ipv4-address;
           mandatory true;
-          desctiption "DNS Server address";
+          description "DNS Server address";
         }
       }
     }
@@ -149,7 +143,7 @@ module ietf-dhcpv4-options {
         leaf log-server-addr {
           type inet:ipv4-address;
           mandatory true;
-          desctiption "Logging Server address";
+          description "Logging Server address";
         }
       }
     }
@@ -183,7 +177,7 @@ module ietf-dhcpv4-options {
       leaf broadcast-addr {
         type inet:ipv4-address;
         mandatory true;
-        desctiption "Broadcast address";
+        description "Broadcast address";
       }
     }
     container ntp-server-option {
@@ -202,7 +196,7 @@ module ietf-dhcpv4-options {
         leaf ntp-server-addr {
           type inet:ipv4-address;
           mandatory true;
-          desctiption "NTP Server address";
+          description "NTP Server address";
         }
       }
     }
