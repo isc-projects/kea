@@ -12,18 +12,12 @@ module ietf-dhcpv4-types {
 
   organization "DHC WG";
   contact
-   "cuiyong@tsinghua.edu.cn
-    lh.sunlinh@gmail.com
-    ian.farrer@telekom.de
-    sladjana.zechlin@telekom.de
-    hezihao9512@gmail.com";
-
+    "piotr.strzyzewski@polsl.pl";
   description "This model defines a YANG data model that can be
     used to define some commonly used DHCPv4 types";
 
   revision 2018-07-14 {
     description "Initial revision";
-    reference "I-D: draft-ietf-dhc-dhcpv4-yang";
   }
 
   /*
