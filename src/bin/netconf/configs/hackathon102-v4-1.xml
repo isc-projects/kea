@@ -75,9 +75,9 @@
 	  <host-reservations>
 		  <host-reservation>
 			  <cli-id>1</cli-id>
-			  <client-identifier>
+			  <hw-address>
 				  <hardware-address>00-53-00-00-00-00</hardware-address>
-			  </client-identifier>
+			  </hw-address>
 			  <reserv-addr>198.51.100.210</reserv-addr>
 			  <hostname>host1.example.net</hostname>
 		  </host-reservation>
