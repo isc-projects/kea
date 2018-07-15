@@ -27,6 +27,7 @@ module ietf-dhcpv4-server {
 
   revision 2018-07-14 {
     description "Initial revision; mostly based on DHCPv6 version";
+    reference "";
   }
 
   /*
@@ -254,7 +255,10 @@ module ietf-dhcpv4-server {
                 'hardware address' are supported.";
                 case client-id {
                   description "Client ID";
-                  type string;
+                  leaf client-ident {
+                    type string;
+                    description "Client ID";
+                  }
                 }
                 case hw-address {
                   description "hardware address";
@@ -563,9 +567,9 @@ module ietf-dhcpv4-server {
         description "Raised when the server has found a client which
           can be regarded as a potential attacker. Some description
           could also be included.";
-        container hw {
+        leaf hw {
+          type yang:mac-address;
           description "HW address";
-          uses yang:mac-address;
         }
         leaf description {
           type string;

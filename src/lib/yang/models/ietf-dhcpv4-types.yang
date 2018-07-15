@@ -18,6 +18,7 @@ module ietf-dhcpv4-types {
 
   revision 2018-07-14 {
     description "Initial revision";
+    reference "";
   }
 
   /*
