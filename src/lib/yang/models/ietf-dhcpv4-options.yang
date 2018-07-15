@@ -165,7 +165,6 @@ module ietf-dhcpv4-options {
       reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
       leaf domain-name {
         type string;
-        mandatory true;
         description "Domain Name";
       }
     }
@@ -176,7 +175,6 @@ module ietf-dhcpv4-options {
       reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
       leaf broadcast-addr {
         type inet:ipv4-address;
-        mandatory true;
         description "Broadcast address";
       }
     }
@@ -207,7 +205,6 @@ module ietf-dhcpv4-options {
       reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
       leaf server-name {
         type string;
-        mandatory true;
         description "TFTP Server Name";
       }
     }
@@ -218,7 +215,6 @@ module ietf-dhcpv4-options {
       reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
       leaf bootfile-name {
         type string;
-        mandatory true;
         description "Boot File Name";
       }
     }
