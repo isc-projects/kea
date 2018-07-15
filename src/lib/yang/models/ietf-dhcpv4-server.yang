@@ -151,7 +151,6 @@ module ietf-dhcpv4-server {
           }
           leaf network-description {
             type string;
-            mandatory true;
             description "description of the subnet";
           }
           leaf network-prefix {
