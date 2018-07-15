@@ -30,7 +30,6 @@ module ietf-dhcpv4-types {
       description "";
       leaf ent-num {
         type uint32;
-        mandatory true;
         description "enterprise number";
       }
       leaf-list data {
