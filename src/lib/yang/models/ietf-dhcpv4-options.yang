@@ -149,7 +149,7 @@ module ietf-dhcpv4-options {
       }
     }
     container hostname-option {
-      // if-feature hostname-op;
+      if-feature hostname-op;
       // presence "Enable this option";
       description "Hostname (12) Hostname string";
       reference "RFC2132: DHCP Options and BOOTP Vendor Extensions";
