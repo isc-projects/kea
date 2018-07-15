@@ -13,6 +13,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
+#include <random>
 #include <sstream>
 
 using namespace isc::data;
@@ -44,6 +45,13 @@ AuthKey::getRandomKeyString() {
     return std::string(randomString.begin(), randomString.end());
 }
 
+std::string 
+AuthKey::ToText() const {
+    std::ostringstream s;
+    //s << authKey_;
+    return (authKey_);
+}
+
 void
 AuthKey::setAuthKey(const std::string& key) {
     authKey_ = key;
@@ -66,24 +74,14 @@ IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
     : type_(type), prefix_(asiolink::IOAddress("::")), 
-      prefix_len_(128), key_("") {
+      prefix_len_(128){
     // Validate and set the actual values.
     set(type, prefix, prefix_len);
 }
 
-IPv6Resrv::IPv6Resrv(const Type& type,
-                     const asiolink::IOAddress& prefix,
-                     const AuthKey& key,
-                     const uint8_t prefix_len)
-    : type_(type), prefix_(asiolink::IOAddress("::")), 
-      prefix_len_(128), key_("") {
-    // Validate and set the actual values.
-    set(type, prefix, prefix_len, key);
-}
-
 void
 IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
-               const uint8_t prefix_len, const AuthKey& key) {
+               const uint8_t prefix_len) {
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
                   << "' for new IPv6 reservation");
@@ -99,9 +97,6 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
                   << "' for reserved IPv6 address, expected 128");
     }
 
-    if ( key.getAuthKey().size() != 0 ) {
-        key_ = key;
-    }
     type_ = type;
     prefix_ = prefix;
     prefix_len_ = prefix_len;
@@ -112,7 +107,6 @@ IPv6Resrv::toText() const {
     std::ostringstream s;
     s << prefix_;
     // For PD, append prefix length.
-    // @todo: add to text for key
     if (getType() == TYPE_PD) {
         s << "/" << static_cast<int>(prefix_len_);
     }
@@ -123,8 +117,7 @@ bool
 IPv6Resrv::operator==(const IPv6Resrv& other) const {
     return (type_ == other.type_ &&
             prefix_ == other.prefix_ &&
-            prefix_len_ == other.prefix_len_ &&
-            key_ == other.key_ );
+            prefix_len_ == other.prefix_len_);
 }
 
 bool
@@ -141,7 +134,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
 
     : identifier_type_(identifier_type),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
@@ -152,7 +146,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false) {
+      cfg_option6_(new CfgOption()), negative_(false), 
+      key_(auth_key){
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -176,7 +171,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
     : identifier_type_(IDENT_HWADDR),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
@@ -186,7 +182,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false) {
+      cfg_option6_(new CfgOption()), negative_(false),
+      key_(auth_key){
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
@@ -584,6 +581,10 @@ Host::toElement6() const {
     ConstCfgOptionPtr opts = getCfgOption6();
     map->set("option-data", opts->toElement());
 
+    // Set auth key
+    //@todo: uncomment once storing in configuration file is enabled
+    //map->set("auth-key", Element::create(getKey().ToText()));
+    
     return (map);
 }
 
@@ -620,6 +621,8 @@ Host::toText() const {
 
     // Add boot file name.
     s << " file=" << (boot_file_name_.empty() ? "(empty)" : boot_file_name_);
+
+    s << " key=" << (key_.ToText().empty() ? "(empty)" : key_.ToText());
 
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";

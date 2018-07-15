@@ -84,8 +84,8 @@ HostPtr
 HostDataSourceUtils::initializeHost6(const std::string address,
                                      Host::IdentifierType identifier,
                                      bool prefix,
-                                     const std::string& key,
-                                     bool new_identifier) {
+                                     bool new_identifier,
+                                     const std::string auth_key) {
     std::vector<uint8_t> ident;
     switch (identifier) {
     case Host::IDENT_HWADDR:
@@ -107,16 +107,20 @@ HostDataSourceUtils::initializeHost6(const std::string address,
     ++subnet4;
     ++subnet6;
 
+    std::string default_string;
     HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
-                          IOAddress("0.0.0.0")));
+                          IOAddress("0.0.0.0"), default_string,
+                          default_string, default_string,
+                           asiolink:: IOAddress::IPV4_ZERO_ADDRESS(), default_string, default_string,
+                          AuthKey(auth_key)));
 
     if (!prefix) {
         // Create IPv6 reservation (for an address)
-        IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), AuthKey(key), 128);
+        IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), 128);
         host->addReservation(resv);
     } else {
         // Create IPv6 reservation for a /64 prefix
-        IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(address), AuthKey(key), 64);
+        IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(address), 64);
         host->addReservation(resv);
     }
     return (host);
@@ -225,6 +229,7 @@ HostDataSourceUtils::compareHosts(const ConstHostPtr& host1,
     EXPECT_EQ(host1->getNextServer(), host2->getNextServer());
     EXPECT_EQ(host1->getServerHostname(), host2->getServerHostname());
     EXPECT_EQ(host1->getBootFileName(), host2->getBootFileName());
+    EXPECT_TRUE(host1->getKey() == host2->getKey());
     ConstElementPtr ctx1 = host1->getContext();
     ConstElementPtr ctx2 = host2->getContext();
     if (ctx1) {

@@ -116,7 +116,6 @@ static constexpr char NULL_USER_CONTEXT[] = "";
 static constexpr char NULL_RESERVED_IPV6_PREFIX_ADDRESS[] = "::";
 static constexpr cass_int32_t NULL_RESERVED_IPV6_PREFIX_LENGTH = 0;
 static constexpr cass_int32_t NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE = -1;
-static constexpr char NULL_RESERVED_KEY[] = "";
 static constexpr cass_int32_t NULL_IAID = -1;
 static constexpr cass_int32_t NULL_OPTION_UNIVERSE = -1;
 static constexpr cass_int32_t NULL_OPTION_CODE = -1;
@@ -351,6 +350,9 @@ private:
     /// @brief Boot file name (file).
     std::string host_ipv4_boot_file_name_;
 
+    /// @brief Key for authentication
+    std::string auth_key_;
+
     /// @brief Name reserved for the host
     std::string hostname_;
 
@@ -372,9 +374,6 @@ private:
     /// @brief Reserver IPv6 prefix type
     /// This value corresponds to the @ref Host::IdentifierType value.
     cass_int32_t reserved_ipv6_prefix_address_type_;
-
-    /// @brief Key for authentication
-    std::string key_;
 
     /// @brief The reservation's IAID
     cass_int32_t iaid_;
@@ -435,6 +434,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -442,7 +442,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -477,6 +476,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -484,7 +484,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -511,6 +510,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -518,7 +518,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -548,6 +547,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -555,7 +555,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -584,6 +583,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -591,7 +591,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -622,6 +621,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -629,7 +629,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -660,6 +659,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -667,7 +667,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -697,6 +696,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -704,7 +704,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -734,6 +733,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -741,7 +741,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "reserved_ipv6_prefix_address, "
       "reserved_ipv6_prefix_length, "
       "reserved_ipv6_prefix_address_type, "
-      "reserved_key, "
       "iaid, "
       "option_universe, "
       "option_code, "
@@ -771,6 +770,7 @@ CqlHostExchange::CqlHostExchange()
       host_ipv6_subnet_id_(0), host_ipv4_address_(0), host_ipv4_next_server_(0),
       host_ipv4_server_hostname_(NULL_DHCP4_SERVER_HOSTNAME),
       host_ipv4_boot_file_name_(NULL_DHCP4_BOOT_FILE_NAME),
+      auth_key_(""),
       user_context_(NULL_USER_CONTEXT),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
@@ -808,6 +808,8 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&host_ipv4_server_hostname_);
     // host_ipv4_boot_file_name: text
     data.add(&host_ipv4_boot_file_name_);
+    // auth_key: text
+    data.add(&auth_key_);
     // hostname: text
     data.add(&hostname_);
     // user_context: text
@@ -824,8 +826,6 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&reserved_ipv6_prefix_length_);
     // reserved_ipv6_prefix_address_type: int
     data.add(&reserved_ipv6_prefix_address_type_);
-    // reserved_key: text
-    data.add(&key_);
     // iaid: int
     data.add(&iaid_);
     /// @}
@@ -903,6 +903,9 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
         // host_ipv4_boot_file_name: text
         host_ipv4_boot_file_name_ = host->getBootFileName();
 
+        // auth_key: varchar
+        auth_key_ = host->getKey().ToText();
+        
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
@@ -944,8 +947,6 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
             reserved_ipv6_prefix_length_ = NULL_RESERVED_IPV6_PREFIX_LENGTH;
             // reserved_ipv6_prefix_address_type: int
             reserved_ipv6_prefix_address_type_ = NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE;
-            // reserved_key: text
-            key_ = NULL_RESERVED_KEY;
             iaid_ = NULL_IAID;
         } else {
             // reserved_ipv6_prefix_address: text
@@ -958,9 +959,6 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
             reserved_ipv6_prefix_address_type_ =
                 reservation->getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
 
-            // reserved_key: text
-            key_ = reservation->getKey().getAuthKey();
-            
             // iaid: int
             /// @todo: We don't support iaid in the IPv6Resrv yet.
             iaid_ = 0;
@@ -1070,6 +1068,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             data.add(&host_ipv4_next_server_);
             data.add(&host_ipv4_server_hostname_);
             data.add(&host_ipv4_boot_file_name_);
+            data.add(&auth_key_);
             data.add(&hostname_);
             data.add(&user_context_);
             data.add(&host_ipv4_client_classes_);
@@ -1080,7 +1079,6 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
         data.add(&reserved_ipv6_prefix_address_);
         data.add(&reserved_ipv6_prefix_length_);
         data.add(&reserved_ipv6_prefix_address_type_);
-        data.add(&key_);
         data.add(&iaid_);
 
         // Option
@@ -1189,7 +1187,8 @@ CqlHostExchange::retrieve() {
                           ipv4_reservation, hostname_,
                           host_ipv4_client_classes_, host_ipv6_client_classes_,
                           static_cast<uint32_t>(host_ipv4_next_server_),
-                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_);
+                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_,
+                          AuthKey(auth_key_));
 
     // Set the user context if there is one.
     if (!user_context_.empty()) {
@@ -1248,7 +1247,7 @@ CqlHostExchange::retrieveReservation() const {
     }
 
     return (IPv6Resrv(type, IOAddress(reserved_ipv6_prefix_address_),
-                      reserved_ipv6_prefix_length_, key_));
+                      reserved_ipv6_prefix_length_));
 }
 
 const OptionWrapper
