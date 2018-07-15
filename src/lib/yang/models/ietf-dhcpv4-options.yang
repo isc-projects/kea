@@ -21,6 +21,7 @@ module ietf-dhcpv4-options {
 
   revision 2018-07-14 {
     description "Initial revision";
+    reference "";
   }
 
   /*
