@@ -199,13 +199,11 @@ module ietf-dhcpv4-server {
               leaf renew-time {
                 type uint32;
 		units "seconds";
-                mandatory true;
                 description "renew time";
               }
               leaf rebind-time {
                 type uint32;
 		units "seconds";
-                mandatory true;
                 description "rebind time";
               }
 //              leaf rapid-commit {
@@ -230,7 +228,6 @@ module ietf-dhcpv4-server {
                 type leafref {
                   path "/server/server-config/option-sets/option-set/option-set-id";
                 }
-                mandatory true;
                 description "The ID field of relevant option-set to be
                     provisioned to clients of this address-pool.";
               }
