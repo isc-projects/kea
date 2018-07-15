@@ -197,12 +197,14 @@ module ietf-dhcpv4-server {
                 description "end address";
               }
               leaf renew-time {
-                type yang:timeticks;
+                type uint32;
+		units "seconds";
                 mandatory true;
                 description "renew time";
               }
               leaf rebind-time {
-                type yang:timeticks;
+                type uint32;
+		units "seconds";
                 mandatory true;
                 description "rebind time";
               }
@@ -220,7 +222,6 @@ module ietf-dhcpv4-server {
               }
               leaf max-address-count {
                 type threshold;
-                mandatory true;
                 description "maximum count of addresses that can
                   be allocated in this pool. This value may be
                   less than count of total addresses.";
