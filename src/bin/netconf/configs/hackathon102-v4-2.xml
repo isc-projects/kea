@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+  <server xmlns="urn:ietf:params:xml:ns:yang:ietf-dhcpv4-server">
+    <server-config>
+      <network-ranges>
+	<network-range>
+	  <network-range-id>1</network-range-id>
+	  <network-prefix>198.51.100.0/24</network-prefix>
+	  <address-pools>
+		  <address-pool>
+			  <pool-id>1</pool-id>
+			  <pool-prefix>198.51.100.0/24</pool-prefix>
+			  <start-address>198.51.100.100</start-address>
+			  <end-address>198.51.100.200</end-address>
+		  </address-pool>
+	  </address-pools>
+	</network-range>
+      </network-ranges>
+    </server-config>
+  </server>
