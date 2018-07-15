@@ -115,7 +115,7 @@ class MySqlHostExchange {
 private:
 
     /// @brief Number of columns returned for SELECT queries send by this class.
-    static const size_t HOST_COLUMNS = 13;
+    static const size_t HOST_COLUMNS = 14;
 
 public:
 
@@ -145,7 +145,8 @@ public:
           user_context_null_(MLM_FALSE),
           dhcp4_next_server_null_(MLM_FALSE),
           dhcp4_server_hostname_null_(MLM_FALSE),
-          dhcp4_boot_file_name_null_(MLM_FALSE) {
+          dhcp4_boot_file_name_null_(MLM_FALSE),
+          auth_key_null_(MLM_FALSE)  {
 
         // Fill arrays with 0 so as they don't include any garbage.
         memset(dhcp_identifier_buffer_, 0, sizeof(dhcp_identifier_buffer_));
@@ -172,8 +173,9 @@ public:
         columns_[10] = "dhcp4_next_server";
         columns_[11] = "dhcp4_server_hostname";
         columns_[12] = "dhcp4_boot_file_name";
+        columns_[13] = "auth_key";
 
-        BOOST_STATIC_ASSERT(12 < HOST_COLUMNS);
+        BOOST_STATIC_ASSERT(13 < HOST_COLUMNS);
     };
 
     /// @brief Virtual destructor.
@@ -398,6 +400,14 @@ public:
             bind_[12].buffer = dhcp4_boot_file_name_;
             bind_[12].buffer_length = boot_file_name.length();
 
+            // auth key
+            bind_[13].buffer_type = MYSQL_TYPE_STRING;
+            std::string auth_key = host->getKey().ToText();
+            std::strncpy(auth_key_, auth_key.c_str(), KEY_LEN);
+            auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
+            bind_[13].buffer = auth_key_;
+            bind_[13].buffer_length = auth_key.length();
+        
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Host: "
@@ -524,6 +534,15 @@ public:
         bind_[12].length = &dhcp4_boot_file_name_length_;
         bind_[12].is_null = &dhcp4_boot_file_name_null_;
 
+        // auth_key_
+        auth_key_null_ = MLM_FALSE;
+        auth_key_length_ = sizeof(auth_key_);
+        bind_[13].buffer_type = MYSQL_TYPE_STRING;
+        bind_[13].buffer = reinterpret_cast<char*>(auth_key_);
+        bind_[13].buffer_length = auth_key_length_;
+        bind_[13].length = &auth_key_length_;
+        bind_[13].is_null = &auth_key_null_;
+        
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -620,12 +639,18 @@ public:
                                                dhcp4_boot_file_name_length_);
         }
 
+        // Set the auth key if a non empty array is retrieved
+        std::string auth_key;
+        if (auth_key_null_ == MLM_FALSE) {
+            auth_key = std::string(auth_key_, auth_key_length_);
+        }
+
         // Create and return Host object from the data gathered.
         HostPtr h(new Host(dhcp_identifier_buffer_, dhcp_identifier_length_,
                            type, ipv4_subnet_id, ipv6_subnet_id, ipv4_reservation,
                            hostname, dhcp4_client_classes, dhcp6_client_classes,
                            next_server, dhcp4_server_hostname,
-                           dhcp4_boot_file_name));
+                           dhcp4_boot_file_name, AuthKey(auth_key)));
         h->setHostId(host_id_);
 
         // Set the user context if there is one.
@@ -770,6 +795,12 @@ private:
     /// A length of the string holding boot file name.
     unsigned long dhcp4_boot_file_name_length_;
 
+    /// Authentication keys
+    char  auth_key_[KEY_LEN];
+
+    /// The length of the string for holding keys
+    unsigned long auth_key_length_;
+    
     /// @name Boolean values indicating if values of specific columns in
     /// the database are NULL.
     //@{
@@ -804,6 +835,9 @@ private:
 
     /// Boolean flag indicating if the value of boot file name is NULL.
     my_bool dhcp4_boot_file_name_null_;
+
+    /// Boolean flag indicating if the value of string is NULL.
+    my_bool auth_key_null_;
 
     //@}
 };
@@ -1329,7 +1363,7 @@ class MySqlHostIPv6Exchange : public MySqlHostWithOptionsExchange {
 private:
 
     /// @brief Number of columns holding IPv6 reservation information.
-    static const size_t RESERVATION_COLUMNS = 6;
+    static const size_t RESERVATION_COLUMNS = 5;
 
 public:
 
@@ -1342,12 +1376,11 @@ public:
           reservation_id_(0),
           reserv_type_(0), reserv_type_null_(MLM_FALSE),
           ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0),
-          key_len_(0),reservation_id_index_(findAvailColumn()),
+          reservation_id_index_(findAvailColumn()),
           address_index_(reservation_id_index_ + 1),
           prefix_len_index_(reservation_id_index_ + 2),
           type_index_(reservation_id_index_ + 3),
           iaid_index_(reservation_id_index_ + 4),
-          key_index_(reservation_id_index_ + 5),
           most_recent_reservation_id_(0) {
 
         memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
@@ -1358,7 +1391,6 @@ public:
         columns_[prefix_len_index_] = "prefix_len";
         columns_[type_index_] = "type";
         columns_[iaid_index_] = "dhcp6_iaid";
-        columns_[key_index_] = "auth_key";
     }
 
     /// @brief Returns last fetched reservation id.
@@ -1400,10 +1432,7 @@ public:
         ipv6_address_buffer_[ipv6_address_buffer_len_] = '\0';
         std::string address = ipv6_address_buffer_;
 
-        key_buffer_[key_len_] = '\0';          
-        std::string key = key_buffer_;
-
-        IPv6Resrv r(type, IOAddress(address), key, prefix_len_);
+        IPv6Resrv r(type, IOAddress(address), prefix_len_);
         return (r);
     };
 
@@ -1497,13 +1526,6 @@ public:
         bind_[iaid_index_].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[iaid_index_].is_unsigned = MLM_TRUE;
 
-        // key for auth VARCHAR(128)
-        key_len_ = sizeof(key_buffer_) - 1;
-        bind_[key_index_].buffer_type = MYSQL_TYPE_STRING;
-        bind_[key_index_].buffer = key_buffer_;
-        bind_[key_index_].buffer_length = key_len_;
-        bind_[key_index_].length = &key_len_;
-
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -1536,12 +1558,6 @@ private:
     /// @brief IAID.
     uint32_t iaid_;
 
-    /// @brief Buffer length for holding keys in textual format.
-    char key_buffer_[KEY_LEN + 1];
-
-    /// @brief Length of the keys
-    unsigned long key_len_;
-
     /// @name Indexes of columns holding information about IPv6 reservations.
     //@{
     /// @brief Index of reservation_id column.
@@ -1558,9 +1574,6 @@ private:
 
     /// @brief Index of IAID column.
     size_t iaid_index_;
-
-    /// @brief Index of keys column.
-    size_t key_index_;
 
     //@}
 
@@ -1582,7 +1595,7 @@ class MySqlIPv6ReservationExchange {
 private:
 
     /// @brief Set number of columns for ipv6_reservation table.
-    static const size_t RESRV_COLUMNS = 7;
+    static const size_t RESRV_COLUMNS = 6;
 
 public:
 
@@ -1602,7 +1615,6 @@ public:
         columns_[2] = "prefix_len";
         columns_[3] = "type";
         columns_[4] = "dhcp6_iaid";
-        columns_[5] = "auth_key";
         BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
     }
 
@@ -1669,16 +1681,6 @@ public:
             bind_[4].buffer = reinterpret_cast<char*>(&host_id_);
             bind_[4].is_unsigned = MLM_TRUE;
 
-            // key VARCHAR(128)
-            // why we need member for len
-            key_ = resv.getKey().getAuthKey();
-            key_len_ = key_.length();
-            bind_[5].buffer_type = MYSQL_TYPE_BLOB;
-            bind_[5].buffer = reinterpret_cast<char*>
-                (const_cast<char*>(key_.c_str()));
-            bind_[5].buffer_length = key_len_;
-            bind_[5].length = &key_len_;
-
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from IPv6 Reservation: "
@@ -1698,12 +1700,6 @@ private:
 
     /// @brief Address (or prefix).
     std::string address_;
-
-    /// @brief Keys for Authentication
-    std::string key_;
-
-    /// @brief length of keys for Authentication
-    unsigned long key_len_;
 
     /// @brief Length of the textual address representation.
     unsigned long address_len_;
@@ -2149,13 +2145,14 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
                 "h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
                 "h.user_context, "
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
                 "o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
                 "o4.persistent, o4.user_context, "
                 "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
                 "o6.persistent, o6.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid, r.auth_key "
+                "r.dhcp6_iaid "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o4 "
                 "ON h.host_id = o4.host_id "
@@ -2173,7 +2170,8 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context "
             "FROM hosts AS h "
@@ -2189,7 +2187,9 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                ""
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context "
             "FROM hosts AS h "
@@ -2207,11 +2207,12 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid, r.auth_key "
+                "r.dhcp6_iaid "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2229,7 +2230,8 @@ TaggedStatementArray tagged_statements = { {
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context "
             "FROM hosts AS h "
@@ -2249,11 +2251,12 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context,"
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid, r.auth_key "
+                "r.dhcp6_iaid "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2276,11 +2279,12 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
                 "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
 
-                "h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid, r.auth_key "
+                "r.dhcp6_iaid "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2295,14 +2299,14 @@ TaggedStatementArray tagged_statements = { {
             "dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
             "dhcp4_client_classes, dhcp6_client_classes, "
             "user_context, dhcp4_next_server, "
-            "dhcp4_server_hostname, dhcp4_boot_file_name) "
-         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+            "dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
+         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
 
     // Inserts a single IPv6 reservation into 'reservations' table.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV,
          "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-            "dhcp6_iaid, host_id, auth_key) "
-         "VALUES (?,?,?,?,?,?)"},
+            "dhcp6_iaid, host_id) "
+         "VALUES (?,?,?,?,?)"},
 
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.

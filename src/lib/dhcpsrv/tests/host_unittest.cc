@@ -35,15 +35,6 @@ TEST(IPv6ResrvTest, constructorAddress) {
     EXPECT_EQ("2001:db8:1::cafe", resrv.getPrefix().toText());
     EXPECT_EQ(128, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    EXPECT_EQ("", resrv.getKey().getAuthKey());
-
-    //create reservation with keys
-    std::string key = "#ssd@@dce3";
-    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"), AuthKey(key));
-    EXPECT_EQ("2001:db8:1::cafe", resrv_keys.getPrefix().toText());
-    EXPECT_EQ(128, resrv_keys.getPrefixLen());
-    EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv_keys.getType());
-    EXPECT_EQ(key, resrv_keys.getKey().getAuthKey());
 }
 
 // This test verifies that it is possible to create IPv6 prefix
@@ -53,19 +44,9 @@ TEST(IPv6ResrvTest, constructorPrefix) {
     EXPECT_EQ("2001:db8:1::", resrv.getPrefix().toText());
     EXPECT_EQ(64, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
-    EXPECT_EQ("", resrv.getKey().getAuthKey());
-    
-    //create reservation with keys
-    std::string key = "#ssd@@dce3";
-    IPv6Resrv resrv_keys(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), AuthKey(key), 64);
-    EXPECT_EQ("2001:db8:1::", resrv_keys.getPrefix().toText());
-    EXPECT_EQ(64, resrv_keys.getPrefixLen());
-    EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv_keys.getType());
-    EXPECT_EQ(key, resrv_keys.getKey().getAuthKey());
 }
 
 // This test verifies that the toText() function prints correctly.
-// @todo: Add test to keys once toText() for keys is implemented.
 TEST(IPv6ResrvTest, toText) {
     IPv6Resrv resrv_prefix(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 64);
     EXPECT_EQ("2001:db8:1::/64", resrv_prefix.toText());
@@ -122,34 +103,6 @@ TEST(IPv6ResrvTest, setPrefix) {
                  isc::BadValue);
 }
 
-// This test verifies that it is possible to modify the keys  
-// 
-TEST(IPv6ResrvTest, setKeys) {
-    // Create an address reservation without assigning keys.
-    IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"));
-    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
-    ASSERT_EQ(128, resrv.getPrefixLen());
-    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ("", resrv.getKey().getAuthKey());
-
-    // Modify an existing key for the reservation 
-    std::string key2 = "key2";
-    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 
-              128, AuthKey(key2));
-    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
-    ASSERT_EQ(128, resrv.getPrefixLen());
-    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ(key2, resrv.getKey().getAuthKey());
-
-    // Enusre not including the key parameter won't affect
-    // the current configured keys
-    resrv.set(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"), 128);
-    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
-    ASSERT_EQ(128, resrv.getPrefixLen());
-    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
-    ASSERT_EQ(key2, resrv.getKey().getAuthKey());
-}
-
 // This test checks that the equality operators work fine.
 TEST(IPv6ResrvTest, equal) {
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) ==
@@ -177,24 +130,6 @@ TEST(IPv6ResrvTest, equal) {
                  IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"), 128) !=
                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
-
-    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                AuthKey("key##1"), 128) ==
-                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                AuthKey("key##1"), 128));
-    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                AuthKey("key##1"), 128) !=
-                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                AuthKey("key##1"), 128));
-
-    EXPECT_FALSE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                AuthKey("key##1"), 128) ==
-                IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"),
-                AuthKey("key##2"), 128));
-    EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                AuthKey("key##1"), 128) !=
-                IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"),
-                AuthKey("key##2"), 128));
 }
 
 /// @brief Test fixture class for @c Host.
@@ -264,7 +199,7 @@ TEST_F(HostTest, createFromHWAddrString) {
                                         std::string(), std::string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
-                                        "bootfile.efi")));
+                                        "bootfile.efi", AuthKey("key123"))));
     // The HW address should be set to non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
     ASSERT_TRUE(hwaddr);
@@ -280,6 +215,7 @@ TEST_F(HostTest, createFromHWAddrString) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_EQ("key123", host->getKey().ToText());
     EXPECT_FALSE(host->getContext());
 
     // Use invalid identifier name
@@ -345,7 +281,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
                                         std::string(), std::string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
-                                        "bootfile.efi")));
+                                        "bootfile.efi", AuthKey("keyabc"))));
 
     // Hardware address should be non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
@@ -362,6 +298,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_EQ("keyabc", host->getKey().ToText());
     EXPECT_FALSE(host->getContext());
 }
 
@@ -675,9 +612,9 @@ TEST_F(HostTest, addReservations) {
     // Add 4 reservations: 2 for NAs, 2 for PDs
     ASSERT_NO_THROW(
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                       IOAddress("2001:db8:1::cafe"), AuthKey("key##1")));
+                                       IOAddress("2001:db8:1::cafe")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                       IOAddress("2001:db8:1:1::"), AuthKey("key##2"), 64));
+                                       IOAddress("2001:db8:1:1::"), 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                        IOAddress("2001:db8:1:2::"), 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
@@ -688,9 +625,9 @@ TEST_F(HostTest, addReservations) {
 
     // Check that reservations exist.
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                               IOAddress("2001:db8:1::cafe"), AuthKey("key##1"))));
+                                               IOAddress("2001:db8:1::cafe"))));
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                               IOAddress("2001:db8:1:1::"), AuthKey("key##2"),
+                                               IOAddress("2001:db8:1:1::"),
                                                64)));
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                                IOAddress("2001:db8:1:2::"),
@@ -702,7 +639,7 @@ TEST_F(HostTest, addReservations) {
     IPv6ResrvRange addresses = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(2, std::distance(addresses.first, addresses.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
-                                            IOAddress("2001:db8:1::cafe"), AuthKey("key##1")),
+                                            IOAddress("2001:db8:1::cafe")),
                                   addresses));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                             IOAddress("2001:db8:1::1")),
@@ -713,7 +650,7 @@ TEST_F(HostTest, addReservations) {
     IPv6ResrvRange prefixes = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(2, std::distance(prefixes.first, prefixes.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                            IOAddress("2001:db8:1:1::"), AuthKey("key##2"), 64),
+                                            IOAddress("2001:db8:1:1::"), 64),
                                   prefixes));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                             IOAddress("2001:db8:1:2::"), 64),
@@ -743,6 +680,7 @@ TEST_F(HostTest, setValues) {
     host->setNextServer(IOAddress("192.0.2.2"));
     host->setServerHostname("server-hostname.example.org");
     host->setBootFileName("bootfile.efi");
+    host->setKey(AuthKey("random-value"));
     std::string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
     host->setNegative(true);
@@ -754,6 +692,7 @@ TEST_F(HostTest, setValues) {
     EXPECT_EQ("192.0.2.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_EQ("random-value", host->getKey().ToText());
     ASSERT_TRUE(host->getContext());
     EXPECT_EQ(user_context, host->getContext()->str());
     EXPECT_TRUE(host->getNegative());
@@ -1039,6 +978,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
@@ -1056,6 +996,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
@@ -1074,6 +1015,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservations=(none)", host->toText());
 
     // Add some classes.
@@ -1084,6 +1026,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router",
               host->toText());
@@ -1096,6 +1039,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router"
               " dhcp6_class0=hub dhcp6_class1=device",
@@ -1103,7 +1047,6 @@ TEST_F(HostTest, toText) {
 }
 
 // This test checks that Host object is correctly unparsed,
-// @todo: add support for keys
 TEST_F(HostTest, unparse) {
     boost::scoped_ptr<Host> host;
     ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
@@ -1273,6 +1216,21 @@ TEST_F(HostTest, hostId) {
     EXPECT_NO_THROW(host->setHostId(12345));
 
     EXPECT_EQ(12345, host->getHostId());
+}
+
+// Tets verifies if we can modify the host keys.
+TEST_F(HostTest, keys) {
+    HostPtr host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "myhost.example.com")));
+//Key must be empty
+    EXPECT_EQ(0,host->getKey().ToText().length());
+
+    //now set to random value 
+    host->setKey(AuthKey("random_key"));
+    EXPECT_EQ("random_key", host->getKey().ToText());
 }
 
 // Test verifies if getRandomKeyString can generate  1000 keys which are random

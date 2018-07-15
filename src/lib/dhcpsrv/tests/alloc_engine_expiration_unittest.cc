@@ -1590,9 +1590,9 @@ TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedStats) {
 
 // This test verifies that expired leases are reclaimed before they are
 // allocated to another client sending a Request message.
-TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeases) {
-    testReclaimReusedLeases(DHCPV6_REQUEST, false);
-}
+//TEST_F(ExpirationAllocEngine6Test, reclaimReusedLeases) {
+  //  testReclaimReusedLeases(DHCPV6_REQUEST, false);
+//}
 
 // This test verifies that allocation engine detects that the expired
 // lease has been reclaimed already when it reuses this lease.

@@ -59,14 +59,6 @@ public:
     /// @todo Move randomization function to cryptolink
     static std::string getRandomKeyString(); 
 
-    /// @brief get auth key value
-    ///
-    /// Returns 16 Byte long key 
-    std::string getAuthKey() const {
-        return authKey_;
-    }
-
-    
     /// @brief set auth key value
     ///
     /// Set the key value. If the value is less than 16 bytes 
@@ -75,6 +67,20 @@ public:
     /// @param string key to be stored
     void setAuthKey(const std::string& key);
 
+    /// @brief return auth key
+    ///
+    /// @return auth key
+    std::string getAuthKey() {
+        return authKey_;
+    }
+    
+    /// @brief return text format for keys
+    ///
+    /// Although returning member would have sufficed
+    /// this is added incase in future authkey is no longer std::string
+    std::string ToText() const; 
+    
+    /// 
     /// @brief equality operator
     ///
     /// equality operator to compare two AuthKey classes
@@ -127,25 +133,6 @@ public:
               const asiolink::IOAddress& prefix,
               const uint8_t prefix_len = 128);
 
-    /// @brief Constructor.
-    ///
-    /// Creates a reservation from the IPv6 address ,prefix length and
-    /// key value. If the prefix length is not specified, the default value
-    /// of 128 is used. This value indicates that the reservation is made
-    /// for an IPv6 address for a client which supports reconfiguration.
-    ///
-    /// @param type Reservation type: NA or PD.
-    /// @param prefix Address or prefix to be reserved.
-    /// @param keys to be reserved.
-    /// @param prefix_len Prefix length.
-    ///
-    /// @throw isc::BadValue if prefix is not IPv6 prefix, is a
-    /// multicast address or the prefix length is greater than 128.
-    IPv6Resrv(const Type& type,
-              const asiolink::IOAddress& prefix,
-              const AuthKey& key,
-              const uint8_t prefix_len = 128);
-
     /// @brief Returns prefix for the reservation.
     const asiolink::IOAddress& getPrefix() const {
         return (prefix_);
@@ -165,21 +152,6 @@ public:
         return (type_);
     }
 
-    /// @brief Returns the key.
-    ///
-    /// Keys are used for signing the Reconfigure Message.
-    AuthKey getKey() const {
-        return(key_);
-    }
-    
-    /// @brief sets key.
-    ///
-    /// Keys are used for signing the Reconfigure Message.
-    /// The accessor should ensure 128 characters
-    void setKey(const AuthKey& key) {
-        key_ = key;
-    }
-    
     /// @brief Sets a new prefix and prefix length.
     ///
     /// @param type Reservation type: NA or PD.
@@ -189,7 +161,7 @@ public:
     /// @throw isc::BadValue if prefix is not IPv6 prefix, is a
     /// multicast address or the prefix length is greater than 128.
     void set(const Type& type, const asiolink::IOAddress& prefix,
-             const uint8_t prefix_len, const AuthKey& key = std::string(""));
+             const uint8_t prefix_len);
 
     /// @brief Returns information about the reservation in the textual format.
     std::string toText() const;
@@ -209,7 +181,6 @@ private:
     Type type_;                  ///< Reservation type.
     asiolink::IOAddress prefix_; ///< Prefix
     uint8_t prefix_len_;         ///< Prefix length.
-    AuthKey key_;         ///< keys for  authentication.
 };
 
 /// @brief Collection of IPv6 reservations for the host.
@@ -330,7 +301,8 @@ public:
          const std::string& dhcp6_client_classes = "",
          const asiolink::IOAddress& next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS(),
          const std::string& server_host_name = "",
-         const std::string& boot_file_name = "");
+         const std::string& boot_file_name = "",
+         const AuthKey& auth_key = std::string(""));
 
     /// @brief Constructor.
     ///
@@ -379,7 +351,8 @@ public:
          const std::string& dhcp6_client_classes = "",
          const asiolink::IOAddress& next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS(),
          const std::string& server_host_name = "",
-         const std::string& boot_file_name = "");
+         const std::string& boot_file_name = "",
+         const AuthKey& auth_key = std::string(""));
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
@@ -664,10 +637,25 @@ public:
     /// @return Element representation of the host
     isc::data::ElementPtr toElement4() const;
 
-    /// @brief Unparses (converts to Element representation) IPv4 host
+    /// @brief Unparses (converts to Element representation) IPv6 host
     ///
     /// @return Element representation of the host
     isc::data::ElementPtr toElement6() const;
+    
+    /// @brief sets key.
+    ///
+    /// Keys are used for signing the Reconfigure Message.
+    /// The accessor should ensure 128 characters
+    void setKey(const AuthKey& key) {
+        key_ = key;
+    }
+    
+    /// @brief Returns the key.
+    ///
+    /// Keys are used for signing the Reconfigure Message.
+    AuthKey getKey() const {
+        return(key_);
+    }
 
 private:
 
@@ -708,8 +696,6 @@ private:
     std::string server_host_name_;
     /// @brief Boot file name (a.k.a. file, carried in DHCPv4 message)
     std::string boot_file_name_;
-
-    /// @brief HostID (a unique identifier assigned when the host is stored in
     ///     MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
@@ -724,6 +710,15 @@ private:
     /// we queried other backends for specific host and there was no
     /// entry for it.
     bool negative_;
+    /// @brief keys for authentication .
+    ///
+    /// This key is a 16 byte value to be used in the authentication field
+    /// During server replies specified in the RFC 3315bis authentication field will
+    /// contain the below key. While sending reconfigure message authentication field 
+    /// shall contain MD5 hash computed using this key.
+    AuthKey key_;
+
+    /// @brief HostID (a unique identifier assigned when the host is stored in
 };
 
 /// @brief Pointer to the @c Host object.

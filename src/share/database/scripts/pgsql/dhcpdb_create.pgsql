@@ -868,7 +868,7 @@ CREATE INDEX timestamp_id ON logs (timestamp);
 CREATE INDEX address_id ON logs (address);
 
 -- Create auth_key in ipv6_reservations
-ALTER TABLE ipv6_reservations ADD COLUMN auth_key  VARCHAR(26) DEFAULT NULL;
+ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
 
 -- Set schema 5.0 version
 UPDATE schema_version
