@@ -875,6 +875,7 @@ constexpr StatementTag CqlLease6Exchange::UPDATE_LEASE6;
 constexpr StatementTag CqlLease6Exchange::DELETE_LEASE6;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_EXPIRE;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_ADDR;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID;
 
@@ -2124,11 +2125,8 @@ CqlLeaseMgr::getLease6(Lease::Type lease_type, const IOAddress &addr) const {
     return (result);
 }
 
-Lease6Ptr
-CqlLeaseMgr::getLease6(const DUID& duid) const {
-    std::string duid_data = duid.toText();
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_DUID)
-        .arg(duid_data);
+Lease6Collection
+CqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     // Set up the WHERE clause value
     AnyArray data;
@@ -2143,6 +2141,7 @@ CqlLeaseMgr::getLease6(const DUID& duid) const {
     exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID, data, result);
 
     return (result);
+    
 }
 
 Lease6Collection

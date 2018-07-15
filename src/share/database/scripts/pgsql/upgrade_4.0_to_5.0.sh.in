@@ -20,7 +20,7 @@ psql "$@" >/dev/null <<EOF
 START TRANSACTION;
 
 -- Create auth_key in ipv6_reservations
-ALTER TABLE ipv6_reservations ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
+ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
 
 -- Set 5.0 schema version.
 UPDATE schema_version

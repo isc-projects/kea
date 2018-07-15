@@ -680,7 +680,7 @@ SET version = '6', minor = '0';
 # This line concludes database upgrade to version 6.0.
 
 #add auth key for reconfiguration
-ALTER TABLE ipv6_reservations 
+ALTER TABLE hosts  
     ADD COLUMN auth_key VARCHAR(16) NULL; 
 
 # Update the schema version number
