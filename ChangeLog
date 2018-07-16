@@ -1,3 +1,6 @@
+1433.   [func]      MayyaSunil
+	Code added to support storage of Authentication key host reservation.
+	There is no way to use the code yet.
 1432.	[func]		MayyaSunil
 	Code added to handle Authentication option in DHCPv6. There
 	is no way to use this code yet.

@@ -165,7 +165,7 @@ pgsql_upgrade_2_0_to_3_0() {
     assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     # Added hosts table
-    output=`pgsql_execute "select host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts;"`
+    output=`pgsql_execute "select host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts;"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
 

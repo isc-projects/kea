@@ -1017,7 +1017,8 @@ Memfile_LeaseMgr::getLeases6() const {
 
 Lease6Collection
 Memfile_LeaseMgr::getLeases6(const DUID& duid) const {
-   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6);
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6_DUID)
+       .arg(duid.toText());
 
    Lease6Collection collection;
    for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease ) {
