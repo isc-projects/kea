@@ -1646,7 +1646,7 @@ TaggedStatementArray tagged_statements = { {
     //PgSqlHostDataSourceImpl::INSERT_V6_RESRV
     // Inserts a single IPv6 reservation into 'reservations' table.
     {5,
-     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4},
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
      "insert_v6_resrv",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
      "  dhcp6_iaid, host_id) "
