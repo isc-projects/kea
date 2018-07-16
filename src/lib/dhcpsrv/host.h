@@ -696,6 +696,8 @@ private:
     std::string server_host_name_;
     /// @brief Boot file name (a.k.a. file, carried in DHCPv4 message)
     std::string boot_file_name_;
+            
+    /// @brief HostID (a unique identifier assigned when the host is stored in
     ///     MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
@@ -710,15 +712,14 @@ private:
     /// we queried other backends for specific host and there was no
     /// entry for it.
     bool negative_;
-    /// @brief keys for authentication .
+    /// @brief key for authentication .
     ///
-    /// This key is a 16 byte value to be used in the authentication field
-    /// During server replies specified in the RFC 3315bis authentication field will
-    /// contain the below key. While sending reconfigure message authentication field 
+    /// key is a 16 byte value to be used in the authentication field.
+    /// Server replies will contain the below key in authentication field as specified in the RFC 3315bis. 
+    //  While sending reconfigure message authentication field 
     /// shall contain MD5 hash computed using this key.
     AuthKey key_;
 
-    /// @brief HostID (a unique identifier assigned when the host is stored in
 };
 
 /// @brief Pointer to the @c Host object.
