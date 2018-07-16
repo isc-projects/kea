@@ -1,3 +1,4 @@
+-- Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 -- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -276,6 +277,25 @@ INSERT INTO schema_version (version, minor) VALUES(2, 0);
 -- This line starts database upgrade to version 3.0
 ALTER TABLE host_reservations ADD auth_key text;
 
+-- Add a column holding leases for user context.
+ALTER TABLE lease4 ADD user_context text;
+ALTER TABLE lease6 ADD user_context text;
+
+-- -----------------------------------------------------
+-- Table `logs` (logs table is used by forensic logging hook library)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS logs (
+    timeuuid timeuuid,  -- creation timeuuid, use dateOf() to get timestamp
+    address varchar,    -- address or prefix
+    log text,           -- the log itself
+    PRIMARY KEY ((timeuuid))
+);
+
+-- Create search index for logs table
+CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
+
+-- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;
 INSERT INTO schema_version (version, minor) VALUES(3, 0);
+
 -- This line concludes database upgrade to version 3.0

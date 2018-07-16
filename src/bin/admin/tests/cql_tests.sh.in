@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,11 +40,11 @@ cql_lease_init_test() {
     assert_eq 0 $? "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    cql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state FROM lease4;"
+    cql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease4;"
     assert_eq 0 $? "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    cql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state FROM lease6;"
+    cql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease6;"
     assert_eq 0 $? "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
@@ -152,16 +152,16 @@ cql_lease4_dump_test() {
     # 1436173267 corresponds to 2015-06-06 11:01:07
     insert_cql="\
 INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id,\
- fqdn_fwd, fqdn_rev, hostname, state)\
+ fqdn_fwd, fqdn_rev, hostname, state, user_context)\
  VALUES(-1073741302,textAsBlob('20'),textAsBlob('30'),40,1430694930,50,true,true,\
- 'one.example.com', 0);\
+ 'one.example.com', 0, '');\
 INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id,\
- fqdn_fwd, fqdn_rev, hostname, state)\
- VALUES(-1073741301,NULL,textAsBlob('123'),40,1433464245,50,true,true,'', 1);\
+ fqdn_fwd, fqdn_rev, hostname, state, user_context)\
+ VALUES(-1073741301,NULL,textAsBlob('123'),40,1433464245,50,true,true,'', 1, '');\
 INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id,\
- fqdn_fwd, fqdn_rev, hostname, state)\
+ fqdn_fwd, fqdn_rev, hostname, state, user_context)\
  VALUES(-1073741300,textAsBlob('22'),NULL,40,1436173267,50,true,true,\
- 'three.example.com', 2);"
+ 'three.example.com', 2, '');"
 
     cql_execute "$insert_cql"
     assert_eq 0 $? "insert into lease4 failed, expected exit code %d, actual %d"
@@ -222,19 +222,19 @@ cql_lease6_dump_test() {
     insert_cql="\
 INSERT INTO lease6(address, duid, valid_lifetime, expire, subnet_id,\
  pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname,\
- hwaddr, hwtype, hwaddr_source, state)\
+ hwaddr, hwtype, hwaddr_source, state, user_context)\
  VALUES('2001:db8::10',textAsBlob('20'),30,1430694930,40,50,1,60,70,true,true,\
- 'one.example.com',textAsBlob('80'),90,16,0);\
+ 'one.example.com',textAsBlob('80'),90,16,0,'');\
 INSERT INTO lease6(address, duid, valid_lifetime, expire, subnet_id,\
  pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname,\
- hwaddr, hwtype, hwaddr_source, state)\
+ hwaddr, hwtype, hwaddr_source, state, user_context)\
  VALUES('2001:db8::11',NULL,30,1433464245,40,50,1,60,70,true,true,\
- '',textAsBlob('80'),90,1,1);\
+ '',textAsBlob('80'),90,1,1,'');\
 INSERT INTO lease6(address, duid, valid_lifetime, expire, subnet_id,\
  pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname,\
- hwaddr, hwtype, hwaddr_source, state)\
+ hwaddr, hwtype, hwaddr_source, state, user_context)\
  VALUES('2001:db8::12',textAsBlob('21'),30,1436173267,40,50,1,60,70,true,true,\
- 'three.example.com',textAsBlob('80'),90,4,2);"
+ 'three.example.com',textAsBlob('80'),90,4,2,'');"
 
     cql_execute "$insert_cql"
     assert_eq 0 $? "insert into lease6 failed, expected exit code %d, actual %d"

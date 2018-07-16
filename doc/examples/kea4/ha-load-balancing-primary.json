@@ -114,6 +114,11 @@
                     // This specifies the number of clients which send messages to
                     // the partner but appear to not receive any response.
                     "max-unacked-clients": 5,
+                    // This specifies the maximum timeout (in milliseconds) for the server
+                    // to complete sync. If you have a large deployment (high tens or
+                    // hundreds of thausands of clients), you may need to increase it
+                    // further. The default value is 60000ms (60 seconds).
+                    "sync-timeout": 60000,
                     "peers": [
                          // This is the configuration of this server instance.
                          {
@@ -205,12 +210,12 @@
 
             }
         ],
-        "severity": "INFO",
+        "severity": "INFO"
     },
     {
         // This section specifies configuration of the HA hooks library specific
         // logger.
-        "name": "kea-dhcp4.ha_hooks",
+        "name": "kea-dhcp4.ha-hooks",
         "output_options": [
             {
                 "output": "stdout"

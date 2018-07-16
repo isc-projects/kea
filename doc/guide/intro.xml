@@ -36,10 +36,10 @@
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
 	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	    other platforms: Kea 1.3.0 builds have been tested on (in no
+	    other platforms: Kea 1.4.0 builds have been tested on (in no
         particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
-        Ubuntu 12.04, Ubuntu 14.04, Ubuntu 16.04, Fedora 22, Fedora 25, CentOS Linux 7,
-        FreeBSD 11.0 OS X 10.11, OS X 10.12, Debian 7.11
+        Ubuntu 14.04, Ubuntu 16.04, Fedora 25, Fedore 26, Fedora 27,
+        CentOS Linux 7, FreeBSD 11.0 OS X 10.11, OS X 10.12, Debian 7.11, Debian 9
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
@@ -173,6 +173,14 @@
               <command>kea-ctrl-agent</command> —
               Kea Control Agent (CA) is a daemon exposes a RESTful control
               interface for managing Kea servers.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-shell</command> —
+              Simple text client that uses REST interface to connect to Kea
+              Control Agent.
             </simpara>
           </listitem>
 

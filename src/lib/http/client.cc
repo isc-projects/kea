@@ -153,6 +153,11 @@ private:
     void terminate(const boost::system::error_code& ec,
                    const std::string& parsing_error = "");
 
+    /// @brief This method schedules timer or reschedules existing timer.
+    ///
+    /// @param request_timeout New timer interval in milliseconds.
+    void scheduleTimer(const long request_timeout);
+
     /// @brief Asynchronously sends data over the socket.
     ///
     /// The data sent over the socket are stored in the @c buf_.
@@ -225,7 +230,7 @@ private:
     std::string buf_;
 
     /// @brief Input buffer.
-    std::array<char, 4096> input_buf_;
+    std::array<char, 32768> input_buf_;
 };
 
 /// @brief Shared pointer to the connection.
@@ -560,6 +565,14 @@ Connection::terminate(const boost::system::error_code& ec,
 }
 
 void
+Connection::scheduleTimer(const long request_timeout) {
+    if (request_timeout > 0) {
+        timer_.setup(boost::bind(&Connection::timerCallback, this), request_timeout,
+                     IntervalTimer::ONE_SHOT);
+    }
+}
+
+void
 Connection::doSend() {
     SocketCallback socket_cb(boost::bind(&Connection::sendCallback, shared_from_this(),
                                          _1, _2));
@@ -598,8 +611,8 @@ Connection::connectCallback(const long request_timeout, const boost::system::err
 
     } else {
         // Setup request timer.
-        timer_.setup(boost::bind(&Connection::timerCallback, this), request_timeout,
-                     IntervalTimer::ONE_SHOT);
+        scheduleTimer(request_timeout);
+
         // Start sending the request asynchronously.
         doSend();
     }
@@ -620,6 +633,9 @@ Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
             return;
         }
     }
+
+    // Sending is in progress, so push back the timeout.
+    scheduleTimer(timer_.getInterval());
 
     // If any data have been sent, remove it from the buffer and only leave the
     // portion that still has to be sent.
@@ -653,6 +669,9 @@ Connection::receiveCallback(const boost::system::error_code& ec, size_t length) 
             length = 0;
         }
     }
+
+    // Receiving is in progress, so push back the timeout.
+    scheduleTimer(timer_.getInterval());
 
     // If we have received any data, let's feed the parser with it.
     if (length != 0) {

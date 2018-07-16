@@ -148,6 +148,15 @@ TEST(ClientClassDef, copyAndEquality) {
     EXPECT_TRUE(cclass2->getRequired());
     EXPECT_FALSE(*cclass == *cclass2);
     EXPECT_TRUE(*cclass != *cclass2);
+    cclass2->setRequired(false);
+    EXPECT_TRUE(*cclass == *cclass2);
+
+    // Verify the depend on known flag is enough to make classes not equal.
+    EXPECT_FALSE(cclass->getDependOnKnown());
+    cclass2->setDependOnKnown(true);
+    EXPECT_TRUE(cclass2->getDependOnKnown());
+    EXPECT_FALSE(*cclass == *cclass2);
+    EXPECT_TRUE(*cclass != *cclass2);
 
     // Make a class that differs from the first class only by name and
     // verify that the equality tools reflect that the classes are not equal.
@@ -233,15 +242,19 @@ TEST(ClientClassDictionary, basics) {
 
     // Verify that we can add classes with both addClass variants
     // First addClass(name, expression, cfg_option)
-    ASSERT_NO_THROW(dictionary->addClass("cc1", expr, "", false, cfg_option));
-    ASSERT_NO_THROW(dictionary->addClass("cc2", expr, "", false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("cc1", expr, "", false,
+                                         false, cfg_option));
+    ASSERT_NO_THROW(dictionary->addClass("cc2", expr, "", false,
+                                         false, cfg_option));
 
     // Verify duplicate add attempt throws
-    ASSERT_THROW(dictionary->addClass("cc2", expr, "", false, cfg_option),
+    ASSERT_THROW(dictionary->addClass("cc2", expr, "", false,
+                                      false, cfg_option),
                  DuplicateClientClassDef);
 
     // Verify that you cannot add a class with no name.
-    ASSERT_THROW(dictionary->addClass("", expr, "", false, cfg_option),
+    ASSERT_THROW(dictionary->addClass("", expr, "", false,
+                                      false, cfg_option),
                  BadValue);
 
     // Now with addClass(class pointer)
@@ -298,9 +311,12 @@ TEST(ClientClassDictionary, copyAndEquality) {
     CfgOptionPtr options;
 
     dictionary.reset(new ClientClassDictionary());
-    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", false, options));
-    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", false, options));
-    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", false, options));
+    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", false,
+                                         false, options));
 
     // Copy constructor should succeed.
     ASSERT_NO_THROW(dictionary2.reset(new ClientClassDictionary(*dictionary)));
@@ -347,6 +363,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
 
     // Let's checks that it doesn't return any nonsense
     EXPECT_FALSE(cclass->getRequired());
+    EXPECT_FALSE(cclass->getDependOnKnown());
     EXPECT_FALSE(cclass->getCfgOptionDef());
     string empty;
     ASSERT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
@@ -370,6 +387,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
     cclass->setRequired(true);
+    cclass->setDependOnKnown(true);
 
     string sname = "This is a very long string that can be a server name";
     string filename = "this-is-a-slightly-longish-name-of-a-file.txt";
@@ -380,6 +398,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
 
     // Let's checks that it doesn't return any nonsense
     EXPECT_TRUE(cclass->getRequired());
+    EXPECT_TRUE(cclass->getDependOnKnown());
     EXPECT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
     EXPECT_EQ(sname, cclass->getSname());
     EXPECT_EQ(filename, cclass->getFilename());
@@ -402,6 +421,8 @@ TEST(ClientClassDef, unparseDef) {
     user_context += "\"bar\": 1 }";
     cclass->setContext(isc::data::Element::fromJSON(user_context));
     cclass->setRequired(true);
+    // The depend on known flag in not visible
+    cclass->setDependOnKnown(true);
     std::string next_server = "1.2.3.4";
     cclass->setNextServer(IOAddress(next_server));
     std::string sname = "my-server.example.com";
@@ -432,9 +453,12 @@ TEST(ClientClassDictionary, unparseDict) {
 
     // Get a client class dictionary and fill it
     dictionary.reset(new ClientClassDictionary());
-    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", false, options));
-    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", false, options));
-    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", false, options));
+    ASSERT_NO_THROW(dictionary->addClass("one", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary->addClass("two", expr, "", false,
+                                         false, options));
+    ASSERT_NO_THROW(dictionary->addClass("three", expr, "", false,
+                                         false, options));
 
     // Unparse it
     auto add_defaults =

@@ -768,6 +768,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
     Pool6Ptr pool;
 
+    CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
+
     while (subnet) {
 
         if (!subnet->clientSupported(ctx.query_->getClasses())) {
@@ -813,7 +815,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
 
                     // The hint is valid and not currently used, let's create a
                     // lease for it
-                    lease = createLease6(ctx, hint, pool->getLength());
+                    lease = createLease6(ctx, hint, pool->getLength(), callout_status);
 
                     // It can happen that the lease allocation failed (we could
                     // have lost the race condition. That means that the hint is
@@ -852,7 +854,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                         ctx.currentIA().old_leases_.push_back(old_lease);
 
                         /// We found a lease and it is expired, so we can reuse it
-                        lease = reuseExpiredLease(lease, ctx, pool->getLength());
+                        lease = reuseExpiredLease(lease, ctx, pool->getLength(),
+                                                  callout_status);
 
                         /// @todo: We support only one lease per ia for now
                         leases.push_back(lease);
@@ -966,7 +969,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                 // free. Let's allocate it.
 
                 ctx.subnet_ = subnet;
-                Lease6Ptr lease = createLease6(ctx, candidate, prefix_len);
+                Lease6Ptr lease = createLease6(ctx, candidate, prefix_len, callout_status);
                 if (lease) {
                     // We are allocating a new lease (not renewing). So, the
                     // old lease should be NULL.
@@ -976,8 +979,7 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     return (leases);
 
                 } else if (ctx.callout_handle_ &&
-                           (ctx.callout_handle_->getStatus() !=
-                            CalloutHandle::NEXT_STEP_CONTINUE)) {
+                           (callout_status != CalloutHandle::NEXT_STEP_CONTINUE)) {
                     // Don't retry when the callout status is not continue.
                     break;
                 }
@@ -993,7 +995,8 @@ AllocEngine::allocateUnreservedLeases6(ClientContext6& ctx) {
                     ctx.currentIA().old_leases_.push_back(old_lease);
 
                     ctx.subnet_ = subnet;
-                    existing = reuseExpiredLease(existing, ctx, prefix_len);
+                    existing = reuseExpiredLease(existing, ctx, prefix_len,
+                                                 callout_status);
 
                     leases.push_back(existing);
                     return (leases);
@@ -1149,7 +1152,8 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                 }
 
                 // Ok, let's create a new lease...
-                Lease6Ptr lease = createLease6(ctx, addr, prefix_len);
+                CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
+                Lease6Ptr lease = createLease6(ctx, addr, prefix_len, callout_status);
 
                 // ... and add it to the existing leases list.
                 existing_leases.push_back(lease);
@@ -1405,7 +1409,8 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
 
 Lease6Ptr
 AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
-                               uint8_t prefix_len) {
+                               uint8_t prefix_len,
+                               CalloutHandle::CalloutNextStep& callout_status) {
 
     if (!expired->expired()) {
         isc_throw(BadValue, "Attempt to recycle lease that is still valid");
@@ -1446,8 +1451,11 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
@@ -1469,10 +1477,12 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         // Call the callouts
         HooksManager::callCallouts(hook_index_lease6_select_, *ctx.callout_handle_);
 
+        callout_status = ctx.callout_handle_->getStatus();
+
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if (callout_status == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
@@ -1512,7 +1522,8 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
 
 Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                     const IOAddress& addr,
-                                    uint8_t prefix_len) {
+                                    uint8_t prefix_len,
+                                    CalloutHandle::CalloutNextStep& callout_status) {
 
     if (ctx.currentIA().type_ != Lease::TYPE_PD) {
         prefix_len = 128; // non-PD lease types must be always /128
@@ -1532,8 +1543,11 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease6_select_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
@@ -1553,10 +1567,12 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
         // This is the first callout, so no need to clear any arguments
         HooksManager::callCallouts(hook_index_lease6_select_, *ctx.callout_handle_);
 
+        callout_status = ctx.callout_handle_->getStatus();
+
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if (callout_status == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE6_SELECT_SKIP);
             return (Lease6Ptr());
         }
@@ -1780,8 +1796,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     if (HooksManager::calloutsPresent(hook_point)) {
         CalloutHandlePtr callout_handle = ctx.callout_handle_;
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(ctx.query_);
@@ -2199,6 +2218,13 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
     // will not update DNS nor update the database.
     bool skipped = false;
     if (callout_handle) {
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         callout_handle->deleteAllArguments();
         callout_handle->setArgument("lease6", lease);
         callout_handle->setArgument("remove_lease", reclaim_mode == DB_RECLAIM_REMOVE);
@@ -2289,7 +2315,13 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
     // will not update DNS nor update the database.
     bool skipped = false;
     if (callout_handle) {
-        callout_handle->deleteAllArguments();
+
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
+
         callout_handle->setArgument("lease4", lease);
         callout_handle->setArgument("remove_lease", reclaim_mode == DB_RECLAIM_REMOVE);
 
@@ -2390,8 +2422,11 @@ AllocEngine::reclaimDeclined(const Lease4Ptr& lease) {
             callout_handle = HooksManager::createCalloutHandle();
         }
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Pass necessary arguments
         callout_handle->setArgument("lease4", lease);
@@ -2448,8 +2483,11 @@ AllocEngine::reclaimDeclined(const Lease6Ptr& lease) {
             callout_handle = HooksManager::createCalloutHandle();
         }
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Pass necessary arguments
         callout_handle->setArgument("lease6", lease);
@@ -2916,6 +2954,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     // caller.
     Lease4Ptr new_lease;
 
+    CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
+
     // Check if there is a reservation for the client. If there is, we want to
     // assign the reserved address, rather than any other one.
     if (hasAddressReservation(ctx)) {
@@ -2936,7 +2976,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
             // Note that we don't remove the existing client's lease at this point
             // because this is not a real allocation, we just offer what we can
             // allocate in the DHCPREQUEST time.
-            new_lease = allocateOrReuseLease4(ctx.currentHost()->getIPv4Reservation(), ctx);
+            new_lease = allocateOrReuseLease4(ctx.currentHost()->getIPv4Reservation(), ctx,
+                                              callout_status);
             if (!new_lease) {
                 LOG_WARN(alloc_engine_logger, ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT)
                     .arg(ctx.query_->getLabel())
@@ -2985,7 +3026,8 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
             .arg(ctx.requested_address_.toText())
             .arg(ctx.query_->getLabel());
 
-        new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
+        new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx,
+                                          callout_status);
     }
 
     // The allocation engine failed to allocate all of the candidate
@@ -3156,7 +3198,9 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // or the existing lease has expired. If the allocation fails,
         // e.g. because the lease is in use, we will return NULL to
         // indicate that we were unable to allocate the lease.
-        new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx);
+        CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
+        new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx,
+                                          callout_status);
 
     } else {
 
@@ -3195,7 +3239,8 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
 }
 
 Lease4Ptr
-AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
+AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
+                          CalloutHandle::CalloutNextStep& callout_status) {
     if (!ctx.hwaddr_) {
         isc_throw(BadValue, "Can't create a lease with NULL HW address");
     }
@@ -3226,8 +3271,11 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
     if (ctx.callout_handle_ &&
         HooksManager::getHooksManager().calloutsPresent(hook_index_lease4_select_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
@@ -3252,10 +3300,12 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr) {
         // This is the first callout, so no need to clear any arguments
         HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
 
+        callout_status = ctx.callout_handle_->getStatus();
+
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if (callout_status == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
         }
@@ -3331,8 +3381,11 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
     if (HooksManager::getHooksManager().
         calloutsPresent(Hooks.hook_index_lease4_renew_)) {
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
@@ -3395,7 +3448,8 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
 
 Lease4Ptr
 AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
-                                AllocEngine::ClientContext4& ctx) {
+                                AllocEngine::ClientContext4& ctx,
+                                CalloutHandle::CalloutNextStep& callout_status) {
     if (!expired) {
         isc_throw(BadValue, "null lease specified for reuseExpiredLease");
     }
@@ -3426,8 +3480,11 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(ctx.query_);
 
-        // Delete all previous arguments
-        ctx.callout_handle_->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(ctx.callout_handle_);
 
         // Pass necessary arguments
         // Pass the original client query
@@ -3450,10 +3507,12 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
         // Call the callouts
         HooksManager::callCallouts(hook_index_lease4_select_, *ctx.callout_handle_);
 
+        callout_status = ctx.callout_handle_->getStatus();
+
         // Callouts decided to skip the action. This means that the lease is not
         // assigned, so the client will get NoAddrAvail as a result. The lease
         // won't be inserted into the database.
-        if (ctx.callout_handle_->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+        if (callout_status == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS,
                       DHCPSRV_HOOK_LEASE4_SELECT_SKIP);
             return (Lease4Ptr());
@@ -3485,14 +3544,15 @@ AllocEngine::reuseExpiredLease4(Lease4Ptr& expired,
 }
 
 Lease4Ptr
-AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& ctx) {
+AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& ctx,
+                                   CalloutHandle::CalloutNextStep& callout_status) {
     ctx.conflicting_lease_.reset();
 
     Lease4Ptr exist_lease = LeaseMgrFactory::instance().getLease4(candidate);
     if (exist_lease) {
         if (exist_lease->expired()) {
             ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
-            return (reuseExpiredLease4(exist_lease, ctx));
+            return (reuseExpiredLease4(exist_lease, ctx, callout_status));
 
         } else {
             // If there is a lease and it is not expired, pass this lease back
@@ -3502,7 +3562,7 @@ AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& c
         }
 
     } else {
-        return (createLease4(ctx, candidate));
+        return (createLease4(ctx, candidate, callout_status));
     }
     return (Lease4Ptr());
 }
@@ -3552,12 +3612,7 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
             max_attempts = 0;
         }
 
-        // Set the default status code in case the lease4_select callouts
-        // do not exist and the callout handle has a status returned by
-        // any of the callouts already invoked for this packet.
-        if (ctx.callout_handle_) {
-            ctx.callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
-        }
+        CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
 
         for (uint64_t i = 0; i < max_attempts; ++i) {
             IOAddress candidate = allocator->pickAddress(subnet,
@@ -3570,13 +3625,12 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                 // The call below will return the non-NULL pointer if we
                 // successfully allocate this lease. This means that the
                 // address is not in use by another client.
-                new_lease = allocateOrReuseLease4(candidate, ctx);
+                new_lease = allocateOrReuseLease4(candidate, ctx, callout_status);
                 if (new_lease) {
                     return (new_lease);
 
                 } else if (ctx.callout_handle_ &&
-                           (ctx.callout_handle_->getStatus() !=
-                            CalloutHandle::NEXT_STEP_CONTINUE)) {
+                           (callout_status != CalloutHandle::NEXT_STEP_CONTINUE)) {
                     // Don't retry when the callout status is not continue.
                     subnet.reset();
                     break;

@@ -10,6 +10,7 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/timeouts.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -89,10 +90,7 @@ public:
     using Dhcpv4Srv::network_state_;
 };
 
-/// @brief Default control connection timeout.
-const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
-
-/// @brief Fixture class intended for testin control channel in the DHCPv4Srv
+/// @brief Fixture class intended for testing control channel in the DHCPv4Srv
 class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
 public:
 
@@ -122,7 +120,7 @@ public:
 
         CommandMgr::instance().closeCommandSocket();
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
     };
@@ -1420,7 +1418,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutPartialCommand) {
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
-    const unsigned short timeout = 2;
+    const unsigned short timeout = 2000;
     CommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
@@ -1474,7 +1472,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutNoData) {
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
-    const unsigned short timeout = 2;
+    const unsigned short timeout = 2000;
     CommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.

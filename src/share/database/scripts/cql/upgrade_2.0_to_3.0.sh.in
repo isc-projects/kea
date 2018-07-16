@@ -18,8 +18,28 @@ fi
 
 cqlsh "$@" <<EOF
 -- This line starts database upgrade to version 3.0
+
+-- Add a auth_key in hosts table
 ALTER TABLE host_reservations ADD auth_key text;
 
+-- Add a column holding leases for user context.
+ALTER TABLE lease4 ADD user_context text;
+ALTER TABLE lease6 ADD user_context text;
+
+-- -----------------------------------------------------
+-- Table logs (it is used by forensic logging hook library)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS logs (
+    timeuuid timeuuid,  -- creation timeuuid, use dateOf() to get timestamp
+    address varchar,    -- address or prefix
+    log text,           -- the log itself
+    PRIMARY KEY ((timeuuid))
+);
+
+-- Create search index for logs table
+CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
+
+-- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;
 INSERT INTO schema_version (version, minor) VALUES(3, 0);
 

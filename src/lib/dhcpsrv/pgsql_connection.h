@@ -17,7 +17,8 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Define PostgreSQL backend version: 4.0
+
+/// @brief Define PostgreSQL backend version: 5.0
 const uint32_t PG_SCHEMA_VERSION_MAJOR = 5;
 const uint32_t PG_SCHEMA_VERSION_MINOR = 0;
 

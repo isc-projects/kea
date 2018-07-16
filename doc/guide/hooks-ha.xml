@@ -12,7 +12,14 @@
         This section describes the High Availability hooks library, which can be
         loaded on a pair of DHCPv4 or DHCPv6 servers to increase reliability of
         the DHCP service in case of outage of one of the servers. This library
-        is only available to ISC customers.
+        used to be only available to ISC customers, but is now part of
+        the open source Kea, available to all users.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
       </para>
       <para>
         High Availability (HA) of the DHCP service is provided by running multiple
@@ -968,6 +975,76 @@
           flexibility.
         </para>
 
+      </section>
+
+      <section xml:id="ha-syncing-timeouts">
+        <title>Discussion about Timeouts</title>
+        <para>In deployments with large number of clients connected to the
+        network, lease database synchronization after the server failure
+        may be a time consuming operation. The synchronizing server needs
+        to gather all leases from the partner which yields a large response
+        over the RESTful interface. The time required for generating the
+        response and sending it to the synchronizing server may take from
+        several seconds to tens of seconds. The default timeout value for
+        such communication is set to 60 seconds. However, the server
+        administrator may need to extend this timeout if necessary. The
+        following configuration snippet demonstrates how to extend this
+        timeout to 90 seconds with the <command>sync-timeout</command>
+        parameter:
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "sync-timeout": 90000,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>
+          It is important to note that extending this value may sometimes
+          be insufficient to prevent issues with timeouts during
+          lease database synchronization. The control commands travel via
+          Control Agent, which also monitors incoming (with synchronizing
+          server) and outgoing (with DHCP server) connections for timeouts.
+          The DHCP server also monitors the connection from the Control
+          Agent for timeouts. Those timeouts can't be currently modified
+          via configuration. Extending these timeouts is only possible by
+          modifing them in the Kea code and recompiling the server. The
+          relevant constants are located in the Kea sources:
+          <filename>src/lib/config/timeouts.h</filename>.
+        </para>
       </section>
 
       <section xml:id="ha-ctrl-agent-config">

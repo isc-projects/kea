@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -520,6 +520,22 @@ public:
         buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00ff0000) >> 16);
         buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000ff00) >> 8);
         buffer_[size_ ++] = static_cast<uint8_t>(data & 0x000000ff);
+    }
+
+    /// \brief Write an unsigned 64-bit integer in host byte order
+    /// into the buffer in network byte order.
+    ///
+    /// \param data The 64-bit integer to be written into the buffer.
+    void writeUint64(uint64_t data) {
+        ensureAllocated(size_ + sizeof(data));
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0xff00000000000000) >> 56);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00ff000000000000) >> 48);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000ff0000000000) >> 40);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x000000ff00000000) >> 32);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00000000ff000000) >> 24);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000000000ff0000) >> 16);
+        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x000000000000ff00) >> 8);
+        buffer_[size_ ++] = static_cast<uint8_t>(data &  0x00000000000000ff);
     }
 
     /// \brief Copy an arbitrary length of data into the buffer.

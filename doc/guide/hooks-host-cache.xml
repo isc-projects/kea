@@ -14,11 +14,16 @@
   </para>
 
   <para>
-    The RADIUS Host cache is a library that has to be loaded by either
-    DHCPv4 or DHCPv6 Kea servers. In principle it can be used with any
-    backend that may introduce performance degradation (MySQL,
-    PostgreSQL, Cassandra, RADIUS). Host Cache is required to be
-    loaded for the RADIUS accounting mechanism to work.
+    <note>
+      <para>This library may only be loaded by <command>kea-dhcp4</command>
+      or <command>kea-dhcp6</command> process.
+      </para>
+    </note>
+
+    In principle it can be used with any backend that may introduce
+    performance degradation (MySQL, PostgreSQL, Cassandra, RADIUS).
+    Host Cache is required to be loaded for the RADIUS accounting
+    mechanism to work.
   </para>
 
   <para>

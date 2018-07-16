@@ -5,12 +5,12 @@
 Primary developers:
  - Tomek Mrugalski (lead developer: DHCPv4, DHCPv6 components, prefix
                     delegation, memfile, database interface, core libdhcp++,
-		    host reservation, MAC extraction in DHCPv6, statistics manager,
-                    kea-shell)
+                    host reservation, MAC extraction in DHCPv6,
+                    statistics manager, kea-shell)
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
-		     host reservation, lease file cleanup, lease expiration,
-                     control agent, shared networks)
+                     host reservation, lease file cleanup, lease expiration,
+                     control agent, shared networks, high availability)
  - Thomas Markwalder (DDNS, user_chk)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
@@ -168,6 +168,9 @@ We have received the following contributions:
 
  - Ryan Goodfellow (rcgoodfellow)
    2018-01: Fix kea-admin typo breaking lease-dump
+
+ - Sunil Mayya
+   2018-07: support for Authentication option in DHCPv6
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan

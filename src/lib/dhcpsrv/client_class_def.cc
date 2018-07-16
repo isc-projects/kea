@@ -21,7 +21,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
     : name_(name), match_expr_(match_expr), required_(false),
-      cfg_option_(cfg_option),
+      depend_on_known_(false), cfg_option_(cfg_option),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     // Name can't be blank
@@ -39,8 +39,8 @@ ClientClassDef::ClientClassDef(const std::string& name,
 }
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
-    : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      required_(false), cfg_option_(new CfgOption()),
+    : name_(rhs.name_), match_expr_(ExpressionPtr()), required_(false),
+      depend_on_known_(false), cfg_option_(new CfgOption()),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     if (rhs.match_expr_) {
@@ -57,6 +57,7 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     }
 
     required_ = rhs.required_;
+    depend_on_known_ = rhs.depend_on_known_;
     next_server_ = rhs.next_server_;
     sname_ = rhs.sname_;
     filename_ = rhs.filename_;
@@ -105,6 +106,16 @@ ClientClassDef::setRequired(bool required) {
     required_ = required;
 }
 
+bool
+ClientClassDef::getDependOnKnown() const {
+    return (depend_on_known_);
+}
+
+void
+ClientClassDef::setDependOnKnown(bool depend_on_known) {
+    depend_on_known_ = depend_on_known;
+}
+
 const CfgOptionDefPtr&
 ClientClassDef::getCfgOptionDef() const {
     return (cfg_option_def_);
@@ -138,6 +149,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
         (cfg_option_def_ && other.cfg_option_def_ &&
          (*cfg_option_def_ == *other.cfg_option_def_))) &&
             (required_ == other.required_) &&
+            (depend_on_known_ == other.depend_on_known_) &&
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
             (filename_ == other.filename_));
@@ -205,6 +217,7 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const std::string& test,
                                 bool required,
+                                bool depend_on_known,
                                 const CfgOptionPtr& cfg_option,
                                 CfgOptionDefPtr cfg_option_def,
                                 ConstElementPtr user_context,
@@ -214,6 +227,7 @@ ClientClassDictionary::addClass(const std::string& name,
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
     cclass->setRequired(required);
+    cclass->setDependOnKnown(depend_on_known);
     cclass->setCfgOptionDef(cfg_option_def);
     cclass->setContext(user_context),
     cclass->setNextServer(next_server);
@@ -300,7 +314,7 @@ ClientClassDictionary::toElement() const {
 
 std::list<std::string>
 builtinNames = {
-    "ALL", "KNOWN"
+    "ALL", "KNOWN", "UNKNOWN"
 };
 
 std::list<std::string>
@@ -333,15 +347,24 @@ isClientClassBuiltIn(const ClientClass& client_class) {
 
 bool
 isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                     bool& depend_on_known,
                      const ClientClass& client_class) {
     // First check built-in classes
     if (isClientClassBuiltIn(client_class)) {
+        // Check direct dependency on [UN]KNOWN
+        if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
+            depend_on_known = true;
+        }
         return (true);
     }
 
     // Second check already defined, i.e. in the dictionary
     ClientClassDefPtr def = class_dictionary->findClass(client_class);
     if (def) {
+        // Check indirect dependency on [UN]KNOWN
+        if (def->getDependOnKnown()) {
+            depend_on_known = true;
+        }
         return (true);
     }
 

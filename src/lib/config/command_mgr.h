@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,8 +56,8 @@ public:
 
     /// @brief Override default connection timeout.
     ///
-    /// @param timeout New connection timeout in seconds.
-    void setConnectionTimeout(const unsigned short timeout);
+    /// @param timeout New connection timeout in milliseconds.
+    void setConnectionTimeout(const long timeout);
 
     /// @brief Opens control socket with parameters specified in socket_info
     ///

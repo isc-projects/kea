@@ -1344,6 +1344,14 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       </para>
+     <para>
+       Options can be specified also in class of host reservation scope.
+       In Kea 1.4 options precedence order is (from most important):
+       host reservation, pool, subnet, shared network, class, global.
+       In Kea 1.5 order will be changed to:
+       host reservation, class, pool, subnet, shared network, global OR it will
+       be fully configurable.
+     </para>
 
       <para>
         The currently supported standard DHCPv4 options are
@@ -1579,7 +1587,7 @@ It is merely echoed by the server
             <row><entry>Name</entry><entry>Meaning</entry></row>
           </thead>
           <tbody>
-            <row><entry>hex</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
+            <row><entry>binary</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
             <row><entry>boolean</entry><entry>Boolean value with allowed values true or false</entry></row>
             <row><entry>empty</entry><entry>No value, data is carried in suboptions</entry></row>
             <row><entry>fqdn</entry><entry>Fully qualified domain name (e.g. www.example.com)</entry></row>
@@ -1966,7 +1974,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-      Another possibility, added in Kea 1.3, is to redefine the option,
+      Another possibility, since Kea 1.3, is to redefine the option,
       see <xref linkend="dhcp4-private-opts"/>.
       </para>
     </section>
@@ -2243,11 +2251,26 @@ It is merely echoed by the server
       </para>
 
       <para>
-      The process of doing classification is conducted in several steps. The first step
-      is to assess an incoming packet and assign it to zero or more classes.  The
-      second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign classes from host reservations and
-      evaluate class expressions depending on the "KNOWN" class.
+      In a similar way a pool can be constrained to serve only known
+      clients, i.e. clients which have a reservation, using the
+      built-in "KNOWN" or "UNKNOWN" classes.  One can assign addresses
+      to registered clients without giving a different address per
+      reservations, for instance when there is not enough available
+      addresses. The determination whether there is a reservation
+      for a given client is made after a subnet is selected. As such, it
+      is not possible to use KNOWN/UNKNOWN classes to select a shared
+      network or a subnet.
+      </para>
+
+      <para>
+      The process of doing classification is conducted in five steps.
+      The first step is to assess an incoming packet and assign it to
+      zero or more classes.
+      The second step is to choose a subnet, possibly based on the
+      class information.
+      The next step is to evaluate class expressions depending on the
+      built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
+      using them for pool selection and to assign classes from host reservations.
       After the list of required classes is built and each class of the list
       has its expression evaluated: when it returns true the packet is added
       as a member of the class.
@@ -3616,9 +3639,9 @@ It is merely echoed by the server
 </screen>
 
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions. The "KNOWN" builtin class is
-    added to the packet and any class depending on it directly or indirectly
-    and not only-if-required is evaluated.
+    with classification using expressions. The "KNOWN" or "UNKNOWN" builtin
+    class is added to the packet and any class depending on it directly or
+    indirectly and not only-if-required is evaluated.
     </para>
 
     <note>

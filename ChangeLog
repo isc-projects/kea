@@ -1,3 +1,85 @@
+1432.	[func]		MayyaSunil
+	Code added to handle Authentication option in DHCPv6. There
+	is no way to use this code yet.
+	(Github #93, git 022dae4393da9e714678d52886d4f478ba308ba9)
+
+1431.	[func]		marcin
+	Implemented lease4-get-page and lease6-get-page commands
+	in lease_cmds hooks library.
+	(Trac #5651, git b056828212f7b206ff8bd07c097fd6f427d22d71)
+
+1430.	[func] 		fdupont
+	Lease objects and lease backends are now able to store user
+        context. User context can store an arbitrary data as long
+        as it is in JSON format. Database schemas updated.
+	(Trac #5584, git b0b7a198b99fd417466708c80cb7cc2162ae480c)
+
+1429.	[bug]		marcin
+	Removed memory leak in the DHCPv4 and DHCPv6 servers which
+	occurred when hooks libraries where loaded.
+	(Trac #5664, git 2584b902d2617089bfa7238133490ddd855aa77a)
+
+1428.	[bug]		marcin
+	Corrected behavior of the standby server in the HA hot-standby
+	mode, which failed to monitor delays in responses to the
+	DHCP queries sent to the primary server after the primary
+	server became unavailable. This resulted in transition of
+	the standby server to the partner-down state immediately
+	after detecting interruption in communication with the
+	primary over the control channel.
+	(Trac #5654, git 7a83f05fe40fb1b6812b055e2d6d633d9e00160c)
+
+Kea 1.4.0 released on June 15, 2018
+
+1427.	[bug]		marcin
+	Resolved multiple problems causing slow synchronization of
+	leases in the HA hooks library, including adjusting
+	timeouts in control channel and improving performance of
+	responses sent by the Command Manager to Control Agent.
+	Also, introduced 'sync-timeout' configuration parameter
+	into HA hooks library to control lease database
+	synchronization timeout.
+	(Trac #5649, git cbc29128863916a13364749bf681586aea2aa51e)
+
+1426.	[func]		fdupont
+	Added KNOWN and UNKNOWN built-in client classes: after host lookup
+	if a matching host entry is found the incoming packet is added to
+	the KNOWN class, if none is found to the UNKNOWN class. Then
+	expressions depending directly or indirectly on these classes are
+	evaluated. Note these classes may be used to select a pool but
+	they may not to select a subnet.
+	(Trac #5549, git 6a856ed9722b918a65dca15ff44314e28897784e)
+
+1425.	[bug]		marcin
+	Improved performance of the DHCP server running in High
+	Availability configuration by optimizing the management of
+	CalloutHandle objects passed to the callouts.
+	(Trac #5647, git eea88d5c8f4d8efb6c5bfdfbf4e070a90069db5d)
+
+1424.	[doc]		marcin
+	List of hooks libraries provided by ISC includes an
+	information which Kea servers the libraries can be attached
+	to. The detailed description of each supported hooks library
+	also contains this information.
+	(Trac #5613, git 9d6f8de3d988c42c413a7d628e31854e9c80d8c9)
+
+1423.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now retain and emit global, scalar
+	parameters specified in their configuration.
+	(Trac #5378, git 4d05122f03d00b10a888c768fe1725cae9d6aea6)
+
+1422.	[build]		fdupont
+	Commented out BOOST_ASIO_DISABLE_THREADS in configure to reflect
+	the current use of threads by boost ASIO in Kea.
+	(Trac #5615, git f3fc8b1a4257a42a97aaf88a36287bbe33d1f65b)
+
+1421.	[build]		marcin
+	Moved libdhcp_ha (High Availability) hooks library from
+	premium to main Kea repository and changed its license to
+	MPLv2.0. Future ChangeLog entries for this library will be
+	tracked in the Kea ChangeLog file.
+	(Trac #5645, git 19b2553d4869bdd52b63b6f7969052d8a724f78d)
+
 1420.	[doc]		marcin
 	Updated list of loggers in the Kea Administrator's Manual.
 	The updated list contains all loggers, including those

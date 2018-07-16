@@ -123,7 +123,7 @@
       command to the DHCPv4 server for processing via unix domain socket.
       Sometimes, the command including a service value may also be processed by the
       CA, if the CA is running a hooks library which handles such command for the
-      given server. As an example, the hooks library attached to the CA
+      given server. As an example, the hooks library loaded by the CA
       may perform some operations on the database (like adding host reservations,
       modifying leases etc.). An advantage of performing DHCPv4 specific
       administrative operations in the CA rather than forwarding it to

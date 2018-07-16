@@ -16,6 +16,12 @@
     Finally, this library was constructed to provide commands for retrieving
     these statistics.  Additional statistics commands may be added to this
     library in future releases.
+
+    <note>
+      <para>This library may only be loaded by <command>kea-dhcp4</command>
+      or <command>kea-dhcp6</command> process.
+      </para>
+    </note>
   </para>
 
   <para>

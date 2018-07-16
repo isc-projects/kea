@@ -87,7 +87,7 @@ public:
 };
 
 /// @brief Default control connection timeout.
-const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
+const size_t DEFAULT_CONNECTION_TIMEOUT = 10000;
 
 class CtrlDhcpv6SrvTest : public BaseServerTest {
 public:
@@ -1441,7 +1441,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
-    const unsigned short timeout = 2;
+    const unsigned short timeout = 2000;
     CommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
@@ -1495,7 +1495,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
-    const unsigned short timeout = 2;
+    const unsigned short timeout = 2000;
     CommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
