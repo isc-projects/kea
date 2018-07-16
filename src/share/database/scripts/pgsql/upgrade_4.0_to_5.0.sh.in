@@ -19,7 +19,7 @@ psql "$@" >/dev/null <<EOF
 
 START TRANSACTION;
 
--- Create auth_key in ipv6_reservations
+-- Create auth_key in hosts table
 ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
 
 -- Add a column holding leases for user context.
