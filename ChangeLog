@@ -1,3 +1,24 @@
+1432.	[func]		MayyaSunil
+	Code added to handle Authentication option in DHCPv6. There
+	is no way to use this code yet.
+	(Github #93, git 022dae4393da9e714678d52886d4f478ba308ba9)
+
+1431.	[func]		marcin
+	Implemented lease4-get-page and lease6-get-page commands
+	in lease_cmds hooks library.
+	(Trac #5651, git b056828212f7b206ff8bd07c097fd6f427d22d71)
+
+1430.	[func] 		fdupont
+	Lease objects and lease backends are now able to store user
+        context. User context can store an arbitrary data as long
+        as it is in JSON format. Database schemas updated.
+	(Trac #5584, git b0b7a198b99fd417466708c80cb7cc2162ae480c)
+
+1429.	[bug]		marcin
+	Removed memory leak in the DHCPv4 and DHCPv6 servers which
+	occurred when hooks libraries where loaded.
+	(Trac #5664, git 2584b902d2617089bfa7238133490ddd855aa77a)
+
 1428.	[bug]		marcin
 	Corrected behavior of the standby server in the HA hot-standby
 	mode, which failed to monitor delays in responses to the

@@ -587,6 +587,11 @@ TEST_F(CqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases4Paged) {
+    testGetLeases4Paged();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
@@ -685,6 +690,11 @@ TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
 // Test checks that getLease6() works with different DUID sizes
 TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
+}
+
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
 }
 
 /// @brief Lease6 update tests
