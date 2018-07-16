@@ -23,7 +23,6 @@ ALTER TABLE hosts ADD COLUMN user_context TEXT NULL;
 # Add user contexts into tables holding DHCP options
 ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT NULL;
 ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT NULL;
-ALTER TABLE  ipv6_reservations ADD COLUMN auth_key VARCHAR(128) NOT NULL;
 
 # Create index for searching leases by subnet identifier.
 CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);

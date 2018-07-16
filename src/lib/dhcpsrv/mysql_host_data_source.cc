@@ -77,7 +77,6 @@ const size_t BOOT_FILE_NAME_MAX_LEN = 128;
 const size_t KEY_LEN = 16;
 
 /// @brief Numeric value representing last supported identifier.
-/// @brief Numeric value representing last supported identifier.
 ///
 /// This value is used to validate whether the identifier type stored in
 /// a database is within bounds. of supported identifiers.
