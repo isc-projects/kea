@@ -80,8 +80,7 @@ AuthKey::operator!=(const AuthKey& other) const {
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
-    : type_(type), prefix_(asiolink::IOAddress("::")), 
-      prefix_len_(128){
+    : type_(type), prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
     // Validate and set the actual values.
     set(type, prefix, prefix_len);
 }

@@ -275,6 +275,8 @@ INSERT INTO schema_version (version, minor) VALUES(2, 0);
 -- This line concludes database upgrade to version 2.0
 
 -- This line starts database upgrade to version 3.0
+
+-- This line adds auth_key column into host reservation table 
 ALTER TABLE host_reservations ADD auth_key text;
 
 -- Add a column holding leases for user context.
