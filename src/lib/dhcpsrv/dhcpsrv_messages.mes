@@ -497,6 +497,10 @@ of leases beginning with the specified address.
 A debug message issued when the server is attempting to obtain all IPv6
 leases from the memory file database.
 
+% DHCPSRV_MEMFILE_GET6_DUID obtaining IPv6 leases for DUID %1
+A debug message issued when the server is attempting to obtain IPv6
+leases from the memory file database for the DUID.
+
 % DHCPSRV_MEMFILE_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.

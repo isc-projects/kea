@@ -165,7 +165,7 @@ EOF
 
     # Second table: hosts
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name FROM hosts;
+    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
@@ -400,10 +400,10 @@ EOF
 
     #table: DHCPv4 fixed field colums (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
-    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts";
+    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name failed. (expected status code %d, returned %d)"
+    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key failed. (expected status code %d, returned %d)"
 
     # verify that dhcp4_subnet_id is unsigned
     qry="show columns from hosts like 'dhcp4_subnet_id'"

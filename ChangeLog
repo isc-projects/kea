@@ -1,3 +1,8 @@
+1434.   [func]      MayyaSunil
+	Code added to support storage of Authentication key host reservation.
+	There is no way to use the code yet.
+	(Github #88, git tbd)
+
 1433.	[func]		marcin
 	Implemented state HA state machine pausing in the high
 	availability hooks library.
