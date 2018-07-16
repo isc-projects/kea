@@ -679,7 +679,7 @@ SET version = '6', minor = '0';
 
 # This line concludes database upgrade to version 6.0.
 
-#add auth key for reconfiguration
+#add auth key in host tables
 ALTER TABLE hosts  
     ADD COLUMN auth_key VARCHAR(16) NULL; 
 
