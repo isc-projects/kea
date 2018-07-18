@@ -10,6 +10,7 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <boost/random.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
@@ -47,9 +48,9 @@ AuthKey::getRandomKeyString() {
 
 std::string 
 AuthKey::ToText() const {
-    std::ostringstream s;
-    //s << authKey_;
-    return (authKey_);
+    //this will need enhancement if the stored container is not
+    //string
+    return authKey_;
 }
 
 void
