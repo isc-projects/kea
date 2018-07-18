@@ -10,21 +10,6 @@
 #include <ha_service_states.h>
 #include <sstream>
 
-namespace {
-
-/// @brief Creates default state configuration.
-///
-/// @param [out] state_map map of state configurations into which the
-/// newly created configuration should be inserted.
-/// @param state state for which new configuration is to be created.
-void
-createStateConfig(isc::ha::HAConfig::StateConfigMap& state_map, const int state) {
-    isc::ha::HAConfig::StateConfigPtr cfg(new isc::ha::HAConfig::StateConfig(state));
-    state_map[state] = cfg;
-}
-
-} // end of anonymous namespace
-
 namespace isc {
 namespace ha {
 
@@ -135,21 +120,26 @@ HAConfig::StateConfig::pausingToString(const HAConfig::StateConfig::Pausing& pau
     isc_throw(BadValue, "unsupported pause enumeration " << static_cast<int>(pausing));
 }
 
+HAConfig::StateConfigPtr
+HAConfig::StateMachineConfig::getStateConfig(const int state) {
+    // Return config for the state if it exists already.
+    auto state_config = states_.find(state);
+    if (state_config != states_.end()) {
+        return (state_config->second);
+    }
+
+    // Create config for the state and store its pointer.
+    StateConfigPtr new_state_config(new StateConfig(state));
+    states_[state] = new_state_config;
+
+    return (new_state_config);
+}
+
 HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
       sync_leases_(true), sync_timeout_(60000), heartbeat_delay_(10000),
       max_response_delay_(60000), max_ack_delay_(10000), max_unacked_clients_(10),
-      peers_(), state_machine_() {
-
-    // Create default state configurations.
-    createStateConfig(state_machine_, HA_BACKUP_ST);
-    createStateConfig(state_machine_, HA_HOT_STANDBY_ST);
-    createStateConfig(state_machine_, HA_LOAD_BALANCING_ST);
-    createStateConfig(state_machine_, HA_PARTNER_DOWN_ST);
-    createStateConfig(state_machine_, HA_READY_ST);
-    createStateConfig(state_machine_, HA_SYNCING_ST);
-    createStateConfig(state_machine_, HA_TERMINATED_ST);
-    createStateConfig(state_machine_, HA_WAITING_ST);
+      peers_(), state_machine_(new StateMachineConfig()) {
 }
 
 HAConfig::PeerConfigPtr
@@ -245,17 +235,6 @@ HAConfig::getOtherServersConfig() const {
     PeerConfigMap copy = peers_;
     copy.erase(getThisServerName());
     return (copy);
-}
-
-HAConfig::StateConfigPtr
-HAConfig::getStateConfig(const int state) const {
-    auto state_config = state_machine_.find(state);
-    if (state_config == state_machine_.end()) {
-        isc_throw(BadValue, "no state machine configuration found for the "
-                  << "state identifier " << state);
-    }
-
-    return (state_config->second);
 }
 
 void

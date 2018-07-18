@@ -103,11 +103,20 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
         isc_throw(ConfigError, "'peers' parameter must be a list");
     }
 
-    // State machine configuration must be a list of maps.
+    // State machine configuration must be a map.
     ConstElementPtr state_machine = c->get("state-machine");
-    if (state_machine && state_machine->getType() != Element::list) {
-        isc_throw(ConfigError, "'state-machine' parameter must be a list");
+    ConstElementPtr states_list;
+    if (state_machine) {
+        if (state_machine->getType() != Element::map) {
+            isc_throw(ConfigError, "'state-machine' parameter must be a map");
+        }
+
+        states_list = state_machine->get("states");
+        if (states_list && (states_list->getType() != Element::list)) {
+            isc_throw(ConfigError, "'states' parameter must be a list");
+        }
     }
+
 
     // We have made major sanity checks, so let's try to gather some values.
 
@@ -176,13 +185,13 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     }
 
     // Per state configuration is optional.
-    if (state_machine) {
-        const auto& state_machine_vec = state_machine->listValue();
+    if (states_list) {
+        const auto& states_vec = states_list->listValue();
 
         std::set<int> configured_states;
 
         // Go over per state configurations.
-        for (auto s = state_machine_vec.begin(); s != state_machine_vec.end(); ++s) {
+        for (auto s = states_vec.begin(); s != states_vec.end(); ++s) {
 
             // State configuration is held in map.
             if ((*s)->getType() != Element::map) {
@@ -202,7 +211,8 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
             }
             configured_states.insert(state);
 
-            config_storage->getStateConfig(state)->setPausing(getString(*s, "pause"));
+            config_storage->getStateMachineConfig()->
+                getStateConfig(state)->setPausing(getString(*s, "pause"));
         }
     }
 

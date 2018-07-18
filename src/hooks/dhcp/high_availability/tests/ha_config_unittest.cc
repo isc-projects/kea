@@ -89,20 +89,22 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "                \"auto-failover\": false"
         "            }"
         "        ],"
-        "        \"state-machine\": ["
-        "            {"
-        "                \"state\": \"waiting\","
-        "                \"pause\": \"once\""
-        "            },"
-        "            {"
-        "                \"state\": \"ready\","
-        "                \"pause\": \"always\""
-        "            },"
-        "            {"
-        "                \"state\": \"partner-down\","
-        "                \"pause\": \"never\""
-        "            }"
-        "        ]"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"once\""
+        "                },"
+        "                {"
+        "                    \"state\": \"ready\","
+        "                    \"pause\": \"always\""
+        "                },"
+        "                {"
+        "                    \"state\": \"partner-down\","
+        "                    \"pause\": \"never\""
+        "                }"
+        "            ]"
+        "        }"
         "    }"
         "]";
 
@@ -142,34 +144,41 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
 
-    // Verify that per-state configuration is correct.
+    // Verify that per-state configuration is correct.x
 
     HAConfig::StateConfigPtr state_cfg;
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_BACKUP_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_BACKUP_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_LOAD_BALANCING_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_LOAD_BALANCING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_PARTNER_DOWN_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_PARTNER_DOWN_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_READY_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_READY_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_ALWAYS, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_SYNCING_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_SYNCING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_TERMINATED_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_TERMINATED_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_WAITING_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_ONCE, state_cfg->getPausing());
 }
@@ -237,31 +246,38 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_FALSE(cfg->isAutoFailover());
 
     HAConfig::StateConfigPtr state_cfg;
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_BACKUP_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_BACKUP_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_HOT_STANDBY_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_HOT_STANDBY_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_PARTNER_DOWN_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_PARTNER_DOWN_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_READY_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_READY_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_SYNCING_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_SYNCING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_TERMINATED_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_TERMINATED_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 
-    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateConfig(HA_WAITING_ST));
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
 }
@@ -757,8 +773,8 @@ TEST_F(HAConfigTest, hotStandbySecondary) {
         "secondary servers not allowed in the hot standby configuration");
 }
 
-// State name must be recognized.
-TEST_F(HAConfigTest, invalidStateName) {
+// state-machine parameter must be a map.
+TEST_F(HAConfigTest, invalidStateMachine) {
     testInvalidConfig(
         "["
         "    {"
@@ -786,6 +802,70 @@ TEST_F(HAConfigTest, invalidStateName) {
         "        ]"
         "    }"
         "]",
+        "'state-machine' parameter must be a map");
+}
+
+// states within state-machine must be a list.
+TEST_F(HAConfigTest, invalidStatesList) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": {"
+        "            }"
+        "        }"
+        "    }"
+        "]",
+        "'states' parameter must be a list");
+}
+
+// State name must be recognized.
+TEST_F(HAConfigTest, invalidStateName) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"foo\","
+        "                    \"pause\": \"always\""
+        "                }"
+        "            ]"
+        "        }"
+        "    }"
+        "]",
         "unknown state foo");
 }
 
@@ -810,12 +890,14 @@ TEST_F(HAConfigTest, invalidPauseValue) {
         "                \"auto-failover\": true"
         "            }"
         "        ],"
-        "        \"state-machine\": ["
-        "            {"
-        "                \"state\": \"waiting\","
-        "                \"pause\": \"foo\""
-        "            }"
-        "        ]"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"foo\""
+        "                }"
+        "            ]"
+        "        }"
         "    }"
         "]",
         "unsupported value foo of 'pause' parameter");
@@ -842,20 +924,22 @@ TEST_F(HAConfigTest, duplicatedStates) {
         "                \"auto-failover\": true"
         "            }"
         "        ],"
-        "        \"state-machine\": ["
-        "            {"
-        "                \"state\": \"waiting\","
-        "                \"pause\": \"always\""
-        "            },"
-        "            {"
-        "                \"state\": \"ready\","
-        "                \"pause\": \"always\""
-        "            },"
-        "            {"
-        "                \"state\": \"waiting\","
-        "                \"pause\": \"always\""
-        "            }"
-        "        ]"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"always\""
+        "                },"
+        "                {"
+        "                    \"state\": \"ready\","
+        "                    \"pause\": \"always\""
+        "                },"
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"always\""
+        "                }"
+        "            ]"
+        "        }"
         "    }"
         "]",
         "duplicated configuration for the 'waiting' state");

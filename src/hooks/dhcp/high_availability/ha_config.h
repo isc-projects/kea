@@ -221,8 +221,37 @@ public:
     /// @brief Pointer to the state configuration.
     typedef boost::shared_ptr<StateConfig> StateConfigPtr;
 
-    /// @brief Map of configuration for supported states.
-    typedef std::map<int, StateConfigPtr> StateConfigMap;
+    /// @brief State machine configuration information.
+    ///
+    /// Currently it merely contains a collection of states specific
+    /// configurations. In the future it may also contain global
+    /// state machine configuration parameters.
+    class StateMachineConfig {
+    public:
+
+        /// @brief Constructor.
+        StateMachineConfig()
+            :  states_() {
+        }
+
+        /// @brief Returns pointer to the state specific configuration.
+        ///
+        /// If requested configuration doesn't exist yet, it is created.
+        ///
+        /// @param state identifier of the state for which configuration
+        /// object should be returned.
+        ///
+        /// @return Pointer to the state configuration.
+        StateConfigPtr getStateConfig(const int state);
+
+    private:
+
+        /// @brief Map of configuration for supported states.
+        std::map<int, StateConfigPtr> states_;
+    };
+
+    /// @brief Pointer to a state machine configuration.
+    typedef boost::shared_ptr<StateMachineConfig> StateMachineConfigPtr;
 
     /// @brief Constructor.
     HAConfig();
@@ -444,19 +473,10 @@ public:
         return (peers_);
     }
 
-    /// @brief Returns HA state configuration by state identifier.
-    ///
-    /// @param state identifier of the state for which configuration should
-    /// be returned.
-    ///
-    /// @return Pointer to the state configuration.
-    /// @throw BadValue if there is no configuration found for the given state.
-    StateConfigPtr getStateConfig(const int state) const;
-
     /// @brief Returns state machine configuration.
     ///
-    /// @return Map of pointers to the configuration of all states.
-    StateConfigMap getStateMachineConfig() const {
+    /// @return Pointer to the state machine configuration.
+    StateMachineConfigPtr getStateMachineConfig() const {
         return (state_machine_);
     }
 
@@ -465,17 +485,17 @@ public:
     /// @throw HAConfigValidationError if configuration is invalid.
     void validate() const;
 
-    std::string this_server_name_; ///< This server name.
-    HAMode ha_mode_;               ///< Mode of operation.
-    bool send_lease_updates_;      ///< Send lease updates to partner?
-    bool sync_leases_;             ///< Synchronize databases on startup?
-    uint32_t sync_timeout_;        ///< Timeout for syncing lease database (ms)
-    uint32_t heartbeat_delay_;     ///< Heartbeat delay in milliseconds.
-    uint32_t max_response_delay_;  ///< Max delay in response to heartbeats.
-    uint32_t max_ack_delay_;       ///< Maximum DHCP message ack delay.
-    uint32_t max_unacked_clients_; ///< Maximum number of unacked clients.
-    PeerConfigMap peers_;          ///< Map of peers' configurations.
-    StateConfigMap state_machine_; ///< Map of per states configurations.
+    std::string this_server_name_;        ///< This server name.
+    HAMode ha_mode_;                      ///< Mode of operation.
+    bool send_lease_updates_;             ///< Send lease updates to partner?
+    bool sync_leases_;                    ///< Synchronize databases on startup?
+    uint32_t sync_timeout_;               ///< Timeout for syncing lease database (ms)
+    uint32_t heartbeat_delay_;            ///< Heartbeat delay in milliseconds.
+    uint32_t max_response_delay_;         ///< Max delay in response to heartbeats.
+    uint32_t max_ack_delay_;              ///< Maximum DHCP message ack delay.
+    uint32_t max_unacked_clients_;        ///< Maximum number of unacked clients.
+    PeerConfigMap peers_;                 ///< Map of peers' configurations.
+    StateMachineConfigPtr state_machine_; ///< State machine configuration.
 };
 
 /// @brief Pointer to the High Availability configuration structure.
