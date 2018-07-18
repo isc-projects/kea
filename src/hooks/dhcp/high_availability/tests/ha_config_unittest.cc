@@ -7,11 +7,13 @@
 #include <config.h>
 
 #include <ha_impl.h>
+#include <ha_service_states.h>
 #include <ha_test.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <util/state_model.h>
 #include <string>
 
 using namespace isc;
@@ -20,6 +22,7 @@ using namespace isc::data;
 using namespace isc::ha;
 using namespace isc::hooks;
 using namespace isc::ha::test;
+using namespace isc::util;
 
 namespace {
 
@@ -43,6 +46,7 @@ public:
         HAImplPtr impl(new HAImpl());
         try {
             impl->configure(Element::fromJSON(invalid_config));
+            ADD_FAILURE() << "expected ConfigError exception, thrown no exception";
 
         } catch (const ConfigError& ex) {
             EXPECT_EQ(expected_error, std::string(ex.what()));
@@ -86,7 +90,23 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "                \"role\": \"backup\","
         "                \"auto-failover\": false"
         "            }"
-        "        ]"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"once\""
+        "                },"
+        "                {"
+        "                    \"state\": \"ready\","
+        "                    \"pause\": \"always\""
+        "                },"
+        "                {"
+        "                    \"state\": \"partner-down\","
+        "                    \"pause\": \"never\""
+        "                }"
+        "            ]"
+        "        }"
         "    }"
         "]";
 
@@ -125,6 +145,44 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(cfg->getLogLabel(), "server3 (http://127.0.0.1:8082/)");
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
+
+    // Verify that per-state configuration is correct.x
+
+    HAConfig::StateConfigPtr state_cfg;
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_BACKUP_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_LOAD_BALANCING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_PARTNER_DOWN_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_READY_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_ALWAYS, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_SYNCING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_TERMINATED_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_ONCE, state_cfg->getPausing());
 }
 
 // Verifies that load balancing configuration is parsed correctly.
@@ -188,6 +246,42 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ("http://127.0.0.1:8082/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
+
+    HAConfig::StateConfigPtr state_cfg;
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_BACKUP_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_HOT_STANDBY_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_PARTNER_DOWN_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_READY_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_SYNCING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_TERMINATED_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
+
+    ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST));
+    ASSERT_TRUE(state_cfg);
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 }
 
 // This server name must not be empty.
@@ -681,6 +775,178 @@ TEST_F(HAConfigTest, hotStandbySecondary) {
         "secondary servers not allowed in the hot standby configuration");
 }
 
+// state-machine parameter must be a map.
+TEST_F(HAConfigTest, invalidStateMachine) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": ["
+        "            {"
+        "                \"state\": \"foo\","
+        "                \"pause\": \"always\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "'state-machine' parameter must be a map");
+}
+
+// states within state-machine must be a list.
+TEST_F(HAConfigTest, invalidStatesList) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": {"
+        "            }"
+        "        }"
+        "    }"
+        "]",
+        "'states' parameter must be a list");
+}
+
+// State name must be recognized.
+TEST_F(HAConfigTest, invalidStateName) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"foo\","
+        "                    \"pause\": \"always\""
+        "                }"
+        "            ]"
+        "        }"
+        "    }"
+        "]",
+        "unknown state foo");
+}
+
+// Pause value must be recognized.
+TEST_F(HAConfigTest, invalidPauseValue) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"foo\""
+        "                }"
+        "            ]"
+        "        }"
+        "    }"
+        "]",
+        "unsupported value foo of 'pause' parameter");
+}
+
+// Must not specify configuration for the same state twice.
+TEST_F(HAConfigTest, duplicatedStates) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ],"
+        "        \"state-machine\": {"
+        "            \"states\": ["
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"always\""
+        "                },"
+        "                {"
+        "                    \"state\": \"ready\","
+        "                    \"pause\": \"always\""
+        "                },"
+        "                {"
+        "                    \"state\": \"waiting\","
+        "                    \"pause\": \"always\""
+        "                }"
+        "            ]"
+        "        }"
+        "    }"
+        "]",
+        "duplicated configuration for the 'waiting' state");
+}
+
 // Test that conversion of the role names works correctly.
 TEST_F(HAConfigTest, stringToRole) {
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY,
@@ -717,6 +983,27 @@ TEST_F(HAConfigTest, stringToHAMode) {
 TEST_F(HAConfigTest, HAModeToString) {
     EXPECT_EQ("load-balancing", HAConfig::HAModeToString(HAConfig::LOAD_BALANCING));
     EXPECT_EQ("hot-standby", HAConfig::HAModeToString(HAConfig::HOT_STANDBY));
+}
+
+// Test that conversion of the 'pause' value works correctly.
+TEST_F(HAConfigTest, stringToPausing) {
+    EXPECT_EQ(STATE_PAUSE_ALWAYS,
+              HAConfig::StateConfig::stringToPausing("always"));
+    EXPECT_EQ(STATE_PAUSE_NEVER,
+              HAConfig::StateConfig::stringToPausing("never"));
+    EXPECT_EQ(STATE_PAUSE_ONCE,
+              HAConfig::StateConfig::stringToPausing("once"));
+}
+
+// Test that pause parameter value is generated correctly.
+TEST_F(HAConfigTest, pausingToString) {
+    EXPECT_EQ("always",
+              HAConfig::StateConfig::pausingToString(STATE_PAUSE_ALWAYS));
+    EXPECT_EQ("never",
+              HAConfig::StateConfig::pausingToString(STATE_PAUSE_NEVER));
+    EXPECT_EQ("once",
+              HAConfig::StateConfig::pausingToString(STATE_PAUSE_ONCE));
+
 }
 
 } // end of anonymous namespace

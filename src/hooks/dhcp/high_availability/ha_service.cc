@@ -85,29 +85,37 @@ void
 HAService::defineStates() {
     StateModel::defineStates();
 
-    defineState(HA_BACKUP_ST, "backup",
-                boost::bind(&HAService::backupStateHandler, this));
+    defineState(HA_BACKUP_ST, stateToString(HA_BACKUP_ST),
+                boost::bind(&HAService::backupStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_BACKUP_ST)->getPausing());
 
-    defineState(HA_HOT_STANDBY_ST, "hot-standby",
-                boost::bind(&HAService::normalStateHandler, this));
+    defineState(HA_HOT_STANDBY_ST, stateToString(HA_HOT_STANDBY_ST),
+                boost::bind(&HAService::normalStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_HOT_STANDBY_ST)->getPausing());
 
-    defineState(HA_LOAD_BALANCING_ST, "load-balancing",
-                boost::bind(&HAService::normalStateHandler, this));
+    defineState(HA_LOAD_BALANCING_ST, stateToString(HA_LOAD_BALANCING_ST),
+                boost::bind(&HAService::normalStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_LOAD_BALANCING_ST)->getPausing());
 
-    defineState(HA_PARTNER_DOWN_ST, "partner-down",
-                boost::bind(&HAService::partnerDownStateHandler, this));
+    defineState(HA_PARTNER_DOWN_ST, stateToString(HA_PARTNER_DOWN_ST),
+                boost::bind(&HAService::partnerDownStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_PARTNER_DOWN_ST)->getPausing());
 
-    defineState(HA_READY_ST, "ready",
-                boost::bind(&HAService::readyStateHandler, this));
+    defineState(HA_READY_ST, stateToString(HA_READY_ST),
+                boost::bind(&HAService::readyStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_READY_ST)->getPausing());
 
-    defineState(HA_SYNCING_ST, "syncing",
-                boost::bind(&HAService::syncingStateHandler, this));
+    defineState(HA_SYNCING_ST, stateToString(HA_SYNCING_ST),
+                boost::bind(&HAService::syncingStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_SYNCING_ST)->getPausing());
 
-    defineState(HA_TERMINATED_ST, "terminated",
-                boost::bind(&HAService::terminatedStateHandler, this));
+    defineState(HA_TERMINATED_ST, stateToString(HA_TERMINATED_ST),
+                boost::bind(&HAService::terminatedStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_TERMINATED_ST)->getPausing());
 
-    defineState(HA_WAITING_ST, "waiting",
-                boost::bind(&HAService::waitingStateHandler, this));
+    defineState(HA_WAITING_ST, stateToString(HA_WAITING_ST),
+                boost::bind(&HAService::waitingStateHandler, this),
+                config_->getStateMachineConfig()->getStateConfig(HA_WAITING_ST)->getPausing());
 }
 
 void
@@ -133,6 +141,11 @@ HAService::normalStateHandler() {
     }
 
     scheduleHeartbeat();
+
+    if (isModelPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -184,6 +197,11 @@ HAService::partnerDownStateHandler() {
 
     scheduleHeartbeat();
 
+    if (isModelPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
+
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
     if (shouldTerminate()) {
@@ -223,6 +241,11 @@ HAService::readyStateHandler() {
     }
 
     scheduleHeartbeat();
+
+    if (isModelPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -277,6 +300,11 @@ HAService::syncingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+    }
+
+    if (isModelPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
     }
 
     // Check if the clock skew is still acceptable. If not, transition to
@@ -363,13 +391,21 @@ HAService::waitingStateHandler() {
         adjustNetworkState();
     }
 
+    // Only schedule the heartbeat for non-backup servers.
+    if (config_->getThisServerConfig()->getRole() != HAConfig::PeerConfig::BACKUP) {
+        scheduleHeartbeat();
+    }
+
+    if (isModelPaused()) {
+        postNextEvent(NOP_EVT);
+        return;
+    }
+
     // Backup server must remain in its own state.
     if (config_->getThisServerConfig()->getRole() == HAConfig::PeerConfig::BACKUP) {
         verboseTransition(HA_BACKUP_ST);
         return;
     }
-
-    scheduleHeartbeat();
 
     // Check if the clock skew is still acceptable. If not, transition to
     // the terminated state.
@@ -475,6 +511,24 @@ HAService::verboseTransition(const unsigned state) {
                 .arg(new_state_name);
         }
     }
+
+    // Inform the administrator if the state machine is paused.
+    if (isModelPaused()) {
+        std::string state_name = stateToString(state);
+        boost::to_upper(state_name);
+        LOG_INFO(ha_logger, HA_STATE_MACHINE_PAUSED)
+            .arg(state_name);
+    }
+}
+
+bool
+HAService::unpause() {
+    if (isModelPaused()) {
+        LOG_INFO(ha_logger, HA_STATE_MACHINE_CONTINUED);
+        unpauseModel();
+        return (true);
+    }
+    return (false);
 }
 
 void

@@ -296,6 +296,21 @@ of server startup or reconfiguration. The first argument provides the HA mode.
 The second argument specifies the role of this server instance in this
 configuration.
 
+% HA_STATE_MACHINE_CONTINUED state machine is un-paused
+This informational message is issued when the HA state machine is un-paused.
+This unlocks the server from the current state. It may transition to any
+other state if it needs to do so, e.g. 'partner-down' if its partner appears
+to be offline. The server may also remain in the current state if the HA
+setup state warrants such behavior.
+
+% HA_STATE_MACHINE_PAUSED state machine paused in state %1
+This informational message is issued when the HA state machine is paused.
+HA state machine may be paused in certain states specified in the HA hooks library
+confuguration. When the state machine is paused, the server remains in the given
+state until it is explicitly unpaused (via ha-continue command). If the state
+machine is paused, the server operates normally but can't transition to any
+other state.
+
 % HA_STATE_TRANSITION server transitions from %1 to %2 state, partner state is %3
 This informational message is issued when the server transitions to a new
 state as a result of some interaction (or lack of thereof) with its partner.

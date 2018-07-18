@@ -8,6 +8,7 @@
 #define HA_SERVICE_STATES_H
 
 #include <util/state_model.h>
+#include <string>
 
 namespace isc {
 namespace ha {
@@ -39,6 +40,20 @@ const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 8;
 /// Special state indicating that this server is unable to communicate with
 /// the partner.
 const int HA_UNAVAILABLE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 1000;
+
+/// @brief Returns state name.
+///
+/// @param state state identifier for which name should be returned.
+///
+/// @throw BadValue if the state identifier is unsupported.
+std::string stateToString(int state);
+
+/// @brief Returns state for a given name.
+///
+/// @param state_name name of the state to be returned.
+///
+/// @throw BadValue if the state name is unsupported.
+int stringToState(const std::string& state_name);
 
 } // end of namespace isc::ha
 } // end of namespace isc

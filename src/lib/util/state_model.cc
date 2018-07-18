@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,8 +14,10 @@ namespace util {
 
 /********************************** State *******************************/
 
-State::State(const int value, const std::string& label, StateHandler handler)
-        : LabeledValue(value, label), handler_(handler) {
+State::State(const int value, const std::string& label, StateHandler handler,
+             const StatePausing& state_pausing)
+    : LabeledValue(value, label), handler_(handler), pausing_(state_pausing),
+      was_paused_(false) {
 }
 
 State::~State() {
@@ -24,6 +26,16 @@ State::~State() {
 void
 State::run() {
         (handler_)();
+}
+
+bool
+State::shouldPause() {
+    if ((pausing_ == STATE_PAUSE_ALWAYS) ||
+        ((pausing_ == STATE_PAUSE_ONCE) && (!was_paused_))) {
+        was_paused_ = true;
+        return (true);
+    }
+    return (false);
 }
 
 /********************************** StateSet *******************************/
@@ -35,9 +47,11 @@ StateSet::~StateSet() {
 }
 
 void
-StateSet::add(const int value, const std::string& label, StateHandler handler) {
+StateSet::add(const int value, const std::string& label, StateHandler handler,
+              const StatePausing& state_pausing) {
     try {
-        LabeledValueSet::add(LabeledValuePtr(new State(value, label, handler)));
+        LabeledValueSet::add(LabeledValuePtr(new State(value, label, handler,
+                                                       state_pausing)));
     } catch (const std::exception& ex) {
         isc_throw(StateModelError, "StateSet: cannot add state :" << ex.what());
     }
@@ -74,9 +88,10 @@ const int StateModel::FAIL_EVT;
 const int StateModel::SM_DERIVED_EVENT_MIN;
 
 StateModel::StateModel() : events_(), states_(), dictionaries_initted_(false),
-                          curr_state_(NEW_ST), prev_state_(NEW_ST),
-                          last_event_(NOP_EVT), next_event_(NOP_EVT),
-                          on_entry_flag_(false), on_exit_flag_(false) {
+                           curr_state_(NEW_ST), prev_state_(NEW_ST),
+                           last_event_(NOP_EVT), next_event_(NOP_EVT),
+                           on_entry_flag_(false), on_exit_flag_(false),
+                           paused_(false) {
 }
 
 StateModel::~StateModel(){
@@ -177,7 +192,7 @@ StateModel::getEvent(unsigned int event_value) {
 
 void
 StateModel::defineState(unsigned int state_value, const std::string& label,
-    StateHandler handler) {
+                        StateHandler handler, const StatePausing& state_pausing) {
     if (!isModelNew()) {
         // Don't allow for self-modifying maps.
         isc_throw(StateModelError, "States may only be added to a new model."
@@ -186,7 +201,7 @@ StateModel::defineState(unsigned int state_value, const std::string& label,
 
     // Attempt to add the state to the set.
     try {
-        states_.add(state_value, label, handler);
+        states_.add(state_value, label, handler, state_pausing);
     } catch (const std::exception& ex) {
         isc_throw(StateModelError, "Error adding state: " << ex.what());
     }
@@ -249,6 +264,11 @@ StateModel::endModel() {
 }
 
 void
+StateModel::unpauseModel() {
+    paused_ = false;
+}
+
+void
 StateModel::abortModel(const std::string& explanation) {
     transition(END_ST, FAIL_EVT);
 
@@ -272,6 +292,12 @@ StateModel::setState(unsigned int state) {
 
     // At this time they are calculated the same way.
     on_exit_flag_ = on_entry_flag_;
+
+    // If we're entering the new state we need to see if we should
+    // pause the state model in this state.
+    if (on_entry_flag_ && !paused_ && (getState(state)->shouldPause())) {
+        paused_ = true;
+    }
 }
 
 void
@@ -343,6 +369,11 @@ StateModel::isModelDone() const {
 bool
 StateModel::didModelFail() const {
     return (isModelDone() && (next_event_ == FAIL_EVT));
+}
+
+bool
+StateModel::isModelPaused() const {
+    return (paused_);
 }
 
 std::string

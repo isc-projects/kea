@@ -246,6 +246,15 @@ protected:
 
 public:
 
+    /// @brief Unpauses the HA state machine with logging.
+    ///
+    /// It un-pauses the state machine if it is paused and logs an informational
+    /// message. It doesn't log the message if the state machine is not paused.
+    ///
+    /// @return true if the state machine was unpaused, false if the state
+    /// machine was not paused when this method was invoked.
+    bool unpause();
+
     /// @brief Instructs the HA service to serve default scopes.
     ///
     /// This method is mostly useful for unit testing. The scopes need to be
