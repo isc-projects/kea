@@ -10,7 +10,6 @@
 #include <communication_state.h>
 #include <ha_config.h>
 #include <ha_server_type.h>
-#include <ha_state_machine_control.h>
 #include <query_filter.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
@@ -247,12 +246,14 @@ protected:
 
 public:
 
-    /// @brief Un-pauses the state machine.
+    /// @brief Unpauses the HA state machine with logging.
     ///
-    /// This is method is invoked when the server receives the 'ha-continue'
-    /// command which instructs the server to unblock the HA state machine
-    /// so as it may transition to a next state.
-    void unpause();
+    /// It un-pauses the state machine if it is paused and logs an informational
+    /// message. It doesn't log the message if the state machine is not paused.
+    ///
+    /// @return true if the state machine was unpaused, false if the state
+    /// machine was not paused when this method was invoked.
+    bool unpause();
 
     /// @brief Instructs the HA service to serve default scopes.
     ///
@@ -642,9 +643,6 @@ protected:
 
     /// @brief Selects queries to be processed/dropped.
     QueryFilter query_filter_;
-
-    /// @brief Controls state machine pausing and unpausing.
-    HAStateMachineControl state_machine_control_;
 
     /// @brief Map holding a number of scheduled requests for a given packet.
     ///

@@ -29,7 +29,6 @@ ha_unittests_SOURCES += communication_state_unittest.cc
 ha_unittests_SOURCES += ha_config_unittest.cc
 ha_unittests_SOURCES += ha_impl_unittest.cc
 ha_unittests_SOURCES += ha_service_unittest.cc
-ha_unittests_SOURCES += ha_state_machine_control_unittest.cc
 ha_unittests_SOURCES += ha_test.cc ha_test.h
 ha_unittests_SOURCES += query_filter_unittest.cc
 ha_unittests_SOURCES += run_unittests.cc

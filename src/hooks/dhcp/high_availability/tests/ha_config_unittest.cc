@@ -13,6 +13,7 @@
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <util/state_model.h>
 #include <string>
 
 using namespace isc;
@@ -21,6 +22,7 @@ using namespace isc::data;
 using namespace isc::ha;
 using namespace isc::hooks;
 using namespace isc::ha::test;
+using namespace isc::util;
 
 namespace {
 
@@ -150,37 +152,37 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_BACKUP_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_LOAD_BALANCING_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_PARTNER_DOWN_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_READY_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_ALWAYS, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_ALWAYS, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_SYNCING_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_TERMINATED_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_ONCE, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_ONCE, state_cfg->getPausing());
 }
 
 // Verifies that load balancing configuration is parsed correctly.
@@ -249,37 +251,37 @@ TEST_F(HAConfigTest, configureHotStandby) {
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_BACKUP_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_HOT_STANDBY_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_PARTNER_DOWN_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_READY_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_SYNCING_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_TERMINATED_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
                     getStateConfig(HA_WAITING_ST));
     ASSERT_TRUE(state_cfg);
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER, state_cfg->getPausing());
+    EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 }
 
 // This server name must not be empty.
@@ -985,22 +987,22 @@ TEST_F(HAConfigTest, HAModeToString) {
 
 // Test that conversion of the 'pause' value works correctly.
 TEST_F(HAConfigTest, stringToPausing) {
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_ALWAYS,
+    EXPECT_EQ(STATE_PAUSE_ALWAYS,
               HAConfig::StateConfig::stringToPausing("always"));
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_NEVER,
+    EXPECT_EQ(STATE_PAUSE_NEVER,
               HAConfig::StateConfig::stringToPausing("never"));
-    EXPECT_EQ(HAConfig::StateConfig::PAUSE_ONCE,
+    EXPECT_EQ(STATE_PAUSE_ONCE,
               HAConfig::StateConfig::stringToPausing("once"));
 }
 
 // Test that pause parameter value is generated correctly.
 TEST_F(HAConfigTest, pausingToString) {
     EXPECT_EQ("always",
-              HAConfig::StateConfig::pausingToString(HAConfig::StateConfig::PAUSE_ALWAYS));
+              HAConfig::StateConfig::pausingToString(STATE_PAUSE_ALWAYS));
     EXPECT_EQ("never",
-              HAConfig::StateConfig::pausingToString(HAConfig::StateConfig::PAUSE_NEVER));
+              HAConfig::StateConfig::pausingToString(STATE_PAUSE_NEVER));
     EXPECT_EQ("once",
-              HAConfig::StateConfig::pausingToString(HAConfig::StateConfig::PAUSE_ONCE));
+              HAConfig::StateConfig::pausingToString(STATE_PAUSE_ONCE));
 
 }
 

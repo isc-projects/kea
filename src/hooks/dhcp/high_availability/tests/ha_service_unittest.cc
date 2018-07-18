@@ -3573,7 +3573,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
                        FinalState(HA_LOAD_BALANCING_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
 
-        service_->unpause();
+        EXPECT_TRUE(service_->unpause());
+        // An additional attempt to unpause should return false.
+        EXPECT_FALSE(service_->unpause());
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
                        FinalState(HA_TERMINATED_ST));
@@ -3587,7 +3589,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
                        FinalState(HA_PARTNER_DOWN_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
 
-        service_->unpause();
+        EXPECT_TRUE(service_->unpause());
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_WAITING_ST));
@@ -3602,7 +3604,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
                        FinalState(HA_READY_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
 
-        service_->unpause();
+        EXPECT_TRUE(service_->unpause());
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -3617,7 +3619,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
                        FinalState(HA_WAITING_ST));
         EXPECT_TRUE(state_->isHeartbeatRunning());
 
-        service_->unpause();
+        EXPECT_TRUE(service_->unpause());
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_SYNCING_ST));
@@ -3671,7 +3673,7 @@ TEST_F(HAServiceStateMachineTest, syncingTransitionsLoadBalancingPause) {
     EXPECT_NE(service_->getLastEvent(), HAService::HA_SYNCING_SUCCEEDED_EVT);
 
     // Unpause the state machine.
-    service_->unpause();
+    EXPECT_TRUE(service_->unpause());
 
     // Retry the test. It should now transition to the ready state.
     testSyncingTransition(FinalState(HA_READY_ST));
