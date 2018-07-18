@@ -10,6 +10,8 @@
 #include <ha_service_states.h>
 #include <sstream>
 
+using namespace isc::util;
+
 namespace isc {
 namespace ha {
 
@@ -78,7 +80,7 @@ HAConfig::PeerConfig::roleToString(const HAConfig::PeerConfig::Role& role) {
 }
 
 HAConfig::StateConfig::StateConfig(const int state)
-    : state_(state), pausing_(HAConfig::StateConfig::PAUSE_NEVER) {
+    : state_(state), pausing_(STATE_PAUSE_NEVER) {
 }
 
 void
@@ -86,31 +88,31 @@ HAConfig::StateConfig::setPausing(const std::string& pausing) {
     pausing_ = stringToPausing(pausing);
 }
 
-HAConfig::StateConfig::Pausing
+StatePausing
 HAConfig::StateConfig::stringToPausing(const std::string& pausing) {
     if (pausing == "always") {
-        return (HAConfig::StateConfig::PAUSE_ALWAYS);
+        return (STATE_PAUSE_ALWAYS);
 
     } else if (pausing == "never") {
-        return (HAConfig::StateConfig::PAUSE_NEVER);
+        return (STATE_PAUSE_NEVER);
 
     } else if (pausing == "once") {
-        return (HAConfig::StateConfig::PAUSE_ONCE);
+        return (STATE_PAUSE_ONCE);
     }
 
     isc_throw(BadValue, "unsupported value " << pausing << " of 'pause' parameter");
 }
 
 std::string
-HAConfig::StateConfig::pausingToString(const HAConfig::StateConfig::Pausing& pausing) {
+HAConfig::StateConfig::pausingToString(const StatePausing& pausing) {
     switch (pausing) {
-    case HAConfig::StateConfig::PAUSE_ALWAYS:
+    case STATE_PAUSE_ALWAYS:
         return ("always");
 
-    case HAConfig::StateConfig::PAUSE_NEVER:
+    case STATE_PAUSE_NEVER:
         return ("never");
 
-    case HAConfig::StateConfig::PAUSE_ONCE:
+    case STATE_PAUSE_ONCE:
         return ("once");
 
     default:

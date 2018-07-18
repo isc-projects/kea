@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <http/url.h>
+#include <util/state_model.h>
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <map>
@@ -165,18 +166,6 @@ public:
     class StateConfig {
     public:
 
-        /// @brief State machine pausing modes.
-        ///
-        /// Supported modes are:
-        /// - always pause in the given state,
-        /// - never pause in the given state,
-        /// - pause upon first transition to the given state.
-        enum Pausing {
-            PAUSE_ALWAYS,
-            PAUSE_NEVER,
-            PAUSE_ONCE
-        };
-
         /// @brief Constructor.
         ///
         /// @param state state identifier.
@@ -188,7 +177,7 @@ public:
         }
 
         /// @brief Returns pausing mode for the given state.
-        Pausing getPausing() const {
+        util::StatePausing getPausing() const {
             return (pausing_);
         }
 
@@ -202,12 +191,12 @@ public:
         ///
         /// @param pausing pausing mode in the textual form. Supported
         /// values are: always, never, once.
-        static Pausing stringToPausing(const std::string& pausing);
+        static util::StatePausing stringToPausing(const std::string& pausing);
 
         /// @brief Returns pausing mode in the textual form.
         ///
         /// @param pausing pausing mode.
-        static std::string pausingToString(const Pausing& pausing);
+        static std::string pausingToString(const util::StatePausing& pausing);
 
     private:
 
@@ -215,7 +204,7 @@ public:
         int state_;
 
         /// @brief Pausing mode in the given state.
-        Pausing pausing_;
+        util::StatePausing pausing_;
     };
 
     /// @brief Pointer to the state configuration.
