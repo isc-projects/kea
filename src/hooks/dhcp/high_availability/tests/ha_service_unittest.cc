@@ -192,7 +192,6 @@ public:
     using HAService::config_;
     using HAService::communication_state_;
     using HAService::query_filter_;
-    using HAService::state_machine_control_;
     using HAService::pending_requests_;
 };
 
@@ -2326,13 +2325,14 @@ TEST_F(HAServiceTest, processContinue) {
     HAConfigPtr config_storage = createValidConfiguration();
 
     // State machine is to be paused in the waiting state.
-    ASSERT_NO_THROW(config_storage->getStateConfig(HA_WAITING_ST)->setPausing("always"));
+    ASSERT_NO_THROW(config_storage->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST)->setPausing("always"));
 
     TestHAService service(io_service_, network_state_, config_storage);
 
     // Pause the state machine.
-    EXPECT_NO_THROW(service.state_machine_control_.notify(HA_WAITING_ST));
-    EXPECT_TRUE(service.state_machine_control_.amPaused());
+    EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
+    EXPECT_TRUE(service.isModelPaused());
 
     // Process ha-continue command that should unpause the state machine.
     ConstElementPtr rsp;
@@ -2344,7 +2344,7 @@ TEST_F(HAServiceTest, processContinue) {
 
     // State machine should have been unpaused as a result of processing the
     // command.
-    EXPECT_FALSE(service.state_machine_control_.amPaused());
+    EXPECT_FALSE(service.isModelPaused());
 
     // Response should include no arguments.
     EXPECT_FALSE(rsp->get("arguments"));
@@ -2358,7 +2358,7 @@ TEST_F(HAServiceTest, processContinue) {
     checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
 
     // The state machine should not be paused.
-    EXPECT_FALSE(service.state_machine_control_.amPaused());
+    EXPECT_FALSE(service.isModelPaused());
 
     // Response should include no arguments.
     EXPECT_FALSE(rsp->get("arguments"));
