@@ -3548,7 +3548,8 @@ TEST_F(HAServiceStateMachineTest, syncingTransitionsLoadBalancing) {
 }
 
 // This test verifies that the HA state machine can be paused in certain states
-// when the server is operating in load balancing mode.
+// when the server is operating in load balancing mode. The test also verifies
+// that heartbeat is active even if the state machine is paused.
 TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
     partner_->startup();
 
@@ -3570,11 +3571,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
 
         service_->unpause();
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
                        FinalState(HA_TERMINATED_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
     }
 
     {
@@ -3582,11 +3585,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
 
         service_->unpause();
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_WAITING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
     }
 
 
@@ -3595,11 +3600,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_READY_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
 
         service_->unpause();
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
     }
 
 
@@ -3608,11 +3615,13 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_WAITING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
 
         service_->unpause();
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
                        FinalState(HA_SYNCING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
     }
 }
 
