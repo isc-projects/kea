@@ -3559,6 +3559,8 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
     state_machine->getStateConfig(HA_LOAD_BALANCING_ST)->setPausing("always");
     state_machine->getStateConfig(HA_PARTNER_DOWN_ST)->setPausing("always");
     state_machine->getStateConfig(HA_READY_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_SYNCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_TERMINATED_ST)->setPausing("always");
     state_machine->getStateConfig(HA_WAITING_ST)->setPausing("always");
 
     startService(valid_config);
@@ -3619,9 +3621,15 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
 TEST_F(HAServiceStateMachineTest, syncingTransitionsLoadBalancingPause) {
     HAConfigPtr valid_config = createValidConfiguration();
 
-    // Pause state machine in syncing state.
-    auto state_config = valid_config->getStateMachineConfig()->getStateConfig(HA_SYNCING_ST);
-    state_config->setPausing("always");
+    auto state_machine = valid_config->getStateMachineConfig();
+
+    // Pause state machine in various states.
+    state_machine->getStateConfig(HA_LOAD_BALANCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_PARTNER_DOWN_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_READY_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_SYNCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_TERMINATED_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_WAITING_ST)->setPausing("always");
 
     startService(valid_config);
     waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT);
