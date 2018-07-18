@@ -29,8 +29,8 @@ TEST_F(HAStateMachineControlTest, pause) {
 
     // Always pause in the waiting state and pause on first transition to
     // the ready state. Do not pause for other states.
-    config->getStateConfig(HA_WAITING_ST)->setPausing("always");
-    config->getStateConfig(HA_READY_ST)->setPausing("once");
+    config->getStateMachineConfig()->getStateConfig(HA_WAITING_ST)->setPausing("always");
+    config->getStateMachineConfig()->getStateConfig(HA_READY_ST)->setPausing("once");
 
     // Initially we shouldn't be paused.
     HAStateMachineControl control(config);

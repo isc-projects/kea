@@ -20,7 +20,8 @@ void
 HAStateMachineControl::notify(const int state) {
     // Always get the configuration to verify that the state identifier is
     // recognized.
-    HAConfig::StateConfigPtr state_config = config_->getStateConfig(state);
+    HAConfig::StateConfigPtr state_config = config_->getStateMachineConfig()->
+        getStateConfig(state);
 
     // Pause if we should always pause in this state or we should pause once
     // and this is the first time we visit this state.
