@@ -643,7 +643,6 @@ public:
     /// @brief sets key.
     ///
     /// Keys are used for signing the Reconfigure Message.
-
     void setKey(const AuthKey& key) {
         key_ = key;
     }
@@ -694,7 +693,7 @@ private:
     std::string server_host_name_;
     /// @brief Boot file name (a.k.a. file, carried in DHCPv4 message)
     std::string boot_file_name_;
-            
+
     /// @brief HostID (a unique identifier assigned when the host is stored in
     ///     MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
@@ -718,7 +717,6 @@ private:
     //  While sending reconfigure message authentication field 
     /// shall contain MD5 hash computed using this key.
     AuthKey key_;
-
 };
 
 /// @brief Pointer to the @c Host object.
