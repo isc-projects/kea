@@ -1115,12 +1115,14 @@
                             "role": "secondary"
                         }
                     ],
-                    "state-machine": [
-                        {
-                            "state": "waiting",
-                            "pause": "once"
-                        }
-                    ]
+                    "state-machine": {
+                        "states":  [
+                            {
+                                "state": "waiting",
+                                "pause": "once"
+                            }
+                        ]
+                    }
                 } ]
             }
         }
@@ -1177,16 +1179,18 @@
                             "role": "secondary"
                         }
                     ],
-                    "state-machine": [
-                        {
-                            "state": "ready",
-                            "pause": "always"
-                        },
-                        {
-                            "state": "partner-down",
-                            "pause": "once"
-                        }
-                    ]
+                    "state-machine": {
+                        "states": [
+                            {
+                                "state": "ready",
+                                "pause": "always"
+                            },
+                            {
+                                "state": "partner-down",
+                                "pause": "once"
+                            }
+                        ]
+                    }
                 } ]
             }
         }
