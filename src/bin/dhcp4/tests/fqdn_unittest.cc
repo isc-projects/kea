@@ -1699,6 +1699,8 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 }
 
+// Verifies that setting hostname-char-set sanitizes Hostname option
+// values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
@@ -1756,6 +1758,75 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
         hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
         ASSERT_TRUE(hostname);
         EXPECT_EQ((*scenario).sanitized_, hostname->getValue());
+        }
+    }
+}
+
+// Verifies that setting hostname-char-set sanitizes FQDN option
+// values received from clients.
+TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[6], *client.getServer());
+
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        Option4ClientFqdn::DomainNameType name_type_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified FQDN with invalid characters",
+            "one-&*_-host",
+            Option4ClientFqdn::PARTIAL,
+            "one-xxx-host.example.org."
+        },
+        {
+            "qualified FQDN with invalid characters",
+            "two-&*_-host.other.org",
+            Option4ClientFqdn::FULL,
+            "two-xxx-host.other.org."
+        },
+        {
+            "unqualified FQDN name with all valid characters",
+            "three-ok-host",
+            Option4ClientFqdn::PARTIAL,
+            "three-ok-host.example.org."
+        },
+        {
+            "qualified FQDN name with valid characters",
+            "four-ok-host.other.org",
+            Option4ClientFqdn::FULL,
+            "four-ok-host.other.org."
+        }
+    };
+
+    Pkt4Ptr resp;
+    Option4ClientFqdnPtr fqdn;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+        // Set the hostname option.
+        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+
+        // Send the DHCPDISCOVER and make sure that the server responded.
+        ASSERT_NO_THROW(client.doDiscover());
+        resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+        // Make sure the response fqdn is what we expect.
+        fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+        ASSERT_TRUE(fqdn);
+        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
         }
     }
 }
