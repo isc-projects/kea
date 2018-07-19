@@ -11,6 +11,7 @@
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -1126,5 +1127,167 @@ TEST(D2ClientMgr, updateDirectionsV6) {
 
     // Response S=1, N=1 isn't possible.
 }
+
+/// @brief Tests v4 FQDN name sanitizing
+TEST(D2ClientMgr, sanitizeFqdnV4) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration.
+    // replace-client-name is false, client passes in empty fqdn
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
+                                  "prefix", "suffix.com", "[^A-Za-z0-9-]", "x")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
+
+    struct Scenario {
+        std::string description_;
+        std::string client_name_;
+        Option4ClientFqdn::DomainNameType name_type_;
+        std::string expected_name_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+        "full FQDN, name unchanged",
+        "One.123.example.com.",
+        Option4ClientFqdn::FULL,
+        "One.123.example.com."
+        },
+        {
+        "partial FQDN, name unchanged, but qualified",
+        "One.123",
+        Option4ClientFqdn::PARTIAL,
+        "One.123.suffix.com."
+        },
+        {
+        "full FQDN, scrubbed",
+        "O#n^e.123.ex&a*mple.com.",
+        Option4ClientFqdn::FULL,
+        "Oxnxe.123.exxaxmple.com."
+        },
+        {
+        "partial FQDN, scrubbed and qualified",
+        "One.1+2|3",
+        Option4ClientFqdn::PARTIAL,
+        "One.1x2x3.suffix.com."
+        },
+        {
+        // Some chars, like parens, get escaped by lib::dns::Name
+        // when output via Name::getDomainName().  This means they'll
+        // get replaced by TWO replacment chars, if the backslash "\"
+        // is an invalid character per hostname-char-set.
+        "full FQDN, scrubbed with escaped char",
+        "One.123.exa(mple.com.",
+        Option4ClientFqdn::FULL,
+        // expect the ( to be replaced by two x's
+        "One.123.exaxxmple.com."
+        }
+    };
+
+    Option4ClientFqdnPtr request;
+    Option4ClientFqdnPtr response;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+            request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                                (*scenario).client_name_,
+                                                (*scenario).name_type_));
+
+            response.reset(new Option4ClientFqdn(*request));
+            mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+            EXPECT_EQ((*scenario).expected_name_, response->getDomainName());
+            EXPECT_EQ(Option4ClientFqdn::FULL, response->getDomainNameType());
+        }
+    }
+}
+
+/// @brief Tests v6 FQDN name sanitizing
+/// @todo This test currently verifies that Option6ClientFqdn::DomainName
+/// downcases strings used to construct it.  For some reason, currently
+/// uknown, Option4ClientFqdn preserves the case, while Option6ClientFqdn
+/// downcases it (see setDomainName() in both classes.  See Trac #5700.
+TEST(D2ClientMgr, sanitizeFqdnV6) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration.
+    // replace-client-name is false, client passes in empty fqdn
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
+                                  "prefix", "suffix.com", "[^A-Za-z0-9-]", "x")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
+
+    struct Scenario {
+        std::string description_;
+        std::string client_name_;
+        Option6ClientFqdn::DomainNameType name_type_;
+        std::string expected_name_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+        "full FQDN, name unchanged",
+        "One.123.example.com.",
+        Option6ClientFqdn::FULL,
+        "one.123.example.com."
+        },
+        {
+        "partial FQDN, name unchanged, but qualified",
+        "One.123",
+        Option6ClientFqdn::PARTIAL,
+        "one.123.suffix.com."
+        },
+        {
+        "full FQDN, scrubbed",
+        "O#n^e.123.ex&a*mple.com.",
+        Option6ClientFqdn::FULL,
+        "oxnxe.123.exxaxmple.com."
+        },
+        {
+        "partial FQDN, scrubbed and qualified",
+        "One.1+2|3",
+        Option6ClientFqdn::PARTIAL,
+        "one.1x2x3.suffix.com."
+        },
+        {
+        // Some chars, like parens, get escaped by lib::dns::Name
+        // when output via Name::getDomainName().  This means they'll
+        // get replaced by TWO replacment chars, if the backslash "\"
+        // is an invalid character per hostname-char-set.
+        "full FQDN, scrubbed with escaped char",
+        "One.123.exa(mple.com.",
+        Option6ClientFqdn::FULL,
+        // expect the ( to be replaced by two x's
+        "one.123.exaxxmple.com."
+        }
+    };
+
+    Option6ClientFqdnPtr request;
+    Option6ClientFqdnPtr response;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+            request.reset(new Option6ClientFqdn(0, (*scenario).client_name_,
+                                                (*scenario).name_type_));
+
+            response.reset(new Option6ClientFqdn(*request));
+            mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+            EXPECT_EQ((*scenario).expected_name_, response->getDomainName());
+            EXPECT_EQ(Option6ClientFqdn::FULL, response->getDomainNameType());
+        }
+    }
+}
+
 
 } // end of anonymous namespace
