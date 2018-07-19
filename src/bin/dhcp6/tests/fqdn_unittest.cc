@@ -129,7 +129,7 @@ public:
                                   ((mask & REPLACE_CLIENT_NAME) ?
                                    D2ClientConfig::RCM_WHEN_PRESENT
                                    : D2ClientConfig::RCM_NEVER),
-                                  "myhost", "example.com", "", "")));
+                                  "myhost", "example.com", "[^A-Za-z0-9-]", "x")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -1515,6 +1515,35 @@ TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
     testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+}
+
+
+// Verifies that setting hostname-char-set sanitizes FQDN option
+// values received from clients.
+TEST_F(FqdnDhcpv6SrvTest, sanitizeFqdn) {
+    // Verify a full FQDN with no invalid chars is left alone
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com",
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.", false);
+
+    // Verify that a partial FQDN with no invalid chars is left alone
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "myhost",
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.", false);
+
+    // Verify that a full FQDN with invalid chars is cleaned.
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "m%y*host.example.com",
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
+             "mxyxhost.example.com.", false);
+
+    // Verify that a partial FQDN with invalid chars is cleaned.
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "m%y*host",
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
+             "mxyxhost.example.com.", false);
 }
 
 }   // end of anonymous namespace
