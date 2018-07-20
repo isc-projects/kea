@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -627,6 +627,17 @@ TEST_F(LabelSequenceTest, toText) {
               "0.1.2.3.4.5.6", ls_long2.toText());
     ls_long2.stripRight(125);
     EXPECT_EQ("0.1", ls_long2.toText());
+}
+
+// The following verifies that toRawText() returns a string
+// actual characters in place of escape sequences.  We do not
+// bother with an exhaustive set of tests here as this is
+// not a primary use case.
+TEST_F(LabelSequenceTest, toRawText) {
+    Name n("a bc.$exa(m)ple.@org");
+    LabelSequence l(n);
+    EXPECT_EQ("a bc.$exa(m)ple.@org", l.toRawText(true));
+    EXPECT_EQ("a bc.$exa(m)ple.@org.", l.toRawText(false));
 }
 
 // The following are test data used in the getHash test below.  Normally
