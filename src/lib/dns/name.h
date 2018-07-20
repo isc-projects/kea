@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -391,6 +391,16 @@ public:
     /// \param omit_final_dot whether to omit the trailing dot in the output.
     /// \return a string representation of the <code>Name</code>.
     std::string toText(bool omit_final_dot = false) const;
+
+    /// \brief Convert the LabelSequence to a string without escape sequences.
+    ///
+    /// The string returned will contain a single character value for any
+    /// escape sequences in the label(s).
+    ///
+    /// \param omit_final_dot whether to omit the trailing dot in the output.
+    /// \return a string representation of the <code>LabelSequence</code>
+    /// that does not contain escape sequences.  Default value is false.
+    std::string toRawText(bool omit_final_dot = false) const;
 
     /// \brief Render the <code>Name</code> in the wire format with compression.
     ///

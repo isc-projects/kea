@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -507,6 +507,12 @@ std::string
 Name::toText(bool omit_final_dot) const {
     LabelSequence ls(*this);
     return (ls.toText(omit_final_dot));
+}
+
+std::string
+Name::toRawText(bool omit_final_dot) const {
+    LabelSequence ls(*this);
+    return (ls.toRawText(omit_final_dot));
 }
 
 NameComparisonResult

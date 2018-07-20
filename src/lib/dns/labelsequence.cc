@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -278,6 +278,60 @@ LabelSequence::getHash(bool case_sensitive) const {
     }
     return (hash_val);
 }
+
+std::string
+LabelSequence::toRawText(bool omit_final_dot) const {
+    const uint8_t* np = &data_[offsets_[first_label_]];
+    const uint8_t* np_end = np + getDataLength();
+
+    // use for integrity check
+    unsigned int labels = getLabelCount();
+    // init with an impossible value to catch error cases in the end:
+    unsigned int count = Name::MAX_LABELLEN + 1;
+
+    // result string: it will roughly have the same length as the wire format
+    // label sequence data.  reserve that length to minimize reallocation.
+    std::string result;
+    result.reserve(getDataLength());
+
+    while (np != np_end) {
+        labels--;
+        count = *np++;
+
+        if (count == 0) {
+            // We've reached the "final dot".  If we've not dumped any
+            // character, the entire label sequence is the root name.
+            // In that case we don't omit the final dot.
+            if (!omit_final_dot || result.empty()) {
+                result.push_back('.');
+            }
+            break;
+        }
+
+        if (count <= Name::MAX_LABELLEN) {
+            assert(np_end - np >= count);
+
+            if (!result.empty()) {
+                // just after a non-empty label.  add a separating dot.
+                result.push_back('.');
+            }
+
+            while (count-- > 0) {
+                const uint8_t c = *np++;
+                result.push_back(c);
+            }
+        } else {
+            isc_throw(BadLabelType, "unknown label type in name data");
+        }
+    }
+
+    // We should be at the end of the data and have consumed all labels.
+    assert(np == np_end);
+    assert(labels == 0);
+
+    return (result);
+}
+
 
 std::string
 LabelSequence::toText(bool omit_final_dot) const {
