@@ -472,13 +472,18 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
     } else {
         // Sanitize the name the client sent us, if we're configured to do so.
         std::string client_name = fqdn.getDomainName();
+
         if (d2_client_config_->getHostnameSanitizer()) {
+            // We need the raw text form, so we can replace escaped chars
+            dns::Name tmp(client_name);
+            std::string raw_name = tmp.toRawText();
+
             // We do not know if the sanitizer's regexp preserves dots, so
             // we'll scrub it label by label. Yeah, lucky us.
             // Using boost::split is simpler than using dns::Name::split() as
             // that returns Names which have trailing dots etc.
             std::vector<std::string> labels;
-            boost::algorithm::split(labels, client_name, boost::is_any_of("."));
+            boost::algorithm::split(labels, raw_name, boost::is_any_of("."));
             std::stringstream ss;
             for (auto label = labels.begin(); label != labels.end(); ++label ) {
                 if (label != labels.begin()) {
