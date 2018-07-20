@@ -10,6 +10,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -1178,15 +1179,16 @@ TEST(D2ClientMgr, sanitizeFqdnV4) {
         "One.1x2x3.suffix.com."
         },
         {
-        // Some chars, like parens, get escaped by lib::dns::Name
-        // when output via Name::getDomainName().  This means they'll
-        // get replaced by TWO replacment chars, if the backslash "\"
-        // is an invalid character per hostname-char-set.
-        "full FQDN, scrubbed with escaped char",
-        "One.123.exa(mple.com.",
+        "full FQDN with characters that get escaped",
+        "O n e.123.exa(m)ple.com.",
         Option4ClientFqdn::FULL,
-        // expect the ( to be replaced by two x's
-        "One.123.exaxxmple.com."
+        "Oxnxe.123.exaxmxple.com."
+        },
+        {
+        "full FQDN with escape sequences",
+        "O\032n\032e.123.example.com.",
+        Option4ClientFqdn::FULL,
+        "Oxnxe.123.example.com."
         }
     };
 
@@ -1261,15 +1263,16 @@ TEST(D2ClientMgr, sanitizeFqdnV6) {
         "one.1x2x3.suffix.com."
         },
         {
-        // Some chars, like parens, get escaped by lib::dns::Name
-        // when output via Name::getDomainName().  This means they'll
-        // get replaced by TWO replacment chars, if the backslash "\"
-        // is an invalid character per hostname-char-set.
-        "full FQDN, scrubbed with escaped char",
-        "One.123.exa(mple.com.",
+        "full FQDN with characters that get escaped",
+        "O n e.123.exa(m)ple.com.",
         Option6ClientFqdn::FULL,
-        // expect the ( to be replaced by two x's
-        "one.123.exaxxmple.com."
+        "oxnxe.123.exaxmxple.com."
+        },
+        {
+        "full FQDN with escape sequences",
+        "O\032n\032e.123.example.com.",
+        Option6ClientFqdn::FULL,
+        "oxnxe.123.example.com."
         }
     };
 
@@ -1288,6 +1291,5 @@ TEST(D2ClientMgr, sanitizeFqdnV6) {
         }
     }
 }
-
 
 } // end of anonymous namespace
