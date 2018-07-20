@@ -84,7 +84,8 @@ HostPtr
 HostDataSourceUtils::initializeHost6(std::string address,
                                      Host::IdentifierType identifier,
                                      bool prefix,
-                                     bool new_identifier) {
+                                     bool new_identifier,
+                                     const std::string auth_key) {
     std::vector<uint8_t> ident;
     switch (identifier) {
     case Host::IDENT_HWADDR:
@@ -108,7 +109,9 @@ HostDataSourceUtils::initializeHost6(std::string address,
 
     HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
                           IOAddress("0.0.0.0")));
-
+    
+    host->setKey(AuthKey(auth_key));
+    
     if (!prefix) {
         // Create IPv6 reservation (for an address)
         IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), 128);
@@ -224,6 +227,7 @@ HostDataSourceUtils::compareHosts(const ConstHostPtr& host1,
     EXPECT_EQ(host1->getNextServer(), host2->getNextServer());
     EXPECT_EQ(host1->getServerHostname(), host2->getServerHostname());
     EXPECT_EQ(host1->getBootFileName(), host2->getBootFileName());
+    EXPECT_TRUE(host1->getKey() == host2->getKey());
     ConstElementPtr ctx1 = host1->getContext();
     ConstElementPtr ctx2 = host2->getContext();
     if (ctx1) {

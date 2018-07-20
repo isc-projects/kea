@@ -39,7 +39,7 @@ public:
     ///
     /// @return generated Host object
     static HostPtr initializeHost6(std::string address, Host::IdentifierType id,
-                                   bool prefix, bool new_identifier = true);
+                                   bool prefix, bool new_identifier = true, const std::string key = "");
 
     /// @brief Generates a hardware address in text version.
     ///

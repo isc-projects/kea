@@ -10,7 +10,11 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <boost/random.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
+#include <random>
 #include <sstream>
 
 using namespace isc::data;
@@ -18,6 +22,54 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
+
+
+AuthKey::AuthKey(const std::string key) {
+    setAuthKey(key);
+}
+
+AuthKey::AuthKey(void) {
+    authKey_ = AuthKey::getRandomKeyString();
+}
+
+std::string
+AuthKey::getRandomKeyString() {
+    std::array <char, AuthKey::KEY_LEN> randomString;
+    
+    std::random_device rd;
+    boost::random::mt19937 gen(rd());
+
+    std::for_each(randomString.begin(), randomString.end() - 1,
+        [&gen](char& a){ boost::random::uniform_int_distribution<char> dist('!', '~');
+        a = dist(gen); } );
+
+    return std::string(randomString.begin(), randomString.end());
+}
+
+std::string 
+AuthKey::ToText() const {
+    //this will need enhancement if the stored container is not
+    //string
+    return authKey_;
+}
+
+void
+AuthKey::setAuthKey(const std::string& key) {
+    authKey_ = key;
+    if (authKey_.size() > AuthKey::KEY_LEN) {
+        authKey_.resize(AuthKey::KEY_LEN);
+    }
+}
+
+bool
+AuthKey::operator==(const AuthKey& other) const {
+    return (authKey_ == other.authKey_);
+}
+
+bool
+AuthKey::operator!=(const AuthKey& other) const {
+    return (authKey_ != other.authKey_);
+}
 
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
@@ -82,7 +134,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
 
     : identifier_type_(identifier_type),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
@@ -93,7 +146,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false) {
+      cfg_option6_(new CfgOption()), negative_(false), 
+      key_(auth_key) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -117,7 +171,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
     : identifier_type_(IDENT_HWADDR),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
@@ -127,7 +182,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false) {
+      cfg_option6_(new CfgOption()), negative_(false),
+      key_(auth_key) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
@@ -525,6 +581,10 @@ Host::toElement6() const {
     ConstCfgOptionPtr opts = getCfgOption6();
     map->set("option-data", opts->toElement());
 
+    // Set auth key
+    //@todo: uncomment once storing in configuration file is enabled
+    //map->set("auth-key", Element::create(getKey().ToText()));
+    
     return (map);
 }
 
@@ -561,6 +621,8 @@ Host::toText() const {
 
     // Add boot file name.
     s << " file=" << (boot_file_name_.empty() ? "(empty)" : boot_file_name_);
+
+    s << " key=" << (key_.ToText().empty() ? "(empty)" : key_.ToText());
 
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";

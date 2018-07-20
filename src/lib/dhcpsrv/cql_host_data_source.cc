@@ -350,6 +350,9 @@ private:
     /// @brief Boot file name (file).
     std::string host_ipv4_boot_file_name_;
 
+    /// @brief Key for authentication
+    std::string auth_key_;
+
     /// @brief Name reserved for the host
     std::string hostname_;
 
@@ -431,6 +434,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -455,7 +459,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       // host
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
       // denormalized reservation, option
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "
      }},
@@ -472,6 +476,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -505,6 +510,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -541,6 +547,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -576,6 +583,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -613,6 +621,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -650,6 +659,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -686,6 +696,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -722,6 +733,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -758,6 +770,7 @@ CqlHostExchange::CqlHostExchange()
       host_ipv6_subnet_id_(0), host_ipv4_address_(0), host_ipv4_next_server_(0),
       host_ipv4_server_hostname_(NULL_DHCP4_SERVER_HOSTNAME),
       host_ipv4_boot_file_name_(NULL_DHCP4_BOOT_FILE_NAME),
+      auth_key_(""),
       user_context_(NULL_USER_CONTEXT),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
@@ -795,6 +808,8 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&host_ipv4_server_hostname_);
     // host_ipv4_boot_file_name: text
     data.add(&host_ipv4_boot_file_name_);
+    // auth_key: text
+    data.add(&auth_key_);
     // hostname: text
     data.add(&hostname_);
     // user_context: text
@@ -888,6 +903,9 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
         // host_ipv4_boot_file_name: text
         host_ipv4_boot_file_name_ = host->getBootFileName();
 
+        // auth_key: varchar
+        auth_key_ = host->getKey().ToText();
+        
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
@@ -1050,6 +1068,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             data.add(&host_ipv4_next_server_);
             data.add(&host_ipv4_server_hostname_);
             data.add(&host_ipv4_boot_file_name_);
+            data.add(&auth_key_);
             data.add(&hostname_);
             data.add(&user_context_);
             data.add(&host_ipv4_client_classes_);
@@ -1168,7 +1187,8 @@ CqlHostExchange::retrieve() {
                           ipv4_reservation, hostname_,
                           host_ipv4_client_classes_, host_ipv6_client_classes_,
                           static_cast<uint32_t>(host_ipv4_next_server_),
-                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_);
+                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_,
+                          AuthKey(auth_key_));
 
     // Set the user context if there is one.
     if (!user_context_.empty()) {

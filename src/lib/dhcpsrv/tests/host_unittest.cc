@@ -13,6 +13,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdlib>
+#include <unordered_map>
 #include <sstream>
 
 using namespace isc;
@@ -129,7 +130,6 @@ TEST(IPv6ResrvTest, equal) {
                  IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::1"), 128) !=
                 IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::1"), 128));
-
 }
 
 /// @brief Test fixture class for @c Host.
@@ -199,7 +199,7 @@ TEST_F(HostTest, createFromHWAddrString) {
                                         std::string(), std::string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
-                                        "bootfile.efi")));
+                                        "bootfile.efi", AuthKey("key123"))));
     // The HW address should be set to non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
     ASSERT_TRUE(hwaddr);
@@ -215,6 +215,7 @@ TEST_F(HostTest, createFromHWAddrString) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_EQ("key123", host->getKey().ToText());
     EXPECT_FALSE(host->getContext());
 
     // Use invalid identifier name
@@ -280,7 +281,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
                                         std::string(), std::string(),
                                         IOAddress("192.0.0.2"),
                                         "server-hostname.example.org",
-                                        "bootfile.efi")));
+                                        "bootfile.efi", AuthKey("keyabc"))));
 
     // Hardware address should be non-null.
     HWAddrPtr hwaddr = host->getHWAddress();
@@ -297,6 +298,7 @@ TEST_F(HostTest, createFromHWAddrBinary) {
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_EQ("keyabc", host->getKey().ToText());
     EXPECT_FALSE(host->getContext());
 }
 
@@ -607,7 +609,7 @@ TEST_F(HostTest, addReservations) {
 
     EXPECT_FALSE(host->hasIPv6Reservation());
 
-    // Add 4 reservations: 2 for NAs, 2 for PDs.
+    // Add 4 reservations: 2 for NAs, 2 for PDs
     ASSERT_NO_THROW(
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        IOAddress("2001:db8:1::cafe")));
@@ -678,6 +680,7 @@ TEST_F(HostTest, setValues) {
     host->setNextServer(IOAddress("192.0.2.2"));
     host->setServerHostname("server-hostname.example.org");
     host->setBootFileName("bootfile.efi");
+    host->setKey(AuthKey("random-value"));
     std::string user_context = "{ \"foo\": \"bar\" }";
     host->setContext(Element::fromJSON(user_context));
     host->setNegative(true);
@@ -689,6 +692,7 @@ TEST_F(HostTest, setValues) {
     EXPECT_EQ("192.0.2.2", host->getNextServer().toText());
     EXPECT_EQ("server-hostname.example.org", host->getServerHostname());
     EXPECT_EQ("bootfile.efi", host->getBootFileName());
+    EXPECT_EQ("random-value", host->getKey().ToText());
     ASSERT_TRUE(host->getContext());
     EXPECT_EQ(user_context, host->getContext()->str());
     EXPECT_TRUE(host->getNegative());
@@ -974,6 +978,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
@@ -991,6 +996,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
@@ -1009,6 +1015,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservations=(none)", host->toText());
 
     // Add some classes.
@@ -1019,6 +1026,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router",
               host->toText());
@@ -1031,6 +1039,7 @@ TEST_F(HostTest, toText) {
               " siaddr=(no)"
               " sname=(empty)"
               " file=(empty)"
+              " key=(empty)"
               " ipv6_reservations=(none)"
               " dhcp4_class0=modem dhcp4_class1=router"
               " dhcp6_class0=hub dhcp6_class1=device",
@@ -1207,6 +1216,74 @@ TEST_F(HostTest, hostId) {
     EXPECT_NO_THROW(host->setHostId(12345));
 
     EXPECT_EQ(12345, host->getHostId());
+}
+
+// Tets verifies if we can modify the host keys.
+TEST_F(HostTest, keys) {
+    HostPtr host;
+    ASSERT_NO_THROW(host.reset(new Host("01:02:03:04:05:06", "hw-address",
+                                        SubnetID(1), SubnetID(2),
+                                        IOAddress("192.0.2.3"),
+                                        "myhost.example.com")));
+//Key must be empty
+    EXPECT_EQ(0,host->getKey().ToText().length());
+
+    //now set to random value 
+    host->setKey(AuthKey("random_key"));
+    EXPECT_EQ("random_key", host->getKey().ToText());
+}
+
+// Test verifies if getRandomKeyString can generate  1000 keys which are random
+TEST_F(HostTest, randomKeys) {
+    //use hashtable and set size to 1000
+    std::unordered_map<std::string, int> key_map;
+    
+    int dup_element = 0;
+    const uint16_t max_iter = 1000;
+    uint16_t iter_num = 0;
+    size_t max_hash_size = 1000;
+
+    key_map.reserve(max_hash_size);
+
+    for (iter_num = 0; iter_num < max_iter; iter_num++) {
+        std::string key = AuthKey::getRandomKeyString();
+        if (key_map[key]) {
+            dup_element++;
+            break;
+        }
+
+        key_map[key] = 1;
+    }
+
+    EXPECT_EQ(0, dup_element);
+}
+
+//Test performs basic functionality test of the AuthKey class
+TEST(AuthKeyTest, basicTest) {
+    //call the constructor with default argument
+    // Default constructor should generate random string of 16 bytes
+    AuthKey defaultKey;
+    ASSERT_EQ(16, defaultKey.getAuthKey().size());
+    
+    AuthKey longKey("someRandomStringGreaterThan16Bytes");
+    ASSERT_EQ(16, longKey.getAuthKey().size());
+
+    //check the setters for valid and invalid string
+    std::string key16ByteStr = "0123456789abcdef";
+    std::string key18ByteStr = "0123456789abcdefgh";
+    
+    AuthKey defaultTestKey;
+
+    defaultTestKey.setAuthKey(key16ByteStr);
+    ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.ToText());
+    
+    defaultTestKey.setAuthKey(key18ByteStr);
+    ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.ToText());
+
 }
 
 } // end of anonymous namespace

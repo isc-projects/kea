@@ -317,6 +317,11 @@ public:
     /// this backend.
     virtual Lease6Collection getLeases6() const override;
 
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(const DUID& duid) const;
+    
     /// @brief Returns range of IPv6 leases using paging.
     ///
     /// This method implements paged browsing of the lease database. The first

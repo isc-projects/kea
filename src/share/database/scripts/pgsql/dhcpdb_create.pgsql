@@ -756,6 +756,9 @@ UPDATE schema_version
 
 -- Upgrade to schema 5.0 begins here:
 
+-- Create auth_key in hosts
+ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
+
 -- Add a column holding leases for user context.
 ALTER TABLE lease4 ADD COLUMN user_context TEXT;
 ALTER TABLE lease6 ADD COLUMN user_context TEXT;
