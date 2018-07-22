@@ -709,7 +709,7 @@ private:
     /// we queried other backends for specific host and there was no
     /// entry for it.
     bool negative_;
-    
+
     /// @brief key for authentication .
     ///
     /// key is a 16 byte value to be used in the authentication field.

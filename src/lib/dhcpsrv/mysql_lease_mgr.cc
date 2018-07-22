@@ -223,6 +223,15 @@ tagged_statements = { {
                         "state, user_context "
                             "FROM lease6 "
                             "WHERE subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_DUID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context "
+                            "FROM lease6 "
+                            "WHERE duid = ?"},
     {MySqlLeaseMgr::GET_LEASE6_EXPIRE,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -2224,15 +2233,22 @@ Lease6Collection
 MySqlLeaseMgr::getLeases6(const DUID& duid) const {
    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID);
    
-    Lease6Collection result =  getLeases6();
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    const vector<uint8_t>& duid_vector = duid.getDuid();
+    unsigned long duid_length = duid_vector.size();
+
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[0].buffer = reinterpret_cast<char*>(
+            const_cast<uint8_t*>(&duid_vector[0]));
+    inbind[0].buffer_length = duid_length;
+    inbind[0].length = &duid_length;
     
-    //erase the ones not containing the matching DUID
-    for (auto iter = result.begin(); iter != result.end();
-            iter++) {
-        if ((*iter)->duid_->getDuid() != duid.getDuid()) {
-            result.erase(iter);
-        }
-    }
+    Lease6Collection result;
+    
+    getLeaseCollection(GET_LEASE6_DUID, inbind, result);
 
     return result;
 }

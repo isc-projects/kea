@@ -276,9 +276,6 @@ INSERT INTO schema_version (version, minor) VALUES(2, 0);
 
 -- This line starts database upgrade to version 3.0
 
--- This line adds auth_key column into host reservation table 
-ALTER TABLE host_reservations ADD auth_key text;
-
 -- Add a column holding leases for user context.
 ALTER TABLE lease4 ADD user_context text;
 ALTER TABLE lease6 ADD user_context text;
@@ -295,6 +292,9 @@ CREATE TABLE IF NOT EXISTS logs (
 
 -- Create search index for logs table
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
+
+-- This line adds auth_key column into host reservation table
+ALTER TABLE host_reservations ADD auth_key text;
 
 -- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;

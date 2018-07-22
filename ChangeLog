@@ -1,3 +1,7 @@
+1436.   [func]      MayyaSunil
+	Implemented new index for queries host reservations by DUID.
+	(Github #98, git c20b5248da1283e596e35ad057ae242f4d613965)
+
 1435.	[func]		marcin
 	Implemented ha-continue command in HA hooks library and
 	updated the Kea User's Guide with the information how to
