@@ -1619,6 +1619,61 @@ GenericLeaseMgrTest::testGetLease6DuidIaidSubnetId() {
                                  leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
 }
+/// @brief verifies getLeases6(DUID)
+void
+GenericLeaseMgrTest::testGetLeases6Duid() {
+    //add leases
+    IOAddress addr1(std::string("2001:db8:1::111"));
+    IOAddress addr2(std::string("2001:db8:1::222"));
+    IOAddress addr3(std::string("2001:db8:1::333"));
+
+    DuidPtr duid1(new DUID({0, 1, 1, 1, 1, 1, 1, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}));
+    DuidPtr duid2(new DUID({0, 2, 2, 2, 2, 2, 2, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}));
+    DuidPtr duid3(new DUID({0, 3, 3, 3, 3, 3, 3, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}));
+    DuidPtr duid4(new DUID({0, 4, 4, 4, 4, 4, 4, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf}));
+
+    uint32_t iaid = 7; // random number
+
+    SubnetID subnet_id = 8; // radom number
+
+    Lease6Ptr lease1(new Lease6(Lease::TYPE_NA, addr1, duid1, iaid, 100, 200, 50,
+                               80, subnet_id));
+    Lease6Ptr lease2(new Lease6(Lease::TYPE_NA, addr2, duid2, iaid, 100, 200, 50,
+                               80, subnet_id));
+    Lease6Ptr lease3(new Lease6(Lease::TYPE_NA, addr3, duid3, iaid, 100, 200, 50,
+                               80, subnet_id));
+
+    EXPECT_TRUE(lmptr_->addLease(lease1));
+    EXPECT_TRUE(lmptr_->addLease(lease2));
+    EXPECT_TRUE(lmptr_->addLease(lease3));
+    
+    Lease6Collection returned1 = lmptr_->getLeases6(*(lease1->duid_));
+    Lease6Collection returned2 = lmptr_->getLeases6(*(lease2->duid_));
+    Lease6Collection returned3 = lmptr_->getLeases6(*(lease3->duid_));
+  
+    //verify if the returned lease mathces 
+    EXPECT_EQ(returned1.size(), 1);
+    EXPECT_EQ(returned2.size(), 1);
+    EXPECT_EQ(returned3.size(), 1);
+
+    //verify that the returned lease are same
+    EXPECT_TRUE(returned1[0]->addr_ == lease1->addr_); 
+    EXPECT_TRUE(returned2[0]->addr_ == lease2->addr_);
+    EXPECT_TRUE(returned3[0]->addr_ == lease3->addr_);
+    
+    //now verify we return empty for a lease that has not been stored
+    returned3 = lmptr_->getLeases6(*duid4);
+    EXPECT_TRUE(returned3.empty());
+   
+    //clean up
+    (void) lmptr_->deleteLease(addr1);
+    (void) lmptr_->deleteLease(addr2);
+    (void) lmptr_->deleteLease(addr3);
+   
+    //now verify we return empty for a lease that has not been stored
+    returned3 = lmptr_->getLeases6(*duid4);
+    EXPECT_TRUE(returned3.empty());
+}
 
 /// @brief Checks that getLease6() works with different DUID sizes
 void

@@ -475,6 +475,14 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
 
+// @brief check leases could be retrieved by DUID
+///
+/// Create leases, add them to backend and verify if it can be queired
+/// using DUID index
+TEST_F(MySqlLeaseMgrTest, getLeases6Duid) {
+    testGetLeases6Duid();
+}
+
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
