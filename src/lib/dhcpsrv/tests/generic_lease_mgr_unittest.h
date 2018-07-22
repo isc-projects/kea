@@ -278,6 +278,12 @@ public:
     /// Adds leases to the database and checks that they can be accessed via
     /// a combination of DIUID and IAID.
     void testGetLease6DuidIaidSubnetId();
+    
+    /// @brief verifies getLeases6 method by DUID
+    ///
+    /// Adds 3 leases to backend and retrieves, verifes empty
+    /// retrival of non existent DUID.
+    void testGetLeases6Duid();
 
     /// @brief Checks that getLease6() works with different DUID sizes
     void testGetLease6DuidIaidSubnetIdSize();
