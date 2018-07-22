@@ -679,6 +679,14 @@ TEST_F(CqlLeaseMgrTest, lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
 }
 
+/// @brief Verifies the getLeases6(DUID) method
+///
+/// Adds 3 lease and verifies fetch by DUID.
+/// Verifies retrival of non existant DUID fails
+TEST_F(CqlLeaseMgrTest, getLeases6Duid) {
+   testGetLeases6Duid(); 
+}
+
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
 ///
 /// Adds leases to the database and checks that they can be accessed via

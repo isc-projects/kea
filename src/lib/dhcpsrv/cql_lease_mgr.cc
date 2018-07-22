@@ -2306,10 +2306,10 @@ CqlLeaseMgr::getLeases6(const DUID& duid) const {
     // Get the data.
     Lease6Collection result;
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
-    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID, data, result);
+    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID,
+                                  data, result);
 
     return (result);
-    
 }
 
 Lease6Collection
