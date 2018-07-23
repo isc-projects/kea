@@ -1069,8 +1069,8 @@
           actions before the server transitions to the next state.
         </para>
 
-        <para>Consider a server failure which results in a loss of entire lease
-        database. Typically, the server will rebuild its lease database
+        <para>Consider a server failure which results in a loss of the entire
+        lease database. Typically, the server will rebuild its lease database
         when it enters the <command>syncing</command> state by querying
         the partner server for leases, but it is possible that the
         partner was also experiencing a failure and lacks lease information.
