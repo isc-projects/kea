@@ -36,9 +36,10 @@ CREATE TABLE IF NOT EXISTS logs (
 -- Create search index for logs table
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
 
--- Cql requires primary keys in the WHERE here.
+-- Add auth_key for storing keys for DHCPV6 reconfigure.
 ALTER TABLE host_reservations ADD auth_key text;
 
+-- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;
 INSERT INTO schema_version (version, minor) VALUES(3, 0);
 
