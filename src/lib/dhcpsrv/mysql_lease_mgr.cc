@@ -2266,23 +2266,6 @@ MySqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     return (result);
 }
 
-Lease6Collection
-MySqlLeaseMgr::getLeases6(const DUID& duid) const {
-   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID);
-   
-    Lease6Collection result =  getLeases6();
-    
-    //erase the ones not containing the matching DUID
-    for (auto iter = result.begin(); iter != result.end();
-            iter++) {
-        if ((*iter)->duid_->getDuid() != duid.getDuid()) {
-            result.erase(iter);
-        }
-    }
-
-    return (result);
-}
-
 void
 MySqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
