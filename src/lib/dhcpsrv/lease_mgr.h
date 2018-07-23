@@ -499,11 +499,6 @@ public:
     virtual Lease6Collection
     getLeases6(const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const = 0;
-
-    /// @brief Returns collection of lease for matching DUID
-    ///
-    /// @return Lease collection (may be empty if no IPv6 lease found for the DUID).
-    virtual Lease6Collection getLeases6(const DUID& duid) const = 0; 
     
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
