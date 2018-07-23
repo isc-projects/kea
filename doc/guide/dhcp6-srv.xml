@@ -2513,6 +2513,12 @@ should include options from the isc option space:
       <listitem><simpara>
       <command>"generated-prefix": "myhost"</command>
       </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-set": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-replacement": ""</command>
+      </simpara></listitem>
       </itemizedlist>
       </para>
 
@@ -2852,6 +2858,80 @@ should include options from the isc option space:
       <para>
         myhost-3001-1--70E.example.com.
       </para>
+      <section xml:id="host-name-sanitization">
+        <title>Sanitizing Client FQDN Names</title>
+        It may be that some of your DHCP clients provide values in the name
+        component of the FQDN option (Option code 39), that contain undesirable
+        characters.  It is possible to configure kea-dhcp5 to sanitize these
+        values. The most typical use case would be ensuring that only
+        characters that are permitted by RFC 1035 be included:
+        A-Z,a-z,0-9, and '-'.  This may be accomplished with following two
+        parameters:
+        <itemizedlist>
+        <listitem><simpara>
+        <command>hostname-char-set</command> - a regular expression describing
+        the invalid character set.  This can be any valid, regular expression
+        using POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]"
+        would replace any character other then the letters A through z, digits
+        0 through 9, and '-'.  An empty string, the default value, disables
+        sanitization.
+        </simpara></listitem>
+        <listitem><simpara>
+        <command>hostname-char-replacement</command> - a string of zero or
+        more characters with which to replace each invalid character in the
+        client value.  The default value is an empty string and will cause
+        invalid characters to be OMITTED rather than replaced.
+        </simpara></listitem>
+        </itemizedlist>
+        The following configuration, will replace anything other than a
+        letter, digit, hyphen, or dot with the letter 'x':
+<screen>
+"Dhcp4": {
+    "dhcp-ddns": {
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
+        ...
+    },
+    ...
+}
+</screen>
+        Thus, a client supplied value of "myhost-$[123.org" would become
+        "myhost-xx123.org".  Sanitizing is performed only on the portion of
+        the name supplied by the client and it is performed before applying
+        a qualifying suffix (if one is defined and needed).
+        <note>
+        The following are some considerations to keep in mind:
+        <para>
+        Name sanitizing is meant to catch the more common cases of invalid
+        characters through a relatively simple character replacement scheme.
+        It is difficult to devise a scheme that works well in all cases and
+        should you find you have clients that are using odd, corner cases of
+        character combinations that cannot be readily handled with this
+        mechanism, you should consider writing a hook that can carry out
+        sufficiently complex logic to address your needs.
+        </para>
+        <para>
+        You do not account for dots ins your hostname-char-set expression.
+        When scrubbing FQDNs, dots are treated as delimiters and used to
+        separate the option value into individual domain labels that are
+        scrubbed and then re-assembled.
+        </para>
+        <para>
+        If your clients are sending values that differ only by characters
+        considered as invalid by your hostname-char-set, be aware that scrubbing
+        them will yield identical values. In such cases, DDNS conflict rules
+        will permit only one of them from registering the name.
+        </para>
+        <para>
+        Finally, given the latitude clients have in the values they send, it is
+        virtually impossible to guarantee that a combination of these two
+        parameters will always yield a name that is valid for use in DNS. For
+        example, using an empty value for hostname-char-replacment could yield
+        an empty domain label within a name, if that label consists only of
+        invalid characters.
+        </para>
+        </note>
+      </section>
     </section>
 
     <section xml:id="dhcp6-dhcp4o6-config">
