@@ -3547,6 +3547,141 @@ TEST_F(HAServiceStateMachineTest, syncingTransitionsLoadBalancing) {
     EXPECT_EQ(HAService::HA_SYNCING_SUCCEEDED_EVT, service_->getLastEvent());
 }
 
+// This test verifies that the HA state machine can be paused in certain states
+// when the server is operating in load balancing mode. The test also verifies
+// that heartbeat is active even if the state machine is paused.
+TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPause) {
+    partner_->startup();
+
+    HAConfigPtr valid_config = createValidConfiguration();
+    auto state_machine = valid_config->getStateMachineConfig();
+
+    // Set state machine pausing in various states.
+    state_machine->getStateConfig(HA_LOAD_BALANCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_PARTNER_DOWN_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_READY_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_SYNCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_TERMINATED_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_WAITING_ST)->setPausing("always");
+
+    startService(valid_config);
+
+    {
+        SCOPED_TRACE("LOAD BALANCING state transitions");
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+
+        EXPECT_TRUE(service_->unpause());
+        // An additional attempt to unpause should return false.
+        EXPECT_FALSE(service_->unpause());
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+    }
+
+    {
+        SCOPED_TRACE("PARTNER DOWN state transitions");
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+
+        EXPECT_TRUE(service_->unpause());
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+    }
+
+
+    {
+        SCOPED_TRACE("READY state transitions");
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_READY_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+
+        EXPECT_TRUE(service_->unpause());
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+    }
+
+
+    {
+        SCOPED_TRACE("WAITING state transitions");
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+
+        EXPECT_TRUE(service_->unpause());
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_SYNCING_ST));
+        EXPECT_TRUE(state_->isHeartbeatRunning());
+    }
+}
+
+// This test verifies that the HA state machine can be paused in the syncing
+// state.
+TEST_F(HAServiceStateMachineTest, syncingTransitionsLoadBalancingPause) {
+    HAConfigPtr valid_config = createValidConfiguration();
+
+    auto state_machine = valid_config->getStateMachineConfig();
+
+    // Pause state machine in various states.
+    state_machine->getStateConfig(HA_LOAD_BALANCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_PARTNER_DOWN_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_READY_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_SYNCING_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_TERMINATED_ST)->setPausing("always");
+    state_machine->getStateConfig(HA_WAITING_ST)->setPausing("always");
+
+    startService(valid_config);
+    waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT);
+
+    // The syncing state handler doesn't start synchronization until it
+    // detects that the partner is online. It may remember that from the
+    // previous heartbeat attempts. If the partner appears to be unavailable
+    // it will continue heartbeats before it synchronizes. This prevents the
+    // server from making endless attempts to synchronize without any chance
+    // to succeed. We verify that the server is not trying to synchronize
+    // by checking that the last event is not the one associated with the
+    // synchronization attempt.
+    ASSERT_NE(service_->getLastEvent(), HAService::HA_SYNCING_FAILED_EVT);
+    ASSERT_NE(service_->getLastEvent(), HAService::HA_SYNCING_SUCCEEDED_EVT);
+
+    // Startup the partner.
+    partner_->enableRespondLeaseFetching();
+    partner_->startup();
+
+    // We haven't been running heartbeats so we have to manually set the
+    // partner's state to something other than 'unavailable'.
+    state_->setPartnerState("ready");
+
+    // Run the syncing state handler.
+    testSyncingTransition(FinalState(HA_SYNCING_ST));
+
+    // We should see no synchronization attempts because the server is paused
+    // in this state.
+    EXPECT_NE(service_->getLastEvent(), HAService::HA_SYNCING_FAILED_EVT);
+    EXPECT_NE(service_->getLastEvent(), HAService::HA_SYNCING_SUCCEEDED_EVT);
+
+    // Unpause the state machine.
+    EXPECT_TRUE(service_->unpause());
+
+    // Retry the test. It should now transition to the ready state.
+    testSyncingTransition(FinalState(HA_READY_ST));
+
+    // This time the server should have synchronized.
+    EXPECT_EQ(HAService::HA_SYNCING_SUCCEEDED_EVT, service_->getLastEvent());
+}
+
 // This test verifies that the server takes ownership of the given scopes
 // and whether the DHCP service is disabled or enabled in certain states.
 TEST_F(HAServiceStateMachineTest, scopesServingLoadBalancing) {

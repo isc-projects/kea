@@ -7,7 +7,10 @@
 #include <exceptions/exceptions.h>
 #include <util/strutil.h>
 #include <ha_config.h>
+#include <ha_service_states.h>
 #include <sstream>
+
+using namespace isc::util;
 
 namespace isc {
 namespace ha {
@@ -76,11 +79,69 @@ HAConfig::PeerConfig::roleToString(const HAConfig::PeerConfig::Role& role) {
     return ("");
 }
 
+HAConfig::StateConfig::StateConfig(const int state)
+    : state_(state), pausing_(STATE_PAUSE_NEVER) {
+}
+
+void
+HAConfig::StateConfig::setPausing(const std::string& pausing) {
+    pausing_ = stringToPausing(pausing);
+}
+
+StatePausing
+HAConfig::StateConfig::stringToPausing(const std::string& pausing) {
+    if (pausing == "always") {
+        return (STATE_PAUSE_ALWAYS);
+
+    } else if (pausing == "never") {
+        return (STATE_PAUSE_NEVER);
+
+    } else if (pausing == "once") {
+        return (STATE_PAUSE_ONCE);
+    }
+
+    isc_throw(BadValue, "unsupported value " << pausing << " of 'pause' parameter");
+}
+
+std::string
+HAConfig::StateConfig::pausingToString(const StatePausing& pausing) {
+    switch (pausing) {
+    case STATE_PAUSE_ALWAYS:
+        return ("always");
+
+    case STATE_PAUSE_NEVER:
+        return ("never");
+
+    case STATE_PAUSE_ONCE:
+        return ("once");
+
+    default:
+        ;
+    }
+
+    isc_throw(BadValue, "unsupported pause enumeration " << static_cast<int>(pausing));
+}
+
+HAConfig::StateConfigPtr
+HAConfig::StateMachineConfig::getStateConfig(const int state) {
+    // Return config for the state if it exists already.
+    auto state_config = states_.find(state);
+    if (state_config != states_.end()) {
+        return (state_config->second);
+    }
+
+    // Create config for the state and store its pointer.
+    StateConfigPtr new_state_config(new StateConfig(state));
+    states_[state] = new_state_config;
+
+    return (new_state_config);
+}
+
 HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
       sync_leases_(true), sync_timeout_(60000), heartbeat_delay_(10000),
       max_response_delay_(60000), max_ack_delay_(10000), max_unacked_clients_(10),
-      peers_() {
+      peers_(), state_machine_(new StateMachineConfig()) {
 }
 
 HAConfig::PeerConfigPtr
