@@ -1,3 +1,9 @@
+1435.	[func]		marcin
+	Implemented ha-continue command in HA hooks library and
+	updated the Kea User's Guide with the information how to
+	pause and resume the HA state machine.
+	(Trac #5675, git 98a9bd4f6766ff2f53681d84d55c56988be4d501)
+
 1434.   [func]      MayyaSunil
 	Code added to support storage of Authentication key host reservation.
 	There is no way to use the code yet.
