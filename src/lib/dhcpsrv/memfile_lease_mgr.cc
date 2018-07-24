@@ -10,6 +10,7 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <dhcpsrv/sanity_checker.h>
 #include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
@@ -690,12 +691,19 @@ Memfile_LeaseMgr::getDBVersion() {
 }
 
 bool
-Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
+Memfile_LeaseMgr::addLease(Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_ADD_ADDR4).arg(lease->addr_.toText());
 
     if (getLease4(lease->addr_)) {
         // there is a lease with specified address already
+        return (false);
+    }
+
+    // Run the lease through a checker.
+    static SanityChecker checker;
+    checker.checkLease(lease);
+    if (!lease) {
         return (false);
     }
 
@@ -711,12 +719,19 @@ Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
 }
 
 bool
-Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
+Memfile_LeaseMgr::addLease(Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_ADD_ADDR6).arg(lease->addr_.toText());
 
     if (getLease6(lease->type_, lease->addr_)) {
         // there is a lease with specified address already
+        return (false);
+    }
+
+    // Run the lease through a checker.
+    static SanityChecker checker;
+    checker.checkLease(lease);
+    if (!lease) {
         return (false);
     }
 

@@ -10,6 +10,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <util/versioned_csv_file.h>
+#include <dhcpsrv/sanity_checker.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -85,6 +86,8 @@ public:
         lease_file.close();
         lease_file.open();
 
+        SanityChecker lease_checker;
+
         boost::shared_ptr<LeaseObjectType> lease;
         // Track the number of corrupted leases.
         uint32_t errcnt = 0;
@@ -121,6 +124,12 @@ public:
                 LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
                           DHCPSRV_MEMFILE_LEASE_LOAD)
                     .arg(lease->toText());
+
+                // Now see if we need to sanitize this lease.
+                lease_checker.checkLease(lease);
+                if (!lease) {
+                    continue;
+                }
 
                 // Check if this lease exists.
                 typename StorageType::iterator lease_it =
