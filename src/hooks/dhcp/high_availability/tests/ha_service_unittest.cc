@@ -2320,6 +2320,50 @@ TEST_F(HAServiceTest, processScopes) {
     EXPECT_FALSE(service.query_filter_.amServingScope("server3"));
 }
 
+// This test verifies that the ha-continue command is processed successfully.
+TEST_F(HAServiceTest, processContinue) {
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    // State machine is to be paused in the waiting state.
+    ASSERT_NO_THROW(config_storage->getStateMachineConfig()->
+                    getStateConfig(HA_WAITING_ST)->setPausing("always"));
+
+    TestHAService service(io_service_, network_state_, config_storage);
+
+    // Pause the state machine.
+    EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
+    EXPECT_TRUE(service.isModelPaused());
+
+    // Process ha-continue command that should unpause the state machine.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processContinue());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine continues.");
+
+    // State machine should have been unpaused as a result of processing the
+    // command.
+    EXPECT_FALSE(service.isModelPaused());
+
+    // Response should include no arguments.
+    EXPECT_FALSE(rsp->get("arguments"));
+
+    // Sending ha-continue command again which should return success but
+    // slightly different textual status.
+    ASSERT_NO_THROW(rsp = service.processContinue());
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "HA state machine is not paused.");
+
+    // The state machine should not be paused.
+    EXPECT_FALSE(service.isModelPaused());
+
+    // Response should include no arguments.
+    EXPECT_FALSE(rsp->get("arguments"));
+}
+
 /// @brief HA partner to the server under test.
 ///
 /// This is a wrapper class around @c HttpListener which simulates a
