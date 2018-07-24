@@ -466,6 +466,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"sanity-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return  isc::dhcp::Dhcp6Parser::make_SANITY_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("sanity-checks", driver.loc_);
+    }
+}
+
+\"lease-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SANITY_CHECKS:
+        return  isc::dhcp::Dhcp6Parser::make_LEASE_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("lease-checks", driver.loc_);
+    }
+}
+
 \"lease-database\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
