@@ -107,6 +107,11 @@ are administratively disabled and will not be issued in the HA state to
 which the server has transitioned. The sole argument specifies the state
 into which the server has transitioned.
 
+% HA_CONTINUE_HANDLER_FAILED ha-continue command failed: %1
+This error message is issued to indicate that the ha-continue command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
 % HA_DEINIT_OK unloading High Availability hooks library successful
 This informational message indicates that the High Availability hooks library
 has been unloaded successfully.

@@ -123,6 +123,9 @@ HAService::backupStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
     }
 
     // There is nothing to do in that state. This server simply receives
@@ -138,6 +141,9 @@ HAService::normalStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
     }
 
     scheduleHeartbeat();
@@ -193,6 +199,9 @@ HAService::partnerDownStateHandler() {
             query_filter_.serveDefaultScopes();
         }
         adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
     }
 
     scheduleHeartbeat();
@@ -238,6 +247,9 @@ HAService::readyStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
     }
 
     scheduleHeartbeat();
@@ -300,6 +312,9 @@ HAService::syncingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
     }
 
     if (isModelPaused()) {
@@ -375,6 +390,9 @@ HAService::terminatedStateHandler() {
         // In the terminated state we don't send heartbeat.
         communication_state_->stopHeartbeat();
 
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
+
         LOG_ERROR(ha_logger, HA_TERMINATED);
     }
 
@@ -389,6 +407,9 @@ HAService::waitingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+
+        // Log if the state machine is paused.
+        conditionalLogPausedState();
     }
 
     // Only schedule the heartbeat for non-backup servers.
@@ -511,14 +532,6 @@ HAService::verboseTransition(const unsigned state) {
                 .arg(new_state_name);
         }
     }
-
-    // Inform the administrator if the state machine is paused.
-    if (isModelPaused()) {
-        std::string state_name = stateToString(state);
-        boost::to_upper(state_name);
-        LOG_INFO(ha_logger, HA_STATE_MACHINE_PAUSED)
-            .arg(state_name);
-    }
 }
 
 bool
@@ -529,6 +542,17 @@ HAService::unpause() {
         return (true);
     }
     return (false);
+}
+
+void
+HAService::conditionalLogPausedState() const {
+    // Inform the administrator if the state machine is paused.
+    if (isModelPaused()) {
+        std::string state_name = stateToString(getCurrState());
+        boost::to_upper(state_name);
+        LOG_INFO(ha_logger, HA_STATE_MACHINE_PAUSED)
+            .arg(state_name);
+    }
 }
 
 void
@@ -1382,6 +1406,14 @@ HAService::processScopes(const std::vector<std::string>& scopes) {
     }
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, "New HA scopes configured."));
+}
+
+data::ConstElementPtr
+HAService::processContinue() {
+    if (unpause()) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine continues."));
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "HA state machine is not paused."));
 }
 
 ConstElementPtr

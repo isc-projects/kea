@@ -255,6 +255,16 @@ public:
     /// machine was not paused when this method was invoked.
     bool unpause();
 
+protected:
+
+    /// @brief Logs if the server is paused in the current state.
+    ///
+    /// This method is internally called by the state handlers upon
+    /// entry to a new state.
+    void conditionalLogPausedState() const;
+
+public:
+
     /// @brief Instructs the HA service to serve default scopes.
     ///
     /// This method is mostly useful for unit testing. The scopes need to be
@@ -609,6 +619,11 @@ public:
     ///
     /// @return Pointer to the response to the ha-scopes command.
     data::ConstElementPtr processScopes(const std::vector<std::string>& scopes);
+
+    /// @brief Processes ha-continue command and returns a response.
+    ///
+    /// @return Pointer to the response to the ha-continue command.
+    data::ConstElementPtr processContinue();
 
 protected:
 
