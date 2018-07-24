@@ -137,6 +137,11 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void scopesHandler(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implements handler for the ha-continue command.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void continueHandler(hooks::CalloutHandle& callout_handle);
+
 protected:
 
     /// @brief Holds parsed configuration.

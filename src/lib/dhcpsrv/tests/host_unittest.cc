@@ -1277,10 +1277,12 @@ TEST(AuthKeyTest, basicTest) {
     defaultTestKey.setAuthKey(key16ByteStr);
     ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
     ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.ToText());
     
     defaultTestKey.setAuthKey(key18ByteStr);
     ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
     ASSERT_EQ(key16ByteStr, defaultTestKey.getAuthKey());
+    ASSERT_EQ(key16ByteStr, defaultTestKey.ToText());
 
 }
 

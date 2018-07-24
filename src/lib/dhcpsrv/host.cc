@@ -10,6 +10,7 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <boost/random.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
@@ -47,9 +48,15 @@ AuthKey::getRandomKeyString() {
 
 std::string 
 AuthKey::ToText() const {
+<<<<<<< HEAD
     std::ostringstream s;
     //s << authKey_;
     return (authKey_);
+=======
+    //this will need enhancement if the stored container is not
+    //string
+    return authKey_;
+>>>>>>> upstream/master
 }
 
 void
@@ -147,7 +154,11 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
       cfg_option6_(new CfgOption()), negative_(false), 
+<<<<<<< HEAD
       key_(auth_key){
+=======
+      key_(auth_key) {
+>>>>>>> upstream/master
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -183,7 +194,11 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
       cfg_option6_(new CfgOption()), negative_(false),
+<<<<<<< HEAD
       key_(auth_key){
+=======
+      key_(auth_key) {
+>>>>>>> upstream/master
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);

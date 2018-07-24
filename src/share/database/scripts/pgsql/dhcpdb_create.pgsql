@@ -870,9 +870,12 @@ CREATE TABLE logs (
 CREATE INDEX timestamp_id ON logs (timestamp);
 CREATE INDEX address_id ON logs (address);
 
--- Set 5.0 schema version.
+-- Create auth_key in hosts table for storing keys for DHCPv6 reconfigure.
+ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
+
+-- Set schema 5.0 version
 UPDATE schema_version
-    SET version = '5', minor = '0';
+   SET version = '5', minor = '0';
 
 -- Schema 5.0 specification ends here.
 

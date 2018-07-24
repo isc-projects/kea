@@ -109,11 +109,10 @@ HostDataSourceUtils::initializeHost6(const std::string address,
 
     std::string default_string;
     HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
-                          IOAddress("0.0.0.0"), default_string,
-                          default_string, default_string,
-                           asiolink:: IOAddress::IPV4_ZERO_ADDRESS(), default_string, default_string,
-                          AuthKey(auth_key)));
-
+                          IOAddress("0.0.0.0")));
+    
+    host->setKey(AuthKey(auth_key));
+    
     if (!prefix) {
         // Create IPv6 reservation (for an address)
         IPv6Resrv resv(IPv6Resrv::TYPE_NA, IOAddress(address), 128);
