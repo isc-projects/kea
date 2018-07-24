@@ -1219,6 +1219,15 @@
         In order to pause the state machine after lease database synchronization,
         use the <command>ready</command> state instead.
         </para></note>
+
+        <note><para>The state of the HA state machine depends on the state of the
+        cooperating server. Therefore, it must be taken into account that
+        pausing the state machine of one server may affect the operation of the
+        partner server. For example: if the primary server is paused in the
+        <command>waiting</command> state the partner server will also remain in
+        the <command>waiting</command> state until the state machine of the
+        primary server is resumed and that server transitions to the
+        <command>ready</command> state.</para></note>
       </section>
 
       <section xml:id="ha-ctrl-agent-config">
