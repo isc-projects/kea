@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
@@ -339,6 +340,11 @@ public:
     /// configuration for host reservations in DHCPv6
     ConstCfgHostOperationsPtr getCfgHostOperations6() const {
         return (cfg_host_operations6_);
+    }
+
+    /// @brief Returns const pointer to object holding sanity checks flags
+    CfgConsistencyPtr getConsistency() {
+        return (cfg_consist_);
     }
 
     //@}
@@ -679,6 +685,9 @@ private:
 
     /// @brief Stores the global parameters specified via configuration
     isc::data::ElementPtr configured_globals_;
+
+    /// @brief Pointer to the configuration consistency settings
+    CfgConsistencyPtr cfg_consist_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

@@ -261,19 +261,29 @@ public:
 
     /// @brief Adds an IPv4 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
-    virtual bool addLease(const Lease4Ptr& lease) = 0;
+    ///         with the same address was already there or failed sanity checks)
+    virtual bool addLease(Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
-    virtual bool addLease(const Lease6Ptr& lease) = 0;
+    ///         with the same address was already there or failed sanity checks)
+    virtual bool addLease(Lease6Ptr& lease) = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
@@ -749,9 +759,6 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
 
-    /// @todo: Add host management here
-    /// As host reservation is outside of scope for 2012, support for hosts
-    /// is currently postponed.
 };
 
 }  // namespace dhcp

@@ -35,7 +35,8 @@ SrvConfig::SrvConfig()
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(Element::createMap()) {
+      configured_globals_(Element::createMap()),
+      cfg_consist_(new CfgConsistency()) {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -52,7 +53,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(Element::createMap()) {
+      configured_globals_(Element::createMap()),
+      cfg_consist_(new CfgConsistency()) {
 }
 
 std::string
@@ -412,6 +414,9 @@ SrvConfig::toElement() const {
         logging->set("loggers", loggers);
         result->set("Logging", logging);
     }
+
+    ConstElementPtr cfg_consist = cfg_consist_->toElement();
+    dhcp->set("sanity-checks", cfg_consist);
 
     return (result);
 }
