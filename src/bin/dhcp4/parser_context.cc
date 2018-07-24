@@ -194,6 +194,8 @@ Parser4Context::contextName()
         return ("replace-client-name");
     case SHARED_NETWORK:
         return ("shared-networks");
+    case SANITY_CHECKS:
+        return ("sanity-checks");
     default:
         return ("__unknown__");
     }

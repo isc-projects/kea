@@ -203,6 +203,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"sanity-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return  isc::dhcp::Dhcp4Parser::make_SANITY_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("sanity-checks", driver.loc_);
+    }
+}
+
+\"lease-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SANITY_CHECKS:
+        return  isc::dhcp::Dhcp4Parser::make_LEASE_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("lease-checks", driver.loc_);
+    }
+}
+
 \"dhcp-socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:

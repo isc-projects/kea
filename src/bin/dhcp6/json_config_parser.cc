@@ -33,6 +33,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
@@ -500,6 +501,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 CfgIfacePtr cfg_iface = srv_config->getCfgIface();
                 parser.parse(cfg_iface, ifaces_cfg);
                 continue;
+            }
+
+            if (config_pair.first == "sanity-checks") {
+                SanityChecksParser parser;
+                parser.parse(*srv_config, config_pair.second);
             }
 
             if (config_pair.first == "expired-leases-processing") {
