@@ -1135,7 +1135,7 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 }
 
 bool
-PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
+PgSqlLeaseMgr::addLease(Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(lease->addr_.toText());
 
@@ -1145,7 +1145,7 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 }
 
 bool
-PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+PgSqlLeaseMgr::addLease(Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR6).arg(lease->addr_.toText());
     PsqlBindArray bind_array;

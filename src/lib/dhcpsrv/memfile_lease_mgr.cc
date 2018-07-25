@@ -702,7 +702,7 @@ Memfile_LeaseMgr::addLease(Lease4Ptr& lease) {
 
     // Run the lease through a checker.
     static SanityChecker checker;
-    checker.checkLease(lease);
+    checker.checkLease(lease, true);
     if (!lease) {
         return (false);
     }
@@ -730,7 +730,7 @@ Memfile_LeaseMgr::addLease(Lease6Ptr& lease) {
 
     // Run the lease through a checker.
     static SanityChecker checker;
-    checker.checkLease(lease);
+    checker.checkLease(lease, true);
     if (!lease) {
         return (false);
     }
