@@ -26,7 +26,7 @@ void SanityChecker::checkLease(Lease6Ptr& lease) {
 }
 
 template<typename LeasePtrType, typename SubnetsType>
-void SanityChecker::checkLeaseInternal(LeasePtrType lease, const CfgConsistencyPtr& checks,
+void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistencyPtr& checks,
                                const SubnetsType& subnets) {
 
     if (checks->getLeaseSanityCheck() == CfgConsistency::LEASE_CHECK_NONE) {

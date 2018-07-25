@@ -257,7 +257,7 @@ TEST_F(SanityChecksTest, memfileAdd4_checksFix) {
 }
 
 TEST_F(SanityChecksTest, memfileAdd4_checksFixdel1) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 1);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
 }
 
 TEST_F(SanityChecksTest, memfileAdd4_checksFixdel2) {

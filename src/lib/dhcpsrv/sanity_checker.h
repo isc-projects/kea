@@ -51,7 +51,7 @@ class SanityChecker {
     ///        specified here)
     /// @param subnets configuration structure with subnets
     template<typename LeaseType, typename SubnetsType>
-    void checkLeaseInternal(LeaseType lease, const CfgConsistencyPtr& checks,
+    void checkLeaseInternal(LeaseType& lease, const CfgConsistencyPtr& checks,
                             const SubnetsType& subnets);
 
     /// @brief Internal method for finding appropriate subnet-id

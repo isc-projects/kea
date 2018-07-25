@@ -432,9 +432,9 @@ the message.
 
 % DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks.
 
-% DHCPSRV_LEASE_SANITY_FIXED The lease %2 with subnet-id %2 failed subnet-id checks, but was correced to subnet-id %3.
+% DHCPSRV_LEASE_SANITY_FIXED The lease %1 with subnet-id %2 failed subnet-id checks, but was correced to subnet-id %3.
 
-% DHCPSRV_LEASE_SANITY_FAIL_DISCARD The lease %2 with subnet-id %2 failed subnet-id checks and was dropped.
+% DHCPSRV_LEASE_SANITY_FAIL_DISCARD The lease %1 with subnet-id %2 failed subnet-id checks and was dropped.
 
 % DHCPSRV_MEMFILE_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease
