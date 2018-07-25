@@ -1699,7 +1699,7 @@ MySqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
 }
 
 bool
-MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
+MySqlLeaseMgr::addLease(Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_ADD_ADDR4).arg(lease->addr_.toText());
 
@@ -1711,7 +1711,7 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 }
 
 bool
-MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
+MySqlLeaseMgr::addLease(Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText())
               .arg(lease->type_);

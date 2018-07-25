@@ -87,7 +87,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(const Lease4Ptr& lease) override;
+    virtual bool addLease(Lease4Ptr& lease) override;
 
     /// @brief Adds an IPv6 lease
     ///
@@ -98,7 +98,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(const Lease6Ptr& lease) override;
+    virtual bool addLease(Lease6Ptr& lease) override;
 
     /// @brief Basic lease access methods. Obtain leases from the database using
     ///     various criteria.
