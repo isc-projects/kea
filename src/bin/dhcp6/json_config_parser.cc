@@ -506,6 +506,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             if (config_pair.first == "sanity-checks") {
                 SanityChecksParser parser;
                 parser.parse(*srv_config, config_pair.second);
+                continue;
             }
 
             if (config_pair.first == "expired-leases-processing") {
