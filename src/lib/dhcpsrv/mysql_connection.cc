@@ -131,10 +131,8 @@ MySqlConnection::openDatabase() {
         // No timeout parameter, we are going to use the default timeout.
         stimeout = "";
     }
-
     if (stimeout.size() > 0) {
         // Timeout was given, so try to convert it to an integer.
-
         try {
             connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
         } catch (...) {
@@ -158,6 +156,29 @@ MySqlConnection::openDatabase() {
             isc_throw(DbInvalidTimeout, "database connection timeout (" <<
                       stimeout << ") must be an integer greater than 0");
         }
+    }
+
+    std::string sprotocol;
+    try {
+        sprotocol = getParameter("protocol");
+    } catch (...) {
+        // No protocol parameter, use the default protocol.
+        sprotocol = "";
+    }
+    mysql_protocol_type protocol;
+    if (sprotocol == "default") {
+        protocol = MYSQL_PROTOCOL_DEFAULT;
+    } else if (sprotocol == "tcp") {
+        protocol = MYSQL_PROTOCOL_TCP;
+    } else if (sprotocol == "socket") {
+        protocol = MYSQL_PROTOCOL_SOCKET;
+    } else if (sprotocol == "pipe") {
+        protocol = MYSQL_PROTOCOL_PIPE;
+    } else if (sprotocol == "memory") {
+        protocol = MYSQL_PROTOCOL_MEMORY;
+    } else if (sprotocol == "") {
+    } else {
+        isc_throw(DbOpenError, "invalid MySql protocol " << sprotocol);
     }
 
     // Set options for the connection:
@@ -198,6 +219,15 @@ MySqlConnection::openDatabase() {
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set database connection timeout: " <<
                   mysql_error(mysql_));
+    }
+
+    // Protocol type
+    if (!sprotocol.empty()) {
+        result = mysql_options(mysql_, MYSQL_OPT_PROTOCOL, &protocol);
+        if (result != 0) {
+            isc_throw(DbOpenError,
+                      "unable to set protocol type: " << mysql_error(mysql_));
+        }
     }
 
     // Open the database.

@@ -29,7 +29,7 @@ namespace dhcp {
 
 CqlConnection::CqlConnection(const ParameterMap& parameters)
     : DatabaseConnection(parameters), statements_(), cluster_(NULL),
-      session_(NULL), consistency_(CASS_CONSISTENCY_QUORUM), schema_meta_(NULL),
+      session_(NULL), ssl_(NULL), consistency_(CASS_CONSISTENCY_QUORUM), schema_meta_(NULL),
       keyspace_meta_(NULL), force_consistency_(true) {
 }
 
@@ -45,6 +45,11 @@ CqlConnection::~CqlConnection() {
         if (statement.prepared_statement_) {
             cass_prepared_free(statement.prepared_statement_);
         }
+    }
+
+    if (ssl_) {
+        cass_ssl_free(ssl_);
+        ssl_ = NULL;
     }
 
     // If there's a session, tear it down and free the resources.
@@ -165,6 +170,14 @@ CqlConnection::openDatabase() {
         // No tcp-nodelay. Fine, we'll use the default false.
     }
 
+    const char* ssl_cert = NULL;
+    std::string sssl_cert;
+    try {
+        sssl_cert = getParameter("ssl-cert");
+        ssl_cert = sssl_cert.c_str();
+    } catch (...) {
+        // No ssl-cert. Fine, we'll disable the ssl verification.
+    }
     cluster_ = cass_cluster_new();
     cass_cluster_set_contact_points(cluster_, contact_points);
 
@@ -177,6 +190,8 @@ CqlConnection::openDatabase() {
         try {
             port_number = boost::lexical_cast<int32_t>(port);
             if (port_number < 1 || port_number > 65535) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "port outside of range, expected "
@@ -184,6 +199,8 @@ CqlConnection::openDatabase() {
                               << port);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid "
                       "port, expected castable to int, instead got "
@@ -199,12 +216,16 @@ CqlConnection::openDatabase() {
             reconnect_wait_time_number =
                 boost::lexical_cast<int32_t>(reconnect_wait_time);
             if (reconnect_wait_time_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): invalid reconnect "
                           "wait time, expected positive number, instead got "
                               << reconnect_wait_time);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): "
                       "invalid reconnect wait time, expected "
@@ -221,6 +242,8 @@ CqlConnection::openDatabase() {
             connect_timeout_number =
                 boost::lexical_cast<int32_t>(connect_timeout);
             if (connect_timeout_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "invalid connect timeout, expected "
@@ -228,6 +251,8 @@ CqlConnection::openDatabase() {
                               << connect_timeout);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid connect timeout, "
                       "expected castable to int, instead got \""
@@ -242,6 +267,8 @@ CqlConnection::openDatabase() {
             request_timeout_number =
                 boost::lexical_cast<int32_t>(request_timeout);
             if (request_timeout_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "invalid request timeout, expected "
@@ -249,6 +276,8 @@ CqlConnection::openDatabase() {
                               << request_timeout);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid request timeout, "
                       "expected castable to int, instead got \""
@@ -262,6 +291,8 @@ CqlConnection::openDatabase() {
         try {
             tcp_keepalive_number = boost::lexical_cast<int32_t>(tcp_keepalive);
             if (tcp_keepalive_number < 0) {
+                cass_cluster_free(cluster_);
+                cluster_ = NULL;
                 isc_throw(DbOperationError,
                           "CqlConnection::openDatabase(): "
                           "invalid TCP keepalive, expected "
@@ -269,6 +300,8 @@ CqlConnection::openDatabase() {
                               << tcp_keepalive);
             }
         } catch (const boost::bad_lexical_cast& ex) {
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
             isc_throw(DbOperationError,
                       "CqlConnection::openDatabase(): invalid TCP keepalive, "
                       "expected castable to int, instead got \""
@@ -280,6 +313,59 @@ CqlConnection::openDatabase() {
 
     if (stcp_nodelay == "true") {
         cass_cluster_set_tcp_nodelay(cluster_, cass_true);
+    }
+
+    ssl_ = cass_ssl_new();
+
+    if (ssl_cert) {
+        char* cert;
+        long cert_size;
+        size_t bytes_read;
+
+        FILE *ssl_cert_file = fopen(ssl_cert, "rb");
+        if (ssl_cert_file == NULL) {
+            cass_ssl_free(ssl_);
+            ssl_ = NULL;
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
+            isc_throw(DbOperationError,
+                      "CqlConnection::openDatabase(): "
+                      "invalid ssl certificate file: "
+                          << sssl_cert);
+        }
+
+        fseek(ssl_cert_file, 0, SEEK_END);
+        cert_size = ftell(ssl_cert_file);
+        rewind(ssl_cert_file);
+
+        cert = new char[cert_size];
+        bytes_read = fread(cert, 1, cert_size, ssl_cert_file);
+        fclose(ssl_cert_file);
+
+        bool ssl_error = false;
+        if (bytes_read == (size_t) cert_size) {
+            rc = cass_ssl_add_trusted_cert_n(ssl_, cert, cert_size);
+            if (rc != CASS_OK) {
+                ssl_error = true;
+            }
+        } else {
+            ssl_error = true;
+        }
+        delete[] cert;
+        if (ssl_error) {
+            cass_ssl_free(ssl_);
+            ssl_ = NULL;
+            cass_cluster_free(cluster_);
+            cluster_ = NULL;
+            isc_throw(DbOperationError,
+                      "CqlConnection::openDatabase(): "
+                      "error loading ssl certificate file: "
+                          << sssl_cert);
+        }
+        cass_ssl_set_verify_flags(ssl_, CASS_SSL_VERIFY_PEER_CERT);
+        cass_cluster_set_ssl(cluster_, ssl_);
+    } else {
+        cass_ssl_set_verify_flags(ssl_, CASS_SSL_VERIFY_NONE);
     }
 
     session_ = cass_session_new();
@@ -294,6 +380,8 @@ CqlConnection::openDatabase() {
     rc = cass_future_error_code(connect_future);
     cass_future_free(connect_future);
     if (rc != CASS_OK) {
+        cass_ssl_free(ssl_);
+        ssl_ = NULL;
         cass_session_free(session_);
         session_ = NULL;
         cass_cluster_free(cluster_);
