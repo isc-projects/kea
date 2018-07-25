@@ -145,11 +145,7 @@ public:
           dhcp4_next_server_null_(MLM_FALSE),
           dhcp4_server_hostname_null_(MLM_FALSE),
           dhcp4_boot_file_name_null_(MLM_FALSE),
-<<<<<<< HEAD
-          auth_key_null_(MLM_FALSE)  {
-=======
           auth_key_null_(MLM_FALSE) {
->>>>>>> upstream/master
 
         // Fill arrays with 0 so as they don't include any garbage.
         memset(dhcp_identifier_buffer_, 0, sizeof(dhcp_identifier_buffer_));
