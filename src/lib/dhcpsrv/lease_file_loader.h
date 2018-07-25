@@ -125,8 +125,10 @@ public:
                           DHCPSRV_MEMFILE_LEASE_LOAD)
                     .arg(lease->toText());
 
-                // Now see if we need to sanitize this lease.
-                lease_checker.checkLease(lease);
+                // Now see if we need to sanitize this lease. As lease file is
+                // loaded during the configuration, we have to use staging,
+                // rather than current config for this.
+                lease_checker.checkLease(lease, false);
                 if (!lease) {
                     continue;
                 }

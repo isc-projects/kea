@@ -89,10 +89,6 @@ public:
 
         Lease::Type lease_type = Lease::TYPE_NA;
         uint32_t iaid = 1 + random()%100;
-        uint32_t valid_lft = 1200;
-        uint32_t preferred_lft = 1000;
-        uint32_t t1 = 600;
-        uint32_t t2 = 900;
 
         std::ostringstream hostname;
         hostname << "hostname" << (random() % 2048);
@@ -111,6 +107,14 @@ public:
         size_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
 
         return (Subnet4Ptr(new Subnet4(addr, len, 1000, 2000, 3000, id)));
+    }
+
+    Subnet6Ptr createSubnet6(string subnet_txt, SubnetID id) {
+        size_t pos = subnet_txt.find("/");
+        isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
+        size_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+        return (Subnet6Ptr(new Subnet6(addr, len, 1000, 2000, 3000, 4000, id)));
     }
 
     void
@@ -158,16 +162,17 @@ public:
                   SubnetID expected_id) {
 
         // Let's start a backend in proper universe.
-        IOAddress a(addr);
-        startLeaseBackend(a.isV6());
+        startLeaseBackend(false);
 
         // Now set the sanity checks to a proper value.
         ASSERT_NO_THROW(CfgMgr::instance().getCurrentCfg()->getConsistency()
                         ->setLeaseSanityCheck(sanity));
 
         // Create the subnet and add it to configuration.
-        Subnet4Ptr subnet = createSubnet4(subnet_txt, subnet_id);
-        ASSERT_NO_THROW(CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet));
+        if (!subnet_txt.empty()) {
+            Subnet4Ptr subnet = createSubnet4(subnet_txt, subnet_id);
+            ASSERT_NO_THROW(CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet));
+        }
 
         // Now try to insert the lease.
         Lease4Ptr l = newLease4(addr, lease_id);
@@ -179,6 +184,58 @@ public:
         if (result && exp_lease_present) {
 
             ASSERT_TRUE(from_backend = LeaseMgrFactory::instance().getLease4(IOAddress(addr)));
+
+            EXPECT_EQ(l->addr_, from_backend->addr_);
+            EXPECT_EQ(from_backend->subnet_id_, expected_id);
+        }
+    }
+
+    /// @brief Creates subnet configuration, inserts a lease and checks the result.
+    ///
+    /// This is a bit complicated test. It creates a Subnet configuration first
+    /// (defined by subnet/subnet_id), adds it to the current configuration,
+    /// then sets the lease checks to specified value, then creates a lease
+    /// (addr/lease_id) and tries to add it to the lease backend (memfile is used).
+    /// Afterwards it checks whether the lease is added or not (exp_lease_present)
+    /// and if it is present, whether it has expected subnet-id (expected_id).
+    ///
+    /// @param addr Address of the lease to be created
+    /// @param lease_id Subnet-id of the lease to be created
+    /// @param subnet_txt Text representation of the subnet, e.g. 192.0.2.0/24
+    /// @param subnet_id Subnet-id of the subnet to be created
+    /// @param sanity Sanity checks set in the configuration
+    /// @param exp_lease_present whether the lease is expected to be inserted
+    /// @param expected_id if exp_lease_present is true, lease's subnet id should
+    ///                    match this value.
+    /// @return lease from the backend (may return null)
+    void
+    leaseAddCheck6(string addr, SubnetID lease_id, string subnet_txt, SubnetID subnet_id,
+                  CfgConsistency::LeaseSanity sanity, bool exp_lease_present,
+                  SubnetID expected_id) {
+
+        // Let's start a backend in proper universe.
+        startLeaseBackend(true);
+
+        // Now set the sanity checks to a proper value.
+        ASSERT_NO_THROW(CfgMgr::instance().getCurrentCfg()->getConsistency()
+                        ->setLeaseSanityCheck(sanity));
+
+        // Create the subnet and add it to configuration.
+        if (!subnet_txt.empty()) {
+            Subnet6Ptr subnet = createSubnet6(subnet_txt, subnet_id);
+            ASSERT_NO_THROW(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet));
+        }
+
+        // Now try to insert the lease.
+        Lease6Ptr l = newLease6(addr, lease_id);
+        bool result = false;
+        EXPECT_NO_THROW(result = LeaseMgrFactory::instance().addLease(l));
+        EXPECT_EQ(result, exp_lease_present);
+
+        Lease6Ptr from_backend;
+        if (result && exp_lease_present) {
+
+            ASSERT_TRUE(from_backend = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress(addr)));
 
             EXPECT_EQ(l->addr_, from_backend->addr_);
             EXPECT_EQ(from_backend->subnet_id_, expected_id);
@@ -221,49 +278,136 @@ TEST_F(SanityChecksTest, leaseCheck) {
     parserCheck(cfg, bogus4, true, CfgConsistency::LEASE_CHECK_NONE);
 }
 
-// This test checks how the code behaves when there is no subnet matching
-// the lease added.
-TEST_F(SanityChecksTest, memfileAdd4NoSubnet) {
-
-    startLeaseBackend(false); // false = V4
-
-    string addr("192.0.2.1");
-    SubnetID lease_id = 1;
-    SubnetID subnet_id = 1;
-
-    Lease4Ptr l = newLease4(addr, lease_id);
-
-    EXPECT_TRUE(LeaseMgrFactory::instance().addLease(l));
-
-    Lease4Ptr from_backend;
-    ASSERT_TRUE(from_backend = LeaseMgrFactory::instance().getLease4(IOAddress(addr)));
-
-    // The lease should be returned exactly as is.
-    detailCompareLease(l, from_backend);
-
-    LeaseMgrFactory::instance().deleteLease(IOAddress(addr));
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to none
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd4NoSubnetNone) {
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_NONE, true, 1);
 }
 
-TEST_F(SanityChecksTest, memfileAdd4_checksNone) {
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to warn
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd4NoSubnetWarn) {
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to fix
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd4NoSubnetFix) {
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to fix-del
+// Expected behavior: lease not added
+TEST_F(SanityChecksTest, memfileAdd4NoSubnetFixDel) {
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to del
+// Expected behavior: lease not added
+TEST_F(SanityChecksTest, memfileAdd4NoSubnetDel) {
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to none
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd4checksNone) {
     leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_NONE, true, 1);
 }
 
-TEST_F(SanityChecksTest, memfileAdd4_checksWarn) {
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to warn
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd4checksWarn) {
     leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_WARN, true, 1);
 }
 
-TEST_F(SanityChecksTest, memfileAdd4_checksFix) {
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to fix
+// Expected behavior: lease added with corrected subnet-id
+TEST_F(SanityChecksTest, memfileAdd4checksFix) {
     leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
 }
 
-TEST_F(SanityChecksTest, memfileAdd4_checksFixdel1) {
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to fix-del
+// Expected behavior: lease added with corrected subnet-id
+TEST_F(SanityChecksTest, memfileAdd4checksFixdel1) {
     leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
 }
 
-TEST_F(SanityChecksTest, memfileAdd4_checksFixdel2) {
+// This test checks how the code behaves when there is:
+// one subnet configured (but the lease does not belong to it),
+// sanity-check is set to fix-del
+// Expected behavior: lease not added
+TEST_F(SanityChecksTest, memfileAdd4checksFixdel2) {
     leaseAddCheck4("192.0.2.1", 1, "192.0.3.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 0);
 }
 
-TEST_F(SanityChecksTest, memfileAdd4_checksDel) {
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to fix-del
+// Expected behavior: lease not added
+TEST_F(SanityChecksTest, memfileAdd4checksDel) {
     leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_DEL, false, 0);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to none
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd6NoSubnetNone) {
+    leaseAddCheck6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_NONE, true, 1);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to warn
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd6NoSubnetWarn) {
+    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to fix
+// Expected behavior: lease added as is
+TEST_F(SanityChecksTest, memfileAdd6NoSubnetFix) {
+    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+}
+
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to fix-del
+// Expected behavior: lease not added
+TEST_F(SanityChecksTest, memfileAdd6NoSubnetFixDel) {
+    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6NoSubnetDel) {
+    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6checksNone) {
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_NONE, true, 1);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6checksWarn) {
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6checksFix) {
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6checksFixdel1) {
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6checksFixdel2) {
+    leaseAddCheck6("2000::1", 1, "3000::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 0);
+}
+
+TEST_F(SanityChecksTest, memfileAdd6checksDel) {
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_DEL, false, 0);
 }

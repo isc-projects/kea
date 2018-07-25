@@ -28,7 +28,9 @@ class SanityChecker {
     /// correct subnet-id or discard the lease.
     ///
     /// @param lease Lease to be sanity-checked
-    void checkLease(Lease4Ptr& lease);
+    /// @param current specify whether to use current (true) or staging(false)
+    ///                config
+    void checkLease(Lease4Ptr& lease, bool current = true);
 
     /// @brief Sanity checks and possibly corrects an IPv4 lease
     ///
@@ -37,7 +39,9 @@ class SanityChecker {
     /// correct subnet-id or discard the lease.
     ///
     /// @param lease Lease to be sanity-checked
-    void checkLease(Lease6Ptr& lease);
+    /// @param current specify whether to use current (true) or staging(false)
+    ///                config
+    void checkLease(Lease6Ptr& lease, bool current = true);
 
  private:
 

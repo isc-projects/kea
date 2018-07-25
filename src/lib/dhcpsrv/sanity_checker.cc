@@ -13,15 +13,27 @@
 namespace isc {
 namespace dhcp {
 
-void SanityChecker::checkLease(Lease4Ptr& lease) {
-    CfgConsistencyPtr sanity = CfgMgr::instance().getCurrentCfg()->getConsistency();
-    CfgSubnets4Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
+void SanityChecker::checkLease(Lease4Ptr& lease, bool current) {
+    SrvConfigPtr cfg;
+    if (current) {
+        cfg = CfgMgr::instance().getCurrentCfg();
+    } else {
+        cfg = CfgMgr::instance().getStagingCfg();
+    }
+    CfgConsistencyPtr sanity = cfg->getConsistency();
+    CfgSubnets4Ptr subnets = cfg->getCfgSubnets4();
     checkLeaseInternal(lease, sanity, subnets);
 }
 
-void SanityChecker::checkLease(Lease6Ptr& lease) {
-    CfgConsistencyPtr sanity = CfgMgr::instance().getCurrentCfg()->getConsistency();
-    CfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
+void SanityChecker::checkLease(Lease6Ptr& lease, bool current) {
+    SrvConfigPtr cfg;
+    if (current) {
+        cfg = CfgMgr::instance().getCurrentCfg();
+    } else {
+        cfg = CfgMgr::instance().getStagingCfg();
+    }
+    CfgConsistencyPtr sanity = cfg->getConsistency();
+    CfgSubnets6Ptr subnets = cfg->getCfgSubnets6();
     checkLeaseInternal(lease, sanity, subnets);
 }
 
