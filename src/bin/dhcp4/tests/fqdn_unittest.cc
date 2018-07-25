@@ -836,7 +836,10 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateWrongHostname) {
     EXPECT_FALSE(hostname);
 }
 
-// Test that the server skips processing of an empty Hostname option.
+// Test that the server does not see an empty Hostname option.
+// Suppressing the empty Hostname is done in libdhcp++ during
+// unpackcing, so technically we don't need this test but,
+// hey it's already written.
 TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
     Pkt4Ptr query;
     ASSERT_NO_THROW(query = generatePktWithEmptyHostname(DHCPREQUEST));
@@ -844,7 +847,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
     ASSERT_NO_THROW(hostname = processHostname(query));
     EXPECT_FALSE(hostname);
 }
-
 
 // Test that server generates the fully qualified domain name for the client
 // if client supplies the partial name.

@@ -1016,6 +1016,37 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
     EXPECT_EQ(0x0, option_bar->getValue());
 }
 
+// Verifies that an Host Name (option 12), will be dropped when empty,
+// while subsequent options will still be unpacked.
+TEST_F(LibDhcpTest, emptyHostName) {
+
+    uint8_t opts[] = {
+        12,  0,             // Empty Hostname
+        60,  3, 10, 11, 12  // Class Id
+    };
+
+    vector<uint8_t> packed(opts, opts + sizeof(opts));
+    isc::dhcp::OptionCollection options; // list of options
+    list<uint16_t> deferred;
+
+    ASSERT_NO_THROW(
+        LibDHCP::unpackOptions4(packed, "dhcp4", options, deferred);
+    );
+
+    // Host Name should not exist, we quietly drop it when empty.
+    isc::dhcp::OptionCollection::const_iterator x = options.find(12);
+    ASSERT_TRUE(x == options.end());
+
+    // Verify Option 60 exists correctly
+    x = options.find(60);
+    ASSERT_FALSE(x == options.end());
+    EXPECT_EQ(60, x->second->getType());
+    ASSERT_EQ(3, x->second->getData().size());
+    EXPECT_EQ(5, x->second->len());
+    EXPECT_EQ(0, memcmp(&x->second->getData()[0], opts + 4, 3));
+};
+
+
 TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     // Create a buffer that holds dummy option data.
