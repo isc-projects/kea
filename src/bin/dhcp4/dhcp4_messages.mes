@@ -98,11 +98,6 @@ client and transaction identification information. The second argument
 specifies the hostname carried in the Hostname option sent by the
 client.
 
-% DHCP4_CLIENT_HOSTNAME_EMPTY %1: client sent bogus empty Hostname option
-This informational message is issued when the server receives an
-empty Hostname option. Such option is bogus (size is required to be
-at least one) and is ignored.
-
 % DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
 This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and

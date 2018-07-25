@@ -525,6 +525,15 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             return (last_offset);
         }
 
+        // While an empty Host Name option is non-RFC compliant, some clients
+        // do send it.  In the spirit of being liberal, we'll just drop it,
+        // rather than the dropping the whole packet.  We do not have a
+        // way to log this from here but meh...  a PCAP will show it arriving,
+        // and we know we drop it.
+        if (opt_len == 0 && opt_type == DHO_HOST_NAME) {
+            continue;
+        }
+
         // Get all definitions with the particular option code. Note
         // that option code is non-unique within this container
         // however at this point we expect to get one option
