@@ -282,63 +282,72 @@ TEST_F(SanityChecksTest, leaseCheck) {
 // no subnets configured, sanity-check is set to none
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd4NoSubnetNone) {
-    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_NONE, true, 1);
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_NONE,
+                   true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to warn
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd4NoSubnetWarn) {
-    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN,
+                   true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to fix
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd4NoSubnetFix) {
-    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX,
+                   true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to fix-del
 // Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd4NoSubnetFixDel) {
-    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL,
+                   false, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to del
 // Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd4NoSubnetDel) {
-    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+    leaseAddCheck4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL,
+                   false, 1);
 }
 
 // This test checks how the code behaves when there is:
 // one subnet configured, sanity-check is set to none
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd4checksNone) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_NONE, true, 1);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2,
+                   CfgConsistency::LEASE_CHECK_NONE, true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // one subnet configured, sanity-check is set to warn
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd4checksWarn) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2,
+                   CfgConsistency::LEASE_CHECK_WARN, true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // one subnet configured, sanity-check is set to fix
 // Expected behavior: lease added with corrected subnet-id
 TEST_F(SanityChecksTest, memfileAdd4checksFix) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2,
+                   CfgConsistency::LEASE_CHECK_FIX, true, 2);
 }
 
 // This test checks how the code behaves when there is:
 // one subnet configured, sanity-check is set to fix-del
 // Expected behavior: lease added with corrected subnet-id
 TEST_F(SanityChecksTest, memfileAdd4checksFixdel1) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2,
+                   CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
 }
 
 // This test checks how the code behaves when there is:
@@ -346,68 +355,103 @@ TEST_F(SanityChecksTest, memfileAdd4checksFixdel1) {
 // sanity-check is set to fix-del
 // Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd4checksFixdel2) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.3.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 0);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.3.0/24", 2,
+                   CfgConsistency::LEASE_CHECK_FIX_DEL, false, 0);
 }
 
 // This test checks how the code behaves when there is:
-// one subnet configured, sanity-check is set to fix-del
+// one subnet configured, sanity-check is set to del
 // Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd4checksDel) {
-    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_DEL, false, 0);
+    leaseAddCheck4("192.0.2.1", 1, "192.0.2.0/24", 2,
+                   CfgConsistency::LEASE_CHECK_DEL, false, 0);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to none
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd6NoSubnetNone) {
-    leaseAddCheck6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_NONE, true, 1);
+    leaseAddCheck6("2001::1", 1, "", 0,
+                   CfgConsistency::LEASE_CHECK_NONE, true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to warn
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd6NoSubnetWarn) {
-    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+    leaseAddCheck6("2000::1", 1, "", 0,
+                   CfgConsistency::LEASE_CHECK_WARN, true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to fix
 // Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd6NoSubnetFix) {
-    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+    leaseAddCheck6("2000::1", 1, "", 0,
+                   CfgConsistency::LEASE_CHECK_FIX, true, 1);
 }
 
 // This test checks how the code behaves when there is:
 // no subnets configured, sanity-check is set to fix-del
 // Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd6NoSubnetFixDel) {
-    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+    leaseAddCheck6("2000::1", 1, "", 0,
+                   CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
 }
 
+// This test checks how the code behaves when there is:
+// no subnets configured, sanity-check is set to del
+// Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd6NoSubnetDel) {
-    leaseAddCheck6("2000::1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+    leaseAddCheck6("2000::1", 1, "", 0,
+                   CfgConsistency::LEASE_CHECK_DEL, false, 1);
 }
 
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to none
+// Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd6checksNone) {
-    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_NONE, true, 1);
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2,
+                   CfgConsistency::LEASE_CHECK_NONE, true, 1);
 }
 
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to warn
+// Expected behavior: lease added as is
 TEST_F(SanityChecksTest, memfileAdd6checksWarn) {
-    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2,
+                   CfgConsistency::LEASE_CHECK_WARN, true, 1);
 }
 
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to fix
+// Expected behavior: lease added with corrected subnet-id
 TEST_F(SanityChecksTest, memfileAdd6checksFix) {
-    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2,
+                   CfgConsistency::LEASE_CHECK_FIX, true, 2);
 }
 
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to fix-del
+// Expected behavior: lease added with corrected subnet-id
 TEST_F(SanityChecksTest, memfileAdd6checksFixdel1) {
-    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2,
+                   CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
 }
 
+// This test checks how the code behaves when there is:
+// one subnet configured (but the lease does not belong to it),
+// sanity-check is set to fix-del
+// Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd6checksFixdel2) {
-    leaseAddCheck6("2000::1", 1, "3000::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 0);
+    leaseAddCheck6("2000::1", 1, "3000::/16", 2,
+                   CfgConsistency::LEASE_CHECK_FIX_DEL, false, 0);
 }
 
+// This test checks how the code behaves when there is:
+// one subnet configured, sanity-check is set to del
+// Expected behavior: lease not added
 TEST_F(SanityChecksTest, memfileAdd6checksDel) {
-    leaseAddCheck6("2000::1", 1, "2000::/16", 2, CfgConsistency::LEASE_CHECK_DEL, false, 0);
+    leaseAddCheck6("2000::1", 1, "2000::/16", 2,
+                   CfgConsistency::LEASE_CHECK_DEL, false, 0);
 }

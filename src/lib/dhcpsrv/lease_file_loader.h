@@ -126,8 +126,8 @@ public:
                     .arg(lease->toText());
 
                 // Now see if we need to sanitize this lease. As lease file is
-                // loaded during the configuration, we have to use staging,
-                // rather than current config for this.
+                // loaded during the configuration, we have to use staging config,
+                // rather than current config for this (false = staging).
                 lease_checker.checkLease(lease, false);
                 if (!lease) {
                     continue;
