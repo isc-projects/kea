@@ -1016,6 +1016,24 @@ Memfile_LeaseMgr::getLeases6() const {
 }
 
 Lease6Collection
+Memfile_LeaseMgr::getLeases6(const DUID& duid) const {
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MEMFILE_GET6_DUID)
+       .arg(duid.toText());
+
+    Lease6Collection collection;
+    const Lease6StorageDuidIndex& idx = storage6_.get<DuidIndexTag>();
+    std::pair<Lease6StorageDuidIndex::const_iterator,
+              Lease6StorageDuidIndex::const_iterator> l =
+        idx.equal_range(duid.getDuid());
+
+    for (auto lease = l.first; lease != l.second; ++lease) {
+        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    }
+
+    return (collection);
+}
+
+Lease6Collection
 Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size) const {
     // Expecting IPv6 address.

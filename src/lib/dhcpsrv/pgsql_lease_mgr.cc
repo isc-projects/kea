@@ -215,6 +215,17 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE subnet_id = $1"},
 
+    // GET_LEASE6_DUID
+    { 1, { OID_BYTEA },
+      "get_lease6_duid",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE duid = $1"},
+
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
       "get_lease6_expire",
@@ -1502,6 +1513,25 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
     // ... and get the data
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_SUBID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_DUID)
+              .arg(duid.toText());
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // DUID
+    bind_array.add(duid.getDuid());
+    Lease6Collection result;
+
+    // query to fetch the data
+    getLeaseCollection(GET_LEASE6_DUID, bind_array, result);
 
     return (result);
 }
