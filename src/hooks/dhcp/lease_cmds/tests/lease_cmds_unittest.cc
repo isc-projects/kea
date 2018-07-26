@@ -3729,4 +3729,33 @@ TEST_F(LeaseCmdsTest, Lease6WipeNoLeasesAll) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
+TEST_F(LeaseCmdsTest, brokenUpdate) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Set the sanity checks level.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()
+        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 444,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "        ,\"force-create\": true\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
+                     "subnet-id=444 currently configured.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+
 } // end of anonymous namespace
