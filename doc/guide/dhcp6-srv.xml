@@ -3022,6 +3022,49 @@ should include options from the isc option space:
       </note>
     </section>
 
+     <section xml:id="sanity-checks6">
+       <title>Sanity checks in DHCPv6</title>
+
+       <para>
+        The sanity checks mechanism works exactly the same as its
+        DHCPv4 counterpart. See <xref linkend="sanity-checks4"/> for
+        details.
+       </para>
+
+       <para>
+         The only difference is that the sanity checks mechanism works
+         for address leases only. Since delegated prefixes do not have
+         to belong to a subnet in which they're offered, there is no
+         way to implement such a mechanism for IPv6 prefixes.
+       </para>
+
+       <para>This feature is currently implemented for memfile backend and for
+       lease6-add command.</para>
+
+              <para>
+         An example configuration that sets this parameter looks as follows:
+<screen>
+"Dhcp6": {
+    "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        <userinput>"lease-checks": "fix-del"</userinput>
+    },
+    ...
+}</screen>
+              </para>
+
+       </section>
+
    </section>
 
   <!-- Host reservation is a large topic. There will be many subsections,
