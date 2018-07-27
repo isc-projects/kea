@@ -638,6 +638,12 @@ TEST_F(LabelSequenceTest, toRawText) {
     LabelSequence l(n);
     EXPECT_EQ("a bc.$exa(m)ple.@org", l.toRawText(true));
     EXPECT_EQ("a bc.$exa(m)ple.@org.", l.toRawText(false));
+
+    // toRawText is not supposed to do any sanity checks.
+    // Let's try with a very weird name.
+    Name n2("xtra\tchars\n.in.name");
+    LabelSequence l2(n2);
+    EXPECT_EQ("xtra\tchars\n.in.name.", l2.toRawText(false));
 }
 
 // The following are test data used in the getHash test below.  Normally

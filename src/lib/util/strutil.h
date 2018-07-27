@@ -263,7 +263,7 @@ class StringSanitizerImpl;
 ///
 /// The implementation uses C++11 regex IF the environemnt supports it
 /// (tested in configure.ac). If not it falls back to C lib regcomp/regexec.
-/// Older compilers, such as  pre Gnu 4.9.0, provided only experimental
+/// Older compilers, such as pre Gnu g++ 4.9.0, provided only experimental
 /// implementations of regex which are recognized as buggy.
 class StringSanitizer {
 public:
@@ -271,7 +271,7 @@ public:
     /// Constructor
     ///
     /// Compiles the given character set into a regular expression, and
-    /// retains the given character replacement.  Thereafter, the instance
+    /// retains the given character replacement. Thereafter, the instance
     /// may be used to scrub an arbitrary number of strings.
     ///
     /// @param char_set string containing a regular expression (POSIX
@@ -291,8 +291,8 @@ public:
 
     /// Returns a scrubbed copy of a given string
     ///
-    /// Replaces all occurrances of characters described by the regular
-    /// expression with the character replacement .
+    /// Replaces all occurrences of characters described by the regular
+    /// expression with the character replacement.
     ///
     /// @param original the string to scrub
     /// @throw Unexpected if an error occurs during scrubbing

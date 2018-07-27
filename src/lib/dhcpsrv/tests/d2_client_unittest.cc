@@ -1239,40 +1239,40 @@ TEST(D2ClientMgr, sanitizeFqdnV6) {
 
     std::vector<Scenario> scenarios = {
         {
-        "full FQDN, name unchanged",
-        "One.123.example.com.",
-        Option6ClientFqdn::FULL,
-        "one.123.example.com."
+            "full FQDN, name unchanged",
+            "One.123.example.com.",
+            Option6ClientFqdn::FULL,
+            "one.123.example.com."
         },
         {
-        "partial FQDN, name unchanged, but qualified",
-        "One.123",
-        Option6ClientFqdn::PARTIAL,
-        "one.123.suffix.com."
+            "partial FQDN, name unchanged, but qualified",
+            "One.123",
+            Option6ClientFqdn::PARTIAL,
+            "one.123.suffix.com."
         },
         {
-        "full FQDN, scrubbed",
-        "O#n^e.123.ex&a*mple.com.",
-        Option6ClientFqdn::FULL,
-        "oxnxe.123.exxaxmple.com."
+            "full FQDN, scrubbed",
+            "O#n^e.123.ex&a*mple.com.",
+            Option6ClientFqdn::FULL,
+            "oxnxe.123.exxaxmple.com."
         },
         {
-        "partial FQDN, scrubbed and qualified",
-        "One.1+2|3",
-        Option6ClientFqdn::PARTIAL,
-        "one.1x2x3.suffix.com."
+            "partial FQDN, scrubbed and qualified",
+            "One.1+2|3",
+            Option6ClientFqdn::PARTIAL,
+            "one.1x2x3.suffix.com."
         },
         {
-        "full FQDN with characters that get escaped",
-        "O n e.123.exa(m)ple.com.",
-        Option6ClientFqdn::FULL,
-        "oxnxe.123.exaxmxple.com."
+            "full FQDN with characters that get escaped",
+            "O n e.123.exa(m)ple.com.",
+            Option6ClientFqdn::FULL,
+            "oxnxe.123.exaxmxple.com."
         },
         {
-        "full FQDN with escape sequences",
-        "O\032n\032e.123.example.com.",
-        Option6ClientFqdn::FULL,
-        "oxnxe.123.example.com."
+            "full FQDN with escape sequences",
+            "O\032n\032e.123.example.com.",
+            Option6ClientFqdn::FULL,
+            "oxnxe.123.example.com."
         }
     };
 

@@ -1742,22 +1742,22 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        SCOPED_TRACE((*scenario).description_);
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE((scenario).description_);
         {
-        // Set the hostname option.
-        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
+            // Set the hostname option.
+            ASSERT_NO_THROW(client.includeHostname((scenario).original_));
 
-        // Send the DHCPDISCOVER and make sure that the server responded.
-        ASSERT_NO_THROW(client.doDiscover());
-        resp = client.getContext().response_;
-        ASSERT_TRUE(resp);
-        ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+            // Send the DHCPDISCOVER and make sure that the server responded.
+            ASSERT_NO_THROW(client.doDiscover());
+            resp = client.getContext().response_;
+            ASSERT_TRUE(resp);
+            ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
 
-        // Make sure the response hostname is what we expect.
-        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-        ASSERT_TRUE(hostname);
-        EXPECT_EQ((*scenario).sanitized_, hostname->getValue());
+            // Make sure the response hostname is what we expect.
+            hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+            ASSERT_TRUE(hostname);
+            EXPECT_EQ((scenario).sanitized_, hostname->getValue());
         }
     }
 }
