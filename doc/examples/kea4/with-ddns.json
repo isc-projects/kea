@@ -54,7 +54,9 @@
         "override-client-update" : true,
         "replace-client-name" : "when-present",
         "generated-prefix" : "test.prefix",
-        "qualifying-suffix" : "test.suffix."
+        "qualifying-suffix" : "test.suffix.",
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x"
     }
 },
 

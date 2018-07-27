@@ -463,7 +463,7 @@ TEST(StringUtilTest, decodeFormattedHexString) {
                  isc::BadValue);
 }
 
-/// @brief Fucntion used to test StringSantitizer
+/// @brief Function used to test StringSantitizer
 /// @param original - string to sanitize
 /// @param char_set - regular expression string describing invalid
 /// characters
@@ -507,7 +507,7 @@ TEST(StringUtilTest, stringSanitizer) {
     sanitizeStringTest("abc.123", "[b-c2]", "*",
                        "a**.1*3");
 
-    // Inverted list of valid chars should work: (b,c,2 are invalid)
+    // Inverted list of valid chars should work: (b,c,2 are valid)
     sanitizeStringTest("abc.123", "[^b-c2]", "*",
                        "*bc**2*");
 
@@ -527,7 +527,7 @@ TEST(StringUtilTest, stringSanitizer) {
     sanitizeStringTest("%%A%%B%%C%%", "[^A-Za-z0-9_]", "x",
                        "xxAxxBxxCxx");
 
-    // Removing than one non-matching in a row should work.
+    // Removing more than one non-matching in a row should work.
     sanitizeStringTest("%%A%%B%%C%%", "[^A-Za-z0-9_]", "",
                        "ABC");
 
