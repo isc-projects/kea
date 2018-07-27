@@ -1,3 +1,11 @@
+14xx.   [func]      tmark
+	Added two new configuration paramters to kea-dhcp4 and kea-dhcp6
+	DhcpDdns sections: 'hostname-char-set' and 'hostname-char-replacment'.
+	These values (when not empty) are used by the server to sanitize
+	host name and FQDN domain names sent by clients prior to using them
+	to construct DNS names.
+	(Trac #5680, git 32466ab3d4688e66c8c2f9fd24d4a98fcc871ff6)
+
 1435.	[func]		marcin
 	Implemented ha-continue command in HA hooks library and
 	updated the Kea User's Guide with the information how to
