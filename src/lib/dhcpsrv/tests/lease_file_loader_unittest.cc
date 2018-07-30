@@ -36,6 +36,11 @@ public:
     /// IO object to be used to write to this file.
     LeaseFileLoaderTest();
 
+    /// @brief Destructor
+    ///
+    /// Removes any configuration that may have been added in CfgMgr.
+    ~LeaseFileLoaderTest();
+
     /// @brief Prepends the absolute path to the file specified
     /// as an argument.
     ///
@@ -145,6 +150,32 @@ public:
     Lease4Storage storage4_; ///< Storage for IPv4 leases
     Lease6Storage storage6_; ///< Storage for IPv4 leases
 
+    /// @brief Creates IPv4 subnet with specified parameters
+    ///
+    /// @param subnet_txt subnet in textual form, e.g. 192.0.2.0/24
+    /// @param subnet_id id to be used.
+    /// @return A pointer to Subnet4 object
+    Subnet4Ptr createSubnet4(std::string subnet_txt, SubnetID id) {
+        size_t pos = subnet_txt.find("/");
+        isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
+        size_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+        return (Subnet4Ptr(new Subnet4(addr, len, 1000, 2000, 3000, id)));
+    }
+
+    /// @brief Creates IPv6 subnet with specified parameters
+    ///
+    /// @param subnet_txt subnet in textual form, e.g. 2001:db8::/32
+    /// @param subnet_id id to be used.
+    /// @return A pointer to Subnet4 object
+    Subnet6Ptr createSubnet6(std::string subnet_txt, SubnetID id) {
+        size_t pos = subnet_txt.find("/");
+        isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
+        size_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+        return (Subnet6Ptr(new Subnet6(addr, len, 1000, 2000, 3000, 4000, id)));
+    }
+
     /// @brief Checks if IPv4 lease loaded from file is sanity checked.
     ///
     /// This method writes a simple lease file with one lease in it,
@@ -154,12 +185,21 @@ public:
     ///
     /// @param lease address of the lease in text form
     /// @param lease_id subnet-id to be used in a lease
+    /// @param subnet_txt Text representation of the subnet, e.g. 192.0.2.0/24
+    /// @param subnet_id Subnet-id of the subnet to be created
     /// @param sanity level of sanity checks
     /// @param exp_present is the lease expected to be loaded (true = yes)
     /// @param exp_id expected subnet-id of the loaded lease
     void sanityChecks4(std::string lease, SubnetID lease_id,
+                       std::string subnet_txt, SubnetID subnet_id,
                        CfgConsistency::LeaseSanity sanity,
                        bool exp_present, SubnetID exp_id) {
+
+        // Create the subnet and add it to configuration.
+        if (!subnet_txt.empty()) {
+            Subnet4Ptr subnet = createSubnet4(subnet_txt, subnet_id);
+            ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet));
+        }
 
         std::stringstream file_content;
         file_content << v4_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
@@ -189,7 +229,7 @@ public:
 
         if (exp_present) {
             ASSERT_TRUE(l) << "lease not found, but expected";
-            EXPECT_EQ(exp_id, l->subnet_id_);
+            EXPECT_EQ(l->subnet_id_, exp_id);
         } else {
             EXPECT_FALSE(l) << "lease found, but was not expected";
         }
@@ -260,6 +300,11 @@ protected:
 
 LeaseFileLoaderTest::LeaseFileLoaderTest()
     : filename_(absolutePath("leases4.csv")), io_(filename_) {
+    CfgMgr::instance().clear();
+}
+
+LeaseFileLoaderTest::~LeaseFileLoaderTest() {
+    CfgMgr::instance().clear();
 }
 
 std::string
@@ -656,16 +701,63 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
 
 // This test checks if the lease can be loaded, even though there are no
 // subnets configured that it would match.
+// Scenario: print a warning, there's no subnet,
+// expected outcome: add the lease as is
 TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsWarn) {
-    sanityChecks4("192.0.2.1", 1, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
 }
 
-// This test checks if the lease can be discarded.  Note we are
-// verifying whether the checks are conducted at all when loading a file.
-// Thorough tests were conducted in sanity_checks_unittest.cc.
-TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsDel) {
-    sanityChecks4("192.0.2.1", 1, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: add the lease as is
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsFix) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
 }
+
+// This test checks if the lease can be discarded if it's impossible to fix.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsFixDel) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease can be discarded.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsDel) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: correct the lease
+TEST_F(LeaseFileLoaderTest, sanityChecker4Fix) {
+    sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+}
+
+// This test checks if the lease can be fixed when it's possible.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4FixDel1) {
+    sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+}
+
+// This test checks if the lease is discarded, when fix is not possible.
+// Scenario: try to fix the lease, there's a subnet, but it doesn't match,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4FixDel2) {
+    sanityChecks4("192.0.2.1", 1, "192.0.3.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease is discarded.
+// Scenario: delete the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4Del) {
+    sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+
+
 
 // This test checks if the lease can be loaded, even though there are no
 // subnets configured that it would match.

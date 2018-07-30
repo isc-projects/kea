@@ -3026,22 +3026,87 @@ should include options from the isc option space:
        <title>Sanity checks in DHCPv6</title>
 
        <para>
-        The sanity checks mechanism works exactly the same as its
-        DHCPv4 counterpart. See <xref linkend="sanity-checks4"/> for
-        details.
+         An important aspect of a well running DHCP system is an assurance that
+         the data remains consisent. However, in some cases it may be convenient
+         to tolerate certain inconsistent data. For example, a network
+         administrator that temporarily removed a subnet from a configuration
+         wouldn't want all the leases associated with it disappear from the
+         lease database. Kea 1.5 introduced a mechanism to better control sanity
+         checks such as this. While currently the scope of configurable sanity
+         checks is limited and their default value is set low, it is expected
+         that over time the default settings will be set to more aggressive
+         values and more parameters of similar nature will be added in the
+         future.
        </para>
 
        <para>
-         The only difference is that the sanity checks mechanism works
-         for address leases only. Since delegated prefixes do not have
-         to belong to a subnet in which they're offered, there is no
-         way to implement such a mechanism for IPv6 prefixes.
+         Kea now supports a new configuration scope called
+         <command>sanity-checks</command>. It currently allows only a
+         single parameter called <command>lease-checks</command>. It
+         governs what sort of verification is done when a new lease is
+         being loaded from a lease file. With the introduction of
+         sanity checks mechanism, it is now possible to tell Kea to
+         try to correct inconsistent data.
        </para>
 
-       <para>This feature is currently implemented for memfile backend and for
-       lease6-add command.</para>
+       <para>
+         Every subnet has a subnet-id value. This is how Kea internally
+         identifies subnets. Each lease has a subnet-id parameter as well, which
+         identifies which subnet it belongs to. However, if configuration has
+         changed, it is possible that a lease could exist with a subnet-id
+         without any subnet that matches it. Also, it may be possible that
+         subnets configuration has changed and the subnet-id now belongs to a
+         subnet that does not match the lease. Kea corrective algorithm first
+         checks if there is a subnet with subnet-id specified by the lease. If
+         there is, it checks whether the lease belongs to that subnet. If not,
+         depending on the lease-checks setting, the lease is discarded, a
+         warning is printed or a new subnet is selected for the lease that
+         matches it topologically.
+       </para>
 
-              <para>
+       <para>
+         Since delegated prefixes do not have to belong to a subnet in which
+         they're offered, there is no way to implement such a mechanism for IPv6
+         prefixes. As such, the mechanism works for IPv6 addresses only.
+       </para>
+
+       <para>
+         There are five levels which are supported:
+       </para>
+
+       <itemizedlist>
+         <listitem>
+           <simpara><command>none</command> - do no special checks, accept the
+           lease as is</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>warn</command> - if problems are detected, a
+           warning will be printed, but the lease data will be accepted
+           anyway. This is the default value. If not explicitly configured to
+           some other value, this level will be used.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is
+           not successful, the data will be inserted anyway.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix-del</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is not
+           succesful, the lease will be rejected. This setting ensures the data
+           correctness, but some incorrect data may be lost. Use with
+           care.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>del</command> - This is the strictest mode. If any
+           inconsistency is detected, the lease is rejected. Use with care.
+           </simpara>
+         </listitem>
+       </itemizedlist>
+       
+       <para>This feature is currently implemented for memfile backend.</para>
+
+       <para>
          An example configuration that sets this parameter looks as follows:
 <screen>
 "Dhcp6": {

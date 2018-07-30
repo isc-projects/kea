@@ -3340,17 +3340,12 @@ It is merely echoed by the server
 
        <para>
          Kea now supports a new configuration scope called
-         <command>sanity-checks</command>. It currently allows only a single
-         parameter called <command>lease-checks</command>. It governs what sort
-         of verification is done when a new lease is being added to the
-         system. There are three ways how a lease can appear in the system:
-         can be loaded from a lease file from disk, can be added by REST command
-         or be added internally using LeaseMgr programmatic interface. While
-         the REST commands already had sanity-checks implemented, they were
-         boolean in nature - either the lease passed all checks and was accepted
-         or it failed and was rejected. With the introduction of sanity checks
-         mechanism, it is now possible to tell Kea to try to correct
-         inconsistent data.
+         <command>sanity-checks</command>. It currently allows only a
+         single parameter called <command>lease-checks</command>. It
+         governs what sort of verification is done when a new lease is
+         being loaded from a lease file. With the introduction of
+         sanity checks mechanism, it is now possible to tell Kea to
+         try to correct inconsistent data.
        </para>
 
        <para>
@@ -3402,8 +3397,7 @@ It is merely echoed by the server
          </listitem>
        </itemizedlist>
 
-       <para>This feature is currently implemented for memfile backend and for
-       lease4-add command.</para>
+       <para>This feature is currently implemented for memfile backend.</para>
 
        <para>
          An example configuration that sets this parameter looks as follows:

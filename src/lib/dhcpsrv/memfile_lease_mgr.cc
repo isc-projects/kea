@@ -10,7 +10,6 @@
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <dhcpsrv/sanity_checker.h>
 #include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
@@ -700,13 +699,6 @@ Memfile_LeaseMgr::addLease(Lease4Ptr& lease) {
         return (false);
     }
 
-    // Run the lease through a checker.
-    static SanityChecker checker;
-    checker.checkLease(lease, true);
-    if (!lease) {
-        return (false);
-    }
-
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
@@ -725,13 +717,6 @@ Memfile_LeaseMgr::addLease(Lease6Ptr& lease) {
 
     if (getLease6(lease->type_, lease->addr_)) {
         // there is a lease with specified address already
-        return (false);
-    }
-
-    // Run the lease through a checker.
-    static SanityChecker checker;
-    checker.checkLease(lease, true);
-    if (!lease) {
         return (false);
     }
 
