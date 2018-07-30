@@ -244,12 +244,21 @@ public:
     ///
     /// @param lease address of the lease in text form
     /// @param lease_id subnet-id to be used in a lease
+    /// @param subnet_txt Text representation of the subnet, e.g. 192.0.2.0/24
+    /// @param subnet_id Subnet-id of the subnet to be created
     /// @param sanity level of sanity checks
     /// @param exp_present is the lease expected to be loaded (true = yes)
     /// @param exp_id expected subnet-id of the loaded lease
     void sanityChecks6(std::string lease, SubnetID lease_id,
+                       std::string subnet_txt, SubnetID subnet_id,
                        CfgConsistency::LeaseSanity sanity,
                        bool exp_present, SubnetID exp_id) {
+
+        // Create the subnet and add it to configuration.
+        if (!subnet_txt.empty()) {
+            Subnet6Ptr subnet = createSubnet6(subnet_txt, subnet_id);
+            ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet));
+        }
 
         std::stringstream file_content;
 
@@ -756,20 +765,59 @@ TEST_F(LeaseFileLoaderTest, sanityChecker4Del) {
     sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_DEL, false, 1);
 }
 
-
-
-
 // This test checks if the lease can be loaded, even though there are no
 // subnets configured that it would match.
 TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsWarn) {
-    sanityChecks6("2001::1", 1, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: add the lease as is
+TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsFix) {
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+}
+
+// This test checks if the lease can be discarded if it's impossible to fix.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsFixDel) {
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
 }
 
 // This test checks if the lease can be discarded.  Note we are
 // verifying whether the checks are conducted at all when loading a file.
 // Thorough tests were conducted in sanity_checks_unittest.cc.
 TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsDel) {
-    sanityChecks6("2001::1", 1, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: correct the lease
+TEST_F(LeaseFileLoaderTest, sanityChecker6Fix) {
+    sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+}
+
+// This test checks if the lease can be fixed when it's possible.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6FixDel1) {
+    sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+}
+
+// This test checks if the lease is discarded, when fix is not possible.
+// Scenario: try to fix the lease, there's a subnet, but it doesn't match,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6FixDel2) {
+    sanityChecks6("2001::1", 1, "2002::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease is discarded.
+// Scenario: delete the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6Del) {
+    sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_DEL, false, 1);
 }
 
 } // end of anonymous namespace
