@@ -8,8 +8,6 @@
 #include <dhcp/hwaddr.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cfg_consistency.h>
 #include <lease_parser.h>
 
 #include <config.h>
@@ -44,21 +42,6 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     HWAddrPtr hwaddr_ptr = HWAddrPtr(new HWAddr(hwaddr));
 
     Subnet4Ptr subnet = cfg->getCfgSubnets4()->getSubnet(subnet_id);
-    if (!subnet) {
-
-        CfgConsistency::LeaseSanity sanity =
-            CfgMgr::instance().getCurrentCfg()->getConsistency()
-            ->getLeaseSanityCheck();
-
-        if (sanity == CfgConsistency::LEASE_CHECK_FIX ||
-            sanity == CfgConsistency::LEASE_CHECK_FIX_DEL) {
-            // Ok, we got an invalid subnet-id, but the sanity checks
-            // are telling us to try to save the day. Let's try to
-            // find a better subnets.
-            subnet = cfg->getCfgSubnets4()->selectSubnet(addr);
-        }
-    }
-
     if (!subnet) {
         isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
                   << subnet_id << " currently configured.");
@@ -192,6 +175,13 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     DUID duid = DUID::fromText(duid_txt);
     DuidPtr duid_ptr = DuidPtr(new DUID(duid));
 
+    // Check if the subnet-id specified is sane.
+    Subnet6Ptr subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
+    if (!subnet) {
+        isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
+                  << subnet_id << " currently configured.");
+    }
+
     Lease::Type type = Lease::TYPE_NA;
     uint8_t prefix_len = 128;
     if (lease_info->contains("type")) {
@@ -209,29 +199,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                       "supported values are: na, ta and pd");
         }
     }
-
-    // Check if the subnet-id specified is sane.
-    Subnet6Ptr subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
-    if (!subnet && (type == Lease::TYPE_NA)) {
-
-        CfgConsistency::LeaseSanity sanity =
-            CfgMgr::instance().getCurrentCfg()->getConsistency()
-            ->getLeaseSanityCheck();
-
-        if (sanity == CfgConsistency::LEASE_CHECK_FIX ||
-            sanity == CfgConsistency::LEASE_CHECK_FIX_DEL) {
-            // Ok, we got an invalid subnet-id, but the sanity checks
-            // are telling us to try to save the day. Let's try to
-            // find a better subnets.
-            subnet = cfg->getCfgSubnets6()->selectSubnet(addr);
-        }
-    }
-
-    if (!subnet) {
-        isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
-                  << subnet_id << " currently configured.");
-    }
-
 
     // Check if the address specified really belongs to the subnet.
     if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
