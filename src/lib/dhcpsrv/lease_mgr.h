@@ -246,7 +246,7 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there or failed sanity checks)
-    virtual bool addLease(Lease4Ptr& lease) = 0;
+    virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
@@ -259,7 +259,7 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there or failed sanity checks)
-    virtual bool addLease(Lease6Ptr& lease) = 0;
+    virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///

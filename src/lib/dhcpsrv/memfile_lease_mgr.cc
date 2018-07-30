@@ -690,7 +690,7 @@ Memfile_LeaseMgr::getDBVersion() {
 }
 
 bool
-Memfile_LeaseMgr::addLease(Lease4Ptr& lease) {
+Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_ADD_ADDR4).arg(lease->addr_.toText());
 
@@ -711,7 +711,7 @@ Memfile_LeaseMgr::addLease(Lease4Ptr& lease) {
 }
 
 bool
-Memfile_LeaseMgr::addLease(Lease6Ptr& lease) {
+Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_ADD_ADDR6).arg(lease->addr_.toText());
 

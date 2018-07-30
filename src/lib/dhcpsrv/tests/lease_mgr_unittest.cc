@@ -46,14 +46,14 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr&) {
+    virtual bool addLease(const Lease4Ptr&) {
         return (false);
     }
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr&) {
+    virtual bool addLease(const Lease6Ptr&) {
         return (false);
     }
 

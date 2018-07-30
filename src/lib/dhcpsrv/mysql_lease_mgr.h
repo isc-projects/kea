@@ -74,7 +74,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(Lease4Ptr& lease);
+    virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease
     ///
@@ -85,7 +85,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(Lease6Ptr& lease);
+    virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
