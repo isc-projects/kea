@@ -2013,7 +2013,7 @@ CqlLeaseMgr::getDBVersion() {
 }
 
 bool
-CqlLeaseMgr::addLease(Lease4Ptr &lease) {
+CqlLeaseMgr::addLease(const Lease4Ptr &lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ADD_ADDR4)
         .arg(lease->addr_.toText());
 
@@ -2032,7 +2032,7 @@ CqlLeaseMgr::addLease(Lease4Ptr &lease) {
 }
 
 bool
-CqlLeaseMgr::addLease(Lease6Ptr &lease) {
+CqlLeaseMgr::addLease(const Lease6Ptr &lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_ADD_ADDR6)
         .arg(lease->addr_.toText());
 

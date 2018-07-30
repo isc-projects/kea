@@ -141,12 +141,12 @@ public:
     /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease4Ptr& lease);
+    virtual bool addLease(const Lease4Ptr& lease);
 
     /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    virtual bool addLease(Lease6Ptr& lease);
+    virtual bool addLease(const Lease6Ptr& lease);
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
