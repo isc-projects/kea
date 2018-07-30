@@ -14,7 +14,6 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/sanity_checker.h>
 #include <dhcp/duid.h>
 #include <hooks/hooks.h>
 #include <exceptions/exceptions.h>
@@ -253,8 +252,6 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
         ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
 
-        SanityChecker checks;
-
         Lease4Ptr lease4;
         Lease6Ptr lease6;
         // This parameter is ignored for the commands adding the lease.
@@ -264,12 +261,8 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             lease4 = parser.parse(config, cmd_args_, force_create);
 
             // checkLeaseIntegrity(config, lease4);
-            if (lease4) {
-                checks.checkLease(lease4);
-                if (!lease4) {
-                    isc_throw(BadValue, "Lease failed sanity checks.");
-                }
 
+            if (lease4) {
                 LeaseMgrFactory::instance().addLease(lease4);
             }
 
@@ -280,10 +273,6 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             // checkLeaseIntegrity(config, lease6);
 
             if (lease6) {
-                checks.checkLease(lease6);
-                if (!lease6) {
-                    isc_throw(BadValue, "Lease failed sanity checks.");
-                }
                 LeaseMgrFactory::instance().addLease(lease6);
             }
         }

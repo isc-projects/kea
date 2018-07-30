@@ -276,29 +276,15 @@ public:
 
         if (insert_lease) {
             if (v6) {
-                Lease6Ptr l = createLease6("2001:db8:1::1", 66, 0x42);
-                lmptr_->addLease(l);
-
-                l = createLease6("2001:db8:1::2", 66, 0x56);
-                lmptr_->addLease(l);
-
-                l = createLease6("2001:db8:2::1", 99, 0x42);
-                lmptr_->addLease(l);
-
-                l = createLease6("2001:db8:2::2", 99, 0x56);
-                lmptr_->addLease(l);
+                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56));
+                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42));
+                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56));
             } else {
-                Lease4Ptr l = createLease4("192.0.2.1", 44, 0x08, 0x42);
-                lmptr_->addLease(l);
-
-                l = createLease4("192.0.2.2", 44, 0x09, 0x56);
-                lmptr_->addLease(l);
-
-                l = createLease4("192.0.3.1", 88, 0x08, 0x42);
-                lmptr_->addLease(l);
-
-                l = createLease4("192.0.3.2", 88, 0x09, 0x56);
-                lmptr_->addLease(l);
+                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56));
+                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42));
+                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56));
             }
         }
     }
@@ -704,100 +690,6 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
 
 }
 
-// Check that a well formed lease but with invalid subnet-id is
-// rejected when sanity-checks are set to DEL.
-TEST_F(LeaseCmdsTest, Lease4AddSanityCheckDel) {
-
-    // Initialize lease manager (false = v4, false = don't add leases)
-    initLeaseMgr(false, false);
-
-    // Set the sanity checks level.
-    CfgMgr::instance().getCurrentCfg()->getConsistency()
-        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_DEL);
-
-    // Check that the lease manager pointer is there.
-    ASSERT_TRUE(lmptr_);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease4-add\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 444,\n"
-        "        \"ip-address\": \"192.0.2.202\",\n"
-        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
-                     "subnet-id=444 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
-// Check that a well formed lease but with invalid subnet-id is
-// corrected when sanity-checks is set to FIX.
-TEST_F(LeaseCmdsTest, Lease4AddSanityCheckFixOk) {
-
-    // Initialize lease manager (false = v4, false = don't add leases)
-    initLeaseMgr(false, false);
-
-    // Set the sanity checks level.
-    CfgMgr::instance().getCurrentCfg()->getConsistency()
-        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
-
-    // Check that the lease manager pointer is there.
-    ASSERT_TRUE(lmptr_);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease4-add\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 444,\n"
-        "        \"ip-address\": \"192.0.2.202\",\n"
-        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease added.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    // Now check that the lease is really there.
-    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
-    ASSERT_TRUE(l);
-
-    // Make sure the lease has subnet-id corrected.
-    EXPECT_EQ(44, l->subnet_id_);
-}
-
-// Check that a well formed lease but with invalid subnet-id is
-// still rejected, if there are no appropriate subnets.
-// (there is subnet with subnet-id 444 and there is no subnet
-// that 192.0.222.202 belongs to.
-TEST_F(LeaseCmdsTest, Lease4AddSanityCheckFixDel) {
-
-    // Initialize lease manager (false = v4, false = don't add leases)
-    initLeaseMgr(false, false);
-
-    CfgMgr::instance().getCurrentCfg()->getConsistency()
-        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
-
-    // Check that the lease manager pointer is there.
-    ASSERT_TRUE(lmptr_);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease4-add\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 444,\n"
-        "        \"ip-address\": \"192.0.222.202\",\n"
-        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
-                     "subnet-id=444 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
 // Check that a well formed lease4 with tons of parameters can be added.
 TEST_F(LeaseCmdsTest, Lease4AddFull) {
 
@@ -1088,104 +980,6 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
 }
-
-// Check that a well formed lease but with invalid subnet-id is
-// rejected when sanity-checks are set to DEL.
-TEST_F(LeaseCmdsTest, Lease6AddSanityCheckDel) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    // Set the sanity checks level.
-    CfgMgr::instance().getCurrentCfg()->getConsistency()
-        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_DEL);
-
-    // Check that the lease manager pointer is there.
-    ASSERT_TRUE(lmptr_);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-add\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 666,\n"
-        "        \"ip-address\": \"2001:db8:1::3\",\n"
-        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"iaid\": 1234\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Invalid subnet-id: No IPv6 subnet with "
-                     "subnet-id=666 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
-// Check that a simple, well formed lease6 can be added.
-TEST_F(LeaseCmdsTest, Lease6AddSanityCheckFixOk) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    // Set the sanity checks level.
-    CfgMgr::instance().getCurrentCfg()->getConsistency()
-        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
-
-    // Check that the lease manager pointer is there.
-    ASSERT_TRUE(lmptr_);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-add\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 666,\n"
-        "        \"ip-address\": \"2001:db8:1::3\",\n"
-        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"iaid\": 1234\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease added.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
-    ASSERT_TRUE(l);
-
-    // Make sure the lease has subnet-id corrected.
-    EXPECT_EQ(66, l->subnet_id_);
-}
-
-// Check that a well formed lease but with invalid subnet-id is
-// still rejected, if there are no appropriate subnets.
-// (there is subnet with subnet-id 666 and there is no subnet
-// that 2001:fff:1::3 belongs to.
-TEST_F(LeaseCmdsTest, Lease6AddSanityCheckFixDel) {
-
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    // Set the sanity checks level.
-    CfgMgr::instance().getCurrentCfg()->getConsistency()
-        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
-
-    // Check that the lease manager pointer is there.
-    ASSERT_TRUE(lmptr_);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-add\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 666,\n"
-        "        \"ip-address\": \"2001:fff:1::3\",\n"
-        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"iaid\": 1234\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Invalid subnet-id: No IPv6 subnet with "
-                     "subnet-id=666 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-}
-
 
 // Check that a simple, well formed prefix lease can be added.
 TEST_F(LeaseCmdsTest, Lease6AddPrefix) {
