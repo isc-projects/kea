@@ -260,8 +260,6 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
             Lease4Parser parser;
             lease4 = parser.parse(config, cmd_args_, force_create);
 
-            // checkLeaseIntegrity(config, lease4);
-
             if (lease4) {
                 LeaseMgrFactory::instance().addLease(lease4);
             }
@@ -269,8 +267,6 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
         } else {
             Lease6Parser parser;
             lease6 = parser.parse(config, cmd_args_, force_create);
-
-            // checkLeaseIntegrity(config, lease6);
 
             if (lease6) {
                 LeaseMgrFactory::instance().addLease(lease6);
