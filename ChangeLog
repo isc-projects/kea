@@ -1,4 +1,11 @@
-14xx.   [func]      tmark
+1437.	[func]		tomek
+	DHCPv4 and DHCPv6 servers are now able to sanity check and
+	possibly correct some inconsistencies in leases when loaded from
+	disk (memfile). A new parameter to govern this behavior has been
+	added.
+	(Trac #5682, git 609bfa0a67caa91fac6834eb39260acfd19e3be4)
+
+1436.   [func]      tmark
 	Added two new configuration paramters to kea-dhcp4 and kea-dhcp6
 	DhcpDdns sections: 'hostname-char-set' and 'hostname-char-replacment'.
 	These values (when not empty) are used by the server to sanitize
