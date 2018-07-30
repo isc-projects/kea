@@ -503,7 +503,11 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
     defaults += "\"hooks-libraries\": [ ],\n";
+    defaults += "\"sanity-checks\": {\n";
+    defaults += "    \"lease-checks\": \"warn\"\n";
+    defaults += "    },\n";
     defaults += "\"dhcp-ddns\": \n";
+
     defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
 
     std::string defaults4 = "\"echo-client-id\": true,\n";
