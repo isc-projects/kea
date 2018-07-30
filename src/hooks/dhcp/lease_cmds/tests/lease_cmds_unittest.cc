@@ -3523,6 +3523,8 @@ TEST_F(LeaseCmdsTest, Lease6WipeNoLeasesAll) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
+// Checks that an attempt to update a lease (set incorrect subnet-id)
+// will fail.
 TEST_F(LeaseCmdsTest, brokenUpdate) {
 
     // Initialize lease manager (false = v4, false = don't add leases)

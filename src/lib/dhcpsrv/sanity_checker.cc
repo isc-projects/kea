@@ -78,9 +78,11 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
                 LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FIXED)
                     .arg(lease->addr_.toText()).arg(lease->subnet_id_).arg(id);
                 lease->subnet_id_ = id;
+            } else {
+                // If not, return the lease as is.
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL)
+                    .arg(lease->addr_.toText()).arg(lease->subnet_id_);
             }
-
-            // If not, return the lease as is.
         }
         break;
 
@@ -89,12 +91,14 @@ void SanityChecker::checkLeaseInternal(LeasePtrType& lease, const CfgConsistency
 
             // If there is a better subnet, use it.
             if (id != 0) {
-                LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL_DISCARD)
-                    .arg(lease->addr_.toText()).arg(lease->subnet_id_);
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FIXED)
+                    .arg(lease->addr_.toText()).arg(lease->subnet_id_).arg(id);
                 lease->subnet_id_ = id;
                 break;
             } else {
                 // If not, delete the lease.
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_SANITY_FAIL_DISCARD)
+                    .arg(lease->addr_.toText()).arg(lease->subnet_id_);
                 lease.reset();
             }
 
