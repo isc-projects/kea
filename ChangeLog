@@ -1,3 +1,12 @@
+
+1438.	[func]		tomek
+	subnet-id parameter is now optional in lease4-add, lease6-add,
+	lease4-update and lease6-update commands. If not specified or
+	its value is zero, Kea will attempt to figure out the correct
+	value of subnet-id. If there is no matching subnet configured,
+	the lease will be rejected.
+	(Trac #5683, git a8ce7a78b5b294e6bce02de887552a1e4593db4e)
+
 1437.	[func]		tomek
 	DHCPv4 and DHCPv6 servers are now able to sanity check and
 	possibly correct some inconsistencies in leases when loaded from
