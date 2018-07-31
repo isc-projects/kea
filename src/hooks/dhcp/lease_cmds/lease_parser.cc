@@ -55,6 +55,12 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
             isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
                       << subnet_id << " currently configured.");
         }
+
+        if (!subnet->inRange(addr)) {
+            isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+                      "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+        }
+
     } else {
         // Subnet-id was not specified. Let's try to figure it out on our own.
         subnet = cfg->getCfgSubnets4()->selectSubnet(addr);
@@ -63,11 +69,6 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                       << " subnet for address " << addr);
         }
         subnet_id = subnet->getID();
-    }
-
-    if (!subnet->inRange(addr)) {
-        isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
-                  "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
     }
 
     // Client-id is optional.
@@ -225,6 +226,13 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
             isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
                       << subnet_id << " currently configured.");
         }
+
+        // Check if the address specified really belongs to the subnet.
+        if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
+            isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+                      "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+        }
+
     } else {
         if (type != Lease::TYPE_NA) {
             isc_throw(BadValue, "Subnet-id is 0 or not specified. This is allowed for"
@@ -236,12 +244,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                       "subnet for address " << addr);
         }
         subnet_id = subnet->getID();
-    }
-
-    // Check if the address specified really belongs to the subnet.
-    if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
-        isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
-                  "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
     }
 
     uint32_t iaid = getUint32(lease_info, "iaid");
