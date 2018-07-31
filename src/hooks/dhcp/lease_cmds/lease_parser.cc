@@ -8,6 +8,8 @@
 #include <dhcp/hwaddr.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <lease_parser.h>
 
 #include <config.h>
@@ -30,8 +32,6 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
 
     // These are mandatory parameters.
     IOAddress addr = getAddress(lease_info, "ip-address");
-    SubnetID subnet_id = getUint32(lease_info, "subnet-id");
-
     if (!addr.isV4()) {
         isc_throw(BadValue, "Non-IPv4 address specified: " << addr);
     }
@@ -41,10 +41,28 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     HWAddr hwaddr = HWAddr::fromText(hwaddr_txt);
     HWAddrPtr hwaddr_ptr = HWAddrPtr(new HWAddr(hwaddr));
 
-    Subnet4Ptr subnet = cfg->getCfgSubnets4()->getSubnet(subnet_id);
-    if (!subnet) {
-        isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
-                  << subnet_id << " currently configured.");
+    // Now sort out the subnet-id. If specified, it must have correct value.
+    // If not specified, Kea will try to sort it out.
+    SubnetID subnet_id = 0;
+    if (lease_info->contains("subnet-id")) {
+        subnet_id = getUint32(lease_info, "subnet-id");
+    }
+    Subnet4Ptr subnet;
+    if (subnet_id) {
+        // If subnet-id is specified, it has to match.
+        subnet = cfg->getCfgSubnets4()->getSubnet(subnet_id);
+        if (!subnet) {
+            isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
+                      << subnet_id << " currently configured.");
+        }
+    } else {
+        // Subnet-id was not specified. Let's try to figure it out on our own.
+        subnet = cfg->getCfgSubnets4()->selectSubnet(addr);
+        if (!subnet) {
+            isc_throw(BadValue, "subnet-id not specified and failed to find a"
+                      << " subnet for address " << addr);
+        }
+        subnet_id = subnet->getID();
     }
 
     if (!subnet->inRange(addr)) {
@@ -164,8 +182,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
 
     // These are mandatory parameters.
     IOAddress addr = getAddress(lease_info, "ip-address");
-    SubnetID subnet_id = getUint32(lease_info, "subnet-id");
-
     if (addr.isV4()) {
         isc_throw(BadValue, "Non-IPv6 address specified: " << addr);
     }
@@ -174,13 +190,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     string duid_txt = getString(lease_info, "duid");
     DUID duid = DUID::fromText(duid_txt);
     DuidPtr duid_ptr = DuidPtr(new DUID(duid));
-
-    // Check if the subnet-id specified is sane.
-    Subnet6Ptr subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
-    if (!subnet) {
-        isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
-                  << subnet_id << " currently configured.");
-    }
 
     Lease::Type type = Lease::TYPE_NA;
     uint8_t prefix_len = 128;
@@ -198,6 +207,35 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
             isc_throw(BadValue, "Incorrect lease type: " << txt << ", the only "
                       "supported values are: na, ta and pd");
         }
+    }
+
+    // Now sort out the subnet-id. If specified, it must have correct value.
+    // If not specified, Kea will try to sort it out.
+    SubnetID subnet_id = 0;
+    if (lease_info->contains("subnet-id")) {
+        subnet_id = getUint32(lease_info, "subnet-id");
+    }
+
+    // Check if the subnet-id specified is sane.
+    Subnet6Ptr subnet;
+    if (subnet_id) {
+        // If subnet-id is specified, it has to match.
+        subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
+        if (!subnet) {
+            isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
+                      << subnet_id << " currently configured.");
+        }
+    } else {
+        if (type != Lease::TYPE_NA) {
+            isc_throw(BadValue, "Subnet-id is 0 or not specified. This is allowed for"
+                      " address leases only, not prefix leases.");
+        }
+        subnet = cfg->getCfgSubnets6()->selectSubnet(addr);
+        if (!subnet) {
+            isc_throw(BadValue, "subnet-id not specified and failed to find a "
+                      "subnet for address " << addr);
+        }
+        subnet_id = subnet->getID();
     }
 
     // Check if the address specified really belongs to the subnet.

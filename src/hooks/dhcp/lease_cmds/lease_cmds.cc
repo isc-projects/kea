@@ -14,6 +14,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
+#include <dhcpsrv/sanity_checker.h>
 #include <dhcp/duid.h>
 #include <hooks/hooks.h>
 #include <exceptions/exceptions.h>
@@ -239,6 +240,8 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
     // below is not expected to throw...
     bool v4 = true;
     string txt = "malformed command";
+
+    stringstream resp;
     try {
         extractCommand(handle);
         v4 = (cmd_name_ == "lease4-add");
@@ -262,6 +265,8 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
             if (lease4) {
                 LeaseMgrFactory::instance().addLease(lease4);
+                resp << "Lease for address " << lease4->addr_.toText()
+                     << ", subnet-id " << lease4->subnet_id_ << " added.";
             }
 
         } else {
@@ -270,6 +275,14 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
             if (lease6) {
                 LeaseMgrFactory::instance().addLease(lease6);
+                if (lease6->type_ == Lease::TYPE_NA) {
+                    resp << "Lease for address " << lease6->addr_.toText()
+                         << ", subnet-id " << lease6->subnet_id_ << " added.";
+                } else {
+                    resp << "Lease for prefix " << lease6->addr_.toText()
+                         << "/" << static_cast<int>(lease6->prefixlen_)
+                         << ", subnet-id " << lease6->subnet_id_ << " added.";
+                }
             }
         }
 
@@ -283,7 +296,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
 
     LOG_INFO(lease_cmds_logger,
              v4 ? LEASE_CMDS_ADD4 : LEASE_CMDS_ADD6).arg(txt);
-    setSuccessResponse(handle, "Lease added.");
+    setSuccessResponse(handle, resp.str());
     return (0);
 }
 

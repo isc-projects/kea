@@ -515,7 +515,8 @@ TEST_F(LeaseCmdsTest, Lease4AddMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and hwaddr missing).
+    // Just ip is not enough (subnet-id and hwaddr missing, although
+    // subnet-id can now be figured out by Kea code)
     txt =
         "{\n"
         "    \"command\": \"lease4-add\",\n"
@@ -523,7 +524,7 @@ TEST_F(LeaseCmdsTest, Lease4AddMissingParams) {
         "            \"ip-address\": \"192.0.2.123\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'hw-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Better, but still no luck. (hwaddr missing).
@@ -666,7 +667,7 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -688,6 +689,66 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
     EXPECT_EQ(0, l->state_);
 
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own.
+TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ(44, l->subnet_id_);
+
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own, but if there's no subnet for address being added, it
+// should fail.
+TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingBadAddr) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.55.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "subnet-id not specified and failed to find a subnet for "
+                     "address 192.0.55.1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease was not added.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.55.1"));
+    ASSERT_FALSE(l);
 }
 
 // Check that a well formed lease4 with tons of parameters can be added.
@@ -716,7 +777,7 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
         "        \"user-context\": { \"foobar\": true }\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -755,18 +816,18 @@ TEST_F(LeaseCmdsTest, Lease4AddComment) {
         "        \"comment\": \"a comment\"\n"
         "    }\n"
             "}";
-        string exp_rsp = "Lease added.";
-        testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-        // Now check that the lease is really there.
-        Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
-        ASSERT_TRUE(l);
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
 
-        // Make sure the lease have proper value set.
-        ASSERT_TRUE(l->hwaddr_);
-        EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
-        ASSERT_TRUE(l->getContext());
-        EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
+    // Make sure the lease have proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    ASSERT_TRUE(l->getContext());
+    EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
 // Check that lease6-add with missing parameters will fail.
@@ -788,7 +849,8 @@ TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and duid missing).
+    // Just ip is not enough (subnet-id and duid missing, but subnet-id
+    // can now be figured out by kea)
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -796,7 +858,7 @@ TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
         "        \"ip-address\": \"2001:db8:1::3\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'duid' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Just subnet-id and ip is not enough (duid missing).
@@ -971,7 +1033,7 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -979,6 +1041,65 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
     ASSERT_TRUE(l);
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own.
+TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissing) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command (without subnet-id)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there and has correct subnet-id.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ(66, l->subnet_id_);
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own, but if there's no subnet for address being added, it
+// should fail.
+TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingBadAddr) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command (without subnet-id)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:ffff::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "subnet-id not specified and failed to find a subnet for "
+                     "address 2001:ffff::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease is really there and has correct subnet-id.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:ffff::1"));
+    ASSERT_FALSE(l);
 }
 
 // Check that a simple, well formed prefix lease can be added.
@@ -1003,7 +1124,7 @@ TEST_F(LeaseCmdsTest, Lease6AddPrefix) {
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for prefix 2001:db8:abcd::/48, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -1043,7 +1164,7 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
         "        \"user-context\": { \"foobar\": true }\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -1084,7 +1205,7 @@ TEST_F(LeaseCmdsTest, Lease6AddComment) {
         "        \"comment\": \"a comment\"\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -2302,7 +2423,8 @@ TEST_F(LeaseCmdsTest, Lease4UpdateMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and hwaddr missing).
+    // Just ip is not enough (subnet-id and hwaddr missing, although
+    // Kea can now figure out subnet-id on its own).
     txt =
         "{\n"
         "    \"command\": \"lease4-update\",\n"
@@ -2310,7 +2432,7 @@ TEST_F(LeaseCmdsTest, Lease4UpdateMissingParams) {
         "            \"ip-address\": \"192.0.2.123\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'hw-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Better, but still no luck. (hwaddr missing).
@@ -2479,6 +2601,40 @@ TEST_F(LeaseCmdsTest, Lease4Update) {
     EXPECT_FALSE(l->getContext());
 }
 
+// Check that a lease4 can be updated. We're changing hw-address
+// and a hostname. The subnet-id is not specified.
+TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetId) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it's been updated.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
 // Check that a lease4 is created if it doesn't exist during the update.
 // To trigger this behavior 'force-create' boolean parameter must be
 // included in the command.
@@ -2508,6 +2664,45 @@ TEST_F(LeaseCmdsTest, Lease4UpdateForceCreate) {
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
+    // Make sure it contains expected values..
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease4 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command. The subnet-id is not specified, Kea will
+// figure it out.
+TEST_F(LeaseCmdsTest, Lease4UpdateForceCreateNoSubnetId) {
+    // Initialize lease manager (false = v4, false = don't add any lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is figured out correctly.
+    EXPECT_EQ(44, l->subnet_id_);
+    
     // Make sure it contains expected values..
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
@@ -2602,7 +2797,8 @@ TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and hwaddr missing).
+    // Just ip is not enough (subnet-id and duid missing, although
+    // kea should be able to figure out the subnet-id on its own.
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
@@ -2610,7 +2806,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
         "            \"ip-address\": \"2001:db8:1::1\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'duid' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Better, but still no luck. (duid missing).
@@ -2758,6 +2954,46 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     EXPECT_FALSE(l->getContext());
 }
 
+// Check that a lease6 can be updated. We're changing hw-address
+// and a hostname. The subnet-id is not specified.
+TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is correct.
+    EXPECT_EQ(66, l->subnet_id_);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+
 // Check that a lease6 can be updated. We're adding a comment and an user
 // context.
 TEST_F(LeaseCmdsTest, Lease6UpdateComment) {
@@ -2858,6 +3094,48 @@ TEST_F(LeaseCmdsTest, Lease6UpdateForceCreate) {
     // Now check that the lease is really there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(l);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease6 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command. The subnet-id is not specified, Kea will
+// figure it out.
+TEST_F(LeaseCmdsTest, Lease6UpdateForceCreateNoSubnetId) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is figured out correctly.
+    EXPECT_EQ(66, l->subnet_id_);
 
     // Make sure the lease is correct.
     ASSERT_TRUE(l->duid_);
