@@ -133,12 +133,12 @@
           sometimes it may be convenient to create the lease
           administratively. The <command>lease4-add</command> command requires
           at least two parameters: an IPv4 address, and an identifier: hardware
-          (MAC) address. A third parameter, subnet-id, used to be mandatory in
-          Kea 1.4.0, but since 1.5.0 it is optional. If not specified or
-          specified value is 0, Kea will try to figure its value out on its own
-          by running a subnet selection procedure. If specified, however, its
-          value much match existing subnet. The simplest successful call might
-          look as follows:
+          (MAC) address. A third parameter, subnet-id, was mandatory in
+          Kea 1.4.0, but is optional beginning with Kea 1.5.0.. If not
+          specified or specified value is 0, Kea will try to determine the
+          value by running a subnet selection procedure. If specified, however,
+          its value must match the existing subnet. The simplest successful
+          call might look as follows:
 <screen>
 {
     "command": "lease4-add",
@@ -154,9 +154,9 @@
         IPv6 address, and IAID value (identity association identifier, a value
         sent by clients) and a DUID. The same principle for subnet-id as in
         lease4-add applies.  If not specified or specified value is 0, Kea will
-        try to figure its value out on its own by running a subnet selection
-        procedure. If specified, however, its value much match existing
-        subnet. For example:
+        try to determine the value own by running a subnet selection procedure.
+        If specified, however, its value must match the existing subnet. For
+        example:
 <screen>
 {
     "command": "lease6-add",
@@ -670,9 +670,9 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
 
           <para>Subnet-id parameter, used to be mandatory in Kea 1.4.0, but it
           is optional since 1.5.0. If not specified or specified value is 0, Kea
-          will try to figure its value out on its own by running a subnet
-          selection procedure. If specified, however, its value much match
-          existing subnet.</para>
+          will try to determine  its value by running a subnet selection
+          procedure. If specified, however, its value must match the existing
+          subnet.</para>
 
           <para>The optional boolean parameter "force-create" specifies
           if the lease should be created if it doesn't exist in the database.
