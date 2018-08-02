@@ -260,6 +260,68 @@ GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
 }
 
 void
+GenericHostDataSourceTest::testZeroSubnetId4() {
+    std::vector<uint8_t> ident;
+
+    ident = HostDataSourceUtils::generateIdentifier();
+    SubnetID subnet_id4 = 0;
+    HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
+                          subnet_id4, 0, IOAddress("0.0.0.0")));
+
+    ASSERT_NO_THROW(addTestOptions(host, true, DHCP4_ONLY));
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // get4(subnet_id, identifier_type, identifier, identifier_size)
+    ConstHostPtr host_by_id = hdsptr_->get4(subnet_id4,
+                                            host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del4(subnet_id4, Host::IDENT_DUID, &ident[0],
+                              ident.size()));
+
+    host_by_id = hdsptr_->get4(subnet_id4, host->getIdentifierType(),
+                               &host->getIdentifier()[0],
+                               host->getIdentifier().size());
+
+    EXPECT_FALSE(host_by_id);
+}
+
+void GenericHostDataSourceTest::testZeroSubnetId6() {
+    std::vector<uint8_t> ident;
+
+    ident = HostDataSourceUtils::generateIdentifier();
+    SubnetID subnet_id6 = 0;
+    HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
+                          0, subnet_id6, IOAddress("0.0.0.0")));
+
+    ASSERT_NO_THROW(addTestOptions(host, true, DHCP6_ONLY));
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // get6(subnet_id, identifier_type, identifier, identifier_size)
+    ConstHostPtr host_by_id = hdsptr_->get6(subnet_id6,
+                                            host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
+
+    // Now try to delete it: del6(subnet6-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del6(subnet_id6, Host::IDENT_DUID, &ident[0],
+                              ident.size()));
+
+    host_by_id = hdsptr_->get4(subnet_id6, host->getIdentifierType(),
+                               &host->getIdentifier()[0],
+                               host->getIdentifier().size());
+
+    EXPECT_FALSE(host_by_id);
+}
+
+
+void
 GenericHostDataSourceTest::testMaxSubnetId4() {
     std::vector<uint8_t> ident;
 

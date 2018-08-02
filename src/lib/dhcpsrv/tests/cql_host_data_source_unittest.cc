@@ -663,4 +663,30 @@ TEST_F(CqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
 
+// Verifies that IPv4 host reservation with options can have a value of zero
+// dhcp4_subnet id
+TEST_F(CqlHostDataSourceTest, zeroSubnetId4) {
+    testMaxSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a value of zero
+// dhcp6_subnet id
+TEST_F(CqlHostDataSourceTest, zeroSubnetId6) {
+    testMaxSubnetId6();
+}
+
+// Verifies that IPv4 host reservation with options can have a max value
+// for  dhcp4_subnet id
+TEST_F(CqlHostDataSourceTest, maxSubnetId4) {
+    testMaxSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a max value
+// for  dhcp6_subnet id
+TEST_F(CqlHostDataSourceTest, maxSubnetId6) {
+    testMaxSubnetId6();
+}
+
+
+
 }  // namespace
