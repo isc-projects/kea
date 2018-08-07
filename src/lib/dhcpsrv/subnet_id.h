@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <stdint.h>
+#include <typeinfo>
 
 namespace isc {
 namespace dhcp {
@@ -20,6 +21,10 @@ namespace dhcp {
 /// a simple unsigned integer. In the future it may be extended to more complex
 /// type.
 typedef uint32_t SubnetID;
+
+static const SubnetID SUBNET_ID_GLOBAL = 0;
+static const SubnetID SUBNET_ID_MAX = std::numeric_limits<uint32_t>::max()-1;
+static const SubnetID SUBNET_ID_UNUSED = std::numeric_limits<uint32_t>::max();
 
 /// @brief Exception thrown upon attempt to add subnet with an ID that belongs
 /// to the subnet that already exists.

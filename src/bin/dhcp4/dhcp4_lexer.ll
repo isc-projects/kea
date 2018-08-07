@@ -938,6 +938,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"reservations\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
         return isc::dhcp::Dhcp4Parser::make_RESERVATIONS(driver.loc_);
     default:

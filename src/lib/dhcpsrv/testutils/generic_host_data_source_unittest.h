@@ -313,18 +313,16 @@ public:
     void testBasic4(const Host::IdentifierType& id);
 
     /// @brief Test that Verifies that an IPv4 host reservation with
-    /// options can have 0 for dhcp4_subnet id. 0 denotes global
-    /// reservation.
+    /// options can have the global subnet id value.
     ///
     /// Uses gtest macros to report failures.
-    void testZeroSubnetId4();
+    void testGlobalSubnetId4();
 
     /// @brief Test that Verifies that an IPv6 host reservation with
-    /// options can have 0 for dhcp6_subnet id. 0 denotes global
-    /// reservation.
+    /// options can have the global subnet id value.
     ///
     /// Uses gtest macros to report failures.
-    void testZeroSubnetId6();
+    void testGlobalSubnetId6();
 
     /// @brief Test that Verifies that an IPv4 host reservation with
     /// options can have a max value for dhcp4_subnet id
