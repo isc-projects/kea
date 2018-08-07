@@ -154,7 +154,7 @@ protected:
         ASSERT_TRUE(host);
 
         EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(0, host->getIPv6SubnetID());
+        EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.112", host->getIPv4Reservation().toText());
         EXPECT_TRUE(host->getHostname().empty());
     }
@@ -370,7 +370,7 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     ASSERT_EQ(1, hosts.size());
 
     EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 
@@ -563,7 +563,7 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     ASSERT_EQ(1, hosts.size());
 
     EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("0.0.0.0", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -676,7 +676,7 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
                                               hwaddr_->hwaddr_.size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(10, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -746,7 +746,7 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
                                               duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -827,7 +827,7 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
                                               duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 

@@ -260,16 +260,17 @@ GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
 }
 
 void
-GenericHostDataSourceTest::testZeroSubnetId4() {
+GenericHostDataSourceTest::testGlobalSubnetId4() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
-    SubnetID subnet_id4 = 0;
+    SubnetID subnet_id4 = SUBNET_ID_GLOBAL;
     HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
-                          subnet_id4, 0, IOAddress("0.0.0.0")));
+                          subnet_id4, SUBNET_ID_UNUSED, IOAddress("0.0.0.0")));
 
     ASSERT_NO_THROW(addTestOptions(host, true, DHCP4_ONLY));
-    ASSERT_NO_THROW(hdsptr_->add(host));
+    (hdsptr_->add(host));
+    //ASSERT_NO_THROW(hdsptr_->add(host));
 
     // get4(subnet_id, identifier_type, identifier, identifier_size)
     ConstHostPtr host_by_id = hdsptr_->get4(subnet_id4,
@@ -290,13 +291,13 @@ GenericHostDataSourceTest::testZeroSubnetId4() {
     EXPECT_FALSE(host_by_id);
 }
 
-void GenericHostDataSourceTest::testZeroSubnetId6() {
+void GenericHostDataSourceTest::testGlobalSubnetId6() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
-    SubnetID subnet_id6 = 0;
+    SubnetID subnet_id6 = SUBNET_ID_GLOBAL;
     HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
-                          0, subnet_id6, IOAddress("0.0.0.0")));
+                          SUBNET_ID_UNUSED, subnet_id6, IOAddress("0.0.0.0")));
 
     ASSERT_NO_THROW(addTestOptions(host, true, DHCP6_ONLY));
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -326,9 +327,9 @@ GenericHostDataSourceTest::testMaxSubnetId4() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
-    SubnetID subnet_id4 = numeric_limits<uint32_t>::max();
+    SubnetID subnet_id4 = SUBNET_ID_MAX;
     HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
-                          subnet_id4, 0, IOAddress("0.0.0.0")));
+                          subnet_id4, SUBNET_ID_UNUSED, IOAddress("0.0.0.0")));
 
     ASSERT_NO_THROW(addTestOptions(host, true, DHCP4_ONLY));
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -356,9 +357,9 @@ void GenericHostDataSourceTest::testMaxSubnetId6() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
-    SubnetID subnet_id6 = numeric_limits<uint32_t>::max();
+    SubnetID subnet_id6 = SUBNET_ID_MAX;
     HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
-                          0, subnet_id6, IOAddress("0.0.0.0")));
+                          SUBNET_ID_UNUSED, subnet_id6, IOAddress("0.0.0.0")));
 
     ASSERT_NO_THROW(addTestOptions(host, true, DHCP6_ONLY));
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -620,13 +621,11 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
     ASSERT_TRUE(hdsptr_);
 
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
-    host->setIPv6SubnetID(0);
+    host->setIPv6SubnetID(SUBNET_ID_UNUSED);
 
     for (int i = 0; i < subnets; ++i) {
         host->setIPv4SubnetID(i + 1000);
-
-        // Check that the same host can have reservations in multiple subnets.
-        EXPECT_NO_THROW(hdsptr_->add(host));
+        ASSERT_NO_THROW(hdsptr_->add(host));
     }
 
     // Now check that the reservations can be retrieved by IPv4 address from
@@ -1568,7 +1567,7 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     // Create a host with zero IPv4 address.
     HostPtr host1 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host1->setIPv4SubnetID(1);
-    host1->setIPv6SubnetID(0);
+    host1->setIPv6SubnetID(SUBNET_ID_UNUSED);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host1));
 
@@ -1581,7 +1580,7 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     // in the unique index.
     HostPtr host2 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host2->setIPv4SubnetID(1);
-    host2->setIPv6SubnetID(0);
+    host2->setIPv6SubnetID(SUBNET_ID_UNUSED);
     ASSERT_NO_THROW(hdsptr_->add(host2));
 }
 
@@ -1592,7 +1591,7 @@ GenericHostDataSourceTest::testMultipleHosts6() {
 
     // Create first host.
     HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
-    host1->setIPv4SubnetID(0);
+    host1->setIPv4SubnetID(SUBNET_ID_UNUSED);
     host1->setIPv6SubnetID(1);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -1602,7 +1601,7 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     ASSERT_THROW(hdsptr_->add(host1), DuplicateEntry);
 
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
-    host2->setIPv4SubnetID(0);
+    host2->setIPv4SubnetID(SUBNET_ID_UNUSED);
     host2->setIPv6SubnetID(1);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host2));

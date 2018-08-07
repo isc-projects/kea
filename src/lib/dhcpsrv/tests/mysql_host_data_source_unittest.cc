@@ -285,16 +285,16 @@ TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
 }
 
-// Verifies that IPv4 host reservation with options can have a value of zero
-// dhcp4_subnet id
-TEST_F(MySqlHostDataSourceTest, zeroSubnetId4) {
-    testMaxSubnetId4();
+// Verifies that IPv4 host reservation with options can have a the global
+// subnet id value
+TEST_F(MySqlHostDataSourceTest, globalSubnetId4) {
+    testGlobalSubnetId4();
 }
 
-// Verifies that IPv6 host reservation with options can have a value of zero
-// dhcp6_subnet id
-TEST_F(MySqlHostDataSourceTest, zeroSubnetId6) {
-    testMaxSubnetId6();
+// Verifies that IPv6 host reservation with options can have a the global
+// subnet id value
+TEST_F(MySqlHostDataSourceTest, globalSubnetId6) {
+    testGlobalSubnetId6();
 }
 
 // Verifies that IPv4 host reservation with options can have a max value

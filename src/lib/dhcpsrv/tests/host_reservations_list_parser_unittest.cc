@@ -180,7 +180,7 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     ASSERT_EQ(1, hosts.size());
 
     EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.134", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -191,7 +191,7 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     ASSERT_EQ(1, hosts.size());
 
     EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.110", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("bar.example.com", hosts[0]->getHostname());
 
@@ -205,7 +205,7 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet6);
 
     CfgMgr::instance().setFamily(AF_INET);
-    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(0));
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SUBNET_ID_UNUSED);
     runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
 }
 
@@ -292,7 +292,7 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     ASSERT_EQ(1, hosts.size());
 
     // Make sure it belongs to a valid subnet.
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
 
     // Get the reserved addresses for the host. There should be exactly one
@@ -311,7 +311,7 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
                                               duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
 
     // This reservation was for a prefix, instead of an IPv6 address.

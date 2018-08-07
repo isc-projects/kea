@@ -1361,7 +1361,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     HostPtr host(new Host(&client.getHWAddress()->hwaddr_[0],
                           client.getHWAddress()->hwaddr_.size(),
                           Host::IDENT_HWADDR, SubnetID(1),
-                          SubnetID(0), IOAddress("10.0.0.9")));
+                          SUBNET_ID_UNUSED, IOAddress("10.0.0.9")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1440,7 +1440,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     host.reset(new Host(&clientB.getHWAddress()->hwaddr_[0],
                         clientB.getHWAddress()->hwaddr_.size(),
                         Host::IDENT_HWADDR, SubnetID(1),
-                        SubnetID(0), in_pool_addr));
+                        SUBNET_ID_UNUSED, in_pool_addr));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
