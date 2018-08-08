@@ -50,6 +50,7 @@
       <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">scripts directory</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-4 | -6</option></arg>
       <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">output file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -169,6 +170,15 @@
         <listitem>
           <para>
             Required for lease-dump, Specifies the file to which the lease data will be dumped.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-v|--version</option></term>
+        <listitem>
+          <para>
+            Prints kea-admin version and quits.
           </para>
         </listitem>
       </varlistentry>

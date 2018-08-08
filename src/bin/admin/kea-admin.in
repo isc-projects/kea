@@ -66,7 +66,7 @@ usage() {
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
     printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
-    printf " -v - print kea-admin version and quit.\n"
+    printf " -v or --version - print kea-admin version and quit.\n"
     printf "\n"
     printf " Parameters specific to lease-dump:\n"
     printf "     -4 to dump IPv4 leases to file\n"
