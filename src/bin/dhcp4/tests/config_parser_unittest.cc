@@ -6156,12 +6156,6 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
         "}\n";
 
     ConstElementPtr json;
-    try {
-    (json = parseDHCP4(config));
-    } catch (const std::exception& ex) {
-        std::cout << "TKM: " << ex.what() << std::endl;
-    }
-
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
@@ -6192,7 +6186,7 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
     ASSERT_TRUE(host);
     EXPECT_EQ("global2", host->getHostname());
 
-    // Check that options are assigned correctly.
+    // Check that options are stored correctly.
     Option4AddrLstPtr opt_dns =
         retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
