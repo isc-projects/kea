@@ -168,6 +168,10 @@ kea_verbose=no
           <command>status</command> - returns the status of the servers (active
           or inactive) and the names of the configuration files in use.
         </simpara></listitem>
+        <listitem><simpara>
+          <command>version</command> - prints out a version of the
+          keactrl tool itself, but also the Kea daemons.
+        </simpara></listitem>
       </itemizedlist>
       </para>
 

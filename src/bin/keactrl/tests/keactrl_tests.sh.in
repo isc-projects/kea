@@ -1109,7 +1109,7 @@ version_test() {
 # This test uses version command, which reports version of the keactrl
 # tool itself, but also all the daemons.
 version_command_test() {
-    test_start "version"
+    test_start "version-command"
 
     # This is what we expect to get. We need to run it through echo
     # to convert \n to actual LF (0xa).
