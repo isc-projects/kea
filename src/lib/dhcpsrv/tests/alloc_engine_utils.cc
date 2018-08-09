@@ -194,7 +194,7 @@ AllocEngine6Test::createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
                                     HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
                                     uint8_t prefix_len) {
     HostPtr host(new Host(&hwaddr->hwaddr_[0], hwaddr->hwaddr_.size(),
-                          Host::IDENT_HWADDR, SubnetID(0), subnet_->getID(),
+                          Host::IDENT_HWADDR, SUBNET_ID_UNUSED, subnet_->getID(),
                           asiolink::IOAddress("0.0.0.0")));
     IPv6Resrv resv(type, addr, prefix_len);
     host->addReservation(resv);

@@ -6052,7 +6052,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     EXPECT_EQ("aa:bb:cc:dd:ee:ff", host->getHWAddress()->toText(false));
     EXPECT_FALSE(host->getDuid());
     EXPECT_EQ(100, host->getIPv4SubnetID());
-    EXPECT_EQ(0, host->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", host->getHostname());
 
     // Check host user context.
@@ -6101,6 +6101,136 @@ TEST_F(Dhcp4ParserTest, comments) {
         "    \"name\": \"kea-dhcp4\"\n"
         "} ]\n";
 #endif
+}
+
+// This test verifies that the global host reservations can be specified
+TEST_F(Dhcp4ParserTest, globalReservations) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"reservations\": [\n"
+        " {\n"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\",\n"
+        "        \"ip-address\": \"192.0.200.1\",\n"
+        "        \"hostname\": \"global1\",\n"
+        "        \"option-data\": [\n"
+        "        {\n"
+        "          \"name\": \"name-servers\",\n"
+        "          \"data\": \"192.0.3.15\"\n"
+        "        },\n"
+        "        {\n"
+        "          \"name\": \"default-ip-ttl\",\n"
+        "          \"data\": \"32\"\n"
+        "        }\n"
+        "        ]\n"
+        " },\n"
+        " {\n"
+        "        \"hw-address\": \"01:02:03:04:05:06\",\n"
+        "        \"hostname\": \"global2\",\n"
+        "        \"option-data\": [\n"
+        "        {\n"
+        "          \"name\": \"name-servers\",\n"
+        "          \"data\": \"192.0.3.95\"\n"
+        "        },\n"
+        "        {\n"
+        "          \"name\": \"default-ip-ttl\",\n"
+        "          \"data\": \"11\"\n"
+        "        }\n"
+        "        ]\n"
+        " }],\n"
+        "\"subnet4\": [ \n"
+        " { \n"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],\n"
+        "    \"subnet\": \"192.0.2.0/24\", \n"
+        "    \"id\": 123,\n"
+        "    \"reservations\": [\n"
+        "    ]\n"
+        " },\n"
+        " {\n"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],\n"
+        "    \"subnet\": \"192.0.4.0/24\",\n"
+        "    \"id\": 542\n"
+        " } ],\n"
+        "\"valid-lifetime\": 4000"
+        "}\n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // Make sure all subnets have been successfully configured. There is no
+    // need to sanity check the subnet properties because it should have
+    // been already tested by other tests.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(2, subnets->size());
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create a hardware address of the host named "global2"
+    std::vector<uint8_t> hwaddr;
+    for (unsigned int i = 1; i < 7; ++i) {
+        hwaddr.push_back(static_cast<uint8_t>(i));
+    }
+
+    // Retrieve the global reservation and sanity check the  hostname reserved.
+    ConstHostPtr host = hosts_cfg->get4(SUBNET_ID_GLOBAL, Host::IDENT_HWADDR,
+                                        &hwaddr[0], hwaddr.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ("global2", host->getHostname());
+
+    // Check that options are stored correctly.
+    Option4AddrLstPtr opt_dns =
+        retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.95", dns_addrs[0].toText());
+    OptionUint8Ptr opt_ttl =
+        retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
+
+    // This reservation should be global solely and not assigned to
+    // either subnet
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+
+    // Do the same test for the DUID based reservation.
+    std::vector<uint8_t> duid;
+    for (unsigned int i = 1; i < 0xb; ++i) {
+        duid.push_back(static_cast<uint8_t>(i));
+    }
+
+    // Retrieve the global reservation and sanity check the  hostname reserved.
+    host = hosts_cfg->get4(SUBNET_ID_GLOBAL, Host::IDENT_DUID, &duid[0], duid.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ("global1", host->getHostname());
+
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.15", dns_addrs[0].toText());
+    opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(32, static_cast<int>(opt_ttl->getValue()));
+
+    // This reservation should be global solely and not assigned to
+    // either subnet
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_DUID, &duid[0], duid.size()));
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_DUID, &duid[0], duid.size()));
 }
 
 }

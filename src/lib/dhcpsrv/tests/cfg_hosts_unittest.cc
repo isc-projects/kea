@@ -215,12 +215,12 @@ TEST_F(CfgHostsTest, getAll4ByAddress) {
         // Add host identified by the HW address.
         cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
                                  "hw-address",
-                                 SubnetID(1 + i), SubnetID(0),
+                                 SubnetID(1 + i), SUBNET_ID_UNUSED,
                                  IOAddress("192.0.2.5"))));
         // Add host identified by the DUID.
         cfg.add(HostPtr(new Host(duids_[i]->toText(),
                                  "duid",
-                                 SubnetID(1 + i), SubnetID(0),
+                                 SubnetID(1 + i), SUBNET_ID_UNUSED,
                                  IOAddress("192.0.2.10"))));
     }
 
@@ -520,7 +520,7 @@ TEST_F(CfgHostsTest, get6ByAddr) {
 
         // Add host identified by DUID.
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
-                                        SubnetID(0), SubnetID(1 + i % 2),
+                                        SUBNET_ID_UNUSED, SubnetID(1 + i % 2),
                                         IOAddress("0.0.0.0")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        increase(IOAddress("2001:db8:2::1"),
@@ -553,7 +553,7 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
 
         // Add host identified by DUID.
         HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
-                                        SubnetID(0), SubnetID(1 + i % 2),
+                                        SUBNET_ID_UNUSED, SubnetID(1 + i % 2),
                                         IOAddress("0.0.0.0")));
 
         // Generate 5 unique addresses for this host.
@@ -603,7 +603,7 @@ TEST_F(CfgHostsTest, add4AlreadyReserved) {
     // First host has a reservation for address 192.0.2.1
     HostPtr host1 = HostPtr(new Host(hwaddrs_[0]->toText(false),
                                      "hw-address",
-                                     SubnetID(1), SubnetID(0),
+                                     SubnetID(1), SubnetID(SUBNET_ID_UNUSED),
                                      IOAddress("192.0.2.1")));
     // Adding this should work.
     EXPECT_NO_THROW(cfg.add(host1));
@@ -611,7 +611,7 @@ TEST_F(CfgHostsTest, add4AlreadyReserved) {
     // The second host has a reservation for the same address.
     HostPtr host2 = HostPtr(new Host(hwaddrs_[1]->toText(false),
                                      "hw-address",
-                                     SubnetID(1), SubnetID(0),
+                                     SubnetID(1), SUBNET_ID_UNUSED,
                                      IOAddress("192.0.2.1")));
 
     // This second host has a reservation for an address that is already
@@ -626,7 +626,7 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
 
     // First host has a reservation for address 2001:db8::1
     HostPtr host1 = HostPtr(new Host(duids_[0]->toText(), "duid",
-                                     SubnetID(0), SubnetID(1),
+                                     SUBNET_ID_UNUSED, SubnetID(1),
                                      IOAddress("0.0.0.0")));
     host1->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                     IOAddress("2001:db8::1")));
@@ -635,7 +635,7 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
 
     // The second host has a reservation for the same address.
     HostPtr host2 = HostPtr(new Host(duids_[1]->toText(), "duid",
-                                     SubnetID(0), SubnetID(1),
+                                     SUBNET_ID_UNUSED, SubnetID(1),
                                      IOAddress("0.0.0.0")));
     host2->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                     IOAddress("2001:db8::1")));
@@ -645,13 +645,24 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
     EXPECT_THROW(cfg.add(host2), isc::dhcp::DuplicateHost);
 }
 
+// Check that no error is reported when adding a host with subnet
+// ids equal to global.
+TEST_F(CfgHostsTest, globalSubnetIDs) {
+    CfgHosts cfg;
+    ASSERT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
+                                             "hw-address",
+                                             SUBNET_ID_GLOBAL, SUBNET_ID_GLOBAL,
+                                             IOAddress("10.0.0.1")))));
+}
+
+
 // Check that error is reported when trying to add a host with subnet
-// ids equal to zero.
-TEST_F(CfgHostsTest, zeroSubnetIDs) {
+// ids equal to unused.
+TEST_F(CfgHostsTest, unusedSubnetIDs) {
     CfgHosts cfg;
     ASSERT_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                           "hw-address",
-                                          SubnetID(0), SubnetID(0),
+                                          SUBNET_ID_UNUSED, SUBNET_ID_UNUSED,
                                           IOAddress("10.0.0.1")))),
                  isc::BadValue);
 }
@@ -663,21 +674,21 @@ TEST_F(CfgHostsTest, duplicatesSubnet4HWAddr) {
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                              "hw-address",
-                                             SubnetID(10), SubnetID(0),
+                                             SubnetID(10), SUBNET_ID_UNUSED,
                                              IOAddress("10.0.0.1")))));
 
     // Try to add the host with the same HW address to the same subnet. The fact
     // that the IP address is different here shouldn't really matter.
     EXPECT_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                           "hw-address",
-                                          SubnetID(10), SubnetID(0),
+                                          SubnetID(10), SUBNET_ID_UNUSED,
                                           IOAddress("10.0.0.10")))),
                  isc::dhcp::DuplicateHost);
 
     // Now try to add it to a different subnet. It should go through.
     EXPECT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                              "hw-address",
-                                             SubnetID(11), SubnetID(0),
+                                             SubnetID(11), SUBNET_ID_UNUSED,
                                              IOAddress("10.0.0.10")))));
 }
 
@@ -688,21 +699,21 @@ TEST_F(CfgHostsTest, duplicatesSubnet4DUID) {
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                              "duid",
-                                             SubnetID(10), SubnetID(0),
+                                             SubnetID(10), SUBNET_ID_UNUSED,
                                              IOAddress("10.0.0.1")))));
 
     // Try to add the host with the same DUID to the same subnet. The fact
     // that the IP address is different here shouldn't really matter.
     EXPECT_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                           "duid",
-                                          SubnetID(10), SubnetID(0),
+                                          SubnetID(10), SUBNET_ID_UNUSED,
                                           IOAddress("10.0.0.10")))),
                  isc::dhcp::DuplicateHost);
 
     // Now try to add it to a different subnet. It should go through.
     EXPECT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                              "duid",
-                                             SubnetID(11), SubnetID(0),
+                                             SubnetID(11), SUBNET_ID_UNUSED,
                                              IOAddress("10.0.0.10")))));
 }
 
@@ -713,7 +724,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                              "hw-address",
-                                             SubnetID(0), SubnetID(1),
+                                             SUBNET_ID_UNUSED, SubnetID(1),
                                              IOAddress("0.0.0.0"),
                                              "foo.example.com"))));
 
@@ -721,7 +732,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
     // that the IP address is different here shouldn't really matter.
     EXPECT_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                           "hw-address",
-                                          SubnetID(0), SubnetID(1),
+                                          SUBNET_ID_UNUSED, SubnetID(1),
                                           IOAddress("0.0.0.0"),
                                           "foo.example.com"))),
                  isc::dhcp::DuplicateHost);
@@ -729,7 +740,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
     // Now try to add it to a different subnet. It should go through.
     EXPECT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
                                              "hw-address",
-                                             SubnetID(0), SubnetID(2),
+                                             SUBNET_ID_UNUSED, SubnetID(2),
                                              IOAddress("0.0.0.0"),
                                              "foo.example.com"))));
 }
@@ -741,7 +752,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                              "duid",
-                                             SubnetID(0), SubnetID(1),
+                                             SUBNET_ID_UNUSED, SubnetID(1),
                                              IOAddress("0.0.0.0"),
                                              "foo.example.com"))));
 
@@ -749,7 +760,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
     // that the IP address is different here shouldn't really matter.
     EXPECT_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                           "duid",
-                                          SubnetID(0), SubnetID(1),
+                                          SUBNET_ID_UNUSED, SubnetID(1),
                                           IOAddress("0.0.0.0"),
                                           "foo.example.com"))),
                  isc::dhcp::DuplicateHost);
@@ -757,7 +768,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
     // Now try to add it to a different subnet. It should go through.
     EXPECT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
                                              "duid",
-                                             SubnetID(0), SubnetID(2),
+                                             SUBNET_ID_UNUSED, SubnetID(2),
                                              IOAddress("0.0.0.0"),
                                              "foo.example.com"))));
 }

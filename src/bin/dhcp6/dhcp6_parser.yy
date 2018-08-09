@@ -454,6 +454,7 @@ global_param: preferred_lifetime
             | user_context
             | comment
             | sanity_checks
+            | reservations
             | unknown_map_entry
             ;
 
