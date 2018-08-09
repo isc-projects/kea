@@ -1,3 +1,16 @@
+1440.	[func]		tmark
+	The internal represenation of an "unused" subnet-id has been
+	changed from zero to 0xFFFFFFFF. The largest, valid value for
+	a subnet's ID is now 0xFFFFFFFE.  Three new constants have been
+	added so subnet_id.h:
+
+		isc::dhcp::SUBNET_ID_GLOBAL
+		isc::dhcp::SUBNET_ID_UNUSED
+		isc::dhcp::SUBNET_ID_MAX
+
+	which should be used in code/hooks in place of hard-coded values.
+	(Trac #5704, git 90fe9ca2cd6f63bcc7168bdc3786677db57b65ec)
+
 1439.	[func]		tomek
 	keactrl and kea-admin tools can now report version.
 	(gitlab #9, git 4a00ab5d4b9ac9193fc5f924149aeaca7a88e2ef)
