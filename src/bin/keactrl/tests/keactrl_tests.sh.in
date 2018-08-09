@@ -1083,9 +1083,8 @@ status_no_config_test() {
     test_finish 0
 }
 
-# This test checks version reported by kea-admin. It has nothing to do
-# with memfile, but that is the only test file that is always ran,
-# so decided to put the generic test here.
+# This test checks version reported by keactrl. This reports the
+# version of the keactrl tool itself.
 version_test() {
     test_start "version"
 
@@ -1107,8 +1106,33 @@ version_test() {
     test_finish 0
 }
 
+# This test uses version command, which reports version of the keactrl
+# tool itself, but also all the daemons.
+version_command_test() {
+    test_start "version"
+
+    # This is what we expect to get. We need to run it through echo
+    # to convert \n to actual LF (0xa).
+    exp="keactrl: @PACKAGE_VERSION@\n"
+    exp+="kea-dhcp4: @PACKAGE_VERSION@\n"
+    exp+="kea-dhcp6: @PACKAGE_VERSION@\n"
+    exp+="kea-dhcp-ddns: @PACKAGE_VERSION@\n"
+    exp+="kea-ctrl-agent: @PACKAGE_VERSION@"
+    EXPECTED_RESP=$(echo -e $exp)
+
+    # Let's use short version:
+    reported_version=$(${keactrl} version)
+
+    assert_str_eq "${EXPECTED_RESP}" "${reported_version}" \
+                  "Expected keactrl version to report %s, but it reported %s"
+
+    test_finish 0
+}
+
+
 
 version_test
+version_command_test
 start_all_servers_no_verbose_test
 start_all_servers_verbose_test
 start_v4_server_test

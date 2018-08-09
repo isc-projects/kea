@@ -55,7 +55,7 @@ is_in_list() {
 # Prints keactrl usage.
 usage() {
     printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" $( basename ${0} )
-    printf "commands: start stop reload status\n"
+    printf "commands: start stop reload status version\n"
 }
 
 ### Functions managing Kea processes ###
@@ -211,6 +211,24 @@ to process ${proc_name}, PID ${_pid}.\n"
     fi
 }
 
+# Print Kea daemon verison
+print_version() {
+    name=${1}
+    binary_path=${2}
+
+    if [ -e ${binary_path} ]; then
+        ver=`${binary_path} -v`
+        if [ $? -ne 0 ]; then
+            log_error "Error checking version of binary file: ${binary_path}"
+        fi
+    else
+        # No file, means no pid
+        ver="unknown, ${binary_path} missing";
+    fi
+
+    echo "${name}: ${ver}"
+}
+
 ### Functions testing the existence of the Kea config file
 
 # Check if the Kea configuration file location has been specified in the
@@ -289,7 +307,7 @@ if test "${command}" = "-v" || test "${command}" = "--version" ; then
     exit 0
 fi
 
-is_in_list "${command}" "start stop reload status"
+is_in_list "${command}" "start stop reload status version"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"
     exit 1
@@ -462,6 +480,15 @@ ${args}" 1
         check_kea_conf ${kea_dhcp6_config_file}
         check_kea_conf ${kea_dhcp_ddns_config_file}
         check_kea_conf ${kea_ctrl_agent_config_file}
+
+        exit 0 ;;
+
+    version)
+        echo "keactrl: ${VERSION}"
+        run_conditional "dhcp4" "print_version kea-dhcp4 ${dhcp4_srv}" 0
+        run_conditional "dhcp6" "print_version kea-dhcp6 ${dhcp6_srv}" 0
+        run_conditional "dhcp_ddns" "print_version kea-dhcp-ddns ${dhcp_ddns_srv}" 0
+        run_conditional "ctrl_agent" "print_version kea-ctrl-agent ${ctrl_agent_srv}" 0
 
         exit 0 ;;
 
