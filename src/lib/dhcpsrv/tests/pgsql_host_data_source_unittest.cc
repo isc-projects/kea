@@ -270,6 +270,18 @@ TEST_F(PgSqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
 }
 
+// Verifies that IPv4 host reservation with options can have a the global
+// subnet id value
+TEST_F(PgSqlHostDataSourceTest, globalSubnetId4) {
+    testGlobalSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a the global
+// subnet id value
+TEST_F(PgSqlHostDataSourceTest, globalSubnetId6) {
+    testGlobalSubnetId6();
+}
+
 // Verifies that IPv4 host reservation with options can have a max value
 // for  dhcp4_subnet id
 TEST_F(PgSqlHostDataSourceTest, maxSubnetId4) {

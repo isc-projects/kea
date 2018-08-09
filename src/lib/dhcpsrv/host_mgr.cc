@@ -181,7 +181,7 @@ HostMgr::get4(const SubnetID& subnet_id,
     if (host && host->getNegative()) {
         return (ConstHostPtr());
     } else if (!host && negative_caching_) {
-        cacheNegative(subnet_id, SubnetID(0),
+        cacheNegative(subnet_id, SubnetID(SUBNET_ID_UNUSED),
                       identifier_type, identifier_begin, identifier_len);
     }
     return (host);
@@ -295,7 +295,7 @@ HostMgr::get6(const SubnetID& subnet_id,
     if (host && host->getNegative()) {
         return (ConstHostPtr());
     } else if (!host && negative_caching_) {
-        cacheNegative(SubnetID(0), subnet_id,
+        cacheNegative(SubnetID(SUBNET_ID_UNUSED), subnet_id,
                       identifier_type, identifier_begin, identifier_len);
     }
     return (host);

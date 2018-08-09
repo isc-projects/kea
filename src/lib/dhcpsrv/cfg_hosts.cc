@@ -446,8 +446,9 @@ CfgHosts::add(const HostPtr& host) {
                   " is added to the configuration");
     }
 
-    // At least one subnet ID must be non-zero
-    if (host->getIPv4SubnetID() == 0 && host->getIPv6SubnetID() == 0) {
+    // At least one subnet ID must be used
+    if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED && 
+        host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
         isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"
                   " 0 when adding new host reservation");
     }
@@ -489,7 +490,7 @@ CfgHosts::add4(const HostPtr& host) {
     }
 
     // Check for duplicates for the specified IPv4 subnet.
-    if (host->getIPv4SubnetID() > 0) {
+    if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
         if (hwaddr && !hwaddr->hwaddr_.empty() &&
             get4(host->getIPv4SubnetID(), Host::IDENT_HWADDR,
                  &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
@@ -507,7 +508,7 @@ CfgHosts::add4(const HostPtr& host) {
                       << "' as this host has already been added");
         }
     // Check for duplicates for the specified IPv6 subnet.
-    } else if (host->getIPv6SubnetID()) {
+    } else if (host->getIPv6SubnetID() != SUBNET_ID_UNUSED) {
         if (duid && !duid->getDuid().empty() &&
             get6(host->getIPv6SubnetID(), Host::IDENT_DUID,
                  &duid->getDuid()[0], duid->getDuid().size())) {
@@ -528,7 +529,7 @@ CfgHosts::add4(const HostPtr& host) {
 
     // Check if the address is already reserved for the specified IPv4 subnet.
     if (!host->getIPv4Reservation().isV4Zero() &&
-        (host->getIPv4SubnetID() > 0) &&
+        (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) &&
         get4(host->getIPv4SubnetID(), host->getIPv4Reservation())) {
         isc_throw(ReservedAddress, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
@@ -540,7 +541,7 @@ CfgHosts::add4(const HostPtr& host) {
 
     // Check if the (identifier type, identifier) tuple is already used.
     const std::vector<uint8_t>& id = host->getIdentifier();
-    if ((host->getIPv4SubnetID() > 0) && !id.empty()) {
+    if ((host->getIPv4SubnetID() != SUBNET_ID_UNUSED) && !id.empty()) {
         if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
                  id.size())) {
             isc_throw(DuplicateHost, "failed to add duplicate IPv4 host using identifier: "
@@ -556,7 +557,7 @@ CfgHosts::add4(const HostPtr& host) {
 void
 CfgHosts::add6(const HostPtr& host) {
 
-    if (host->getIPv6SubnetID() == 0) {
+    if (host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
         // This is IPv4-only host. No need to add it to v6 tables.
         return;
     }

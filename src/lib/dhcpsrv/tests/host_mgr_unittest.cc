@@ -187,7 +187,7 @@ HostMgrTest::addHost4(BaseHostDataSource& data_source,
                       const SubnetID& subnet_id,
                       const IOAddress& address) {
     data_source.add(HostPtr(new Host(hwaddr->toText(false),
-                                     "hw-address", subnet_id, SubnetID(0),
+                                     "hw-address", subnet_id, SUBNET_ID_UNUSED,
                                      address)));
 }
 
@@ -330,7 +330,7 @@ HostMgrTest::testGet4Any() {
 
     // Add new host to the database.
     HostPtr new_host(new Host(duids_[0]->toText(), "duid", SubnetID(1),
-                              SubnetID(0), IOAddress("192.0.2.5")));
+                              SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
     // Abuse of the server's configuration.
     getCfgHosts()->add(new_host);
 
@@ -543,7 +543,7 @@ TEST_F(HostMgrTest, addNoDataSource) {
     HostMgr::create();
 
     HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
-                          SubnetID(1), SubnetID(0), IOAddress("192.0.2.5")));
+                          SubnetID(1), SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
     EXPECT_THROW(HostMgr::instance().add(host), NoHostDataSourceManager);
 }
 
