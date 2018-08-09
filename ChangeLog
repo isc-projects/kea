@@ -1,3 +1,6 @@
+1439.	[func]		tomek
+	keactrl and kea-admin tools can now report version.
+	(gitlab #9, git 4a00ab5d4b9ac9193fc5f924149aeaca7a88e2ef)
 
 1438.	[func]		tomek
 	subnet-id parameter is now optional in lease4-add, lease6-add,
