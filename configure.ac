@@ -878,10 +878,31 @@ if test "SYSREPO_CONFIG" != "" ; then
         AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
     fi
 
+    # Let's get the configuration environment for pure Sysrepo (written in C) first
     SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libsysrepo`
     SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
     SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
     SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
+
+    # Now get the environment for C++ bindings for Sysrepo.
+    SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
+    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libSysrepo-cpp`"
+    SYSREPOCPP_LIBS="`$SYSREPO_CONFIG --libs libSysrepo-cpp`"
+    SYSREPOCPP_VERSION=`$SYSREPO_CONFIG --modversion libSysrepo-cpp`
+
+    # If include paths are equal, there's no need to include both. But if they're different,
+    # we need both.
+    if test "${SYSREPO_INCLUDEDIR}" != "${SYSREPOCPP_INCLUDEDIR}"; then
+       SYSREPO_INCLUDEDIR="${SYSREPO_INCLUDEDIR} ${SYSREPOCPP_INCLUDEDIR}"
+    fi
+
+    if test "${SYSREPO_CPPFLAGS}" != "${SYSREPOCPP_CPPFLAGS}"; then
+       SYSREPO_CPPFLAGS="${SYSREPO_CPPFLAGS} ${SYSREPOCPP_CPPFLAGS}"
+    fi
+
+    if test "${SYSREPO_LIBS}" != "${SYSREPOCPP_LIBS}"; then
+       SYSREPO_LIBS="${SYSREPO_LIBS} ${SYSREPOCPP_LIBS}"
+    fi
 
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
@@ -905,6 +926,15 @@ if test "SYSREPO_CONFIG" != "" ; then
             [AC_MSG_RESULT([checking for Sysrepo headers and library... no])
              AC_MSG_ERROR([Needs Sysrepo library])]
     )
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <sysrepo-cpp/Session.h>],
+                              [Connection("conn-name");])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
+             AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.])]
+    )
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
