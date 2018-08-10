@@ -1,6 +1,6 @@
-module ietf-dhcpv4-server {
+module kea-dhcpv4-server {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:ietf-dhcpv4-server";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcpv4-server";
   prefix "dhcpv4-server";
 
   import ietf-inet-types {
@@ -23,7 +23,7 @@ module ietf-dhcpv4-server {
   contact
     "piotr.strzyzewski@polsl.pl";
   description "This model defines a YANG data model that can be
-      used to configure and manage a DHCPv4 server.";
+      used to configure and manage Kea-dhcp4, a DHCPv4 server from ISC.";
 
   revision 2018-07-14 {
     description "Initial revision; mostly based on DHCPv6 version";
