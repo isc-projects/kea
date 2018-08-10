@@ -1,0 +1,19 @@
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::netconf
+
+% NETCONF_STARTING Kea-netconf agent (version %1) is starting with process-id %2
+Describe it later.
+
+% NETCONF_STATED Kea-netconf agent (version %1) started
+Describe it later.
+
+% NETCONF_SHUTDOWN Kea-netconf agent shutting down.
+Describe it later.
+
+% NETCONF_EXCEPTION Exception encountered: %1
+Oops.
