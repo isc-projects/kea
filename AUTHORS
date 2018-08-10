@@ -172,7 +172,7 @@ We have received the following contributions:
  - Sunil Mayya
    2018-07: support for Authentication option in DHCPv6
    2018-07: support storage of Authentication keys in host structure
-   2018-07: Optimized query for host reservation from the backends
+   2018-08: Optimized query for host reservation from the backends
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
