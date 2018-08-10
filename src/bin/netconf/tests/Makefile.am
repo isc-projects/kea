@@ -14,7 +14,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
-CLEANFILES += *.json *.log
+CLEANFILES = *.json *.log
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
