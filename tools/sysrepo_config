@@ -67,7 +67,7 @@ then
 fi
 if [ $1 == "--libs" ]
 then
-	echo "-L${SYSREPO_PATH}/build/src -L${SYSREPO_PATH}/build/swig -L$YANG_LIBRARY_PATH -lsysrepo -lyang -pthread -lpcre -lev -lprotobuf -lavl -lprotobuf-c"
+	echo "-L${SYSREPO_PATH}/build/src -L${SYSREPO_PATH}/build/swig -L$YANG_LIBRARY_PATH -l:${sysrepo_lib}.a -lSysrepo-cpp -lyang -pthread -lpcre -lev -lprotobuf -lavl -lprotobuf-c"
 	exit 0
 fi
 if [ $1 == "--modversion" ]
