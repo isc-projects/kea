@@ -96,11 +96,16 @@ public:
         /// dealing with with addresses that are in pool.
         HR_OUT_OF_POOL,
 
+        /// Only global reservations are allowed. This mode
+        /// instructs AllocEngine to only look at global reservations.
+        HR_GLOBAL,
+
         /// Both out-of-pool and in-pool reservations are allowed. This is the
         /// most flexible mode, where sysadmin have biggest liberty. However,
         /// there is a non-trivial performance penalty for it, as the
         /// AllocEngine code has to check whether there are reservations, even
         /// when dealing with reservations from within the dynamic pools.
+        /// @todo - should ALL include global?
         HR_ALL
     } HRMode;
 
