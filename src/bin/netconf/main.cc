@@ -6,42 +6,47 @@
 
 #include <config.h>
 
-#include <netconf/agent.h>
 #include <netconf/netconf_log.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/daemon.h>
 #include <iostream>
 
-int main(
+#include <sysrepo-cpp/Session.h>
 
-         /// @brief Prints Kea Usage and exits
+using namespace std;
+using namespace isc;
+using namespace isc::netconf;
+
+/// @brief Prints Kea Usage and exits
 ///
 /// Note: This function never returns. It terminates the process.
 void
 usage() {
-    cerr << "Kea netconf daemon, version " << VERSION << endl;
-    cerr << endl;
-    cerr << "Usage: " <<
-         << "  -c: config-file" << endl;
-    cerr << "  -v: print version number and exit" << endl;
-    cerr << "  -V: print extended version and exit" << endl;
+    cerr << "Kea netconf daemon, version " << VERSION << endl
+         << endl
+         << "Usage: " << endl
+         << "  -c: config-file" << endl
+         << "  -d: debug mode (maximum verbosity)" << endl
+         << "  -v: print version number and exit" << endl
+         << "  -V: print extended version and exit" << endl;
     exit(EXIT_FAILURE);
 }
-} // end of anonymous namespace
 
 int
 main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
+    int ch;
 
     while ((ch = getopt(argc, argv, "vVc:")) != -1) {
         switch (ch) {
         case 'v':
-            cout << Dhcpv4Srv::getVersion(false) << endl;
+            cout << string(PACKAGE_VERSION) << endl;
             return (EXIT_SUCCESS);
 
         case 'V':
-            cout << Dhcpv4Srv::getVersion(true) << endl;
+            cout << string(PACKAGE_VERSION) << endl;
+            cout << "git " << EXTENDED_VERSION << endl;
             return (EXIT_SUCCESS);
 
         case 'c': // config file
@@ -63,51 +68,36 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    //CfgMgr::instance().setFamily(AF_INET);
-
     int ret = EXIT_SUCCESS;
     try {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        CfgMgr::instance().setDefaultLoggerName(KEA_NETCONF_LOGGER_NAME);
+        //CfgMgr::instance().setDefaultLoggerName(KEA_NETCONF_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         bool verbose_mode = true;
-        Daemon::loggerInit(KEA_NETCONF_LOGGER_NAME, verbose_mode);
-        LOG_INFO(netconf_logger, NETCONF_AGENT_STARTING).arg(VERSION).arg(getpid());
+        isc::dhcp::Daemon::loggerInit(NETCONF_LOGGER_NAME, verbose_mode);
+        LOG_INFO(netconf_logger, NETCONF_STARTING).arg(VERSION).arg(getpid());
 
-        // Create the server instance.
-        NetconfAgent agent;
-
-        // Remember verbose-mode
-        agent.setVerbose(verbose_mode);
-
-        // Create our PID file.
-        //server.setProcName(DHCP4_NAME);
-        //server.setConfigFile(config_file);
-        //server.createPIDFile();
-
-        try {
-            // Initialize the server.
-            server.init(config_file);
-        } catch (const std::exception& ex) {
-            cerr << "Failed to initialize server: " << ex.what() << endl;
-            return (EXIT_FAILURE);
-        }
-
+        Connection conn("kea-netconf");
+        
         // Tell the admin we are ready to process packets
-        LOG_INFO(netconf_logger, NETCONF_AGENT_STATED).arg(VERSION);
+        LOG_INFO(netconf_logger, NETCONF_STATED).arg(VERSION);
 
         // And run the main loop of the server.
-        agent.run();
+        while (true) {
+            cout << "Dummy kea-netconf running. Press ctrl-c to terminate."
+                 << endl;
+            sleep(1);
+        }
 
         LOG_INFO(netconf_logger, NETCONF_SHUTDOWN);
 
-    } catch (const isc::exception& ex) {
+    } catch (const isc::Exception& ex) {
         // First, we parint the error on stderr (that should always work)
-        cerr "ERROR:" << ex.what() << endl;
-
+        cerr << "ERROR:" << ex.what() << endl;
+        ret = EXIT_FAILURE;
     }
 
     return (ret);

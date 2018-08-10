@@ -46,9 +46,7 @@ BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 
 noinst_LTLIBRARIES = libnetconf.la
 
-libnetconf_la_SOURCES  = agent.cc agent.h
-libnetconf_la_SOURCES += translator.cc translator.h
-libnetconf_la_SOURCES += netconf_log.cc netconf_log.h
+libnetconf_la_SOURCES  = netconf_log.cc netconf_log.h
 
 nodist_libnetconf_la_SOURCES = netconf_messages.h netconf_messages.cc
 
@@ -59,21 +57,21 @@ sbin_PROGRAMS = kea-netconf
 kea_netconf_SOURCES  = main.cc
 
 kea_netconf_LDADD  = libnetconf.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+#kea_netconf_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_netconf_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)
 
