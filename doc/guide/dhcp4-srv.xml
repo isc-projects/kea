@@ -3462,7 +3462,7 @@ It is merely echoed by the server
     identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
 
     <para>The following example shows how to reserve addresses for specific
-    hosts:
+    hosts in a subnet:
 
 <screen>
 "subnet4": [
@@ -3541,6 +3541,20 @@ It is merely echoed by the server
       to skip reservation checks when dealing with existing leases. Therefore,
       system administrators are encouraged to use out-of-pool reservations if
       possible.</para>
+      <para>Beginning, with Kea 1.5.0, there is now support for global
+      host reservations.  These are reservations that are specified at the
+      global level within the configuration and that do not belong to any
+      specific subnet.  Kea will still match inbound client packets to a
+      subnet as before, but when the subnet's reservation mode is set to
+      <command>"global"</command>, Kea will look for host reservations only
+      among the global reservations defined. Typcially, such resrvations would
+      be used to reserve hostnames for clients which may move from one subnet
+      to another.
+      </para>
+      <note>You can reserve any ip-address in a global reservation. Just keep
+      in mind that Kea will not do any sanity checking on the address and for
+      Kea 1.5.0, support for this should be considered experimental.
+      </note>
     </section>
 
     <section xml:id="reservation4-conflict">
@@ -3884,10 +3898,10 @@ It is merely echoed by the server
       Allowed values are:
 
       <itemizedlist>
-      <listitem><simpara> <command>all</command> - enables all host reservation
-      types. This is the default value. This setting is the safest and the most
-      flexible. It allows in-pool and out-of-pool reservations. As all checks
-      are conducted, it is also the slowest.
+      <listitem><simpara> <command>all</command> - enables both in-pool
+      and out-of-pool host reservation types. This is the default value. This
+      setting is the safest and the most flexible. As all checks are conducted,
+      it is also the slowest.
       </simpara></listitem>
 
       <listitem><simpara> <command>out-of-pool</command> - allows only out of
@@ -3898,6 +3912,16 @@ It is merely echoed by the server
       if any of your reservations use in-pool address. Caution is advised when
       using this setting: Kea does not sanity check the reservations against
       <command>reservation-mode</command> and misconfiguration may cause problems.
+      </simpara></listitem>
+
+      <listitem><simpara> <command>global</command> - allows only global
+      host reservations.  With this setting in place, the server searches for
+      reservations for a client only among the defined global reservations.
+      If an address is specified, the server will skip the reservation checks
+      done when dealing in other modes, thus improving performance.
+      Caution is advised when using this setting: Kea does not sanity check
+      the reservations when <command>global</command> and
+      misconfiguration may cause problems.
       </simpara></listitem>
 
       <listitem><simpara>
@@ -3911,7 +3935,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-        An example configuration that disables reservation looks like follows:
+        An example configuration that disables reservation appears as follows:
 <screen>
 "Dhcp4": {
     "subnet4": [
@@ -3923,7 +3947,44 @@ It is merely echoed by the server
     ]
 }
 </screen>
+
+
       </para>
+      <para>
+        An example configuration using global reservations is shown below:
+<screen>
+"Dhcp4": {
+
+    <userinput>
+    "reservations": [
+       {
+        "hw-address": "01:bb:cc:dd:ee:ff",
+        "hostname": "host-one"
+       },
+       {
+        "hw-address": "02:bb:cc:dd:ee:ff",
+        "hostname": "host-two"
+       }
+    ],
+    </userinput>
+    "subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        <userinput>"reservation-mode": "global"</userinput>,
+        ...
+    },
+    {
+        "subnet": "192.0.8.0/24",
+        <userinput>"reservation-mode": "global"</userinput>,
+        ...
+    }
+    ]
+}
+</screen>
+
+
+      </para>
+
 
       <para>Another aspect of the host reservations are the different types of
       identifiers. Kea 1.1.0 supports four types of identifiers
