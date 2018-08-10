@@ -1834,6 +1834,7 @@ Google Benchmark:
 END
 else
 cat >> config.report << END
+
 Google Benchmark:
   no
 END
