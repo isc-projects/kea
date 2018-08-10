@@ -6,7 +6,7 @@
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 <!-- Converted by db4-upgrade version 1.1 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-shell">
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-netconf">
   <title>YANG/NETCONF Support</title>
 
   <section xml:id="netconf-overview">
@@ -14,34 +14,32 @@
     <para>Kea 1.5.0 introduced an optional support for YANG/NETCONF
     interface. </para>
 
-    <para>As the primary purpose of the Kea Shell is as a tool in scripting environment,
-    it is not interactive. However, with simple tricks it can be run manually.
-    </para>
+    <para>This bare bones documentation is a work in progress. Its
+    current purpose is to let engineers joining the project or perhaps
+    advanced early adopters to get up to speed quickly.</para>
   </section>
 
   <section xml:id="netconf-install">
     <title>Installing NETCONF Dependencies</title>
 
-<para>This bare bones documentation is a work in progress. Its current purpose
-is to let engineers joining the project or perhaps advanced early adopters to
-get up to speed quickly. Note that to get NETCONF capabilities Kea uses Sysrepo
-software, which has many dependencies. Unfortunately, many of them are not
-available as packages, so some need to be compiled manually.</para>
+    <para>Note that to get NETCONF capabilities Kea uses Sysrepo software, which has many
+    dependencies. Unfortunately, many of them are not available as packages, so some need
+    to be compiled manually.</para>
 
-<para>The following installation instruction was tested on Ubuntu 18.04.</para>
-    
-<para>    
-STEP 1. Install dependencies. Note that some of those dependencies are likely to
-be present in your system already.
+    <para>The following installation instruction was tested on Ubuntu 18.04.</para>
+
+    <para>STEP 1. Install dependencies. Note that some of those dependencies are likely to
+    be present in your system already.
 
 <screen>
 $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-dev libavl-dev libprotobuf-c-dev protobuf-c-compiler
-</screen>      
-</para>
+</screen>
 
-<para>
-STEP 2. Install libyang. Download libyang from https://github.com/CESNET/libyang/releases.
-As of writing this document, the latest version was 0.15-r1.
+    </para>
+
+    <para>STEP 2. Install libyang. Download libyang from
+    https://github.com/CESNET/libyang/releases.  As of writing this document, the latest
+    version was 0.15-r1.
 
 <screen>
     tar zxvf libyang-0.15-r1.tar.gz
@@ -51,13 +49,12 @@ As of writing this document, the latest version was 0.15-r1.
     cmake ..
     make
     sudo make install
-</screen>      
+</screen>
 
-For detailed build instructions, see https://github.com/CESNET/libyang/.
-</para>
+    For detailed build instructions, see https://github.com/CESNET/libyang/.</para>
 
-<para>STEP 3. Install syrepo. Download sysrepo from https://github.com/sysrepo/sysrepo/releases.
-As of writing this document, the 0.7.4 as the latest version.
+    <para>STEP 3. Install syrepo. Download sysrepo from https://github.com/sysrepo/sysrepo/releases.
+    As of writing this document, the 0.7.4 as the latest version.
 
 <screen>
 tar zxvf sysrepo-0.7.4.tar.gz
@@ -69,6 +66,9 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DGEN_LANGUAGE_BINDINGS=ON -DGEN_CPP_BINDINGS=ON\
 make
 sudo make install
 </screen>
+
+For detailed instructions, see Build &amp; Installation Steps Section on the project page
+located at https://github.com/sysrepo/sysrepo.
 </para>
 </section>
 
@@ -153,7 +153,7 @@ Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-interfaces'...
 Installing data files for module 'ietf-interfaces'...
 Notifying sysrepo about the change...
 Install operation completed successfully.
-</screen>  
+</screen>
 
 You can confirm whether the models are imported correctly by using sysrepoctl -l
 
