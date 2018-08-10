@@ -1023,7 +1023,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "SELECT "
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE duid = ? "
       "ALLOW FILTERING "}},
