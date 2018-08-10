@@ -1641,8 +1641,8 @@ GenericLeaseMgrTest::testGetLeases6Duid() {
                                80, subnet_id));
     Lease6Ptr lease2(new Lease6(Lease::TYPE_NA, addr2, duid2, iaid, 100, 200, 50,
                                80, subnet_id));
-    Lease6Ptr lease3(new Lease6(Lease::TYPE_NA, addr3, duid3, iaid, 100, 200, 50,
-                               80, subnet_id));
+    Lease6Ptr lease3(new Lease6(Lease::TYPE_PD, addr3, duid3, iaid, 100, 200, 50,
+                               80, subnet_id, HWAddrPtr(), 64));
 
     EXPECT_TRUE(lmptr_->addLease(lease1));
     EXPECT_TRUE(lmptr_->addLease(lease2));
