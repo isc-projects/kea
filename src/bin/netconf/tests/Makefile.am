@@ -30,7 +30,8 @@ if HAVE_GTEST
 
 TESTS += netconf_unittests
 
-netconf_unittests_SOURCES  = netconf_unittest.cc
+netconf_unittests_SOURCES  = run_unittests.cc
+netconf_unittests_SOURCES += netconf_env_unittest.cc
 
 netconf_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 netconf_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
@@ -52,12 +53,13 @@ netconf_unittests_LDADD = $(top_builddir)/src/bin/netconf/libnetconf.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+netconf_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 netconf_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
-netconf_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
+netconf_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD) $(SYSREPO_LIBS)
 endif
 
 noinst_EXTRA_DIST = configs-list.txt
