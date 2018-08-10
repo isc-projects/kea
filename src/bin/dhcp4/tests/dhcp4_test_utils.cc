@@ -605,7 +605,14 @@ void
 Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
                          const bool commit) {
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseJSON(config));
+    try {
+        json = parseJSON(config);
+    } catch (const std::exception& ex){
+        FAIL() << "parsing failure:"
+                << "config:" << config << std::endl
+                << "error: " << ex.what();
+    }
+
     ConstElementPtr status;
 
     // Disable the re-detect flag
@@ -616,7 +623,7 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode);
+    ASSERT_EQ(0, rcode) << comment->stringValue();
 
     // Use specified lease database backend.
     ASSERT_NO_THROW( {
