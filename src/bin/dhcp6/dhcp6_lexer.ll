@@ -313,6 +313,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"hostname-char-set\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hostname-char-set", driver.loc_);
+    }
+}
+
+\"hostname-char-replacement\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("hostname-char-replacement", driver.loc_);
+    }
+}
+
 (?i:\"UDP\") {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::dhcp::Parser6Context::NCR_PROTOCOL) {
@@ -445,6 +463,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return  isc::dhcp::Dhcp6Parser::make_RE_DETECT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("re-detect", driver.loc_);
+    }
+}
+
+\"sanity-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return  isc::dhcp::Dhcp6Parser::make_SANITY_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("sanity-checks", driver.loc_);
+    }
+}
+
+\"lease-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SANITY_CHECKS:
+        return  isc::dhcp::Dhcp6Parser::make_LEASE_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("lease-checks", driver.loc_);
     }
 }
 
@@ -1186,6 +1222,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"reservations\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
         return isc::dhcp::Dhcp6Parser::make_RESERVATIONS(driver.loc_);
     default:

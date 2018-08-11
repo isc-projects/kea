@@ -2582,6 +2582,12 @@ It is merely echoed by the server
       <listitem><simpara>
       <command>"generated-prefix": "myhost"</command>
       </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-set": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-replacement": ""</command>
+      </simpara></listitem>
       </itemizedlist>
       </para>
 
@@ -2908,6 +2914,86 @@ It is merely echoed by the server
         myhost-172-16-1-10.example.com.
       </para>
       </section>
+      <section xml:id="host-name-sanitization">
+        <title>Sanitizing Client Host Name and FQDN Names</title>
+        It may be that some of your DHCP clients provide values in the Host
+        Name option (Option code 12) or FQDN option (Option code 81), that
+        contain undesirable characters.  It is possible to configure kea-dhcp4
+        to sanitize these values.  The most typical use case would be ensuring
+        that only characters that are permitted by RFC 1035 be included:
+        A-Z,a-z,0-9, and '-'.
+
+        This may be accomplished with following two parameters:
+        <itemizedlist>
+        <listitem><simpara>
+        <command>hostname-char-set</command> - a regular expression describing
+        the invalid character set.  This can be any valid, regular expression
+        using POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]"
+        would replace any character other then the letters A through z, digits
+        0 through 9, and '-'.  An empty string, the default value, disables
+        sanitization.
+        </simpara></listitem>
+        <listitem><simpara>
+        <command>hostname-char-replacement</command> - a string of zero or
+        more characters with which to replace each invalid character in the
+        host name.  The default value is an empty string and will cause
+        invalid characters to be OMITTED rather than replaced.
+        </simpara></listitem>
+        </itemizedlist>
+        The following configuration, will replace anything other than a
+        letter, digit, hyphen, or dot with the letter 'x':
+<screen>
+"Dhcp4": {
+    "dhcp-ddns": {
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
+        ...
+    },
+    ...
+}
+</screen>
+        Thus, a client supplied value of "myhost-$[123.org" would become
+        "myhost-xx123.org".  Sanitizing is performed only on the portion of
+        the name supplied by the client and it is performed before applying
+        a qualifying suffix (if one is defined and needed).
+        <note>
+        The following are some considerations to keep in mind:
+        <para>
+        Name sanitizing is meant to catch the more common cases of invalid
+        characters through a relatively simple character replacement scheme.
+        It is difficult to devise a scheme that works well in all cases,
+        for both Host Name and FQDN options.  If you find you have clients
+        that are using odd, corner cases of character combinations that cannot
+        be readily handled with this mechanism, you should consider writing
+        a hook that can carry out sufficiently complex logic to address your
+        needs.
+        </para>
+        <para>
+        If your clients include domain names in the Host Name option and you
+        want these preserved, you will need to make sure that the dot, '.', is
+        considered a valid character by the hostname-char-set expression, such
+        as this: "[^A-Za-z0-9.-]". This will not affect dots in FQDN Option
+        values.  When scrubbing FQDNs, dots are treated as delimiters and used
+        to  separate the option value into individual domain labels that are
+        scrubbed and then re-assembled.
+        </para>
+        <para>
+        If your clients are sending values that differ only by characters
+        considered as invalid by your hostname-char-set, be aware that scrubbing
+        them will yield identical values. In such cases, DDNS conflict rules
+        will permit only one of them from registering the name.
+        </para>
+        <para>
+        Finally, given the latitude clients have in the values they send, it is
+        virtually impossible to guarantee that a combination of these two
+        parameters will always yield a name that is valid for use in DNS. For
+        example, using an empty value for hostname-char-replacment could yield
+        an empty domain label within a name, if that label consists only of
+        invalid characters.
+        </para>
+        </note>
+      </section>
+
     </section>
 
     <section xml:id="dhcp4-next-server">
@@ -3232,7 +3318,110 @@ It is merely echoed by the server
 }
 </screen>
     </para>
-    </section>
+     </section>
+
+
+     <section xml:id="sanity-checks4">
+       <title>Sanity checks in DHCPv4</title>
+
+       <para>
+         An important aspect of a well running DHCP system is an assurance that
+         the data remains consisent. However, in some cases it may be convenient
+         to tolerate certain inconsistent data. For example, a network
+         administrator that temporarily removed a subnet from a configuration
+         wouldn't want all the leases associated with it disappear from the
+         lease database. Kea 1.5 introduced a mechanism to better control sanity
+         checks such as this. While currently the scope of configurable sanity
+         checks is limited and their default value is set low, it is expected
+         that over time the default settings will be set to more aggressive
+         values and more parameters of similar nature will be added in the
+         future.
+       </para>
+
+       <para>
+         Kea now supports a new configuration scope called
+         <command>sanity-checks</command>. It currently allows only a
+         single parameter called <command>lease-checks</command>. It
+         governs what sort of verification is done when a new lease is
+         being loaded from a lease file. With the introduction of
+         sanity checks mechanism, it is now possible to tell Kea to
+         try to correct inconsistent data.
+       </para>
+
+       <para>
+         Every subnet has a subnet-id value. This is how Kea internally
+         identifies subnets. Each lease has a subnet-id parameter as well, which
+         identifies which subnet it belongs to. However, if configuration has
+         changed, it is possible that a lease could exist with a subnet-id
+         without any subnet that matches it. Also, it may be possible that
+         subnets configuration has changed and the subnet-id now belongs to a
+         subnet that does not match the lease. Kea corrective algorithm first
+         checks if there is a subnet with subnet-id specified by the lease. If
+         there is, it checks whether the lease belongs to that subnet. If not,
+         depending on the lease-checks setting, the lease is discarded, a
+         warning is printed or a new subnet is selected for the lease that
+         matches it topologically.
+       </para>
+
+       <para>
+         There are five levels which are supported:
+       </para>
+
+       <itemizedlist>
+         <listitem>
+           <simpara><command>none</command> - do no special checks, accept the
+           lease as is</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>warn</command> - if problems are detected, a
+           warning will be printed, but the lease data will be accepted
+           anyway. This is the default value. If not explicitly configured to
+           some other value, this level will be used.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is
+           not successful, the data will be inserted anyway.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix-del</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is not
+           succesful, the lease will be rejected. This setting ensures the data
+           correctness, but some incorrect data may be lost. Use with
+           care.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>del</command> - This is the strictest mode. If any
+           inconsistency is detected, the lease is rejected. Use with care.
+           </simpara>
+         </listitem>
+       </itemizedlist>
+
+       <para>This feature is currently implemented for memfile backend.</para>
+
+       <para>
+         An example configuration that sets this parameter looks as follows:
+<screen>
+"Dhcp4": {
+    "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        <userinput>"lease-checks": "fix-del"</userinput>
+    },
+    ...
+}</screen>
+
+  </para>
+     </section>
 
   </section> <!-- end of configuring kea-dhcp4 server section -->
 

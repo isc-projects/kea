@@ -218,6 +218,9 @@ public:
         /// Used while parsing Dhcp6/interfaces structures.
         INTERFACES_CONFIG,
 
+        /// Sanity checks.
+        SANITY_CHECKS,
+
         /// Used while parsing Dhcp6/lease-database structures.
         LEASE_DATABASE,
 

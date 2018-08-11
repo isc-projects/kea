@@ -123,6 +123,7 @@ libdhcpsrv_unittests_SOURCES += cql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_host_data_source_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
+libdhcpsrv_unittests_SOURCES += sanity_checks_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_network_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_network_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_networks_list_parser_unittest.cc

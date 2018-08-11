@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -158,8 +158,8 @@ HostReservationParser::parseInternal(const SubnetID&,
         }
 
         // Create a host object from the basic parameters we already parsed.
-        host.reset(new Host(identifier, identifier_name, SubnetID(0),
-                             SubnetID(0), IOAddress("0.0.0.0"), hostname));
+        host.reset(new Host(identifier, identifier_name, SUBNET_ID_UNUSED,
+                            SUBNET_ID_UNUSED, IOAddress("0.0.0.0"), hostname));
 
         // Add user context
         if (user_context) {

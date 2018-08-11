@@ -740,7 +740,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkClassification) {
     // lease from subnet2.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet1_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.17")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.17")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
     AllocEngine::findReservation(ctx);
@@ -810,7 +810,7 @@ TEST_F(SharedNetworkAlloc4Test, discoverSharedNetworkReservations) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
-                          SubnetID(0), IOAddress("10.2.3.23")));
+                          SUBNET_ID_UNUSED, IOAddress("10.2.3.23")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1066,7 +1066,7 @@ TEST_F(SharedNetworkAlloc4Test, requestSharedNetworkReservations) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet2_->getID(),
-                          SubnetID(0), IOAddress("10.2.3.23")));
+                          SUBNET_ID_UNUSED, IOAddress("10.2.3.23")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1498,7 +1498,7 @@ TEST_F(AllocEngine4Test, reservedAddressNoHint) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1537,7 +1537,7 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
     // Create reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1578,7 +1578,7 @@ TEST_F(AllocEngine4Test,reservedAddressNoHintFakeAllocation) {
 TEST_F(AllocEngine4Test, reservedAddressHint) {
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1627,7 +1627,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintFakeAllocation) {
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1666,7 +1666,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLease) {
     // Create the reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1717,7 +1717,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijacked) {
     // Create host reservation for the client B.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1775,7 +1775,7 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
     // Create a reservation for the client B.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1835,7 +1835,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseInvalidHint) {
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1889,7 +1889,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseFakeAllocation) {
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1954,7 +1954,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHint) {
     // Create a reservation.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2006,7 +2006,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseNoHintFakeAllocation) {
     // Create a reservation.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2070,7 +2070,7 @@ TEST_F(AllocEngine4Test, reservedAddressConflictResolution) {
     // Create a reservation for client B.
     HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr2_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.101")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.101")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2162,7 +2162,7 @@ TEST_F(AllocEngine4Test, reservedAddressVsDynamicPool) {
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.100")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.100")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2194,7 +2194,7 @@ TEST_F(AllocEngine4Test, reservedAddressHintUsedByOtherClient) {
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.100")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.100")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2236,7 +2236,7 @@ TEST_F(AllocEngine4Test, reservedAddressShortPool) {
     // Reserve the address for a different client.
     HostPtr host(new Host(&hwaddr2_->hwaddr_[0], hwaddr2_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.100")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.100")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2277,7 +2277,7 @@ TEST_F(AllocEngine4Test, reservedHostname) {
     // indicates that there is no reservation.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress::IPV4_ZERO_ADDRESS(),
+                          SUBNET_ID_UNUSED, IOAddress::IPV4_ZERO_ADDRESS(),
                           "foo.example.org"));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
@@ -2323,7 +2323,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     // Create a reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.100")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.100")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2347,7 +2347,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     host.reset(new Host(&clientid_->getClientId()[0],
                         clientid_->getClientId().size(),
                         Host::IDENT_DUID, subnet_->getID(),
-                        SubnetID(0), IOAddress("192.0.2.101")));
+                        SUBNET_ID_UNUSED, IOAddress("192.0.2.101")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2366,7 +2366,7 @@ TEST_F(AllocEngine4Test, findReservation) {
     ctx.subnet_ = subnet_;
     host.reset(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                         Host::IDENT_HWADDR, subnet_->getID() + 1,
-                        SubnetID(0), IOAddress("192.0.2.100")));
+                        SUBNET_ID_UNUSED, IOAddress("192.0.2.100")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -2444,7 +2444,7 @@ TEST_F(AllocEngine4Test, reservedAddressExistingLeaseStat) {
     // Create the reservation for the client.
     HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
                           Host::IDENT_HWADDR, subnet_->getID(),
-                          SubnetID(0), IOAddress("192.0.2.123")));
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 

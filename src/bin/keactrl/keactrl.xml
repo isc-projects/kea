@@ -46,6 +46,7 @@
       <arg choice="opt" rep="norepeat">command</arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -177,6 +178,15 @@
             </varlistentry>
 
           </variablelist>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-v|--version</option></term>
+        <listitem>
+          <para>
+            Prints keactrl version and quits.
+          </para>
         </listitem>
       </varlistentry>
 

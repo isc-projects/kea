@@ -196,7 +196,9 @@ Parser6Context::contextName()
         return ("replace-client-name");
     case SHARED_NETWORK:
         return ("shared-networks");
-     default:
+    case SANITY_CHECKS:
+        return ("sanity-checks");
+    default:
         return ("__unknown__");
     }
 }
