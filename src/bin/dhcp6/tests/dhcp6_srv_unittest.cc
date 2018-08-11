@@ -62,6 +62,7 @@ const char* CONFIGS[] = {
     "{ \"interfaces-config\": {"
     "  \"interfaces\": [ \"*\" ]"
     "},"
+    " \"enable-reconfiguration\": true,"
     "\"preferred-lifetime\": 3000,"
     "\"rebind-timer\": 2000, "
     "\"renew-timer\": 1000, "
@@ -2734,6 +2735,8 @@ TEST_F(Dhcpv6SrvTest, truncatedVIVSO) {
 // Verifies various properties of the server when reconfigure accept
 // option is enabled
 TEST_F(Dhcpv6SrvTest, reconfigureAcceptOptionTest) {
+    
+    
     //initialise the database
     destroyMySQLSchema();
     createMySQLSchema();
@@ -2741,6 +2744,9 @@ TEST_F(Dhcpv6SrvTest, reconfigureAcceptOptionTest) {
     HostMgr::addBackend(validMySQLConnectionString());
     NakedDhcpv6Srv srv(0);
 
+    //enable reconfigure feature in the config
+    CfgMgr::instance().getCurrentCfg()->setReconfigurationFlag(true);
+    
     // Let's create basic a REQUEST with reconfigure 
     // accept option enabled
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));

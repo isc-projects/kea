@@ -287,7 +287,7 @@ public:
         LOGGERS,
 
         /// Used while parsing Logging/loggers/output_options structures.
-        OUTPUT_OPTIONS,
+        OUTPUT_OPTIONS, 
 
         /// Used while parsing Dhcp6/dhcp-ddns.
         DHCP_DDNS,

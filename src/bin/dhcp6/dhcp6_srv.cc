@@ -65,8 +65,6 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#define ENABLE_RECONFIG 
-
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
@@ -316,16 +314,19 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
     ctx.callout_handle_ = getCalloutHandle(pkt);
     ctx.hwaddr_ = getMAC(pkt);
 
-    //set ctx.support_reconfig to true only for 
-    //request, renew or rebind.
-    //This will ensure that only in situations when lease is created, key and user context will be stored.
-
-    OptionPtr reconfigAccept = pkt->getOption(D6O_RECONF_ACCEPT);
-    if (reconfigAccept) {
-        if(pkt->getType() == DHCPV6_REQUEST ||
-           pkt->getType() == DHCPV6_RENEW ||
-           pkt->getType() == DHCPV6_REBIND) {
-           ctx.support_reconfig =  true;
+    //Check if reconfiguration feature is supported 
+    if (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag()) {
+        OptionPtr reconfigAccept = pkt->getOption(D6O_RECONF_ACCEPT);
+        
+        //set ctx.support_reconfig to true only for 
+        //request, renew or rebind.(and not ir)
+        //Only for those client request we store leases
+        if (reconfigAccept ) {
+            if (pkt->getType() == DHCPV6_REQUEST ||
+               pkt->getType() == DHCPV6_RENEW ||
+               pkt->getType() == DHCPV6_REBIND) {
+               ctx.support_reconfig =  true;
+            }
         }
     }
 
@@ -1061,10 +1062,10 @@ Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer,
                                 const CfgOptionList&) {
     // add server-id
     answer->addOption(getServerID());
-#ifdef ENABLE_RECONFIG 
-    OptionPtr reconfig_opt(new Option(Option::V6, D6O_RECONF_ACCEPT));
-    answer->addOption(reconfig_opt);
-#endif
+    if (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag()) {
+        OptionPtr reconfig_opt(new Option(Option::V6, D6O_RECONF_ACCEPT));
+        answer->addOption(reconfig_opt);
+    }
 }
 
 void
@@ -2825,7 +2826,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
 
     //check for reconfig option
     updateReconfigInfo(renew, ctx);
-    
+
     setReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
 
@@ -3914,22 +3915,15 @@ void Dhcpv6Srv::discardPackets() {
 }
 
 void Dhcpv6Srv::updateReconfigInfo(const Pkt6Ptr& msg, AllocEngine::ClientContext6& ctx) {
-#ifdef ENABLE_RECONFIG 
+
     if (ctx.support_reconfig &&
         !ctx.fake_allocation_) {
-        //check if client has included reconfig accept only in
-        uint8_t msg_type = msg->getType();
-        
-        if (msg_type != DHCPV6_CONFIRM &&
-            msg_type != DHCPV6_RELEASE &&
-            msg_type != DHCPV6_DECLINE) {
-            //check if key is configured 
-            updateHostKey(ctx);
-            //store the client interface and linklocal address in the client context
-            storeClientIntfInfo(msg, ctx);
-        }
+        //check if key is configured , if not generate and store key in the 
+        //backend 
+        updateHostKey(ctx);
+        //store the client interface and linklocal address in the client context
+        storeClientIntfInfo(msg, ctx);
     }
-#endif
 }
 
 };
