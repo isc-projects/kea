@@ -321,7 +321,7 @@ Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
         //set ctx.support_reconfig to true only for 
         //request, renew or rebind.(and not ir)
         //Only for those client request we store leases
-        if (reconfigAccept ) {
+        if (reconfigAccept) {
             if (pkt->getType() == DHCPV6_REQUEST ||
                pkt->getType() == DHCPV6_RENEW ||
                pkt->getType() == DHCPV6_REBIND) {
@@ -1062,6 +1062,8 @@ Dhcpv6Srv::appendDefaultOptions(const Pkt6Ptr&, Pkt6Ptr& answer,
                                 const CfgOptionList&) {
     // add server-id
     answer->addOption(getServerID());
+
+    //append reconf accept flag if its enabled in the configuration
     if (CfgMgr::instance().getCurrentCfg()->getReconfigurationFlag()) {
         OptionPtr reconfig_opt(new Option(Option::V6, D6O_RECONF_ACCEPT));
         answer->addOption(reconfig_opt);
@@ -2826,7 +2828,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
 
     //check for reconfig option
     updateReconfigInfo(renew, ctx);
-
+    
     setReservedClientClasses(renew, ctx);
     requiredClassify(renew, ctx);
 
@@ -3848,13 +3850,15 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
 }
 
 void Dhcpv6Srv::updateHostKey(AllocEngine::ClientContext6& ctx) {
+    //Default arguments generates a random key
     AuthKey default_key;
 
     //check if reservation is present for the client
     if (ctx.hosts_.empty()) {
         //create and assign new reservation
         HostPtr hptr(new Host(ctx.duid_->toText(), "duid",
-                    SubnetID(1), ctx.subnet_->getID(), IOAddress::IPV4_ZERO_ADDRESS()));
+                     SubnetID(1), ctx.subnet_->getID(),
+                     IOAddress::IPV4_ZERO_ADDRESS()));
 
         hptr->setKey(default_key);
 
@@ -3866,9 +3870,8 @@ void Dhcpv6Srv::updateHostKey(AllocEngine::ClientContext6& ctx) {
 		    ctx.hosts_[ctx.subnet_->getID()] = hptr;
         }
 		// Now update the context with the new reservation
-	} else {
+    } else {
         for (auto& host : ctx.hosts_) {
-            //first check if there are keys already stored 
             if (host.second->getKey().ToText().empty()) {
                 HostPtr hostPtr = boost::const_pointer_cast<Host>(host.second);
                 //multiple host reservation are assigned the same key
@@ -3879,7 +3882,15 @@ void Dhcpv6Srv::updateHostKey(AllocEngine::ClientContext6& ctx) {
    }
 }
 
-void Dhcpv6Srv::storeClientIntfInfo(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
+void Dhcpv6Srv::discardPackets() {
+    // Dump all of our current packets, anything that is mid-stream
+    isc::dhcp::Pkt6Ptr pkt6ptr_empty;
+    isc::dhcp::getCalloutHandle(pkt6ptr_empty);
+    HooksManager::clearParkingLots();
+}
+
+void Dhcpv6Srv::storeClientIntfInfo(const Pkt6Ptr& pkt,
+                                    AllocEngine::ClientContext6& ctx) {
     //extract interface and ip address of the client
     auto iface = pkt->getIface();
     auto client_address = pkt->getRemoteAddr();
@@ -3907,21 +3918,16 @@ void Dhcpv6Srv::storeClientIntfInfo(const Pkt6Ptr& pkt, AllocEngine::ClientConte
     }
 }
 
-void Dhcpv6Srv::discardPackets() {
-    // Dump all of our current packets, anything that is mid-stream
-    isc::dhcp::Pkt6Ptr pkt6ptr_empty;
-    isc::dhcp::getCalloutHandle(pkt6ptr_empty);
-    HooksManager::clearParkingLots();
-}
-
-void Dhcpv6Srv::updateReconfigInfo(const Pkt6Ptr& msg, AllocEngine::ClientContext6& ctx) {
-
+void Dhcpv6Srv::updateReconfigInfo(const Pkt6Ptr& msg,
+                                   AllocEngine::ClientContext6& ctx) {
     if (ctx.support_reconfig &&
         !ctx.fake_allocation_) {
         //check if key is configured , if not generate and store key in the 
         //backend 
         updateHostKey(ctx);
         //store the client interface and linklocal address in the client context
+        //This infomation is needed while sending reconfigure message to the
+        //client
         storeClientIntfInfo(msg, ctx);
     }
 }

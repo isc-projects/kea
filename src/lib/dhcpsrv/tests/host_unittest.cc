@@ -1302,5 +1302,3 @@ TEST(AuthKeyTest, basicTest) {
 }
 
 } // end of anonymous namespace
-
-// Test verifies if 

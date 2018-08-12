@@ -2,6 +2,7 @@
 	Implemented Mechanism to parse reconfig accept option,
 	send reconfig accept option and storing client info in
 	lease user context.
+    (Github #97, git ba0dec8bd54b547ac10460a80debf40dcd8880d8)
 
 1442.   [func]		MayyaSunil
 	Implemented new queries for IPv6 leases by DUID.

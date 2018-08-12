@@ -173,7 +173,7 @@ We have received the following contributions:
    2018-07: Support for Authentication option in DHCPv6
    2018-07: Support storage of Authentication keys in host structure
    2018-08: Optimized query for host reservation from the backends
-   2018-08: Support Parsing reconfig accept option and send reconfig accept option
+   2018-08: Handle support for reconfig accept option and storing client info in leases.
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan

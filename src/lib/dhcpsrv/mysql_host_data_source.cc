@@ -1431,7 +1431,6 @@ public:
 
         ipv6_address_buffer_[ipv6_address_buffer_len_] = '\0';
         std::string address = ipv6_address_buffer_;
-
         IPv6Resrv r(type, IOAddress(address), prefix_len_);
         return (r);
     };

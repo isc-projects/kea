@@ -693,7 +693,8 @@ private:
     std::string server_host_name_;
     /// @brief Boot file name (a.k.a. file, carried in DHCPv4 message)
     std::string boot_file_name_;
-    ///     MySQL, PostgreSQL or Cassandra)
+    /// @brief HostID (a unique identifier assigned when the host is stored in
+    ///  MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
     /// @brief Pointer to the DHCPv4 option data configuration for this host.

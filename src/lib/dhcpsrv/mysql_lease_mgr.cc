@@ -184,7 +184,7 @@ tagged_statements = { {
                         "state, user_context "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
-       {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
+    {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
