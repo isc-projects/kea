@@ -60,6 +60,9 @@ using namespace std;
   USE_ROUTING "use-routing"
   RE_DETECT "re-detect"
 
+  SANITY_CHECKS "sanity-checks"
+  LEASE_CHECKS "lease-checks"
+
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
   NEXT_SERVER "next-server"
@@ -186,6 +189,8 @@ using namespace std;
   NEVER "never"
   ALWAYS "always"
   WHEN_NOT_PRESENT "when-not-present"
+  HOSTNAME_CHAR_SET "hostname-char-set"
+  HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
 
   LOGGING "Logging"
   LOGGERS "loggers"
@@ -447,6 +452,8 @@ global_param: valid_lifetime
             | boot_file_name
             | user_context
             | comment
+            | sanity_checks
+            | reservations
             | unknown_map_entry
             ;
 
@@ -565,6 +572,39 @@ lease_database: LEASE_DATABASE {
     ctx.stack_.pop_back();
     ctx.leave();
 };
+
+sanity_checks: SANITY_CHECKS {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("sanity-checks", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.SANITY_CHECKS);
+} COLON LCURLY_BRACKET sanity_checks_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sanity_checks_params: sanity_checks_param
+                    | sanity_checks_params COMMA sanity_checks_param;
+
+sanity_checks_param: lease_checks;
+
+lease_checks: LEASE_CHECKS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+
+    if ( (string($4) == "none") ||
+         (string($4) == "warn") ||
+         (string($4) == "fix") ||
+         (string($4) == "fix-del") ||
+         (string($4) == "del")) {
+        ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+        ctx.stack_.back()->set("lease-checks", user);
+        ctx.leave();
+    } else {
+        error(@4, "Unsupported 'lease-checks value: " + string($4) +
+              ", supported values are: none, warn, fix, fix-del, del");
+    }
+}
 
 hosts_database: HOSTS_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -1825,6 +1865,8 @@ dhcp_ddns_param: enable_updates
                | override_client_update
                | replace_client_name
                | generated_prefix
+               | hostname_char_set
+               | hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry
@@ -1942,6 +1984,23 @@ generated_prefix: GENERATED_PREFIX {
     ctx.stack_.back()->set("generated-prefix", s);
     ctx.leave();
 };
+
+hostname_char_set: HOSTNAME_CHAR_SET {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname-char-set", s);
+    ctx.leave();
+};
+
+hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("hostname-char-replacement", s);
+    ctx.leave();
+};
+
 
 // JSON entries for Dhcp4 and DhcpDdns
 

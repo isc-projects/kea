@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <stdint.h>
+#include <typeinfo>
 
 namespace isc {
 namespace dhcp {
@@ -20,6 +21,13 @@ namespace dhcp {
 /// a simple unsigned integer. In the future it may be extended to more complex
 /// type.
 typedef uint32_t SubnetID;
+
+/// @brief Special value is used for storing/recognizing global host reservations.
+static const SubnetID SUBNET_ID_GLOBAL = 0;
+/// @brief The largest valid value for auto-generated subnet IDs.
+static const SubnetID SUBNET_ID_MAX = std::numeric_limits<uint32_t>::max()-1;
+/// @brief Special value used to signify that a SubnetID is "not set"
+static const SubnetID SUBNET_ID_UNUSED = std::numeric_limits<uint32_t>::max();
 
 /// @brief Exception thrown upon attempt to add subnet with an ID that belongs
 /// to the subnet that already exists.

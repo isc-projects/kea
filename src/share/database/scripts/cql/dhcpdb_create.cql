@@ -294,9 +294,6 @@ CREATE TABLE IF NOT EXISTS logs (
 -- Create search index for logs table
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
 
--- This line adds auth_key column into host reservation table
-ALTER TABLE host_reservations ADD auth_key text;
-
 -- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;
 INSERT INTO schema_version (version, minor) VALUES(3, 0);

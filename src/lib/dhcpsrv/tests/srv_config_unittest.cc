@@ -503,7 +503,11 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
     defaults += "\"hooks-libraries\": [ ],\n";
+    defaults += "\"sanity-checks\": {\n";
+    defaults += "    \"lease-checks\": \"warn\"\n";
+    defaults += "    },\n";
     defaults += "\"dhcp-ddns\": \n";
+
     defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
 
     std::string defaults4 = "\"echo-client-id\": true,\n";
@@ -582,14 +586,20 @@ TEST_F(SrvConfigTest, unparseHR) {
                                     def_triplet, def_triplet, 4000, s_id));
     network4->add(ssubnet4);
 
+    // Add a v4 global host reservation to the plain subnet
+    HostPtr ghost4(new Host("AA:01:02:03:04:05", "hw-address",
+                            SUBNET_ID_GLOBAL, SUBNET_ID_UNUSED, 
+                            IOAddress("192.0.3.1")));
+    conf4.getCfgHosts()->add(ghost4);
+
     // Add a host reservation to the plain subnet
     HostPtr phost4(new Host("00:01:02:03:04:05", "hw-address",
-                            p_id, SubnetID(0), IOAddress("192.0.1.1")));
+                            p_id, SUBNET_ID_UNUSED, IOAddress("192.0.1.1")));
     conf4.getCfgHosts()->add(phost4);
 
     // Add a host reservation to the shared subnet
     HostPtr shost4(new Host("00:05:04:03:02:01", "hw-address",
-                            s_id, SubnetID(0), IOAddress("192.0.2.1")));
+                            s_id, SUBNET_ID_UNUSED, IOAddress("192.0.2.1")));
     conf4.getCfgHosts()->add(shost4);
 
     // Unparse the config
@@ -603,8 +613,25 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_TRUE(dhcp4);
     ASSERT_EQ(Element::map, dhcp4->getType());
 
-    // Get plain subnets
+    // Get global host reservations
     ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp4->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the global host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the reserved address
+    ASSERT_NO_THROW(check = check->get("ip-address"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("192.0.3.1", check->stringValue());
+
+    // Get plain subnets
     ASSERT_NO_THROW(check = dhcp4->get("subnet4"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
@@ -708,14 +735,21 @@ TEST_F(SrvConfigTest, unparseHR) {
                                     1000, 2000, 3000, 4000, s_id));
     network6->add(ssubnet6);
 
+    // Add a v6 global host reservation
+    HostPtr ghost6(new Host("ff:b2:c3:d4:e5:f6", "duid", SUBNET_ID_UNUSED,
+                            SUBNET_ID_GLOBAL, IOAddress::IPV4_ZERO_ADDRESS(),
+                            "global.example.org"));
+    conf6.getCfgHosts()->add(ghost6);
+
     // Add a host reservation to the plain subnet
-    HostPtr phost6(new Host("a1:b2:c3:d4:e5:f6", "duid", SubnetID(0),
+    HostPtr phost6(new Host("a1:b2:c3:d4:e5:f6", "duid", SUBNET_ID_UNUSED,
                             p_id, IOAddress::IPV4_ZERO_ADDRESS(),
                             "foo.example.org"));
+
     conf6.getCfgHosts()->add(phost6);
 
     // Add a host reservation to the shared subnet
-    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SubnetID(0),
+    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SUBNET_ID_UNUSED, 
                             s_id, IOAddress::IPV4_ZERO_ADDRESS(),
                             "bar.example.org"));
     conf6.getCfgHosts()->add(shost6);
@@ -730,6 +764,23 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
     ASSERT_TRUE(dhcp6);
     ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Get global host reservations
+    ASSERT_NO_THROW(check = dhcp6->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the global host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the host name
+    ASSERT_NO_THROW(check = check->get("hostname"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("global.example.org", check->stringValue());
 
     // Get plain subnets
     ASSERT_NO_THROW(check = dhcp6->get("subnet6"));

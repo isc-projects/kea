@@ -1779,11 +1779,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             .arg(ex.getQuery()->getLabel());
         return;
     }
-    // Copy construct the hostname provided by the client. It is entirely
-    // possible that we will use the hostname option provided by the client
-    // to perform the DNS update and we will send the same option to him to
-    // indicate that we accepted this hostname.
-    OptionStringPtr opt_hostname_resp(new OptionString(*opt_hostname));
+
+    // Stores the value we eventually use, so we can send it back.
+    OptionStringPtr opt_hostname_resp;
 
     // The hostname option may be unqualified or fully qualified. The lab_count
     // holds the number of labels for the name. The number of 1 means that
@@ -1791,7 +1789,6 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // getLabelCount function treats each name as a fully qualified one).
     // By checking the number of labels present in the hostname we may infer
     // whether client has sent the fully qualified or unqualified hostname.
-
 
     if ((replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
          replace_name_mode == D2ClientConfig::RCM_WHEN_PRESENT)
@@ -1805,17 +1802,28 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         /// point.
         /// For now, we just remain liberal and expect that the DNS will handle
         /// conversion if needed and possible.
-        opt_hostname_resp->setValue(".");
+        opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, "."));
+    } else {
+        // Sanitize the name the client sent us, if we're configured to do so.
+        isc::util::str::StringSanitizerPtr sanitizer = d2_mgr.getD2ClientConfig()
+                                                       ->getHostnameSanitizer();
+        if (sanitizer) {
+            hostname = sanitizer->scrub(hostname);
+        }
 
-    } else if (label_count == 2) {
-        // If there are two labels, it means that the client has specified
-        // the unqualified name. We have to concatenate the unqualified name
-        // with the domain name. The false value passed as a second argument
-        // indicates that the trailing dot should not be appended to the
-        // hostname. We don't want to append the trailing dot because
-        // we don't know whether the hostname is partial or not and some
-        // clients do not handle the hostnames with the trailing dot.
-        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
+        if (label_count == 2) {
+            // If there are two labels, it means that the client has specified
+            // the unqualified name. We have to concatenate the unqualified name
+            // with the domain name. The false value passed as a second argument
+            // indicates that the trailing dot should not be appended to the
+            // hostname. We don't want to append the trailing dot because
+            // we don't know whether the hostname is partial or not and some
+            // clients do not handle the hostnames with the trailing dot.
+            opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME,
+                                                     d2_mgr.qualifyName(hostname, false)));
+        } else {
+            opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, hostname));
+        }
     }
 
     LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)

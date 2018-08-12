@@ -596,13 +596,13 @@ Host::toText() const {
     // Add HW address or DUID.
     s << getIdentifierAsText();
 
-    // Add IPv4 subnet id if exists (non-zero).
-    if (ipv4_subnet_id_) {
+    // Add IPv4 subnet id if exists.
+    if (ipv4_subnet_id_ != SUBNET_ID_UNUSED) {
         s << " ipv4_subnet_id=" << ipv4_subnet_id_;
     }
 
-    // Add IPv6 subnet id if exists (non-zero).
-    if (ipv6_subnet_id_) {
+    // Add IPv6 subnet id if exists.
+    if (ipv6_subnet_id_ != SUBNET_ID_UNUSED) {
         s << " ipv6_subnet_id=" << ipv6_subnet_id_;
     }
 

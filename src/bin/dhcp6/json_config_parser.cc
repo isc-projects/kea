@@ -33,6 +33,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
@@ -502,6 +503,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "sanity-checks") {
+                SanityChecksParser parser;
+                parser.parse(*srv_config, config_pair.second);
+                continue;
+            }
+
             if (config_pair.first == "expired-leases-processing") {
                 ExpirationConfigParser parser;
                 parser.parse(config_pair.second);
@@ -579,6 +586,17 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 // We also need to put the subnets it contains into normal
                 // subnets list.
                 global_parser.copySubnets6(srv_config->getCfgSubnets6(), cfg);
+                continue;
+            }
+
+            if (config_pair.first == "reservations") {
+                HostCollection hosts;
+                HostReservationsListParser<HostReservationParser6> parser;
+                parser.parse(SUBNET_ID_GLOBAL, config_pair.second, hosts);
+                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                    srv_config->getCfgHosts()->add(*h);
+                }
+
                 continue;
             }
 

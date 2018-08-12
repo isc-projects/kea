@@ -34,30 +34,6 @@
 /// They are essential components of the interface to any database backend.
 /// Each concrete database backend (e.g. MySQL) will define a class derived
 /// from LeaseMgr class.
-///
-/// Failover considerations:
-/// There are no intermediate plans to implement DHCPv4 failover
-/// (draft-ietf-dhc-failover-12.txt). Currently (Oct. 2012) the DHCPv6 failover
-/// is being defined in DHC WG in IETF (draft-ietf-dhcpv6-failover-requirements,
-/// draft-ietf-dhcpv6-failover-design), but the work is not advanced enough
-/// for implementation plans yet. v4 failover requires additional parameters
-/// to be kept with a lease. It is likely that v6 failover will require similar
-/// fields. Such implementation will require database schema extension.
-/// We have designed a way to expand/upgrade schemas during upgrades: a database
-/// schema is versioned and sanity checks about required version will be done
-/// upon start and/or upgrade. With this mechanism in place, we can add new
-/// fields to the database. In particular we can use that capability to
-/// introduce failover related fields.
-///
-/// However, there is another approach that can be reliably used to provide
-/// failover, even without the actual failover protocol implemented. As the
-/// first backend will use MySQL, we will be able to use Multi-Master capability
-/// offered by MySQL and use two separate Kea instances connecting to the
-/// same database.
-///
-/// Nevertheless, we hope to have failover protocol eventually implemented in
-/// the Kea.
-
 namespace isc {
 namespace dhcp {
 
@@ -261,18 +237,28 @@ public:
 
     /// @brief Adds an IPv4 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
+    ///         with the same address was already there or failed sanity checks)
     virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
+    ///         with the same address was already there or failed sanity checks)
     virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
@@ -754,9 +740,6 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
 
-    /// @todo: Add host management here
-    /// As host reservation is outside of scope for 2012, support for hosts
-    /// is currently postponed.
 };
 
 }  // namespace dhcp

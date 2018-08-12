@@ -129,7 +129,8 @@ public:
           bind_(columns_num_), columns_(columns_num_),
           error_(columns_num_, MLM_FALSE), host_id_(0),
           dhcp_identifier_length_(0), dhcp_identifier_type_(0),
-          dhcp4_subnet_id_(0), dhcp6_subnet_id_(0), ipv4_address_(0),
+          dhcp4_subnet_id_(SUBNET_ID_UNUSED), 
+          dhcp6_subnet_id_(SUBNET_ID_UNUSED), ipv4_address_(0),
           hostname_length_(0), dhcp4_client_classes_length_(0),
           dhcp6_client_classes_length_(0),
           user_context_length_(0),
@@ -312,7 +313,7 @@ public:
             // Can't take an address of intermediate object, so let's store it
             // in dhcp4_subnet_id_
             dhcp4_subnet_id_ = host->getIPv4SubnetID();
-            dhcp4_subnet_id_null_ = host->getIPv4SubnetID() == 0 ? MLM_TRUE : MLM_FALSE;
+            dhcp4_subnet_id_null_ = host->getIPv4SubnetID() == SUBNET_ID_UNUSED ? MLM_TRUE : MLM_FALSE;
             bind_[3].buffer_type = MYSQL_TYPE_LONG;
             bind_[3].buffer = reinterpret_cast<char*>(&dhcp4_subnet_id_);
             bind_[3].is_unsigned = MLM_TRUE;
@@ -322,7 +323,7 @@ public:
             // Can't take an address of intermediate object, so let's store it
             // in dhcp6_subnet_id_
             dhcp6_subnet_id_ = host->getIPv6SubnetID();
-            dhcp6_subnet_id_null_ = host->getIPv6SubnetID() == 0 ? MLM_TRUE : MLM_FALSE;
+            dhcp6_subnet_id_null_ = host->getIPv6SubnetID() == SUBNET_ID_UNUSED ? MLM_TRUE : MLM_FALSE;
             bind_[4].buffer_type = MYSQL_TYPE_LONG;
             bind_[4].buffer = reinterpret_cast<char*>(&dhcp6_subnet_id_);
             bind_[4].is_unsigned = MLM_TRUE;
@@ -571,14 +572,14 @@ public:
 
         // Set DHCPv4 subnet ID to the value returned. If NULL returned,
         // set to 0.
-        SubnetID ipv4_subnet_id(0);
+        SubnetID ipv4_subnet_id(SUBNET_ID_UNUSED);
         if (dhcp4_subnet_id_null_ == MLM_FALSE) {
             ipv4_subnet_id = static_cast<SubnetID>(dhcp4_subnet_id_);
         }
 
         // Set DHCPv6 subnet ID to the value returned. If NULL returned,
         // set to 0.
-        SubnetID ipv6_subnet_id(0);
+        SubnetID ipv6_subnet_id(SUBNET_ID_UNUSED);
         if (dhcp6_subnet_id_null_ == MLM_FALSE) {
             ipv6_subnet_id = static_cast<SubnetID>(dhcp6_subnet_id_);
         }
@@ -1743,7 +1744,7 @@ public:
         : type_(0), value_len_(0), formatted_value_len_(0), space_(),
           space_len_(0), persistent_(false), user_context_(),
           user_context_len_(0), client_class_(), client_class_len_(0),
-          subnet_id_(0), host_id_(0), option_() {
+          subnet_id_(SUBNET_ID_UNUSED), host_id_(0), option_() {
 
         BOOST_STATIC_ASSERT(9 < OPTION_COLUMNS);
     }
