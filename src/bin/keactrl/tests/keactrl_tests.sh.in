@@ -1086,7 +1086,7 @@ status_no_config_test() {
 # This test checks version reported by keactrl. This reports the
 # version of the keactrl tool itself.
 version_test() {
-    test_start "version"
+    test_start "keactrl.version"
 
     # This is what we expect to get.
     EXPECTED_VERSION=@PACKAGE_VERSION@
@@ -1109,19 +1109,26 @@ version_test() {
 # This test uses version command, which reports version of the keactrl
 # tool itself, but also all the daemons.
 version_command_test() {
-    test_start "version-command"
+    test_start "keactrl.version-command"
 
-    # This is what we expect to get. We need to run it through echo
-    # to convert \n to actual LF (0xa).
+    # Create configuration file for keactrl.
+    keactrl_config="${CFG_FILES}\ndhcp4=yes\ndhcp6=yes\ndhcp_ddns=yes\n"
+    keactrl_config+="ctrl_agent=yes\nkea_verbose=no\n${keactrl_fixed_config}"
+     create_keactrl_config "${keactrl_config}"
+
+    # This is what we expect to get. We need to run it through printf
+    # to convert \n to actual LF (0xa) or whatever the EOL is used on your
+    # system.
     exp="keactrl: @PACKAGE_VERSION@\n"
     exp+="kea-dhcp4: @PACKAGE_VERSION@\n"
     exp+="kea-dhcp6: @PACKAGE_VERSION@\n"
     exp+="kea-dhcp-ddns: @PACKAGE_VERSION@\n"
     exp+="kea-ctrl-agent: @PACKAGE_VERSION@"
-    EXPECTED_RESP=$(echo -e $exp)
+    # The %b parameter tells printf to interpret backslashes.
+    EXPECTED_RESP=$(printf "%b" "$exp")
 
     # Let's use short version:
-    reported_version=$(${keactrl} version)
+    reported_version=$(${keactrl} version -c ${KEACTRL_CFG_FILE})
 
     assert_str_eq "${EXPECTED_RESP}" "${reported_version}" \
                   "Expected keactrl version to report %s, but it reported %s"
