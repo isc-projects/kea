@@ -1,3 +1,7 @@
+1441.	[bug]		tomek
+	keactrl version tests now work properly on MacOS.
+	(Gitlab #11, git a24aa03879991e9a917042159df602a65f9c18bb)
+
 1440.	[func]		tmark
 	The internal represenation of an "unused" subnet-id has been
 	changed from zero to 0xFFFFFFFF. The largest, valid value for
