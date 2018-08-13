@@ -311,6 +311,12 @@ public:
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6() const;
+
+    /// @brief Returns IPv6 leases for the DUID.
+    ///
+    /// @todo: implement an optimised of the query using index.
+    /// @return Lease collection (may be empty if no IPv6 lease found) for the DUID.
+    virtual Lease6Collection getLeases6(const DUID& duid) const;
     
     /// @brief Returns range of IPv6 leases using paging.
     ///

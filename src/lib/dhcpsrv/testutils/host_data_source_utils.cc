@@ -81,7 +81,7 @@ HostDataSourceUtils::initializeHost4(const std::string& address,
 }
 
 HostPtr
-HostDataSourceUtils::initializeHost6(std::string address,
+HostDataSourceUtils::initializeHost6(const std::string address,
                                      Host::IdentifierType identifier,
                                      bool prefix,
                                      bool new_identifier,
@@ -107,6 +107,7 @@ HostDataSourceUtils::initializeHost6(std::string address,
     ++subnet4;
     ++subnet6;
 
+    std::string default_string;
     HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
                           IOAddress("0.0.0.0")));
     
