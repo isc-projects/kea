@@ -6,6 +6,13 @@
 
 $NAMESPACE isc::config
 
+% COMMAND_ACCEPTOR_START Starting to accept connections via unix domain socket bound to %1
+This informational message is issued when the Kea server starts an acceptor
+via which it is going to accept new control connections. The acceptor is
+bound to the endpoint associated with the filename provided as an argument.
+If starting the acceptor fails, subsequent error messages will provide a
+reason for failure.
+
 % COMMAND_DEREGISTERED Command %1 deregistered
 This debug message indicates that the daemon stopped supporting specified
 command. This command can no longer be issued. If the command socket is
