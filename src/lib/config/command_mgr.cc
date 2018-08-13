@@ -541,6 +541,9 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     socket_name_ = name->stringValue();
 
+    LOG_INFO(command_logger, COMMAND_ACCEPTOR_START)
+        .arg(socket_name_);
+
     try {
         // Start asynchronous acceptor service.
         acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
