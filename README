@@ -4,10 +4,10 @@ REST interface, and a DHCP benchmarking tool, perfdhcp.
 
 Kea is developed by Internet Systems Consortium.
 
-The developers website is at http://kea.isc.org/
+The developers website is at https://gitlab.isc.org/isc-projects/kea
 
-Limitations and known issues with this DHCP release can be found
-at http://kea.isc.org/wiki/KeaKnownIssues
+Limitations, known issues and feature requests can be found
+at https://gitlab.isc.org/isc-projects/kea/issues
 
 If you are thinking about contributing a patch, please read this first:
 http://kea.isc.org/wiki/ContributorsGuide
