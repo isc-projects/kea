@@ -873,7 +873,7 @@ elif test "${sysrepo_config}" != "no" ; then
     SYSREPO_CONFIG="${sysrepo_config}"
 fi
 
-if test "SYSREPO_CONFIG" != "" ; then
+if test "$SYSREPO_CONFIG" != "" ; then
     if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
         AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
     fi
