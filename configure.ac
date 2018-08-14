@@ -1500,6 +1500,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/lfc/tests/Makefile
                  src/bin/netconf/Makefile
                  src/bin/netconf/tests/Makefile
+                 src/bin/netconf/tests/netconf_tests.sh
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile

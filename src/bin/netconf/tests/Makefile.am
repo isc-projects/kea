@@ -1,5 +1,11 @@
 SHTESTS =
 
+SHTESTS += netconf_tests.sh
+
+noinst_SCRIPTS = netconf_tests.sh
+
+EXTRA_DIST = netconf_tests.sh.in
+
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
 	for shtest in $(SHTESTS) ; do \
@@ -15,6 +21,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 CLEANFILES = *.json *.log
+
+DISTCLEANFILES = netconf_tests.sh
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
