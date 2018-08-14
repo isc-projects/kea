@@ -522,6 +522,8 @@ SubnetConfigParser::hrModeFromText(const std::string& txt) {
         return (Network::HR_DISABLED);
     } else if (txt.compare("out-of-pool") == 0) {
         return (Network::HR_OUT_OF_POOL);
+    } else if (txt.compare("global") == 0) {
+        return (Network::HR_GLOBAL);
     } else if (txt.compare("all") == 0) {
         return (Network::HR_ALL);
     } else {

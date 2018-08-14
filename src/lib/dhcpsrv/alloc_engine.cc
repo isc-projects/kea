@@ -2628,6 +2628,14 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
     Subnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
+        if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+            auto host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
+            return (host != ctx.hosts_.end() &&
+                    !(host->second->getIPv4Reservation().isV4Zero()));
+            // if we want global + other modes we would need to
+            // return only if true, else continue
+        }
+
         auto host = ctx.hosts_.find(subnet->getID());
         if ((host != ctx.hosts_.end()) &&
             !(host->second->getIPv4Reservation().isV4Zero()) &&
@@ -2811,7 +2819,10 @@ AllocEngine::ClientContext4::ClientContext4(const Subnet4Ptr& subnet,
 ConstHostPtr
 AllocEngine::ClientContext4::currentHost() const {
     if (subnet_) {
-        auto host = hosts_.find(subnet_->getID());
+        SubnetID id = (subnet_->getHostReservationMode() == Network::HR_GLOBAL ?
+                       SUBNET_ID_GLOBAL : subnet_->getID());
+
+        auto host = hosts_.find(id);
         if (host != hosts_.cend()) {
             return (host->second);
         }
@@ -2878,6 +2889,17 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
 
+    if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+        ConstHostPtr ghost = findGlobalReservation(ctx);
+        if (ghost) {
+            ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
+
+            // @todo In theory, to support global as part of HR_ALL,
+            //  we would just keep going, instead of returning.
+            return;
+        }
+    }
+
     // If the subnet belongs to a shared network it is usually going to be
     // more efficient to make a query for all reservations for a particular
     // client rather than a query for each subnet within this shared network.
@@ -2941,6 +2963,24 @@ AllocEngine::findReservation(ClientContext4& ctx) {
         subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
     }
 }
+
+ConstHostPtr
+AllocEngine::findGlobalReservation(ClientContext4& ctx) {
+    ConstHostPtr host;
+    BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+        // Attempt to find a host using a specified identifier.
+        host = HostMgr::instance().get4(SUBNET_ID_GLOBAL, id_pair.first,
+                                        &id_pair.second[0], id_pair.second.size());
+
+        // If we found matching global host we're done.
+        if (host) {
+            break;
+        }
+    }
+
+    return (host);
+}
+
 
 Lease4Ptr
 AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
