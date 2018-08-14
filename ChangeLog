@@ -1,3 +1,10 @@
+1445.	[func]		tomek
+	Implemented initial skeleton version of the kea-netconf tool.
+	Currently it can't do anything, but the build system is now
+	capable of detecting sysrepo (use --with-sysrepo in configure),
+	there's a very basic documentation and unit-tests.
+	(gitlab !1, git 89ff2093811d65220d99dc2a6516375c4ec953dc)
+
 1444.	[bug]		tomek
 	keactrl version tests now work properly on macOS.
 	(Gitlab !5, git a8c385e1507ffd101f65b445783b0355b01decce)
