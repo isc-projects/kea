@@ -10,6 +10,10 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/daemon.h>
 #include <iostream>
+#include <fstream>
+#include <unistd.h>
+#include <cstdio>
+#include <signal.h>
 
 #include <sysrepo-cpp/Session.h>
 
@@ -31,6 +35,32 @@ usage() {
          << "  -V: print extended version and exit" << endl;
     exit(EXIT_FAILURE);
 }
+
+/// @name Temporary code until isc::dhcp::Daemon is used.
+///
+/// @{
+const char* PID_FILENAME = "kea-netconf.test_config.pid";
+
+volatile bool SHUTDOWN_FLAG = false;
+
+void
+createPIDFile(int pid) {
+    // This is not a real implemented. We will soon use the one coming
+    // from isc::dhcp::Daemon AFTER it's moved to libprocess.
+
+    ofstream file(PID_FILENAME, ios::trunc);
+    file << pid;
+}
+
+void
+deletePIDFile() {
+    remove(PID_FILENAME);
+}
+
+static void signal_handler(int ) {
+    SHUTDOWN_FLAG = true;
+}
+/// @}
 
 int
 main(int argc, char* argv[]) {
@@ -70,10 +100,14 @@ main(int argc, char* argv[]) {
 
     int ret = EXIT_SUCCESS;
     try {
-        // It is important that we set a default logger name because this name
-        // will be used when the user doesn't provide the logging configuration
-        // in the Kea configuration file.
-        //CfgMgr::instance().setDefaultLoggerName(KEA_NETCONF_LOGGER_NAME);
+
+        // Temporary code. This will be replaced with isc::dhcp::Daemon
+        // once it is migrated to libprocess. We DO NOT want to bring
+        // the whole libdhcpsrv into netconf.
+        createPIDFile(getpid());
+        signal(SIGHUP, signal_handler);
+        signal(SIGINT, signal_handler);
+        signal(SIGTERM, signal_handler);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         bool verbose_mode = true;
@@ -86,13 +120,15 @@ main(int argc, char* argv[]) {
         LOG_INFO(netconf_logger, NETCONF_STATED).arg(VERSION);
 
         // And run the main loop of the server.
-        while (true) {
+        while (!SHUTDOWN_FLAG) {
             cout << "Dummy kea-netconf running. Press ctrl-c to terminate."
                  << endl;
             sleep(1);
         }
 
         LOG_INFO(netconf_logger, NETCONF_SHUTDOWN);
+
+        deletePIDFile();
 
     } catch (const isc::Exception& ex) {
         // First, we parint the error on stderr (that should always work)
