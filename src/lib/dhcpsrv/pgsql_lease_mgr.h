@@ -281,9 +281,11 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6() const;
 
-    /// @brief Returns all IPv6 leases.
+    /// @brief Returns IPv6 leases for the DUID.
     ///
-    /// @return Lease collection (may be empty if no IPv6 lease found).
+    /// @todo: implement an optimised of the query using index.
+    /// @return Lease collection (may be empty if no IPv6 lease found)
+    /// for the DUID
     virtual Lease6Collection getLeases6(const DUID& duid) const;
     
     /// @brief Returns range of IPv6 leases using paging.
@@ -553,6 +555,7 @@ public:
         GET_LEASE6_DUID_IAID_SUBID, // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,            // Get page of IPv6 leases beginning with an address
         GET_LEASE6_SUBID,           // Get IPv6 leases by subnet ID
+        GET_LEASE6_DUID,           // Get IPv6 leases by DUID
         GET_LEASE6_EXPIRE,          // Get expired lease6
         INSERT_LEASE4,              // Add entry to lease4 table
         INSERT_LEASE6,              // Add entry to lease6 table

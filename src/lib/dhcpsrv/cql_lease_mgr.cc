@@ -1023,7 +1023,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "SELECT "
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE duid = ? "
       "ALLOW FILTERING "}},
@@ -2306,10 +2306,10 @@ CqlLeaseMgr::getLeases6(const DUID& duid) const {
     // Get the data.
     Lease6Collection result;
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
-    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID, data, result);
+    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID,
+                                  data, result);
 
     return (result);
-    
 }
 
 Lease6Collection

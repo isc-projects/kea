@@ -942,6 +942,13 @@ TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     testGetLeases6SubnetId();
 }
 
+// This test adds 3 leases  and verifies fetch by DUID.
+// Verifies retrival of non existant DUID fails
+TEST_F(MemfileLeaseMgrTest, getLeases6Duid) {
+    startBackend(V6);
+    testGetLeases6Duid();
+}
+
 // This test checks that all IPv6 leases are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6) {
     startBackend(V6);

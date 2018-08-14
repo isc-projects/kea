@@ -212,7 +212,7 @@ public:
     ///
     /// @param duid ignored
     /// @return whatever is set in leases6_ field
-    virtual Lease6Collection getLeases6(const DUID& duid) const {
+    virtual Lease6Collection getLeases6(const DUID&) const {
         return (leases6_);
     }
 
