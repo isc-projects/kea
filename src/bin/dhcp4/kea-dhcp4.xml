@@ -205,6 +205,11 @@
       </citerefentry>,
 
       <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
         <refentrytitle>perfdhcp</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
