@@ -62,7 +62,8 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "preferred-lifetime",       Element::integer, "3600" },
     { "valid-lifetime",           Element::integer, "7200" },
     { "decline-probation-period", Element::integer, "86400" }, // 24h
-    { "dhcp4o6-port",             Element::integer, "0" }
+    { "dhcp4o6-port",             Element::integer, "0" },
+    { "enable-reconfiguration",   Element::boolean, "false" }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.

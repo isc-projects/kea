@@ -38,7 +38,7 @@ public:
     /// identifier should be generated or the same as previously.
     ///
     /// @return generated Host object
-    static HostPtr initializeHost6(std::string address, Host::IdentifierType id,
+   static HostPtr initializeHost6(std::string address, Host::IdentifierType id,
                                    bool prefix, bool new_identifier = true,
                                    const std::string key = "");
 

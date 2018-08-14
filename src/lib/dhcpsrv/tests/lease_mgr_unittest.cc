@@ -208,7 +208,7 @@ public:
         return (leases6_);
     }
 
-    /// @brief Returns collection of lease for matching DUID
+    /// @brief Returns collection of leases for matching DUID
     ///
     /// @param duid ignored
     /// @return whatever is set in leases6_ field

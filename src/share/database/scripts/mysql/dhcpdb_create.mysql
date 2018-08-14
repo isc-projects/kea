@@ -764,10 +764,6 @@ CREATE TABLE logs (
 # Create search index
 CREATE INDEX timestamp_index ON logs (timestamp);
 
-#add auth key for reconfiguration
-ALTER TABLE hosts  
-    ADD COLUMN auth_key VARCHAR(16) NULL; 
-
 # Update the schema version number
 UPDATE schema_version
 SET version = '7', minor = '0';

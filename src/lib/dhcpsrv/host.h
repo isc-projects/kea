@@ -78,7 +78,6 @@ public:
     /// this is added incase in future authkey is no longer std::string
     std::string ToText() const; 
 
-    /// 
     /// @brief equality operator
     ///
     /// equality operator to compare two AuthKey classes
@@ -643,6 +642,7 @@ public:
     /// @brief sets key.
     ///
     /// Keys are used for signing the Reconfigure Message.
+
     void setKey(const AuthKey& key) {
         key_ = key;
     }
@@ -693,9 +693,8 @@ private:
     std::string server_host_name_;
     /// @brief Boot file name (a.k.a. file, carried in DHCPv4 message)
     std::string boot_file_name_;
-
     /// @brief HostID (a unique identifier assigned when the host is stored in
-    ///     MySQL, PostgreSQL or Cassandra)
+    ///  MySQL, PostgreSQL or Cassandra)
     uint64_t host_id_;
 
     /// @brief Pointer to the DHCPv4 option data configuration for this host.
