@@ -776,6 +776,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"global\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp4Parser::make_GLOBAL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("global", driver.loc_);
+    }
+}
+
 \"all\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:

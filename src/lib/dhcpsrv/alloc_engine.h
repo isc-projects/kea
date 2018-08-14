@@ -1299,6 +1299,17 @@ public:
     /// @param ctx Client context holding various information about the client.
     static void findReservation(ClientContext4& ctx);
 
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find a "global" host reservation matching the
+    /// client identifier.  It will return the first global reservation that matches
+    /// per the configured list of host identifiers, or an empty pointer if no
+    /// matches are found.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return Pointer to the reservation found, or an empty pointer.
+    static ConstHostPtr findGlobalReservation(ClientContext4& ctx);
+
 private:
 
     /// @brief Offers the lease.

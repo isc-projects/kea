@@ -3462,7 +3462,7 @@ It is merely echoed by the server
     identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
 
     <para>The following example shows how to reserve addresses for specific
-    hosts:
+    hosts in a subnet:
 
 <screen>
 "subnet4": [
@@ -3541,6 +3541,20 @@ It is merely echoed by the server
       to skip reservation checks when dealing with existing leases. Therefore,
       system administrators are encouraged to use out-of-pool reservations if
       possible.</para>
+      <para>Beginning with Kea 1.5.0, there is now support for global
+      host reservations.  These are reservations that are specified at the
+      global level within the configuration and that do not belong to any
+      specific subnet.  Kea will still match inbound client packets to a
+      subnet as before, but when the subnet's reservation mode is set to
+      <command>"global"</command>, Kea will look for host reservations only
+      among the global reservations defined. Typcially, such resrvations would
+      be used to reserve hostnames for clients which may move from one subnet
+      to another.
+      </para>
+      <note>You can reserve any ip-address in a global reservation. Just keep
+      in mind that Kea will not do any sanity checking on the address and for
+      Kea 1.5.0, support for global reservations should be considered experimental.
+      </note>
     </section>
 
     <section xml:id="reservation4-conflict">
@@ -3618,6 +3632,15 @@ It is merely echoed by the server
       out-of-pool reservations. If the reserved address does not belong to a
       pool, there is no way that other clients could get this address.
       </para>
+
+    <note>
+     <para>The conflict resolution mechanism does not work for global
+     reservations. As of Kea 1.5.0, it is generally recommended to not use
+     global reservations for addresses. If you want to use it anyway,
+     you have to manually ensure that the reserved addressed are not
+     in the dynamic pools.</para>
+    </note>
+
     </section>
 
     <section xml:id="reservation4-hostname">
@@ -3884,10 +3907,10 @@ It is merely echoed by the server
       Allowed values are:
 
       <itemizedlist>
-      <listitem><simpara> <command>all</command> - enables all host reservation
-      types. This is the default value. This setting is the safest and the most
-      flexible. It allows in-pool and out-of-pool reservations. As all checks
-      are conducted, it is also the slowest.
+      <listitem><simpara> <command>all</command> - enables both in-pool
+      and out-of-pool host reservation types. This is the default value. This
+      setting is the safest and the most flexible. As all checks are conducted,
+      it is also the slowest. This does not check against global reservations.
       </simpara></listitem>
 
       <listitem><simpara> <command>out-of-pool</command> - allows only out of
@@ -3898,6 +3921,16 @@ It is merely echoed by the server
       if any of your reservations use in-pool address. Caution is advised when
       using this setting: Kea does not sanity check the reservations against
       <command>reservation-mode</command> and misconfiguration may cause problems.
+      </simpara></listitem>
+
+      <listitem><simpara> <command>global</command> - allows only global
+      host reservations.  With this setting in place, the server searches for
+      reservations for a client only among the defined global reservations.
+      If an address is specified, the server will skip the reservation checks
+      done when dealing in other modes, thus improving performance.
+      Caution is advised when using this setting: Kea does not sanity check
+      the reservations when <command>global</command> and
+      misconfiguration may cause problems.
       </simpara></listitem>
 
       <listitem><simpara>
@@ -3911,7 +3944,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-        An example configuration that disables reservation looks like follows:
+        An example configuration that disables reservation appears as follows:
 <screen>
 "Dhcp4": {
     "subnet4": [
@@ -3923,7 +3956,44 @@ It is merely echoed by the server
     ]
 }
 </screen>
+
+
       </para>
+      <para>
+        An example configuration using global reservations is shown below:
+<screen>
+"Dhcp4": {
+
+    <userinput>
+    "reservations": [
+       {
+        "hw-address": "01:bb:cc:dd:ee:ff",
+        "hostname": "host-one"
+       },
+       {
+        "hw-address": "02:bb:cc:dd:ee:ff",
+        "hostname": "host-two"
+       }
+    ],
+    </userinput>
+    "subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        <userinput>"reservation-mode": "global"</userinput>,
+        ...
+    },
+    {
+        "subnet": "192.0.8.0/24",
+        <userinput>"reservation-mode": "global"</userinput>,
+        ...
+    }
+    ]
+}
+</screen>
+  For more details regarding global erservations, see <xref linkend="global-reservations4"/>.
+
+      </para>
+
 
       <para>Another aspect of the host reservations are the different types of
       identifiers. Kea 1.1.0 supports four types of identifiers
@@ -3968,7 +4038,84 @@ If not specified, the default value is:
 src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 </para>
-   </section>
+</section>
+
+
+  <section id="global-reservations4">
+    <title>Global reservations in DHCPv4</title>
+
+    <para>In some deployments, such as mobile, clients can roam within the
+    network and there is a desire to specify certain parameters regardless of
+    the client's current location. To facilitate such a need, a global
+    reservation mechanism has been implemented. The idea behind it is that
+    regular host reservations are tied to specific subnets, by using specific
+    subnet-id. Kea 1.5.0 introduced a new capability to specify global
+    reservation that can be used in every subnet that has global reservations
+    enabled.</para>
+
+    <para>This feature can be used to assign certain parameters, such as
+    hostname or other dedicated, host-specific options. It can also be used to
+    assign addresses. However, global reservations that assign addresses bypass
+    the whole topology determination provided by DHCP logic implemented in
+    Kea. It is very easy to misuse this feature and get configuration that is
+    inconsistent. To give a specific example, imagine a global reservation
+    for address 192.0.2.100 and two subnets 192.0.2.0/24 and 192.0.5.0/24. If
+    global reservations are used in both subnets and a device matching global
+    host reservations visits part of the network that is serviced by
+    192.0.5.0/24, it will get an IP address 192.0.2.100, a subnet 192.0.5.0 and
+    a default router 192.0.5.1. Obviously such a configuration is unusable, as
+    the client won't be able to reach its default gateway.</para>
+
+    <para>
+      To use global host reservations a configuration similar to the following
+      can be used:
+
+<screen>
+"Dhcp4:" {
+    // This specify global reservations. They will apply to all subnets that
+    // have global reservations enabled.
+    <userinput>
+    "reservations": [
+    {
+       "hw-address": "aa:bb:cc:dd:ee:ff",
+       "hostname": "hw-host-dynamic"
+    },
+    {
+       "hw-address": "01:02:03:04:05:06",
+       "hostname": "hw-host-fixed",
+
+       // Use of IP address is global reservation is risky. If used outside of
+       // matching subnet, such as 192.0.1.0/24, it will result in a broken
+       // configuration being handled to the client.
+       "ip-address": "192.0.1.77"
+    },
+    {
+       "duid": "01:02:03:04:05",
+       "hostname": "duid-host"
+    },
+    {
+       "circuit-id": "'charter950'",
+       "hostname": "circuit-id-host"
+    },
+    {
+       "client-id": "01:11:22:33:44:55:66",
+       "hostname": "client-id-host"
+    }
+    ]</userinput>,
+    "valid-lifetime": 600,
+    "subnet4": [ {
+        "subnet": "10.0.0.0/24",
+        <userinput>"reservation-mode": "global",</userinput>
+        "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
+    } ]
+}
+</screen>
+    </para>
+
+    <para>When using database backends, the global host reservations are
+    distinguished from regular reservations by using subnet-id value of
+    zero.</para>
+  </section> <!-- end of global reservations -->
 
   </section>
   <!-- end of host reservations section -->

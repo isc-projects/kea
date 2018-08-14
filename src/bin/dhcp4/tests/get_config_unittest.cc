@@ -68,6 +68,7 @@ namespace {
 ///@{
 /// @brief extracted configurations
 const char* EXTRACTED_CONFIGS[] = {
+    // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1919,6 +1920,7 @@ const char* EXTRACTED_CONFIGS[] = {
 
 /// @brief unparsed configurations
 const char* UNPARSED_CONFIGS[] = {
+    // CONFIGURATION 0
 "{\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
