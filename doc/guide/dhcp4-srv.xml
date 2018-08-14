@@ -3553,8 +3553,7 @@ It is merely echoed by the server
       </para>
       <note>You can reserve any ip-address in a global reservation. Just keep
       in mind that Kea will not do any sanity checking on the address and for
-      Kea 1.5.0, support for global reservation mechanism should be
-      considered experimental.
+      Kea 1.5.0, support for global reservations should be considered experimental.
       </note>
     </section>
 
@@ -3638,7 +3637,7 @@ It is merely echoed by the server
      <para>The conflict resolution mechanism does not work for global
      reservations. As of Kea 1.5.0, it is generally recommended to not use
      global reservations for addresses. If you want to use it anyway,
-     you have to manually ensure that the reserved addressed are non
+     you have to manually ensure that the reserved addressed are not
      in the dynamic pools.</para>
     </note>
 
@@ -4055,11 +4054,11 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     enabled.</para>
 
     <para>This feature can be used to assign certain parameters, such as
-    hostname or some dedicated, host specific options. It can also be used to
+    hostname or other dedicated, host-specific options. It can also be used to
     assign addresses. However, global reservations that assign addresses bypass
     the whole topology determination provided by DHCP logic implemented in
     Kea. It is very easy to misuse this feature and get configuration that is
-    inconsistent. To give specific example, imagine a case of global reservation
+    inconsistent. To give a specific example, imagine a global reservation
     for address 192.0.2.100 and two subnets 192.0.2.0/24 and 192.0.5.0/24. If
     global reservations are used in both subnets and a device matching global
     host reservations visits part of the network that is serviced by
