@@ -611,6 +611,9 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
         FAIL() << "parsing failure:"
                 << "config:" << config << std::endl
                 << "error: " << ex.what();
+
+        // No point in going deeper into the swamp...
+        return;
     }
 
     ConstElementPtr status;

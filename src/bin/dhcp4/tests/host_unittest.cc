@@ -32,12 +32,12 @@ namespace {
 /// @brief Set of JSON configuration(s) used throughout the Host tests.
 ///
 /// - Configuration 0:
-///   - Used for testing global host reservations 
-///   - 5 global reservations 
+///   - Used for testing global host reservations
+///   - 5 global reservations
 ///   - 1 subnet: 10.0.0.0/24
 const char* CONFIGS[] = {
     // Configuration 0
-    // 1 subnet, mode HR_GLOBAL, 
+    // 1 subnet, mode HR_GLOBAL,
     // global reservations for different identifier types
     "{ \"interfaces-config\": {\n"
         "      \"interfaces\": [ \"*\" ]\n"
@@ -75,7 +75,7 @@ const char* CONFIGS[] = {
         "} ]\n"
     "}\n"
     ,
-    // Configuration 1 global vs in-pool 
+    // Configuration 1 global vs in-pool
     // 2 subnets, one mode default (aka HR_ALL), one mode HR_GLOBAL
     // Host reservations for the same client, one global, one in each subnet
     "{ \"interfaces-config\": {\n"
@@ -143,7 +143,7 @@ const char* CONFIGS[] = {
         "]\n"
         "}\n"
     ,
-    // Configuration 3 global and all 
+    // Configuration 3 global and all
     "{ \"interfaces-config\": {\n"
         "      \"interfaces\": [ \"*\" ]\n"
         "},\n"
@@ -171,7 +171,7 @@ const char* CONFIGS[] = {
         "}\n"
 };
 
-/// @brief Test fixture class for testing v4 exchanges.
+/// @brief Test fixture class for testing global v4 reservations.
 class HostTest : public Dhcpv4SrvTest {
 public:
 
@@ -198,8 +198,17 @@ public:
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 
-    void runDoraTest(const std::string& config, Dhcp4Client& client, 
-                     const std::string& expected_host, 
+    /// @brief Conducts DORA exchange and checks assigned address and hostname
+    ///
+    /// If expected_host is empty, the test expects the hostname option to not
+    /// be assigned.
+    ///
+    /// @param config configuration to be used
+    /// @param client reference to a client instance
+    /// @param expected_host expected hostname to be assigned (may be empty)
+    /// @param expected_addr expected address to be assigned
+    void runDoraTest(const std::string& config, Dhcp4Client& client,
+                     const std::string& expected_host,
                      const std::string& expected_addr) {
 
         // Configure DHCP server.
@@ -231,7 +240,7 @@ public:
         EXPECT_EQ(client.config_.lease_.addr_.toText(), expected_addr);
     }
 
-    
+
 };
 
 // Verifies that a client, which fails to match to a global
@@ -243,8 +252,7 @@ TEST_F(HostTest, globalHardwareNoMatch) {
     runDoraTest(CONFIGS[0], client, "", "10.0.0.10");
 }
 
-
-// Verifies that a client, that matches to a global hostname 
+// Verifies that a client, that matches to a global hostname
 // reservation, gets both the hostname and a dynamic address,
 // when the subnet mode is HR_GLOBAL
 TEST_F(HostTest, globalHardwareDynamicAddress) {
@@ -254,9 +262,8 @@ TEST_F(HostTest, globalHardwareDynamicAddress) {
     runDoraTest(CONFIGS[0], client, "hw-host-dynamic", "10.0.0.10");
 }
 
-
 // Verifies that a client matched to a global address reservation
-// reservation, gets both the hostname and the reserved address
+// gets both the hostname and the reserved address
 // when the subnet mode is HR_GLOBAL
 TEST_F(HostTest, globalHardwareFixedAddress) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
@@ -266,7 +273,7 @@ TEST_F(HostTest, globalHardwareFixedAddress) {
     runDoraTest(CONFIGS[0], client, "hw-host-fixed", "192.0.1.77");
 }
 
-// Verifies that a client, can be matched to a global reservation by DUID
+// Verifies that a client can be matched to a global reservation by DUID
 TEST_F(HostTest, globalDuid) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
@@ -281,7 +288,7 @@ TEST_F(HostTest, globalDuid) {
     runDoraTest(CONFIGS[0], client, "duid-host", "10.0.0.10");
 }
 
-// Verifies that a client, can be matched to a global reservation by ciruit-id 
+// Verifies that a client can be matched to a global reservation by circuit-id
 TEST_F(HostTest, globalCircuitId) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
@@ -297,7 +304,7 @@ TEST_F(HostTest, globalCircuitId) {
     runDoraTest(CONFIGS[0], client, "circuit-id-host", "10.0.0.10");
 }
 
-// Verifies that a client, can be matched to a global reservation by client-id 
+// Verifies that a client can be matched to a global reservation by client-id
 TEST_F(HostTest, globalClientID) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
@@ -312,15 +319,15 @@ TEST_F(HostTest, globalClientID) {
 }
 
 // Verifies that even when a matching global reservation exists,
-// client will get a subnet scoped reservation, when subnet 
+// client will get a subnet scoped reservation, when subnet
 // reservation mode is default
 TEST_F(HostTest, defaultOverGlobal) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-   
-    // Hardware address matches all reservations 
+
+    // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
-    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its 
+    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its
     // reservation should be used, rather than global.
     runDoraTest(CONFIGS[1], client, "subnet-10-host", "10.0.0.10");
 }
@@ -328,11 +335,11 @@ TEST_F(HostTest, defaultOverGlobal) {
 // Verifies that when there are matching reservations at
 // both the global and subnet levels, client will be matched
 // to the global reservation, when subnet reservation mode
-// is HR_GLOBAL. 
+// is HR_GLOBAL.
 TEST_F(HostTest, globalOverSubnet) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-   
-    // Hardware address matches all reservations 
+
+    // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
     // Change to subnet 20
@@ -349,11 +356,11 @@ TEST_F(HostTest, globalOverSubnet) {
 // is HR_OUT_OF_POOL
 TEST_F(HostTest, outOfPoolOverGlobal) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-   
-    // Hardware address matches all reservations 
+
+    // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
-    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its 
+    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its
     // reservation should be used, rather than global.
     runDoraTest(CONFIGS[2], client, "subnet-10-host", "192.0.5.10");
 }
@@ -364,11 +371,11 @@ TEST_F(HostTest, outOfPoolOverGlobal) {
 // is HR_ALL
 TEST_F(HostTest, allOverGlobal) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
-   
-    // Hardware address matches all reservations 
+
+    // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
-    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its 
+    // Subnet 10 usses default HR mode(i.e. "in-pool"), so its
     // reservation should be used, rather than global.
     runDoraTest(CONFIGS[3], client, "subnet-10-host", "192.0.5.10");
 }
