@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/addr_utilities.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
