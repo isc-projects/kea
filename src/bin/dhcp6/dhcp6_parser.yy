@@ -212,6 +212,8 @@ using namespace std;
   HOSTNAME_CHAR_SET "hostname-char-set"
   HOSTNAME_CHAR_REPLACEMENT "hostname-char-replacement"
 
+  ENABLE_RECONFIGURATION "enable-reconfiguration"
+  
   LOGGING "Logging"
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output_options"
@@ -419,6 +421,7 @@ global_object: dhcp6_object
              | unknown_map_entry
              ;
 
+
 dhcp6_object: DHCP6 {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -443,6 +446,7 @@ sub_dhcp6: LCURLY_BRACKET {
     // parsing completed
 };
 
+
 global_params: global_param
              | global_params COMMA global_param
              ;
@@ -459,6 +463,7 @@ global_param: data_directory
             | renew_timer
             | rebind_timer
             | decline_probation_period
+            | enable_reconfiguration
             | subnet6_list
             | shared_networks
             | interfaces_config
@@ -500,6 +505,11 @@ data_directory: DATA_DIRECTORY {
     ElementPtr datadir(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("data-directory", datadir);
     ctx.leave();
+};
+
+enable_reconfiguration: ENABLE_RECONFIGURATION COLON BOOLEAN {
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("enable-reconfiguration", b);
 };
 
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {

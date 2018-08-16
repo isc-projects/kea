@@ -1,3 +1,10 @@
+XXXX.	[func]		MayyaSunil, fdupont
+	Implemented Mechanism to parse reconfig accept option,
+	send reconfig accept option and storing client info in
+	lease user context.
+	(Github #100,Gitlab #199,!292,
+	git tbd 779b4f89e37752ff12cbb69c30bb98215d601d47)
+
 1662.	[bug]		marcin
 	Prevent deadlock in the Kea DHCP servers caused by allocating
 	memory in the system signal handler. The issue was found on

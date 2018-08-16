@@ -1226,6 +1226,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"enable-reconfiguration\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_ENABLE_RECONFIGURATION(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("enable-reconfiguration", driver.loc_);
+    }
+}
+
 \"calculate-tee-times\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

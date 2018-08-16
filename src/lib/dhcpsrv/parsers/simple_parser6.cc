@@ -93,7 +93,8 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "reservation-mode",         Element::string,  "all" },
     { "calculate-tee-times",      Element::boolean, "true" },
     { "t1-percent",               Element::real,    ".50" },
-    { "t2-percent",               Element::real,    ".80" }
+    { "t2-percent",               Element::real,    ".80" },
+    { "enable-reconfiguration",   Element::boolean, "false" }
 };
 
 /// @brief This table defines all option definition parameters.

@@ -589,6 +589,16 @@ public:
         return (dhcp4o6_port_);
     }
 
+    /// @brief set reconfigure feature flag
+    void setReconfigurationFlag(bool flag) {
+        enable_reconfigure_ = flag;
+    }
+
+    /// @brief Returns reconfigure feature flag
+    bool getReconfigurationFlag() {
+        return enable_reconfigure_;
+    }
+
     /// @brief Returns pointer to the D2 client configuration
     D2ClientConfigPtr getD2ClientConfig() {
         return (d2_client_config_);
@@ -779,6 +789,8 @@ private:
     /// @brief Stores D2 client configuration
     D2ClientConfigPtr d2_client_config_;
 
+    /// @brief enable reconfiguration support
+    bool enable_reconfigure_;
     /// @brief Stores the global parameters specified via configuration
     isc::data::ElementPtr configured_globals_;
 

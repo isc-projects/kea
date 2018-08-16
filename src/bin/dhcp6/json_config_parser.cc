@@ -188,6 +188,11 @@ public:
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
 
+        //set reconfigure feature flag
+        bool reconfigure_feature_flag = getBoolean(global, 
+                                                   "enable-reconfiguration");
+        srv_config->setReconfigurationFlag(reconfigure_feature_flag);
+
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
         if (user_context) {
@@ -677,6 +682,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "dhcp4o6-port") ||
                  (config_pair.first == "server-tag") ||
                  (config_pair.first == "reservation-mode") ||
+                 (config_pair.first == "enable-reconfiguration")) {
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
                  (config_pair.first == "t2-percent") ||
@@ -702,7 +708,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             // If we got here, no code handled this parameter, so we bail out.
             isc_throw(DhcpConfigError,
-                      "unsupported global configuration parameter: " << config_pair.first
+                  "unsupported global configuration parameter: " << config_pair.first
                       << " (" << config_pair.second->getPosition() << ")");
         }
 

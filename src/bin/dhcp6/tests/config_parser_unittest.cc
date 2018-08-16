@@ -213,6 +213,7 @@ const char* PARSER_CONFIGS[] = {
 
     // Configuration 7: two host databases
     "{"
+    "    \"enable-reconfiguration\": true,"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
     "    },"
@@ -7027,6 +7028,9 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
     // Keywords are in alphabetical order
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
     EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
+    
+    //check if reconfigure feature flag is true
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getReconfigurationFlag());
 }
 
 // This test checks comments. Please keep it last.
@@ -7036,6 +7040,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
+    ASSERT_FALSE(CfgMgr::instance().getStagingCfg()->getReconfigurationFlag());
     // Check global user context.
     ConstElementPtr ctx = CfgMgr::instance().getStagingCfg()->getContext();
     ASSERT_TRUE(ctx);
