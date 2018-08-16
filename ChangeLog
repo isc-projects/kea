@@ -1,6 +1,6 @@
 1444.	[bug]		tomek
 	keactrl version tests now work properly on macOS.
-	(Gitlab #11, git 52c0e6e2eec550e9e874d721c7e43149bcf83f35)
+	(Gitlab #11, git a8c385e1507ffd101f65b445783b0355b01decce)
 
 1443.	[func]		tmark
 	kea-dhcp4 now supports global host reservations and a new
