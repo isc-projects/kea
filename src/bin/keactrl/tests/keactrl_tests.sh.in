@@ -1114,7 +1114,7 @@ version_command_test() {
     # Create configuration file for keactrl.
     keactrl_config="${CFG_FILES}\ndhcp4=yes\ndhcp6=yes\ndhcp_ddns=yes\n"
     keactrl_config+="ctrl_agent=yes\nkea_verbose=no\n${keactrl_fixed_config}"
-     create_keactrl_config "${keactrl_config}"
+    create_keactrl_config "${keactrl_config}"
 
     # This is what we expect to get. We need to run it through printf
     # to convert \n to actual LF (0xa) or whatever the EOL is used on your
