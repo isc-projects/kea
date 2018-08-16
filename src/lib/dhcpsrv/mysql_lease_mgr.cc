@@ -2231,7 +2231,8 @@ MySqlLeaseMgr::getLeases6() const {
 
 Lease6Collection
 MySqlLeaseMgr::getLeases6(const DUID& duid) const {
-   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID);
+   LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_DUID)
+             .arg(duid.toText());
    
     // Set up the WHERE clause value
     MYSQL_BIND inbind[1];
