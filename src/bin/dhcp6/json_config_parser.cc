@@ -582,6 +582,17 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "reservations") {
+                HostCollection hosts;
+                HostReservationsListParser<HostReservationParser6> parser;
+                parser.parse(SUBNET_ID_GLOBAL, config_pair.second, hosts);
+                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                    srv_config->getCfgHosts()->add(*h);
+                }
+
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port and user-context

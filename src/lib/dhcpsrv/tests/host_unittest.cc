@@ -983,7 +983,7 @@ TEST_F(HostTest, toText) {
     // Reset some of the data and make sure that the output is affected.
     host->setHostname("");
     host->removeIPv4Reservation();
-    host->setIPv4SubnetID(0);
+    host->setIPv4SubnetID(SUBNET_ID_UNUSED);
     host->setNegative(true);
 
     EXPECT_EQ("hwaddr=010203040506 ipv6_subnet_id=2"
@@ -1001,7 +1001,7 @@ TEST_F(HostTest, toText) {
     // Create host identified by DUID, instead of HWADDR, with a very
     // basic configuration.
     ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
-                                        SubnetID(0), SubnetID(0),
+                                        SUBNET_ID_UNUSED, SUBNET_ID_UNUSED,
                                         IOAddress::IPV4_ZERO_ADDRESS(),
                                         "myhost")));
 
@@ -1035,6 +1035,20 @@ TEST_F(HostTest, toText) {
               " dhcp4_class0=modem dhcp4_class1=router"
               " dhcp6_class0=hub dhcp6_class1=device",
               host->toText());
+
+    // Create global host identified by DUID, with a very basic configuration.
+    ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
+                                        SUBNET_ID_GLOBAL, SUBNET_ID_GLOBAL, 
+                                        IOAddress::IPV4_ZERO_ADDRESS(),
+                                        "myhost")));
+
+    EXPECT_EQ("duid=1112131415 ipv4_subnet_id=0 ipv6_subnet_id=0 "
+               "hostname=myhost ipv4_reservation=(no)"
+              " siaddr=(no)"
+              " sname=(empty)"
+              " file=(empty)"
+              " ipv6_reservations=(none)", host->toText());
+
 }
 
 // This test checks that Host object is correctly unparsed,
@@ -1089,7 +1103,7 @@ TEST_F(HostTest, unparse) {
     // Reset some of the data and make sure that the output is affected.
     host->setHostname("");
     host->removeIPv4Reservation();
-    host->setIPv4SubnetID(0);
+    host->setIPv4SubnetID(SUBNET_ID_UNUSED);
 
     EXPECT_EQ("{ "
               "\"boot-file-name\": \"\", "
@@ -1117,7 +1131,7 @@ TEST_F(HostTest, unparse) {
     // Create host identified by DUID, instead of HWADDR, with a very
     // basic configuration.
     ASSERT_NO_THROW(host.reset(new Host("11:12:13:14:15", "duid",
-                                        SubnetID(0), SubnetID(0),
+                                        SUBNET_ID_UNUSED, SUBNET_ID_UNUSED, 
                                         IOAddress::IPV4_ZERO_ADDRESS(),
                                         "myhost")));
 

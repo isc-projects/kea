@@ -315,6 +315,10 @@ protected:
     ///
     /// @return the next unique Subnet-ID
     static SubnetID generateNextID() {
+        if (static_id_ == SUBNET_ID_MAX) {
+            resetSubnetID();
+        }
+
         return (static_id_++);
     }
 

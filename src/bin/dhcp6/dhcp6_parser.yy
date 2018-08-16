@@ -448,6 +448,7 @@ global_param: preferred_lifetime
             | dhcp_ddns
             | user_context
             | comment
+            | reservations
             | unknown_map_entry
             ;
 

@@ -66,11 +66,12 @@ const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
 /// listed below:
 /// - zero or null IPv4 address indicates that there is no reservation for the
 ///   IPv4 address for the host,
-/// - zero or null subnet identifier (either IPv4 or IPv6) indicates that
+/// - null subnet identifier (either IPv4 or IPv6) indicates that
 ///   this subnet identifier must be ignored. Specifically, this is the case
 ///   when host reservation is created for the DHCPv4 server, the IPv6 subnet id
 ///   should be ignored. Conversely, when host reservation is created for the
 ///   DHCPv6 server, the IPv4 subnet id should be ignored.
+///   NOTE! Zero is a the "global" subnet id as Kea 1.5.0
 ///
 /// To exclude those special case values, the Postgres backend uses partial
 /// indexes, i.e. the only values that are included in the index are those that
@@ -206,10 +207,20 @@ public:
             bind_array->add(host->getIdentifierType());
 
             // dhcp4_subnet_id : INT NULL
-            bind_array->add(host->getIPv4SubnetID());
+            if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED) {
+                bind_array->addNull();
+            }
+            else {
+                bind_array->add(host->getIPv4SubnetID());
+            }
 
             // dhcp6_subnet_id : INT NULL
-            bind_array->add(host->getIPv6SubnetID());
+            if (host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
+                bind_array->addNull();
+            }
+            else {
+                bind_array->add(host->getIPv6SubnetID());
+            }
 
             // ipv4_address : BIGINT NULL
             bind_array->add((host->getIPv4Reservation()));
@@ -316,14 +327,14 @@ public:
             static_cast<Host::IdentifierType>(type);
 
         // dhcp4_subnet_id : INT NULL
-        uint32_t subnet_id(0);
+        uint32_t subnet_id(SUBNET_ID_UNUSED);
         if (!isColumnNull(r, row, DHCP4_SUBNET_ID_COL)) {
             getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
         }
         SubnetID dhcp4_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // dhcp6_subnet_id : INT NULL
-        subnet_id = 0;
+        subnet_id = SUBNET_ID_UNUSED;
         if (!isColumnNull(r, row, DHCP6_SUBNET_ID_COL)) {
             getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
         }

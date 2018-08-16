@@ -125,6 +125,7 @@ using namespace std;
   RESERVATION_MODE "reservation-mode"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
+  GLOBAL "global"
   ALL "all"
 
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
@@ -447,6 +448,7 @@ global_param: valid_lifetime
             | boot_file_name
             | user_context
             | comment
+            | reservations
             | unknown_map_entry
             ;
 
@@ -1075,6 +1077,7 @@ reservation_mode: RESERVATION_MODE {
 
 hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
        | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
+       | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
        | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
        ;
 

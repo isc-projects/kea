@@ -339,9 +339,18 @@ SrvConfig::toElement() const {
             }
         }
     }
-    // Insert reservations
+
+    // Host reservations 
     CfgHostsList resv_list;
     resv_list.internalize(cfg_hosts_->toElement());
+
+    // Insert global reservations
+    ConstElementPtr global_resvs = resv_list.get(SUBNET_ID_GLOBAL);
+    if (global_resvs->size() > 0) {
+        dhcp->set("reservations", global_resvs);
+    }
+
+    // Insert subnet reservations
     for (std::vector<ElementPtr>::const_iterator subnet = sn_list.cbegin();
          subnet != sn_list.cend(); ++subnet) {
         ConstElementPtr id = (*subnet)->get("id");
@@ -352,6 +361,7 @@ SrvConfig::toElement() const {
         ConstElementPtr resvs = resv_list.get(subnet_id);
         (*subnet)->set("reservations", resvs);
     }
+
     // Set expired-leases-processing
     ConstElementPtr expired = cfg_expiration_->toElement();
     dhcp->set("expired-leases-processing", expired);

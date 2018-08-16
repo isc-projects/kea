@@ -169,6 +169,9 @@ Network::toElement() const {
     case HR_OUT_OF_POOL:
         mode = "out-of-pool";
         break;
+    case HR_GLOBAL:
+        mode = "global";
+        break;
     case HR_ALL:
         mode = "all";
         break;
