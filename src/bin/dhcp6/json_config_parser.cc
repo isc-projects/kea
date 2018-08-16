@@ -163,6 +163,11 @@ public:
         uint16_t dhcp4o6_port = getUint16(global, "dhcp4o6-port");
         srv_config->setDhcp4o6Port(dhcp4o6_port);
 
+        //set reconfigure feature flag
+        bool reconfigure_feature_flag = getBoolean(global, 
+                                                   "enable-reconfiguration");
+        srv_config->setReconfigurationFlag(reconfigure_feature_flag);
+
         // Set the global user context.
         ConstElementPtr user_context = global->get("user-context");
         if (user_context) {
@@ -602,16 +607,17 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
-            // decline-probation-period, dhcp4o6-port and user-context
-            // are handled in the global_parser.parse() which sets
-            // global parameters.
+            // decline-probation-period, dhcp4o6-port, enable-reconfiguration 
+            // and user-context are handled in the global_parser.parse() 
+            // which sets global parameters.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "preferred-lifetime") ||
                  (config_pair.first == "valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
-                 (config_pair.first == "user-context")) {
+                 (config_pair.first == "user-context") ||
+                 (config_pair.first == "enable-reconfiguration") ) {
                 continue;
             }
 
@@ -623,7 +629,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             // If we got here, no code handled this parameter, so we bail out.
             isc_throw(DhcpConfigError,
-                      "unsupported global configuration parameter: " << config_pair.first
+                  "unsupported global configuration parameter: " << config_pair.first
                       << " (" << config_pair.second->getPosition() << ")");
         }
 

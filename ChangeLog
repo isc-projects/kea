@@ -1,3 +1,9 @@
+1443.   [func]      MayyaSunil
+	Implemented Mechanism to parse reconfig accept option,
+	send reconfig accept option and storing client info in
+	lease user context.
+	(Github #100, git 43306d2a62b508aed21037ae15494e66f361fd24)
+
 1442.   [func]		MayyaSunil
 	Implemented new queries for IPv6 leases by DUID.
 	(Github #99, git c20b5248da1283e596e35ad057ae242f4d613965)
