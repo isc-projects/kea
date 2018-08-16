@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcp/option_space.h>
-#include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <algorithm>

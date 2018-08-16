@@ -12,8 +12,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/addr_utilities.h>
 #include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <stats/stats_mgr.h>
 #include <sstream>
 

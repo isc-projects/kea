@@ -23,7 +23,7 @@
 #include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
