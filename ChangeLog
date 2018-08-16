@@ -1,3 +1,7 @@
+1444.	[bug]		tomek
+	keactrl version tests now work properly on macOS.
+	(Gitlab #11, git 52c0e6e2eec550e9e874d721c7e43149bcf83f35)
+
 1443.	[func]		tmark
 	kea-dhcp4 now supports global host reservations and a new
 	global reservations-mode .  Prior to this reservations could
@@ -12,7 +16,7 @@
 1441.	[func]		marcin
 	Added log message indicating that the control socket has been
 	opened by a server.
-	(gitlab #8, git 3dbaf4917bea112466f1ee5726870c545950e114)
+	(Gitlab #8, git 3dbaf4917bea112466f1ee5726870c545950e114)
 
 1440.	[func]		tmark
 	The internal represenation of an "unused" subnet-id has been
@@ -29,7 +33,7 @@
 
 1439.	[func]		tomek
 	keactrl and kea-admin tools can now report version.
-	(gitlab #9, git 4a00ab5d4b9ac9193fc5f924149aeaca7a88e2ef)
+	(Gitlab #9, git 4a00ab5d4b9ac9193fc5f924149aeaca7a88e2ef)
 
 1438.	[func]		tomek
 	subnet-id parameter is now optional in lease4-add, lease6-add,
@@ -228,7 +232,7 @@ Kea 1.4.0 released on June 15, 2018
 1408.	[func]		tomek
 	perfdhcp now supports -o option that adds DHCP options.
 	This may be used to simulate various clients.
-	(github #77, git b81dedb7f0a2516130e7bd799d9084c63f0e844c)
+	(Github #77, git b81dedb7f0a2516130e7bd799d9084c63f0e844c)
 
 1407.	[bug]		tmark
 	Corrected an issue where the destruction of loggers
@@ -611,7 +615,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	functionality was added. There are some limitations (delete,
 	client classes, fixed DHCPv4 fields, statistics recount, etc.)
 	These will be addressed in upcoming tickets.
-	(github #37, git e37606fd2d0c02234a55f7445c52a12b2e7a82ec)
+	(Github #37, git e37606fd2d0c02234a55f7445c52a12b2e7a82ec)
 
 1343.	[func]		fdupont
 	User-context and comments are now supported in many new scopes:
@@ -628,7 +632,7 @@ Kea 1.4.0-beta released on May 18, 2018
 1341.	[func]		razvan, andrei
 	Significant update of Cassandra support. A lot of code for
 	Cassandra Lease Manager has been updated and partially rewritten.
-	(github #35, git 41795494720cd9886c1e98d21eaeefd94d674e37)
+	(Github #35, git 41795494720cd9886c1e98d21eaeefd94d674e37)
 
 1340.	[func]		marcin
 	Added support for "dhcp-enable" and "dhcp-disable" commands in
@@ -687,7 +691,7 @@ Kea 1.3.0 released on October 27, 2017
 1330.	[bug]		fdupont
 	The option length checks were relaxed for the V-I Vendor Class
 	option.
-	(Trac #5391, github #57,
+	(Trac #5391, Github #57,
 	 git 8c1ea6684a808e8d3af9ea7eccecd93adc801e8a)
 
 1329.	[func]		marcin
@@ -1530,7 +1534,7 @@ Kea 1.2.0-beta released on April 7, 2017
 	Support for DHCPv6 options defined in RFC6603 and RFC7598. Thanks
 	to Andrei Pavel and Cristian Secareanu of Qualitance for submitting
 	initial implementation.
-	(Trac #github24, git 59b62eb3ddd9db62c04bd47cd8fbdc1af62fbc1b)
+	(Trac #Github24, git 59b62eb3ddd9db62c04bd47cd8fbdc1af62fbc1b)
 
 1185.	[build]		marcin
 	Install Kea headers to be used for building external libraries.
@@ -1602,11 +1606,11 @@ Kea 1.1.0 released on September 30, 2016
 	MySQL database creation scripts use single quotes for
 	strings to avoid issues with creation of the database
 	when MySQL server operates in ANSI_QUOTES mode.
-	(github #30, git e40a54a8e24b5f6427edd4afcd5cdc15012b8866)
+	(Github #30, git e40a54a8e24b5f6427edd4afcd5cdc15012b8866)
 
 1172.	[bug]		andir
 	Kea build fixes for gcc 6, which uses C++14 by default.
-	(github #29, git ad68c3942839618c26d7ff017fbac7df139b5d01)
+	(Github #29, git ad68c3942839618c26d7ff017fbac7df139b5d01)
 
 1171.	[doc]		marcin
 	Updated supported operating systems and the prerequisites for
@@ -1662,7 +1666,7 @@ Kea 1.1.0 released on September 30, 2016
 	Added two enhancements to perfdhcp: optionally using MAC
 	addresses from a file in new DHCP transactions, and
 	generation of DHCPv6 relayed messages.
-	(github #22, git c5b4a5981cf642ebb9aecb8acc07b87abdccbd91)
+	(Github #22, git c5b4a5981cf642ebb9aecb8acc07b87abdccbd91)
 
 1161.	[bug]		fdupont
 	Fixed interface manager receive methods which raise a bug on
@@ -1763,7 +1767,7 @@ Kea 1.1.0-beta released on August 31, 2016
 1144.	[bug]		mihu
 	Response to DHCPINFORM is generally sent to port 68, rather
 	than port 67. Thanks to Michal Humpula for providing a patch.
-	(github #23, git 4216a4bedf8a884df087c68d48c88ee9ffa444dc)
+	(Github #23, git 4216a4bedf8a884df087c68d48c88ee9ffa444dc)
 
 1143.	[doc]		fdupont
 	User's Guide has been updated with DHCPv4-over-DHCPv6 support
@@ -1957,7 +1961,7 @@ Kea 1.1.0-beta released on August 31, 2016
 1108.	[bug]		pallotron
 	perfdhcp uses the same transaction id throughout the DORA
 	exchange to adhere with RFC 2131.
-	(github #19, git d260a70d6aa0baecd68131bc35f58f097aa77bcc)
+	(Github #19, git d260a70d6aa0baecd68131bc35f58f097aa77bcc)
 
 1107.	[func]		tmark
 	The DDNS parameter, replace-client-name, has been changed from a boolean
