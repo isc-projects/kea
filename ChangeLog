@@ -1,3 +1,10 @@
+1443.	[func]		tmark
+	kea-dhcp4 now supports global host reservations and a new
+	global reservations-mode .  Prior to this reservations could
+	only be specified per subnet.  This is supported by by Memfile,
+	MySQL,PostgreSQL,and Cassandra host data sources.
+	(Trac #5705, git f991cffd06add941f8bf2937232f51d597623e21)
+
 1442.   [func]		MayyaSunil
 	Implemented new queries for IPv6 leases by DUID.
 	(Github #99, git c20b5248da1283e596e35ad057ae242f4d613965)
