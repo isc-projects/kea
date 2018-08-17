@@ -241,6 +241,7 @@ JSONFeed::receiveStartHandler() {
                 feedFailure("invalid first character " + std::string(1, c));
                 break;
             }
+            break;
 
         default:
             invalidEventError("receiveStartHandler", getNextEvent());
