@@ -484,6 +484,23 @@ public:
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
 
+        /// @brief Returns global host reservation if there is one
+        ///
+        /// If the current subnet's reservation mode is global and
+        /// there is a global host (i.e. reservation belonging to
+        /// the global subnet), return it.  Otherwise return an 
+        /// empty pointer.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr globalHost() const;
+
+        /// @brief Determines if a global reservation exists
+        ///
+        /// @return true if there current subnet's reservation mode is
+        /// global and there is global host containing the given
+        /// lease reservation, false otherwise
+        bool hasGlobalReservation(const IPv6Resrv& resv) const;
+
         /// @brief Default constructor.
         ClientContext6();
 
@@ -747,6 +764,30 @@ public:
     /// @param ctx Client context that contains all necessary information.
     static void findReservation(ClientContext6& ctx);
 
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find a "global" host reservation matching the
+    /// client identifier.  It will return the first global reservation that
+    /// matches per the configured list of host identifiers, or an empty
+    /// pointer if no matches are found.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return Pointer to the reservation found, or an empty pointer.
+    static ConstHostPtr findGlobalReservation(ClientContext6& ctx);
+
+    /// @brief Creates an IPv6Resrv instance from a Lease6
+    ///
+    /// @param lease Reference to the Lease6
+    /// @return The newly formed IPv6Resrv instance
+    static IPv6Resrv makeIPv6Resrv(const Lease6& lease) {
+        if (lease.type_ == Lease::TYPE_NA) {
+            return (IPv6Resrv(IPv6Resrv::TYPE_NA, lease.addr_,
+                              (lease.prefixlen_ ? lease.prefixlen_ : 128)));
+        } 
+
+        return (IPv6Resrv(IPv6Resrv::TYPE_PD, lease.addr_, lease.prefixlen_));
+    }
+
 private:
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
@@ -810,6 +851,9 @@ private:
     /// @param existing_leases leases that are already associated with the client
     void
     allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
+
+    bool
+    allocateGlobalReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
 
     /// @brief Removes leases that are reserved for someone else.
     ///
