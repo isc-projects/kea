@@ -340,6 +340,7 @@ TEST_F(BufferTest, writeUint64) {
     obuffer.writeUint64(val1);
     ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
     cp = static_cast<const uint8_t*>(obuffer.getData());
+    EXPECT_TRUE(cp);
     EXPECT_FALSE(memcmp(exp_val1, obuffer.getData(), sizeof(uint64_t)));
 
     EXPECT_NO_THROW(obuffer.clear());
@@ -347,6 +348,7 @@ TEST_F(BufferTest, writeUint64) {
     obuffer.writeUint64(val2);
     ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
     cp = static_cast<const uint8_t*>(obuffer.getData());
+    EXPECT_TRUE(cp);
     EXPECT_FALSE(memcmp(exp_val2, obuffer.getData(), sizeof(uint64_t)));
 }
 
