@@ -483,12 +483,35 @@ ConstHostPtr
 AllocEngine::ClientContext6::currentHost() const {
     Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
     if (subnet) {
-        auto host = hosts_.find(subnet->getID());
+        SubnetID id = (subnet_->getHostReservationMode() == Network::HR_GLOBAL ?
+                       SUBNET_ID_GLOBAL : subnet->getID());
+
+        auto host = hosts_.find(id);
         if (host != hosts_.cend()) {
             return (host->second);
         }
     }
+
     return (ConstHostPtr());
+}
+
+ConstHostPtr
+AllocEngine::ClientContext6::globalHost() const {
+    Subnet6Ptr subnet = host_subnet_ ? host_subnet_ : subnet_;
+    if (subnet && subnet_->getHostReservationMode() == Network::HR_GLOBAL) {
+        auto host = hosts_.find(SUBNET_ID_GLOBAL);
+        if (host != hosts_.cend()) {
+            return (host->second);
+        }
+    }
+
+    return (ConstHostPtr());
+}
+
+bool
+AllocEngine::ClientContext6::hasGlobalReservation(const IPv6Resrv& resv) const {
+    ConstHostPtr ghost = globalHost();
+    return (ghost && ghost->hasReservation(resv));
 }
 
 void AllocEngine::findReservation(ClientContext6& ctx) {
@@ -504,6 +527,17 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
     std::map<SubnetID, ConstHostPtr> host_map;
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
+
+    if (subnet->getHostReservationMode() == Network::HR_GLOBAL) {
+        ConstHostPtr ghost = findGlobalReservation(ctx);
+        if (ghost) {
+            ctx.hosts_[SUBNET_ID_GLOBAL] = ghost;
+
+            // @todo In theory, to support global as part of HR_ALL,
+            //  we would just keep going, instead of returning.
+            return;
+        }
+    }
 
     // If the subnet belongs to a shared network it is usually going to be
     // more efficient to make a query for all reservations for a particular
@@ -566,6 +600,24 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
         subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
     }
 }
+
+ConstHostPtr
+AllocEngine::findGlobalReservation(ClientContext6& ctx) {
+    ConstHostPtr host;
+    BOOST_FOREACH(const IdentifierPair& id_pair, ctx.host_identifiers_) {
+        // Attempt to find a host using a specified identifier.
+        host = HostMgr::instance().get6(SUBNET_ID_GLOBAL, id_pair.first,
+                                        &id_pair.second[0], id_pair.second.size());
+
+        // If we found matching global host we're done.
+        if (host) {
+            break;
+        }
+    }
+
+    return (host);
+}
+
 
 Lease6Collection
 AllocEngine::allocateLeases6(ClientContext6& ctx) {
@@ -1020,12 +1072,16 @@ void
 AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                                      Lease6Collection& existing_leases) {
 
-
     // If there are no reservations or the reservation is v4, there's nothing to do.
     if (ctx.hosts_.empty()) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                   ALLOC_ENGINE_V6_ALLOC_NO_V6_HR)
             .arg(ctx.query_->getLabel());
+        return;
+    }
+
+    if (allocateGlobalReservedLeases6(ctx, existing_leases)) {
+        // global reservation provided the lease, we're done
         return;
     }
 
@@ -1039,8 +1095,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     BOOST_FOREACH(const Lease6Ptr& lease, existing_leases) {
         if ((lease->valid_lft_ != 0)) {
             if ((ctx.hosts_.count(lease->subnet_id_) > 0) &&
-                ctx.hosts_[lease->subnet_id_]->hasReservation(IPv6Resrv(type, lease->addr_,
-                                                                        lease->prefixlen_))) {
+                ctx.hosts_[lease->subnet_id_]->hasReservation(makeIPv6Resrv(*lease))) {
                 // We found existing lease for a reserved address or prefix.
                 // We'll simply extend the lifetime of the lease.
                 LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -1188,6 +1243,126 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     }
 }
 
+bool
+AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
+                                           Lease6Collection& existing_leases) {
+    // Get the global host
+    ConstHostPtr ghost = ctx.globalHost();
+    if (!ghost) {
+        return (false);
+    }
+
+    // We want to avoid allocating new lease for an IA if there is already
+    // a valid lease for which client has reservation. So, we first check if
+    // we already have a lease for a reserved address or prefix.
+    BOOST_FOREACH(const Lease6Ptr& lease, existing_leases) {
+        if ((lease->valid_lft_ != 0) &&
+            (ghost->hasReservation(makeIPv6Resrv(*lease)))) {
+            // We found existing lease for a reserved address or prefix.
+            // We'll simply extend the lifetime of the lease.
+            LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                      ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS)
+                    .arg(ctx.query_->getLabel())
+                    .arg(lease->typeToText(lease->type_))
+                    .arg(lease->addr_.toText());
+
+            // parameters, such as hostname. We want to hand out the hostname value
+            // from the same reservation entry as IP addresses. Thus, let's see if
+            // there is any hostname reservation.
+            if (!ghost->getHostname().empty()) {
+                    // We have to determine whether the hostname is generated
+                    // in response to client's FQDN or not. If yes, we will
+                    // need to qualify the hostname. Otherwise, we just use
+                    // the hostname as it is specified for the reservation.
+                    OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
+                    ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
+                                    qualifyName(ghost->getHostname(), static_cast<bool>(fqdn));
+            }
+
+            // If this is a real allocation, we may need to extend the lease
+            // lifetime.
+            if (!ctx.fake_allocation_ && conditionalExtendLifetime(*lease)) {
+                LeaseMgrFactory::instance().updateLease6(lease);
+            }
+
+            return(true);
+        }
+    }
+
+    // There is no lease for a reservation in this IA. So, let's now iterate
+    // over reservations specified and try to allocate one of them for the IA.
+
+    // Let's convert this from Lease::Type to IPv6Reserv::Type
+    IPv6Resrv::Type type = ctx.currentIA().type_ == Lease::TYPE_NA ?
+        IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD;
+
+    const IPv6ResrvRange& reservs = ghost->getIPv6Reservations(type);
+    BOOST_FOREACH(IPv6ResrvTuple type_lease_tuple, reservs) {
+        // We do have a reservation for address or prefix.
+        const IOAddress& addr = type_lease_tuple.second.getPrefix();
+        uint8_t prefix_len = type_lease_tuple.second.getPrefixLen();
+
+        // We have allocated this address/prefix while processing one of the
+        // previous IAs, so let's try another reservation.
+        if (ctx.isAllocated(addr, prefix_len)) {
+            continue;
+        }
+
+        // If there's a lease for this address, let's not create it.
+        // It doesn't matter whether it is for this client or for someone else.
+        if (!LeaseMgrFactory::instance().getLease6(ctx.currentIA().type_, addr)) {
+
+            if (!ghost->getHostname().empty()) {
+                // If there is a hostname reservation here we should stick
+                // to this reservation. By updating the hostname in the
+                // context we make sure that the database is updated with
+                // this new value and the server doesn't need to do it and
+                // its processing performance is not impacted by the hostname
+                // updates.
+
+                // We have to determine whether the hostname is generated
+                // in response to client's FQDN or not. If yes, we will
+                // need to qualify the hostname. Otherwise, we just use
+                // the hostname as it is specified for the reservation.
+                OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
+                ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
+                                qualifyName(ghost->getHostname(), static_cast<bool>(fqdn));
+            }
+
+            // Ok, let's create a new lease...
+            CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
+            Lease6Ptr lease = createLease6(ctx, addr, prefix_len, callout_status);
+
+            // ... and add it to the existing leases list.
+            existing_leases.push_back(lease);
+
+            if (ctx.currentIA().type_ == Lease::TYPE_NA) {
+                    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_ADDR_GRANTED)
+                        .arg(addr.toText())
+                        .arg(ctx.query_->getLabel());
+            } else {
+                LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_HR_PREFIX_GRANTED)
+                        .arg(addr.toText())
+                        .arg(static_cast<int>(prefix_len))
+                        .arg(ctx.query_->getLabel());
+            }
+
+            // We found a lease for this client and this IA. Let's return.
+            // Returning after the first lease was assigned is useful if we
+            // have multiple reservations for the same client. If the client
+            // sends 2 IAs, the first time we call allocateReservedLeases6 will
+            // use the first reservation and return. The second time, we'll
+            // go over the first reservation, but will discover that there's
+            // a lease corresponding to it and will skip it and then pick
+            // the second reservation and turn it into the lease. This approach
+            // would work for any number of reservations.
+            return (true);
+        }
+    }
+
+    return(false);
+}
+
 void
 AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
                                               Lease6Collection& existing_leases) {
@@ -1210,19 +1385,12 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
     BOOST_FOREACH(const Lease6Ptr& candidate, copy) {
         // If we have reservation we should check if the reservation is for
         // the candidate lease. If so, we simply accept the lease.
-        if (ctx.hosts_.count(candidate->subnet_id_) > 0) {
-            if (candidate->type_ == Lease6::TYPE_NA) {
-                if (ctx.hosts_[candidate->subnet_id_]->hasReservation(
-                        IPv6Resrv(IPv6Resrv::TYPE_NA, candidate->addr_))) {
-                    continue;
-                }
-            } else {
-                if (ctx.hosts_[candidate->subnet_id_]->hasReservation(
-                        IPv6Resrv(IPv6Resrv::TYPE_PD,candidate->addr_,
-                                  candidate->prefixlen_))) {
-                    continue;
-                }
-            }
+        IPv6Resrv resv = makeIPv6Resrv(*candidate);
+        if ((ctx.hasGlobalReservation(resv)) ||
+            ((ctx.hosts_.count(candidate->subnet_id_) > 0) &&
+             (ctx.hosts_[candidate->subnet_id_]->hasReservation(resv)))) {
+            // We have a subnet reservation
+            continue;
         }
 
         // The candidate address doesn't appear to be reserved for us.
@@ -1357,46 +1525,41 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
     for (Lease6Collection::iterator lease = existing_leases.begin();
          lease != existing_leases.end(); ++lease) {
 
-        IPv6Resrv resv(ctx.currentIA().type_ == Lease::TYPE_NA ?
-                       IPv6Resrv::TYPE_NA : IPv6Resrv::TYPE_PD,
-                       (*lease)->addr_, (*lease)->prefixlen_);
-
-        // If there is no reservation for this subnet.
-        if ((ctx.hosts_.count((*lease)->subnet_id_) > 0) &&
-            (ctx.hosts_[(*lease)->subnet_id_]->hasReservation(resv))) {
+        // If there is reservation for this keep it.
+        IPv6Resrv resv = makeIPv6Resrv(*(*lease));
+        if (ctx.hasGlobalReservation(resv) ||
+            ((ctx.hosts_.count((*lease)->subnet_id_) > 0) &&
+             (ctx.hosts_[(*lease)->subnet_id_]->hasReservation(resv)))) {
             continue;
+        }
 
-        } else {
+        // We have reservations, but not for this lease. Release it.
+        // Remove this lease from LeaseMgr
+        LeaseMgrFactory::instance().deleteLease((*lease)->addr_);
 
-            // We have reservations, but not for this lease. Release it.
+        // Update DNS if required.
+        queueNCR(CHG_REMOVE, *lease);
 
-            // Remove this lease from LeaseMgr
-            LeaseMgrFactory::instance().deleteLease((*lease)->addr_);
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", (*lease)->subnet_id_,
+                                   ctx.currentIA().type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            static_cast<int64_t>(-1));
 
-            // Update DNS if required.
-            queueNCR(CHG_REMOVE, *lease);
+        /// @todo: Probably trigger a hook here
 
-            // Need to decrease statistic for assigned addresses.
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", (*lease)->subnet_id_,
-                                       ctx.currentIA().type_ == Lease::TYPE_NA ?
-                                       "assigned-nas" : "assigned-pds"),
-                static_cast<int64_t>(-1));
+        // Add this to the list of removed leases.
+        ctx.currentIA().old_leases_.push_back(*lease);
 
-            /// @todo: Probably trigger a hook here
+        // Set this pointer to NULL. The pointer is still valid. We're just
+        // setting the Lease6Ptr to NULL value. We'll remove all NULL
+        // pointers once the loop is finished.
+        lease->reset();
 
-            // Add this to the list of removed leases.
-            ctx.currentIA().old_leases_.push_back(*lease);
-
-            // Set this pointer to NULL. The pointer is still valid. We're just
-            // setting the Lease6Ptr to NULL value. We'll remove all NULL
-            // pointers once the loop is finished.
-            lease->reset();
-
-            if (--total == 1) {
-                // If there's only one lease left, break the loop.
-                break;
-            }
+        if (--total == 1) {
+            // If there's only one lease left, break the loop.
+            break;
         }
 
     }
@@ -1740,10 +1903,11 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
         }
     }
 
-    // Check if the lease still belongs to the subnet and that the use of this subnet
-    // is allowed per client classification. If not, remove this lease.
-    if (((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) ||
-        !ctx.subnet_->clientSupported(ctx.query_->getClasses())) {
+    // If the lease is not global and it is either out of range (NAs only) or it
+    // is not permitted by subnet client classification, delete it.
+    if (!(ctx.hasGlobalReservation(makeIPv6Resrv(*lease))) &&
+        (((lease->type_ != Lease::TYPE_PD) && !ctx.subnet_->inRange(lease->addr_)) ||
+        !ctx.subnet_->clientSupported(ctx.query_->getClasses()))) {
         // Oh dear, the lease is no longer valid. We need to get rid of it.
 
         // Remove this lease from LeaseMgr
