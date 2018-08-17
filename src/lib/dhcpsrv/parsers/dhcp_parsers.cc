@@ -570,7 +570,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     unsigned int len;
     try {
         len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
-    } catch (const boost::bad_lexical_cast) {
+    } catch (const boost::bad_lexical_cast&) {
         ConstElementPtr elem = params->get("subnet");
         isc_throw(DhcpConfigError, "prefix length: '" <<
                   subnet_txt.substr(pos+1) << "' is not an integer ("
