@@ -199,6 +199,8 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         .arg(check_only ? "check" : "update")
         .arg(config_set->str());
 
+    isc::data::ConstElementPtr current_socket;
+    current_socket = getD2CfgMgr()->getControlSocketInfo();
     isc::data::ConstElementPtr answer;
     answer = getCfgMgr()->simpleParseConfig(config_set, check_only);
     if (check_only) {
@@ -219,7 +221,9 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
 
     // Set the command channel.
     try {
-        configureCommandChannel();
+        isc::data::ConstElementPtr staging_socket;
+        staging_socket = getD2CfgMgr()->getControlSocketInfo();
+        configureCommandChannel(current_socket, staging_socket);
     } catch (const isc::Exception& ex) {
         answer = isc::config::createAnswer(2, ex.what());
         return (answer);
@@ -245,45 +249,26 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
 }
 
 void
-D2Process::configureCommandChannel() {
-    D2CfgMgrPtr mgr = getD2CfgMgr();
-    if (!mgr) {
-        return;
-    }
-    D2CfgContextPtr ctx = mgr->getD2CfgContext();
-    if (!ctx) {
-        return;
-    }
-    D2ControllerPtr ctrl =
-        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
-    if (!ctrl) {
-        return;
-    }
-
-    // Get the previous config.
-    isc::data::ConstElementPtr old_sock_cfg = ctx->getControlSocketInfo(true);
-
-    // Get the new config.
-    isc::data::ConstElementPtr sock_cfg = ctx->getControlSocketInfo();
-
+D2Process::configureCommandChannel(isc::data::ConstElementPtr current_cfg,
+                                   isc::data::ConstElementPtr staging_cfg) {
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
-    bool sock_changed = (old_sock_cfg && (old_sock_cfg->size() > 0) &&
-                         sock_cfg && (sock_cfg->size() > 0) &&
-                         !sock_cfg->equals(*old_sock_cfg));
-    if (old_sock_cfg && (old_sock_cfg->size() > 0) &&
-        (!sock_cfg || (sock_cfg->size() == 0) || sock_changed)) {
+    bool sock_changed = (current_cfg && (current_cfg->size() > 0) &&
+                         staging_cfg && (staging_cfg->size() > 0) &&
+                         !staging_cfg->equals(*current_cfg));
+    if (current_cfg && (current_cfg->size() > 0) &&
+        (!staging_cfg || (staging_cfg->size() == 0) || sock_changed)) {
         // Close the existing socket.
         isc::config::CommandMgr::instance().closeCommandSocket();
-        ctx->setControlSocketInfo(isc::data::ConstElementPtr(), true);
     }
-    if (sock_cfg && (sock_cfg->size() > 0) &&
-        (!old_sock_cfg || (old_sock_cfg->size() == 0) || sock_changed)) {
+    if (staging_cfg && (staging_cfg->size() > 0) &&
+        (!current_cfg || (current_cfg->size() == 0) || sock_changed)) {
         // Assume that CommandMgr works with D2 I/O.
+        D2ControllerPtr ctrl =
+            boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
         ctrl->registerCommands();
-        isc::config::CommandMgr::instance().openCommandSocket(sock_cfg, true);
-        ctx->setControlSocketInfo(sock_cfg, true);
+        isc::config::CommandMgr::instance().openCommandSocket(staging_cfg, true);
     }
 }
 

@@ -35,8 +35,7 @@ D2CfgContext::D2CfgContext()
       forward_mgr_(new DdnsDomainListMgr("forward-ddns")),
       reverse_mgr_(new DdnsDomainListMgr("reverse-ddns")),
       keys_(new TSIGKeyInfoMap()),
-      control_socket_(ConstElementPtr()),
-      old_control_socket_(ConstElementPtr()) {
+      control_socket_(ConstElementPtr()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
@@ -54,7 +53,6 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
     keys_ = rhs.keys_;
 
     control_socket_ = rhs.control_socket_;
-    old_control_socket_ = rhs.old_control_socket_;
 }
 
 D2CfgContext::~D2CfgContext() {
@@ -245,6 +243,11 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
 const D2ParamsPtr&
 D2CfgMgr::getD2Params() {
     return (getD2CfgContext()->getD2Params());
+}
+
+const isc::data::ConstElementPtr
+D2CfgMgr::getControlSocketInfo() {
+    return (getD2CfgContext()->getControlSocketInfo());
 }
 
 std::string

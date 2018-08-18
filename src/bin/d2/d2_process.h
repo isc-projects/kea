@@ -256,8 +256,10 @@ protected:
 
     /// @brief Configure the command channel.
     ///
-    /// Strip down code used in DHCPv4 / DHCPv6 servers.
-    void configureCommandChannel();
+    /// @param current_cfg current configuration of the control socket.
+    /// @param staging_cfg staging configuration of the control socket.
+    void configureCommandChannel(isc::data::ConstElementPtr current_cfg,
+                                 isc::data::ConstElementPtr staging_cfg);
 
 public:
     /// @brief Returns a pointer to the configuration manager.
