@@ -90,8 +90,9 @@ public:
 
     /// Set replay detection method value
     ///
-    /// @param rdm replay detection method value to be set
+    /// @param value replay detection method value to be set
     void setReplyDetectionValue(uint64_t value) { rdm_value_ = value; }
+
     /// Set authentication information 
     ///
     /// @param auth_info authentication information to be set

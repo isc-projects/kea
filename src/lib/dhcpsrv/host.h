@@ -38,16 +38,16 @@ public:
 
     /// @brief Constructor
     ///
-    /// Constructor for assigning auth keys in host reservation
-    ///  Ensures the key length is not greater than 16 bytes
-    /// @param string auth key to be stored
+    /// Constructor for assigning auth keys in host reservation.
+    /// Ensures the key length is not greater than 16 bytes.
+    /// @param key auth key to be stored
     AuthKey(const std::string key);
     
     /// @brief Constructor
     ///
-    /// Constructor for generating auth keys, with no argument
-    /// shall use the internal function for generationg random keys
-    AuthKey(void);
+    /// Constructor for generating auth keys, with no argument.
+    /// shall use the internal function for generationg random keys.
+    AuthKey();
 
     // @brief get random string
     ///
@@ -62,7 +62,7 @@ public:
     /// Set the key value.
     //  If the size is greater than 16 bytes, we resize to 16 Bytes
     /// Doesnt throw an exception
-    /// @param string key to be stored
+    /// @param key auth key to be stored
     void setAuthKey(const std::string& key);
 
     /// @brief return auth key
@@ -82,13 +82,13 @@ public:
     /// @brief equality operator
     ///
     /// equality operator to compare two AuthKey classes
-    /// @param Authkey to be compared against
+    /// @param other Authkey to be compared against
     bool operator==(const AuthKey& other) const;
 
     /// @brief inequality operator
     ///
     /// inequality operator to compare two AuthKey classes
-    /// @param Authkey to be compared against
+    /// @param other Authkey to be compared against
     bool operator!=(const AuthKey& other) const;
 
 private:
@@ -287,6 +287,7 @@ public:
     /// @param next_server IPv4 address of next server (siaddr).
     /// @param server_host_name Server host name (a.k.a. sname).
     /// @param boot_file_name Boot file name (a.k.a. file).
+    /// @param auth_key Authentication key.
     ///
     /// @throw BadValue if the provided values are invalid. In particular,
     /// if the identifier is invalid.
@@ -300,7 +301,7 @@ public:
          const asiolink::IOAddress& next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS(),
          const std::string& server_host_name = "",
          const std::string& boot_file_name = "",
-         const AuthKey& auth_key = std::string(""));
+         const AuthKey& auth_key = AuthKey(""));
 
     /// @brief Constructor.
     ///
@@ -338,6 +339,7 @@ public:
     /// @param next_server IPv4 address of next server (siaddr).
     /// @param server_host_name Server host name (a.k.a. sname).
     /// @param boot_file_name Boot file name (a.k.a. file).
+    /// @param auth_key Authentication key.
     ///
     /// @throw BadValue if the provided values are invalid. In particular,
     /// if the identifier is invalid.
@@ -350,7 +352,7 @@ public:
          const asiolink::IOAddress& next_server = asiolink::IOAddress::IPV4_ZERO_ADDRESS(),
          const std::string& server_host_name = "",
          const std::string& boot_file_name = "",
-         const AuthKey& auth_key = std::string(""));
+         const AuthKey& auth_key = AuthKey(""));
 
     /// @brief Replaces currently used identifier with a new identifier.
     ///
