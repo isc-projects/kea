@@ -111,6 +111,7 @@ We have received the following contributions:
    2018-02: exit-wait-time param added to perfdhcp (github 55)
    2018-03: Cassandra: host delete, fixed DHCPv4 fields, user contexts,
             Postgres: hwaddress source, type storage (github 70)
+   2018-07: Sysrepo detection improvements
 
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac
@@ -143,6 +144,7 @@ We have received the following contributions:
    2018-02: --with-dhcp-XXX renamed to --with-XXX
    2018-02: Support for Google benchmark added (github 36)
    2018-02: exit-wait-time param added to perfdhcp (github 55)
+   2018-07: Sysrepo detection improvements
 
  - Vincent Legout
    2016-11: Fixed serveral spelling mistakes
@@ -173,6 +175,9 @@ We have received the following contributions:
    2018-07: support for Authentication option in DHCPv6
    2018-07: support storage of Authentication keys in host structure
    2018-08: Optimized query for host reservation from the backends
+
+ - Piotr Strzyżewski
+   2018-07: YANG model for DHCPv4 Kea
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
