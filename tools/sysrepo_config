@@ -39,6 +39,8 @@ then
 	echo "    get lib path"
 	echo "--modversion"
 	echo "    get version"
+	echo "--variable=SR_REPOSITORY_LOC"
+	echo "    get repo path"
 	echo "libraries:"
 	echo "    libsysrepo"
 	exit 0
@@ -77,6 +79,10 @@ then
 	PATCH="0"
 	echo "${MAJOR}.${MINOR}.${PATCH}"
 	exit 0
+fi
+if [ $1 == "--variable=SR_REPOSITORY_LOC" ]
+then
+	echo "${SYSREPO_PATH}/build/repository"
 fi
 echo "wrong parameter"
 echo "run: \`$0 --help\` for more help"

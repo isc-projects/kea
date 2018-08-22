@@ -89,7 +89,9 @@ located at https://github.com/sysrepo/sysrepo.
   $ sysrepoctl -l
 </screen>
 
-After installation the result should be similar to this:
+After installation the result should be similar to this, assuming that
+the sysrepo repository path is
+<filename>/home/thomson/devel/sysrepo-0.7.4/build/repository</filename>:
 <screen>
 Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/
 Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.4/build/repository/data/
@@ -120,18 +122,13 @@ src/lib/libyang/models. To install Kea models, do the following:
 
 <screen>
 cd src/lib/yang/models
-sudo sysrepoctl -i -g kea-dhcpv4-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
-sudo sysrepoctl -i -g ietf-dhcpv6-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+sudo ./yang-install.sh kea-dhcpv4-server.yang
+sudo ./yang-install.sh ietf-dhcpv6-server.yang
 </screen>
-
-Note the first -s parameter specifies the location of your YANG schema
-directory. You can check it with sysrepoctl -l. This is a parameter that is
-configured during sysrepo compilation.
-
 
 The installation should look similar to the following:
 <screen>
-$ sudo sysrepoctl -i -g ietf-dhcpv4-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+$ sudo ./yang-install.sh kea-dhcpv4-server.yang
 Installing a new module from file 'ietf-dhcpv4-server.yang'...
 Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcpv4-server@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-dhcpv4-options'...

@@ -1,0 +1,9 @@
+#!/bin/sh
+# install a yang model
+
+if test $# -ne 1; then
+  echo "Usage: $0 <model>.yang"
+  exit 1
+fi
+
+exec sysrepoctl -i -g $1 -s @SYSREPO_REPO@/yang -s .

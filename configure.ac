@@ -883,6 +883,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
     SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
     SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
     SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
+    SYSREPO_REPO=`$SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo`
 
     # Now get the environment for C++ bindings for Sysrepo.
     SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
@@ -906,6 +907,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
 
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
+    AC_SUBST(SYSREPO_REPO)
 
     # Check that a simple program using Sysrepo functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
@@ -1588,6 +1590,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/yang/models/yang-install.sh
                  src/share/Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile
@@ -1635,6 +1638,7 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/util/tests/process_spawn_app.sh
+           chmod +x src/lib/yang/models/yang-install.sh
            chmod +x tools/path_replacer.sh
 ])
 
@@ -1795,6 +1799,7 @@ Sysrepo:
   SYSREPO_VERSION:     ${SYSREPO_VERSION}
   SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
   SYSREPO_LIBS:        ${SYSREPO_LIBS}
+  SYSREPO_REPO:        ${SYSREPO_REPO}
 END
 else
 cat >> config.report << END
