@@ -39,8 +39,8 @@ isRangeZero(Iterator begin, Iterator end) {
 /// after every start of your process.  Calling srand() is enough. This
 /// method uses default rand(), which is usually a LCG pseudo-random
 /// number generator, so it is not suitable for security
-/// purposes. Please get a decent PRNG implementation, like Mersenne
-/// twister, if you are doing anything related with security.
+/// purposes. Please use cryptolink RNG if you are doing anything
+/// related with security.
 ///
 /// PRNG initialization is left out of this function on purpose. It may
 /// be initialized to specific value on purpose, e.g. to repeat exactly
