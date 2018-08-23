@@ -9,9 +9,11 @@
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
+#include <cryptolink/crypto_rng.h>
 
 #include <botan/botan.h>
 #include <botan/init.h>
+#include <botan/auto_rng.h>
 
 namespace isc {
 namespace cryptolink {
@@ -23,15 +25,51 @@ private:
 };
 
 CryptoLink::~CryptoLink() {
+    rng_.reset();
     delete impl_;
 }
+
+/// \brief Botan implementation of RNG.
+class RNGImpl : public RNG {
+public:
+    RNGImpl() {
+        rng.reset(new Botan::AutoSeeded_RNG());
+    }
+
+    ~RNGImpl() {
+    }
+
+private:
+    std::vector<uint8_t> random(size_t len) {
+        std::vector<uint8_t> data;
+        if (len > 0) {
+            data.resize(len);
+            try {
+                rng->randomize(&data[0], len);
+            } catch (const Botan::Exception& ex) {
+                isc_throw(isc::cryptolink::LibraryError,
+                          "Botan error: " << ex.what());
+            }
+        }
+        return (data);
+    }
+
+    boost::shared_ptr<Botan::RandomNumberGenerator> rng;
+};
 
 void
 CryptoLink::initialize() {
     CryptoLink& c = getCryptoLinkInternal();
-    if (c.impl_ == NULL) {
+    if (!c.impl_) {
         try {
             c.impl_ = new CryptoLinkImpl();
+        } catch (const Botan::Exception& ex) {
+            isc_throw(InitializationError, "Botan error: " << ex.what());
+        }
+    }
+    if (!c.rng_) {
+        try {
+            c.rng_.reset(new RNGImpl());
         } catch (const Botan::Exception& ex) {
             isc_throw(InitializationError, "Botan error: " << ex.what());
         }
