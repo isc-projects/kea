@@ -106,6 +106,12 @@ CREATE INDEX timestamp_index ON logs (timestamp);
 ALTER TABLE hosts 
     ADD COLUMN auth_key VARCHAR(16) NULL; 
 
+# Convert subnet-id values of 0  to NULL
+UPDATE hosts SET dhcp4_subnet_id = NULL WHERE dhcp4_subnet_id = 0;
+UPDATE dhcp4_options SET dhcp4_subnet_id = NULL WHERE dhcp4_subnet_id = 0;
+UPDATE hosts SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
+UPDATE dhcp6_options SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '7', minor = '0';
