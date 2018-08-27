@@ -11,7 +11,7 @@ Primary developers:
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability)
- - Thomas Markwalder (DDNS, user_chk)
+ - Thomas Markwalder (DDNS, user_chk, global host reservations)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, perfdhcp, control agent)

@@ -321,7 +321,105 @@ const char* CONFIGS[] = {
         "        }"
         "    ]"
         "} ]"
-    "}"
+    "}",
+
+    // Configuration 8: Global HRs TYPE_NAs
+    "{ "
+        "\"interfaces-config\": { \n"
+        "  \"interfaces\": [ \"*\" ] \n"
+        "},\n "
+        "\"host-reservation-identifiers\": [ \"duid\", \"hw-address\" ], \n"
+        "\"reservations\": [ \n"
+        "{ \n"
+        "   \"duid\": \"01:02:03:04\", \n"
+        "   \"hostname\": \"duid-host-fixed\", \n"
+        "   \"ip-addresses\": [ \"3001::1\" ] \n"
+        "}, \n"
+        "{ \n"
+        "   \"duid\": \"01:02:03:05\", \n"
+        "   \"hostname\": \"duid-host-dynamic\" \n"
+        "}, \n"
+        "{ \n"
+        "   \"hw-address\": \"38:60:77:d5:ff:ee\", \n"
+        "   \"hostname\": \"hw-host\" \n"
+        "} \n"
+        "], \n"
+        "\"valid-lifetime\": 4000,  \n"
+        "\"preferred-lifetime\": 3000, \n"
+        "\"rebind-timer\": 2000,  \n"
+        "\"renew-timer\": 1000,  \n"
+        "\"mac-sources\": [ \"ipv6-link-local\" ],  \n"
+        "\"subnet6\": [  \n"
+        " {  \n"
+        "    \"subnet\": \"2001:db8:1::/48\",  \n"
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
+        "    \"interface\" : \"eth0\", \n"
+        "    \"reservation-mode\": \"global\" \n"
+        " },"
+        " {  \n"
+        "    \"subnet\": \"2001:db8:2::/48\",  \n"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ], \n"
+        "    \"interface\" : \"eth1\", \n"
+        "    \"reservations\": [ \n"
+        "    { \n"
+        "       \"duid\": \"01:02:03:05\", \n"
+        "       \"hostname\": \"subnet-duid-host\" \n"
+        "    }] \n"
+        " }"
+        " ] \n"
+    "} \n"
+    ,
+    // Configuration 9: Global HRs TYPE_PDs
+    "{ "
+        "\"interfaces-config\": { \n"
+        "  \"interfaces\": [ \"*\" ] \n"
+        "},\n "
+        "\"host-reservation-identifiers\": [ \"duid\", \"hw-address\" ], \n"
+        "\"reservations\": [ \n"
+        "{ \n"
+        "   \"duid\": \"01:02:03:04\", \n"
+        "   \"hostname\": \"duid-host-fixed\", \n"
+        "   \"prefixes\": [ \"4000::100/120\" ]"
+        "}, \n"
+        "{ \n"
+        "   \"duid\": \"01:02:03:05\", \n"
+        "   \"hostname\": \"duid-host-dynamic\" \n"
+        "} \n"
+        "], \n"
+        "\"valid-lifetime\": 4000,  \n"
+        "\"preferred-lifetime\": 3000, \n"
+        "\"rebind-timer\": 2000,  \n"
+        "\"renew-timer\": 1000,  \n"
+        "\"mac-sources\": [ \"ipv6-link-local\" ],  \n"
+        "\"subnet6\": [  \n"
+        " {  \n"
+        "    \"subnet\": \"2001:db8:1::/48\",  \n"
+        "    \"interface\" : \"eth0\", \n"
+        "    \"reservation-mode\": \"global\", \n"
+        "    \"pd-pools\": [ \n"
+        "    { \n"
+        "       \"prefix\": \"3000::\", \n"
+        "       \"prefix-len\": 119, \n"
+        "       \"delegated-len\": 120 \n"
+        "    }] \n"
+        " },"
+        " {  \n"
+        "    \"subnet\": \"2001:db8:2::/48\",  \n"
+        "    \"interface\" : \"eth1\", \n"
+        "    \"pd-pools\": [ \n"
+        "    { \n"
+        "       \"prefix\": \"3001::\", \n"
+        "       \"prefix-len\": 119, \n"
+        "       \"delegated-len\": 120 \n"
+        "    }], \n"
+        "    \"reservations\": [ \n"
+        "    { \n"
+        "       \"duid\": \"01:02:03:05\", \n"
+        "       \"hostname\": \"subnet-duid-host\" \n"
+        "    }] \n"
+        " }"
+        " ] \n"
+    "} \n"
 };
 
 /// @brief Base class representing leases and hints conveyed within IAs.
@@ -701,6 +799,14 @@ public:
                              const Reservation& r5 = Reservation::UNSPEC(),
                              const Reservation& r6 = Reservation::UNSPEC()) const;
 
+    /// @brief Verifies that an SARR exchange results in the expected lease
+    ///
+    /// @param client Client configured to request a single lease
+    /// @param exp_address expected address/prefix of the lease
+    /// @param exp_hostname expected hostname on the lease
+    void sarrTest(Dhcp6Client& client, const std::string& exp_address,
+                  const std::string& exp_hostname);
+
     /// @brief Configures client to include hint.
     ///
     /// @param client Reference to a client.
@@ -1062,6 +1168,25 @@ HostTest::requestEmptyIAs(Dhcp6Client& client) {
     client.requestPrefix(5);
     client.requestPrefix(6);
 }
+
+void
+HostTest::sarrTest(Dhcp6Client& client, const std::string& exp_address,
+                   const std::string& exp_hostname) {
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Verify that the client got a dynamic address
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ(exp_address, lease_client.addr_.toText());
+
+    // Check that the server recorded the lease
+    // and that the server lease has expected hostname.
+    Lease6Ptr lease_server = checkLease(lease_client);
+    ASSERT_TRUE(lease_server);
+    EXPECT_EQ(exp_hostname, lease_server->hostname_);
+}
+
 
 // Test basic SARR scenarios against a server configured with one subnet
 // containing two reservations.  One reservation with a hostname, one
@@ -1918,5 +2043,108 @@ TEST_F(HostTest, conflictResolutionReuseExpired) {
     EXPECT_FALSE(client2.hasLeaseWithZeroLifetimeForPrefix(IOAddress("3000::"), 120));
 }
 
+// Verifies fundamental Global vs Subnet host reservations for NA leases
+TEST_F(HostTest, globalReservationsNA) {
+    Dhcp6Client client;
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[8], *client.getServer()));
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+
+    {
+        SCOPED_TRACE("Global HR by DUID with reserved address");
+        client.setDUID("01:02:03:04");
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get global reserved address and reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3001::1", "duid-host-fixed"));
+    }
+
+    {
+        SCOPED_TRACE("Global HR by DUID with dynamic address");
+        client.clearConfig();
+        client.setDUID("01:02:03:05");
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get dynamic address and reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:1::", "duid-host-dynamic"));
+    }
+
+    {
+        SCOPED_TRACE("Global HR by HW Address with dynamic address");
+        client.clearConfig();
+        client.setDUID("33:44:55:66");
+        client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get dynamic address and hardware host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:1::1", "hw-host"));
+    }
+
+    {
+        SCOPED_TRACE("Default subnet mode excludes Global HR");
+        client.clearConfig();
+        client.setInterface("eth1");
+        client.setDUID("01:02:03:04");
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get dynamic address and no host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:2::", ""));
+    }
+
+    {
+        SCOPED_TRACE("Subnet reservation over global");
+        client.clearConfig();
+        client.setInterface("eth1");
+        client.setDUID("01:02:03:05");
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get dynamic address and host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:2::1", "subnet-duid-host"));
+    }
+}
+
+// Verifies fundamental Global vs Subnet host reservations for PD leases
+TEST_F(HostTest, globalReservationsPD) {
+    Dhcp6Client client;
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[9], *client.getServer()));
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(2, subnets->size());
+
+    {
+        SCOPED_TRACE("Global HR by DUID with reserved prefix");
+        client.setDUID("01:02:03:04");
+        client.requestPrefix(1);
+        // Should get global reserved prefix and reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "4000::100", "duid-host-fixed"));
+    }
+
+    {
+        SCOPED_TRACE("Global HR by DUID with dynamic prefix");
+        client.clearConfig();
+        client.setDUID("01:02:03:05");
+        client.requestPrefix(1);
+        // Should get dynamic prefix and reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3000::", "duid-host-dynamic"));
+    }
+
+    {
+        SCOPED_TRACE("Default subnet mode excludes Global HR");
+        client.clearConfig();
+        client.setInterface("eth1");
+        client.setDUID("01:02:03:04");
+        client.requestPrefix(1);
+        // Should get dynamic prefix and no host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3001::", ""));
+    }
+
+    {
+        SCOPED_TRACE("Subnet reservation over global");
+        client.clearConfig();
+        client.setInterface("eth1");
+        client.setDUID("01:02:03:05");
+        client.requestPrefix(1);
+        // Should get dynamic prefix and subnet reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3001::100", "subnet-duid-host"));
+    }
+}
 
 } // end of anonymous namespace
