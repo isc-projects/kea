@@ -1180,8 +1180,8 @@ HostTest::sarrTest(Dhcp6Client& client, const std::string& exp_address,
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ(exp_address, lease_client.addr_.toText());
 
-    // Check that the server recorded the lease.
-    // and that the server lease has NO hostname
+    // Check that the server recorded the lease
+    // and that the server lease has expected hostname.
     Lease6Ptr lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
     EXPECT_EQ(exp_hostname, lease_server->hostname_);

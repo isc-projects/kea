@@ -488,7 +488,7 @@ public:
         ///
         /// If the current subnet's reservation mode is global and
         /// there is a global host (i.e. reservation belonging to
-        /// the global subnet), return it.  Otherwise return an 
+        /// the global subnet), return it.  Otherwise return an
         /// empty pointer.
         ///
         /// @return Pointer to the host object.
@@ -783,7 +783,7 @@ public:
         if (lease.type_ == Lease::TYPE_NA) {
             return (IPv6Resrv(IPv6Resrv::TYPE_NA, lease.addr_,
                               (lease.prefixlen_ ? lease.prefixlen_ : 128)));
-        } 
+        }
 
         return (IPv6Resrv(IPv6Resrv::TYPE_PD, lease.addr_, lease.prefixlen_));
     }
@@ -842,16 +842,33 @@ private:
 
     /// @brief Creates new leases based on reservations.
     ///
-    /// This method allocates new leases, based on host reservation. Existing
-    /// leases are specified in existing_leases parameter. A new lease is not created,
-    /// if there is a lease for specified address on existing_leases list or there is
-    /// a lease used by someone else.
+    /// This method allcoates new leases,  based on host reservations.
+    /// Existing leases are specified in the existing_leases parameter.
+    /// It first calls @c allocateGlobalReservedLeases6 to accomodate
+    /// subnets using global reservations.  If that method allocates
+    /// addresses, we return, otherwise we continue and check for non-global
+    /// reservations.  A new lease is not created, if there is a lease for
+    /// specified address on existing_leases list or there is a lease used by
+    /// someone else.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases leases that are already associated with the client
     void
     allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
 
+    /// @brief Creates new leases based on global reservations.
+    ///
+    /// This method is used by @allocateReservedLeases6, to allocate new leases based
+    /// on global reservation if one exists and global reservations are enabled for
+    /// the selected subnet. It differs from it's caller by looking only at the global
+    /// reservation and therefore has no need to iterate over the selected subnet or it's
+    /// siblings looking for host reservations.  Like it's caller, existing leases are
+    /// specified in existing_leases parameter. A new lease is not created, if there is
+    /// a lease for specified address on existing_leases list or there is a lease used by
+    /// someone else.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases leases that are already associated with the client
     bool
     allocateGlobalReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
 
