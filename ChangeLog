@@ -1,3 +1,10 @@
+1446.	[func]		tmark
+	kea-dhcp6 now supports global host reservations and a new
+	global reservations-mode .  Prior to this reservations could
+	only be specified per subnet.  This is supported by by Memfile,
+	MySQL, PostgreSQL, and Cassandra host data sources.
+	(Gitlab #13,!6, git# a5484c4d8852662be7da1e6e8b1d4c1a19e6502f)
+
 1445.	[func]		tomek
 	Implemented initial skeleton version of the kea-netconf tool.
 	Currently it can't do anything, but the build system is now
