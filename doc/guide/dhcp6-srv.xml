@@ -3275,7 +3275,7 @@ should include options from the isc option space:
       specific subnet.  Kea will still match inbound client packets to a
       subnet as before, but when the subnet's reservation mode is set to
       <command>"global"</command>, Kea will look for host reservations only
-      among the global reservations defined. Typcially, such resrvations would
+      among the global reservations defined. Typcially, such reservations would
       be used to reserve hostnames for clients which may move from one subnet
       to another.
       </para>
@@ -3709,17 +3709,17 @@ If not specified, the default value is:
 
     <para>This feature can be used to assign certain parameters, such as
     hostname or other dedicated, host-specific options. It can also be used to
-    assign addresses or prefixes. However, global reservations that assign 
-    either of these bypass the whole topology determination provided by DHCP 
-    logic implemented in Kea. It is very easy to misuse this feature and get 
-    configuration that is inconsistent.  To give a specific example, imagine a 
-    global reservation for an address 2001:db8:1111::1 and two subnets 
-    2001:db8:1111::/64 and 2001:db8:ffff::/48. If global reservations are used 
-    in both subnets and a device matching global host reservations visits part 
-    of the network that is covered by 2001:db8:ffff::/48, it will get an IP 
-    address 2001:db8:ffff::/48, which will be outside of the prefix announced
+    assign addresses or prefixes. However, global reservations that assign
+    either of these bypass the whole topology determination provided by DHCP
+    logic implemented in Kea. It is very easy to misuse this feature and get
+    configuration that is inconsistent.  To give a specific example, imagine a
+    global reservation for an address 2001:db8:1111::1 and two subnets
+    2001:db8:1111::/48 and 2001:db8:ffff::/48. If global reservations are used
+    in both subnets and a device matching global host reservations visits part
+    of the network that is covered by 2001:db8:ffff::/48, it will get an IP
+    address 2001:db8:ffff::1, which will be outside of the prefix announced
     by its local router using Router Advertisements.  Such a configuration
-    would be unsuable or at the very least ridden with issues, such as the 
+    would be unsuable or at the very least ridden with issues, such as the
     downlink traffic not reaching the device.</para>
 
     <para>
@@ -3741,7 +3741,7 @@ If not specified, the default value is:
        "hostname": "hw-host-fixed",
 
        // Use of IP address is global reservation is risky. If used outside of
-       // matching subnet, such as 2001:db8:1::/64, it will result in a broken
+       // matching subnet, such as 3001::/64, it will result in a broken
        // configuration being handled to the client.
        "ip-address": "2001:db8:ff::77"
     },

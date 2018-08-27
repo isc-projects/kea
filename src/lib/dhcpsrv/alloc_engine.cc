@@ -1252,7 +1252,7 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
         return (false);
     }
 
-    // We want to avoid allocating new lease for an IA if there is already
+    // We want to avoid allocating a new lease for an IA if there is already
     // a valid lease for which client has reservation. So, we first check if
     // we already have a lease for a reserved address or prefix.
     BOOST_FOREACH(const Lease6Ptr& lease, existing_leases) {
@@ -1266,6 +1266,7 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                     .arg(lease->typeToText(lease->type_))
                     .arg(lease->addr_.toText());
 
+            // Besides IP reservations we're also going to return other reserved
             // parameters, such as hostname. We want to hand out the hostname value
             // from the same reservation entry as IP addresses. Thus, let's see if
             // there is any hostname reservation.
