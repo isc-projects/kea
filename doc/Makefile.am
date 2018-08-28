@@ -1,4 +1,4 @@
-SUBDIRS = guide design
+SUBDIRS = guide
 
 EXTRA_DIST  = version.ent.in Doxyfile Doxyfile-xml
 EXTRA_DIST += devel/bison.dox
