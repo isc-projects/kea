@@ -1453,8 +1453,6 @@ AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  dns++.pc
                  doc/Makefile
-                 doc/design/Makefile
-                 doc/design/datasrc/Makefile
                  doc/guide/Makefile
                  doc/version.ent
                  ext/Makefile
