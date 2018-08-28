@@ -60,7 +60,7 @@
     sections describe the commands available.
   </para>
 
-  <section id="cache-flush-cmd">
+  <section id="command-cache-flush">
     <title>cache-flush command</title>
     <para>This command allows removal of specified number of cached
     host entries. It takes one parameter which defines the number of
@@ -76,7 +76,7 @@ in FIFO order, so always the oldest entries are removed.
     </para>
   </section>
 
-  <section id="cache-clear-cmd">
+  <section id="command-cache-clear">
     <title>cache-clear command</title>
     <para>This command allows removal of all cached
     host entries. An example usage looks as follows:
@@ -89,7 +89,7 @@ certain number of cached hosts, please use cache-flush instead.
     </para>
   </section>
 
-  <section id="cache-write-cmd">
+  <section id="command-cache-write">
     <title>cache-write command</title>
     <para>In general case the cache content is considered a run-time
     state and the server can be shutdown or restarted as usual. The
@@ -121,7 +121,7 @@ any other tool that is able to understand JSON format.
 
   </section>
 
-  <section id="cache-load-cmd">
+  <section id="command-cache-load">
     <title>cache-load command</title>
     <para>See previous section for a discussion regarding use cases
     where it may be useful to write and load contents of the host
@@ -142,7 +142,7 @@ any other tool that is able to understand JSON format.
 
   </section>
 
-  <section id="cache-get-cmd">
+  <section id="command-cache-get">
     <title>cache-get command</title>
     <para>This command is similar to cache-write, but instead of
     writing the cache contents to disk, it returns the contents to
@@ -159,7 +159,7 @@ may be large.
     </para>
   </section>
 
-  <section id="cache-insert-cmd">
+  <section id="command-cache-insert">
     <title>cache-insert command</title>
     <para>This command may be used to manually insert a host into the
     cache. There are very few use cases when this command could be
@@ -220,7 +220,7 @@ may be large.
     </para>
   </section>
 
-  <section id="cache-remove-cmd">
+  <section id="command-cache-remove">
     <title>cache-remove command</title>
     <para>Sometimes it is useful to remove a single entry from the
     host cache. A good use case is a situation where the device is up,
