@@ -6,7 +6,7 @@
 #ifndef PGSQL_CONNECTION_H
 #define PGSQL_CONNECTION_H
 
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 
 #include <libpq-fe.h>
 #include <boost/scoped_ptr.hpp>

@@ -1534,6 +1534,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/testdata/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
+                 src/lib/database/Makefile
+                 src/lib/database/tests/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dhcp_ddns/Makefile

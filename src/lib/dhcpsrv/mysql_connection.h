@@ -7,8 +7,8 @@
 #ifndef MYSQL_CONNECTION_H
 #define MYSQL_CONNECTION_H
 
-#include <dhcpsrv/database_connection.h>
-#include <dhcpsrv/db_log.h>
+#include <database/database_connection.h>
+#include <database/db_log.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
@@ -117,7 +117,7 @@ public:
     /// @throw DbOpenError Unable to initialize MySql handle.
     MySqlHolder() : mysql_(mysql_init(NULL)) {
         if (mysql_ == NULL) {
-            isc_throw(DbOpenError, "unable to initialize MySQL");
+            isc_throw(db::DbOpenError, "unable to initialize MySQL");
         }
     }
 
@@ -208,7 +208,7 @@ private:
 /// to the database and preparing compiled statements. Its fields are
 /// public, because they are used (both set and retrieved) in classes
 /// that use instances of MySqlConnection.
-class MySqlConnection : public DatabaseConnection {
+class MySqlConnection : public db::DatabaseConnection {
 public:
 
     /// @brief Constructor
