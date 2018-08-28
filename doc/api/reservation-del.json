@@ -2,7 +2,8 @@
     "name": "reservation-del",
     "brief": "Deletes an existing host reservation.",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
-    "avail": "1.2.0, host_cmds library (premium)",
+    "hook": "host_cmds",
+    "avail": "1.2.0",
 
     "cmd-syntax": "{
     \"command\": \"reservation-del\",
