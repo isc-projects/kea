@@ -17,7 +17,9 @@ using namespace isc::data;
 class DocGen {
 public:
 
-    const string OUTPUT = "../../doc/guide/api.xml";
+    const string OUTPUT = "guide/api.xml";
+
+    bool verbose = false;
 
     void loadFiles(const vector<string>& files) {
 
@@ -101,9 +103,9 @@ public:
         requireList  (x, "support", fname);
         requireString(x, "avail", fname);
         requireString(x, "brief", fname);
-        requireString(x, "cmd-syntax", fname);
 
         // They're optional.
+        //requireString(x, "cmd-syntax", fname);
         //requireString(x, "cmd-comment", fname);
         //requireString(x, "resp-syntax", fname);
         //requireString(x, "resp-comment", fname);
@@ -143,21 +145,30 @@ public:
 
         // Generate a list of components:
         set<string> all_daemons;
+        set<string> all_hooks;
         for (auto cmd : cmds_) {
             auto daemons = cmd.second->get("support");
+            auto hook = cmd.second->get("hook");
             for (int i = 0; i < daemons->size(); i++) {
                 string daemon = daemons->get(i)->stringValue();
                 if (all_daemons.find(daemon) == all_daemons.end()) {
                     all_daemons.insert(daemon);
                 }
             }
+            if (hook) {
+                string hook_txt = hook->stringValue();
+                if (all_hooks.find(hook_txt) == all_hooks.end()) {
+                    all_hooks.insert(hook_txt);
+                }
+            }
         }
 
         cout << "### " << all_daemons.size() << " daemon(s) detected." << endl;
+        cout << "### " << all_hooks.size() << " hook lib(s) detected." << endl;
 
         for (auto daemon : all_daemons) {
             f << "<para xml:id=\"commands-" << daemon << "\">"
-              << "Commands supported by " << daemon << ": ";
+              << "Commands supported by " << daemon << " daemon: ";
 
             bool first = true;
             for (auto cmd : cmds_) {
@@ -174,6 +185,28 @@ public:
                         break; // get to next command
                     }
                 }
+            }
+
+            f << ".</para>" << endl;
+        }
+
+        for (auto hook : all_hooks) {
+            f << "<para xml:id=\"commands-" << hook << "-lib\">"
+              << "Commands supported by " << hook << " hook library: ";
+
+            bool first = true;
+            for (auto cmd : cmds_) {
+
+                first = true;
+                auto daemon_hook = cmd.second->get("hook");
+                if (!daemon_hook || daemon_hook->stringValue() != hook) {
+                    continue;
+                }
+                if (!first) {
+                    f << ", ";
+                }
+                generateCmdLink(f, cmd.first);
+                first = false;
             }
 
             f << ".</para>" << endl;
@@ -199,11 +232,16 @@ public:
 
         f << "</chapter>" << endl;
 
-        cout << "----------------" << endl;
         ofstream file(OUTPUT.c_str(), ofstream::trunc);
         file << f.str();
-        // cout << f.str();
-        cout << "----------------" << endl;
+        if (verbose) {
+            cout << "----------------" << endl;
+            cout << f.str();
+            cout << "----------------" << endl;
+        }
+        file.close();
+
+        cout << "Output written to " << OUTPUT << endl;
     }
 
     void generateCommands(stringstream& f){
@@ -283,18 +321,31 @@ void generateCommand(stringstream& f, const ElementPtr& cmd) {
     f << "</para>" << endl << endl;
 
     // availability
-    f << "<para>Availability: " << cmd->get("avail")->stringValue() << "</para>"
-      << endl << endl;
+    f << "<para>Availability: " << cmd->get("avail")->stringValue();
+    auto hook = cmd->get("hook");
+    if (hook) {
+        f << " (<link linkend=\"commands-" << hook->stringValue() << "-lib\">"
+          << hook->stringValue() << "</link>)";
+    } else {
+        f << " (built-in)";
+    }
+
+    f << "</para>" << endl << endl;
 
     // description and examples
     f << "<para>Description and examples: See <xref linkend=\"command-"
       << cmd->get("name")->stringValue() << "\"/></para>" << endl << endl;
 
     // Command syntax:
-    f << "<para>Command syntax:" << endl
-      << "  <screen>" << escapeString(cmd->get("cmd-syntax")->stringValue())
-      << "</screen>"
-      << endl;
+    f << "<para>Command syntax:" << endl;
+    if (cmd->contains("cmd-syntax")) {
+        f << "  <screen>" << escapeString(cmd->get("cmd-syntax")->stringValue())
+          << "</screen>" << endl;
+    } else {
+        f << "  <screen>{" << endl
+          << "    \"command\": \"" << cmd->get("name")->stringValue() << "\"" << endl
+          << "}</screen>" << endl;
+    }
     if (cmd->contains("cmd-comment")) {
         f << cmd->get("cmd-comment")->stringValue();
     }
