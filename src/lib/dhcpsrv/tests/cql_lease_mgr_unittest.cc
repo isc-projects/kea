@@ -37,6 +37,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;

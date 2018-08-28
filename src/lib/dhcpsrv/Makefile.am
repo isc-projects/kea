@@ -118,7 +118,6 @@ libkea_dhcpsrv_la_SOURCES += daemon.cc daemon.h
 libkea_dhcpsrv_la_SOURCES += db_type.h
 libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
-libkea_dhcpsrv_la_SOURCES += dhcpsrv_db_log.cc dhcpsrv_db_log.h
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_data_source_factory.cc host_data_source_factory.h
@@ -276,13 +275,8 @@ libkea_dhcpsrv_include_HEADERS = \
 	d2_client_cfg.h \
 	d2_client_mgr.h \
 	daemon.h \
-	database_connection.h \
-	db_exceptions.h \
-	db_log.h \
 	db_type.h \
 	dhcp4o6_ipc.h \
-	dhcpsrv_db_log.h \
-	dhcpsrv_log.h \
 	host.h \
 	host_container.h \
 	host_data_source_factory.h \

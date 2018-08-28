@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -355,7 +355,7 @@ public:
         try {
             value = boost::lexical_cast<T>(data);
         } catch (const std::exception& ex) {
-            isc_throw(DbOperationError, "Invalid data:[" << data
+            isc_throw(db::DbOperationError, "Invalid data:[" << data
                       << "] for row: " << row << " col: " << col << ","
                       << getColumnLabel(r, col) << " : " << ex.what());
         }

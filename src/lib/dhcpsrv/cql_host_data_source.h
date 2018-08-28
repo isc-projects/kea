@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -77,12 +78,12 @@ public:
     /// @param parameters a data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database or if the
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database or if the
     /// schema version is invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     ///
@@ -278,7 +279,7 @@ public:
     ///         integers. "first" is the major version number, "second" is the
     ///         minor version number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
     virtual VersionPair getVersion() const;
 

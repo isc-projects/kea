@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -17,9 +18,9 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_exchange.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/sql_common.h>
 
 #include <boost/multi_index/hashed_index.hpp>
@@ -35,6 +36,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+using namespace isc::db;
 
 namespace isc {
 namespace dhcp {

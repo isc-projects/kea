@@ -5,12 +5,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <util/pid_file.h>
 #include <util/process_spawn.h>
@@ -39,6 +39,7 @@ const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 } // end of anonymous namespace
 
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::util;
 
 namespace isc {

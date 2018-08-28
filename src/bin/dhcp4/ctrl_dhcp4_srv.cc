@@ -23,6 +23,7 @@
 #include <sstream>
 
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::config;

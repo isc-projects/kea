@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {

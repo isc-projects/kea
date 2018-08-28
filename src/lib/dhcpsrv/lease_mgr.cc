@@ -25,6 +25,7 @@
 #include <time.h>
 
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {

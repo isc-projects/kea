@@ -53,11 +53,11 @@ public:
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database or the schema
+    /// @throw isc::db::DbOpenError Error opening the database or the schema
     /// version is incorrect.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    MySqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~MySqlLeaseMgr();
@@ -72,7 +72,7 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool addLease(const Lease4Ptr& lease);
 
@@ -83,7 +83,7 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool addLease(const Lease6Ptr& lease);
 
@@ -103,7 +103,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
@@ -122,7 +122,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
 
@@ -140,7 +140,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
@@ -159,7 +159,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
@@ -189,7 +189,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const;
@@ -250,7 +250,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
@@ -273,7 +273,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid) const;
@@ -292,7 +292,7 @@ public:
     /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
     ///        fit into the space allocated for the result.  This indicates a
     ///        programming error.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
@@ -377,9 +377,9 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
     ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
@@ -390,9 +390,9 @@ public:
     ///
     /// @param lease6 The lease to be updated.
     ///
-    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
     ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
@@ -403,7 +403,7 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
 
@@ -544,7 +544,7 @@ public:
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
@@ -616,7 +616,7 @@ private:
     /// @return true if the lease was added, false if it was not added because
     ///         a lease with that address already exists in the database.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     bool addLeaseCommon(StatementIndex stindex, std::vector<MYSQL_BIND>& bind);
 
@@ -636,9 +636,9 @@ private:
     ///        be thrown.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
     void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
@@ -657,9 +657,9 @@ private:
     ///        new data is appended to the end.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                             Lease4Collection& result) const {
@@ -677,9 +677,9 @@ private:
     ///        data in the collection is erased first.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     void getLeaseCollection(StatementIndex stindex, MYSQL_BIND* bind,
                             Lease6Collection& result) const {
@@ -744,7 +744,7 @@ private:
     ///
     /// @throw NoSuchLease Could not update a lease because no lease matches
     ///        the address given.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
     void updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
@@ -763,7 +763,7 @@ private:
     ///
     /// @return Number of deleted leases.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     uint64_t deleteLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind);
 
@@ -787,7 +787,7 @@ private:
     /// @param index Index of statement that caused the error
     /// @param what High-level description of the error
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     void checkError(int status, StatementIndex index,
                     const char* what) const;

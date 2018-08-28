@@ -53,11 +53,11 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-   PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+   PgSqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     /// Frees database resources and closes the database connection through

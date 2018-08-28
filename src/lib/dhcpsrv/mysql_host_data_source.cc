@@ -6,15 +6,14 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <util/buffer.h>
 #include <util/optional_value.h>
 
@@ -32,6 +31,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;
@@ -1991,7 +1991,7 @@ public:
     /// @param bind Vector of MYSQL_BIND objects to be used when making the
     /// query.
     ///
-    /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
+    /// @throw isc::db::DuplicateEntry Database throws duplicate entry error
     void addStatement(MySqlHostDataSourceImpl::StatementIndex stindex,
                       std::vector<MYSQL_BIND>& bind);
 

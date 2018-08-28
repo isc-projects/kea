@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -65,12 +66,12 @@ public:
     /// @param parameters a data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database or the schema
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database or the schema
     /// version is invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~CqlLeaseMgr();
@@ -85,7 +86,7 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool addLease(const Lease4Ptr& lease) override;
 
@@ -96,7 +97,7 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool addLease(const Lease6Ptr& lease) override;
 
@@ -117,7 +118,7 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr
     getLease4(const isc::asiolink::IOAddress& addr) const override;
@@ -133,7 +134,7 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection
     getLease4(const isc::dhcp::HWAddr& hwaddr) const override;
@@ -149,7 +150,7 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const override;
@@ -165,7 +166,7 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const override;
 
@@ -194,7 +195,7 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const override;
@@ -256,7 +257,7 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr
     getLease6(Lease::Type type,
@@ -277,7 +278,7 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type,
                                         const DUID& duid,
@@ -294,7 +295,7 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type,
                                         const DUID& duid,
@@ -320,7 +321,7 @@ public:
     /// @brief Returns all IPv6 leases.
     ///
     /// @return Lease collection (may be empty if no IPv6 lease found).
-    virtual Lease6Collection getLeases6(const DUID& duid) const;
+    virtual Lease6Collection getLeases6(const DUID& duid) const override;
     
     /// @brief Returns range of IPv6 leases using paging.
     ///
@@ -392,9 +393,9 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
     ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual void updateLease4(const Lease4Ptr& lease4) override;
 
@@ -405,9 +406,9 @@ public:
     ///
     /// @param lease6 The lease to be updated.
     ///
-    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
 
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6) override;
 
@@ -418,7 +419,7 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) override;
 
@@ -550,7 +551,7 @@ public:
     /// @return Version number as a pair of unsigned integers. "first" is the
     ///         major version number, "second" the minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual VersionPair getVersion() const override;
 

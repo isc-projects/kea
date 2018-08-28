@@ -17,8 +17,8 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcpsrv/cql_host_data_source.h>
-
 #include <dhcp/duid.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
@@ -26,7 +26,6 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cql_exchange.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <util/buffer.h>
 #include <util/hash.h>
@@ -45,6 +44,7 @@
 #include <string>  // for std::string
 
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;

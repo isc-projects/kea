@@ -537,7 +537,7 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 

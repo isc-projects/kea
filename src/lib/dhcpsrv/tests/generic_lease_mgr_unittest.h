@@ -467,11 +467,11 @@ public:
 class LeaseMgrDbLostCallbackTest : public ::testing::Test {
 public:
     LeaseMgrDbLostCallbackTest() {
-        DatabaseConnection::db_lost_callback = 0;
+        db::DatabaseConnection::db_lost_callback = 0;
     }
 
     virtual ~LeaseMgrDbLostCallbackTest() {
-        DatabaseConnection::db_lost_callback = 0;
+        db::DatabaseConnection::db_lost_callback = 0;
     }
 
     /// @brief Prepares the class for a test.
@@ -520,7 +520,7 @@ public:
     void testDbLostCallback();
 
     /// @brief Callback function registered with the host manager
-    bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
+    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
         return (callback_called_ = true);
     }
 

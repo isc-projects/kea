@@ -153,7 +153,7 @@ public:
     /// @return Lease6 pointer (or NULL if collection was empty)
     Lease6Ptr expectOneLease(const Lease6Collection& col) {
         if (col.size() > 1) {
-            isc_throw(MultipleRecords, "More than one lease found in collection");
+            isc_throw(db::MultipleRecords, "More than one lease found in collection");
         }
         if (col.empty()) {
             return (Lease6Ptr());

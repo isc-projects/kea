@@ -11,7 +11,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
-#include <dhcpsrv/database_connection.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
@@ -24,6 +23,7 @@
 #include <sstream>
 
 using namespace isc::config;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::hooks;

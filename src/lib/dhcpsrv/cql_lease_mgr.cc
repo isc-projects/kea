@@ -27,6 +27,7 @@
 #include <asiolink/io_address.h>
 
 using namespace isc::data;
+using namespace isc::db;
 using isc::asiolink::IOAddress;
 
 namespace isc {

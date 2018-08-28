@@ -8,11 +8,11 @@
 #define MEMFILE_LEASE_MGR_H
 
 #include <asiolink/interval_timer.h>
+#include <database/database_connection.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/memfile_lease_storage.h>
-#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <util/process_spawn.h>
 
@@ -130,7 +130,7 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
-    Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    Memfile_LeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
@@ -838,7 +838,7 @@ private:
     ///
     /// DatabaseConnection object is used only for storing, accessing and
     /// printing parameter map.
-    DatabaseConnection conn_;
+    db::DatabaseConnection conn_;
 
     //@}
 };

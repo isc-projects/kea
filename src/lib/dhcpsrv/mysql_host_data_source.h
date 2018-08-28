@@ -49,11 +49,11 @@ public:
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database or the
+    /// @throw isc::db::DbOpenError Error opening the database or the
     /// schema version is invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    MySqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+    MySqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     ///
@@ -237,7 +237,7 @@ public:
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 

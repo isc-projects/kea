@@ -11,7 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
 
@@ -336,7 +336,7 @@ private:
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
     ///
-    void dbReconnect(ReconnectCtlPtr db_reconnect_ctl);
+    void dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback DB backends should invoke upon loss of connectivity
     ///
@@ -356,7 +356,7 @@ private:
     /// configured reconnect parameters
     ///
     /// @return false if reconnect is not configured, true otherwise
-    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl);
+    bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
