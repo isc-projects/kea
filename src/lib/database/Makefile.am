@@ -39,9 +39,9 @@ libkea_database_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
 libkea_database_la_LDFLAGS = -no-undefined -version-info 0:0:0
 
-# The message file should be in the distribution.
-#EXTRA_DIST = config_backend.dox
-
 # Specify the headers for copying into the installation directory tree.
-#libkea_cb_includedir = $(pkgincludedir)/config
-#libkea_cb_include_HEADERS = 
+libkea_database_includedir = $(pkgincludedir)/database
+libkea_database_include_HEADERS = \
+	database_connection.h \
+	db_exceptions.h \
+	db_log.h
