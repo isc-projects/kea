@@ -7,8 +7,8 @@
 #ifndef MYSQL_HOST_DATA_SOURCE_H
 #define MYSQL_HOST_DATA_SOURCE_H
 
+#include <database/db_exceptions.h>
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/mysql_connection.h>
 
 #include <stdint.h>

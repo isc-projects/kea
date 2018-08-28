@@ -10,7 +10,7 @@
 #include <exceptions/exceptions.h>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Database statement not applied
 ///
@@ -75,6 +75,6 @@ public:
 };
 
 }  // namespace isc
-}  // namespace dhcp
+}  // namespace db
 
 #endif

@@ -7,7 +7,7 @@
 
 #include <config.h>
 
-#include <dhcpsrv/db_log.h>
+#include <database/db_log.h>
 #include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
 

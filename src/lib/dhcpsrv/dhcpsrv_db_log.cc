@@ -11,6 +11,8 @@
 #include <dhcpsrv/dhcpsrv_db_log.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
+using namespace isc::db;
+
 namespace isc {
 namespace dhcp {
 
@@ -38,7 +40,7 @@ const DbLogger::MessageMap dhcpsrv_db_message_map = {
 DbLogger dhcpsrv_db_logger(dhcpsrv_logger, dhcpsrv_db_message_map);
 
 // Do this initialization here!
-DbLoggerStack db_logger_stack = { dhcpsrv_db_logger };
+//DbLoggerStack db_logger_stack = { dhcpsrv_db_logger };
 
 
 } // namespace dhcp

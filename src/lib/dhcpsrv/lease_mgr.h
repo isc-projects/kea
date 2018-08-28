@@ -9,12 +9,12 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <database/db_exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/sql_common.h>
 
 #include <boost/noncopyable.hpp>

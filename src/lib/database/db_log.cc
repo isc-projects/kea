@@ -9,13 +9,14 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/db_log.h>
-#include <dhcpsrv/dhcpsrv_db_log.h>
+#include <database/db_log.h>
 
 using namespace isc::log;
 
 namespace isc {
-namespace dhcp {
+namespace db {
+
+DbLoggerStack db_logger_stack;
 
 const MessageID&
 DbLogger::translateMessage(const DbMessageID& id) const {
@@ -32,5 +33,5 @@ void checkDbLoggerStack() {
     }
 }
 
-} // namespace dhcp
+} // namespace db
 } // namespace isc

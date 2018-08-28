@@ -24,7 +24,7 @@
 /// logger with mapped messages.
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 ///@{
 /// @brief Database logging levels
@@ -146,7 +146,7 @@ void checkDbLoggerStack();
 
 ///@}
 
-} // namespace dhcp
+} // namespace db
 } // namespace isc
 
 #endif // DB_LOG_H
