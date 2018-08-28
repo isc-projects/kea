@@ -7,9 +7,9 @@
 #ifndef HOST_MGR_H
 #define HOST_MGR_H
 
+#include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/cache_host_data_source.h>
-#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/noncopyable.hpp>

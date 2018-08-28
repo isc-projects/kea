@@ -231,7 +231,7 @@ public:
     ///        to be valid, else an exception will be thrown.
     /// @param text Text of the SQL statement to be prepared.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.
     void prepareStatement(uint32_t index, const char* text);
@@ -246,7 +246,7 @@ public:
     /// @param end_statement Pointer to the statement marking end of the
     /// range of statements to be compiled. This last statement is not compiled.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     /// @throw isc::InvalidParameter 'index' is not valid for the vector.  This
     ///        represents an internal error within the code.
@@ -373,7 +373,7 @@ public:
     /// @tparam Enumeration representing index of a statement to which an
     /// error pertains.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template<typename StatementIndex>
     void checkError(const int status, const StatementIndex& index,
@@ -390,7 +390,7 @@ public:
             case CR_SERVER_LOST:
             case CR_OUT_OF_MEMORY:
             case CR_CONNECTION_ERROR:
-                DB_LOG_ERROR(MYSQL_FATAL_ERROR)
+                DB_LOG_ERROR(db::MYSQL_FATAL_ERROR)
                     .arg(what)
                     .arg(text_statements_[static_cast<int>(index)])
                     .arg(mysql_error(mysql_))
@@ -404,11 +404,11 @@ public:
 
                 // We still need to throw so caller can error out of the current
                 // processing.
-                isc_throw(DbOperationError,
+                isc_throw(db::DbOperationError,
                           "fatal database errror or connectivity lost");
             default:
                 // Connection is ok, so it must be an SQL error
-                isc_throw(DbOperationError, what << " for <"
+                isc_throw(db::DbOperationError, what << " for <"
                           << text_statements_[static_cast<int>(index)]
                           << ">, reason: "
                           << mysql_error(mysql_) << " (error code "

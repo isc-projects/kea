@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <dhcpsrv/db_log.h>
+#include <database/db_log.h>
 #include <dhcpsrv/pgsql_connection.h>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
@@ -25,6 +25,7 @@
 #define PGSQL_STATECODE_LEN 5
 #include <utils/errcodes.h>
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {
@@ -55,7 +56,7 @@ PgSqlResult::PgSqlResult(PGresult *result)
 void
 PgSqlResult::rowCheck(int row) const {
     if (row < 0 || row >= rows_) {
-        isc_throw (DbOperationError, "row: " << row
+        isc_throw (db::DbOperationError, "row: " << row
                    << ", out of range: 0.." << rows_);
     }
 }

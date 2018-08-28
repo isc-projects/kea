@@ -19,6 +19,7 @@
 #include <limits>
 
 using namespace isc;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace std;
 

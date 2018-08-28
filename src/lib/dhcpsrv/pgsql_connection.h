@@ -296,7 +296,7 @@ private:
 /// to the database and preparing compiled statements. Its fields are
 /// public, because they are used (both set and retrieved) in classes
 /// that use instances of PgSqlConnection.
-class PgSqlConnection : public DatabaseConnection {
+class PgSqlConnection : public db::DatabaseConnection {
 public:
     /// @brief Define the PgSql error state for a duplicate key error.
     static const char DUPLICATE_KEY[];

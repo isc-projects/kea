@@ -8,7 +8,7 @@
 #define CFG_DBACCESS_H
 
 #include <cc/cfg_to_element.h>
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 
 #include <boost/shared_ptr.hpp>
 #include <string>

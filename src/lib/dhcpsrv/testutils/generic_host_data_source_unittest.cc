@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
+#include <database/db_exceptions.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -13,8 +15,6 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
-#include <dhcpsrv/database_connection.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
@@ -34,6 +34,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::util;
 using namespace isc::data;
 

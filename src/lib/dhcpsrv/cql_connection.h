@@ -19,7 +19,7 @@
 #ifndef CQL_CONNECTION_H
 #define CQL_CONNECTION_H
 
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 
 #include <cassandra.h>
 
@@ -116,7 +116,7 @@ typedef std::pair<StatementTag, CqlTaggedStatement> StatementMapEntry;
 /// to the Cassandra database and preparing of compiled statements. Its fields
 /// are public because they are used (both set and retrieved) in classes that
 /// use instances of CqlConnection.
-class CqlConnection : public DatabaseConnection {
+class CqlConnection : public db::DatabaseConnection {
 public:
     /// @brief Constructor
     ///
@@ -133,7 +133,7 @@ public:
     /// by the CQL backend.
     /// @param statements statements to be prepared
     ///
-    /// @throw isc::dhcp::DbOperationError if an operation on the open database
+    /// @throw isc::db::DbOperationError if an operation on the open database
     ///     has failed
     /// @throw isc::InvalidParameter if there is an invalid access in the
     ///     vector. This represents an internal error within the code.

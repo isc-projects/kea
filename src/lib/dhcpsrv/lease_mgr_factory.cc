@@ -29,6 +29,7 @@
 #include <sstream>
 #include <utility>
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {

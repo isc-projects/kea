@@ -54,7 +54,8 @@ if HAVE_CQL
 libdhcpsrvtest_la_LDFLAGS  += $(CQL_LIBS)
 endif
 
-libdhcpsrvtest_la_LIBADD   = $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcpsrvtest_la_LIBADD   = $(top_builddir)/src/lib/database/libkea-database.la
+libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 
 endif

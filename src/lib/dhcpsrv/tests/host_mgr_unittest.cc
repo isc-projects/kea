@@ -29,6 +29,7 @@
 #include <vector>
 
 using namespace isc;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 

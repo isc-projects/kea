@@ -41,6 +41,10 @@ const int DB_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
 
 ///@}
 
+/// @brief Common database library logger.
+extern isc::log::Logger database_logger;
+
+
 ///@{
 /// @brief Database messages
 ///
@@ -109,42 +113,48 @@ void checkDbLoggerStack();
 /// @brief Macros
 
 #define DB_LOG_DEBUG(LEVEL, MESSAGE) \
-    checkDbLoggerStack(); \
+    isc::db::checkDbLoggerStack(); \
     if (!db_logger_stack.back().logger_.isDebugEnabled((LEVEL))) { \
     } else \
-        db_logger_stack.back().logger_.debug((LEVEL), \
-                db_logger_stack.back().translateMessage((MESSAGE)))
+        isc::db::db_logger_stack.back().logger_.debug((LEVEL), \
+                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 
 #define DB_LOG_INFO(MESSAGE) \
-    checkDbLoggerStack(); \
-    if (!db_logger_stack.back().logger_.isInfoEnabled()) { \
+    isc::db::checkDbLoggerStack(); \
+    if (!isc::db::db_logger_stack.back().logger_.isInfoEnabled()) { \
     } else \
-        db_logger_stack.back().logger_.info( \
-                db_logger_stack.back().translateMessage((MESSAGE)))
+        isc::db::db_logger_stack.back().logger_.info( \
+                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 #define DB_LOG_WARN(MESSAGE) \
-    checkDbLoggerStack(); \
-    if (!db_logger_stack.back().logger_.isWarnEnabled()) { \
+    isc::db::checkDbLoggerStack(); \
+    if (!isc::db::db_logger_stack.back().logger_.isWarnEnabled()) { \
     } else \
-        db_logger_stack.back().logger_.warn( \
-                db_logger_stack.back().translateMessage((MESSAGE)))
+        isc::db::db_logger_stack.back().logger_.warn( \
+                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 #define DB_LOG_ERROR(MESSAGE) \
-    checkDbLoggerStack(); \
-    if (!db_logger_stack.back().logger_.isErrorEnabled()) { \
+    isc::db::checkDbLoggerStack(); \
+    if (!isc::db::db_logger_stack.back().logger_.isErrorEnabled()) { \
     } else \
-        db_logger_stack.back().logger_.error( \
-                db_logger_stack.back().translateMessage((MESSAGE)))
+        isc::db::db_logger_stack.back().logger_.error( \
+                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 #define DB_LOG_FATAL(MESSAGE) \
-    checkDbLoggerStack(); \
-    if (!db_logger_stack.back().logger_.isFatalEnabled()) { \
+    isc::db::checkDbLoggerStack(); \
+    if (!isc::db::db_logger_stack.back().logger_.isFatalEnabled()) { \
     } else \
-        db_logger_stack.back().logger_.fatal( \
-                db_logger_stack.back().translateMessage((MESSAGE)))
+        isc::db::db_logger_stack.back().logger_.fatal( \
+                isc::db::db_logger_stack.back().translateMessage((MESSAGE)))
 
 ///@}
+
+/// @brief DHCP server database message map
+extern const db::DbLogger::MessageMap db_message_map;
+
+/// @brief Database logger translator.
+extern db::DbLogger db_logger_translator;
 
 } // namespace db
 } // namespace isc

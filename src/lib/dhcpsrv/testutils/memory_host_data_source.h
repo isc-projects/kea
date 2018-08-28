@@ -205,7 +205,7 @@ typedef boost::shared_ptr<MemHostDataSource> MemHostDataSourcePtr;
 /// @param parameters
 /// @return A pointer to a base host data source instance.
 HostDataSourcePtr
-memFactory(const DatabaseConnection::ParameterMap& /*parameters*/);
+memFactory(const db::DatabaseConnection::ParameterMap& /*parameters*/);
 
 } // namespace isc::dhcp::test
 } // namespace isc::dhcp
