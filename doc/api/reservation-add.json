@@ -5,7 +5,8 @@
         the client will be assigned to, DHCPv4 and DHCPv6 options and
         more.",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
-    "avail": "1.2.0, host_cmds library (premium)",
+    "hook": "host_cmds",
+    "avail": "1.2.0",
     "description": "See <xref linkend=\"cmd-reservation-add\"/>",
 
     "cmd-syntax": "{
