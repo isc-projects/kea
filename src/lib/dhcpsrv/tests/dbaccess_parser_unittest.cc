@@ -198,7 +198,7 @@ public:
     ///
     /// @brief Keyword/value collection of database access parameters
     TestDbAccessParser(DBType type) 
-        : DbAccessParser(type)
+        : DbAccessParser(), type_(type)
     {}
 
     /// @brief Destructor
@@ -206,9 +206,18 @@ public:
     {}
 
     /// @brief Parse configuration value
+    ///
+    /// @param database_config Configuration to be parsed.
     void parse(ConstElementPtr database_config) {
         CfgDbAccessPtr cfg_db(new CfgDbAccess());
-        DbAccessParser::parse(cfg_db, database_config);
+        std::string db_access_string;
+        DbAccessParser::parse(db_access_string, database_config);
+
+        if (type_ == DBType::LEASE_DB) {
+            cfg_db->setLeaseDbAccessString(db_access_string);
+        } else {
+            cfg_db->setHostDbAccessString(db_access_string);
+        }
     }
 
     /// Allow use of superclass's protected functions.
@@ -234,6 +243,8 @@ public:
     std::string getDbAccessString() const {
         return (DbAccessParser::getDbAccessString());
     }
+
+    DBType type_;
 };
 
 // Check that the parser works with a simple configuration.

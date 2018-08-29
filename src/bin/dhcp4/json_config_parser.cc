@@ -429,25 +429,31 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DBType::LEASE_DB);
+                DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setLeaseDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DBType::HOSTS_DB);
+                DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setHostDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-databases") {
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                DbAccessParser parser(DBType::HOSTS_DB);
+                DbAccessParser parser;
                 auto list = config_pair.second->listValue();
                 for (auto it : list) {
-                    parser.parse(cfg_db_access, it);
+                    std::string access_string;
+                    parser.parse(access_string, it);
+                    cfg_db_access->setHostDbAccessString(access_string);
                 }
                 continue;
             }
