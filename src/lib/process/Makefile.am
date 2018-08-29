@@ -1,6 +1,8 @@
 SUBDIRS = . testutils tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
+
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 if HAVE_MYSQL
@@ -40,6 +42,7 @@ libkea_process_la_SOURCES  = d_cfg_mgr.cc d_cfg_mgr.h
 libkea_process_la_SOURCES += d_controller.cc d_controller.h
 libkea_process_la_SOURCES += d_log.cc d_log.h
 libkea_process_la_SOURCES += d_process.h
+libkea_process_la_SOURCES += daemon.cc daemon.h
 libkea_process_la_SOURCES += io_service_signal.cc io_service_signal.h
 
 nodist_libkea_process_la_SOURCES = process_messages.cc process_messages.h
