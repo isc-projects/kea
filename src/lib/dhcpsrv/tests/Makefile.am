@@ -170,6 +170,11 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+
+if HAVE_MYSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la

@@ -11,7 +11,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
-#include <dhcpsrv/mysql_connection.h>
+#include <mysql/mysql_connection.h>
 
 #include <boost/array.hpp>
 #include <boost/static_assert.hpp>

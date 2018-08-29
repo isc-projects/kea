@@ -9,7 +9,7 @@
 
 #include <database/db_exceptions.h>
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/mysql_connection.h>
+#include <mysql/mysql_connection.h>
 
 #include <stdint.h>
 

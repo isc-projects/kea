@@ -10,7 +10,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/mysql_connection.h>
+#include <mysql/mysql_connection.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
@@ -803,7 +803,7 @@ private:
     boost::scoped_ptr<MySqlLease6Exchange> exchange6_; ///< Exchange object
 
     /// @brief MySQL connection
-    MySqlConnection conn_;
+    db::MySqlConnection conn_;
 };
 
 }  // namespace dhcp

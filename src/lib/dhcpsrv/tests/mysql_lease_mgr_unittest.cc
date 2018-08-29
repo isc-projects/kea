@@ -8,12 +8,12 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
 
 #include <gtest/gtest.h>
 
