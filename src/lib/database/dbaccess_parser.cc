@@ -6,17 +6,10 @@
 
 #include <config.h>
 
-#include <dhcp/option.h>
-#include <dhcpsrv/cfg_db_access.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/db_type.h>
-#include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/parsers/dbaccess_parser.h>
+#include <database/db_exceptions.h>
+#include <database/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <map>
@@ -27,7 +20,7 @@ using namespace std;
 using namespace isc::data;
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 
 // Factory function to build the parser
@@ -63,7 +56,7 @@ DbAccessParser::parse(std::string& access_string,
     int64_t tcp_keepalive = 0;
 
     // 2. Update the copy with the passed keywords.
-    BOOST_FOREACH(ConfigPair param, database_config->mapValue()) {
+    for (std::pair<std::string, ConstElementPtr> param : database_config->mapValue()) {
         try {
             if ((param.first == "persist") || (param.first == "readonly") ||
                 (param.first == "tcp-nodelay")) {
@@ -110,7 +103,7 @@ DbAccessParser::parse(std::string& access_string,
             }
         } catch (const isc::data::TypeError& ex) {
             // Append position of the element.
-            isc_throw(DhcpConfigError, "invalid value type specified for "
+            isc_throw(DbConfigError, "invalid value type specified for "
                       "parameter '" << param.first << "' ("
                       << param.second->getPosition() << ")");
         }
@@ -121,7 +114,7 @@ DbAccessParser::parse(std::string& access_string,
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
-        isc_throw(DhcpConfigError,
+        isc_throw(DbConfigError,
                   "database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed (" << database_config->getPosition() << ")");
@@ -137,7 +130,7 @@ DbAccessParser::parse(std::string& access_string,
         (dbtype != "postgresql") &&
         (dbtype != "cql")) {
         ConstElementPtr value = database_config->get("type");
-        isc_throw(DhcpConfigError, "unknown backend database type: " << dbtype
+        isc_throw(DbConfigError, "unknown backend database type: " << dbtype
                   << " (" << value->getPosition() << ")");
     }
 
@@ -145,7 +138,7 @@ DbAccessParser::parse(std::string& access_string,
     if ((lfc_interval < 0) ||
         (lfc_interval > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("lfc-interval");
-        isc_throw(DhcpConfigError, "lfc-interval value: " << lfc_interval
+        isc_throw(DbConfigError, "lfc-interval value: " << lfc_interval
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");
@@ -155,7 +148,7 @@ DbAccessParser::parse(std::string& access_string,
     if ((timeout < 0) ||
         (timeout > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("connect-timeout");
-        isc_throw(DhcpConfigError, "connect-timeout value: " << timeout
+        isc_throw(DbConfigError, "connect-timeout value: " << timeout
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint32_t>::max()
                   << " (" << value->getPosition() << ")");
@@ -165,7 +158,7 @@ DbAccessParser::parse(std::string& access_string,
     if ((port < 0) ||
         (port > std::numeric_limits<uint16_t>::max())) {
         ConstElementPtr value = database_config->get("port");
-        isc_throw(DhcpConfigError, "port value: " << port
+        isc_throw(DbConfigError, "port value: " << port
                   << " is out of range, expected value: 0.."
                   << std::numeric_limits<uint16_t>::max()
                   << " (" << value->getPosition() << ")");
@@ -174,7 +167,7 @@ DbAccessParser::parse(std::string& access_string,
     // Check that the max-reconnect-retries reasonable.
     if (max_reconnect_tries < 0) {
         ConstElementPtr value = database_config->get("max-reconnect-tries");
-        isc_throw(DhcpConfigError, "max-reconnect-tries cannot be less than zero: "
+        isc_throw(DbConfigError, "max-reconnect-tries cannot be less than zero: "
                   << " (" << value->getPosition() << ")");
     }
 
@@ -182,7 +175,7 @@ DbAccessParser::parse(std::string& access_string,
     if ((reconnect_wait_time < 0) ||
         (reconnect_wait_time > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("reconnect-wait-time");
-        isc_throw(DhcpConfigError, "reconnect-wait-time " << reconnect_wait_time
+        isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }
@@ -191,7 +184,7 @@ DbAccessParser::parse(std::string& access_string,
     if ((reconnect_wait_time < 0) ||
         (reconnect_wait_time > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("reconnect-wait-time");
-        isc_throw(DhcpConfigError, "reconnect-wait-time " << reconnect_wait_time
+        isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }
@@ -199,7 +192,7 @@ DbAccessParser::parse(std::string& access_string,
     if ((tcp_keepalive < 0) ||
         (tcp_keepalive > std::numeric_limits<uint32_t>::max())) {
         ConstElementPtr value = database_config->get("reconnect-wait-time");
-        isc_throw(DhcpConfigError, "tcp-keepalive " << tcp_keepalive
+        isc_throw(DbConfigError, "tcp-keepalive " << tcp_keepalive
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }
@@ -221,7 +214,7 @@ DbAccessParser::getDbAccessString() const {
     // Construct the database access string from all keywords and values in the
     // parameter map where the value is not null.
     string dbaccess;
-    BOOST_FOREACH(StringPair keyval, values_) {
+    for (StringPair keyval : values_) {
         if (!keyval.second.empty()) {
 
             // Separate keyword/value pair from predecessor (if there is one).
@@ -237,5 +230,5 @@ DbAccessParser::getDbAccessString() const {
     return (dbaccess);
 }
 
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc

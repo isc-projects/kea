@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
+#include <database/dbaccess_parser.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp/libdhcp++.h>
@@ -16,7 +17,6 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
@@ -429,7 +429,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser;
+                db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
@@ -438,7 +438,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser;
+                db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
@@ -448,7 +448,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             if (config_pair.first == "hosts-databases") {
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                DbAccessParser parser;
+                db::DbAccessParser parser;
                 auto list = config_pair.second->listValue();
                 for (auto it : list) {
                     std::string access_string;

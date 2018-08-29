@@ -74,6 +74,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Error detected in the database configuration.
+class DbConfigError : public Exception {
+public:
+    DbConfigError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 }  // namespace isc
 }  // namespace db
 

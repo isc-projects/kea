@@ -7,11 +7,9 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <dhcpsrv/db_type.h>
-#include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/parsers/dbaccess_parser.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
-#include <dhcpsrv/host_mgr.h>
+#include <database/database_connection.h>
+#include <database/db_exceptions.h>
+#include <database/dbaccess_parser.h>
 #include <log/logger_support.h>
 
 #include <gtest/gtest.h>
@@ -22,8 +20,6 @@
 using namespace std;
 using namespace isc;
 using namespace isc::db;
-using namespace isc::dhcp;
-using namespace isc::dhcp::test;
 using namespace isc::data;
 using namespace isc::config;
 
@@ -33,22 +29,14 @@ namespace {
 class DbAccessParserTest : public ::testing::Test {
 public:
     /// @brief Constructor
-    ///
-    /// Just make sure that the lease database is closed before every test
-    /// (the first in particular).
     DbAccessParserTest() {
-        LeaseMgrFactory::destroy();
     }
     /// @brief Destructor
-    ///
-    /// Just make sure that the lease database is closed after every test
-    /// (the last in particular).
     ///
     /// As some of the tests have the side-effect of altering the logging
     /// settings (when the parser's "parse" method is called), ensure that
     /// the logging is reset to the default after each test completes.
     ~DbAccessParserTest() {
-        LeaseMgrFactory::destroy();
         isc::log::setDefaultLoggingOutput();
     }
 
@@ -195,10 +183,8 @@ class TestDbAccessParser : public DbAccessParser {
 public:
 
     /// @brief Constructor
-    ///
-    /// @brief Keyword/value collection of database access parameters
-    TestDbAccessParser(DBType type) 
-        : DbAccessParser(), type_(type)
+    TestDbAccessParser() 
+        : DbAccessParser()
     {}
 
     /// @brief Destructor
@@ -209,20 +195,9 @@ public:
     ///
     /// @param database_config Configuration to be parsed.
     void parse(ConstElementPtr database_config) {
-        CfgDbAccessPtr cfg_db(new CfgDbAccess());
         std::string db_access_string;
         DbAccessParser::parse(db_access_string, database_config);
-
-        if (type_ == DBType::LEASE_DB) {
-            cfg_db->setLeaseDbAccessString(db_access_string);
-        } else {
-            cfg_db->setHostDbAccessString(db_access_string);
-        }
     }
-
-    /// Allow use of superclass's protected functions.
-    using DbAccessParser::getDbAccessParameters;
-    using DbAccessParser::getDbAccessString;
 
     /// @brief Get database access parameters
     ///
@@ -243,8 +218,6 @@ public:
     std::string getDbAccessString() const {
         return (DbAccessParser::getDbAccessString());
     }
-
-    DBType type_;
 };
 
 // Check that the parser works with a simple configuration.
@@ -256,7 +229,7 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -270,7 +243,7 @@ TEST_F(DbAccessParserTest, hosts) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::HOSTS_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -286,7 +259,7 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -303,7 +276,7 @@ TEST_F(DbAccessParserTest, persistV4Memfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
 
     checkAccessString("Valid memfile", parser.getDbAccessParameters(),
@@ -322,7 +295,7 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
 
     checkAccessString("Valid memfile", parser.getDbAccessParameters(),
@@ -341,7 +314,7 @@ TEST_F(DbAccessParserTest, validLFCInterval) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid LFC Interval", parser.getDbAccessParameters(),
                       config);
@@ -359,8 +332,8 @@ TEST_F(DbAccessParserTest, negativeLFCInterval) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // This test checks that the parser rejects the too large (greater than
@@ -375,8 +348,8 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // This test checks that the parser accepts the valid value of the
@@ -391,7 +364,7 @@ TEST_F(DbAccessParserTest, validTimeout) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid timeout", parser.getDbAccessParameters(),
                       config);
@@ -409,8 +382,8 @@ TEST_F(DbAccessParserTest, negativeTimeout) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // This test checks that the parser rejects a too large (greater than
@@ -425,8 +398,8 @@ TEST_F(DbAccessParserTest, largeTimeout) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // This test checks that the parser accepts the valid value of the
@@ -441,7 +414,7 @@ TEST_F(DbAccessParserTest, validPort) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid port", parser.getDbAccessParameters(),
                       config);
@@ -459,8 +432,8 @@ TEST_F(DbAccessParserTest, negativePort) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // This test checks that the parser rejects a too large (greater than
@@ -475,8 +448,8 @@ TEST_F(DbAccessParserTest, largePort) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // Check that the parser works with a valid MySQL configuration
@@ -493,7 +466,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
     checkAccessString("Valid mysql", parser.getDbAccessParameters(), config);
 }
@@ -511,8 +484,8 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // Check reconfiguration.  Checks that incremental changes applied to the
@@ -562,7 +535,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                              "name",     "keatest",
                              NULL};
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
 
     // First configuration string should cause a representation of that string
     // to be held.
@@ -600,7 +573,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
     json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
     checkAccessString("Incompatible incremental change", parser.getDbAccessParameters(),
                       config3);
 
@@ -626,7 +599,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
 
     // Get the database access string
@@ -652,7 +625,7 @@ TEST_F(DbAccessParserTest, validReadOnly) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
+    TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
 
     checkAccessString("Valid readonly parameter",
@@ -674,8 +647,8 @@ TEST_F(DbAccessParserTest, invalidReadOnly) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser(DBType::LEASE_DB);
-    EXPECT_THROW(parser.parse(json_elements), DhcpConfigError);
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
 }
 
 // Check that multiple host storages are correctly parsed.
@@ -692,8 +665,8 @@ TEST_F(DbAccessParserTest, multipleHost) {
     ConstElementPtr json_elements1 = Element::fromJSON(json_config1);
     ConstElementPtr json_elements2 = Element::fromJSON(json_config2);
     
-    TestDbAccessParser parser1(DBType::HOSTS_DB);
-    TestDbAccessParser parser2(DBType::HOSTS_DB);
+    TestDbAccessParser parser1;
+    TestDbAccessParser parser2;
     EXPECT_NO_THROW(parser1.parse(json_elements1));
     EXPECT_NO_THROW(parser2.parse(json_elements2));
 

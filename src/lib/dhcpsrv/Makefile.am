@@ -174,8 +174,6 @@ libkea_dhcpsrv_la_SOURCES += writable_host_data_source.h
 # Configuration parsers
 libkea_dhcpsrv_la_SOURCES += parsers/client_class_def_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/client_class_def_parser.h
-libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.cc
-libkea_dhcpsrv_la_SOURCES += parsers/dbaccess_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.cc
 libkea_dhcpsrv_la_SOURCES += parsers/dhcp_parsers.h
 libkea_dhcpsrv_la_SOURCES += parsers/duid_config_parser.cc
@@ -334,7 +332,6 @@ endif
 libkea_dhcpsrv_parsers_includedir = $(pkgincludedir)/dhcpsrv/parsers
 libkea_dhcpsrv_parsers_include_HEADERS = \
 	parsers/client_class_def_parser.h \
-	parsers/dbaccess_parser.h \
 	parsers/dhcp_parsers.h \
 	parsers/duid_config_parser.h \
 	parsers/expiration_config_parser.h \
