@@ -19,6 +19,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cql_lease_mgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <dhcp/duid.h>

@@ -10,6 +10,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 
 #include <boost/static_assert.hpp>
