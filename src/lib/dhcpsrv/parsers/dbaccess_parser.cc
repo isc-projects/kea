@@ -31,13 +31,13 @@ namespace dhcp {
 
 
 // Factory function to build the parser
-DbAccessParser::DbAccessParser(DBType db_type)
-    : values_(), type_(db_type) {
+DbAccessParser::DbAccessParser()
+    : values_() {
 }
 
 // Parse the configuration and check that the various keywords are consistent.
 void
-DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
+DbAccessParser::parse(std::string& access_string,
                       ConstElementPtr database_config) {
 
     // To cope with incremental updates, the strategy is:
@@ -122,8 +122,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
         isc_throw(DhcpConfigError,
-                  (type_ == DBType::LEASE_DB ? "lease" : "host")
-                  << " database access parameters must "
+                  "database access parameters must "
                   "include the keyword 'type' to determine type of database "
                   "to be accessed (" << database_config->getPosition() << ")");
     }
@@ -212,11 +211,7 @@ DbAccessParser::parse(CfgDbAccessPtr& cfg_db,
     values_.swap(values_copy);
 
     // 5. Save the database access string in the Configuration Manager.
-    if (type_ == DBType::LEASE_DB) {
-        cfg_db->setLeaseDbAccessString(getDbAccessString());
-    } else if (type_ == DBType::HOSTS_DB) {
-        cfg_db->setHostDbAccessString(getDbAccessString(), false);
-    }
+    access_string = getDbAccessString();
 }
 
 // Create the database access string

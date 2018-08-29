@@ -17,14 +17,12 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Parse Lease Database Parameters
+/// @brief Parse Database Parameters
 ///
-/// This class is the parser for the lease database configuration.  This is a
-/// map under the top-level "lease-database" element, and comprises a map of
-/// strings.
+/// This class is the parser for the database configuration.  This is a
+/// map under the top-level "lease-database", "host-database" and
+/// "config-database" elements, and comprises a map of strings.
 ///
-/// Only the "type" sub-element is mandatory: the remaining sub-elements 
-/// depend on the database chosen.
 class DbAccessParser: public isc::data::SimpleParser {
 public:
 
@@ -35,9 +33,7 @@ public:
     typedef std::map<std::string, std::string> StringPairMap;
 
     /// @brief Constructor
-    ///
-    /// @param db_type Specifies database type (lease or hosts)
-    explicit DbAccessParser(DBType db_type);
+    DbAccessParser();
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -53,17 +49,16 @@ public:
     /// - "connect-timeout" is a number from the range of 0 to 4294967295.
     /// - "port" is a number from the range of 0 to 65535.
     ///
-    /// Once all has been validated, constructs the database access string
-    /// expected by the lease manager.
+    /// Once all has been validated, constructs the database access string.
     ///
-    /// @param cfg_db The configuration where the access string will be set
+    /// @param [out] access_string Generated database access string.
     /// @param database_config The configuration value for the "*-database"
     ///        identifier.
     ///
     /// @throw isc::dhcp::DhcpConfigError The 'type' keyword contains an
     ///        unknown database type or is missing from the list of
     ///        database access keywords.
-    void parse(isc::dhcp::CfgDbAccessPtr& cfg_db,
+    void parse(std::string& access_string,
                isc::data::ConstElementPtr database_config);
 
 
@@ -91,8 +86,6 @@ protected:
 private:
 
     std::map<std::string, std::string> values_; ///< Stored parameter values
-
-    DBType type_; ///< Database type (leases or hosts)
 };
 
 };  // namespace dhcp
