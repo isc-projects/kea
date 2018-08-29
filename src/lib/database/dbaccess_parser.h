@@ -9,13 +9,12 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <dhcpsrv/cfg_db_access.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Parse Database Parameters
 ///
@@ -55,7 +54,7 @@ public:
     /// @param database_config The configuration value for the "*-database"
     ///        identifier.
     ///
-    /// @throw isc::dhcp::DhcpConfigError The 'type' keyword contains an
+    /// @throw isc::dhcp::DbConfigError The 'type' keyword contains an
     ///        unknown database type or is missing from the list of
     ///        database access keywords.
     void parse(std::string& access_string,
@@ -88,7 +87,7 @@ private:
     std::map<std::string, std::string> values_; ///< Stored parameter values
 };
 
-};  // namespace dhcp
+};  // namespace db
 };  // namespace isc
 
 
