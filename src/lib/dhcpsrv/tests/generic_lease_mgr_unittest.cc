@@ -10,6 +10,7 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
@@ -1757,7 +1758,7 @@ GenericLeaseMgrTest::testUpdateLease4() {
 
     // Try updating a lease not in the database.
     lmptr_->deleteLease(ioaddress4_[2]);
-    EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::db::NoSuchLease);
+    EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
 }
 
 void
@@ -1816,7 +1817,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
     EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::db::DbOperationError);
 
     // Try updating a lease not in the database.
-    EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::db::NoSuchLease);
+    EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
 }
 
 void

@@ -8,6 +8,7 @@
 #define PGSQL_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_exchange.h>
@@ -349,7 +350,7 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
     ///        exist.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
@@ -362,7 +363,7 @@ public:
     ///
     /// @param lease6 The lease to be updated.
     ///
-    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
     ///        exist.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.

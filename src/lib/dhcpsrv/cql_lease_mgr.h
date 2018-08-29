@@ -22,6 +22,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_exchange.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -393,7 +394,7 @@ public:
     ///
     /// @param lease4 The lease to be updated.
     ///
-    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
     ///        exist.
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
@@ -406,7 +407,7 @@ public:
     ///
     /// @param lease6 The lease to be updated.
     ///
-    /// @throw isc::db::NoSuchLease Attempt to update a lease that did not
+    /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
 
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.

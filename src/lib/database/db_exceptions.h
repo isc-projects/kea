@@ -31,13 +31,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Attempt to update lease that was not there
-class NoSuchLease : public Exception {
-public:
-    NoSuchLease(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 /// @brief Data is truncated
 class DataTruncated : public Exception {
 public:
