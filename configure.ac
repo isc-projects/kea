@@ -1572,6 +1572,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/logger_lock_test.sh
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
+                 src/lib/mysql/Makefile
                  src/lib/process/Makefile
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile

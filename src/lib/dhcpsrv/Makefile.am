@@ -138,7 +138,6 @@ libkea_dhcpsrv_la_SOURCES += sql_common.h
 
 if HAVE_MYSQL
 libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
-libkea_dhcpsrv_la_SOURCES += mysql_connection.cc mysql_connection.h
 libkea_dhcpsrv_la_SOURCES += mysql_host_data_source.cc mysql_host_data_source.h
 endif
 
@@ -215,6 +214,11 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+
+if HAVE_MYSQL
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
@@ -317,7 +321,6 @@ endif
 
 if HAVE_MYSQL
 libkea_dhcpsrv_include_HEADERS += \
-	mysql_connection.h \
 	mysql_host_data_source.h \
 	mysql_lease_mgr.h
 endif

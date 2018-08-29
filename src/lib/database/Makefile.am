@@ -20,7 +20,7 @@ BUILT_SOURCES = db_messages.h db_messages.cc
 EXTRA_DIST = db_messages.mes
 
 # Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda http_messages.h http_messages.cc s-messages
+CLEANFILES = *.gcno *.gcda db_messages.h db_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-database.la
 libkea_database_la_SOURCES  = database_connection.cc database_connection.h

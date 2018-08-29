@@ -8,8 +8,8 @@
 #include <config.h>
 
 #include <database/db_log.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -19,12 +19,10 @@
 #include <limits>
 
 using namespace isc;
-using namespace isc::db;
-using namespace isc::dhcp;
 using namespace std;
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 const my_bool MLM_FALSE = 0;
 const my_bool MLM_TRUE = 1;
@@ -400,5 +398,5 @@ MySqlConnection::rollback() {
 }
 
 
-} // namespace isc::dhcp
+} // namespace isc::db
 } // namespace isc

@@ -84,6 +84,11 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+
+if HAVE_MYSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la

@@ -85,6 +85,12 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+
+if HAVE_MYSQL
+d2_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
+d2_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la

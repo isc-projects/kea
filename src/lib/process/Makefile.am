@@ -55,6 +55,12 @@ libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+
+if HAVE_MYSQL
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la

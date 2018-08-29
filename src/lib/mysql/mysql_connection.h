@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @name MySQL constants.
 ///
@@ -436,7 +436,7 @@ public:
     MySqlHolder mysql_;
 };
 
-}; // end of isc::dhcp namespace
+}; // end of isc::db namespace
 }; // end of isc namespace
 
 #endif // MYSQL_CONNECTION_H

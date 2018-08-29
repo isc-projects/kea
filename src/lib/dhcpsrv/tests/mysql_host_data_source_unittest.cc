@@ -10,13 +10,13 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <mysql/mysql_connection.h>
 
 #include <gtest/gtest.h>
 
