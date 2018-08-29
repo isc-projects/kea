@@ -8,7 +8,7 @@
 #define PGSQL_EXCHANGE_H
 
 #include <asiolink/io_address.h>
-#include <dhcpsrv/pgsql_connection.h>
+#include <pgsql/pgsql_connection.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
@@ -19,7 +19,7 @@
 #include <iostream>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Structure used to bind C++ input values to dynamic SQL parameters
 /// The structure contains three vectors which store the input values,
@@ -396,7 +396,7 @@ protected:
     std::vector<std::string>columns_;
 };
 
-}; // end of isc::dhcp namespace
+}; // end of isc::db namespace
 }; // end of isc namespace
 
 #endif // PGSQL_EXCHANGE_H

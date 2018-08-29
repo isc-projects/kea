@@ -1573,6 +1573,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
                  src/lib/mysql/Makefile
+                 src/lib/pgsql/Makefile
+                 src/lib/pgsql/tests/Makefile
                  src/lib/process/Makefile
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile

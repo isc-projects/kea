@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <dhcpsrv/pgsql_connection.h>
-#include <dhcpsrv/pgsql_exchange.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -18,7 +18,6 @@
 
 using namespace isc;
 using namespace isc::db;
-using namespace isc::dhcp;
 
 namespace {
 

@@ -10,8 +10,8 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/pgsql_connection.h>
-#include <dhcpsrv/pgsql_exchange.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
@@ -588,7 +588,7 @@ private:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
+    bool addLeaseCommon(StatementIndex stindex, db::PsqlBindArray& bind_array);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -611,7 +611,7 @@ private:
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -631,7 +631,7 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                             Lease4Collection& result) const {
         getLeaseCollection(stindex, bind_array, exchange4_, result);
     }
@@ -651,7 +651,7 @@ private:
     ///        failed.
     /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                             Lease6Collection& result) const {
         getLeaseCollection(stindex, bind_array, exchange6_, result);
     }
@@ -665,7 +665,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, db::PsqlBindArray& bind_array,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -677,7 +677,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, db::PsqlBindArray& bind_array,
                   Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
@@ -715,7 +715,7 @@ private:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array,
+    void updateLeaseCommon(StatementIndex stindex, db::PsqlBindArray& bind_array,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
@@ -733,7 +733,7 @@ private:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     uint64_t deleteLeaseCommon(StatementIndex stindex,
-                               PsqlBindArray& bind_array);
+                               db::PsqlBindArray& bind_array);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -755,7 +755,7 @@ private:
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
     /// PostgreSQL connection handle
-    PgSqlConnection conn_;
+    db::PgSqlConnection conn_;
 };
 
 }  // namespace dhcp

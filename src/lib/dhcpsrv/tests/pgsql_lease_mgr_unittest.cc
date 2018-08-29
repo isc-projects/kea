@@ -8,11 +8,11 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/pgsql_schema.h>
+#include <pgsql/pgsql_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>

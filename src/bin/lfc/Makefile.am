@@ -61,6 +61,15 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+
+if HAVE_MYSQL
+kea_lfc_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+kea_lfc_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+
+kea_lfc_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la

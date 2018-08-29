@@ -59,6 +59,9 @@ libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 if HAVE_MYSQL
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
+if HAVE_PGSQL
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
 
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la

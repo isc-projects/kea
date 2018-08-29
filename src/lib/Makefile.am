@@ -5,6 +5,10 @@ if HAVE_MYSQL
 SUBDIRS += mysql
 endif
 
+if HAVE_PGSQL
+SUBDIRS += pgsql
+endif
+
 SUBDIRS += testutils hooks dhcp config stats asiodns dhcp_ddns eval \
 	dhcpsrv cfgrpt \
 	process http
