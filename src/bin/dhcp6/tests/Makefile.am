@@ -139,6 +139,9 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 if HAVE_MYSQL
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
+if HAVE_PGSQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
 
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

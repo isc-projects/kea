@@ -88,6 +88,9 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 if HAVE_MYSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
+if HAVE_PGSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
 
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

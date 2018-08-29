@@ -6,7 +6,8 @@
 
 #include <config.h>
 
-#include <dhcpsrv/pgsql_exchange.h>
+#include <pgsql/pgsql_exchange.h>
+#include <pgsql/pgsql_connection.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -14,10 +15,8 @@
 #include <sstream>
 #include <vector>
 
-using namespace isc::db;
-
 namespace isc {
-namespace dhcp {
+namespace db {
 
 const int PsqlBindArray::TEXT_FMT = 0;
 const int PsqlBindArray::BINARY_FMT = 1;
@@ -298,5 +297,5 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
     return (stream.str());
 }
 
-}; // end of isc::dhcp namespace
+}; // end of isc::db namespace
 }; // end of isc namespace

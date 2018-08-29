@@ -146,8 +146,6 @@ libkea_dhcpsrv_la_SOURCES += network.cc network.h
 libkea_dhcpsrv_la_SOURCES += network_state.cc network_state.h
 
 if HAVE_PGSQL
-libkea_dhcpsrv_la_SOURCES += pgsql_connection.cc pgsql_connection.h
-libkea_dhcpsrv_la_SOURCES += pgsql_exchange.cc pgsql_exchange.h
 libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
 endif
@@ -217,6 +215,9 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
 
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
@@ -327,8 +328,6 @@ endif
 
 if HAVE_PGSQL
 libkea_dhcpsrv_include_HEADERS += \
-	pgsql_connection.h \
-	pgsql_exchange.h \
 	pgsql_host_data_source.h \
 	pgsql_lease_mgr.h
 endif

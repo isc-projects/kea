@@ -101,6 +101,9 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 if HAVE_MYSQL
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
+if HAVE_PGSQL
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
 
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

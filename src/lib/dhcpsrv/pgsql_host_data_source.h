@@ -8,8 +8,8 @@
 #define PGSQL_HOST_DATA_SOURCE_H
 
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/pgsql_connection.h>
-#include <dhcpsrv/pgsql_exchange.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
 namespace isc {
 namespace dhcp {

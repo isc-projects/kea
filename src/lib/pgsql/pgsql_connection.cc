@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <database/db_log.h>
-#include <dhcpsrv/pgsql_connection.h>
+#include <pgsql/pgsql_connection.h>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
 // code is 5 decimal, ASCII, digits, the first two define the category of
@@ -25,11 +25,10 @@
 #define PGSQL_STATECODE_LEN 5
 #include <utils/errcodes.h>
 
-using namespace isc::db;
 using namespace std;
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 // Default connection timeout
 
@@ -361,5 +360,5 @@ PgSqlConnection::rollback() {
     }
 }
 
-}; // end of isc::dhcp namespace
+}; // end of isc::db namespace
 }; // end of isc namespace

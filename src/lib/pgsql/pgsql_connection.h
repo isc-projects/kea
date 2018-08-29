@@ -15,7 +15,7 @@
 #include <stdint.h>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Define PostgreSQL backend version: 5.0
 const uint32_t PG_SCHEMA_VERSION_MAJOR = 5;
@@ -423,7 +423,7 @@ public:
 
 };
 
-}; // end of isc::dhcp namespace
+}; // end of isc::db namespace
 }; // end of isc namespace
 
 #endif // PGSQL_CONNECTION_H
