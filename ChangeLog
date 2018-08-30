@@ -1,3 +1,8 @@
+1447.	[doc]		tmark
+	Updated Kea Administrators's Guide with discussions of the
+	use of subnet ID parameters in hook library commands.
+	(Gitlab #14,!15	git# 4a7da8069feab1e21132689a9368f8ccb4174683)
+
 1446.	[func]		tmark
 	kea-dhcp6 now supports global host reservations and a new
 	global reservations-mode .  Prior to this reservations could
