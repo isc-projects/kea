@@ -19,9 +19,9 @@
 #ifndef CQL_LEASE_MGR_H
 #define CQL_LEASE_MGR_H
 
+#include <cql/cql_connection.h>
+#include <cql/cql_exchange.h>
 #include <dhcp/hwaddr.h>
-#include <dhcpsrv/cql_connection.h>
-#include <dhcpsrv/cql_exchange.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 
@@ -33,11 +33,6 @@
 
 namespace isc {
 namespace dhcp {
-
-class CqlVersionExchange;
-class CqlLeaseExchange;
-class CqlLease4Exchange;
-class CqlLease6Exchange;
 
 /// @brief Cassandra Lease Manager
 ///
@@ -568,7 +563,7 @@ public:
 
 private:
     /// @brief Database connection object
-    mutable CqlConnection dbconn_;
+    mutable db::CqlConnection dbconn_;
 };
 
 }  // namespace dhcp

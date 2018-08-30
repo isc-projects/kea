@@ -17,12 +17,12 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
+#include <cql/cql_connection.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/cql_host_data_source.h>
 #include <dhcpsrv/testutils/cql_schema.h>

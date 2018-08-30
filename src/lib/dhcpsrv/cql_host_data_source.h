@@ -18,8 +18,8 @@
 #ifndef CQL_HOST_DATA_SOURCE_H
 #define CQL_HOST_DATA_SOURCE_H
 
+#include <cql/cql_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/cql_connection.h>
 
 #include <string>
 #include <vector>
@@ -281,7 +281,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    virtual VersionPair getVersion() const;
+    virtual db::VersionPair getVersion() const;
 
     /// @brief Commit Transactions
     ///

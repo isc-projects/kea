@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Cristian Secăreanu <cristian.secareanu@qualitance.com>
@@ -18,7 +19,7 @@
 #define SQL_COMMON_H
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Used to map server data types with internal backend storage data
 /// types.
@@ -49,7 +50,7 @@ public:
     }
 };
 
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc
 
 #endif  // SQL_COMMON_H

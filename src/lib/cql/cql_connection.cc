@@ -18,17 +18,15 @@
 
 #include <config.h>
 
+#include <cql/cql_connection.h>
+#include <cql/cql_exchange.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
-#include <dhcpsrv/cql_connection.h>
-#include <dhcpsrv/cql_exchange.h>
 
 #include <string>
 
-using namespace isc::db;
-
 namespace isc {
-namespace dhcp {
+namespace db {
 
 CqlConnection::CqlConnection(const ParameterMap& parameters)
     : DatabaseConnection(parameters), statements_(), cluster_(NULL),

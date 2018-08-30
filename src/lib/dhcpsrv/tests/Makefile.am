@@ -114,7 +114,6 @@ libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 endif
 if HAVE_CQL
-libdhcpsrv_unittests_SOURCES += cql_connection_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_host_data_source_unittest.cc
 endif

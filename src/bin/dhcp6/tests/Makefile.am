@@ -142,6 +142,9 @@ endif
 if HAVE_PGSQL
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
+if HAVE_CQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
 
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

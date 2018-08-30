@@ -9,6 +9,10 @@ if HAVE_PGSQL
 SUBDIRS += pgsql
 endif
 
+if HAVE_CQL
+SUBDIRS += cql
+endif
+
 SUBDIRS += testutils hooks dhcp config stats asiodns dhcp_ddns eval \
 	dhcpsrv cfgrpt \
 	process http

@@ -19,8 +19,8 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cql/cql_connection.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>

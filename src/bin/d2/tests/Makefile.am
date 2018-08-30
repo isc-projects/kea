@@ -92,6 +92,9 @@ endif
 if HAVE_PGSQL
 d2_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
+if HAVE_CQL
+d2_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
 
 d2_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
