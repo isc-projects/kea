@@ -759,6 +759,9 @@ temporarily override a list of interface names and listen on all interfaces.
         at present is to
         manually specify a unique identifier for each subnet.
       </para>
+      <note>
+        Subnet IDs must be greater than zero and less than 4294967295.
+      </note>
       <para>
         The following configuration will assign the specified subnet
         identifier to the newly configured subnet:
