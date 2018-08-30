@@ -12,7 +12,7 @@
 #include <string>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 namespace test {
 
 extern const char* CQL_VALID_TYPE;

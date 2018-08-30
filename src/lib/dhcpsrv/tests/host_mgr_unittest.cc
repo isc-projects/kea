@@ -14,11 +14,11 @@
 #include <dhcpsrv/tests/test_utils.h>
 
 #if defined HAVE_MYSQL
-#include <dhcpsrv/testutils/mysql_schema.h>
+#include <mysql/testutils/mysql_schema.h>
 #endif
 
 #if defined HAVE_PGSQL
-#include <dhcpsrv/testutils/pgsql_schema.h>
+#include <pgsql/testutils/pgsql_schema.h>
 #endif
 
 #if defined HAVE_CQL
@@ -30,7 +30,9 @@
 
 using namespace isc;
 using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 
 namespace {
@@ -619,13 +621,13 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
 
     // Find the most recently opened socket. Our SQL client's socket should
     // be the next one.
-    int last_open_socket = test::findLastSocketFd();
+    int last_open_socket = findLastSocketFd();
 
     // Connect to the host backend.
     ASSERT_NO_THROW(HostMgr::addBackend(validConnectString()));
 
     // Find the SQL client socket.
-    int sql_socket = test::findLastSocketFd();
+    int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Clear the callback invocation marker.
@@ -667,12 +669,12 @@ MySQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    test::destroyMySQLSchema();
-    test::createMySQLSchema();
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     // Connect to the database
     try {
-        HostMgr::addBackend(test::validMySQLConnectionString());
+        HostMgr::addBackend(validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -687,7 +689,7 @@ void
 MySQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("mysql");
-    test::destroyMySQLSchema();
+    destroyMySQLSchema();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
@@ -695,15 +697,15 @@ MySQLHostMgrTest::TearDown() {
 class MySQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyMySQLSchema();
+        destroyMySQLSchema();
     }
 
     virtual void createSchema() {
-        test::createMySQLSchema();
+        createMySQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validMySQLConnectionString());
+        return (validMySQLConnectionString());
     }
 };
 
@@ -764,12 +766,12 @@ PostgreSQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    test::destroyPgSQLSchema();
-    test::createPgSQLSchema();
+    destroyPgSQLSchema();
+    createPgSQLSchema();
 
     // Connect to the database
     try {
-        HostMgr::addBackend(test::validPgSQLConnectionString());
+        HostMgr::addBackend(validPgSQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -784,7 +786,7 @@ void
 PostgreSQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("postgresql");
-    test::destroyPgSQLSchema();
+    destroyPgSQLSchema();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
@@ -792,15 +794,15 @@ PostgreSQLHostMgrTest::TearDown() {
 class PostgreSQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyPgSQLSchema();
+        destroyPgSQLSchema();
     }
 
     virtual void createSchema() {
-        test::createPgSQLSchema();
+        createPgSQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validPgSQLConnectionString());
+        return (validPgSQLConnectionString());
     }
 };
 
@@ -859,12 +861,12 @@ CQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    test::destroyCqlSchema(false, true);
-    test::createCqlSchema(false, true);
+    destroyCqlSchema(false, true);
+    createCqlSchema(false, true);
 
     // Connect to the database
     try {
-        HostMgr::addBackend(test::validCqlConnectionString());
+        HostMgr::addBackend(validCqlConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -879,7 +881,7 @@ void
 CQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("cql");
-    test::destroyCqlSchema(false, true);
+    destroyCqlSchema(false, true);
 }
 
 // This test verifies that reservations for a particular client can

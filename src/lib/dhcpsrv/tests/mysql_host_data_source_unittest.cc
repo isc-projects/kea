@@ -12,11 +12,11 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -29,6 +29,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::data;

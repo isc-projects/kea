@@ -1536,6 +1536,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cryptolink/tests/Makefile
                  src/lib/database/Makefile
                  src/lib/database/tests/Makefile
+                 src/lib/database/testutils/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dhcp_ddns/Makefile
@@ -1573,10 +1574,13 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
                  src/lib/mysql/Makefile
+                 src/lib/mysql/testutils/Makefile
                  src/lib/pgsql/Makefile
                  src/lib/pgsql/tests/Makefile
+                 src/lib/pgsql/testutils/Makefile
                  src/lib/cql/Makefile
                  src/lib/cql/tests/Makefile
+                 src/lib/cql/testutils/Makefile
                  src/lib/process/Makefile
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile
