@@ -46,6 +46,7 @@ libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
 if HAVE_CQL
 libdhcpsrvtest_la_CPPFLAGS += $(CQL_CPPFLAGS)
+libdhcpsrvtest_la_LIBADD  += $(top_builddir)/src/lib/cql/libkea-cql.la
 endif
 
 libdhcpsrvtest_la_LDFLAGS  = $(AM_LDFLAGS)
