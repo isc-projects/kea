@@ -1422,11 +1422,11 @@ Requirements </link> document.</para>
         In other words, they are not specific to any subnet.  When reservations
         are supplied via the configuration file, the ID of the containing
         subnet (or lack thereof) is implicit in the configuration structure.
-        In order to manage reservations in a data store however, it is
-        necessary to identify the scope to which the reservation belongs,
-        along with any other host command parameters.  For global reservations,
-        use a value of zero (0) for <command>subnet-id</command>.  For subnet
-        level reservations, use the ID of the owning subnet.
+        However, when managing reservations using the host commands, it is
+        necessary to explicitly identify the scope to which the reservation
+        belongs.  This is done via the <command>subnet-id</command> parameter.
+        For global reservations, use a value of zero (0).  For reservations
+        scoped to a specific subnet, use that subnet's ID.
         </para>
         </section>
 
