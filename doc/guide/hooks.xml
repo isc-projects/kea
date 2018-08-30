@@ -787,7 +787,7 @@ identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
         <para>
         Example:
 <screen>
-2018-01-06 01:02:03 CET Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 
+2018-01-06 01:02:03 CET Administrator added a lease of address: 192.0.2.202 to a device with hardware address:
 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
@@ -802,7 +802,7 @@ identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
         <para>
         Example:
 <screen>
-2018-01-06 01:02:03 CET Administrator updated information on the lease of address: 192.0.2.202 to a device 
+2018-01-06 01:02:03 CET Administrator updated information on the lease of address: 192.0.2.202 to a device
 with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
 </screen>
         </para>
@@ -1413,19 +1413,35 @@ Requirements </link> document.</para>
         </para>
 
         <section>
+          <title>The subnet-id parameter</title>
+        <para> Prior to diving into the individual commands, it is worth
+        discussing the parameter, <command>subnet-id</command>. Currently
+        it is mandatory for all of the commands supplied by this library.
+        Prior to Kea 1.5.0, reservations had to belong to specific subnet.
+        Beginning with Kea 1.5.0, reservations may now be specified globally.
+        In other words, they are not specific to any subnet.  When reservations
+        are supplied via the configuration file, the ID of the containing
+        subnet (or lack thereof) is implicit in the configuration structure.
+        However, when managing reservations using the host commands, it is
+        necessary to explicitly identify the scope to which the reservation
+        belongs.  This is done via the <command>subnet-id</command> parameter.
+        For global reservations, use a value of zero (0).  For reservations
+        scoped to a specific subnet, use that subnet's ID.
+        </para>
+        </section>
+
+        <section>
           <title>reservation-add command</title>
         <para>
           <command>reservation-add</command> allows for the insertion of a new host.  It
           takes a set of arguments that vary depending on the nature of the host
           reservation. Any parameters allowed in the configuration file that
           pertain to host reservation are permitted here. For details regarding
-          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and <xref linkend="host-reservation-v6"/>. There is one notable addition. A
-          <command>subnet-id</command> must be specified.  This parameter is
-          mandatory, because reservations specified in the configuration file
-          are always defined within a subnet, so the subnet they belong to is
-          clear. This is not the case with reservation-add, therefore the
-          subnet-id must be specified explicitly. An example command can be as
-          simple as:
+          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and
+          <xref linkend="host-reservation-v6"/>.
+          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          add a global reservation, or the id of the subnet to which the reservation
+          should be added.  An example command can be as simple as:
 <screen>{
     "command": "reservation-add",
     "arguments": {
@@ -1520,8 +1536,11 @@ Here is an example of complex IPv6 reservation:
           identifier. Currently supported identifiers are "hw-address", "duid",
           "circuit-id", "client-id" and "flex-id", but additional types may be
           added in the future. If any new identifier types are defined in the
-          future, reservation-get command will support them
-          automatically.</para>
+          future, reservation-get command will support them automatically.
+          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          fetch a global reservation, or the id of the subnet to which the reservation
+          belongs.
+          </para>
 
           <para>
             An example command for getting a host reservation by (subnet-id,
@@ -1596,7 +1615,11 @@ An example result returned when the query was malformed:<screen>
           "hw-address", "duid", "circuit-id", "client-id" and "flex-id", but
           additional types may be added in the future. If any new identifier
           types are defined in the future, reservation-get command will support
-          them automatically.</para>
+          them automatically.
+          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          delete a global reservation, or the id of the subnet from which the reservation
+          should be deleted.
+          </para>
 
           <para>
             An example command for deleting a host reservation by (subnet-id,
@@ -2052,6 +2075,9 @@ If the subnet exists the response will be similar to this:
           used). You can mix those two approaches only if you
           understand how the internal automatic subnet-id generation works.
         </para>
+        <note>
+          Subnet IDs must be greater than zero and less than 4294967295.
+        </note>
 
       </section>
 
