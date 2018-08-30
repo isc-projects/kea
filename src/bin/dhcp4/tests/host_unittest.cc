@@ -13,9 +13,6 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/testutils/cql_schema.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <boost/shared_ptr.hpp>

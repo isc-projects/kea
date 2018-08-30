@@ -7,7 +7,7 @@
 #include <config.h>
 #include <string>
 #include <mysql.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <mysql/mysql_connection.h>
 
 #include <fstream>
@@ -18,7 +18,7 @@
 using namespace std;
 
 namespace isc {
-namespace dhcp {
+namespace db {
 namespace test {
 
 const char* MYSQL_VALID_TYPE = "type=mysql";
@@ -58,5 +58,5 @@ void runMySQLScript(const std::string& path, const std::string& script_name,
 }
 
 }  // namespace test
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc

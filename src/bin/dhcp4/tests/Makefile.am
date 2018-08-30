@@ -132,15 +132,19 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 
 if HAVE_MYSQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 endif
 if HAVE_PGSQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
 if HAVE_CQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
 endif
 
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la

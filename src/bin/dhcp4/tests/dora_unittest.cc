@@ -13,9 +13,19 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/testutils/cql_schema.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
+
+#ifdef HAVE_CQL
+#include <cql/testutils/cql_schema.h>
+#endif
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
+
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <boost/shared_ptr.hpp>
@@ -24,6 +34,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 

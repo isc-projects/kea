@@ -1,56 +1,56 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef TEST_MYSQL_SCHEMA_H
-#define TEST_MYSQL_SCHEMA_H
+#ifndef TEST_PGSQL_SCHEMA_H
+#define TEST_PGSQL_SCHEMA_H
 
 #include <config.h>
-#include <dhcpsrv/testutils/schema.h>
+#include <database/testutils/schema.h>
 #include <string>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 namespace test {
 
-extern const char* MYSQL_VALID_TYPE;
+extern const char* PGSQL_VALID_TYPE;
 
 /// Return valid connection string
 ///
-/// @return valid MySQL connection string.
-std::string validMySQLConnectionString();
+/// @return valid PgSQL connection string.
+std::string validPgSQLConnectionString();
 
 /// @brief Clear everything from the database
 ///
 /// Submits the current schema drop script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
+///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/dhcpdb_drop.pgsql
 ///
-/// to the unit test MySQL database. If the script fails, the invoking test
-/// will fail. The output of stderr is suppressed unless the parameter,
+/// to the unit test Postgresql database. If the script fails, the invoking
+/// test will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void destroyMySQLSchema(bool show_err = false);
+void destroyPgSQLSchema(bool show_err = false);
 
-/// @brief Create the MySQL Schema
+/// @brief Create the Postgresql Schema
 ///
 /// Submits the current schema creation script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
+///  <TEST_ADMIN_SCRIPTS_DIR>/pgsql/dhcpdb_create.pgsql
 ///
-/// to the unit test MySQL database. If the script fails, the invoking test
-/// will fail. The output of stderr is suppressed unless the parameter,
+/// to the unit test Postgresql database. If the script fails, the invoking
+/// test will fail. The output of stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void createMySQLSchema(bool show_err = false);
+void createPgSQLSchema(bool show_err = false);
 
-/// @brief Run a MySQL SQL script against the MySQL unit test database
+/// @brief Run a PgSQL SQL script against the Postgresql unit test database
 ///
-/// Submits the given SQL script to MySQL via mysql CLI. The output of
+/// Submits the given SQL script to Postgresql via psql CLI. The output of
 /// stderr is suppressed unless the parameter, show_err is true.  The is done
 /// to suppress warnings that might otherwise make test output needlessly
 /// noisy.  A gtest assertion occurs if the script fails to execute.
@@ -58,7 +58,7 @@ void createMySQLSchema(bool show_err = false);
 /// @param path - path (if not blank) of the script to execute
 /// @param script_name - file name of the path to execute
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void runMySQLScript(const std::string& path, const std::string& script_name,
+void runPgSQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
 };

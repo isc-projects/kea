@@ -19,7 +19,7 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
-#include <dhcpsrv/testutils/schema.h>
+#include <database/testutils/schema.h>
 #include <util/buffer.h>
 
 #include <boost/foreach.hpp>
@@ -35,6 +35,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::util;
 using namespace isc::data;
 
