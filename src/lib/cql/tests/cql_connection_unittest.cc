@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2017 Deutsche Telekom AG.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -6,8 +7,8 @@
 
 #include <config.h>
 
-#include <dhcpsrv/cql_connection.h>
-#include <dhcpsrv/cql_exchange.h>
+#include <cql/cql_connection.h>
+#include <cql/cql_exchange.h>
 
 #include <cstring>
 
@@ -17,11 +18,11 @@
 
 namespace {
 
-using isc::dhcp::CqlTaggedStatement;
-using isc::dhcp::StatementMap;
-using isc::dhcp::StatementTag;
-using isc::dhcp::StatementTagHash;
-using isc::dhcp::exchangeType;
+using isc::db::CqlTaggedStatement;
+using isc::db::StatementMap;
+using isc::db::StatementTag;
+using isc::db::StatementTagHash;
+using isc::db::exchangeType;
 
 class CqlConnectionTest {
 public:

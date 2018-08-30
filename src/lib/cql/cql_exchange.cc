@@ -18,10 +18,10 @@
 
 #include <config.h>
 
+#include <cql/cql_connection.h>
+#include <cql/cql_exchange.h>
+#include <cql/sql_common.h>
 #include <database/db_exceptions.h>
-#include <dhcpsrv/cql_connection.h>
-#include <dhcpsrv/cql_exchange.h>
-#include <dhcpsrv/sql_common.h>
 
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
@@ -37,10 +37,8 @@
 #include <utility>
 #include <vector>
 
-using namespace isc::db;
-
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Macro to return directly from caller function
 #define KEA_CASS_CHECK(cass_error)   \
@@ -1007,5 +1005,5 @@ CqlVersionExchange::retrieveVersion(const CqlConnection& connection) {
     return VersionPair();
 }
 
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc

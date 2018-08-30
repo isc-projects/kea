@@ -32,7 +32,7 @@
 #include <vector>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Pair containing major and minor versions
 /// @todo: This is already defined in lease_mgr.h. Need to have one
@@ -211,7 +211,7 @@ public:
 
 typedef std::shared_ptr<CqlConnection> CqlConnectionPtr;
 
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc
 
 #endif  // CQL_CONNECTION_H

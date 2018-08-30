@@ -17,6 +17,7 @@
 
 #include <config.h>
 
+#include <cql/cql_exchange.h>
 #include <database/db_exceptions.h>
 #include <dhcpsrv/cql_host_data_source.h>
 #include <dhcp/duid.h>
@@ -25,7 +26,6 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cql_exchange.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <util/buffer.h>
 #include <util/hash.h>

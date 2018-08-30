@@ -26,6 +26,7 @@ libkea_pgsql_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libkea_pgsql_la_LDFLAGS += $(PGSQL_LIBS)
 
 # Specify the headers for copying into the installation directory tree.
-libkea_pgsql_includedir = $(pkgincludedir)/database
+libkea_pgsql_includedir = $(pkgincludedir)/pgsql
 libkea_pgsql_include_HEADERS = \
-	pgsql_connection.h
+	pgsql_connection.h \
+	pgsql_exchange.h

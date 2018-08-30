@@ -62,6 +62,9 @@ endif
 if HAVE_PGSQL
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
+if HAVE_CQL
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
 
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la

@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -18,8 +19,8 @@
 #ifndef CQL_EXCHANGE_H
 #define CQL_EXCHANGE_H
 
-#include <dhcpsrv/cql_connection.h>
-#include <dhcpsrv/sql_common.h>
+#include <cql/cql_connection.h>
+#include <cql/sql_common.h>
 
 #include <boost/any.hpp>  // for boost::any
 
@@ -30,7 +31,7 @@
 #include <vector>
 
 namespace isc {
-namespace dhcp {
+namespace db {
 
 /// @brief Host identifier converted to Cassandra data type
 typedef std::vector<cass_byte_t> CassBlob;
@@ -318,7 +319,7 @@ exchangeType(const boost::any& object);
 ExchangeDataType
 exchangeType(const CassValueType& type);
 
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc
 
 #endif  // CQL_EXCHANGE_H
