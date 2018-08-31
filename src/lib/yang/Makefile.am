@@ -7,6 +7,7 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 lib_LTLIBRARIES = libkea-yang.la
 libkea_yang_la_SOURCES = sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
+libkea_yang_la_SOURCES += adaptor.cc adaptor.h
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
@@ -22,7 +23,8 @@ libkea_yang_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libkea_yang_includedir = $(pkgincludedir)/yang
 libkea_yang_include_HEADERS = \
 	sysrepo_error.h \
-	translator.h
+	translator.h \
+	adaptor.h
 
 EXTRA_DIST = yang.dox
 
