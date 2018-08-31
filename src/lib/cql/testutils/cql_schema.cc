@@ -9,7 +9,7 @@
 #include <cassandra.h>
 
 #include <cql/cql_connection.h>
-#include <dhcpsrv/testutils/cql_schema.h>
+#include <cql/testutils/cql_schema.h>
 
 #include <stdlib.h>
 

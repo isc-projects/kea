@@ -20,11 +20,11 @@
 
 #include <asiolink/io_address.h>
 #include <cql/cql_connection.h>
+#include <cql/testutils/cql_schema.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/testutils/cql_schema.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -38,6 +38,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;
