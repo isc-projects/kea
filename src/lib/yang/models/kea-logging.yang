@@ -1,0 +1,109 @@
+module kea-logging {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang::kea-logging";
+  prefix "kea-logging";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import kea-types {
+    prefix kea;
+  }
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This model defines a YANG data model that can be
+    used to configure and manage logging of a Kea server.";
+
+  revision 2018-08-20 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Groupings
+  */
+
+  grouping configuration {
+    description "Contains parameters for logging configuration.";
+
+    container loggers {
+      description "Loggers.";
+      list logger {
+        key name;
+        leaf name {
+          type string;
+          description "Name of the logger.";
+          mandatory true;
+        }
+        container output-options {
+          description "Output options.";
+          leaf output {
+            type string;
+            description "Type of output. Special values are stdout (standard
+              output), stderr (standard error), syslog (syslog using default
+              name), syslog:name (syslog using specified name). Any other
+              value is interpreted as a filename.";
+          }
+          leaf flush {
+            type boolean;
+            default true;
+            description "When true flush buffers after each message.";
+          }
+          leaf maxsize {
+            type uint32;
+            default 10240000;
+            description "Maximum size of output file before rotation.
+              Values below 204800 including 0 disable rotation.";
+          }
+          leaf maxver {
+            type uint32 {
+              range 1..max;
+            }
+            default 1;
+            description "Maximum version to keep a rotated output file.";
+          }
+        }
+        leaf debuglevel {
+          type uint8 {
+            range 0..99;
+          }
+          description "What level of debug messages should be printed.";
+        }
+        leaf severity {
+          type enumeration {
+            enum "FATAL" {
+              description "Condition is so serious that the server cannot
+                continue executing";
+            }
+            enum "ERROR" {
+              description "Error condition. The server will continue
+                executing, but the results may not be as expected.";
+            }
+            enum "WARN" {
+              description "Out of the ordinary condition. However, the server
+                will continue executing normally.";
+            }
+            enum "INFO" {
+              description "Information message marking some event.";
+            }
+            enum "DEBUG" {
+              description "For debugging purposes.";
+            }
+            enum "NONE" {
+              description "All messages are inhibited.";
+            }
+          }
+          description "Category of messages logged.";
+        }
+        leaf user-context {
+          type kea:user-context;
+          description "Logger user context.";
+        }
+      }
+    }
+  }
+}

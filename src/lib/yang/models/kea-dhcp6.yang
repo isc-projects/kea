@@ -1,0 +1,971 @@
+module kea-dhcp6 {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang::kea-dhcp6";
+  prefix "kea-dhcp6";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+  import kea-types {
+    prefix kea;
+  }
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This model defines a YANG data model that can be
+    used to configure and manage a Kea DHCPv6 server.";
+
+  revision 2018-08-20 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Typedefs
+  */
+  typedef host-identifier-type {
+    type enumeration {
+      enum "duid";
+      enum "hw-address";
+      enum "flex-id";
+    }
+    description "Host identifier type.";
+  }
+
+  typedef host-reservation-mode {
+    type enumeration {
+      enum "disabled";
+      enum "out-of-pool";
+      enum "all";
+    }
+    description "Host reservation mode.";
+  }
+
+  typedef lease-state {
+    type enumeration {
+      enum "default";
+      enum "declined";
+      enum "expired-reclaimed";
+    }
+    description "Lease state.";
+  }
+
+  /*
+  * Groupings
+  */
+  grouping preferred-lifetime {
+    leaf preferred-lifetime {
+      type uint32;
+      units "seconds";
+      description "Preferred lifetime.";
+    }
+  }
+
+  grouping valid-lifetime {
+    leaf valid-lifetime {
+      type uint32;
+      units "seconds";
+      description "Valid lifetime.";
+    }
+  }
+
+  grouping renew-timer {
+    leaf renew-timer {
+      type uint32;
+      units "seconds";
+      description "Renew timer.";
+    }
+  }
+
+  grouping rebind-timer {
+    leaf rebind-timer {
+      type uint32;
+      units "seconds";
+      description "Rebind timer.";
+    }
+  }
+
+  grouping relay {
+    leaf-list ip-addresses {
+      type inet:ipv6-address;
+      description "IP addresses.";
+    }
+  }
+
+  grouping subnet6-list {
+    description "Subnet6 list.";
+    list subnet6 {
+      key id;
+      ordered-by user;
+      uses preferred-lifetime;
+      uses valid-lifetime;
+      uses renew-timer;
+      uses rebind-timer;
+      uses option-data-list;
+      container pools {
+        list pool {
+          key "start-address end-address";
+          leaf prefix {
+            type inet:ipv6-prefix;
+            description "Pool prefix.";
+          }
+          leaf start-address {
+            type inet:ipv6-address;
+            mandatory true;
+            description "Pool start address.";
+          }
+          leaf end-address {
+            type inet:ipv6-address;
+            mandatory true;
+            description "Pool end address.";
+          }
+          uses option-data-list;
+          leaf client-class {
+            type string;
+            description "Pool client class guard.";
+          }
+          leaf-list require-client-classes {
+            type string;
+            description "Pool require client classes.";
+          }
+          leaf user-context {
+            type kea:user-context;
+            description "Pool user context.";
+          }       
+        }
+      }
+      container pd-pools {
+        list pd-pool {
+          key prefix;
+          leaf prefix {
+            type inet:ipv6-prefix;
+            mandatory true;
+            description "Prefix pool prefix.";
+          }
+          leaf delegated-len {
+            type uint8;
+            description "Prefix pool delegated length.";
+          }
+          uses option-data-list;
+          leaf client-class {
+            type string;
+            description "Prefix pool client class guard.";
+          }
+          leaf-list require-client-classes {
+            type string;
+            description "Prefix pool require client classes.";
+          }
+          leaf excluded-prefix {
+            type inet:ipv6-prefix;
+            description "Prefix pool excluded prefix.";
+          }
+          leaf user-context {
+            type kea:user-context;
+            description "Prefix pool user context.";
+          }       
+        }
+      }
+      leaf subnet {
+        type inet:ipv6-prefix;
+        mandatory true;
+        description "Subnet prefix.";
+      }
+      leaf interface {
+        type string;
+        description "Subnet interface.";
+      }
+      leaf interface-id {
+        type string;
+        description "Subnet interface-id option.";
+      }
+      leaf id {
+        type uint32 {
+          range 1..max;
+        }
+        mandatory true;
+        description "Subnet ID.";
+      }
+      leaf rapid-commit {
+        type boolean;
+        default false;
+        description "Subnet rapid commit flag.";
+      }
+      leaf client-class {
+        type string;
+        description "Subnet client class guard.";
+      }
+      leaf-list require-client-classes {
+        type string;
+        description "Subnet require client classes.";
+      }
+      container reservations {
+        description "Subnet host reservations.";
+        list host {
+          key "identifier-type identifier";
+          leaf identifier-type {
+            type host-identifier-type;
+            description "Host identifier type.";
+          }
+          leaf identifier {
+            type string;
+            description "Host identifier.";
+          }
+          leaf-list client-classes {
+            type string;
+            description "Host client classes.";
+          }
+          leaf-list ip-addresses {
+            type inet:ipv6-address;
+            description "Host reserved IP addresses.";
+          }
+          leaf-list prefixes {
+            type inet:ipv6-prefix;
+            description "Host reserved IP prefixes.";
+          }
+          leaf hostname {
+            type string;
+            description "Host DNS name.";
+          }
+          uses option-data-list;
+          leaf user-context {
+            type kea:user-context;
+            description "Host user context.";
+          }
+        }
+      }
+      leaf reservation-mode {
+        type host-reservation-mode;
+        description "Subnet host reservation mode.";
+      }
+      container relay {
+        description "Relay.";
+        uses relay;
+      }
+      leaf user-context {
+        type kea:user-context;
+        description "Subnet user context.";
+      }
+    }
+  }
+
+  grouping database {
+    leaf database-type {
+      type string;
+      mandatory true;
+      description "Database type (e.g. mysql).";
+    }
+    leaf user {
+      type string;
+      description "Database user name.";
+    }
+    leaf password {
+      type string;
+      description "Database user password.";
+    }
+    leaf host {
+      type string;
+      description "Database host.";
+    } 
+    leaf name {
+      type string;
+      description "Database name.";
+    }
+    leaf persist {
+      type boolean;
+      default true;
+      description "Write lease to disk file.";
+    }
+    leaf port {
+      type uint16;
+      description "Database port.";
+    }
+    leaf lfc-interval {
+      type uint32;
+      units "seconds";
+      default 3600;
+      description "Interval between two lease file cleanups.";
+    }
+    leaf readonly {
+      type boolean;
+      default false;
+      description "Read-only database.";
+    }
+    leaf connect-timeout {
+      type uint32;
+      description "Database connection timeout.";
+    }
+    leaf-list contact-points {
+      type inet:ip-address;
+      description "Cassandra database contact points.";
+    }
+    leaf keyspace {
+      type string;
+      description "Cassandra database keyspace.";
+    }
+    leaf max-reconnect-tries {
+      type uint32;
+      default 0;
+      description "Maximum of recovery attempts before exit.";
+    }
+    leaf reconnect-wait-time {
+      type uint32;
+      default 0;      
+      description "Waiting delay between two recovery attempts.";
+    }
+    leaf request-timeout {
+      type uint32;
+      description "Timeout waiting for a response.";
+    }
+    leaf tcp-keepalive {
+      type uint32;
+      units "seconds";
+      default 0;
+      description "TCP keepalive for the database connection.";
+    }
+    leaf tcp-nodelay {
+      type boolean;
+      default true;
+      description "TCP nodelay for the database connection.";
+    } 
+    leaf user-context {
+      type kea:user-context;
+      description "Database user context.";
+    }
+  }
+
+  grouping client-class {
+    leaf name {
+      type string;
+      mandatory true;
+      description "Client class name.";
+    }
+    leaf test {
+      type string;
+      description "Client class test expression.";
+    }
+    leaf only-if-required {
+      type boolean;
+      default false;
+      description "Client class only if required flag.";
+    }
+    uses option-data-list;
+    leaf user-context {
+      type kea:user-context;
+      description "Client class user context.";
+    }
+  }
+
+  grouping option-def-list {
+    container option-def-list {
+      description "Option definition list.";
+      list option-def {
+        key "code space";
+        leaf name {
+          type string;
+          mandatory true;
+          description "Option definition name.";
+        }
+        leaf code {
+          type uint16;
+          mandatory true;
+          description "Option definition code.";
+        }
+        leaf type {
+          type string;
+          mandatory true;
+          description "Option definition type.";
+        }
+        leaf record-types {
+          type string;
+          description "Option definition record types.";
+        }
+        leaf space {
+          type string;
+          mandatory true;
+          description "Option definition space.";
+        }
+        leaf encapsulate {
+          type string;
+          description "Option definition encapsulate.";
+        }
+        leaf array {
+          type boolean;
+          default false;
+          description "Option definition array flag.";
+        }
+        leaf user-context {
+          type kea:user-context;
+          description "Option definition user context.";
+        }
+      }
+    }
+  }
+
+  grouping option-data-list {
+    container option-data-list {
+      description "Option data list.";
+      list option-data {
+        key "code space";
+        leaf name {
+          type string;
+          description "Option name.";
+        }
+        leaf data {
+          type string;
+          description "Option data.";
+        }
+        leaf code {
+          type uint16;
+          mandatory true;
+          description "Option code.";
+        }
+        leaf space {
+          type string;
+          mandatory true;
+          description "Option space.";
+        }
+        leaf csv-format {
+          type boolean;
+          default true;
+          description "Option CSV format flag.";
+        }
+        leaf always-send {
+          type boolean;
+          default false;
+          description "Option always send flag.";
+        }
+        leaf user-context {
+          type kea:user-context;
+          description "Option user context.";
+        }
+      }   
+    }
+  }
+
+  grouping configuration {
+    description "Contains parameters for DHCPv6 server configuration.";
+
+    uses preferred-lifetime;
+    uses valid-lifetime;
+    uses renew-timer;
+    uses rebind-timer;
+
+    leaf decline-probation-period {
+      type uint32;
+      units "seconds";
+      default 86400;
+      description "Decline probabation period.";
+    }
+
+    container subnet6 {
+      description "Global subnet6 list.";
+      uses subnet6-list;
+    }
+
+    container shared-networks {
+      description "Shared networks.";
+      list shared-network {
+        key name;
+        leaf name {
+          type string;
+          mandatory true;
+          description "Shared network name.";
+        }
+        container subnet6 {
+          description "Shared network subnet6 list.";
+          uses subnet6-list;
+        }
+        leaf interface {
+          type string;
+          description "Shared network interface.";
+        }
+        leaf interface-id {
+          type string;
+          description "Shared network interface-id option.";
+        }
+        uses renew-timer;
+        uses rebind-timer;
+        uses option-data-list;
+        container relay {
+          description "Relay.";
+          uses relay;
+        }
+        leaf reservation-mode {
+          type host-reservation-mode;
+          description "Shared network host reservation mode.";
+        }
+        leaf client-class {
+          type string;
+          description "Shared network client class guard.";
+        }
+        leaf-list require-client-classes {
+          type string;
+          description "Shared network require client classes.";
+        }
+        uses preferred-lifetime;
+        leaf rapid-commit {
+          type boolean;
+          default false;
+          description "Shared network rapid commit flag.";
+        }
+        uses valid-lifetime;
+        leaf user-context {
+          type kea:user-context;
+          description "Shared network user context.";
+        }
+      }
+    }
+
+    container interfaces-config {
+      description "Interfaces configuration.";
+      leaf-list interfaces {
+        type string;
+        description "Interface name or name/address or *.";
+      }
+      leaf re-detect {
+        type boolean;
+        default false;
+        description "Re-detect interfaces at each reconfiguration.";
+      }
+      leaf user-context {
+        type kea:user-context;
+        description "Interfaces user context.";
+      }
+    }
+    
+    container lease-database {
+      description "Lease database.";
+      presence "Enable lease database.";
+      uses database;
+    }
+
+    container hosts-databases {
+      description "Hosts databases.";
+      list hosts-database {
+        key database-type;
+        uses database;
+      }
+    }
+
+    leaf-list relay-supplied-options {
+      type string;
+      description "Relay supplied options.";
+    }
+
+    leaf-list mac-sources {
+      type string;
+      description "MAC address sources.";
+    }
+
+    leaf-list host-reservation-identifiers {
+      type host-identifier-type;
+      description "Host reservation identifier.";
+    }
+
+    container client-classes {
+      description "Client classes.";
+      list client-class {
+        key name;
+        ordered-by user;
+        uses client-class;
+      }
+    }
+
+    uses option-def-list;
+    uses option-data-list;
+    uses kea:hooks-libraries;
+
+    container expired-leases-processing {
+      description "Expired leases processing setup.";
+      leaf reclaim-timer-wait-time {
+        type uint32;
+        units "seconds";
+        default 10;
+        description "Interval between reclamation cycles.";
+      }
+      leaf flush-reclaimed-timer-wait-time {
+        type uint32;
+        units "seconds";
+        default 25;
+        description "Interval between reclaimed leases collection.";
+      }
+      leaf hold-reclaimed-time {
+        type uint32;
+        units "seconds";
+        default 3600;
+        description "Hold timer for re-assignment.";
+      }
+      leaf max-reclaim-leases {
+        type uint32;
+        default 100;
+        description "Maximum number of reclaimed leases per cycle.";
+      }
+      leaf max-reclaim-time {
+        type uint32;
+        units "milliseconds";
+        default 250;
+        description "Maximum duration of a reclamation cycle.";
+      }
+      leaf unwarned-reclaim-cycles {
+        type uint32;
+        default 5;
+        description "Maximum numbers of uncomplete cycles before warning.";
+      }
+    }
+
+    container server-id {
+      description "Server DUID.";
+      leaf type {
+        type enumeration {
+          enum "LLT";
+          enum "EN";
+          enum "LL";
+        }
+        description "Server DIOD type.";
+      }
+      leaf identifier {
+        type string;
+        description "Server DUID identifier.";
+      }
+      leaf time {
+        type uint32;
+        description "Server DUID time.";
+      }
+      leaf htype {
+        type uint16;
+        description "Server DUID hardware type.";
+      }
+      leaf enterprise-id {
+        type uint32;
+        description "Server DUID enterprise ID.";
+      }
+      leaf persist {
+        type boolean;
+        default true;
+        description "Server DUID persist flag.";
+      }
+      leaf user-context {
+        type kea:user-context;
+        description "Server DUID user context.";
+      }
+    }
+
+    leaf dhcp4o6-port {
+      type uint16;
+      description "DHCPv4-over-DHCPv6 interserver port.";
+    }
+
+    container control-socket {
+      description "Control socket";
+      presence "Enable control socket.";
+      uses kea:control-socket;
+    }
+
+    container dhcp-ddns {
+      description "DHCP-DDNS client setup.";
+      leaf enable-updates {
+        type boolean;
+        default false;
+        description "Enable DHCP-DDNS updates.";
+      }
+      leaf qualifying-suffix {
+        type string;
+        description "DHCP-DDNS qualifying suffix.";
+      }
+      leaf server-ip {
+        type inet:ip-address;
+        default "127.0.0.1";
+        description "DHCP-DDNS server IP address.";
+      }
+      leaf server-port {
+        type uint16;
+        default 53001;
+        description "DHCP-DDNS server port.";
+      }
+      leaf sender-ip {
+        type inet:ip-address;
+        description "DHCP-DDNS sender IP address.";
+      }
+      leaf sender-port {
+        type uint16;
+        description "DHCP-DDNS sender port.";
+      }
+      leaf max-queue-size {
+        type uint32;
+        default 1024;
+        description "Maximum DHCP-DDNS queue size.";
+      }
+      leaf ncr-protocol {
+        type enumeration {
+          enum "udp";
+          enum "tcp";
+        }
+        default "udp";
+        description "Protocol to use for DHCP-DDNS.";
+      }
+      leaf ncr-format {
+        type enumeration {
+          enum "JSON";
+        }
+        default "JSON";
+        description "Packet format to use for DHCP-DDNS.";
+      }
+      leaf always-include-fqdn {
+        type boolean;
+        description "???";
+      }
+      leaf override-no-update {
+        type boolean;
+        default false;
+        description "Ignore client request and send update.";
+      }
+      leaf override-client-update {
+        type boolean;
+        default false;
+        description "Ignore client delegation.";
+      }
+      leaf replace-client-name {
+        type enumeration {
+          enum "when-present";
+          enum "never";
+          enum "always";
+          enum "when-not-present";
+        }
+        default "never";
+        description "Replace the name provided by the client.";
+      }
+      leaf generated-prefix {
+        type string;
+        default "myhost";
+        description "DHCP-DDNS generated prefix.";
+      }
+      leaf hostname-char-set {
+        type string;
+        description "Invalid character set in hostnames.";
+      }
+      leaf hostname-char-replacement {
+        type string;
+        description "Replacement for invalid charaters.";
+      }
+      leaf user-context {
+        type kea:user-context;
+        description "DHCP-DDNS user context.";
+      }
+    }
+
+    leaf user-context {
+      type kea:user-context;
+      description "DHCPv6 server user context.";
+    }
+
+    container sanity-checks {
+      description "Sanity checks.";
+      leaf lease-checks {
+        type enumeration {
+          enum "none" {
+            description "No checks.";
+          }
+          enum "warn" {
+            description "When a check fails print a warning and accept the
+              lease.";
+          }
+          enum "fix" {
+            description "When a check fails try to fix it and accept the
+              lease.";
+          }
+          enum "fix-del" {
+            description "When a check fails try to fix it and reject the
+              lease if still bad.";
+          }
+          enum "del" {
+            description "When a check fails reject the lease.";
+          }
+        }
+        default "warn";
+        description "Lease checks: verify subnet-id consistency on memfile
+          loading.";
+      }
+    }
+  }
+
+  /*
+  * State data
+  */
+  grouping state {
+    description "State of Kea DHCPv6 server.";
+
+    container leases {
+      description "Kea DHCPv6 leases.";
+      list lease {
+        key ip-address;
+        leaf ip-address {
+          type inet:ipv6-address;
+          mandatory true;
+          description "Lease IP address.";
+        }
+        leaf duid {
+          type binary;
+          mandatory true;
+          description "Lease DUID.";
+        }
+        leaf valid-lifetime {
+          type uint32;
+          units "seconds";
+          mandatory true;
+          description "Lease valid lifetime.";
+        }
+        leaf cltt {
+          type uint32;
+          units "seconds";
+          mandatory true;
+          description "Lease client last transmission time.";
+        }
+        leaf subnet-id {
+          type uint32;
+          mandatory true;
+          description "Lease subnet ID.";
+        }
+        leaf preferred-lifetime {
+          type uint32;
+          units "seconds";
+          mandatory true;
+          description "Lease preferred lifetime.";
+        }
+        leaf lease-type {
+          type enumeration {
+            enum "IA_NA";
+            enum "IA_TA";
+            enum "IA_PD";
+          }
+          mandatory true;
+          description "Lease IA type.";
+        }
+        leaf iaid {
+          type uint32;
+          mandatory true;
+          description "Lease IA ID.";
+        }
+        leaf prefix-length {
+          type uint8 {
+            range 0..128;
+          }
+          description "Lease prefix length.";
+        }
+        leaf fqdn-fwd {
+          type boolean;
+          default false;
+          description "Lease FQDN forward flag.";
+        }
+        leaf fqdn-rev {
+          type boolean;
+          default false;
+          description "Lease FQDN reverse lag.";
+        }
+        leaf hostname {
+          type string;
+          default "";
+          description "Lease hostname.";
+        }
+        leaf state {
+          type lease-state;
+          default "default";
+          description "Lease state.";
+        }
+        leaf user-context {
+          type kea:user-context;
+          description "Lease user context.";
+        }
+        leaf hw-address {
+          type string;
+          description "Lease hardware address.";
+        }
+      }
+    }
+
+    container lease-stats {
+      list subnet {
+        key subnet-id;
+        leaf subnet-id {
+          type uint32;
+          mandatory true;         
+          description "Subnet ID.";
+        }
+        leaf total-nas {
+          type uint32;
+          mandatory true;
+          description "Total non-temporary addresses counter.";
+        }
+        leaf assigned-nas {
+          type uint32;
+          mandatory true;
+          description "Assigned non-temporary counter.";
+        }
+        leaf declined-nas {
+          type uint32;
+          mandatory true;
+          description "Declined non-temporary addresses counter.";
+        }
+        leaf total-pds {
+          type uint32;
+          mandatory true;
+          description "Total delegated prefixes counter.";
+        }
+        leaf assigned-pds {
+          type uint32;
+          mandatory true;
+          description "Assigned delegated prefixe counter.";
+        }
+      }
+    }
+
+    container hosts {
+      description "Kea DHCPv6 hosts.";
+      list host {
+        key "subnet-id identifier-type identifier";
+        leaf identifier {
+          type string;
+          mandatory true;
+          description "Host identifier.";
+        }
+        leaf identifier-type {
+          type host-identifier-type;
+          mandatory true;
+          description "Host identifier type.";
+        }
+        leaf subnet-id {
+          type uint32;
+          mandatory true;
+          description "Host subnet ID.";
+        }
+        leaf-list ip-addresses {
+          type inet:ipv6-address;
+          description "Host reserved IP addresses.";
+        }
+        leaf-list prefixes {
+          type inet:ipv6-prefix;
+          description "Host reserved prefixes.";
+        }
+        leaf hostname {
+          type string;
+          description "Host name.";
+        }
+        leaf-list client-classes {
+          type string;
+          description "Host client classes.";
+        }
+        uses option-data-list;
+        leaf user-context {
+          type kea:user-context;
+          description "Host user context.";
+        }
+        leaf auth-key {
+          type string;
+          description "Host authentication key.";
+        }
+      }
+    }
+  }
+}
