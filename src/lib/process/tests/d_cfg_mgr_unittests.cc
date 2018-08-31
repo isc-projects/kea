@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 
