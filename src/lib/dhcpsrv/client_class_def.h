@@ -42,7 +42,7 @@ public:
 };
 
 /// @brief Embodies a single client class definition
-class ClientClassDef : public UserContext, public isc::data::CfgToElement {
+class ClientClassDef : public data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///

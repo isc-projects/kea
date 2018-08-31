@@ -5,13 +5,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
 #include <cc/user_context.h>
 
-using namespace isc::data;
 
 namespace isc {
-namespace dhcp {
+namespace data {
 
 void
 UserContext::contextToElement(ElementPtr map) const {

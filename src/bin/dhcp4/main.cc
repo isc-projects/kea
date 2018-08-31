@@ -22,6 +22,7 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::process;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
@@ -228,7 +229,7 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
-    } catch (const isc::dhcp::DaemonPIDExists& ex) {
+    } catch (const isc::process::DaemonPIDExists& ex) {
         // First, we print the error on stderr (that should always work)
         cerr << DHCP4_NAME << " already running? " << ex.what()
              << endl;

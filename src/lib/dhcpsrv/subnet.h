@@ -30,7 +30,7 @@
 namespace isc {
 namespace dhcp {
 
-class Subnet : public virtual UserContext, public data::CfgToElement {
+class Subnet : public virtual data::UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.

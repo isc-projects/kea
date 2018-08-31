@@ -23,7 +23,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
-#include <dhcpsrv/daemon.h>
+#include <process/daemon.h>
 
 #include <functional>
 #include <iostream>
@@ -56,7 +56,7 @@ public:
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
-class Dhcpv6Srv : public Daemon {
+class Dhcpv6Srv : public process::Daemon {
 private:
 
     /// @brief Pointer to IO service used by the server.

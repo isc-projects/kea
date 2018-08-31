@@ -14,5 +14,4 @@ SUBDIRS += cql
 endif
 
 SUBDIRS += testutils hooks dhcp config stats asiodns dhcp_ddns eval \
-	dhcpsrv cfgrpt \
-	process http
+	cfgrpt process dhcpsrv process http

@@ -732,7 +732,7 @@ private:
     /// Collection of data fields within the record.
     RecordFieldsCollection record_fields_;
     /// User context
-    UserContext user_context_;
+    data::UserContext user_context_;
 };
 
 

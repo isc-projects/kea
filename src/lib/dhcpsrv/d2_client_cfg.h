@@ -50,7 +50,7 @@ public:
 /// parameters associated with DHCP-DDNS and acting as a client of D2.
 /// Instances of this class may be constructed through configuration parsing.
 ///
-class D2ClientConfig : public UserContext, public isc::data::CfgToElement {
+class D2ClientConfig : public data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Default configuration constants.
     static const char* DFT_SERVER_IP;

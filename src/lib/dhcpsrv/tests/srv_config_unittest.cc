@@ -10,12 +10,14 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
+#include <process/logging_info.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::process;
 
 // Those are the tests for SrvConfig storage. Right now they are minimal,
 // but the number is expected to grow significantly once we migrate more
