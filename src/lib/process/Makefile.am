@@ -38,12 +38,15 @@ CLEANFILES = *.gcno *.gcda process_messages.h process_messages.cc s-messages
 DISTCLEANFILES = spec_config.h.pre
 
 lib_LTLIBRARIES = libkea-process.la
-libkea_process_la_SOURCES  = d_cfg_mgr.cc d_cfg_mgr.h
+libkea_process_la_SOURCES  = config_base.cc config_base.h
+libkea_process_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 libkea_process_la_SOURCES += d_controller.cc d_controller.h
 libkea_process_la_SOURCES += d_log.cc d_log.h
 libkea_process_la_SOURCES += d_process.h
 libkea_process_la_SOURCES += daemon.cc daemon.h
 libkea_process_la_SOURCES += io_service_signal.cc io_service_signal.h
+libkea_process_la_SOURCES += log_parser.cc log_parser.h
+libkea_process_la_SOURCES += logging_info.cc logging_info.h
 
 nodist_libkea_process_la_SOURCES = process_messages.cc process_messages.h
 
