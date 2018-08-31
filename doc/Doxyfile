@@ -810,6 +810,7 @@ INPUT                  = ../src/bin/agent \
                          ../src/lib/util/random \
                          ../src/lib/util/threads \
                          ../src/lib/util/unittests \
+                         ../src/lib/yang \
                          devel
 
 # This tag can be used to specify the character encoding of the source files
