@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,12 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/daemon.h>
+#include <process/daemon.h>
+#include <process/log_parser.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_name.h>
 #include <log/logger_support.h>
-#include <logging.h>
+#include <process/cfg_base.h>
 #include <util/filename.h>
 
 #include <boost/bind.hpp>
@@ -25,11 +25,15 @@
 /// This file provides stub implementations that are expected to be redefined
 /// in derived classes (e.g. ControlledDhcpv6Srv)
 namespace isc {
-namespace dhcp {
+namespace process {
+
+bool Daemon::verbose_ = false;
+
+std::string Daemon::default_logger_name_("kea");
 
 Daemon::Daemon()
     : signal_set_(), signal_handler_(), config_file_(""), proc_name_(""),
-    pid_file_dir_(DHCP_DATA_DIR), pid_file_(), am_file_author_(false) {
+      pid_file_dir_(DATA_DIR), pid_file_(), am_file_author_(false) {
 
     // The pid_file_dir can be overridden via environment variable
     // This is primarily intended to simplify testing
@@ -60,25 +64,25 @@ void Daemon::handleSignal() {
 }
 
 void Daemon::configureLogger(const isc::data::ConstElementPtr& log_config,
-                             const SrvConfigPtr& storage) {
+                             const ConfigPtr& storage) {
 
     if (log_config) {
         isc::data::ConstElementPtr loggers = log_config->get("loggers");
         if (loggers) {
             LogConfigParser parser(storage);
-            parser.parseConfiguration(loggers, CfgMgr::instance().isVerbose());
+            parser.parseConfiguration(loggers, verbose_);
         }
     }
 }
 
 void
 Daemon::setVerbose(bool verbose) {
-    CfgMgr::instance().setVerbose(verbose);
+    verbose_ = verbose;
 }
 
 bool
-Daemon::getVerbose() const {
-    return (CfgMgr::instance().isVerbose());
+Daemon::getVerbose() {
+    return (verbose_);
 }
 
 void Daemon::loggerInit(const char* name, bool verbose) {
@@ -209,10 +213,6 @@ Daemon::createPIDFile(int pid) {
 size_t
 Daemon::writeConfigFile(const std::string& config_file,
                         isc::data::ConstElementPtr cfg) const {
-    if (!cfg) {
-        cfg = CfgMgr::instance().getCurrentCfg()->toElement();
-    }
-
     if (!cfg) {
         isc_throw(Unexpected, "Can't write configuration: conversion to JSON failed");
     }
