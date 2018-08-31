@@ -1,0 +1,46 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libyang libkea-yang - Kea Yang Utilities Library
+
+All translators take a seesion in constructors and derive from
+the basic / base class and recursively of translators for
+embedded parts.
+
+@section yangTranslator between Yang and JSON Translator
+
+@c isc::yang::TranslatorBasic provides some methods:
+ - getItem() gets and translates basic value from Yang to JSON
+ - getItems() gets and translates a leaf-list from Yang to JSON
+   (for a list please use an iterator)
+ - setItem() translates and sets a basic value from JSON to Yang
+ - delItem() deletes a value
+ - getIter() gets an iterator over a Yang list
+ - getNext() returns the xpath of the next item
+
+@section yangTranslatorPool between Yang and JSON Translator for pool
+
+@c isc::yang::TranslatorPool is the standard example of a translator
+for a structured value. Its constructor takes a model name: the code
+implements some variants to accommodate the model with shared code
+moved into a common private routine.
+
+@c isc::yang::TranslatorPools deals with a list of pools. The getPools
+method iterates over thr lidt in both ways. Loot at examples in unit
+tests to understand how can be filled.
+
+Note pools show two shortcomings in IETF models:
+ - option sets make to track changes nearly impossible: the only easy
+  code is to translate the whole configuration.
+ - prefix and start - end forms of pool ranges are both mandatory.
+
+@section yangTranslatorSubnet between Yang and JSON Translator for subnet
+
+The new thing here is the use of adaptors to move timers from subnets
+to pools and back.
+
+*/
