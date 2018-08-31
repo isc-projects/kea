@@ -1,0 +1,69 @@
+module kea-types {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang::kea-types";
+  prefix "kea-types";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  organization "Internet Systems Consortium";
+  contact "kea-dev@lists.isc.org";
+  description "This model defines a YANG data model that can be
+    used to define some commonly used Kea types";
+
+  revision 2018-08-20 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Typedef
+  */
+  typedef user-context {
+    type string;
+    description "User context (JSON map).";
+  }
+
+  /*
+  * Grouping
+  */
+  grouping control-socket {
+    description "Control socket.";
+    leaf socket-name {
+      type string;
+      mandatory true;
+      description "Path to the UNIX socket.";
+    }
+    leaf socket-type {
+      type enumeration {
+        enum "unix";
+      }
+      mandatory true;
+      description "Socket type.";
+    }
+    leaf user-context {
+      type user-context;
+      description "Control socket user context.";
+    }
+  }
+
+  grouping hooks-libraries {
+    description "Hook libraries.";
+    list hook-library {
+      key library;
+      leaf library {
+        type string;
+        mandatory true;
+        description "Path to the DSO.";
+      }
+      leaf parameters {
+        type string;
+        description "Parameters (JSON value).";
+      }
+    }
+  }
+}
