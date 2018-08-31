@@ -9,9 +9,9 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_process.h>
 #include <process/io_service_signal.h>
@@ -101,7 +101,7 @@ typedef boost::shared_ptr<DControllerBase> DControllerBasePtr;
 /// NOTE: Derivations must supply their own static singleton instance method(s)
 /// for creating and fetching the instance. The base class declares the instance
 /// member in order for it to be available for static callback functions.
-class DControllerBase : public dhcp::Daemon {
+class DControllerBase : public Daemon {
 public:
     /// @brief Constructor
     ///

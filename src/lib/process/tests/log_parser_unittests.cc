@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,16 +6,17 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/logging.h>
+#include <process/log_parser.h>
+#include <process/process_messages.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <process/d_log.h>
 #include <testutils/io_utils.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc;
-using namespace isc::dhcp;
+using namespace isc::process;
 using namespace isc::data;
 
 namespace {
@@ -78,10 +79,10 @@ const int LoggingTest::TEST_MAX_VERS = 2;       // More than the default of 1
 // Checks that the constructor is able to process specified storage properly.
 TEST_F(LoggingTest, constructor) {
 
-    SrvConfigPtr null_ptr;
+    ConfigPtr null_ptr;
     EXPECT_THROW(LogConfigParser parser(null_ptr), BadValue);
 
-    SrvConfigPtr nonnull(new SrvConfig());
+    ConfigPtr nonnull(new ConfigBase());
 
     EXPECT_NO_THROW(LogConfigParser parser(nonnull));
 }
@@ -106,7 +107,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     "    }"
     "]}";
 
-    SrvConfigPtr storage(new SrvConfig());
+    ConfigPtr storage(new ConfigBase());
 
     LogConfigParser parser(storage);
 
@@ -147,7 +148,7 @@ TEST_F(LoggingTest, parsingFile) {
     "    }"
     "]}";
 
-    SrvConfigPtr storage(new SrvConfig());
+    ConfigPtr storage(new ConfigBase());
 
     LogConfigParser parser(storage);
 
@@ -201,7 +202,7 @@ TEST_F(LoggingTest, multipleLoggers) {
     "    }"
     "]}";
 
-    SrvConfigPtr storage(new SrvConfig());
+    ConfigPtr storage(new ConfigBase());
 
     LogConfigParser parser(storage);
 
@@ -251,7 +252,7 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     "    }"
     "]}";
 
-    SrvConfigPtr storage(new SrvConfig());
+    ConfigPtr storage(new ConfigBase());
 
     LogConfigParser parser(storage);
 
@@ -305,7 +306,7 @@ TEST_F(LoggingTest, logRotate) {
         "]}";
 
     // Create our server config container.
-    SrvConfigPtr server_cfg(new SrvConfig());
+    ConfigPtr server_cfg(new ConfigBase());
 
     // LogConfigParser expects a list of loggers, so parse
     // the JSON text and extract the "loggers" element from it
@@ -330,7 +331,7 @@ TEST_F(LoggingTest, logRotate) {
 
     for (int i = 1; i < TEST_MAX_VERS + 1; i++) {
         // Output the big log and make sure we get the expected rotation file.
-        LOG_INFO(logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(big_arg);
+        LOG_INFO(logger, DCTL_CONFIG_COMPLETE).arg(big_arg);
         EXPECT_TRUE(isc::test::fileExists(logName(i).c_str()));
     }
 

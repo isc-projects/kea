@@ -100,7 +100,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
 
     try {
         createPIDFile();
-    } catch (const dhcp::DaemonPIDExists& ex) {
+    } catch (const DaemonPIDExists& ex) {
         LOG_FATAL(dctl_logger, DCTL_ALREADY_RUNNING)
                   .arg(bin_name_).arg(ex.what());
         isc_throw (LaunchError, "Launch Failed: " << ex.what());

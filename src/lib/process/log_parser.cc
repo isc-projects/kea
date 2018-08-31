@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <dhcpsrv/logging.h>
+#include <process/log_parser.h>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
@@ -18,9 +18,9 @@ using namespace isc::data;
 using namespace isc::log;
 
 namespace isc {
-namespace dhcp {
+namespace process {
 
-LogConfigParser::LogConfigParser(const SrvConfigPtr& storage)
+LogConfigParser::LogConfigParser(const ConfigPtr& storage)
     :config_(storage), verbose_(false) {
     if (!storage) {
         isc_throw(BadValue, "LogConfigParser needs a pointer to the "

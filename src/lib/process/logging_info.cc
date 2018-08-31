@@ -1,19 +1,19 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/logging_info.h>
+#include <process/logging_info.h>
+#include <process/daemon.h>
 #include <log/logger_name.h>
 
 using namespace isc::log;
 using namespace isc::data;
 
 namespace isc {
-namespace dhcp {
+namespace process {
 
 bool
 LoggingDestination::equals(const LoggingDestination& other) const {
@@ -43,16 +43,16 @@ LoggingInfo::LoggingInfo()
     : name_("kea"), severity_(isc::log::INFO), debuglevel_(0) {
     // If configuration Manager is in the verbose mode, we need to modify the
     // default settings.
-    if (CfgMgr::instance().isVerbose()) {
+    if (Daemon::getVerbose()) {
         severity_ = isc::log::DEBUG;
         debuglevel_ = 99;
     }
 
     // If the process has set the non-empty name for the default logger,
     // let's use this name.
-    std::string logger_name = CfgMgr::instance().getDefaultLoggerName();
-    if (!logger_name.empty()) {
-        name_ = logger_name;
+    std::string default_logger = Daemon::getDefaultLoggerName();
+    if (!default_logger.empty()) {
+        name_ = default_logger;
     }
 
     // Add a default logging destination in case use hasn't provided a

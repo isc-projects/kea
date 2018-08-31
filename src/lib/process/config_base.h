@@ -54,7 +54,7 @@ public:
     /// @brief Compares two configuration.
     ///
     /// @param other the other configuration to compare to
-    virtual bool equals(const ConfigBase& other) const;
+    bool equals(const ConfigBase& other) const;
 
     /// @brief Converts to Element representation
     ///
@@ -70,7 +70,7 @@ protected:
     /// by descendant classes.
     ///
     /// @param new_config this configuration will be copied to new_config
-    virtual void copy(ConfigBase& new_config) const;
+    void copy(ConfigBase& new_config) const;
 
 private:
     /// @brief Logging specific information.

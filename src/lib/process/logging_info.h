@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace isc {
-namespace dhcp {
+namespace process {
 
 /// @brief Defines single logging destination
 ///
@@ -73,7 +73,7 @@ public:
 ///            "severity": "WARN",
 ///            "debuglevel": 99
 ///        },
-class LoggingInfo : public UserContext, public isc::data::CfgToElement {
+class LoggingInfo : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief logging name
@@ -133,7 +133,7 @@ public:
 };
 
 /// @brief storage for logging information in log4cplus format
-typedef std::vector<isc::dhcp::LoggingInfo> LoggingInfoStorage;
+typedef std::vector<isc::process::LoggingInfo> LoggingInfoStorage;
 
 }
 }

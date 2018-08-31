@@ -9,8 +9,9 @@
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/daemon.h>
-#include <dhcpsrv/logging.h>
+#include <process/daemon.h>
+#include <process/config_base.h>
+#include <process/log_parser.h>
 #include <log/logger_support.h>
 
 #include <gtest/gtest.h>
@@ -18,11 +19,11 @@
 #include <sys/wait.h>
 
 using namespace isc;
-using namespace isc::dhcp;
+using namespace isc::process;
 using namespace isc::data;
 
 namespace isc {
-namespace dhcp {
+namespace process {
 
 // @brief Derived Daemon class
 class DaemonImpl : public Daemon {
@@ -92,7 +93,7 @@ TEST_F(DaemonTest, constructor) {
 
     EXPECT_TRUE(instance2.getConfigFile().empty());
     EXPECT_TRUE(instance2.getProcName().empty());
-    EXPECT_EQ(CfgMgr::instance().getDataDir(),instance2.getPIDFileDir());
+    EXPECT_EQ(std::string(DATA_DIR), instance2.getPIDFileDir());
     EXPECT_TRUE(instance2.getPIDFileName().empty());
 }
 
@@ -265,10 +266,10 @@ TEST_F(DaemonTest, PIDFileCleanup) {
 // More dedicated tests are available for LogConfigParser class.
 // See logger_unittest.cc
 TEST_F(DaemonTest, parsingConsoleOutput) {
-    CfgMgr::instance().setVerbose(false);
+    Daemon::setVerbose(false);
 
     // Storage - parsed configuration will be stored here
-    SrvConfigPtr storage(new SrvConfig());
+    ConfigPtr storage(new ConfigBase());
 
     const char* config_txt =
     "{ \"loggers\": ["

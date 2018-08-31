@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,14 +8,14 @@
 #define DAEMON_H
 
 #include <cc/data.h>
-#include <dhcpsrv/srv_config.h>
+#include <process/config_base.h>
 #include <util/pid_file.h>
 #include <util/signal_set.h>
 #include <boost/noncopyable.hpp>
 #include <string>
 
 namespace isc {
-namespace dhcp {
+namespace process {
 
 /// @brief Exception thrown when a the PID file points to a live PID
 class DaemonPIDExists : public Exception {
@@ -96,7 +96,7 @@ public:
     /// @param log_config JSON structures that describe logging
     /// @param storage configuration will be stored here
     static void configureLogger(const isc::data::ConstElementPtr& log_config,
-                                const isc::dhcp::SrvConfigPtr& storage);
+                                const isc::process::ConfigPtr& storage);
 
     /// @brief Sets or clears verbose mode
     ///
@@ -105,12 +105,12 @@ public:
     /// config file are ignored.
     ///
     /// @param verbose specifies if verbose should be set or not
-    void setVerbose(const bool verbose);
+    static void setVerbose(const bool verbose);
 
     /// @brief Returns if running in verbose mode
     ///
     /// @return verbose mode
-    bool getVerbose() const;
+    static bool getVerbose();
 
     /// @brief returns Kea version on stdout and exits.
     ///
@@ -200,6 +200,19 @@ public:
     /// PID of the current process is used.
     void createPIDFile(int pid = 0);
 
+    /// @brief Returns default logger name.
+    static std::string getDefaultLoggerName() {
+        return (default_logger_name_);
+    }
+
+    /// @brief Sets the default logger name.
+    ///
+    /// This name is used in cases when a user doesn't provide a configuration
+    /// for logger in the Kea configuration file.
+    static void setDefaultLoggerName(const std::string& logger) {
+        default_logger_name_ = logger;
+    }
+
 protected:
 
     /// @brief Invokes handler for the next received signal.
@@ -244,6 +257,12 @@ private:
 
     /// @brief Pointer to the PID file for this process
     isc::util::PIDFilePtr pid_file_;
+
+    /// @brief Indicates whether verbose mode is turned on or not.
+    static bool verbose_;
+
+    /// @brief Stores default logger name
+    static std::string default_logger_name_;
 
     /// @brief Flag indicating if this instance created the file
     bool am_file_author_;

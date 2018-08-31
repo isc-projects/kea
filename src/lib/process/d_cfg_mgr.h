@@ -60,7 +60,7 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 ///    // Restore from backup
 ///    context_ = backup_copy;
 ///
-class DCfgContextBase : public isc::dhcp::UserContext, public isc::data::CfgToElement {
+class DCfgContextBase : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Indicator that a configuration parameter is optional.
     static const bool OPTIONAL = true;

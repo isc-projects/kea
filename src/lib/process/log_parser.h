@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,11 +8,12 @@
 #define DHCPSRV_LOGGING_H
 
 #include <cc/data.h>
-#include <dhcpsrv/srv_config.h>
+#include <process/logging_info.h>
+#include <process/config_base.h>
 #include <vector>
 
 namespace isc {
-namespace dhcp {
+namespace process {
 
 /// @brief Configures log4cplus by translating Kea configuration structures
 ///
@@ -45,7 +46,7 @@ public:
     /// @brief Constructor
     ///
     /// @param storage parsed logging configuration will be stored here
-    LogConfigParser(const SrvConfigPtr& storage);
+    LogConfigParser(const ConfigPtr& storage);
 
     /// @brief Parses specified configuration
     ///
@@ -77,7 +78,7 @@ private:
     /// @brief Configuration is stored here
     ///
     /// LogConfigParser class uses only config_->logging_info_ field.
-    SrvConfigPtr config_;
+    ConfigPtr config_;
 
     /// @brief Verbose mode
     ///
