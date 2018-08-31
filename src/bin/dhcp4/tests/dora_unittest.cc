@@ -1964,15 +1964,15 @@ public:
     ///
     /// Recreates MySQL schema for a test.
     DORAMySQLTest() : DORATest() {
-        destroyMySQLSchema();
-        createMySQLSchema();
+        db::test::destroyMySQLSchema();
+        db::test::createMySQLSchema();
     }
 
     /// @brief Destructor.
     ///
     /// Destroys MySQL schema.
     virtual ~DORAMySQLTest() {
-        destroyMySQLSchema();
+        db::test::destroyMySQLSchema();
     }
 };
 
@@ -1997,15 +1997,15 @@ public:
     ///
     /// Recreates PgSQL schema for a test.
     DORAPgSQLTest() : DORATest() {
-        destroyPgSQLSchema();
-        createPgSQLSchema();
+        db::test::destroyPgSQLSchema();
+	db::test::createPgSQLSchema();
     }
 
     /// @brief Destructor.
     ///
     /// Destroys PgSQL schema.
     virtual ~DORAPgSQLTest() {
-        destroyPgSQLSchema();
+        db::test::destroyPgSQLSchema();
     }
 };
 
@@ -2029,15 +2029,15 @@ public:
     ///
     /// Recreates CQL schema for a test.
     DORACQLTest() : DORATest() {
-        destroyCqlSchema(false, true);
-        createCqlSchema(false, true);
+        db::test::destroyCqlSchema(false, true);
+        db::test::createCqlSchema(false, true);
     }
 
     /// @brief Destructor.
     ///
     /// Destroys CQL schema.
     virtual ~DORACQLTest() {
-        destroyCqlSchema(false, true);
+        db::test::destroyCqlSchema(false, true);
     }
 };
 
