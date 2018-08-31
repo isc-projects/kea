@@ -1597,6 +1597,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/yang/Makefile
+                 src/lib/yang/tests/Makefile
                  src/share/Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile
