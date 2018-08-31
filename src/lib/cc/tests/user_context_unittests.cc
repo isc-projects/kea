@@ -9,7 +9,6 @@
 #include <gtest/gtest.h>
 
 using namespace isc::data;
-using namespace isc::dhcp;
 
 namespace {
 

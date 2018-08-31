@@ -35,6 +35,7 @@ stat_cmds_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 stat_cmds_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 stat_cmds_unittests_LDADD = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 stat_cmds_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

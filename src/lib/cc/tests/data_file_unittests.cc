@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/daemon.h>
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <fstream>

@@ -45,7 +45,7 @@ typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
 /// class provides an abstract interface that must be implemented by derived
 /// classes and, where appropriate, implements common methods used by the
 /// derived classes.
-class Network : public virtual UserContext, public data::CfgToElement {
+class Network : public virtual isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Holds optional information about relay.
     ///

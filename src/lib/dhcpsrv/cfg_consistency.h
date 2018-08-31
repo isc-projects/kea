@@ -16,7 +16,7 @@ namespace dhcp {
 
 /// @brief Parameters for various consistency checks.
 ///
-class CfgConsistency : public isc::dhcp::UserContext, public isc::data::CfgToElement {
+class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToElement {
 
     public:
 

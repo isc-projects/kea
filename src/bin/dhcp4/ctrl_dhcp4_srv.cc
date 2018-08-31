@@ -276,7 +276,8 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
     // Ok, it's time to write the file.
     size_t size = 0;
     try {
-        size = writeConfigFile(filename);
+        ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+        size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
         return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
                              + ex.what()));

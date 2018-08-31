@@ -127,7 +127,7 @@ public:
 /// to which it is bound. It is allowed to select multiple addresses on the
 /// particular interface explicitly, e.g. "eth0/192.168.8.1",
 /// "eth0/192.168.8.2".
-class CfgIface : public UserContext, public isc::data::CfgToElement {
+class CfgIface : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Socket type used by the DHCPv4 server.

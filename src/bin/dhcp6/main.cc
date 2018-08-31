@@ -15,6 +15,7 @@
 #include <log/logger_manager.h>
 #include <exceptions/exceptions.h>
 #include <cfgrpt/config_report.h>
+#include <process/daemon.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -22,6 +23,7 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::process;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv6 server
@@ -136,7 +138,7 @@ main(int argc, char* argv[]) {
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);
             CfgMgr::instance().setDefaultLoggerName(DHCP6_ROOT_LOGGER_NAME);
-            Daemon::loggerInit(DHCP6_ROOT_LOGGER_NAME, verbose_mode);
+            isc::process::Daemon::loggerInit(DHCP6_ROOT_LOGGER_NAME, verbose_mode);
 
             // Check the syntax first.
             Parser6Context parser;
@@ -236,7 +238,7 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp6_logger, DHCP6_SHUTDOWN);
 
-    } catch (const isc::dhcp::DaemonPIDExists& ex) {
+    } catch (const isc::process::DaemonPIDExists& ex) {
         // First, we print the error on stderr (that should always work)
         cerr << DHCP6_NAME << " already running? " << ex.what()
              << endl;

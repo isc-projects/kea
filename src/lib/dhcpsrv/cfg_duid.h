@@ -27,7 +27,7 @@ namespace dhcp {
 /// generate. It also allows for overriding entire default DUID or parts of
 /// it via configuration file. This class holds the DUID configuration
 /// specified in the server configuration file.
-class CfgDUID : public UserContext, public isc::data::CfgToElement {
+class CfgDUID : public data::UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Constructor.

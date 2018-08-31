@@ -24,7 +24,7 @@
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
-#include <dhcpsrv/logging_info.h>
+#include <process/config_base.h>
 #include <hooks/hooks_config.h>
 #include <cc/data.h>
 #include <cc/user_context.h>
@@ -41,7 +41,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig : public UserContext, public isc::data::CfgToElement {
+class SrvConfig : public process::ConfigBase {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
@@ -116,25 +116,6 @@ public:
     ///
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const SrvConfig& other);
-
-    /// @name Modifiers and accesors for the configuration objects.
-    ///
-    /// @warning References to the objects returned by accessors are only
-    /// valid during the lifetime of the @c SrvConfig object which
-    /// returned them.
-    ///
-    //@{
-    /// @brief Returns logging specific configuration.
-    const LoggingInfoStorage& getLoggingInfo() const {
-        return (logging_info_);
-    }
-
-    /// @brief Sets logging specific configuration.
-    ///
-    /// @param logging_info New logging configuration.
-    void addLoggingInfo(const LoggingInfo& logging_info) {
-        logging_info_.push_back(logging_info);
-    }
 
     /// @brief Returns non-const pointer to interface configuration.
     ///
@@ -427,9 +408,6 @@ public:
     /// be copied.
     void copy(SrvConfig& new_config) const;
 
-    /// @brief Apply logging configuration to log4cplus.
-    void applyLoggingCfg() const;
-
     /// @name Methods and operators used to compare configurations.
     ///
     //@{
@@ -588,9 +566,6 @@ private:
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
-
-    /// @brief Logging specific information.
-    LoggingInfoStorage logging_info_;
 
     /// @brief Interface configuration.
     ///

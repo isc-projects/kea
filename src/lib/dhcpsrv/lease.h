@@ -32,7 +32,7 @@ typedef boost::shared_ptr<Lease> LeasePtr;
 ///
 /// This structure holds all information that is common between IPv4 and IPv6
 /// leases.
-struct Lease : public UserContext, public isc::data::CfgToElement {
+struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Type of lease or pool
     typedef enum {

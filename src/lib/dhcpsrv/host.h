@@ -239,7 +239,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
 /// Note that the last three operations are mainly required for managing
 /// host reservations which will be implemented later.
-class Host : public UserContext {
+class Host : public data::UserContext {
 public:
 
     /// @brief Type of the host identifier.

@@ -13,6 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <process/logging_info.h>
 #include <stats/stats_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -31,6 +32,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::stats;
+using namespace isc::process;
 using namespace isc;
 
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t

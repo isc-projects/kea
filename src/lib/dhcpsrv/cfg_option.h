@@ -31,7 +31,7 @@ namespace dhcp {
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
 /// (persistent = true).
-class OptionDescriptor : public UserContext {
+class OptionDescriptor : public data::UserContext {
 public:
     /// @brief Option instance.
     OptionPtr option_;
