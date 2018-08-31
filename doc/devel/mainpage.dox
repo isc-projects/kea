@@ -107,6 +107,7 @@
  *
  * @section libraries Kea libraries
  * - @subpage libcc
+ * - @subpage libyang
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
