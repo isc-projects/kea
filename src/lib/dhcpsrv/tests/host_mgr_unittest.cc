@@ -22,7 +22,7 @@
 #endif
 
 #if defined HAVE_CQL
-#include <dhcpsrv/testutils/cql_schema.h>
+#include <cql/testutils/cql_schema.h>
 #endif
 
 #include <gtest/gtest.h>

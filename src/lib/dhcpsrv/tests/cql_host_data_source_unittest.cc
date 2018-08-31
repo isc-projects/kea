@@ -20,12 +20,12 @@
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <cql/cql_connection.h>
+#include <cql/testutils/cql_schema.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/cql_host_data_source.h>
-#include <dhcpsrv/testutils/cql_schema.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
@@ -41,6 +41,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::data;
