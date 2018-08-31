@@ -40,7 +40,11 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+
+#ifdef HAVE_MYSQL
 using namespace isc::db::test;
+#endif
+
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
