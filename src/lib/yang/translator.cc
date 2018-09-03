@@ -143,7 +143,8 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
 
     case SR_LIST_T:
         if (elem->getType() != Element::list) {
-            isc_throw(BadValue, "value for a list called with not a list");
+            isc_throw(BadValue, "value for a list called with not a list: "
+                      << elem->str());
         }
         // Return null.
         break;
@@ -152,63 +153,81 @@ TranslatorBasic::value(ConstElementPtr elem, sr_type_t type) {
     case SR_IDENTITYREF_T:
     case SR_ENUM_T:
         if (elem->getType() != Element::string) {
-            isc_throw(BadValue, "value for a string called with not a string");
+            isc_throw(BadValue,
+                      "value for a string called with not a string: "
+                      << elem->str());
         }
         s_val.reset(new Val(elem->stringValue().c_str(), type));
         break;
 
     case SR_BOOL_T:
         if (elem->getType() != Element::boolean) {
-            isc_throw(BadValue, "value for a boolean called with not a boolean");
+            isc_throw(BadValue,
+                      "value for a boolean called with not a boolean: "
+                      << elem->str());
         }
         s_val.reset(new Val(elem->boolValue(), type));
         break;
 
     case SR_UINT8_T:
         if (elem->getType() != Element::integer) {
-            isc_throw(BadValue, "value for an integer called with not an integer");
+            isc_throw(BadValue,
+                      "value for an integer called with not an integer: "
+                      << elem->str());
         }
         s_val.reset(new Val(static_cast<uint8_t>(elem->intValue()), type));
         break;
 
     case SR_UINT16_T:
         if (elem->getType() != Element::integer) {
-            isc_throw(BadValue, "value for an integer called with not an integer");
+            isc_throw(BadValue,
+                      "value for an integer called with not an integer: "
+                      << elem->str());
         }
         s_val.reset(new Val(static_cast<uint16_t>(elem->intValue()), type));
         break;
 
     case SR_UINT32_T:
         if (elem->getType() != Element::integer) {
-            isc_throw(BadValue, "value for an integer called with not an integer");
+            isc_throw(BadValue,
+                      "value for an integer called with not an integer: "
+                      << elem->str());
         }
         s_val.reset(new Val(static_cast<uint32_t>(elem->intValue()), type));
         break;
 
     case SR_INT8_T:
         if (elem->getType() != Element::integer) {
-            isc_throw(BadValue, "value for an integer called with not an integer");
+            isc_throw(BadValue,
+                      "value for an integer called with not an integer: "
+                      << elem->str());
         }
         s_val.reset(new Val(static_cast<int8_t>(elem->intValue()), type));
         break;
 
     case SR_INT16_T:
         if (elem->getType() != Element::integer) {
-            isc_throw(BadValue, "value for an integer called with not an integer");
+            isc_throw(BadValue,
+                      "value for an integer called with not an integer: "
+                      << elem->str());
         }
         s_val.reset(new Val(static_cast<int16_t>(elem->intValue()), type));
         break;
 
     case SR_INT32_T:
         if (elem->getType() != Element::integer) {
-            isc_throw(BadValue, "value for an integer called with not an integer");
+            isc_throw(BadValue,
+                      "value for an integer called with not an integer: "
+                      << elem->str());
         }
         s_val.reset(new Val(static_cast<int32_t>(elem->intValue()), type));
         break;
 
     case SR_BINARY_T:
         if (elem->getType() != Element::string) {
-            isc_throw(BadValue, "value for a base64 called with not a string");
+            isc_throw(BadValue,
+                      "value for a base64 called with not a string: "
+                      << elem->str());
         }
         s_val.reset(new Val(encode64(elem->stringValue()).c_str(), type));
         break;
