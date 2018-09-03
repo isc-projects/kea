@@ -41,30 +41,33 @@ module kea-logging {
         }
         container output-options {
           description "Output options.";
-          leaf output {
-            type string;
-            description "Type of output. Special values are stdout (standard
-              output), stderr (standard error), syslog (syslog using default
-              name), syslog:name (syslog using specified name). Any other
-              value is interpreted as a filename.";
-          }
-          leaf flush {
-            type boolean;
-            default true;
-            description "When true flush buffers after each message.";
-          }
-          leaf maxsize {
-            type uint32;
-            default 10240000;
-            description "Maximum size of output file before rotation.
-              Values below 204800 including 0 disable rotation.";
-          }
-          leaf maxver {
-            type uint32 {
-              range 1..max;
+          list option {
+            key output;
+            leaf output {
+              type string;
+              description "Type of output. Special values are stdout (standard
+                output), stderr (standard error), syslog (syslog using default
+                name), syslog:name (syslog using specified name). Any other
+                value is interpreted as a filename.";
             }
-            default 1;
-            description "Maximum version to keep a rotated output file.";
+            leaf flush {
+              type boolean;
+              default true;
+              description "When true flush buffers after each message.";
+            }
+            leaf maxsize {
+              type uint32;
+              default 10240000;
+              description "Maximum size of output file before rotation.
+                Values below 204800 including 0 disable rotation.";
+            }
+            leaf maxver {
+              type uint32 {
+                range 1..max;
+              }
+              default 1;
+              description "Maximum version to keep a rotated output file.";
+            }
           }
         }
         leaf debuglevel {

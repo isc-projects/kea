@@ -61,10 +61,7 @@ module kea-control-agent {
       }
    }
 
-   container hooks-libraries {
-     description "Hooks libraries.";
-     uses kea:hooks-libraries;
-   }
+   uses kea:hooks-libraries;
 
    leaf user-context {
      type kea:user-context;

@@ -298,8 +298,8 @@ module kea-dhcp4 {
       type uint32;
       description "Database connection timeout.";
     }
-    leaf-list contact-points {
-      type inet:ip-address;
+    leaf contact-points {
+      type string;
       description "Cassandra database contact points.";
     }
     leaf keyspace {
@@ -676,10 +676,10 @@ module kea-dhcp4 {
       }
       leaf ncr-protocol {
         type enumeration {
-          enum "udp";
-          enum "tcp";
+          enum "UDP";
+          enum "TCP";
         }
-        default "udp";
+        default "UDP";
         description "Protocol to use for DHCP-DDNS.";
       }
       leaf ncr-format {
