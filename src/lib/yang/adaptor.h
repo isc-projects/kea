@@ -7,10 +7,19 @@
 #ifndef ISC_ADAPTOR_H
 #define ISC_ADAPTOR_H 1
 
+#include <exceptions/exceptions.h>
 #include <cc/data.h>
 
 namespace isc {
 namespace yang {
+
+/// @brief Missing key error.
+class MissingKey : public isc::Exception {
+public:
+    MissingKey(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
 
 /// @brief JSON adaptor between canonical Kea and Yang models.
 ///
