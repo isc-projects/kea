@@ -1,3 +1,9 @@
+1448.	[build]*	marcin
+	Created new Kea libraries: libkea-database, libkea-mysql,
+	libkea-pgsql and libkea-cql. Some database specific code was
+	moved from libkea-dhcpsrv to those new libraries.
+	(Gitlab #92,!13, git 5feb6b8a53675c27715e9e8fbeb312bd6eb17547)
+
 1447.	[doc]		tmark
 	Updated Kea Administrators's Guide with discussions of the
 	use of subnet ID parameters in hook library commands.
