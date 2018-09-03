@@ -102,7 +102,7 @@
 // by the relay agent that forwards the packet from client to the server.
 // In this example the host is also assigned vendor specific options.
          {
-             "client-id": "01:11:22:33:44:55:66",
+             "circuit-id": "01:11:22:33:44:55:66",
              "ip-address": "192.0.2.204",
              "option-data": [
                  {
