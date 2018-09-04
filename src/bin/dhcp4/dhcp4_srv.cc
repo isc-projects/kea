@@ -23,7 +23,7 @@
 #include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -162,6 +162,22 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
             alloc_engine->findReservation(*context_);
         }
     }
+
+    // Set KNOWN builtin class if something was found, UNKNOWN if not.
+    if (!context_->hosts_.empty()) {
+        query->addClass("KNOWN");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query->getLabel())
+            .arg("KNOWN");
+    } else {
+        query->addClass("UNKNOWN");
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query->getLabel())
+            .arg("UNKNOWN");
+    }
+
+    // Perform second pass of classification.
+    Dhcpv4Srv::evaluateClasses(query, true);
 
     const ClientClasses& classes = query_->getClasses();
     if (!classes.empty()) {
@@ -353,8 +369,11 @@ Dhcpv4Exchange::setHostIdentifiers() {
                 Host::IdentifierType type = Host::IDENT_FLEX;
                 std::vector<uint8_t> id;
 
-                // Delete previously set arguments
-                callout_handle->deleteAllArguments();
+                // Use the RAII wrapper to make sure that the callout handle state is
+                // reset when this object goes out of scope. All hook points must do
+                // it to prevent possible circular dependency between the callout
+                // handle and its arguments.
+                ScopedCalloutHandleState callout_handle_state(callout_handle);
 
                 // Pass incoming packet as argument
                 callout_handle->setArgument("query4", context_->query_);
@@ -514,8 +533,11 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
         HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // We're reusing callout_handle from previous calls
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
@@ -632,8 +654,11 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
         HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // We're reusing callout_handle from previous calls
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Set new arguments
         callout_handle->setArgument("query4", query);
@@ -756,7 +781,7 @@ Dhcpv4Srv::run_one() {
         // we were interrupted. And we don't want to print a message every
         // second.
 
-    } catch (const SignalInterruptOnSelect) {
+    } catch (const SignalInterruptOnSelect&) {
         // Packet reception interrupted because a signal has been received.
         // This is not an error because we might have received a SIGTERM,
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
@@ -829,8 +854,11 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // Delete previously set arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
@@ -941,8 +969,11 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_receive_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // Delete previously set arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
@@ -1025,11 +1056,11 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
     if (ctx && HooksManager::calloutsPresent(Hooks.hook_index_leases4_committed_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
-
-        // Clear skip flag if it was set in previous callouts
-        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
 
@@ -1108,11 +1139,11 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
     // Execute all callouts registered for pkt4_send
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_send_)) {
 
-        // Delete all previous arguments
-        callout_handle->deleteAllArguments();
-
-        // Clear skip flag if it was set in previous callouts
-        callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the query and response packets within
         // hook library.
@@ -1167,8 +1198,11 @@ Dhcpv4Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
         // Let's execute all callouts registered for buffer4_send
         if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
 
-            // Delete previously set arguments
-            callout_handle->deleteAllArguments();
+            // Use the RAII wrapper to make sure that the callout handle state is
+            // reset when this object goes out of scope. All hook points must do
+            // it to prevent possible circular dependency between the callout
+            // handle and its arguments.
+            ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Enable copying options from the packet within hook library.
             ScopedEnableOptionsCopy<Pkt4> resp4_options_copy(rsp);
@@ -1745,11 +1779,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             .arg(ex.getQuery()->getLabel());
         return;
     }
-    // Copy construct the hostname provided by the client. It is entirely
-    // possible that we will use the hostname option provided by the client
-    // to perform the DNS update and we will send the same option to him to
-    // indicate that we accepted this hostname.
-    OptionStringPtr opt_hostname_resp(new OptionString(*opt_hostname));
+
+    // Stores the value we eventually use, so we can send it back.
+    OptionStringPtr opt_hostname_resp;
 
     // The hostname option may be unqualified or fully qualified. The lab_count
     // holds the number of labels for the name. The number of 1 means that
@@ -1757,7 +1789,6 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     // getLabelCount function treats each name as a fully qualified one).
     // By checking the number of labels present in the hostname we may infer
     // whether client has sent the fully qualified or unqualified hostname.
-
 
     if ((replace_name_mode == D2ClientConfig::RCM_ALWAYS ||
          replace_name_mode == D2ClientConfig::RCM_WHEN_PRESENT)
@@ -1771,17 +1802,28 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         /// point.
         /// For now, we just remain liberal and expect that the DNS will handle
         /// conversion if needed and possible.
-        opt_hostname_resp->setValue(".");
+        opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, "."));
+    } else {
+        // Sanitize the name the client sent us, if we're configured to do so.
+        isc::util::str::StringSanitizerPtr sanitizer = d2_mgr.getD2ClientConfig()
+                                                       ->getHostnameSanitizer();
+        if (sanitizer) {
+            hostname = sanitizer->scrub(hostname);
+        }
 
-    } else if (label_count == 2) {
-        // If there are two labels, it means that the client has specified
-        // the unqualified name. We have to concatenate the unqualified name
-        // with the domain name. The false value passed as a second argument
-        // indicates that the trailing dot should not be appended to the
-        // hostname. We don't want to append the trailing dot because
-        // we don't know whether the hostname is partial or not and some
-        // clients do not handle the hostnames with the trailing dot.
-        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
+        if (label_count == 2) {
+            // If there are two labels, it means that the client has specified
+            // the unqualified name. We have to concatenate the unqualified name
+            // with the domain name. The false value passed as a second argument
+            // indicates that the trailing dot should not be appended to the
+            // hostname. We don't want to append the trailing dot because
+            // we don't know whether the hostname is partial or not and some
+            // clients do not handle the hostnames with the trailing dot.
+            opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME,
+                                                     d2_mgr.qualifyName(hostname, false)));
+        } else {
+            opt_hostname_resp.reset(new OptionString(Option::V4, DHO_HOST_NAME, hostname));
+        }
     }
 
     LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
@@ -2137,21 +2179,32 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Subnet mask (type 1)
         resp->addOption(getNetmaskOption(subnet));
 
-        // renewal-timer (type 58)
-        if (!subnet->getT1().unspecified()) {
+        // rebind timer (type 59) - if specified then send it only it if
+        // it is less than lease lifetime.  Note we "sanity" check T1
+        // and T2 against lease lifetime here in event the lifetime has
+        // been altered somewhere along the line.
+        uint32_t timer_ceiling = lease->valid_lft_;
+        if ((!subnet->getT2().unspecified()) &&
+            (subnet->getT2() <  timer_ceiling)) {
+            OptionUint32Ptr t2(new OptionUint32(Option::V4,
+                                                DHO_DHCP_REBINDING_TIME,
+                                                subnet->getT2()));
+            resp->addOption(t2);
+
+            // If T2 is specified, then it becomes the ceiling for T1
+            timer_ceiling = subnet->getT2();
+        }
+
+        // renewal-timer (type 58) - if specified then send it only if
+        // it is less than the ceiling (T2 if given, lease life time if not)
+        if ((!subnet->getT1().unspecified()) &&
+            (subnet->getT1() <  timer_ceiling)) {
             OptionUint32Ptr t1(new OptionUint32(Option::V4,
                                                 DHO_DHCP_RENEWAL_TIME,
                                                 subnet->getT1()));
             resp->addOption(t1);
         }
 
-        // rebind timer (type 59)
-        if (!subnet->getT2().unspecified()) {
-            OptionUint32Ptr t2(new OptionUint32(Option::V4,
-                                                DHO_DHCP_REBINDING_TIME,
-                                                subnet->getT2()));
-            resp->addOption(t2);
-        }
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
@@ -2647,8 +2700,11 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
         if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_release_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(release);
 
-            // Delete all previous arguments
-            callout_handle->deleteAllArguments();
+            // Use the RAII wrapper to make sure that the callout handle state is
+            // reset when this object goes out of scope. All hook points must do
+            // it to prevent possible circular dependency between the callout
+            // handle and its arguments.
+            ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Enable copying options from the packet within hook library.
             ScopedEnableOptionsCopy<Pkt4> query4_options_copy(release);
@@ -2797,8 +2853,11 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_decline_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(decline);
 
-        // Delete previously set arguments
-        callout_handle->deleteAllArguments();
+        // Use the RAII wrapper to make sure that the callout handle state is
+        // reset when this object goes out of scope. All hook points must do
+        // it to prevent possible circular dependency between the callout
+        // handle and its arguments.
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(decline);
@@ -3186,10 +3245,14 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // All packets belongs to ALL.
     pkt->addClass("ALL");
 
-    // First phase: built-in vendor class processing
+    // First: built-in vendor class processing.
     classifyByVendor(pkt);
 
-    // Run match expressions
+    // Run match expressions on classes not depending on KNOWN/UNKNOWN.
+    evaluateClasses(pkt, false);
+}
+
+void Dhcpv4Srv::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
@@ -3204,6 +3267,10 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
         }
         // Not the right time if only when required
         if ((*it)->getRequired()) {
+            continue;
+        }
+        // Not the right pass.
+        if ((*it)->getDependOnKnown() != depend_on_known) {
             continue;
         }
         // Evaluate the expression which can return false (no match),

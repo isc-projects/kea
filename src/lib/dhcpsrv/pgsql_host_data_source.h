@@ -8,8 +8,8 @@
 #define PGSQL_HOST_DATA_SOURCE_H
 
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/pgsql_connection.h>
-#include <dhcpsrv/pgsql_exchange.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
 namespace isc {
 namespace dhcp {
@@ -53,11 +53,11 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-   PgSqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+   PgSqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     /// Frees database resources and closes the database connection through
@@ -141,30 +141,6 @@ public:
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len);
 
-    /// @brief Return all hosts for the specified HW address or DUID.
-    ///
-    /// This method returns all @c Host objects which represent reservations
-    /// for the specified HW address or DUID. Note, that this method may
-    /// return multiple reservations because a particular client may have
-    /// reservations in multiple subnets and the same client may be identified
-    /// by HW address or DUID. The server is unable to verify that the specific
-    /// DUID and HW address belong to the same client, until the client sends
-    /// a DHCP message.
-    ///
-    /// Specifying both hardware address and DUID is allowed for this method
-    /// and results in returning all objects that are associated with hardware
-    /// address OR duid. For example: if one host is associated with the
-    /// specified hardware address and another host is associated with the
-    /// specified DUID, two hosts will be returned.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
-    ///
-    /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
     ///
@@ -192,24 +168,6 @@ public:
     /// @return Collection of const @c Host objects.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
-
-    /// @brief Returns a host connected to the IPv4 subnet.
-    ///
-    /// Implementations of this method should guard against the case when
-    /// multiple instances of the @c Host are present, e.g. when two
-    /// @c Host objects are found, one for the DUID, another one for the
-    /// HW address. In such case, an implementation of this method
-    /// should throw an MultipleRecords exception.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available.
-    ///
-    /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-         const DuidPtr& duid = DuidPtr()) const;
 
     /// @brief Returns a host connected to the IPv4 subnet.
     ///
@@ -244,24 +202,6 @@ public:
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
-    /// Implementations of this method should guard against the case when
-    /// multiple instances of the @c Host are present, e.g. when two
-    /// @c Host objects are found, one for the DUID, another one for the
-    /// HW address. In such case, an implementation of this method
-    /// should throw an MultipleRecords exception.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid DUID or NULL if not available.
-    ///
-    /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const DuidPtr& duid,
-            const HWAddrPtr& hwaddr = HWAddrPtr()) const;
-
-    /// @brief Returns a host connected to the IPv6 subnet.
-    ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of a buffer containing
@@ -279,7 +219,7 @@ public:
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @return Const @c Host object using a specified HW address or DUID.
+    /// @return Const @c Host object using a specified IPv6 prefix.
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
@@ -316,6 +256,11 @@ public:
     virtual std::string getDescription() const;
 
     /// @brief Returns backend version.
+    ///
+    /// The method is called by the constructor after opening the database
+    /// but prior to preparing SQL statements, to verify that the schema version
+    /// is correct. Thus it must not rely on a pre-prepared statement or
+    /// formal statement execution error checking.
     ///
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" the

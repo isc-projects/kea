@@ -62,6 +62,7 @@ public:
     /// @param opt option
     /// @param persist if true option is always sent.
     /// @param formatted_value option value in the textual format. Default
+    /// @param user_context user context (optional).
     /// value is empty indicating that the value is not set.
     OptionDescriptor(const OptionPtr& opt, bool persist,
                      const std::string& formatted_value = "",

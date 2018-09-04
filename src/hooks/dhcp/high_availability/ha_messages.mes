@@ -1,0 +1,349 @@
+# Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+
+$NAMESPACE isc::ha
+
+% HA_BUFFER4_RECEIVE_FAILED buffer4_receive callout failed: %1
+This error message is issued when the callout for the buffer4_receive hook
+point failed.  This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+% HA_BUFFER4_RECEIVE_NOT_FOR_US %1: dropping query to be processed by another server
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it should be served by another server. This
+is the case when the remote server was designated to process the packet
+as a result of load balancing or because it is a primary server in the
+hot standby configuration. The argument provides client identification
+information retrieved from the query.
+
+% HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED an error upacking an option, caused subsequent options to be skipped: %1
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the DHCPv4 query. The server
+will still attempt to service the packet. The sole argument provides a
+reason for unpacking error.
+
+% HA_BUFFER4_RECEIVE_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+This debug message is issued when received DHCPv4 query is malformed and
+can't be parsed by the buffer4_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+% HA_BUFFER6_RECEIVE_FAILED buffer6_receive callout failed: %1
+This error message is issued when the callout for the buffer6_receive hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+% HA_BUFFER6_RECEIVE_NOT_FOR_US %1: dropping query to be processed by another server
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it should be served by another server. This
+is the case when the remote server was designated to process the packet
+as a result of load balancing or because it is a primary server in the
+hot standby configuration. The argument provides client identification
+information retrieved from the query.
+
+% HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED an error upacking an option, caused subsequent options to be skipped: %1
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the DHCPv6 query. The server
+will still attempt to service the packet. The sole argument provides a
+reason for unpacking error.
+
+% HA_BUFFER6_RECEIVE_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+This debug message is issued when received DHCPv6 query is malformed and
+can't be parsed by the buffer6_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+% HA_COMMAND_PROCESSED_FAILED command_processed callout failed: %1
+This error message is issued when the callout for the command_processed hook
+point failed. The argument contains a reason for the error.
+
+% HA_CONFIGURATION_FAILED failed to configure High Availability hooks library: %1
+This error message is issued when there is an error configuring the HA hooks
+library. The argument provides the detailed error message.
+
+% HA_CONFIGURATION_SUCCESSFUL HA hook library has been successfully configured
+This informational message is issued when the HA hook library configuration
+parser successfully parses and validates the new configuration.
+
+% HA_CONFIG_AUTO_FAILOVER_DISABLED auto-failover disabled for %1
+This warning message is issued to indicate that the 'auto-failover' parameter
+was administratively disabled for the specified server. The server will not
+automatically start serving partner's scope when the partner failure is detected.
+The server administrator will need to enable this scope manually by
+sending appropriate ha-scopes command.
+
+% HA_CONFIG_LEASE_SYNCING_DISABLED lease database synchronization between HA servers is disabled
+This warning message is issued when the lease database synchronization is
+administratively disabled. This is valid configuration if the leases are
+replicated between lease databases via some other mechanism, e.g. SQL
+database replication.
+
+% HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER bypassing SYNCING state because lease database synchronization is administratively disabled
+This informational message is issued as a reminder that lease database
+synchronization is administratively disabled and therefore the server
+transitions directly from the "waiting" to "ready" state.
+
+% HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER unusual configuration where "send-lease-updates": %1 and "sync-leases": %2
+This warning message is issued when the configuration values of the
+send-lease-updates and sync-leases parameters differ. This may be a
+valid configuration but is unusual. Normally, if the lease database
+with replication is in use, both values are set to false. If a lease
+database without replication is in use (e.g. memfile), both values
+are set to true. Providing different values for those parameters means
+that an administrator either wants the server to not synchronize
+leases upon startup but later send lease updates to the partner, or
+the lease database should be synchronized upon startup, but no lease
+updates are later sent as a result of leases allocation.
+
+% HA_CONFIG_LEASE_UPDATES_DISABLED lease updates will not be generated
+This warning message is issued when the lease updates are administratively
+disabled. This is valid configuration if the leases are replicated to the
+partner's database via some other mechanism, e.g. SQL database replication.
+
+% HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER lease updates are administratively disabled and will not be generated while in %1 state
+This informational message is issued as a reminder that the lease updates
+are administratively disabled and will not be issued in the HA state to
+which the server has transitioned. The sole argument specifies the state
+into which the server has transitioned.
+
+% HA_CONTINUE_HANDLER_FAILED ha-continue command failed: %1
+This error message is issued to indicate that the ha-continue command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+% HA_DEINIT_OK unloading High Availability hooks library successful
+This informational message indicates that the High Availability hooks library
+has been unloaded successfully.
+
+% HA_DHCP4_START_SERVICE_FAILED failed to start DHCPv4 HA service in dhcp4_srv_configured callout: %1
+This error message is issued when an attempt to start High Availability service
+for the DHCPv4 server failed in the dhcp4_srv_configured callout. This
+is internal server error and a bug report should be created.
+
+% HA_DHCP6_START_SERVICE_FAILED failed to start DHCPv4 HA service in dhcp6_srv_configured callout: %1
+This error message is issued when an attempt to start High Availability service
+for the DHCPv4 server failed in the dhcp4_srv_configured callout. This
+is internal server error and a bug report should be created.
+
+% HA_DHCP_DISABLE_COMMUNICATIONS_FAILED failed to send request to disable DHCP service of %1: %2
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the dhcp-disable command. The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
+% HA_DHCP_DISABLE_FAILED failed to disable DHCP service of %1: %2
+This warning message indicates that a peer returned an error status code
+in response to a dhcp-disable command.  The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
+% HA_DHCP_ENABLE_COMMUNICATIONS_FAILED failed to send request to enable DHCP service of %1: %2
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the dhcp-enable command. The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
+% HA_DHCP_ENABLE_FAILED failed to enable DHCP service of %1: %2
+This warning message indicates that a peer returned an error status code
+in response to a dhcp-enable command.  The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
+% HA_HEARTBEAT_COMMUNICATIONS_FAILED failed to send heartbeat to %1: %2
+This warning message indicates that there was a problem in communication with a
+HA peer while sending a heartbeat. This is a first sign that the peer may be
+down. The server will keep trying to send heartbeats until it considers that
+communication is interrupted.
+
+% HA_HEARTBEAT_FAILED heartbeat to %1 failed: %2
+This warning message indicates that a peer returned an error status code
+in response to a heartbeat. This is the sign that the peer may not function
+properly. The server will keep trying to send heartbeats until it considers
+that communication is interrupted.
+
+% HA_HEARTBEAT_HANDLER_FAILED heartbeat command failed: %1
+This error message is issued to indicate that the heartbeat command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+% HA_HIGH_CLOCK_SKEW partner's clock is %1, please synchronize clocks!
+This warning message is issued when the clock skew between the active servers
+exceeds 30 seconds. The HA service continues to operate but may not function
+properly, especially for low lease lifetimes. The administrator should
+should synchronize the clocks, e.g. using NTP. If the clock skew exceeds
+60 seconds, the HA service will terminate.
+
+% HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION partner's clock is %1, causing HA service to terminate
+This warning message is issued when the clock skew between the active servers
+exceeds 60 seconds. The HA service stops. The servers will continue to respond
+to the DHCP queries but won't exchange lease updates or send heartbeats.
+The administrator is required to synchronize the clocks and then restart the
+servers to resume the HA service.
+
+% HA_INIT_OK loading High Availability hooks library successful
+This informational message indicates that the High Availability hooks library
+has been loaded successfully.
+
+% HA_LEASES4_COMMITTED_FAILED leases4_committed callout failed: %1
+This error message is issued when the callout for the leases4_committed hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+% HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE %1: leases4_committed callout was invoked without any leases
+This debug message is issued when the "leases4_committed" callout returns
+because there are neither new leases nor deleted leases for which updates
+should be sent. The sole argument specifies the details of the client
+which sent the packet.
+
+% HA_LEASES6_COMMITTED_FAILED leases6_committed callout failed: %1
+This error message is issued when the callout for the leases6_committed hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+% HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE %1: leases6_committed callout was invoked without any leases
+This debug message is issued when the "leases6_committed" callout returns
+because there are neither new leases nor deleted leases for which updates
+should be sent. The sole argument specifies the details of the client
+which sent the packet.
+
+% HA_LEASES_SYNC_COMMUNICATIONS_FAILED failed to communicate with %1 while syncing leases: %2
+This error message is issued to indicate that there was a communication error
+with a partner server while trying to fetch leases from its lease database.
+The argument contains a reason for the error.
+
+% HA_LEASES_SYNC_FAILED failed to synchronize leases with %1: %2
+This error message is issued to indicate that there was a problem while
+parsing a response from the server from which leases have been fetched for
+local database synchronization. The argument contains a reason for the error.
+
+% HA_LEASE_SYNC_FAILED synchronization failed for lease: %1, reason: %2
+This warning message is issued when creating or updating a lease in the
+local lease database fails. The lease information in the JSON format is
+provided as a first argument. The second argument provides a reason for
+the failure.
+
+% HA_LEASE_SYNC_STALE_LEASE4_SKIP skipping stale lease %1 in subnet %2
+This debug message is issued during lease database synchronization, when
+fetched IPv4 lease instance appears to be older than the instance in the
+local database. The newer instance is left in the database and the fetched
+lease is dropped. The remote server will still hold the older lease instance
+until it synchronizes its database with this server. The first argument specifies
+leased address. The second argument specifies a subnet to which the lease
+belongs.
+
+% HA_LEASE_SYNC_STALE_LEASE6_SKIP skipping stale lease %1 in subnet %2
+This debug message is issued during lease database synchronization, when
+fetched IPv6 lease instance appears to be older than the instance in the
+local database. The newer instance is left in the database and the fetched
+lease is dropped. The remote server will still hold the older lease instance
+until it synchronizes its database with this server. The first argument specifies
+leased address. The second argument specifies a subnet to which the lease
+belongs.
+
+% HA_LEASE_UPDATES_DISABLED lease updates will not be sent to the partner while in %1 state
+This informational message is issued to indicate that lease updates will
+not be sent to the partner while the server is in the current state. The
+argument specifies the server's current state name. The lease updates
+are still sent to the backup servers if they are configured but any
+possible errors in communication with the backup servers are ignored.
+
+% HA_LEASE_UPDATES_ENABLED lease updates will be sent to the partner while in %1 state
+This informational message is issued to indicate that lease updates will
+be sent to the partner while the server is in the current state. The
+argument specifies the server's current state name.
+
+% HA_LEASE_UPDATE_COMMUNICATIONS_FAILED %1: failed to communicate with %2: %3
+This warning message indicates that there was a problem in communication with a
+HA peer while processing a DHCP client query and sending lease update. The
+client's DHCP message will be dropped.
+
+% HA_LEASE_UPDATE_FAILED %1: lease update to %2 failed: %3
+This warning message indicates that a peer returned an error status code
+in response to a lease update. The client's DHCP message will be dropped.
+
+% HA_LOAD_BALANCING_DUID_MISSING load balancing failed for the DHCPv6 message (transaction id: %1) because DUID is missing
+This debug message is issued when the HA hook library was unable to load
+balance an incoming DHCPv6 query because neither client identifier nor
+HW address was included in the query. The query will be dropped. The
+sole argument contains transaction id.
+
+% HA_LOAD_BALANCING_IDENTIFIER_MISSING load balancing failed for the DHCPv4 message (transaction id: %1) because HW address and client identifier are missing
+This debug message is issued when the HA hook library was unable to load
+balance an incoming DHCPv4 query because neither client identifier nor
+HW address was included in the query. The query will be dropped. The
+sole argument contains transaction id.
+
+% HA_LOCAL_DHCP_DISABLE local DHCP service is disabled while the %1 is in the %2 state
+This informational message is issued to indicate that the local DHCP service
+is disabled because the server remains in a state in which the server
+should not respond to DHCP clients, e.g. the server hasn't synchronized
+its lease database. The first argument specifies server name. The second
+argument specifies server's state.
+
+% HA_LOCAL_DHCP_ENABLE local DHCP service is enabled while the %1 is in the %2 state
+This informational message is issued to indicate that the local DHCP service
+is enabled because the server remains in a state in which it should
+respond to the DHCP clients. The first argument specifies server name.
+The second argument specifies server's state.
+
+% HA_MISSING_CONFIGURATION high-availability parameter not specified for High Availability hooks library
+This error message is issued to indicate that the configuration for the
+High Availability hooks library hasn't been specified. The 'high-availability'
+parameter must be specified for the hooks library to load properly.
+
+% HA_SCOPES_HANDLER_FAILED ha-scopes command failed: %1
+This error message is issued to indicate that the ha-scopes command handler
+failed while processing the command. The argument provides reason for
+the failure.
+
+% HA_SERVICE_STARTED started high availability service in %1 mode as %2 server
+This informational message is issued when the HA service is started as a result
+of server startup or reconfiguration. The first argument provides the HA mode.
+The second argument specifies the role of this server instance in this
+configuration.
+
+% HA_STATE_MACHINE_CONTINUED state machine is un-paused
+This informational message is issued when the HA state machine is un-paused.
+This unlocks the server from the current state. It may transition to any
+other state if it needs to do so, e.g. 'partner-down' if its partner appears
+to be offline. The server may also remain in the current state if the HA
+setup state warrants such behavior.
+
+% HA_STATE_MACHINE_PAUSED state machine paused in state %1
+This informational message is issued when the HA state machine is paused.
+HA state machine may be paused in certain states specified in the HA hooks library
+confuguration. When the state machine is paused, the server remains in the given
+state until it is explicitly unpaused (via ha-continue command). If the state
+machine is paused, the server operates normally but can't transition to any
+other state.
+
+% HA_STATE_TRANSITION server transitions from %1 to %2 state, partner state is %3
+This informational message is issued when the server transitions to a new
+state as a result of some interaction (or lack of thereof) with its partner.
+The arguments specify initial server state, new server state and the partner's
+state.
+
+% HA_SYNC_FAILED lease database synchronization with %1 failed: %2
+This error message is issued to indicate that the lease database synchronization
+failed. The first argument provides partner server's name. The second argument
+provides a reason for the failure.
+
+% HA_SYNC_HANDLER_FAILED ha-sync command failed: %1
+This error message is issued to indicate that the ha-sync command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+% HA_SYNC_START starting lease database synchronization with %1
+This informational message is issued when the server starts lease database
+synchronization with a partner. The name of the partner is specified with the
+sole argument.
+
+% HA_SYNC_SUCCESSFUL lease database synchronization with %1 completed successfully in %2
+This informational message is issued when the server successfully completed
+lease database synchronization with the partner. The first argument specifies
+the name of the partner server. The second argument specifies the duration of
+the synchronization.
+
+% HA_TERMINATED HA service terminated because of the unacceptable clock skew; fix the problem and restart!
+This error message is issued to indicate that the HA service has been stopped
+due to unacceptable clock skew. The error can be fixed by synchronizing the
+clocks on the active servers and restarting Kea.

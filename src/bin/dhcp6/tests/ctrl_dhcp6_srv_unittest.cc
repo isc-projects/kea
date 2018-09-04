@@ -87,7 +87,7 @@ public:
 };
 
 /// @brief Default control connection timeout.
-const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
+const size_t DEFAULT_CONNECTION_TIMEOUT = 10000;
 
 class CtrlDhcpv6SrvTest : public BaseServerTest {
 public:
@@ -1435,13 +1435,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
 }
 
 // This test verifies that the server signals timeout if the transmission
-// takes too long.
-TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeout) {
+// takes too long, having received a partial command.
+TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
     createUnixChannelServer();
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
-    const unsigned short timeout = 2;
+    const unsigned short timeout = 2000;
     CommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
@@ -1483,9 +1483,58 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeout) {
     th.join();
 
     // Check that the server has signalled a timeout.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Connection over control channel"
-              " timed out\" }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Connection over control channel timed out,"
+              " discarded partial command of 19 bytes\" }", response);
 }
 
+// This test verifies that the server signals timeout if the transmission
+// takes too long, having received no data.
+TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
+    createUnixChannelServer();
+
+    // Set connection timeout to 2s to prevent long waiting time for the
+    // timeout during this test.
+    const unsigned short timeout = 2000;
+    CommandMgr::instance().setConnectionTimeout(timeout);
+
+    // Server's response will be assigned to this variable.
+    std::string response;
+
+    // It is useful to create a thread and run the server and the client
+    // at the same time and independently.
+    std::thread th([this, &response]() {
+
+        // IO service will be stopped automatically when this object goes
+        // out of scope and is destroyed. This is useful because we use
+        // asserts which may break the thread in various exit points.
+        IOServiceWork work(getIOService());
+
+        // Create the client and connect it to the server.
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        // Having sent nothing let's just wait and see if Server times us out.
+        // Let's wait up to 15s for the server's response. The response
+        // should arrive sooner assuming that the timeout mechanism for
+        // the server is working properly.
+        const unsigned int timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout));
+
+        // Explicitly close the client's connection.
+        client->disconnectFromServer();
+    });
+
+    // Run the server until stopped.
+    getIOService()->run();
+
+    // Wait for the thread to return.
+    th.join();
+
+    // Check that the server has signalled a timeout.
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Connection over control channel timed out\" }", response);
+}
 
 } // End of anonymous namespace

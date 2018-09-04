@@ -47,13 +47,25 @@ nodist_libkea_process_la_SOURCES = process_messages.cc process_messages.h
 libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_process_la_LDFLAGS += -no-undefined -version-info 2:0:0
+libkea_process_la_LDFLAGS += -no-undefined -version-info 2:1:0
 
 libkea_process_la_LIBADD  =
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

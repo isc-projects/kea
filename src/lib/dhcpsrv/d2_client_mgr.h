@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,12 +16,14 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <exceptions/exceptions.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
@@ -237,6 +239,12 @@ public:
     ///
     /// If replace-client-name is false and the supplied name is a fully
     /// qualified name, set the server FQDN to the supplied name.
+    ///
+    /// If hostname-char-set is not empty, the inbound name will be
+    /// sanitized.  This is done by iterating over the domain name labels,
+    /// sanitizing each individually, and then concatenating them into a
+    /// new sanitized name.  It is done this way to guard against the case
+    /// where the hostname-char-set does not protect dots from replacement.
     ///
     /// @param fqdn FQDN option from which to get client (inbound) name
     /// @param fqdn_resp FQDN option to update with the adjusted name
@@ -462,9 +470,38 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
         fqdn.getDomainName().empty()) {
         fqdn_resp.setDomainName("", T::PARTIAL);
     } else {
+        // Sanitize the name the client sent us, if we're configured to do so.
+        std::string client_name = fqdn.getDomainName();
+
+        if (d2_client_config_->getHostnameSanitizer()) {
+            // We need the raw text form, so we can replace escaped chars
+            dns::Name tmp(client_name);
+            std::string raw_name = tmp.toRawText();
+
+            // We do not know if the sanitizer's regexp preserves dots, so
+            // we'll scrub it label by label. Yeah, lucky us.
+            // Using boost::split is simpler than using dns::Name::split() as
+            // that returns Names which have trailing dots etc.
+            std::vector<std::string> labels;
+            boost::algorithm::split(labels, raw_name, boost::is_any_of("."));
+            std::stringstream ss;
+            for (auto label = labels.begin(); label != labels.end(); ++label ) {
+                if (label != labels.begin()) {
+                    ss << ".";
+                }
+
+                ss << d2_client_config_->getHostnameSanitizer()->scrub(*label);
+            }
+
+            client_name = ss.str();
+        }
+
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == T::PARTIAL) {
-            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName(),true), T::FULL);
+            fqdn_resp.setDomainName(qualifyName(client_name,true), T::FULL);
+        }
+        else  {
+            fqdn_resp.setDomainName(client_name, T::FULL);
         }
     }
 }

@@ -1,0 +1,187 @@
+<!--
+ - Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-netconf">
+  <title>YANG/NETCONF Support</title>
+
+  <section xml:id="netconf-overview">
+    <title>Overview</title>
+    <para>Kea 1.5.0 introduced an optional support for YANG/NETCONF
+    interface. </para>
+
+    <para>This bare bones documentation is a work in progress. Its
+    current purpose is to let engineers joining the project or perhaps
+    advanced early adopters to get up to speed quickly.</para>
+  </section>
+
+  <section xml:id="netconf-install">
+    <title>Installing NETCONF Dependencies</title>
+
+    <para>Note that to get NETCONF capabilities Kea uses Sysrepo software, which has many
+    dependencies. Unfortunately, many of them are not available as packages, so some need
+    to be compiled manually.</para>
+
+    <para>The following installation instruction was tested on Ubuntu 18.04.</para>
+
+    <para>STEP 1. Install dependencies. Note that some of those dependencies are likely to
+    be present in your system already.
+
+<screen>
+$ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-dev libavl-dev libprotobuf-c-dev protobuf-c-compiler
+</screen>
+
+    </para>
+
+    <para>STEP 2. Install libyang. Download libyang from
+    https://github.com/CESNET/libyang/releases.  As of writing this document, the latest
+    version was 0.15-r1.
+
+<screen>
+    tar zxvf libyang-0.15-r1.tar.gz
+    cd libyang-0.15-r1/
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+</screen>
+
+    For detailed build instructions, see https://github.com/CESNET/libyang/.</para>
+
+    <para>STEP 3. Install syrepo. Download sysrepo from https://github.com/sysrepo/sysrepo/releases.
+    As of writing this document, the 0.7.4 as the latest version.
+
+<screen>
+tar zxvf sysrepo-0.7.4.tar.gz
+cd sysrepo-0.7.4
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug -DGEN_LANGUAGE_BINDINGS=ON -DGEN_CPP_BINDINGS=ON\
+      -DGEN_PYTHON_BINDINGS=OFF -DGEN_LUA_BINDINGS=OFF -DENABLE_TESTS=OFF ..
+make
+sudo make install
+</screen>
+
+For detailed instructions, see Build &amp; Installation Steps Section on the project page
+located at https://github.com/sysrepo/sysrepo.
+</para>
+</section>
+
+  <section>
+    <title>Quick sysrepo overview</title>
+    <para>
+    This section covers a rather brief overview of a subset of available
+    functionality in sysrepo. For more complete document, see sysrepo homepage.
+    You may also want to take a look at
+    <uri xmlns:xlink="http://www.w3.org/1999/xlink"
+         xlink:href="https://github.com/isc-projects/kea-yang">notes made during a series of IETF
+    Hackathons</uri>.
+    </para>
+
+    <para>
+      List currently installed YANG modules:
+<screen>
+  $ sysrepoctl -l
+</screen>
+
+After installation the result should be similar to this:
+<screen>
+Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/
+Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.4/build/repository/data/
+(Do not alter contents of these directories manually)
+
+Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules                    | Enabled Features
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ietf-netconf-notifications | 2012-02-06 | Installed   | root:root           | 666         |                               |
+ietf-netconf               | 2011-06-01 | Imported    |                     |             |                               |
+ietf-netconf-acm           | 2012-02-22 | Imported    |                     |             |                               |
+nc-notifications           | 2008-07-14 | Installed   | root:root           | 666         |                               |
+notifications              | 2008-07-14 | Installed   | root:root           | 666         |                               |
+turing-machine             | 2013-12-27 | Installed   | root:root           | 666         |                               |
+iana-if-type               | 2014-05-08 | Installed   |                     |             |                               |
+ietf-interfaces            | 2014-05-08 | Installed   | root:root           | 666         |                               |
+ietf-ip                    | 2014-06-16 | Installed   |                     |             |                               |
+</screen>
+    </para>
+
+    <para>
+Installing Kea YANG modules. There are two major modules that Kea is able to
+support: kea-dhcp4-server and ietf-dhcp6-server. Note that while there is an
+active effort at DHC working group at IETF to develop an DHCPv6 YANG model,
+similar initiative for DHCPv4 died long time ago. As such, Kea uses IETF model
+for DHCPv6 and its own dedicated model for DHCPv4. Those two models have extra
+models as dependencies. The dependency models are also provided in
+src/lib/libyang/models. To install Kea models, do the following:
+
+<screen>
+cd src/lib/yang/models
+sudo sysrepoctl -i -g kea-dhcpv4-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+sudo sysrepoctl -i -g ietf-dhcpv6-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+</screen>
+
+Note the first -s parameter specifies the location of your YANG schema
+directory. You can check it with sysrepoctl -l. This is a parameter that is
+configured during sysrepo compilation.
+
+
+The installation should look similar to the following:
+<screen>
+$ sudo sysrepoctl -i -g ietf-dhcpv4-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+Installing a new module from file 'ietf-dhcpv4-server.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcpv4-server@2018-07-14.yang'...
+Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-dhcpv4-options'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcpv4-options@2018-07-14.yang'...
+Resolving dependency: 'ietf-dhcpv4-options' imports 'ietf-dhcpv4-types'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcpv4-types@2018-07-14.yang'...
+Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-dhcpv4-types'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcpv4-types@2018-07-14.yang'...
+Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-interfaces'...
+Schema of the module ietf-interfaces is already installed, skipping...
+Installing data files for module 'ietf-dhcpv4-server'...
+Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-dhcpv4-options'...
+Skipping installation of data files for module 'ietf-dhcpv4-options'...
+Resolving dependency: 'ietf-dhcpv4-options' imports 'ietf-dhcpv4-types'...
+Skipping installation of data files for module 'ietf-dhcpv4-types'...
+Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-dhcpv4-types'...
+Skipping installation of data files for module 'ietf-dhcpv4-types'...
+Resolving dependency: 'ietf-dhcpv4-server' imports 'ietf-interfaces'...
+Installing data files for module 'ietf-interfaces'...
+Notifying sysrepo about the change...
+Install operation completed successfully.
+</screen>
+
+You can confirm whether the models are imported correctly by using sysrepoctl -l
+
+<screen>
+$ sysrepoctl -l
+Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/
+Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.4/build/repository/data/
+(Do not alter contents of these directories manually)
+
+Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules                    | Enabled Features
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ietf-netconf-notifications | 2012-02-06 | Installed   | root:root           | 666         |                               |
+ietf-netconf               | 2011-06-01 | Imported    |                     |             |                               |
+ietf-netconf-acm           | 2012-02-22 | Imported    |                     |             |                               |
+nc-notifications           | 2008-07-14 | Installed   | root:root           | 666         |                               |
+notifications              | 2008-07-14 | Installed   | root:root           | 666         |                               |
+turing-machine             | 2013-12-27 | Installed   | root:root           | 666         |                               |
+iana-if-type               | 2014-05-08 | Installed   |                     |             |                               |
+ietf-interfaces            | 2014-05-08 | Installed   | root:root           | 666         |                               |
+ietf-ip                    | 2014-06-16 | Installed   |                     |             |                               |
+kea-dhcpv4-server          | 2018-07-14 | Installed   | root:root           | 666         |                               |
+ietf-dhcpv4-options        | 2018-07-14 | Imported    |                     |             |                               |
+ietf-dhcpv4-types          | 2018-07-14 | Imported    |                     |             |                               |
+ietf-dhcpv6-server         | 2018-03-04 | Installed   | root:root           | 666         |                               |
+ietf-dhcpv6-options        | 2018-03-04 | Imported    |                     |             |                               |
+ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |             |                               |
+</screen>
+</para>
+
+  </section>
+</chapter>

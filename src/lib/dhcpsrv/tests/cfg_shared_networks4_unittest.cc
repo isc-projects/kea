@@ -109,12 +109,14 @@ TEST(CfgSharedNetworks4Test, duplicateName) {
 TEST(CfgSharedNetworks4Test, unparse) {
     SharedNetwork4Ptr network1(new SharedNetwork4("frog"));
     SharedNetwork4Ptr network2(new SharedNetwork4("dog"));
-
     network1->setIface("eth0");
     network1->addRelayAddress(IOAddress("198.16.1.1"));
     network1->addRelayAddress(IOAddress("198.16.1.2"));
 
     network2->setIface("eth1");
+    network2->setT1(Triplet<uint32_t>(100));
+    network2->setT2(Triplet<uint32_t>(200));
+    network2->setValid(Triplet<uint32_t>(300));
 
     CfgSharedNetworks4 cfg;
     ASSERT_NO_THROW(cfg.add(network1));
@@ -126,25 +128,22 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": true,\n"
         "    \"name\": \"dog\",\n"
+        "    \"rebind-timer\": 200,\n"
         "    \"option-data\": [ ],\n"
-        "    \"rebind-timer\": 0,\n"
+        "    \"renew-timer\": 100,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
-        "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
         "    \"subnet4\": [ ],\n"
-        "    \"valid-lifetime\": 0\n"
+        "    \"valid-lifetime\": 300\n"
         "  },\n"
         "  {\n"
         "    \"interface\": \"eth0\",\n"
         "    \"match-client-id\": true,\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
-        "    \"rebind-timer\": 0,\n"
         "    \"relay\": { \"ip-addresses\": [ \"198.16.1.1\", \"198.16.1.2\" ] },\n"
-        "    \"renew-timer\": 0,\n"
         "    \"reservation-mode\": \"all\","
-        "    \"subnet4\": [ ],\n"
-        "    \"valid-lifetime\": 0\n"
+        "    \"subnet4\": [ ]\n"
         "  }\n"
         "]\n";
 

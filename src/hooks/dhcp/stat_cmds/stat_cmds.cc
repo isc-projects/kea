@@ -310,6 +310,8 @@ LeaseStatCmdsImpl::getParameters(const ConstElementPtr& cmd_args) {
     Parameters params;
 
     params.select_mode_ = LeaseStatsQuery::ALL_SUBNETS;
+    params.first_subnet_id_ = 0;
+    params.last_subnet_id_ = 0;
     if (!cmd_args ) {
         // No arguments defaults to ALL_SUBNETS.
         return (params);

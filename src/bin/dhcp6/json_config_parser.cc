@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <database/dbaccess_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
@@ -23,7 +24,6 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -33,6 +33,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
+#include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
@@ -419,6 +420,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
         SrvConfigPtr srv_config = CfgMgr::instance().getStagingCfg();
 
+        // Preserve all scalar global parameters
+        srv_config->extractConfiguredGlobals(config_set);
+
         // Set all default values if not specified by the user.
         SimpleParser6::setAllDefaults(mutable_cfg);
 
@@ -499,6 +503,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "sanity-checks") {
+                SanityChecksParser parser;
+                parser.parse(*srv_config, config_pair.second);
+                continue;
+            }
+
             if (config_pair.first == "expired-leases-processing") {
                 ExpirationConfigParser parser;
                 parser.parse(config_pair.second);
@@ -532,25 +542,31 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DBType::LEASE_DB);
+                db::DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setLeaseDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DBType::HOSTS_DB);
+                db::DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setHostDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-databases") {
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                DbAccessParser parser(DBType::HOSTS_DB);
+                db::DbAccessParser parser;
                 auto list = config_pair.second->listValue();
                 for (auto it : list) {
-                    parser.parse(cfg_db_access, it);
+                    std::string access_string;
+                    parser.parse(access_string, it);
+                    cfg_db_access->setHostDbAccessString(access_string);
                 }
                 continue;
             }
@@ -576,6 +592,17 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 // We also need to put the subnets it contains into normal
                 // subnets list.
                 global_parser.copySubnets6(srv_config->getCfgSubnets6(), cfg);
+                continue;
+            }
+
+            if (config_pair.first == "reservations") {
+                HostCollection hosts;
+                HostReservationsListParser<HostReservationParser6> parser;
+                parser.parse(SUBNET_ID_GLOBAL, config_pair.second, hosts);
+                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
+                    srv_config->getCfgHosts()->add(*h);
+                }
+
                 continue;
             }
 

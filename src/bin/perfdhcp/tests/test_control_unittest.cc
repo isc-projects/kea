@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/pkt4.h>
 #include <dhcp/iface_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -91,8 +92,8 @@ public:
     void setRelativeDueTimes(const int send_secs, const int renew_secs = 0,
                              const int release_secs = 0) {
         ptime now = microsec_clock::universal_time();
-	// Use now to avoid unused but set warning
-	ASSERT_FALSE(now.is_special());
+        // Use now to avoid unused but set warning
+        ASSERT_FALSE(now.is_special());
         basic_rate_control_.setRelativeDue(send_secs);
         renew_rate_control_.setRelativeDue(renew_secs);
         release_rate_control_.setRelativeDue(release_secs);
@@ -121,6 +122,7 @@ public:
     using TestControl::registerOptionFactories;
     using TestControl::reset;
     using TestControl::sendDiscover4;
+    using TestControl::sendRequest4;
     using TestControl::sendPackets;
     using TestControl::sendMultipleRequests;
     using TestControl::sendMultipleMessages6;
@@ -136,6 +138,11 @@ public:
     using TestControl::macaddr_gen_;
     using TestControl::first_packet_serverid_;
     using TestControl::interrupted_;
+    using TestControl::testDiags;
+    using TestControl::template_packets_v4_;
+    using TestControl::template_packets_v6_;
+    using TestControl::ack_storage_;
+    using TestControl::sendRequestFromAck;
 
     NakedTestControl() : TestControl() {
         uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
@@ -461,12 +468,13 @@ public:
     /// \param iterations_num number of exchanges to simulate.
     /// \param receive_num number of received OFFER packets.
     /// \param iterations_performed actual number of iterations.
+    /// \param tc test control instance
     void testPkt4Exchange(int iterations_num,
                           int receive_num,
                           bool use_templates,
-                          int& iterations_performed) const {
+                          int& iterations_performed,
+                          NakedTestControl& tc) const {
         int sock_handle = 0;
-        NakedTestControl tc;
         tc.initializeStatsMgr();
 
         // Use templates files to crate packets.
@@ -525,12 +533,13 @@ public:
     /// \param iterations_num number of exchanges to simulate.
     /// \param receive_num number of received OFFER packets.
     /// \param iterations_performed actual number of iterations.
+    /// \param tc test control instance
     void testPkt6Exchange(int iterations_num,
                           int receive_num,
                           bool use_templates,
-                          int& iterations_performed) const {
+                          int& iterations_performed,
+                          NakedTestControl& tc) const {
         int sock_handle = 0;
-        NakedTestControl tc;
         tc.initializeStatsMgr();
 
         // Use templates files to crate packets.
@@ -1062,6 +1071,38 @@ public:
 
     }
 
+    /// @brief check if v4 options 200 and 201 are present.
+    ///
+    /// The options are expected to have specific format, as if parameters
+    /// -o 200,abcdef1234, -o 201,00 were passed to the command line.
+    void checkOptions20x(const Pkt4Ptr& pkt) {
+        ASSERT_TRUE(pkt);
+        OptionPtr opt = pkt->getOption(200);
+        ASSERT_TRUE(opt);
+        EXPECT_TRUE(opt->getUniverse() == Option::V4);
+        EXPECT_EQ(opt->toText(), "type=200, len=005: ab:cd:ef:12:34");
+
+        opt = pkt->getOption(201);
+        ASSERT_TRUE(opt);
+        EXPECT_EQ(opt->toText(), "type=201, len=001: 00");
+    }
+
+    /// @brief check if v6 options 200 and 201 are present.
+    ///
+    /// The options are expected to have specific format, as if parameters
+    /// -o 200,abcdef1234, -o 201,00 were passed to the command line.
+    void checkOptions20x(const Pkt6Ptr& pkt) {
+        ASSERT_TRUE(pkt);
+        OptionPtr opt = pkt->getOption(200);
+        ASSERT_TRUE(opt);
+        EXPECT_TRUE(opt->getUniverse() == Option::V6);
+        EXPECT_EQ(opt->toText(), "type=00200, len=00005: ab:cd:ef:12:34");
+
+        opt = pkt->getOption(201);
+        ASSERT_TRUE(opt);
+        EXPECT_EQ(opt->toText(), "type=00201, len=00001: 00");
+    }
+
 };
 
 // This test verifies that the class members are reset to expected values.
@@ -1472,7 +1513,8 @@ TEST_F(TestControlTest, Packet4Exchange) {
     // following variable.
     int iterations_performed = 0;
     bool use_templates = false;
-    testPkt4Exchange(iterations_num, iterations_num, use_templates, iterations_performed);
+    NakedTestControl tc;
+    testPkt4Exchange(iterations_num, iterations_num, use_templates, iterations_performed, tc);
     // The command line restricts the number of iterations to 10
     // with -n 10 parameter.
     EXPECT_EQ(10, iterations_performed);
@@ -1492,7 +1534,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     // will be reached.
     const int received_num = 10;
     use_templates = true;
-    testPkt4Exchange(iterations_num, received_num, use_templates, iterations_performed);
+    testPkt4Exchange(iterations_num, received_num, use_templates, iterations_performed, tc);
     EXPECT_EQ(12, iterations_performed);
 }
 
@@ -1515,8 +1557,9 @@ TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
+    NakedTestControl tc;
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed);
+                     iterations_performed, tc);
     // Actual number of iterations should be 10.
     EXPECT_EQ(10, iterations_performed);
 
@@ -1541,7 +1584,7 @@ TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // to simulate the IPv6 address acquisition and to verify that the
     // IA_NA options returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, received_num, use_templates,
-                     iterations_performed);
+                     iterations_performed, tc);
     EXPECT_EQ(6, iterations_performed);
 }
 
@@ -1575,8 +1618,9 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // parameter (10 in this case). All exchanged packets carry the IA_NA option
     // to simulate the IPv6 address acquisition and to verify that the IA_NA
     // options returned by the server are processed correctly.
+    NakedTestControl tc;
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed);
+                     iterations_performed, tc);
     // Actual number of iterations should be 10.
     EXPECT_EQ(10, iterations_performed);
 }
@@ -1611,8 +1655,9 @@ TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
     // parameter (10 in this case). All exchanged packets carry the IA_PD option
     // to simulate the Prefix Delegation and to verify that the IA_PD options
     // returned by the server are processed correctly.
+    NakedTestControl tc;
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed);
+                     iterations_performed, tc);
     // Actual number of iterations should be 10.
     EXPECT_EQ(10, iterations_performed);
 }
@@ -1647,8 +1692,9 @@ TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
     // or IA_PD options to simulate the address and prefix acquisition with
     // the single message and to verify that the IA_NA and IA_PD options
     // returned by the server are processed correctly.
+    NakedTestControl tc;
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed);
+                     iterations_performed, tc);
     // Actual number of iterations should be 10.
     EXPECT_EQ(10, iterations_performed);
 }
@@ -1888,5 +1934,127 @@ TEST_F(TestControlTest, getCurrentTimeoutRenewRelease) {
     tc.setRelativeDueTimes(5, 8, 9);
     EXPECT_GT(tc.getCurrentTimeout(), 0);
     EXPECT_LE(tc.getCurrentTimeout(), 5000000);
+
+}
+
+// Test checks if sendDiscover really includes custom options
+TEST_F(TestControlTest, sendDiscoverExtraOpts) {
+
+    // Important paramters here:
+    // -xT - save first packet of each type for templates (useful for packet inspection)
+    // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
+    // -o 201,00 - send option 201 with hex content: 00
+    std::string loopback(getLocalLoopback());
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -4 -l " + loopback
+                    + " -xT -L 10068 -o 200,abcdef1234 -o 201,00 -r 1 127.0.0.1"));
+
+    // Create test control and set up some basic defaults.
+    NakedTestControl tc;
+    tc.initializeStatsMgr();
+    tc.registerOptionFactories();
+    NakedTestControl::IncrementalGeneratorPtr gen(new NakedTestControl::IncrementalGenerator());
+    tc.setTransidGenerator(gen);
+
+    // Socket is needed to send packets through the interface.
+    int sock_handle = 0;
+    ASSERT_NO_THROW(sock_handle = tc.openSocket());
+    TestControl::TestControlSocket sock(sock_handle);
+
+    // Make tc send the packet. The first packet of each type is saved in templates.
+    ASSERT_NO_THROW(tc.sendDiscover4(sock));
+
+    // Let's find the packet and see if it includes the right option.
+    auto pkt_it = tc.template_packets_v4_.find(DHCPDISCOVER);
+    ASSERT_TRUE(pkt_it != tc.template_packets_v4_.end());
+
+    checkOptions20x(pkt_it->second);
+}
+
+// Test checks if regular packet exchange inserts the extra v4 options
+// specified on command line.
+TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
+
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback(getLocalLoopback());
+    if (loopback.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test." << std::endl;
+        return;
+    }
+
+    // Important paramters here:
+    // -xT - save first packet of each type for templates (useful for packet inspection)
+    // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
+    // -o 201,00 - send option 201 with hex content: 00
+    const int iterations_num = 1;
+    processCmdLine("perfdhcp -l " + loopback + " -4 " +
+                   "-o 200,abcdef1234 -o 201,00 " +
+                   "-r 100 -n 10 -R 20 -xT -L 10547 127.0.0.1");
+
+    int iterations_performed = 0;
+    NakedTestControl tc;
+    tc.registerOptionFactories();
+
+    // Do the actual exchange.
+    testPkt4Exchange(iterations_num, iterations_num, false, iterations_performed, tc);
+    EXPECT_EQ(1, iterations_performed);
+
+    // Check if Discover was recored and if it contains options 200 and 201.
+    auto disc = tc.template_packets_v4_.find(DHCPDISCOVER);
+    ASSERT_TRUE(disc != tc.template_packets_v4_.end());
+    checkOptions20x(disc->second);
+
+    // Check if Request was recored and if it contains options 200 and 201.
+    auto req = tc.template_packets_v4_.find(DHCPREQUEST);
+    ASSERT_TRUE(req != tc.template_packets_v4_.end());
+    checkOptions20x(req->second);
+}
+
+// Test checks if regular packet exchange inserts the extra v6 options
+// specified on command line.
+TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback(getLocalLoopback());
+    if (loopback.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    // Important paramters here:
+    // -xT - save first packet of each type for templates (useful for packet inspection)
+    // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
+    // -o 201,00 - send option 201 with hex content: 00
+    const int iterations_num = 1;
+    processCmdLine("perfdhcp -l " + loopback
+                   + " -6 -e address-only"
+                   + " -xT -o 200,abcdef1234 -o 201,00 "
+                   + " -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument.
+    // First packet of each type is recorded as a template packet. The check
+    // inspects this template to see if the expected options are really there.
+    NakedTestControl tc;
+    testPkt6Exchange(iterations_num, iterations_num, false,
+                     iterations_performed, tc);
+
+    // Check if Solicit was recored and if it contains options 200 and 201.
+    auto sol = tc.template_packets_v6_.find(DHCPV6_SOLICIT);
+    ASSERT_TRUE(sol != tc.template_packets_v6_.end());
+    checkOptions20x(sol->second);
+
+    // Check if Request was recored and if it contains options 200 and 201.
+    auto req = tc.template_packets_v6_.find(DHCPV6_REQUEST);
+    ASSERT_TRUE(req != tc.template_packets_v6_.end());
+    checkOptions20x(req->second);
 
 }

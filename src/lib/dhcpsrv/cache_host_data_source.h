@@ -25,7 +25,7 @@ public:
     /// Similar to @c add() but with a different purpose.
     ///
     /// @param host Pointer to the new @c Host object being inserted.
-    /// @param] overwrite false if doing nothing in case of conflicts
+    /// @param overwrite false if doing nothing in case of conflicts
     /// (and returning 1), true if removing conflicting entries
     /// (and returning their number).
     /// @return number of conflicts limited to one if overwrite is false.

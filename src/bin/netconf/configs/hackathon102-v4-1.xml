@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+  <server xmlns="urn:ietf:params:xml:ns:yang:ietf-dhcpv4-server">
+    <server-config>
+      <serv-attributes>
+	<name />
+	<description />
+	<ipv4-address>192.0.2.1</ipv4-address>
+	<!-- <interfaces-config /> -->
+	<vendor-info>
+	  <ent-num>1234</ent-num>
+	  <data>why is vendor-info mandatory?</data>
+	</vendor-info>
+
+      </serv-attributes>
+      <option-sets>
+	<option-set>
+	    <option-set-id>1</option-set-id>
+
+	    <router-option>
+		    <router>
+			    <router-id>1</router-id>
+			    <router-addr>198.51.100.254</router-addr>
+		    </router>
+	    </router-option>
+
+	    <domain-server-option>
+		    <domain-server>
+			    <domain-server-id>1</domain-server-id>
+			    <domain-server-addr>198.51.100.1</domain-server-addr>
+		    </domain-server>
+		    <domain-server>
+			    <domain-server-id>2</domain-server-id>
+			    <domain-server-addr>198.51.100.2</domain-server-addr>
+		    </domain-server>
+	    </domain-server-option>
+
+	    <broadcast-option>
+		    <broadcast-addr>198.51.100.255</broadcast-addr>
+	    </broadcast-option>
+
+	    <domain-search-option>
+		    <domain-search>
+			    <domain-search-id>1</domain-search-id>
+			    <domain-search-entry>example.net</domain-search-entry>
+		    </domain-search>
+		    <domain-search>
+			    <domain-search-id>2</domain-search-id>
+			    <domain-search-entry>sub.example.net</domain-search-entry>
+		    </domain-search>
+	    </domain-search-option>
+
+	</option-set>
+
+      </option-sets>
+      <network-ranges>
+	<option-set-id>1</option-set-id>
+	<network-range>
+	  <network-range-id>1</network-range-id>
+	  <network-description />
+	  <network-prefix>198.51.100.0/24</network-prefix>
+	  <option-set-id>1</option-set-id>
+	  <address-pools>
+		  <address-pool>
+			  <pool-id>1</pool-id>
+			  <pool-prefix>198.51.100.0/24</pool-prefix>
+			  <start-address>198.51.100.100</start-address>
+			  <end-address>198.51.100.200</end-address>
+			  <renew-time>3600</renew-time>
+			  <rebind-time>3600</rebind-time>
+			  <max-address-count>50</max-address-count>
+			  <option-set-id>1</option-set-id>
+		  </address-pool>
+	  </address-pools>
+	  <host-reservations>
+		  <host-reservation>
+			  <cli-id>1</cli-id>
+			  <hardware-address>00:53:00:00:00:00</hardware-address>
+			  <reserv-addr>198.51.100.210</reserv-addr>
+			  <hostname>host1.example.net</hostname>
+		  </host-reservation>
+	  </host-reservations>
+	</network-range>
+      </network-ranges>
+    </server-config>
+  </server>

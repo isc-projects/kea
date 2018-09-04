@@ -96,6 +96,32 @@
            } ],
          "subnet": "2001:db8:4::/64",
          "interface": "ethY"
+    },
+// This subnet is divided in two pools for unknown and known
+// (i.e. which have a reservation) clients. The built-in KNOWN and
+// UNKNOWN classes are set or not at host reservation lookup (KNOWN if
+// this returns something, UNKNOWN if this finds nothing) and client
+//classes depending on it are evaluated.
+// This happens after subnet selection and before address allocation
+//from pools.
+    {
+        "pools": [
+            {
+               "pool": "2001:db8:8::/64",
+               "client-class": "UNKNOWN"
+            },
+            {
+               "pool": "2001:db8:9::/64",
+               "client-class": "KNOWN"
+           }
+        ],
+        "subnet": "2001:db8:8::/46",
+        "reservations": [
+            {  "hw-address": "00:00:00:11:22:33", "hostname": "h1" },
+            {  "hw-address": "00:00:00:44:55:66", "hostname": "h4" },
+            {  "hw-address": "00:00:00:77:88:99", "hostname": "h7" },
+            {  "hw-address": "00:00:00:aa:bb:cc", "hostname": "ha" }
+        ]
     }
 
   ]

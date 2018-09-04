@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,17 +11,10 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <botan/version.h>
-#include <botan/botan.h>
 #include <botan/hmac.h>
-#include <botan/hash.h>
-#include <botan/types.h>
+#include <botan/lookup.h>
 
 #include <cryptolink/botan_common.h>
-
-#if BOTAN_VERSION_CODE < BOTAN_VERSION_CODE_FOR(1,11,0)
-#define secure_vector SecureVector
-#endif
 
 namespace isc {
 namespace cryptolink {
@@ -44,7 +37,6 @@ public:
         try {
             const std::string& name =
                 btn::getHashAlgorithmName(hash_algorithm);
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,11,0)
             std::unique_ptr<Botan::HashFunction> hash_ptr =
                 Botan::HashFunction::create(name);
             if (hash_ptr) {
@@ -52,9 +44,6 @@ public:
             } else {
                 throw Botan::Algorithm_Not_Found(name);
             }
-#else
-            hash = Botan::get_hash(name);
-#endif
         } catch (const Botan::Algorithm_Not_Found&) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
@@ -70,15 +59,7 @@ public:
         try {
             // use a temp var so we don't have blocks spanning
             // preprocessor directives
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
             size_t block_length = hash->hash_block_size();
-#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
-            size_t block_length = hash->HASH_BLOCK_SIZE;
-#else
-#error "Unsupported Botan version (need 1.8 or higher)"
-            // added to suppress irrelevant compiler errors
-            size_t block_length = 0;
-#endif
             if (secret_len > block_length) {
                 Botan::secure_vector<Botan::byte> hashed_key =
                     hash->process(static_cast<const Botan::byte*>(secret),
@@ -113,15 +94,7 @@ public:
     ///
     /// @return output size of the digest
     size_t getOutputLength() const {
-#if BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,9,0)
         return (hmac_->output_length());
-#elif BOTAN_VERSION_CODE >= BOTAN_VERSION_CODE_FOR(1,8,0)
-        return (hmac_->OUTPUT_LENGTH);
-#else
-#error "Unsupported Botan version (need 1.8 or higher)"
-        // added to suppress irrelevant compiler errors
-        return 0;
-#endif
     }
 
     /// @brief Add data to digest

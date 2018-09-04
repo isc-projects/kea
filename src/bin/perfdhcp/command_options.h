@@ -9,6 +9,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <dhcp/option.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -337,6 +338,11 @@ public:
     /// \return wrapped command (start/stop).
     std::string getWrapped() const { return wrapped_; }
 
+    /// @brief Returns extra options to be inserted.
+    ///
+    /// @return container with options
+    const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
+
     /// \brief Returns server name.
     ///
     /// \return server name.
@@ -637,6 +643,9 @@ private:
 
     /// Indicates how many DHCPv6 relay agents are simulated.
     uint8_t v6_relay_encapsulation_level_;
+
+    /// @brief Extra options to be sent in each packet.
+    isc::dhcp::OptionCollection extra_opts_;
 };
 
 }  // namespace perfdhcp

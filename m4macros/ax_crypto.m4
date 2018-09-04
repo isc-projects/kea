@@ -24,6 +24,49 @@ AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
     IFS="$IFS_SAVED"
 ])
 
+AC_DEFUN([ACX_TRY_BOTAN1_TOOL], [
+    TOOL=$1
+    TOOL_ARG=$2
+    BOTAN1_TOOL=""
+    ACX_CHECK_PROG_NONCACHE([BOTAN1_TOOL], [${TOOL}])
+    AC_MSG_CHECKING([usability of ${TOOL} ${TOOL_ARG}])
+    if test "$BOTAN1_TOOL" != "" ; then
+        if test -x ${BOTAN1_TOOL}; then
+            CRYPTO_LIBS=`$BOTAN1_TOOL $TOOL_ARG --libs`
+            LIBS_SAVED=${LIBS}
+            LIBS="$LIBS $CRYPTO_LIBS"
+            CRYPTO_INCLUDES=`$BOTAN1_TOOL $TOOL_ARG --cflags`
+            CPPFLAGS_SAVED=${CPPFLAGS}
+            CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
+            #AC_MSG_RESULT([found])
+            AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <botan/botan.h>
+                                  #include <botan/init.h>
+                                  #include <botan/hash.h>
+                                 ],
+                                 [using namespace Botan;
+                                  LibraryInitializer::initialize();
+                                  HashFunction *h = get_hash("MD5");
+                                 ])],
+                [ AC_MSG_RESULT([ok])
+                  $3
+                ],
+                [ AC_MSG_RESULT([not usable]) ]
+            )
+            LIBS=${LIBS_SAVED}
+            CPPFLAGS=${CPPFLAGS_SAVED}
+        else
+            AC_MSG_RESULT([not executable])
+        fi
+    else
+        AC_MSG_RESULT([not found])
+    fi
+    BOTAN1_TOOL=""
+    AC_SUBST(BOTAN1_TOOL)
+    ]
+)
+# End of ACX_TRY_BOTAN1_TOOL
+
 AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
     TOOL=$1
     TOOL_ARG=$2
@@ -40,13 +83,9 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
             CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
             #AC_MSG_RESULT([found])
             AC_LINK_IFELSE(
-                [AC_LANG_PROGRAM([#include <botan/botan.h>
-                                  #include <botan/init.h>
-                                  #include <botan/hash.h>
-                                 ],
+                [AC_LANG_PROGRAM([#include <botan/lookup.h>],
                                  [using namespace Botan;
-                                  LibraryInitializer::initialize();
-                                  HashFunction *h = get_hash("MD5");
+                                  HashFunction *h = HashFunction::create("MD5").release();
                                  ])],
                 [ AC_MSG_RESULT([ok])
                   $3
@@ -74,7 +113,7 @@ AC_DEFUN([AX_CRYPTO], [
 # Unless --with-botan-config is given, we first try to find these config
 # scripts ourselves. Unfortunately, on some systems, these scripts do not
 # provide the correct implementation, so for each script found, we try
-# a compilation test (ACX_TRY_BOTAN_TOOL). If none are found, or none of
+# a compilation test (ACX_TRY_BOTAN[1]_TOOL). If none are found, or none of
 # them work, we see if pkg-config is available. If so, we try the several
 # potential pkg-config .pc files. Again, on some systems, these can return
 # incorrect information as well, so the try-compile test is repeated for
@@ -111,45 +150,73 @@ elif test "${botan_config}" != "yes" ; then
         if test -d "${botan_config}" ; then
             AC_MSG_ERROR([${botan_config} is a directory])
         else
-            BOTAN_CONFIG="${botan_config}"
+            BOTAN1_CONFIG="${botan_config}"
         fi
     else
         AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
     fi
+    # determine Botan major version
+    BOTAN_CONFIG="${BOTAN1_CONFIG}"
+    cat > conftest.cpp << EOF
+#include <botan/version.h>
+MAJOR_VERSION=BOTAN_VERSION_MAJOR
+EOF
+    CRYPTO_INCLUDES=`$BOTAN1_CONFIG --cflags`
+    MAJOR_VERSION=`$CXX -E $CXXFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^MAJOR_VERSION=' | $SED -e 's/MAJOR_VERSION=//' -e 's/[[     ]]//g' -e 's/"//g' 2> /dev/null`
+    if test "x${MAJOR_VERSION}" = "x2"; then
+        BOTAN1_CONFIG=""
+    fi
+    $RM -f conftest.cpp
 else
     BOTAN_CONFIG=""
+    BOTAN1_CONFIG=""
     # first try several possible names of the config script
-    # (botan-config-1.8 is there just in case, the official name change
+    # (botan-config-1.9 is there just in case, the official name change
     # came later)
-    BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
-    for botan_config in $BOTAN_CONFIG_VERSIONS; do
-        ACX_TRY_BOTAN_TOOL([$botan_config],,
-                           [ BOTAN_CONFIG="$botan_config"  ]
-                          )
-        if test "$BOTAN_CONFIG" != "" ; then
+    BOTAN1_CONFIG_VERSIONS="botan-config-1.11 botan-config-1.10 botan-config-1.9 botan-config"
+    for botan1_config in $BOTAN1_CONFIG_VERSIONS; do
+        ACX_TRY_BOTAN1_TOOL([$botan1_config],,
+                            [ BOTAN1_CONFIG="$botan1_config"  ]
+                           )
+        if test "$BOTAN1_CONFIG" != "" ; then
+            BOTAN_CONFIG="${BOTAN1_CONFIG}"
             break
         fi
     done
-    if test "$BOTAN_CONFIG" = "" ; then
-        AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-        if test "$PKG_CONFIG" != "" ; then
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+    if test "$PKG_CONFIG" != "" ; then
+        if test "$BOTAN1_CONFIG" = "" ; then
             # Ok so no script found, see if pkg-config knows of it.
             # Unfortunately, the botan.pc files also have their minor version
             # in their name, so we need to try them one by one
-            BOTAN_VERSIONS="botan-2 botan-1.11 botan-1.10 botan-1.9 botan-1.8"
+            BOTAN1_VERSIONS="botan-1.11 botan-1.10 botan-1.9 botan-1.8"
+            for version in $BOTAN1_VERSIONS; do
+                ACX_TRY_BOTAN1_TOOL([pkg-config],
+                                    ["$version --silence-errors"],
+                                    [ BOTAN1_CONFIG="$PKG_CONFIG $version" ]
+                                   )
+                if test "$BOTAN1_CONFIG" != "" ; then
+                    BOTAN_CONFIG="${BOTAN1_CONFIG}"
+                    break
+                fi
+            done
+        fi
+        if test "$BOTAN_CONFIG" = "" ; then
+            # Retry with Botan2
+            BOTAN_VERSIONS="botan-2"
             for version in $BOTAN_VERSIONS; do
                 ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
                                    [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
                                   )
-            if test "$BOTAN_CONFIG" != "" ; then
-                break
-            fi
+                if test "$BOTAN_CONFIG" != "" ; then
+                    break
+                fi
             done
         fi
     fi
 fi
 
-if test "x${BOTAN_CONFIG}" != "x"
+if test "$BOTAN_CONFIG" != ""
 then
     CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
     CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
@@ -175,7 +242,7 @@ then
 AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
 EOF
 
-   CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+   CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[    ]]//g' -e 's/"//g' 2> /dev/null`
    if test -z "$CRYPTO_VERSION"; then
       CRYPTO_VERSION="unknown"
    fi
@@ -222,14 +289,18 @@ EOF
    # failure handler we can detect the difference between a header not existing
    # (or not even passing the pre-processor phase) and a header file resulting
    # in compilation failures.
-   AC_CHECK_HEADERS([botan/botan.h],,[
+   HEADER_TO_CHECK=botan/botan.h
+   if test "BOTAN1_CONFIG" = ""; then
+        HEADER_TO_CHECK=botan/lookup.h
+   fi
+   AC_CHECK_HEADERS([${HEADER_TO_CHECK}],,[
         CRYPTO_INCLUDES=""
         CRYPTO_LIBS=""
         CRYPTO_LDFLAGS=""
         CRYPTO_RPATH=""
         if test "x$ac_header_preproc" = "xyes"; then
-                AC_MSG_RESULT([
-botan/botan.h was found but is unusable. The most common cause of this problem
+                AC_MSG_RESULT([${HEADER_TO_CHECK}
+was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
 your C++ compiler we highly recommend that you use support libraries such as
@@ -242,7 +313,7 @@ Boost and Botan that were compiled with the same compiler version.])
    LIBS=$LIBS_SAVED
 fi
 
-if test "x${CRYPTO_LIBS}" != "x"
+if test "x${BOTAN1_CONFIG}" != "x"
 then
    CPPFLAGS_SAVED=$CPPFLAGS
    CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
@@ -257,13 +328,13 @@ then
                           LibraryInitializer::initialize();
                           HashFunction *h = get_hash("MD5");
                          ])],
-        [AC_MSG_RESULT([checking for Botan library... yes])],
-        [AC_MSG_RESULT([checking for Botan library... no])
+        [AC_MSG_RESULT([checking for Botan1 library... yes])],
+        [AC_MSG_RESULT([checking for Botan1 library... no])
          CRYPTO_INCLUDES=""
          CRYPTO_LIBS=""
          CRYPTO_LDFLAGS=""
          CRYPTO_RPATH=""
-         AC_MSG_RESULT([Needs Botan library 1.8 or higher. On some systems,
+         AC_MSG_RESULT([Needs Botan library 1.9 or higher. On some systems,
          the botan package has a few missing dependencies (libbz2 and
          libgmp), if libbotan has been installed and you see this message,
          try upgrading to a higher version of botan or installing libbz2
@@ -271,20 +342,48 @@ then
    )
    CPPFLAGS=$CPPFLAGS_SAVED
    LIBS=$LIBS_SAVED
+   CRYPTO_NAME="Botan1"
+   CRYPTO_PACKAGE="botan-1.11"
+elif test "x${CRYPTO_LIBS}" != "x"
+then
+   CPPFLAGS_SAVED=$CPPFLAGS
+   CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
+   LIBS_SAVED="$LIBS"
+   LIBS="$LIBS $CRYPTO_LIBS"
+   AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <botan/lookup.h>],
+                         [using namespace Botan;
+                          HashFunction *h = HashFunction::create("MD5")
+.release();
+                         ])],   
+        [AC_MSG_RESULT([checking for Botan library... yes])],
+        [AC_MSG_RESULT([checking for Botan library... no])
+         CRYPTO_INCLUDES=""
+         CRYPTO_LIBS=""
+         CRYPTO_LDFLAGS=""
+         CRYPTO_RPATH=""
+         AC_MSG_RESULT([Needs Botan library 2.0 or higher. On some systems,
+         the botan package has a few missing dependencies (libbz2 and
+         libgmp), if libbotan has been installed and you see this message,
+         try upgrading to a higher version of botan or installing libbz2
+         and libgmp.])]
+   )
+   CPPFLAGS=$CPPFLAGS_SAVED
+   LIBS=$LIBS_SAVED
+   CRYPTO_NAME="Botan"
+   CRYPTO_PACKAGE="botan-2"
 fi
 
 if test "x${CRYPTO_LIBS}" != "x"
 then
-   CRYPTO_NAME="Botan"
    DISABLED_CRYPTO="OpenSSL"
-   CRYPTO_PACKAGE="botan-1.8"
    CRYPTO_CFLAGS=""
    DISTCHECK_CRYPTO_CONFIGURE_FLAG="$distcheck_botan"
    AC_DEFINE_UNQUOTED([WITH_BOTAN], [], [Compile with Botan crypto])
 else
    CRYPTO_NAME="OpenSSL"
    DISABLED_CRYPTO="Botan"
-   CRYPTO_PACKAGE="openssl-1.0.2"
+   CRYPTO_PACKAGE="openssl-1.1.0"
    AC_DEFINE_UNQUOTED([WITH_OPENSSL], [], [Compile with OpenSSL crypto])
    AC_MSG_CHECKING(for OpenSSL library)
    # from bind9
@@ -293,7 +392,7 @@ else
       use_openssl="yes"
    fi
    if test "${use_openssl}" = "yes" ; then
-      for d in /usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw; do
+      for d in /usr /usr/local /usr/local/ssl /usr/local/opt/openssl /usr/pkg /usr/sfw; do
           if test -f $d/include/openssl/opensslv.h; then
              use_openssl=$d; break
           fi
@@ -386,6 +485,7 @@ EOF
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
 
+AM_CONDITIONAL(HAVE_BOTAN1, test "$CRYPTO_NAME" = "Botan1")
 AM_CONDITIONAL(HAVE_BOTAN, test "$CRYPTO_NAME" = "Botan")
 AM_CONDITIONAL(HAVE_OPENSSL, test "$CRYPTO_NAME" = "OpenSSL")
 AC_SUBST(CRYPTO_INCLUDES)

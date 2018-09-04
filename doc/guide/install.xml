@@ -15,17 +15,12 @@
 
       <para>
         Some operating systems or software package vendors may provide
-        ready-to-use, pre-built software packages for Kea.  Installing a
+        ready-to-use, pre-built software packages for Kea. Installing a
         pre-built package means you do not need to install the software
         required only to build Kea and do not need to <emphasis>make</emphasis>
         the software.
       </para>
 
-      <para>
-        FreeBSD ports, NetBSD pkgsrc, and Debian
-        <emphasis>testing</emphasis> package collections provide all the
-        prerequisite packages.
-      </para>
     </section>
 
     <section xml:id="install-hierarchy">
@@ -56,6 +51,12 @@
             <simpara>
               <filename>lib/</filename> —
               libraries.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>lib/hooks</filename> —
+              additional hooks libraries.
             </simpara>
           </listitem>
           <listitem>
@@ -124,7 +125,9 @@
 
           <listitem>
         <para>
-          Botan (at least version 1.8) or OpenSSL (at least version 1.0.1).
+          Botan (at least version 1.9) or OpenSSL (at least version 1.0.1).
+          Note that Botan version 2 or later and OpenSSL version 1.0.2 or
+          1.1.0 or later are strongly recommended.
         </para>
           </listitem>
 
@@ -177,6 +180,17 @@ Debian and Ubuntu:
           required. Note that running the unit tests requires a local
           PostgreSQL server.
         </para>
+        </listitem>
+
+        <listitem>
+        <para>
+          Cpp-driver from DataStax is needed when using the --with-cql
+	  configuration flag to build Kea with Cassandra database backend.
+          In this case an instance of the Cassandra server running locally
+          or on some other machine, reachable over the network from the
+          machine running Kea, is required. Note that running the unit
+          tests requires a local Cassandra server.
+	</para>
         </listitem>
 
         <listitem>

@@ -138,6 +138,35 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		[AC_MSG_RESULT([no])
 		 continue])
 
+	AC_MSG_CHECKING(enum class support)
+	feature="enum class"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[enum class FooBar {
+			     FOO = 1,
+			     BAR = 2
+			 };],
+			[FooBar f = FooBar::FOO;
+			 return (f == FooBar::FOO ? 1 : 2);])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
+	AC_MSG_CHECKING(range-for support)
+	feature="constexpr"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <vector>
+			 std::vector<int> v = { 1, 2, 3, 4 };],
+			[int sum = 0;
+			 for (auto i : v) {
+			     sum += i;
+			 }
+			 return sum;])],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])
+		 continue])
+
 	AC_MSG_CHECKING(lambda support)
 	feature="lambda"
 	AC_COMPILE_IFELSE(

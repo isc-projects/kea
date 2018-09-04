@@ -7,11 +7,9 @@
 #ifndef HOST_MGR_H
 #define HOST_MGR_H
 
-#include <dhcp/duid.h>
-#include <dhcp/hwaddr.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/cache_host_data_source.h>
-#include <dhcpsrv/database_connection.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/noncopyable.hpp>
@@ -102,29 +100,6 @@ public:
     /// manager to not use the alternate host data source.
     static HostMgr& instance();
 
-    /// @brief Returns all hosts for the specified HW address or DUID.
-    ///
-    /// This method returns all @c Host objects representing reservations for
-    /// the specified HW address or/and DUID as documented in the
-    /// @c BaseHostDataSource::getAll.
-    ///
-    /// It retrieves reservations from both primary and alternate host data
-    /// source as a single collection of @c Host objects, i.e. if matching
-    /// reservations are in both sources, all of them are returned. The
-    /// reservations from the primary data source are placed before the
-    /// reservations from the alternate source.
-    ///
-    /// Note that returned collection may contain duplicates. It is the
-    /// caller's responsibility to check for duplicates.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL of not available.
-    ///
-    /// @return Collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
     ///
@@ -164,22 +139,6 @@ public:
     /// @return Collection of const @c Host objects.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
-
-    /// @brief Returns a host connected to the IPv4 subnet.
-    ///
-    /// This method returns a single reservation for the particular host
-    /// (identified by the HW address or DUID) as documented in the
-    /// @c BaseHostDataSource::get4.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available.
-    ///
-    /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-         const DuidPtr& duid = DuidPtr()) const;
 
     /// @brief Returns any host connected to the IPv4 subnet.
     ///
@@ -233,22 +192,6 @@ public:
     virtual ConstHostPtr
     get4(const SubnetID& subnet_id, const asiolink::IOAddress& address) const;
 
-    /// @brief Returns a host connected to the IPv6 subnet.
-    ///
-    /// This method returns a host connected to the IPv6 subnet and identified
-    /// by the HW address or DUID, as described in the
-    /// @c BaseHostDataSource::get6.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid DUID or NULL if not available.
-    ///
-    /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const DuidPtr& duid,
-         const HWAddrPtr& hwaddr = HWAddrPtr()) const;
-
     /// @brief Returns any host connected to the IPv6 subnet.
     ///
     /// This method returns a host connected to the IPv6 subnet as described
@@ -295,7 +238,7 @@ public:
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @return Const @c Host object using a specified HW address or DUID.
+    /// @return Const @c Host object using a specified IPv6 prefix.
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 

@@ -312,6 +312,12 @@ public:
     // Generate client-id option
     isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
 
+        if (duid_size == 0) {
+            return (isc::dhcp::OptionPtr
+                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID)));
+
+        }
+
         isc::dhcp::OptionBuffer clnt_duid(duid_size);
         for (size_t i = 0; i < duid_size; i++) {
             clnt_duid[i] = 100 + i;
@@ -321,6 +327,29 @@ public:
 
         return (isc::dhcp::OptionPtr
                 (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID,
+                                       clnt_duid.begin(),
+                                       clnt_duid.begin() + duid_size)));
+    }
+
+    /// Generate server-id option
+    /// @param duid_size size of the duid
+    isc::dhcp::OptionPtr generateServerId(size_t duid_size = 32) {
+
+        if (duid_size == 0) {
+            return (isc::dhcp::OptionPtr
+                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID)));
+
+        }
+
+        isc::dhcp::OptionBuffer clnt_duid(duid_size);
+        for (size_t i = 0; i < duid_size; i++) {
+            clnt_duid[i] = 100 + i;
+        }
+
+        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(clnt_duid));
+
+        return (isc::dhcp::OptionPtr
+                (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID,
                                        clnt_duid.begin(),
                                        clnt_duid.begin() + duid_size)));
     }

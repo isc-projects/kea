@@ -52,6 +52,7 @@
  * - @subpage agentHooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
+ * - @subpage libdhcp_ha
  * - @subpage libdhcp_user_chk
  * - @subpage libdhcp_lease_cmds
  * - @subpage libdhcp_stat_cmds

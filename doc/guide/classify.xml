@@ -78,10 +78,11 @@
       </para></listitem>
       <listitem><para>
       Classes with matching expressions and not marked for later ("on
-      request" or depending on the KNOWN builtin class) evaluation are
-      processed in the order they are defined in the configuration:
-      the boolean expression is evaluated and when it returns true
-      ("match") the incoming packet is associated to the class.
+      request" or depending on the KNOWN/UNKNOWN builtin classes)
+      evaluation are processed in the order they are defined in the
+      configuration: the boolean expression is evaluated and when it
+      returns true ("match") the incoming packet is associated to the
+      class.
       </para></listitem>
       <listitem><para>
       If a private or code 43 DHCPv4 option is received, decoding it
@@ -98,18 +99,22 @@
       that has a class which matches one of the packet's classes.
       </para></listitem>
       <listitem><para>
-      Host reservations are looked for. If an identifier from the incoming
-      packet matches a host reservation in the subnet or shared network,
-      the packet is associated with the KNOWN builtin class and all classes
-      of the host reservation.
+      Host reservations are looked for. If an identifier from the
+      incoming packet matches a host reservation in the subnet or
+      shared network, the packet is associated with the KNOWN class
+      and all classes of the host reservation. If a reservation is not
+      found, the packet is assigned to UNKNOWN class.
       </para></listitem>
       <listitem><para>
       Classes with matching expressions using directly or indirectly
-      the KNOWN builtin class and not marked for later ("on request")
-      evaluation are processed in the order they are defined in the
-      configuration: the boolean expression is evaluated and when it
-      returns true ("match") the incoming packet is associated to the
-      class.
+      the KNOWN/UNKNOWN builtin classes and not marked for later ("on
+      request") evaluation are processed in the order they are defined
+      in the configuration: the boolean expression is evaluated and
+      when it returns true ("match") the incoming packet is associated
+      to the class. The determination whether there is a reservation
+      for a given client is made after a subnet is selected. As such, it
+      is not possible to use KNOWN/UNKNOWN classes to select a shared
+      network or a subnet.
       </para></listitem>
       <listitem><para>
       If needed, addresses and prefixes from pools are assigned,
@@ -183,17 +188,27 @@
       packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
 
+      <para>The &quot;HA_&quot; prefix is used by the High Availability
+      hooks library to designate certain servers to process DHCP packets
+      as a result of load balancing. The class name is constructed by
+      prepending the &quot;HA_&quot; prefix to the name of the server
+      which should process the DHCP packet. This server will use appropriate
+      pool or subnet to allocate IP addresses (and/or prefixes) from, based on
+      the assigned client classes. The details can be found in
+      <xref linkend="high-availability-library"/>.</para>
+
       <para>Other examples are: the  ALL class which all incoming packets
       belong to, and the KNOWN class assigned when host reservations exist
       for the particular client. By convention, builtin classes' names
       begin with all capital letters.
       </para>
 
-      <para>Currently recognized builtin class names are ALL and KNOWN
-      and prefixes VENDOR_CLASS_, AFTER_ and EXTERNAL_. The AFTER_ prefix
-      is a provision for a not yet written hook, the EXTERNAL_ prefix
-      can be freely used: builtin classes are implicitly defined so
-      never raise warnings if they do not appear in the configuration.
+      <para>Currently recognized builtin class names are ALL, KNOWN
+      and UNKNOWN, and prefixes VENDOR_CLASS_, HA_, AFTER_ and
+      EXTERNAL_. The AFTER_ prefix is a provision for a not yet
+      written hook, the EXTERNAL_ prefix can be freely used: builtin
+      classes are implicitly defined so never raise warnings if they
+      do not appear in the configuration.
       </para>
 
   </section>
@@ -236,11 +251,12 @@
       </para>
 
       <para>
-      Dependencies between classes are checked too: for instance forward
-      dependencies are rejected when the configuration is parsed:
-      an expression can only depend on already defined classes (including
-      builtin classes) and which are evaluated in a previous or the
-      same evaluation phase. This does not apply to the KNOWN class.
+      Dependencies between classes are checked too: for instance
+      forward dependencies are rejected when the configuration is
+      parsed: an expression can only depend on already defined classes
+      (including builtin classes) and which are evaluated in a
+      previous or the same evaluation phase. This does not apply to
+      the KNOWN or UNKNOWN classes.
       </para>
 
       <para>
@@ -326,7 +342,7 @@
               <entry>Unknown client</entry>
               <entry>unknown</entry>
               <entry>not member('KNOWN')</entry>
-              <entry>If there is a hostreservation for the client
+              <entry>If there is a host reservation for the client
               "false" else "true"</entry>
             </row>
             <row>
@@ -585,13 +601,13 @@
       built-in, i.e., beginning by &quot;VENDOR_CLASS_&quot;,
       &quot;AFTER__&quot; (for the to come "after" hook) and
       &quot;EXTERNAL_&quot; or equal to &quot;ALL&quot;, &quot;KNOWN&quot;,
-      etc.
+      &quot;UNKNOWN&quot;etc.
       </para>
       <para>"known" and "unknown" are short hands for "member('KNOWN')" and
       "not member('KNOWN')". Note the evaluation of any expression using
       directly or indirectly the &quot;KNOWN&quot; class is deferred
       after the host reservation lookup (i.e. when the &quot;KNOWN&quot;
-      belonging is determined).
+      or &quot;UNKNOWN&quot; partition is determined).
       </para></listitem>
 
       <listitem><para>

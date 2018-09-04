@@ -9,8 +9,8 @@
 <refentry>
   <info>
     <productname>ISC Kea</productname>
-    <date>May 18, 2018</date>
-    <edition>1.4.0-beta</edition>
+    <date>June 15, 2018</date>
+    <edition>1.4.0</edition>
     <author>
       <personname/>
       <contrib>The Kea software has been written by a number of
@@ -46,6 +46,7 @@
       <arg choice="opt" rep="norepeat">command</arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -180,6 +181,15 @@
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><option>-v|--version</option></term>
+        <listitem>
+          <para>
+            Prints keactrl version and quits.
+          </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
   </refsect1>
 
@@ -245,6 +255,11 @@
 
       <citerefentry>
         <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

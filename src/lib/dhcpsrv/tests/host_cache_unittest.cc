@@ -21,6 +21,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -597,10 +598,6 @@ public:
     /// Destructor
     virtual ~TestOneBackend() { }
 
-    ConstHostCollection getAll(const HWAddrPtr&, const DuidPtr&) const {
-        return (getCollection());
-    }
-
     ConstHostCollection getAll(const Host::IdentifierType&, const uint8_t*, 
                                const size_t) const {
         return (getCollection());
@@ -610,22 +607,12 @@ public:
         return (getCollection());
     }
 
-    ConstHostPtr get4(const SubnetID&, const HWAddrPtr&,
-                      const DuidPtr&) const {
-        return (getOne());
-    }
-
     ConstHostPtr get4(const SubnetID&, const Host::IdentifierType&,
                       const uint8_t*, const size_t) const {
         return (getOne());
     }
 
     ConstHostPtr get4(const SubnetID&, const IOAddress&) const {
-        return (getOne());
-    }
-
-    ConstHostPtr get6(const SubnetID&, const DuidPtr&,
-                      const HWAddrPtr&) const {
         return (getOne());
     }
 
@@ -813,11 +800,6 @@ void NegativeCacheTest::testGetAll() {
     // Verifies getAll* return a collection with it.
     ConstHostCollection hosts;
     ASSERT_NO_THROW(hosts =
-        HostMgr::instance().getAll(host->getHWAddress(), DuidPtr()));
-    ASSERT_EQ(1, hosts.size());
-    EXPECT_EQ(host, hosts[0]);
-
-    ASSERT_NO_THROW(hosts =
         HostMgr::instance().getAll(host->getIdentifierType(),
                                    &host->getIdentifier()[0],
                                    host->getIdentifier().size()));
@@ -848,11 +830,6 @@ void NegativeCacheTest::testGet4() {
 
     // Verifies get4 overloads return a null pointer.
     ConstHostPtr got;
-    ASSERT_NO_THROW(got =
-        HostMgr::instance().get4(host->getIPv4SubnetID(),
-                                 host->getHWAddress(), DuidPtr()));
-    EXPECT_FALSE(got);
-
     ASSERT_NO_THROW(got =
         HostMgr::instance().get4(host->getIPv4SubnetID(),
                                  host->getIdentifierType(),
@@ -899,12 +876,6 @@ void NegativeCacheTest::testGet6() {
 
     // Verifies get6 overloads return a null pointer.
     ConstHostPtr got;
-    ASSERT_NO_THROW(got =
-                    HostMgr::instance().get6(host->getIPv6SubnetID(),
-                                             host->getDuid(),
-                                             HWAddrPtr()));
-    EXPECT_FALSE(got);
-
     ASSERT_NO_THROW(got =
                     HostMgr::instance().get6(host->getIPv6SubnetID(),
                                              host->getIdentifierType(),

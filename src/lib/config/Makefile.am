@@ -21,6 +21,7 @@ libkea_cfgclient_la_SOURCES += client_connection.cc client_connection.h
 libkea_cfgclient_la_SOURCES += command_mgr.cc command_mgr.h
 libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
 libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
+libkea_cfgclient_la_SOURCES += timeouts.h
 
 libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -34,7 +35,7 @@ libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 5:0:0
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 5:1:0
 libkea_cfgclient_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
@@ -52,6 +53,6 @@ libkea_cfgclient_include_HEADERS = \
 	cmds_impl.h \
 	command_mgr.h \
 	config_log.h \
-	hooked_command_mgr.h
-
+	hooked_command_mgr.h \
+	timeouts.h
 

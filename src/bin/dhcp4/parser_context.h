@@ -214,6 +214,9 @@ public:
         /// Used while parsing Dhcp4/interfaces structures.
         INTERFACES_CONFIG,
 
+        /// Sanity checks.
+        SANITY_CHECKS,
+
         /// Used while parsing Dhcp4/interfaces/dhcp-socket-type structures.
         DHCP_SOCKET_TYPE,
 

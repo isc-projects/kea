@@ -12,6 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
+#include <hooks/callout_handle_associate.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -86,7 +87,7 @@ private:
 ///
 /// @note This is abstract class. Please instantiate derived classes
 /// such as @c Pkt4 or @c Pkt6.
-class Pkt {
+class Pkt : public hooks::CalloutHandleAssociate {
 protected:
 
     /// @brief Constructor.

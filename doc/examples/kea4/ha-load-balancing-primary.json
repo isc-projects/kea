@@ -40,47 +40,37 @@
     // Client classes will associate address pools with certain servers taking
     // part in providing High Availability.
     "client-classes": [
-        // This class corresponds with a scope of the server1.
-        // It must be always declared.
-        {
-            "name": "ha_server1"
-        },
-        // This class corresponds with a scope of the server2.
-        // It must be always declared.
-        {
-            "name": "ha_server2"
-        },
         // phones class
         {
             "name": "phones",
-            "test": "substring(option[60].hex,0,6) == 'Aastra'",
+            "test": "substring(option[60].hex,0,6) == 'Aastra'"
         },
         // laptops are everything but phones.
         {
             "name": "laptops",
             "test": "not member('phones')"
         },
-        // Some phones will be handled by server1. Whether the ha_server1
-        // or ha_server2 is assigned for the client is a matter of load
+        // Some phones will be handled by server1. Whether the HA_server1
+        // or HA_server2 is assigned for the client is a matter of load
         // balancing performed by the HA hooks library.
         {
             "name": "phones_server1",
-            "test": "member('phones') and member('ha_server1')"
+            "test": "member('phones') and member('HA_server1')"
         },
         // Some phones will be handled by server2.
         {
             "name": "phones_server2",
-            "test": "member('phones') and member('ha_server2')"
+            "test": "member('phones') and member('HA_server2')"
         },
         // Some laptops will be handled by server1.
         {
             "name": "laptops_server1",
-            "test": "member('laptops') and member('ha_server1')"
+            "test": "member('laptops') and member('HA_server1')"
         },
         // Some laptops will be handled by server2.
         {
             "name": "laptops_server2",
-            "test": "member('laptops') and member('ha_server2')"
+            "test": "member('laptops') and member('HA_server2')"
         }
     ],
 
@@ -124,6 +114,11 @@
                     // This specifies the number of clients which send messages to
                     // the partner but appear to not receive any response.
                     "max-unacked-clients": 5,
+                    // This specifies the maximum timeout (in milliseconds) for the server
+                    // to complete sync. If you have a large deployment (high tens or
+                    // hundreds of thausands of clients), you may need to increase it
+                    // further. The default value is 60000ms (60 seconds).
+                    "sync-timeout": 60000,
                     "peers": [
                          // This is the configuration of this server instance.
                          {
@@ -215,12 +210,12 @@
 
             }
         ],
-        "severity": "INFO",
+        "severity": "INFO"
     },
     {
         // This section specifies configuration of the HA hooks library specific
         // logger.
-        "name": "kea-dhcp4.ha_hooks",
+        "name": "kea-dhcp4.ha-hooks",
         "output_options": [
             {
                 "output": "stdout"

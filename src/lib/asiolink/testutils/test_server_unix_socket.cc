@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
@@ -60,7 +62,12 @@ public:
 
     /// @brief Closes the socket.
     void stop() {
-        socket_->close();
+        try {
+            socket_->close();
+
+        } catch (...) {
+            // ignore errors when closing the socket.
+        }
     }
 
     /// @brief Handler invoked when data have been received over the socket.
@@ -78,6 +85,8 @@ public:
                 size_t bytes_transferred) {
         // This is most likely due to the abort.
         if (ec) {
+            // An error occurred so let's close the socket.
+            stop();
             return;
         }
 
@@ -92,7 +101,12 @@ public:
                 boost::asio::buffer(response.c_str(), response.size()));
         }
 
-        start();
+        /// @todo We're taking simplistic approach and send a response right away
+        /// after receiving data over the socket. Therefore, after responding we
+        /// do not schedule another read. We could extend this logic slightly to
+        /// parse the received data and see when we've got enough data before we
+        /// send a response. However, the current unit tests don't really require
+        /// that.
 
         // Invoke callback function to notify that the response has been sent.
         sent_response_callback_();

@@ -96,16 +96,6 @@ HostMgr::instance() {
 }
 
 ConstHostCollection
-HostMgr::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
-    ConstHostCollection hosts = getCfgHosts()->getAll(hwaddr, duid);
-    for (auto source : alternate_sources_) {
-        ConstHostCollection hosts_plus = source->getAll(hwaddr, duid);
-        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
-    }
-    return (hosts);
-}
-
-ConstHostCollection
 HostMgr::getAll(const Host::IdentifierType& identifier_type,
                 const uint8_t* identifier_begin,
                 const size_t identifier_len) const {
@@ -129,38 +119,6 @@ HostMgr::getAll4(const IOAddress& address) const {
         hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
     }
     return (hosts);
-}
-
-ConstHostPtr
-HostMgr::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-              const DuidPtr& duid) const {
-    ConstHostPtr host = getCfgHosts()->get4(subnet_id, hwaddr, duid);
-    if (host || alternate_sources_.empty()) {
-        return (host);
-    }
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
-              HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID)
-        .arg(subnet_id)
-        .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
-        .arg(duid ? duid->toText() : "(duid)");
-    for (auto source : alternate_sources_) {
-        if (hwaddr) {
-            host = source->get4(subnet_id, hwaddr, DuidPtr());
-        }
-        if (!host && duid) {
-            host = source->get4(subnet_id, HWAddrPtr(), duid);
-        }
-        if (host && host->getNegative()) {
-            return (ConstHostPtr());
-        }
-        if (host && (source != cache_ptr_)) {
-            cache(host);
-        }
-        if (host) {
-            return (host);
-        }
-    }
-    return (ConstHostPtr());
 }
 
 ConstHostPtr
@@ -223,7 +181,7 @@ HostMgr::get4(const SubnetID& subnet_id,
     if (host && host->getNegative()) {
         return (ConstHostPtr());
     } else if (!host && negative_caching_) {
-        cacheNegative(subnet_id, SubnetID(0),
+        cacheNegative(subnet_id, SubnetID(SUBNET_ID_UNUSED),
                       identifier_type, identifier_begin, identifier_len);
     }
     return (host);
@@ -255,39 +213,6 @@ HostMgr::get4(const SubnetID& subnet_id,
     return (ConstHostPtr());
 }
 
-
-ConstHostPtr
-HostMgr::get6(const SubnetID& subnet_id, const DuidPtr& duid,
-               const HWAddrPtr& hwaddr) const {
-    ConstHostPtr host = getCfgHosts()->get6(subnet_id, duid, hwaddr);
-    if (host || alternate_sources_.empty()) {
-        return (host);
-    }
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE,
-              HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_DUID_HWADDR)
-        .arg(subnet_id)
-        .arg(duid ? duid->toText() : "(duid)")
-        .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)");
-
-    for (auto source : alternate_sources_) {
-        if (duid) {
-            host = source->get6(subnet_id, duid, HWAddrPtr());
-        }
-        if (!host && hwaddr) {
-            host = source->get6(subnet_id, DuidPtr(), hwaddr);
-        }
-        if (host && host->getNegative()) {
-            return (ConstHostPtr());
-        }
-        if (host && source != cache_ptr_) {
-            cache(host);
-        }
-        if (host) {
-            return (host);
-        }
-    }
-    return (ConstHostPtr());
-}
 
 ConstHostPtr
 HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
@@ -370,7 +295,7 @@ HostMgr::get6(const SubnetID& subnet_id,
     if (host && host->getNegative()) {
         return (ConstHostPtr());
     } else if (!host && negative_caching_) {
-        cacheNegative(SubnetID(0), subnet_id,
+        cacheNegative(SubnetID(SUBNET_ID_UNUSED), subnet_id,
                       identifier_type, identifier_begin, identifier_len);
     }
     return (host);

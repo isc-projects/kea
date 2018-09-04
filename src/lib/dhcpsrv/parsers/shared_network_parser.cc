@@ -7,6 +7,8 @@
 #ifndef SHARED_NETWORK_PARSER_H
 #define SHARED_NETWORK_PARSER_H
 
+#include <config.h>
+
 #include <cc/data.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>

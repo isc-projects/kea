@@ -9,13 +9,12 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <database/db_exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/db_exceptions.h>
-#include <dhcpsrv/sql_common.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -34,35 +33,25 @@
 /// They are essential components of the interface to any database backend.
 /// Each concrete database backend (e.g. MySQL) will define a class derived
 /// from LeaseMgr class.
-///
-/// Failover considerations:
-/// There are no intermediate plans to implement DHCPv4 failover
-/// (draft-ietf-dhc-failover-12.txt). Currently (Oct. 2012) the DHCPv6 failover
-/// is being defined in DHC WG in IETF (draft-ietf-dhcpv6-failover-requirements,
-/// draft-ietf-dhcpv6-failover-design), but the work is not advanced enough
-/// for implementation plans yet. v4 failover requires additional parameters
-/// to be kept with a lease. It is likely that v6 failover will require similar
-/// fields. Such implementation will require database schema extension.
-/// We have designed a way to expand/upgrade schemas during upgrades: a database
-/// schema is versioned and sanity checks about required version will be done
-/// upon start and/or upgrade. With this mechanism in place, we can add new
-/// fields to the database. In particular we can use that capability to
-/// introduce failover related fields.
-///
-/// However, there is another approach that can be reliably used to provide
-/// failover, even without the actual failover protocol implemented. As the
-/// first backend will use MySQL, we will be able to use Multi-Master capability
-/// offered by MySQL and use two separate Kea instances connecting to the
-/// same database.
-///
-/// Nevertheless, we hope to have failover protocol eventually implemented in
-/// the Kea.
-
 namespace isc {
 namespace dhcp {
 
 /// @brief Pair containing major and minor versions
 typedef std::pair<uint32_t, uint32_t> VersionPair;
+
+/// @brief Wraps value holding size of the page with leases.
+class LeasePageSize {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param page_size page size value.
+    /// @throw OutOfRange if page size is 0 or greater than uint32_t numeric
+    /// limit.
+    explicit LeasePageSize(const size_t page_size);
+
+    const size_t page_size_; ///< Holds page size.
+};
 
 /// @brief Contains a single row of lease statistical data
 ///
@@ -247,18 +236,28 @@ public:
 
     /// @brief Adds an IPv4 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
+    ///         with the same address was already there or failed sanity checks)
     virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
+    ///         with the same address was already there or failed sanity checks)
     virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
@@ -350,6 +349,34 @@ public:
     /// @return Lease collection (may be empty if no IPv4 lease found).
     virtual Lease4Collection getLeases4() const = 0;
 
+    /// @brief Returns range of IPv4 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv4 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv4 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const = 0;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
@@ -430,6 +457,40 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6() const = 0;
 
+    /// @brief Returns collection of leases for matching DUID
+    ///
+    /// @return Lease collection 
+    /// (may be empty if no IPv6 lease found for the DUID).
+    virtual Lease6Collection getLeases6(const DUID& duid) const = 0; 
+
+    /// @brief Returns range of IPv6 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv6 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv6 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection
+    getLeases6(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const = 0;
+
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -475,7 +536,7 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 
@@ -679,9 +740,6 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
 
-    /// @todo: Add host management here
-    /// As host reservation is outside of scope for 2012, support for hosts
-    /// is currently postponed.
 };
 
 }  // namespace dhcp

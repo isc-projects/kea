@@ -28,7 +28,7 @@
         load the libraries.
       </para>
       <para>
-      Hooks libraries are attached to individual Kea processes, not to
+      Hooks libraries are loaded by individual Kea processes, not to
       Kea as a whole.  This means (for example) that it is possible
       to associate one set of libraries with the DHCP4 server and a
       different set to the DHCP6 server.
@@ -311,19 +311,35 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
       making Kea sustainable in the long term.
       </para></note>
 
-      <para>Currently the following libraries are available or planned from ISC:
+      <para>The following table provides a list of libraries currently available
+      from ISC. It is important to pay attention to which libraries may be loaded
+      by which Kea processes. It is a common mistake to configure the <command>
+      kea-ctrl-agent</command> process to load libraries that should, in fact,
+      be loaded by the <command>kea-dhcp4 </command> or <command>kea-dhcp6</command>
+      processes.  If a library from ISC doesn't work as expected, please make sure
+      that it has been loaded by the correct process per the table below.
+
+      <warning>
+        <para>
+          While the Kea Control Agent includes the "hooks" functionality,
+          (i.e. hooks libraries can be loaded by this process), none of ISC's
+          current hooks libraries should be loaded by the Control Agent.
+        </para>
+      </warning>
 
         <table frame="all" xml:id="hook-libs">
           <title>List of available hooks libraries</title>
           <tgroup cols="3">
           <colspec colname="name"/>
           <colspec colname="avail"/>
+          <colspec colname="module"/>
           <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
               <entry>Availability</entry>
               <entry>Since</entry>
+              <entry>Load by process</entry>
               <entry>Description</entry>
             </row>
           </thead>
@@ -333,6 +349,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>user_chk</entry>
               <entry>Kea sources</entry>
               <entry>Kea 0.8</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Reads known users list from a file. Unknown users
               will be assigned a
               lease from the last subnet defined in the configuration file,
@@ -345,6 +367,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Forensic Logging</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.1.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>This library provides hooks that record a detailed log of
               lease assignments and renewals into a set of log files. In many
               legal jurisdictions companies, especially ISPs, must record
@@ -359,6 +387,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Flexible Identifier</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.2.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Kea software provides a way to handle host reservations
               that include addresses, prefixes, options, client classes and
               other features. The reservation can be based on hardware address,
@@ -379,6 +413,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Host Commands</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.2.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Kea provides a way to store host reservations in a
               database. In many larger deployments it is useful to be able to
               manage that information while the server is running. This library
@@ -396,6 +436,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Subnet Commands</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.3.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>In deployments in which subnet configuration needs to
               be frequently updated, it is a hard requirement that such updates be
               performed without the need for a full DHCP server reconfiguration
@@ -412,6 +458,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Lease Commands</entry>
               <entry>Kea sources</entry>
               <entry>Kea 1.3.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>The lease commands hook library offers a number of new
               commands used to manage leases. Kea provides a way to store lease
               information in various backends: memfile, MySQL, PostgreSQL and
@@ -423,13 +475,20 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               errors, like adding a lease with subnet-id that does not exist in
               the configuration or configuring a lease to use an address that is
               outside of the subnet to which it is supposed to belong.
+              It provides a way to manage user contexts associated with leases.
               </entry>
             </row>
 
             <row>
               <entry>High Availability</entry>
-              <entry>Support customers</entry>
+              <entry>Kea sources</entry>
               <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Minimizing a risk of DHCP service unavailability is
               achieved by setting up a pair of the DHCP servers in a network.
               Two modes of operation are supported. The first one is called load
@@ -455,6 +514,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Radius</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>The RADIUS Hook library allows Kea to interact with the
               RADIUS servers using access and accounting mechanisms. The access
               mechanism may be used for access control, assigning specific IPv4
@@ -468,6 +533,12 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               <entry>Host Cache</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
               <entry>Some of the database backends, such as RADIUS, are
               considered slow and may take a long time to respond. Since Kea in
               general is synchronous, the backend performance directly affects
@@ -596,6 +667,12 @@ and may have the zero or more of the following entries:
         provides hooks that record a detailed log of lease assignments
         and renewals into a set of log files.  Currently this library
         is only available to ISC customers with a support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
         </para>
         <para>
         In many legal jurisdictions companies, especially ISPs, must record
@@ -644,7 +721,7 @@ path/base-name.CCYYMMDD.txt
           An entry is a single string with no embedded end-of-line markers,
           a prepended timestamp and has the following sections:
 <screen>
-timestamp address duration device-id {client-info} {relay-info}
+timestamp address duration device-id {client-info} {relay-info} {user-context}
 </screen>
           </para>
           <para>
@@ -678,13 +755,18 @@ timestamp address duration device-id {client-info} {relay-info}
             options: 1, 2 and 6) if present.
             The circuit id and remote id are presented as hex strings
             </para></listitem>
+            <listitem><para>
+            user-context - the optional user context associated to the lease.
+            </para></listitem>
           </itemizedlist>
           </para>
           <para>
           For instance (line breaks added for readability, they would not
           be present in the log file).
 <screen>
-2018-01-06 01:02:03 CET Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address: hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33, identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
+2018-01-06 01:02:03 CET Address: 192.2.1.100 has been renewed for 1 hrs 52 min 15 secs to a device with hardware address:
+hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54 connected via relay at address: 192.2.16.33,
+identified by circuit-id: 68:6f:77:64:79 and remote-id: 87:f6:79:77:ef
 </screen>
         </para>
         <para>
@@ -705,7 +787,8 @@ timestamp address duration device-id {client-info} {relay-info}
         <para>
         Example:
 <screen>
-2018-01-06 01:02:03 CET Administrator added a lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
+2018-01-06 01:02:03 CET Administrator added a lease of address: 192.0.2.202 to a device with hardware address:
+1a:1b:1c:1d:1e:1f for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
         <para>
@@ -719,7 +802,8 @@ timestamp address duration device-id {client-info} {relay-info}
         <para>
         Example:
 <screen>
-2018-01-06 01:02:03 CET Administrator updated information on the lease of address: 192.0.2.202 to a device with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
+2018-01-06 01:02:03 CET Administrator updated information on the lease of address: 192.0.2.202 to a device
+with hardware address: 1a:1b:1c:1d:1e:1f, client-id: 1234567890
 </screen>
         </para>
         <para>
@@ -755,7 +839,7 @@ timestamp address duration device-id {client-info} {relay-info}
           An entry is a single string with no embedded end-of-line markers,
           a prepended timestamp and has the following sections:
 <screen>
-timestamp address duration device-id {relay-info}*
+timestamp address duration device-id {relay-info}* {user-context}
 </screen>
           </para>
           <para>
@@ -788,13 +872,19 @@ timestamp address duration device-id {relay-info}*
             topology. Nevertheless, this is useful information to better scope
             down the location of the device, so it is being recorded, if present.
             </para></listitem>
+            <listitem><para>
+            user-context - the optional user context associated to the lease.
+            </para></listitem>
           </itemizedlist>
           </para>
           <para>
           For instance (line breaks added for readability, they would not
           be present in the log file).
 <screen>
-2018-01-06 01:02:03 PST Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1, hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
+2018-01-06 01:02:03 PST Address:2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs
+to a device with DUID: 17:34:e2:ff:09:92:54 and hardware address: hwtype=1 08:00:2b:02:3f:4e
+(from Raw Socket) connected via relay at address: fe80::abcd for client on link address: 3001::1,
+hop count: 1, identified by remote-id: 01:02:03:04:0a:0b:0c:0d:0e:0f and subscriber-id: 1a:2b:3c:4d:5e:6f
 </screen>
         </para>
         <para>
@@ -814,7 +904,8 @@ timestamp address duration device-id {relay-info}*
         <para>
         Example:
 <screen>
-2018-01-06 01:02:03 PST Administrator added a lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
+2018-01-06 01:02:03 PST Administrator added a lease of address: 2001:db8::3 to a device with DUID:
+1a:1b:1c:1d:1e:1f:20:21:22:23:24 for 1 days 0 hrs 0 mins 0 secs
 </screen>
         </para>
         <para>
@@ -827,7 +918,8 @@ timestamp address duration device-id {relay-info}*
         <para>
         Example:
 <screen>
-2018-01-06 01:02:03 PST Administrator updated information on the lease of address: 2001:db8::3 to a device with DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
+2018-01-06 01:02:03 PST Administrator updated information on the lease of address: 2001:db8::3 to a device with
+DUID: 1a:1b:1c:1d:1e:1f:20:21:22:23:24, hardware address: 1a:1b:1c:1d:1e:1f
 </screen>
         </para>
         <para>
@@ -978,20 +1070,7 @@ Examples:
           Please refer to <xref linkend="mysql-database"/> for MySQL,
           to <xref linkend="pgsql-database"/> for PostgreSQL or
           to <xref linkend="cql-database"/> for Cassandra CQL.
-          Scripts are in
-          <filename><replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts</filename> directory, for instance the PostgreSQL create schema
-          command is:
-<screen>
-$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/legal_log/scripts/pgsql/legldb_create.pgsql</userinput>
-Password for user <replaceable>user-name</replaceable>:
-START TRANSACTION
-CREATE TABLE
-CREATE INDEX
-CREATE TABLE
-INSERT 0 1
-COMMIT
-$
-</screen>
+          The logs table is part of the Kea database schemas.
           </para>
           <para>
           Configuration parameters are extended by standard lease database
@@ -1036,7 +1115,14 @@ $
         hook application.</para>
 
         <para>Currently this library is only available to ISC customers with a
-        support contract.</para>
+        support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+      </para>
 
         <para>The library allows for defining an expression, using notation
         initially used for client classification only. See <xref linkend="classification-using-expressions"/> for detailed description
@@ -1274,7 +1360,14 @@ $
         </para>
 
         <para>Currently this library is only available to ISC customers with a
-        support contract.</para>
+        support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+        </para>
 
         <para>
           Currently three commands are supported: reservation-add (which adds
@@ -1320,19 +1413,35 @@ Requirements </link> document.</para>
         </para>
 
         <section>
+          <title>The subnet-id parameter</title>
+        <para> Prior to diving into the individual commands, it is worth
+        discussing the parameter, <command>subnet-id</command>. Currently
+        it is mandatory for all of the commands supplied by this library.
+        Prior to Kea 1.5.0, reservations had to belong to specific subnet.
+        Beginning with Kea 1.5.0, reservations may now be specified globally.
+        In other words, they are not specific to any subnet.  When reservations
+        are supplied via the configuration file, the ID of the containing
+        subnet (or lack thereof) is implicit in the configuration structure.
+        However, when managing reservations using the host commands, it is
+        necessary to explicitly identify the scope to which the reservation
+        belongs.  This is done via the <command>subnet-id</command> parameter.
+        For global reservations, use a value of zero (0).  For reservations
+        scoped to a specific subnet, use that subnet's ID.
+        </para>
+        </section>
+
+        <section>
           <title>reservation-add command</title>
         <para>
           <command>reservation-add</command> allows for the insertion of a new host.  It
           takes a set of arguments that vary depending on the nature of the host
           reservation. Any parameters allowed in the configuration file that
           pertain to host reservation are permitted here. For details regarding
-          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and <xref linkend="host-reservation-v6"/>. There is one notable addition. A
-          <command>subnet-id</command> must be specified.  This parameter is
-          mandatory, because reservations specified in the configuration file
-          are always defined within a subnet, so the subnet they belong to is
-          clear. This is not the case with reservation-add, therefore the
-          subnet-id must be specified explicitly. An example command can be as
-          simple as:
+          IPv4 reservations, see <xref linkend="host-reservation-v4"/> and
+          <xref linkend="host-reservation-v6"/>.
+          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          add a global reservation, or the id of the subnet to which the reservation
+          should be added.  An example command can be as simple as:
 <screen>{
     "command": "reservation-add",
     "arguments": {
@@ -1427,8 +1536,11 @@ Here is an example of complex IPv6 reservation:
           identifier. Currently supported identifiers are "hw-address", "duid",
           "circuit-id", "client-id" and "flex-id", but additional types may be
           added in the future. If any new identifier types are defined in the
-          future, reservation-get command will support them
-          automatically.</para>
+          future, reservation-get command will support them automatically.
+          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          fetch a global reservation, or the id of the subnet to which the reservation
+          belongs.
+          </para>
 
           <para>
             An example command for getting a host reservation by (subnet-id,
@@ -1503,7 +1615,11 @@ An example result returned when the query was malformed:<screen>
           "hw-address", "duid", "circuit-id", "client-id" and "flex-id", but
           additional types may be added in the future. If any new identifier
           types are defined in the future, reservation-get command will support
-          them automatically.</para>
+          them automatically.
+          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          delete a global reservation, or the id of the subnet from which the reservation
+          should be deleted.
+          </para>
 
           <para>
             An example command for deleting a host reservation by (subnet-id,
@@ -1558,593 +1674,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
       <!-- === lease_cmds ================================================== -->
       <!-- ================================================================= -->
 
-      <section xml:id="lease-cmds">
-        <title>lease_cmds: Lease Commands</title>
-        <para>
-          This section describes the hook library that offers a number of new
-          commands used to manage leases. Kea provides a way to store lease
-          information in several backends (memfile, MySQL, PostgreSQL and
-          Cassandra). This library provides a unified interface that can
-          manipulate leases in an unified, safe way. In particular, it allows
-          things previously impossible: manipulate leases in memfile while Kea
-          is running, sanity check changes, check lease existence and remove all
-          leases belonging to specific subnet. It can also catch more obscure
-          errors, like adding a lease with subnet-id that does not exist in the
-          configuration or configuring a lease to use an address that is outside
-          of the subnet to which it is supposed to belong.
-        </para>
-
-        <para>There are many use cases when an administrative command may be
-        useful: during migration between servers (possibly even between
-        different vendors), when a certain network is being retired, when a
-        device has been disconnected and the sysadmin knows for sure that it
-        will not be coming back. The "get" queries may be useful for automating
-        certain management and monitoring tasks. They can also act as
-        preparatory steps for lease updates and removals.</para>
-
-        <para>
-          This library provides the following commands:
-          <itemizedlist>
-            <listitem>
-              <para><command>lease4-add</command> - adds new IPv4 lease;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease6-add</command> - adds new IPv6 lease;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease4-get</command> - checks if an IPv4 lease with
-              the specified parameters exists and returns it if it does;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease6-get</command> - checks if an IPv6 lease with
-              the specified parameters exists and returns it if it does;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease4-get-all</command> - returns all IPv4 leases
-              or IPv4 leases for specified subnets;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease6-get-all</command> - returns all IPv6 leases
-              or IPv6 leases for specified subnets;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease4-del</command> - attempts to delete an IPv4
-              lease with the specified parameters;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease6-del</command> - attempts to delete an IPv6
-              lease with the specified parameters;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease4-update</command> - updates an IPv4 lease;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease6-update</command> - updates an IPv6 lease;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease4-wipe</command> - removes all leases from a
-              specific IPv4 subnet or all subnets;</para>
-            </listitem>
-            <listitem>
-              <para><command>lease6-wipe</command> - removes all leases from a
-              specific IPv6 subnet or all subnets;</para>
-            </listitem>
-          </itemizedlist>
-
-        </para>
-
-        <para>Lease commands library is part of the open source code and is
-        available to every Kea user.</para>
-
-        <para>
-          All commands are using JSON syntax. They can be issued either using
-          control channel (see <xref linkend="ctrl-channel"/>) or via Control
-          Agent (see <xref linkend="kea-ctrl-agent"/>).
-        </para>
-
-        <para>
-          The library can be loaded in the same way as other hook libraries. It
-          does not take any parameters. It supports both DHCPv4 and DHCPv6
-          servers.
-<screen>
-"Dhcp6": { <userinput>
-    "hooks-libraries": [
-        {
-            "library": "/path/libdhcp_lease_cmds.so"
-        }
-        ...
-    ] </userinput>
-}
-</screen>
-        </para>
-
-        <section>
-          <title>lease4-add, lease6-add commands</title>
-        <para>
-          <command>lease4-add</command> and <command>lease6-add</command>
-          commands allow for the creation of a new lease. Typically Kea creates a lease
-          on its own, when it first sees a new device. However, sometimes it may
-          be convenient to create the lease administratively. The
-          <command>lease4-add</command> command requires at least three
-          parameters: an IPv4 address, a subnet-id and an identifier: hardware
-          (MAC) address. The simplest successful call might look as follows:
-<screen>
-{
-    "command": "lease4-add",
-    "arguments": {
-        "subnet-id": 44,
-        "ip-address": "192.0.2.202",
-        "hw-address": "1a:1b:1c:1d:1e:1f"
-    }
-}
-</screen>
-        </para>
-
-        <para><command>lease6-add</command> command requires four
-        parameters: an IPv6 address, a subnet-id, and IAID value
-        (identity association identifier, a value sent by clients) and
-        a DUID:
-<screen>
-{
-    "command": "lease6-add",
-    "arguments": {
-        "subnet-id": 66,
-        "ip-address": "2001:db8::3",
-        "duid": "1a:1b:1c:1d:1e:1f:20:21:22:23:24",
-        "iaid": 1234
-    }
-}</screen>
-
-<command>lease6-add</command> can be also used to add leases for IPv6
-prefixes. In this case there are two parameters that must be
-specified: type (set to value of "IA_PD") and a prefix
-length. The actual prefix is set using ip-address field. For example,
-to configure a lease for prefix 2001:db8:abcd::/48, the following
-command can be used:
-
-<screen>
-{
-    "command": "lease6-add",
-    "arguments": {
-        "subnet-id": 66,
-        "type": "IA_PD",
-        "ip-address": "2001:db8:abcd::",
-        "prefix-len": 48,
-        "duid": "1a:1b:1c:1d:1e:1f:20:21:22:23:24",
-        "iaid": 1234
-    }
-}</screen>
-
-The commands can take a number of additional optional parameters:
-          <itemizedlist>
-            <listitem>
-              <para><command>valid-lft</command> - specifies the lifetime of the
-              lease, expressed in seconds. If not specified, the value
-              configured in the subnet related to specified subnet-id is
-              used.</para>
-            </listitem>
-            <listitem>
-              <para><command>expire</command> - timestamp of the lease
-              expiration time, expressed in unix format (seconds since 1 Jan
-              1970). If not specified, the default value is now + valid
-              lifetime.</para>
-            </listitem>
-            <listitem>
-              <para><command>fqdn-fwd</command> - specifies whether the lease
-              should be marked as if forward DNS update was conducted. Note this
-              only affects the lease parameter and the actual DNS update will
-              not be conducted at the lease insertion time. If configured, a DNS
-              update to remove the A or AAAA records will be conducted when the
-              lease is removed due to expiration or being released by a
-              client. If not specified, the default value is false. Hostname
-              parameter must be specified in fqdn-fwd is set to true.</para>
-            </listitem>
-            <listitem>
-              <para><command>fqdn-rev</command> - specifies whether the lease
-              should be marked as if reverse DNS update was conducted. Note this
-              only affects the lease parameter and the actual DNS update will
-              not be conducted at the lease insertion time. If configured, a DNS
-              update to remove the PTR record will be conducted when the lease
-              is removed due to expiration or being released by a client. If not
-              specified, the default value is false. Hostname parameter must be
-              specified in fqdn-fwd is set to true.</para>
-            </listitem>
-            <listitem>
-              <para><command>hostname</command> - specifies the hostname to be
-              associated with this lease. Its value must be non-empty if either
-              fqdn-fwd or fwdn-rev are set to true. If not specified, the
-              default value is an empty string.</para>
-            </listitem>
-            <listitem>
-              <para><command>hw-address</command> - hardware (MAC) address can
-              be optionally specified for IPv6 lease. It is mandatory parameter
-              for IPv4 lease.</para>
-            </listitem>
-            <listitem>
-              <para><command>client-id</command> - client identifier is an
-              optional parameter that can be specified for IPv4 lease.</para>
-            </listitem>
-            <listitem>
-              <para><command>preferred-lft</command> - Preferred lifetime is an
-              optional parameter for IPv6 leases. If not specified, the value
-              configured for the subnet corresponding to the specified subnet-id
-              is used. This parameter is not used in IPv4.</para>
-            </listitem>
-          </itemizedlist>
-        </para>
-
-        <para>Here's an example of more complex lease addition:
-
-<screen>
-{
-    "command": "lease6-add",
-    "arguments": {
-        "subnet-id": 66,
-        "ip-address": "2001:db8::3",
-        "duid": "01:02:03:04:05:06:07:08",
-        "iaid": 1234,
-        "hw-address": "1a:1b:1c:1d:1e:1f",
-        "preferred-lft": 500,
-        "valid-lft": 1000,
-        "expire": 12345678,
-        "fqdn-fwd": true,
-        "fqdn-rev": true,
-        "hostname": "urania.example.org"
-    }
-}
-</screen>
-        </para>
-
-        <para>
-          The command returns a status that indicates either a success (result
-          0) or a failure (result 1). Failed command always includes text
-          parameter that explains the cause of failure. Example results:
-          <screen>{ "result": 0, "text": "Lease added." }</screen> Example failure:
-          <screen>{ "result": 1, "text": "missing parameter 'ip-address' (&lt;string&gt;:3:19)" }</screen>
-        </para>
-
-
-        <section>
-          <title>lease4-get, lease6-get commands</title>
-          <para><command>lease4-get</command> or <command>lease6-get</command>
-          can be used to query the lease database and retrieve existing
-          leases. There are two types of parameters the
-          <command>lease4-get</command> supports: (address) or (subnet-id,
-          identifier-type, identifier). There are two types for
-          <command>lease6-get</command>: (address,type) or (subnet-id,
-          identifier-type, identifier, IAID, type). The first type of query is
-          used when the address (either IPv4 or IPv6) is known, but the details
-          of the lease aren't. One common use case of this type of query is to
-          find out whether a given address is being used or not. The second
-          query uses identifiers. Currently supported identifiers for leases are:
-          "hw-address" (IPv4 only), "client-id" (IPv4 only) and "duid" (IPv6 only).
-          </para>
-
-          <para>
-            An example <command>lease4-get</command> command for getting a lease
-            by an IPv4 address looks as follows:
-<screen>
-{
-    "command": "lease4-get",
-    "arguments": {
-        "ip-address": "192.0.2.1"
-    }
-}
-</screen>
-          </para>
-
-          <para>An example of the <command>lease6-get</command> query
-          looks as follows:
-<screen>
-{
-  "command": "lease6-get",
-  "arguments": {
-    "ip-address": "2001:db8:1234:ab::",
-    "type": "IA_PD"
-  }
-}</screen>
-          </para>
-
-          <para>An example query by "hw-address" for IPv4 lease looks
-          as follows:
-<screen>
-{
-    "command": "lease4-get",
-    "arguments": {
-        "identifier-type": "hw-address",
-        "identifier": "08:08:08:08:08:08",
-        "subnet-id": 44
-    }
-}</screen>
-
-          </para>
-
-          <para>An example query by "client-id" for IPv4 lease looks
-          as follows:
-<screen>
-{
-    "command": "lease4-get",
-    "arguments": {
-        "identifier-type": "client-id",
-        "identifier": "01:01:02:03:04:05:06",
-        "subnet-id": 44
-    }
-}</screen>
-
-          </para>
-
-          <para>An example query by (subnet-id, identifier-type,
-          identifier, iaid, type) for IPv6 lease looks as follows:
-<screen>
-{
-    "command": "lease4-get",
-    "arguments": {
-        "identifier-type": "duid",
-        "identifier": "08:08:08:08:08:08",
-        "iaid": 1234567,
-        "type": "IA_NA",
-        "subnet-id": 44
-    }
-}</screen>
-The type is an optional parameter. Supported values are: IA_NA
-(non-temporary address) and IA_PD (IPv6 prefix) are supported.
-If not specified, IA_NA is assumed.
-          </para>
-
-          <para><command>leaseX-get</command> returns a result that indicates a
-          result of the operation and lease details, if found. It has one of the
-          following values: 0 (success), 1 (error) or 2 (empty). The empty
-          result means that a query has been completed properly, but the object
-          (a lease in this case) has not been found. The lease parameters, if
-          found, are returned as arguments.
-          </para>
-
-          <para>
-An example result returned when the host was found:
-<screen>{
-  "arguments": {
-    "client-id": "42:42:42:42:42:42:42:42",
-    "cltt": 12345678,
-    "fqdn-fwd": false,
-    "fqdn-rev": true,
-    "hostname": "myhost.example.com.",
-    "hw-address": "08:08:08:08:08:08",
-    "ip-address": "192.0.2.1",
-    "state": 0,
-    "subnet-id": 44,
-    "valid-lft": 3600
-  },
-  "result": 0,
-  "text": "IPv4 lease found."
-}</screen>
-</para>
-
-        </section>
-
-        <section>
-          <title>lease4-get-all, lease6-get-all commands</title>
-          <para><command>lease4-get-all</command> and
-          <command>lease6-get-all</command> are used to retrieve all
-          IPv4 or IPv6 leases or all leases for the specified set of
-          subnets. All leases are returned when there are no arguments
-          specified with the command as in the following example:
-<screen>
-{
-    "command": "lease4-get-all"
-}
-</screen>
-          </para>
-
-          <para>If the arguments are provided, it is expected that they contain
-          "subnets" parameter, being a list of subnet identifiers for which the
-          leases should be returned. For example, in order to retrieve all IPv6
-          leases belonging to the subnets with identifiers 1, 2, 3 and 4:
-<screen>
-{
-    "command": "lease6-get-all",
-    "arguments": {
-        "subnets": [ 1, 2, 3, 4 ]
-    }
-}
-</screen>
-          </para>
-
-          <para>
-            The returned response contains a detailed list of leases in the
-            following format:
-<screen>{
-    "arguments": {
-        "leases": [
-            {
-                "cltt": 12345678,
-                "duid": "42:42:42:42:42:42:42:42",
-                "fqdn-fwd": false,
-                "fqdn-rev": true,
-                "hostname": "myhost.example.com.",
-                "hw-address": "08:08:08:08:08:08",
-                "iaid": 1,
-                "ip-address": "2001:db8:2::1",
-                "preferred-lft": 500,
-                "state": 0,
-                "subnet-id": 44,
-                "type": "IA_NA",
-                "valid-lft": 3600
-            },
-            {
-                "cltt": 12345678,
-                "duid": "21:21:21:21:21:21:21:21",
-                "fqdn-fwd": false,
-                "fqdn-rev": true,
-                "hostname": "",
-                "iaid": 1,
-                "ip-address": "2001:db8:0:0:2::",
-                "preferred-lft": 500,
-                "prefix-len": 80,
-                "state": 0,
-                "subnet-id": 44,
-                "type": "IA_PD",
-                "valid-lft": 3600
-            }
-        ]
-    },
-    "result": 0,
-    "text": "2 IPv6 lease(s) found."
-}</screen>
-          </para>
-
-          <warning>
-            <para>The <command>lease4-get</command> and
-            <command>lease6-get</command> commands may result in very
-            large responses. This may have negative impact on the DHCP server
-            responsiveness while the response is generated and transmitted
-            over the control channel, as the server imposes no restriction
-            on the number of leases returned as a result of this command.
-            </para>
-          </warning>
-
-        </section>
-
-        <section>
-          <title>lease4-del, lease6-del commands</title>
-          <para><command>leaseX-del</command> can be used to delete a lease from
-          the lease database. There are two types of parameters this command
-          supports, similar to leaseX-get commands: (address) for both v4 and
-          v6, (subnet-id, identifier-type, identifier) for v4 and (subnet-id,
-          identifier-type, identifier, type, IAID) for v6. The first type of
-          query is used when the address (either IPv4 or IPv6) is known, but the
-          details of the lease are not. One common use case of this type of query
-          is to remove a lease (e.g. you want a specific address to no longer be
-          used, no matter who may use it). The second query uses
-          identifiers. For maximum flexibility, this interface uses identifiers
-          as a pair of values: type and the actual identifier. Currently
-          supported identifiers are "hw-address" (IPv4 only), "client-id"
-          (IPv4 only) and "duid" (IPv6 only), but additional types may be added
-          in the future. </para>
-
-          <para>
-            An example command for deleting a host reservation by address looks
-            as follows:
-<screen>
-{
-    "command": "lease4-del",
-    "arguments": {
-        "ip-address": "192.0.2.202"
-    }
-}</screen>
-
-An example IPv4 lease deletion by "hw-address" looks as follows:
-
-<screen>{
-  "command": "lease4-del",
-  "arguments": {
-    "identifier": "08:08:08:08:08:08",
-    "identifier-type": "hw-address",
-    "subnet-id": 44
-  }
-}</screen>
-          </para>
-
-          <para><command>leaseX-del</command> returns a result that
-          indicates a outcome of the operation. It has one of the
-          following values: 0 (success), 1 (error) or 3 (empty). The
-          empty result means that a query has been completed properly,
-          but the object (a lease in this case) has not been found.
-          </para>
-        </section>
-
-        <section>
-          <title>lease4-update, lease6-update commands</title>
-          <para><command>lease4-update</command> and
-          <command>lease6-update</command> commands can be used to update
-          existing leases. Since all lease database backends are indexed by IP
-          addresses, it is not possible to update an address. All other fields
-          may be updated. If an address needs to be changed, please use
-          <command>leaseX-del</command> followed by
-          <command>leaseX-add</command> commands.</para>
-
-          <para>The optional boolean parameter "force-create" specifies
-          if the lease should be created if it doesn't exist in the database.
-          It defaults to false, which indicates that the lease is not created
-          if it doesn't exist. In such case, an error is returned as a result
-          of trying to update a non-existing lease. If the "force-create" parameter
-          is set to true and the updated lease doesn't exist, the new lease is
-          created as a result of receiving the <command>leaseX-update</command>.
-          </para>
-
-          <para>
-            An example command updating IPv4 lease looks as follows:
-<screen>{
-  "command": "lease4-update",
-  "arguments": {
-    "ip-address": "192.0.2.1",
-    "hostname": "newhostname.example.org",
-    "hw-address": "1a:1b:1c:1d:1e:1f",
-    "subnet-id": 44,
-    "force-create": true
-  }
-}</screen>
-          </para>
-
-          <para>
-            An example command updating IPv6 lease looks as follows:
-<screen>{
-  "command": "lease6-update",
-  "arguments": {
-    "ip-address": "2001:db8::1",
-    "duid": "88:88:88:88:88:88:88:88",
-    "iaid": 7654321,
-    "hostname": "newhostname.example.org",
-    "subnet-id": 66,
-    "force-create": false
-  }
-}</screen>
-          </para>
-        </section>
-
-        <section>
-          <title>lease4-wipe, lease6-wipe commands</title>
-          <para><command>lease4-wipe</command> and
-          <command>lease6-wipe</command> are designed to remove all
-          leases associated with a given subnet. This administrative
-          task is expected to be used when existing subnet is being
-          retired. Note that the leases are not properly expired,
-          there are no DNS updates conducted, no log messages and
-          hooks are not called for leases being removed.</para>
-
-          <para>An example of <command>lease4-wipe</command> looks as follows:
-<screen>{
-  "command": "lease4-wipe",
-  "arguments": {
-    "subnet-id": 44
-  }
-}</screen>
-          </para>
-
-          <para>An example of <command>lease6-wipe</command> looks as follows:
-<screen>{
-  "command": "lease6-wipe",
-  "arguments": {
-    "subnet-id": 66
-  }
-}</screen>
-          </para>
-
-          <para>The commands return a textual description of the
-          number of leases removed and 0 (success) status code if any
-          leases were removed and 2 (empty) if there were no
-          leases. Status code 1 (error) may be returned in case the
-          parameters are incorrect or some other exception is
-          encountered.</para>
-
-          <para>The subnet-id 0 has special meaning. It tells Kea to
-          delete leases from all configured subnets. Also, the
-          subnet-id parameter may be omitted. If not specified, leases
-          from all subnets are wiped.</para>
-
-          <para>Note: not all backends support this command.</para>
-        </section>
-      </section>
-    </section>
+      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-lease-cmds.xml"/>
 
       <section xml:id="subnet-cmds">
         <title>subnet_cmds: Subnet Commands</title>
@@ -2162,7 +1692,14 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
         </para>
 
         <para>Currently this library is only available to ISC customers with a
-        support contract.</para>
+        support contract.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+        </para>
 
         <para>The following commands are currently supported:
         <itemizedlist mark="bullet">
@@ -2538,6 +2075,9 @@ If the subnet exists the response will be similar to this:
           used). You can mix those two approaches only if you
           understand how the internal automatic subnet-id generation works.
         </para>
+        <note>
+          Subnet IDs must be greater than zero and less than 4294967295.
+        </note>
 
       </section>
 
@@ -3026,7 +2566,4 @@ both the command and the response.
         of server id which is DHCPv6 only.
       </para>
     </section>
-
-
-
    </chapter>

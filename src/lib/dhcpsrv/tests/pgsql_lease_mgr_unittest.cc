@@ -7,13 +7,13 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
-#include <exceptions/exceptions.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -25,6 +25,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;
@@ -199,15 +201,15 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 class PgSqlLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyPgSQLSchema();
+        destroyPgSQLSchema();
     }
 
     virtual void createSchema() {
-        test::createPgSQLSchema();
+        createPgSQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validPgSQLConnectionString());
+        return (validPgSQLConnectionString());
     }
 
     virtual std::string invalidConnectString() {
@@ -344,6 +346,11 @@ TEST_F(PgSqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(PgSqlLeaseMgrTest, getLeases4Paged) {
+    testGetLeases4Paged();
+}
+
 // This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetId) {
     testGetLeases6SubnetId();
@@ -352,6 +359,11 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetId) {
 // This test checks that all IPv6 leases are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6) {
     testGetLeases6();
+}
+
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(PgSqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
 }
 
 /// @brief Basic Lease4 Checks
@@ -439,6 +451,14 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6DuidSize) {
 /// discriminate between the leases based on lease type alone.
 TEST_F(PgSqlLeaseMgrTest, lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
+}
+
+/// @brief Verifies the getLeases6(DUID) method
+///
+/// Adds 3 lease and verifies fetch by DUID.
+/// Verifies retrival of non existant DUID fails
+TEST_F(PgSqlLeaseMgrTest, getLeases6Duid) {
+   testGetLeases6Duid(); 
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID

@@ -1,11 +1,7 @@
 // Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
+// License, v. 2.0. If a copy of the MPL was not distributed with this // file, You can obtain one at http://mozilla.org/MPL/2.0/.  #include <config.h> 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -526,6 +522,8 @@ SubnetConfigParser::hrModeFromText(const std::string& txt) {
         return (Network::HR_DISABLED);
     } else if (txt.compare("out-of-pool") == 0) {
         return (Network::HR_OUT_OF_POOL);
+    } else if (txt.compare("global") == 0) {
+        return (Network::HR_GLOBAL);
     } else if (txt.compare("all") == 0) {
         return (Network::HR_ALL);
     } else {
@@ -567,7 +565,26 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     // Try to create the address object. It also validates that
     // the address syntax is ok.
     isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
-    uint8_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+    // Now parse out the prefix length.
+    unsigned int len;
+    try {
+        len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+    } catch (const boost::bad_lexical_cast&) {
+        ConstElementPtr elem = params->get("subnet");
+        isc_throw(DhcpConfigError, "prefix length: '" <<
+                  subnet_txt.substr(pos+1) << "' is not an integer ("
+                  << elem->getPosition() << ")");
+    }
+
+    // Sanity check the prefix length
+    if ((addr.isV6() && len > 128) ||
+        (addr.isV4() && len > 32)) {
+        ConstElementPtr elem = params->get("subnet");
+        isc_throw(BadValue,
+                  "Invalid prefix length specified for subnet: " << len
+                  << " (" <<  elem->getPosition() << ")");
+    }
 
     // Call the subclass's method to instantiate the subnet
     initSubnet(params, addr, len);
@@ -652,9 +669,16 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
     // The renew-timer and rebind-timer are optional. If not set, the
     // option 58 and 59 will not be sent to a client. In this case the
-    // client will use default values based on the valid-lifetime.
-    Triplet<uint32_t> t1 = getInteger(params, "renew-timer");
-    Triplet<uint32_t> t2 = getInteger(params, "rebind-timer");
+    // client should formulate default values based on the valid-lifetime.
+    Triplet<uint32_t> t1;
+    if (params->contains("renew-timer")) {
+        t1 = getInteger(params, "renew-timer");
+    }
+
+    Triplet<uint32_t> t2;
+    if (params->contains("rebind-timer")) {
+        t2 = getInteger(params, "rebind-timer");
+    }
 
     // The valid-lifetime is mandatory. It may be specified for a
     // particular subnet. If not, the global value should be present.
@@ -1295,6 +1319,12 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     std::string generated_prefix =
         getString(client_config, "generated-prefix");
 
+    std::string hostname_char_set =
+        getString(client_config, "hostname-char-set");
+
+    std::string hostname_char_replacement =
+        getString(client_config, "hostname-char-replacement");
+
     // qualifying-suffix is the only parameter which has no default
     std::string qualifying_suffix = "";
     bool found_qualifying_suffix = false;
@@ -1376,8 +1406,9 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                                             override_client_update,
                                             replace_client_name_mode,
                                             generated_prefix,
-                                            qualifying_suffix));
-
+                                            qualifying_suffix,
+                                            hostname_char_set,
+                                            hostname_char_replacement));
     }  catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
@@ -1408,7 +1439,9 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "override-no-update", Element::boolean, "false" },
     { "override-client-update", Element::boolean, "false" },
     { "replace-client-name", Element::string, "never" },
-    { "generated-prefix", Element::string, "myhost" }
+    { "generated-prefix", Element::string, "myhost" },
+    { "hostname-char-set", Element::string, "" },
+    { "hostname-char-replacement", Element::string, "" }
     // qualifying-suffix has no default
 };
 

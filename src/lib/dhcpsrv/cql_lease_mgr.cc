@@ -1,3 +1,4 @@
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
@@ -18,6 +19,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cql_lease_mgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <dhcp/duid.h>
@@ -25,6 +27,8 @@
 
 #include <asiolink/io_address.h>
 
+using namespace isc::data;
+using namespace isc::db;
 using isc::asiolink::IOAddress;
 
 namespace isc {
@@ -32,6 +36,7 @@ namespace dhcp {
 
 static constexpr size_t HOSTNAME_MAX_LEN = 255u;
 static constexpr size_t ADDRESS6_TEXT_MAX_LEN = 39u;
+static constexpr char NULL_USER_CONTEXT[] = "";
 
 /// @brief Common CQL and Lease Data Methods
 ///
@@ -47,7 +52,7 @@ public:
     CqlLeaseExchange(const CqlConnection &connection)
         : connection_(connection), valid_lifetime_(0), expire_(0),
           subnet_id_(0), fqdn_fwd_(cass_false), fqdn_rev_(cass_false),
-          state_(0) {
+          state_(0), user_context_(NULL_USER_CONTEXT) {
     }
 
     /// @brief Create BIND array to receive C++ data.
@@ -96,6 +101,9 @@ protected:
 
     /// @brief Lease state
     cass_int32_t state_;
+
+    /// @brief User context
+    std::string user_context_;
 };
 
 /// @brief Exchange Lease4 information between Kea and CQL
@@ -217,6 +225,10 @@ public:
     static constexpr StatementTag GET_LEASE4_HWADDR = "GET_LEASE4_HWADDR";
     // Get lease4 by HW address & subnet ID
     static constexpr StatementTag GET_LEASE4_HWADDR_SUBID = "GET_LEASE4_HWADDR_SUBID";
+    // Get range of lease4 from first lease with a limit
+    static constexpr StatementTag GET_LEASE4_LIMIT = "GET_LEASE4_LIMIT";
+    // Get range of lease4 from address with limit (paging)
+    static constexpr StatementTag GET_LEASE4_PAGE = "GET_LEASE4_PAGE";
     // Get lease4 by subnet ID
     static constexpr StatementTag GET_LEASE4_SUBID = "GET_LEASE4_SUBID";
     /// @}
@@ -240,6 +252,8 @@ constexpr StatementTag CqlLease4Exchange::GET_LEASE4_CLIENTID;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_CLIENTID_SUBID;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_HWADDR_SUBID;
+constexpr StatementTag CqlLease4Exchange::GET_LEASE4_LIMIT;
+constexpr StatementTag CqlLease4Exchange::GET_LEASE4_PAGE;
 constexpr StatementTag CqlLease4Exchange::GET_LEASE4_SUBID;
 
 StatementMap CqlLease4Exchange::tagged_statements_{
@@ -249,9 +263,9 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {INSERT_LEASE4,
       "INSERT INTO lease4( "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       ") VALUES ( "
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "}},
 
@@ -267,7 +281,8 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       "fqdn_fwd = ?, "
       "fqdn_rev = ?, "
       "hostname = ?, "
-      "state = ? "
+      "state = ?, "
+      "user_context = ? "
       "WHERE address = ? "
       "IF EXISTS "}},
 
@@ -283,7 +298,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_EXPIRE,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE state = ? "
       "AND expire < ? "
@@ -295,7 +310,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       {GET_LEASE4,
        "SELECT "
        "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-       "fqdn_fwd, fqdn_rev, hostname, state "
+       "fqdn_fwd, fqdn_rev, hostname, state, user_context "
        "FROM lease4 "}},
 
     // Gets an IPv4 lease with specified IPv4 address
@@ -303,7 +318,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_ADDR,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE address = ? "}},
 
@@ -312,7 +327,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_CLIENTID,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE client_id = ? "
       "ALLOW FILTERING "}},
@@ -322,7 +337,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_CLIENTID_SUBID,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE client_id = ? "
       "AND subnet_id = ? "
@@ -333,7 +348,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_HWADDR,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE hwaddr = ? "
       "ALLOW FILTERING "}},
@@ -343,10 +358,31 @@ StatementMap CqlLease4Exchange::tagged_statements_{
      {GET_LEASE4_HWADDR_SUBID,
       "SELECT "
       "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-      "fqdn_fwd, fqdn_rev, hostname, state "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
       "FROM lease4 "
       "WHERE hwaddr = ? "
       "AND subnet_id = ? "
+      "ALLOW FILTERING "}},
+
+    // Get range of lease4 from first lease with a limit (paging)
+    {GET_LEASE4_LIMIT,
+     {GET_LEASE4_LIMIT,
+      "SELECT "
+      "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
+      "FROM lease4 "
+      "LIMIT ? "
+      "ALLOW FILTERING "}},
+
+    // Get range of lease4 from address with a limit (paging)
+    {GET_LEASE4_PAGE,
+     {GET_LEASE4_PAGE,
+      "SELECT "
+      "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
+      "fqdn_fwd, fqdn_rev, hostname, state, user_context "
+      "FROM lease4 "
+      "WHERE TOKEN(address) > TOKEN(?) "
+      "LIMIT ? "
       "ALLOW FILTERING "}},
 
      // Gets an IPv4 lease(s) with specified subnet-id
@@ -354,7 +390,7 @@ StatementMap CqlLease4Exchange::tagged_statements_{
       {GET_LEASE4_SUBID,
        "SELECT "
        "address, hwaddr, client_id, valid_lifetime, expire, subnet_id, "
-       "fqdn_fwd, fqdn_rev, hostname, state "
+       "fqdn_fwd, fqdn_rev, hostname, state, user_context "
        "FROM lease4 "
        "WHERE subnet_id = ? "
        "ALLOW FILTERING "}}
@@ -437,6 +473,14 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         // state: int
         state_ = static_cast<cass_int32_t>(lease_->state_);
 
+        // user_context: text
+        ConstElementPtr ctx = lease_->getContext();
+        if (ctx) {
+            user_context_ = ctx->str();
+        } else {
+            user_context_ = NULL_USER_CONTEXT;
+        }
+
         // Start with a fresh array.
         data.clear();
         data.add(&address_);
@@ -449,6 +493,7 @@ CqlLease4Exchange::createBindForInsert(const Lease4Ptr &lease, AnyArray &data) {
         data.add(&fqdn_rev_);
         data.add(&hostname_);
         data.add(&state_);
+        data.add(&user_context_);
 
     } catch (const Exception &ex) {
         isc_throw(DbOperationError, "CqlLease4Exchange::createBindForInsert(): "
@@ -531,6 +576,14 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         // state: int
         state_ = static_cast<cass_int32_t>(lease_->state_);
 
+        // user_context: text
+        ConstElementPtr ctx = lease_->getContext();
+        if (ctx) {
+            user_context_ = ctx->str();
+        } else {
+            user_context_ = NULL_USER_CONTEXT;
+        }
+
         // Start with a fresh array.
         data.clear();
         data.add(&hwaddr_);
@@ -542,6 +595,7 @@ CqlLease4Exchange::createBindForUpdate(const Lease4Ptr &lease, AnyArray &data,
         data.add(&fqdn_rev_);
         data.add(&hostname_);
         data.add(&state_);
+        data.add(&user_context_);
         data.add(&address_);
 
     } catch (const Exception &ex) {
@@ -609,6 +663,9 @@ CqlLease4Exchange::createBindForSelect(AnyArray &data, StatementTag /* unused */
 
     // state: int
     data.add(&state_);
+
+    // user_context: text
+    data.add(&user_context_);
 }
 
 boost::any
@@ -645,12 +702,25 @@ CqlLease4Exchange::retrieve() {
 
         uint32_t addr4 = static_cast<uint32_t>(address_);
 
+        ConstElementPtr ctx;
+        if (!user_context_.empty()) {
+            ctx = Element::fromJSON(user_context_);
+            if (!ctx || (ctx->getType() != Element::map)) {
+                isc_throw(BadValue, "user context '" << user_context_
+                          << "' is not a JSON map");
+            }
+        }
+
         Lease4Ptr result(new Lease4(addr4, hwaddr, client_id_.data(),
                                     client_id_.size(), valid_lifetime_, 0, 0,
                                     cltt, subnet_id_, fqdn_fwd_, fqdn_rev_,
                                     hostname_));
 
         result->state_ = state_;
+
+        if (ctx) {
+            result->setContext(ctx);
+        }
 
         return (result);
     } catch (const Exception &ex) {
@@ -664,9 +734,6 @@ CqlLease4Exchange::retrieve() {
 void
 CqlLease4Exchange::getLeaseCollection(StatementTag &statement_tag, AnyArray &data,
                                       Lease4Collection &result) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_ADDR4)
-        .arg(statement_tag);
-
     AnyArray collection = executeSelect(connection_, data, statement_tag);
 
     // Transfer Lease4 objects to result.
@@ -836,8 +903,11 @@ public:
     static constexpr StatementTag DELETE_LEASE6 = "DELETE_LEASE6";
     static constexpr StatementTag GET_LEASE6_EXPIRE = "GET_LEASE6_EXPIRE";
     static constexpr StatementTag GET_LEASE6_ADDR = "GET_LEASE6_ADDR";
+    static constexpr StatementTag GET_LEASE6_DUID = "GET_LEASE6_DUID";
     static constexpr StatementTag GET_LEASE6_DUID_IAID = "GET_LEASE6_DUID_IAID";
     static constexpr StatementTag GET_LEASE6_DUID_IAID_SUBID = "GET_LEASE6_DUID_IAID_SUBID";
+    static constexpr StatementTag GET_LEASE6_LIMIT = "GET_LEASE6_LIMIT";
+    static constexpr StatementTag GET_LEASE6_PAGE = "GET_LEASE6_PAGE";
     // @}
 
 private:
@@ -874,8 +944,11 @@ constexpr StatementTag CqlLease6Exchange::UPDATE_LEASE6;
 constexpr StatementTag CqlLease6Exchange::DELETE_LEASE6;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_EXPIRE;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_ADDR;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID;
 constexpr StatementTag CqlLease6Exchange::GET_LEASE6_DUID_IAID_SUBID;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_LIMIT;
+constexpr StatementTag CqlLease6Exchange::GET_LEASE6_PAGE;
 
 StatementMap CqlLease6Exchange::tagged_statements_ = {
 
@@ -885,9 +958,9 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "INSERT INTO lease6("
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       ") VALUES ("
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
       ") "
       "IF NOT EXISTS "}},
 
@@ -909,7 +982,8 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "hwaddr = ?, "
       "hwtype = ?, "
       "hwaddr_source = ?, "
-      "state = ? "
+      "state = ?, "
+      "user_context = ? "
       "WHERE address = ? "
       "IF EXISTS "}},
 
@@ -926,23 +1000,34 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "SELECT "
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE state = ? "
       "AND expire < ? "
       "LIMIT ? "
       "ALLOW FILTERING "}},
 
-    // Gets an IPv6 lease with specified IPv4 address
+    // Gets an IPv6 lease with specified IPv6 address
     {GET_LEASE6_ADDR,
      {GET_LEASE6_ADDR,
       "SELECT "
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE address = ? "
       "AND lease_type = ? "
+      "ALLOW FILTERING "}},
+
+    // Gets an IPv6 lease with specified duid
+    {GET_LEASE6_DUID,
+     {GET_LEASE6_DUID,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state, user_context "
+      "FROM lease6 "
+      "WHERE duid = ? "
       "ALLOW FILTERING "}},
 
     // Gets an IPv6 lease(s) with specified duid and iaid
@@ -951,7 +1036,7 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "SELECT "
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE duid = ? AND iaid = ? "
       "AND lease_type = ? "
@@ -963,13 +1048,35 @@ StatementMap CqlLease6Exchange::tagged_statements_ = {
       "SELECT "
       "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
       "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
-      "hwaddr_source, state "
+      "hwaddr_source, state, user_context "
       "FROM lease6 "
       "WHERE duid = ? AND iaid = ? "
       "AND lease_type = ? "
       "AND subnet_id = ? "
       "ALLOW FILTERING "}},
 
+    // Get range of IPv6 leases from first lease with a limit (paging)
+    {GET_LEASE6_LIMIT,
+     {GET_LEASE6_LIMIT,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state, user_context "
+      "FROM lease6 "
+      "LIMIT ? "
+      "ALLOW FILTERING "}},
+
+    // Get range of IPv6 leases from address with a limit (paging)
+    {GET_LEASE6_PAGE,
+     {GET_LEASE6_PAGE,
+      "SELECT "
+      "address, valid_lifetime, expire, subnet_id, pref_lifetime, duid, iaid, "
+      "lease_type, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, "
+      "hwaddr_source, state, user_context "
+      "FROM lease6 "
+      "WHERE TOKEN(address) > TOKEN(?) "
+      "LIMIT ? "
+      "ALLOW FILTERING "}}
 };
 
 CqlLease6Exchange::CqlLease6Exchange(const CqlConnection &connection)
@@ -1072,6 +1179,14 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         // state: int
         state_ = static_cast<cass_int32_t>(lease_->state_);
 
+        // user_context: text
+        ConstElementPtr ctx = lease_->getContext();
+        if (ctx) {
+            user_context_ = ctx->str();
+        } else {
+            user_context_ = NULL_USER_CONTEXT;
+        }
+
         // Start with a fresh array.
         data.clear();
 
@@ -1092,6 +1207,7 @@ CqlLease6Exchange::createBindForInsert(const Lease6Ptr &lease, AnyArray &data) {
         data.add(&hwtype_);
         data.add(&hwaddr_source_);
         data.add(&state_);
+        data.add(&user_context_);
 
     } catch (const Exception &ex) {
         isc_throw(DbOperationError, "CqlLease6Exchange::createBindForInsert(): "
@@ -1205,6 +1321,14 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         // state: int
         state_ = static_cast<cass_int32_t>(lease_->state_);
 
+        // user_context: text
+        ConstElementPtr ctx = lease_->getContext();
+        if (ctx) {
+            user_context_ = ctx->str();
+        } else {
+            user_context_ = NULL_USER_CONTEXT;
+        }
+
         // Start with a fresh array.
         data.clear();
 
@@ -1224,6 +1348,7 @@ CqlLease6Exchange::createBindForUpdate(const Lease6Ptr &lease, AnyArray &data,
         data.add(&hwtype_);
         data.add(&hwaddr_source_);
         data.add(&state_);
+        data.add(&user_context_);
         data.add(&address_);
 
     } catch (const Exception &ex) {
@@ -1309,6 +1434,9 @@ CqlLease6Exchange::createBindForSelect(AnyArray &data, StatementTag /* unused */
 
     // state: int
     data.add(&state_);
+
+    // user_context: text
+    data.add(&user_context_);
 }
 
 boost::any
@@ -1360,6 +1488,15 @@ CqlLease6Exchange::retrieve() {
             hwaddr->source_ = hwaddr_source_;
         }
 
+        ConstElementPtr ctx;
+        if (!user_context_.empty()) {
+            ctx = Element::fromJSON(user_context_);
+            if (!ctx ||(ctx->getType() != Element::map)) {
+                isc_throw(BadValue, "user context '" << user_context_
+                          << "' is not a JSON map");
+            }
+        }
+
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
         Lease6Ptr result(
@@ -1372,6 +1509,10 @@ CqlLease6Exchange::retrieve() {
         result->cltt_ = cltt;
 
         result->state_ = state_;
+
+        if (ctx) {
+            result->setContext(ctx);
+        }
 
         return (result);
     } catch (const Exception &ex) {
@@ -1386,9 +1527,6 @@ CqlLease6Exchange::retrieve() {
 void
 CqlLease6Exchange::getLeaseCollection(StatementTag &statement_tag, AnyArray &data,
                                       Lease6Collection &result) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_ADDR4)
-        .arg(statement_tag);
-
     AnyArray collection = executeSelect(connection_, data, statement_tag);
 
     // Transfer Lease6 objects to result.
@@ -1546,7 +1684,7 @@ public:
     ///
     /// @param connection connection used to communicate with the Cassandra
     /// database
-    /// @param where_values array of bound objects used to filter the results
+    /// @param data array of bound objects used to filter the results
     /// @param statement_tag prepared statement being executed
     ///
     /// @throw DbOperationError
@@ -1854,9 +1992,24 @@ CqlLeaseStatsQuery::executeSelect(const CqlConnection& connection, const AnyArra
 CqlLeaseMgr::CqlLeaseMgr(const DatabaseConnection::ParameterMap &parameters)
     : LeaseMgr(), dbconn_(parameters) {
     dbconn_.openDatabase();
+
+    // Prepare the version exchange first.
+    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
+
+    // Validate the schema version.
+    std::pair<uint32_t, uint32_t> code_version(CQL_SCHEMA_VERSION_MAJOR,
+                                               CQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError, "Cassandra schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << "."
+                  << db_version.second);
+    }
+
+    // Now prepare the rest of the exchanges.
     dbconn_.prepareStatements(CqlLease4Exchange::tagged_statements_);
     dbconn_.prepareStatements(CqlLease6Exchange::tagged_statements_);
-    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
     dbconn_.prepareStatements(CqlLeaseStatsQuery::tagged_statements_);
 }
 
@@ -2067,6 +2220,51 @@ CqlLeaseMgr::getLeases4() const {
     return (result);
 }
 
+Lease4Collection
+CqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size) const {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (page_size.page_size_ == 0) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be 0");
+    }
+
+    if (page_size.page_size_ > std::numeric_limits<uint32_t>::max()) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be greater than "
+                  << std::numeric_limits<uint32_t>::max());
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    AnyArray data;
+
+    cass_int32_t address_data = 0;
+    if (!lower_bound_address.isV4Zero()) {
+        address_data = static_cast<cass_int32_t>(lower_bound_address.toUint32());
+        data.add(&address_data);
+    }
+
+    cass_int32_t page_size_data = static_cast<cass_int32_t>(page_size.page_size_);
+    data.add(&page_size_data);
+
+    // Get the data.
+    Lease4Collection result;
+    std::unique_ptr<CqlLease4Exchange> exchange4(new CqlLease4Exchange(dbconn_));
+    exchange4->getLeaseCollection(lower_bound_address.isV4Zero() ?
+                                  CqlLease4Exchange::GET_LEASE4_LIMIT :
+                                  CqlLease4Exchange::GET_LEASE4_PAGE,
+                                  data, result);
+
+    return (result);
+}
+
 Lease6Ptr
 CqlLeaseMgr::getLease6(Lease::Type lease_type, const IOAddress &addr) const {
     std::string addr_data = addr.toText();
@@ -2093,6 +2291,25 @@ CqlLeaseMgr::getLease6(Lease::Type lease_type, const IOAddress &addr) const {
     Lease6Ptr result;
     std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
     exchange6->getLease(CqlLease6Exchange::GET_LEASE6_ADDR, data, result);
+
+    return (result);
+}
+
+Lease6Collection
+CqlLeaseMgr::getLeases6(const DUID& duid) const {
+
+    // Set up the WHERE clause value
+    AnyArray data;
+    
+    CassBlob duid_data(duid.getDuid());
+
+    data.add(&duid_data);
+
+    // Get the data.
+    Lease6Collection result;
+    std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
+    exchange6->getLeaseCollection(CqlLease6Exchange::GET_LEASE6_DUID,
+                                  data, result);
 
     return (result);
 }
@@ -2164,6 +2381,59 @@ CqlLeaseMgr::getLeases6(SubnetID) const {
 Lease6Collection
 CqlLeaseMgr::getLeases6() const {
     isc_throw(NotImplemented, "getLeases6() is not implemented");
+}
+
+Lease6Collection
+CqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size) const {
+    // Expecting IPv6 address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (page_size.page_size_ == 0) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be 0");
+    }
+
+    if (page_size.page_size_ > std::numeric_limits<uint32_t>::max()) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be greater than "
+                  << std::numeric_limits<uint32_t>::max());
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    AnyArray data;
+
+    std::string lb_address_data;
+    if (!lower_bound_address.isV6Zero()) {
+        lb_address_data = lower_bound_address.toText();
+        if (lb_address_data.size() > ADDRESS6_TEXT_MAX_LEN) {
+            isc_throw(BadValue,
+                      "CqlLeaseMgr::getLeases6(lower_bound_address, page_size): "
+                      "address "
+                      << lb_address_data << " of length " << lb_address_data.size()
+                      << " exceeds maximum allowed length of "
+                      << ADDRESS6_TEXT_MAX_LEN);
+        }
+        data.add(&lb_address_data);
+    }
+
+    cass_int32_t page_size_data = static_cast<cass_int32_t>(page_size.page_size_);
+    data.add(&page_size_data);
+
+    // Get the leases.
+    Lease6Collection result;
+    std::unique_ptr<CqlLease6Exchange> exchange6(new CqlLease6Exchange(dbconn_));
+    exchange6->getLeaseCollection(lower_bound_address.isV6Zero() ?
+                                  CqlLease6Exchange::GET_LEASE6_LIMIT :
+                                  CqlLease6Exchange::GET_LEASE6_PAGE,
+                                  data, result);
+
+    return (result);
 }
 
 void

@@ -1706,6 +1706,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Set client identifier
     pkt4->addOption(generateClientId(pkt4->getHWAddr()));
 
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt4);
+
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
     if (!preload) {
@@ -1784,6 +1787,10 @@ TestControl::sendRequestFromAck(const TestControlSocket& socket) {
     // Create message of the specified type.
     Pkt4Ptr msg = createRequestFromAck(ack);
     setDefaults4(socket, msg);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(msg);
+
     msg->pack();
     // And send it.
     IfaceMgr::instance().send(msg);
@@ -1817,6 +1824,10 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
     // Prepare the message of the specified type.
     Pkt6Ptr msg = createMessageFromReply(msg_type, reply);
     setDefaults6(socket, msg);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(msg);
+
     msg->pack();
     // And send it.
     IfaceMgr::instance().send(msg);
@@ -1873,6 +1884,9 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // Set client's and server's ports as well as server's address,
     // and local (relay) address.
     setDefaults4(socket, pkt4);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt4);
 
     // Set hardware address
     pkt4->setHWAddr(offer_pkt4->getHWAddr());
@@ -1989,6 +2003,10 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     pkt4->addOption(opt_requested_ip);
 
     setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt4);
+
     // Prepare on-wire data.
     pkt4->rawPack();
     IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
@@ -2044,6 +2062,10 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 
     // Set default packet data.
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     // Prepare on-wire data.
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
@@ -2148,6 +2170,10 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     pkt6->addOption(opt_clientid);
     // Set default packet data.
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     // Prepare on wire data.
     pkt6->rawPack();
     // Send packet.
@@ -2205,6 +2231,10 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     }
 
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
     if (!preload) {
@@ -2250,6 +2280,10 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     // Prepare on-wire data.
     pkt6->rawPack();
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     // Send solicit packet.
     IfaceMgr::instance().send(pkt6);
     if (!preload) {
@@ -2321,6 +2355,26 @@ TestControl::setDefaults6(const TestControlSocket& socket,
       relay_info.linkaddr_ = IOAddress(socket.addr_);
       relay_info.peeraddr_ = IOAddress(socket.addr_);
       pkt->addRelayInfo(relay_info);
+    }
+}
+
+void
+TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
+    // All all extra options that the user may have specified
+    CommandOptions& options = CommandOptions::instance();
+    const dhcp::OptionCollection& extra_opts = options.getExtraOpts();
+    for (auto entry : extra_opts) {
+        pkt->addOption(entry.second);
+    }
+}
+
+void
+TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
+    // All all extra options that the user may have specified
+    CommandOptions& options = CommandOptions::instance();
+    const dhcp::OptionCollection& extra_opts = options.getExtraOpts();
+    for (auto entry : extra_opts) {
+        pkt->addOption(entry.second);
     }
 }
 

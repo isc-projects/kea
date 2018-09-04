@@ -4,8 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <http/http_message_parser_base.h>
 #include <boost/bind.hpp>
+#include <sstream>
 
 using namespace isc::util;
 
@@ -23,7 +26,8 @@ const int HttpMessageParserBase::HTTP_PARSE_FAILED_EVT;
 
 
 HttpMessageParserBase::HttpMessageParserBase(HttpMessage& message)
-    : StateModel(), message_(message), buffer_(), error_message_() {
+    : StateModel(), message_(message), buffer_(), buffer_pos_(0),
+      error_message_() {
 }
 
 void
@@ -67,6 +71,31 @@ HttpMessageParserBase::postBuffer(const void* buf, const size_t buf_size) {
                        static_cast<const char*>(buf) + buf_size);
     }
 }
+
+std::string
+HttpMessageParserBase::getBufferAsString(const size_t limit) const {
+    std::string message(buffer_.begin(), buffer_.end());
+    return (logFormatHttpMessage(message, limit));
+}
+
+std::string
+HttpMessageParserBase::logFormatHttpMessage(const std::string& message,
+                                            const size_t limit) {
+    if ((limit > 0) && !message.empty()) {
+        if (limit < message.size()) {
+            std::ostringstream s;
+            s << message.substr(0, limit)
+              << ".........\n(truncating HTTP message larger than "
+              << limit << " characters)\n";
+            return (s.str());
+        }
+    }
+
+    // Return original message if it is empty or does not exceed the
+    // limit.
+    return (message);
+}
+
 
 void
 HttpMessageParserBase::defineEvents() {
@@ -197,9 +226,8 @@ HttpMessageParserBase::parseEndedHandler() {
 bool
 HttpMessageParserBase::popNextFromBuffer(char& next) {
     // If there are any characters in the buffer, pop next.
-    if (!buffer_.empty()) {
-        next = buffer_.front();
-        buffer_.pop_front();
+    if (buffer_pos_ < buffer_.size()) {
+        next = buffer_[buffer_pos_++];
         return (true);
     }
     return (false);

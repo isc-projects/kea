@@ -165,7 +165,7 @@ EOF
 
     # Second table: hosts
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name FROM hosts;
+    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
@@ -258,7 +258,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 6.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 7.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -400,10 +400,10 @@ EOF
 
     #table: DHCPv4 fixed field colums (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
-    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts";
+    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name failed. (expected status code %d, returned %d)"
+    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key failed. (expected status code %d, returned %d)"
 
     # verify that dhcp4_subnet_id is unsigned
     qry="show columns from hosts like 'dhcp4_subnet_id'"
@@ -449,9 +449,30 @@ EOF
 
     # lease4/6_stats changes are tested separately
 
-    # Verify upgraded schema reports version 6.0
+    #table: user_context to lease4 and lease6 (upgrade 6.0 -> 7.0)
+    # verify that lease4 table includes user_context
+    qry="select user_context from lease4";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from lease4 failed. (expected status code %d, returned %d)"
+
+    # verify that lease6 table includes user_context
+    qry="select user_context from lease6";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from lease6 failed. (expected status code %d, returned %d)"
+
+    #table: logs (upgrade 6.0 -> 7.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT timestamp, address, log FROM logs;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
+
+    # Verify upgraded schema reports version 7.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "6.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+
 
     # Let's wipe the whole database
     mysql_wipe
@@ -492,9 +513,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0);\
-insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1);\
-insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2);"
+insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0,NULL);\
+insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1,NULL);\
+insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2,NULL);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
@@ -552,9 +573,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0);\
-insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1);\
-insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2);"
+insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,NULL);\
+insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2,NULL);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?

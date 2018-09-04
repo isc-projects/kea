@@ -120,6 +120,9 @@ public:
     /// @brief Returns HTTP message body as string.
     std::string getBody() const;
 
+    /// @brief Returns HTTP method, URI and HTTP version as a string.
+    std::string toBriefString() const;
+
     /// @brief Returns HTTP message as string.
     ///
     /// This method is called to generate the outbound HTTP message. Make

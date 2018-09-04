@@ -10,13 +10,13 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -28,6 +28,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::data;
@@ -283,6 +285,18 @@ TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
 // address. Host uses hw address as identifier.
 TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv4 host reservation with options can have a the global
+// subnet id value
+TEST_F(MySqlHostDataSourceTest, globalSubnetId4) {
+    testGlobalSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a the global
+// subnet id value
+TEST_F(MySqlHostDataSourceTest, globalSubnetId6) {
+    testGlobalSubnetId6();
 }
 
 // Verifies that IPv4 host reservation with options can have a max value

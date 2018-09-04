@@ -32,6 +32,7 @@ CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 lib_LTLIBRARIES = libkea-hooks.la
 libkea_hooks_la_SOURCES  =
 libkea_hooks_la_SOURCES += callout_handle.cc callout_handle.h
+libkea_hooks_la_SOURCES += callout_handle_associate.cc callout_handle_associate.h
 libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
 libkea_hooks_la_SOURCES += hooks.h
 libkea_hooks_la_SOURCES += hooks_log.cc hooks_log.h
@@ -50,7 +51,7 @@ nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 5:0:0
+libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 7:0:0
 libkea_hooks_la_LIBADD  =
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
@@ -64,6 +65,7 @@ libkea_hooks_la_LIBADD += $(LOG4CPLUS_LIBS)
 libkea_hooks_includedir = $(pkgincludedir)/hooks
 libkea_hooks_include_HEADERS = \
 	callout_handle.h \
+	callout_handle_associate.h \
 	callout_manager.h \
 	hooks.h \
 	hooks_config.h \

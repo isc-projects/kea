@@ -310,5 +310,25 @@ TEST_F(HttpResponseParserTest, noColonInHttpHeader) {
     testInvalidHttpResponse(http_resp);
 }
 
+// This test verifies that the HTTP response is formatted for logging.
+TEST_F(HttpResponseParserTest, logFormatHttpMessage) {
+    std::string message = "POST / HTTP/1.1\r\n"
+        "Host: 127.0.0.1:8080\r\n"
+        "User-Agent: curl/7.59.0\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: 51\r\n\r\n"
+        "{ \"command\": \"config-get\", \"service\": [ \"dhcp4\" ] }";
+
+    // limit = 0 means no limit
+    EXPECT_EQ(message, HttpResponseParser::logFormatHttpMessage(message, 0));
+
+    // large enough limit should not cause the truncation.
+    EXPECT_EQ(message, HttpResponseParser::logFormatHttpMessage(message, 1024));
+
+    // Only 3 characters requested. The request should be truncated.
+    EXPECT_EQ("POS.........\n(truncating HTTP message larger than 3 characters)\n",
+              HttpResponseParser::logFormatHttpMessage(message, 3));
+}
+
 
 }

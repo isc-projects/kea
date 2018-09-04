@@ -484,6 +484,23 @@ public:
         /// @return Pointer to the host object.
         ConstHostPtr currentHost() const;
 
+        /// @brief Returns global host reservation if there is one
+        ///
+        /// If the current subnet's reservation mode is global and
+        /// there is a global host (i.e. reservation belonging to
+        /// the global subnet), return it.  Otherwise return an
+        /// empty pointer.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr globalHost() const;
+
+        /// @brief Determines if a global reservation exists
+        ///
+        /// @return true if there current subnet's reservation mode is
+        /// global and there is global host containing the given
+        /// lease reservation, false otherwise
+        bool hasGlobalReservation(const IPv6Resrv& resv) const;
+
         /// @brief Default constructor.
         ClientContext6();
 
@@ -747,6 +764,30 @@ public:
     /// @param ctx Client context that contains all necessary information.
     static void findReservation(ClientContext6& ctx);
 
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find a "global" host reservation matching the
+    /// client identifier.  It will return the first global reservation that
+    /// matches per the configured list of host identifiers, or an empty
+    /// pointer if no matches are found.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return Pointer to the reservation found, or an empty pointer.
+    static ConstHostPtr findGlobalReservation(ClientContext6& ctx);
+
+    /// @brief Creates an IPv6Resrv instance from a Lease6
+    ///
+    /// @param lease Reference to the Lease6
+    /// @return The newly formed IPv6Resrv instance
+    static IPv6Resrv makeIPv6Resrv(const Lease6& lease) {
+        if (lease.type_ == Lease::TYPE_NA) {
+            return (IPv6Resrv(IPv6Resrv::TYPE_NA, lease.addr_,
+                              (lease.prefixlen_ ? lease.prefixlen_ : 128)));
+        }
+
+        return (IPv6Resrv(IPv6Resrv::TYPE_PD, lease.addr_, lease.prefixlen_));
+    }
+
 private:
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
@@ -761,6 +802,7 @@ private:
     ///        available
     /// @param prefix_len length of the prefix (for PD only)
     ///        should be 128 for other lease types
+    /// @param [out] callout_status callout returned by the lease6_select
     ///
     /// The following fields of the ctx structure are used:
     /// @ref ClientContext6::subnet_ subnet the lease is allocated from
@@ -784,7 +826,8 @@ private:
     ///         became unavailable)
     Lease6Ptr createLease6(ClientContext6& ctx,
                            const isc::asiolink::IOAddress& addr,
-                           const uint8_t prefix_len);
+                           const uint8_t prefix_len,
+                           hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Allocates a normal, in-pool, unreserved lease from the pool.
     ///
@@ -799,15 +842,35 @@ private:
 
     /// @brief Creates new leases based on reservations.
     ///
-    /// This method allocates new leases, based on host reservation. Existing
-    /// leases are specified in existing_leases parameter. A new lease is not created,
-    /// if there is a lease for specified address on existing_leases list or there is
-    /// a lease used by someone else.
+    /// This method allcoates new leases,  based on host reservations.
+    /// Existing leases are specified in the existing_leases parameter.
+    /// It first calls @c allocateGlobalReservedLeases6 to accomodate
+    /// subnets using global reservations.  If that method allocates
+    /// addresses, we return, otherwise we continue and check for non-global
+    /// reservations.  A new lease is not created, if there is a lease for
+    /// specified address on existing_leases list or there is a lease used by
+    /// someone else.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases leases that are already associated with the client
     void
     allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
+
+    /// @brief Creates new leases based on global reservations.
+    ///
+    /// This method is used by @allocateReservedLeases6, to allocate new leases based
+    /// on global reservation if one exists and global reservations are enabled for
+    /// the selected subnet. It differs from it's caller by looking only at the global
+    /// reservation and therefore has no need to iterate over the selected subnet or it's
+    /// siblings looking for host reservations.  Like it's caller, existing leases are
+    /// specified in existing_leases parameter. A new lease is not created, if there is
+    /// a lease for specified address on existing_leases list or there is a lease used by
+    /// someone else.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases leases that are already associated with the client
+    bool
+    allocateGlobalReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
 
     /// @brief Removes leases that are reserved for someone else.
     ///
@@ -859,6 +922,7 @@ private:
     /// @param ctx client context that contains all details.
     /// @param prefix_len prefix length (for PD leases)
     ///        Should be 128 for other lease types
+    /// @param [out] callout_status callout returned by the lease6_select
     ///
     /// The following parameters are used from the ctx structure:
     /// @ref ClientContext6::subnet_ subnet the lease is allocated from
@@ -879,9 +943,11 @@ private:
     ///
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
-    Lease6Ptr reuseExpiredLease(Lease6Ptr& expired,
-                                ClientContext6& ctx,
-                                uint8_t prefix_len);
+    Lease6Ptr
+    reuseExpiredLease(Lease6Ptr& expired,
+                      ClientContext6& ctx,
+                      uint8_t prefix_len,
+                      hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Updates FQDN and Client's Last Transmission Time
     /// for a collection of leases.
@@ -1294,6 +1360,17 @@ public:
     /// @param ctx Client context holding various information about the client.
     static void findReservation(ClientContext4& ctx);
 
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find a "global" host reservation matching the
+    /// client identifier.  It will return the first global reservation that matches
+    /// per the configured list of host identifiers, or an empty pointer if no
+    /// matches are found.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return Pointer to the reservation found, or an empty pointer.
+    static ConstHostPtr findGlobalReservation(ClientContext4& ctx);
+
 private:
 
     /// @brief Offers the lease.
@@ -1375,6 +1452,7 @@ private:
     ///
     /// @param ctx client context that contains additional parameters.
     /// @param addr An address that was selected and is confirmed to be available
+    /// @param [out] callout_status callout returned by the lease6_select
     ///
     /// In particular, the following fields from Client context are used:
     /// - @ref ClientContext4::subnet_ Subnet the lease is allocated from
@@ -1395,7 +1473,8 @@ private:
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        become unavailable)
     Lease4Ptr createLease4(const ClientContext4& ctx,
-                           const isc::asiolink::IOAddress& addr);
+                           const isc::asiolink::IOAddress& addr,
+                           hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Renews a DHCPv4 lease.
     ///
@@ -1422,11 +1501,14 @@ private:
     /// @param expired An old, expired lease.
     /// @param ctx Message processing context. It holds various information
     /// extracted from the client's message and required to allocate a lease.
+    /// @param [out] callout_status callout returned by the lease4_select
     ///
     /// @return Updated lease instance.
     /// @throw BadValue if trying to reuse a lease which is still valid or
     /// when the provided parameters are invalid.
-    Lease4Ptr reuseExpiredLease4(Lease4Ptr& expired, ClientContext4& ctx);
+    Lease4Ptr
+    reuseExpiredLease4(Lease4Ptr& expired, ClientContext4& ctx,
+                       hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Allocates the lease by replacing an existing lease.
     ///
@@ -1439,11 +1521,14 @@ private:
     /// allocated.
     /// @param ctx Client context holding the data extracted from the
     /// client's message.
+    /// @param [out] callout_status callout returned by the lease4_select
     ///
     /// @return A pointer to the allocated lease or NULL if the allocation
     /// was not successful.
-    Lease4Ptr allocateOrReuseLease4(const asiolink::IOAddress& address,
-                                    ClientContext4& ctx);
+    Lease4Ptr
+    allocateOrReuseLease4(const asiolink::IOAddress& address,
+                          ClientContext4& ctx,
+                          hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Allocates the lease from the dynamic pool.
     ///

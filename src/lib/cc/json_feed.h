@@ -164,6 +164,11 @@ public:
         return (error_message_);
     }
 
+    /// @brief Returns the text parsed into the buffer.
+    std::string getProcessedText() const {
+        return (output_);
+    }
+
     /// @brief Returns processed data as a structure of @ref isc::data::Element
     /// objects.
     ///

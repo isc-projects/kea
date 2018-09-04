@@ -8,6 +8,8 @@
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
 
+#include <config.h>
+
 #include <lease_cmds.h>
 #include <lease_cmds_log.h>
 #include <cc/command_interpreter.h>
@@ -86,6 +88,28 @@ int lease6_get_all(CalloutHandle& handle) {
     return (lease_cmds.leaseGetAllHandler(handle));
 }
 
+/// @brief This is a command callout for 'lease4-get-page' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease4_get_page(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetPageHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-get-page' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease6_get_page(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetPageHandler(handle));
+}
+
 /// @brief This is a command callout for 'lease4-del' command.
 ///
 /// @param handle Callout handle used to retrieve a command and
@@ -160,9 +184,11 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease4-add", lease4_add);
     handle.registerCommandCallout("lease6-add", lease6_add);
     handle.registerCommandCallout("lease4-get", lease4_get);
-    handle.registerCommandCallout("lease4-get-all", lease4_get_all);
     handle.registerCommandCallout("lease6-get", lease6_get);
+    handle.registerCommandCallout("lease4-get-all", lease4_get_all);
     handle.registerCommandCallout("lease6-get-all", lease6_get_all);
+    handle.registerCommandCallout("lease4-get-page", lease4_get_page);
+    handle.registerCommandCallout("lease6-get-page", lease6_get_page);
     handle.registerCommandCallout("lease4-del", lease4_del);
     handle.registerCommandCallout("lease6-del", lease6_del);
     handle.registerCommandCallout("lease4-update", lease4_update);

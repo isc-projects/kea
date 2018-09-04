@@ -18,6 +18,7 @@
 prefix=@prefix@
 SCRIPTS_DIR_DEFAULT=@datarootdir@/@PACKAGE@/scripts
 scripts_dir=${SCRIPTS_DIR_DEFAULT}
+VERSION=@PACKAGE_VERSION@
 
 # These are the default parameters. They will likely not work in any
 # specific deployment.
@@ -41,7 +42,7 @@ fi
 
 # Prints out usage version.
 usage() {
-    printf "kea-admin @PACKAGE_VERSION@\n"
+    printf "kea-admin $VERSION\n"
     printf "\n"
     printf "This is a kea-admin script that conducts administrative tasks on\n"
     printf "the Kea installation.\n"
@@ -65,6 +66,7 @@ usage() {
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
     printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
+    printf " -v or --version - print kea-admin version and quit.\n"
     printf "\n"
     printf " Parameters specific to lease-dump:\n"
     printf "     -4 to dump IPv4 leases to file\n"
@@ -490,9 +492,9 @@ cql_dump() {
     # Get the query appropriate to lease version. Explicitly specify all columns
     # so that they are returned in expected order.
     if [ $dump_type -eq 4 ]; then
-        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state FROM lease4"
+        dump_query="SELECT address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context FROM lease4"
     elif [ $dump_type -eq 6 ]; then
-        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state FROM lease6"
+        dump_query="SELECT address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context FROM lease6"
     else
         log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
         usage
@@ -537,6 +539,13 @@ if [ -z ${command} ]; then
     usage
     exit 1
 fi
+
+# Check if this is a simple question about version.
+if test "${command}" = "-v" || test "${command}" = "--version" ; then
+    echo "${VERSION}"
+    exit 0
+fi
+
 is_in_list "${command}" "lease-init lease-version lease-upgrade lease-dump"
 if [ ${_inlist} -eq 0 ]; then
     log_error "invalid command: ${command}"

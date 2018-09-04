@@ -11,6 +11,12 @@ lib_LTLIBRARIES = libkea-cryptolink.la
 libkea_cryptolink_la_SOURCES = cryptolink.h cryptolink.cc
 libkea_cryptolink_la_SOURCES += crypto_hash.h crypto_hash.cc
 libkea_cryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
+if HAVE_BOTAN1
+libkea_cryptolink_la_SOURCES += botan1_link.cc
+libkea_cryptolink_la_SOURCES += botan_common.h
+libkea_cryptolink_la_SOURCES += botan1_hash.cc
+libkea_cryptolink_la_SOURCES += botan1_hmac.cc
+endif
 if HAVE_BOTAN
 libkea_cryptolink_la_SOURCES += botan_link.cc
 libkea_cryptolink_la_SOURCES += botan_common.h
@@ -26,7 +32,7 @@ libkea_cryptolink_la_SOURCES += openssl_hmac.cc
 endif
 
 libkea_cryptolink_la_LDFLAGS = $(CRYPTO_LDFLAGS)
-libkea_cryptolink_la_LDFLAGS += -no-undefined -version-info 2:1:0
+libkea_cryptolink_la_LDFLAGS += -no-undefined -version-info 3:0:0
 libkea_cryptolink_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cryptolink_la_LIBADD += $(CRYPTO_LIBS)
 
@@ -37,6 +43,11 @@ libkea_cryptolink_include_HEADERS = \
 	crypto_hash.h \
 	crypto_hmac.h \
 	cryptolink.h
+
+if HAVE_BOTAN1
+libkea_cryptolink_include_HEADERS += \
+	botan_common.h
+endif
 
 if HAVE_BOTAN
 libkea_cryptolink_include_HEADERS += \

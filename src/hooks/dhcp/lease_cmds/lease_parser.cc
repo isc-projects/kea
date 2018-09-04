@@ -8,6 +8,8 @@
 #include <dhcp/hwaddr.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <lease_parser.h>
 
 #include <config.h>
@@ -30,8 +32,6 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
 
     // These are mandatory parameters.
     IOAddress addr = getAddress(lease_info, "ip-address");
-    SubnetID subnet_id = getUint32(lease_info, "subnet-id");
-
     if (!addr.isV4()) {
         isc_throw(BadValue, "Non-IPv4 address specified: " << addr);
     }
@@ -41,15 +41,34 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     HWAddr hwaddr = HWAddr::fromText(hwaddr_txt);
     HWAddrPtr hwaddr_ptr = HWAddrPtr(new HWAddr(hwaddr));
 
-    Subnet4Ptr subnet = cfg->getCfgSubnets4()->getSubnet(subnet_id);
-    if (!subnet) {
-        isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
-                  << subnet_id << " currently configured.");
+    // Now sort out the subnet-id. If specified, it must have correct value.
+    // If not specified, Kea will try to sort it out.
+    SubnetID subnet_id = 0;
+    if (lease_info->contains("subnet-id")) {
+        subnet_id = getUint32(lease_info, "subnet-id");
     }
+    Subnet4Ptr subnet;
+    if (subnet_id) {
+        // If subnet-id is specified, it has to match.
+        subnet = cfg->getCfgSubnets4()->getSubnet(subnet_id);
+        if (!subnet) {
+            isc_throw(BadValue, "Invalid subnet-id: No IPv4 subnet with subnet-id="
+                      << subnet_id << " currently configured.");
+        }
 
-    if (!subnet->inRange(addr)) {
-        isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
-                  "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+        if (!subnet->inRange(addr)) {
+            isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+                      "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+        }
+
+    } else {
+        // Subnet-id was not specified. Let's try to figure it out on our own.
+        subnet = cfg->getCfgSubnets4()->selectSubnet(addr);
+        if (!subnet) {
+            isc_throw(BadValue, "subnet-id not specified and failed to find a"
+                      << " subnet for address " << addr);
+        }
+        subnet_id = subnet->getID();
     }
 
     // Client-id is optional.
@@ -110,6 +129,30 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                   "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
     }
 
+    // Handle user context.
+    ConstElementPtr ctx = lease_info->get("user-context");
+    if (ctx && (ctx->getType() != Element::map)) {
+        isc_throw(BadValue, "Invalid user context '" << ctx->str()
+                  << "' is not a JSON map.");
+    }
+
+    // Handle comment.
+    ConstElementPtr comment = lease_info->get("comment");
+    if (comment) {
+        if (ctx && ctx->contains("comment")) {
+            isc_throw(BadValue, "Duplicated comment entry '" << comment->str()
+                      << "' in user context '" << ctx->str() << "'");
+        }
+        ElementPtr copied;
+        if (ctx) {
+            copied = copy(ctx, 0);
+        } else {
+            copied = Element::createMap();
+        }
+        copied->set("comment", comment);
+        ctx = copied;
+    }
+
     // Let's fabricate some data and we're ready to go.
     uint32_t t1 = subnet->getT1();
     uint32_t t2 = subnet->getT2();
@@ -118,6 +161,7 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
                            cltt, subnet_id,
                            fqdn_fwd, fqdn_rev, hostname));
     l->state_ = state;
+    l->setContext(ctx);
 
     // Retrieve the optional flag indicating if the lease must be created when it
     // doesn't exist during the update.
@@ -139,8 +183,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
 
     // These are mandatory parameters.
     IOAddress addr = getAddress(lease_info, "ip-address");
-    SubnetID subnet_id = getUint32(lease_info, "subnet-id");
-
     if (addr.isV4()) {
         isc_throw(BadValue, "Non-IPv6 address specified: " << addr);
     }
@@ -149,13 +191,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     string duid_txt = getString(lease_info, "duid");
     DUID duid = DUID::fromText(duid_txt);
     DuidPtr duid_ptr = DuidPtr(new DUID(duid));
-
-    // Check if the subnet-id specified is sane.
-    Subnet6Ptr subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
-    if (!subnet) {
-        isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
-                  << subnet_id << " currently configured.");
-    }
 
     Lease::Type type = Lease::TYPE_NA;
     uint8_t prefix_len = 128;
@@ -175,10 +210,40 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
         }
     }
 
-    // Check if the address specified really belongs to the subnet.
-    if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
-        isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
-                  "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+    // Now sort out the subnet-id. If specified, it must have correct value.
+    // If not specified, Kea will try to sort it out.
+    SubnetID subnet_id = 0;
+    if (lease_info->contains("subnet-id")) {
+        subnet_id = getUint32(lease_info, "subnet-id");
+    }
+
+    // Check if the subnet-id specified is sane.
+    Subnet6Ptr subnet;
+    if (subnet_id) {
+        // If subnet-id is specified, it has to match.
+        subnet = cfg->getCfgSubnets6()->getSubnet(subnet_id);
+        if (!subnet) {
+            isc_throw(BadValue, "Invalid subnet-id: No IPv6 subnet with subnet-id="
+                      << subnet_id << " currently configured.");
+        }
+
+        // Check if the address specified really belongs to the subnet.
+        if ((type == Lease::TYPE_NA) && !subnet->inRange(addr)) {
+            isc_throw(BadValue, "The address " << addr.toText() << " does not belong "
+                      "to subnet " << subnet->toText() << ", subnet-id=" << subnet_id);
+        }
+
+    } else {
+        if (type != Lease::TYPE_NA) {
+            isc_throw(BadValue, "Subnet-id is 0 or not specified. This is allowed for"
+                      " address leases only, not prefix leases.");
+        }
+        subnet = cfg->getCfgSubnets6()->selectSubnet(addr);
+        if (!subnet) {
+            isc_throw(BadValue, "subnet-id not specified and failed to find a "
+                      "subnet for address " << addr);
+        }
+        subnet_id = subnet->getID();
     }
 
     uint32_t iaid = getUint32(lease_info, "iaid");
@@ -251,6 +316,30 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                   "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
     }
 
+    // Handle user context.
+    ConstElementPtr ctx = lease_info->get("user-context");
+    if (ctx && (ctx->getType() != Element::map)) {
+        isc_throw(BadValue, "Invalid user context '" << ctx->str()
+                  << "' is not a JSON map.");
+    }
+
+    // Handle comment.
+    ConstElementPtr comment = lease_info->get("comment");
+    if (comment) {
+        if (ctx && ctx->contains("comment")) {
+            isc_throw(BadValue, "Duplicated comment entry '" << comment->str()
+                      << "' in user context '" << ctx->str() << "'");
+        }
+        ElementPtr copied;
+        if (ctx) {
+            copied = copy(ctx, 0);
+        } else {
+            copied = Element::createMap();
+        }
+        copied->set("comment", comment);
+        ctx = copied;
+    }
+
     // Let's fabricate some data and we're ready to go.
     uint32_t t1 = subnet->getT1();
     uint32_t t2 = subnet->getT2();
@@ -260,6 +349,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
                            hwaddr_ptr, prefix_len));
     l->cltt_ = cltt;
     l->state_ = state;
+    l->setContext(ctx);
 
     // Retrieve the optional flag indicating if the lease must be created when it
     // doesn't exist during the update.

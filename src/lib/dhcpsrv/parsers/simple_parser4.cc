@@ -1,8 +1,10 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <cc/data.h>
@@ -56,8 +58,6 @@ const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
 /// in Dhcp4) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
-    { "renew-timer",              Element::integer, "900" },
-    { "rebind-timer",             Element::integer, "1800" },
     { "valid-lifetime",           Element::integer, "7200" },
     { "decline-probation-period", Element::integer, "86400" }, // 24h
     { "dhcp4o6-port",             Element::integer, "0" },

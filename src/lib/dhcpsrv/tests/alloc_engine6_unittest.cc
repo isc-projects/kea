@@ -67,8 +67,16 @@ TEST_F(AllocEngine6Test, constructor) {
     EXPECT_THROW(x->getAllocator(Lease::TYPE_V4), BadValue);
 }
 
-// This test checks if the simple allocation (REQUEST) can succeed
-// and the stats counter is properly bumped by 1
+// This test checks if two simple IPv6 allocations succeed and that the
+// statistics is properly updated. Prior to the second allocation it
+// resets the pointer to the last allocated address within the address
+// pool. This causes the engine to walk over the already allocated
+// address and then pick the first available address for the second
+// allocation. Because the allocation engine checks the callouts next
+// step status after each attempt to allocate an address, this test
+// also sets this status to non-default value prior to the second
+// allocation attempt, to make sure that this unexpected status will
+// not interfere with the allocation.
 TEST_F(AllocEngine6Test, simpleAlloc6) {
     // Assigned count should be zero.
     EXPECT_TRUE(testStatistics("assigned-nas", 0, subnet_->getID()));
@@ -76,6 +84,19 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     // We should have bumped the assigned counter by 1
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
+
+    // Reset last allocated address to check that the other client will
+    // be refused the already allocated address and will get the one
+    // available.
+    pool_->resetLastAllocated();
+
+    // Simulate another client. This client should be assigned a different
+    // address.
+    DuidPtr duid(new DUID(std::vector<uint8_t>(8, 0x84)));
+    simpleAlloc6Test(pool_, duid, IOAddress("::"), false);
+
+    // We should have bumped the assigned counter by 2
+    EXPECT_TRUE(testStatistics("assigned-nas", 2, subnet_->getID()));
 }
 
 // This test checks if the simple PD allocation (REQUEST) can succeed
@@ -732,7 +753,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
 
     // Create a subnet with a pool that has one address.
     initSubnet(IOAddress("2001:db8:1::"), addr, addr);
-    
+
     // Initialize FQDN for a lease.
     initFqdn("myhost.example.com", true, true);
 
@@ -749,7 +770,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
 
     // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -847,7 +868,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
@@ -2098,7 +2119,7 @@ TEST_F(AllocEngine6Test, solicitReuseDeclinedLease6) {
     EXPECT_EQ(addr, assigned->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(assigned, Lease::TYPE_NA, 128);
+    checkLease6(duid_, assigned, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     testReuseLease6(engine, declined, addr_txt, true, SHOULD_PASS, assigned);
@@ -2694,6 +2715,197 @@ TEST_F(SharedNetworkAlloc6Test, requestRunningOut) {
 
     // Bugger off, we're full!
     EXPECT_TRUE(leases.empty());
+}
+
+// Verifies that client with a global hostname reservation can get and
+// renew a dynamic lease from their selected subnet.
+TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                 Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                 asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    // Check that we have been allocated a dynamic address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("2001:db8:1::10", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    // We  verify the "time" change in case the lease returned to us
+    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
+    --lease->cltt_;
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(IOAddress("2001:db8:1::10"), 128));
+
+    // Set test fixture hostname_ to the expected value. This gets checked in
+    // renewTest.
+    hostname_ = "ghost1";
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, true);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a global address reservation can get and
+// renew a lease for an arbitrary address.
+TEST_F(AllocEngine6Test, globalHostReservedAddress) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                 Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                 asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("3001::1"), 128);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    // Check that we have been allocated the fixed address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("3001::1", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    // We  verify the "time" change in case the lease returned to us
+    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
+    --lease->cltt_;
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(IOAddress("3001::1"), 128));
+
+    // Set test fixture hostname_ to the expected value. This gets checked in
+    // renewTest.
+    hostname_ = "ghost1";
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, pool_, hints, false);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
+}
+
+// Verifies that client with a global prefix reservation can get and
+// renew a lease for an arbitrary prefix.
+TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                 Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                 asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, asiolink::IOAddress("3001::"), 64);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setHostReservationMode(Network::HR_GLOBAL);
+
+    // Create context which will be used to try to allocate leases
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false, query);
+    ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    // Check that we have been allocated the fixed address.
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("3001::", lease->addr_.toText());
+
+    // We're going to rollback the clock a little so we can verify a renewal.
+    // We  verify the "time" change in case the lease returned to us
+    // by expectOneLease ever becomes a copy and not what is in the lease mgr.
+    --lease->cltt_;
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+    EXPECT_EQ(from_mgr->cltt_, lease->cltt_);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(make_pair(IOAddress("3001::"), 64));
+
+    // Set test fixture hostname_ to the expected value. This gets checked via
+    // renewTest.
+    hostname_ = "ghost1";
+
+    // We need a PD pool to fake renew_test
+    Pool6Ptr dummy_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8::"), 64, 64));
+
+    // Client should receive a lease.
+    Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, false);
+    ASSERT_EQ(1, renewed.size());
+
+    // And the lease lifetime should be extended.
+    EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
+        << "Lease lifetime was not extended, but it should";
 }
 
 }; // namespace test

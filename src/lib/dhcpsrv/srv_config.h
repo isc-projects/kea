@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/logging_info.h>
@@ -59,10 +60,12 @@ public:
     static const uint32_t CFGSEL_DDNS    = 0x00000010;
     /// Number of all subnets
     static const uint32_t CFGSEL_SUBNET  = 0x00000003;
+    /// Configured globals
+    static const uint32_t CFGSEL_GLOBALS = 0x00000020;
     /// IPv4 related config
-    static const uint32_t CFGSEL_ALL4    = 0x00000015;
+    static const uint32_t CFGSEL_ALL4    = 0x00000035;
     /// IPv6 related config
-    static const uint32_t CFGSEL_ALL6    = 0x0000001A;
+    static const uint32_t CFGSEL_ALL6    = 0x0000003A;
     /// Whole config
     static const uint32_t CFGSEL_ALL     = 0xFFFFFFFF;
     //@}
@@ -339,6 +342,11 @@ public:
         return (cfg_host_operations6_);
     }
 
+    /// @brief Returns const pointer to object holding sanity checks flags
+    CfgConsistencyPtr getConsistency() {
+        return (cfg_consist_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -556,6 +564,21 @@ public:
         d2_client_config_ = d2_client_config;
     }
 
+    /// @brief Returns pointer to configured global parameters
+    isc::data::ConstElementPtr getConfiguredGlobals() const {
+        return (isc::data::ConstElementPtr(configured_globals_));
+    }
+
+    /// @brief Saves scalar elements from the global scope of a configuration
+    void extractConfiguredGlobals(isc::data::ConstElementPtr config);
+
+    /// @brief Adds a parameter to the collection configured globals
+    /// @param name std::string name of the global to add
+    /// @param value ElementPtr containing the value of the global
+    void addConfiguredGlobal(const std::string& name, isc::data::ConstElementPtr value) {
+        configured_globals_->set(name, value);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -657,7 +680,14 @@ private:
     /// this socket is bound and connected to this port and port + 1
     uint16_t dhcp4o6_port_;
 
+    /// @brief Stores D2 client configuration
     D2ClientConfigPtr d2_client_config_;
+
+    /// @brief Stores the global parameters specified via configuration
+    isc::data::ElementPtr configured_globals_;
+
+    /// @brief Pointer to the configuration consistency settings
+    CfgConsistencyPtr cfg_consist_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

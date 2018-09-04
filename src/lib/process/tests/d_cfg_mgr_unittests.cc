@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -572,7 +572,7 @@ TEST_F(DStubCfgMgrTest, simpleParseConfigWithCallback) {
     ASSERT_NO_THROW(fromJSON(config));
 
     answer_ = cfg_mgr_->simpleParseConfig(config_set_, false,
-                                          [this]() {
+                                          []() {
         isc_throw(Unexpected, "unexpected configuration error");
     });
     EXPECT_TRUE(checkAnswer(1));

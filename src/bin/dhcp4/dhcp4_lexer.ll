@@ -203,6 +203,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"sanity-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return  isc::dhcp::Dhcp4Parser::make_SANITY_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("sanity-checks", driver.loc_);
+    }
+}
+
+\"lease-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SANITY_CHECKS:
+        return  isc::dhcp::Dhcp4Parser::make_LEASE_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("lease-checks", driver.loc_);
+    }
+}
+
 \"dhcp-socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
@@ -758,6 +776,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"global\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp4Parser::make_GLOBAL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("global", driver.loc_);
+    }
+}
+
 \"all\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::RESERVATION_MODE:
@@ -920,6 +947,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"reservations\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
         return isc::dhcp::Dhcp4Parser::make_RESERVATIONS(driver.loc_);
     default:
@@ -1320,6 +1348,24 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_GENERATED_PREFIX(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("generated-prefix", driver.loc_);
+    }
+}
+
+\"hostname-char-set\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("hostname-char-set", driver.loc_);
+    }
+}
+
+\"hostname-char-replacement\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP_DDNS:
+        return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("hostname-char-replacement", driver.loc_);
     }
 }
 

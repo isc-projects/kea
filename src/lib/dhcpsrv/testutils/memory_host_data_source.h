@@ -29,19 +29,6 @@ public:
 
     /// BaseHostDataSource methods.
 
-    /// @brief Return all hosts for the specified HW address or DUID.
-    ///
-    /// This may return hosts from multiple subnets.
-    ///
-    /// Currently not implemented.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
-    /// @return Empty collection of const @c Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid = DuidPtr()) const;
-
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
     ///
@@ -67,19 +54,6 @@ public:
     /// @return Empty collection of const @c Host objects.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
-
-    /// @brief Returns a host connected to the IPv4 subnet.
-    ///
-    /// Currently not implemented.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available.
-    /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-         const DuidPtr& duid = DuidPtr()) const;
 
 
     /// @brief Returns a host connected to the IPv4 subnet.
@@ -109,19 +83,6 @@ public:
 
     /// @brief Returns a host connected to the IPv6 subnet.
     ///
-    /// Currently not implemented.
-    ///
-    /// @param subnet_id Subnet identifier.
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid DUID or NULL if not available.
-    /// @return Const @c Host object using a specified HW address or DUID.
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id, const DuidPtr& duid,
-         const HWAddrPtr& hwaddr = HWAddrPtr()) const;
-
-    /// @brief Returns a host connected to the IPv6 subnet.
-    ///
     /// @param subnet_id Subnet identifier.
     /// @param identifier_type Identifier type.
     /// @param identifier_begin Pointer to a beginning of a buffer containing
@@ -141,7 +102,7 @@ public:
     ///
     /// @param prefix IPv6 prefix for which the @c Host object is searched.
     /// @param prefix_len IPv6 prefix length.
-    /// @return Const @c Host object using a specified HW address or DUID.
+    /// @return Const @c Host object using a specified IPv6 prefix.
     virtual ConstHostPtr
     get6(const asiolink::IOAddress& prefix, const uint8_t prefix_len) const;
 
@@ -244,7 +205,7 @@ typedef boost::shared_ptr<MemHostDataSource> MemHostDataSourcePtr;
 /// @param parameters
 /// @return A pointer to a base host data source instance.
 HostDataSourcePtr
-memFactory(const DatabaseConnection::ParameterMap& /*parameters*/);
+memFactory(const db::DatabaseConnection::ParameterMap& /*parameters*/);
 
 } // namespace isc::dhcp::test
 } // namespace isc::dhcp

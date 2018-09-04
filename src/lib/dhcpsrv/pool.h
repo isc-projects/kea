@@ -221,14 +221,14 @@ protected:
 
     /// @brief Required classes
     ///
-    /// @ref isc::dhcp::Network::required_classes
+    /// @ref isc::dhcp::Network::required_classes_
     ClientClasses required_classes_;
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;
 
     /// @brief Last allocated address
-    /// See @ref isc::dhcp::subnet::last_allocated_ia_
+    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
     /// Initialized and reset to first
     isc::asiolink::IOAddress last_allocated_;
 

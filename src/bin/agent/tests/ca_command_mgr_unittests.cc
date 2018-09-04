@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -242,13 +242,19 @@ public:
         ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
                                                     command);
 
-        // Cancel all asynchronous operations and let the handlers to be invoked
-        // with operation_aborted error code.
-        server_socket_->stopServer();
-        getIOService()->stopWork();
+        // Stop IO service immediatelly and let the thread die.
+        getIOService()->stop();
 
         // Wait for the thread to finish.
         th.wait();
+
+        // Cancel all asynchronous operations on the server.
+        server_socket_->stopServer();
+
+        // We have some cancelled operations for which we need to invoke the
+        // handlers with the operation_aborted error code.
+        getIOService()->get_io_service().reset();
+        getIOService()->poll();
 
         EXPECT_EQ(expected_responses, server_socket_->getResponseNum());
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
@@ -376,13 +382,19 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     ConstElementPtr answer = mgr_.handleCommand("list-commands", ConstElementPtr(),
                                                 command);
 
-    // Cancel all asynchronous operations and let the handlers to be invoked
-    // with operation_aborted error code.
-    server_socket_->stopServer();
-    getIOService()->stopWork();
+    // Stop IO service immediatelly and let the thread die.
+    getIOService()->stop();
 
     // Wait for the thread to finish.
     th.wait();
+
+    // Cancel all asynchronous operations on the server.
+    server_socket_->stopServer();
+
+    // We have some cancelled operations for which we need to invoke the
+    // handlers with the operation_aborted error code.
+    getIOService()->get_io_service().reset();
+    getIOService()->poll();
 
     // Answer of 3 is specific to the stub response we send when the
     // command is forwarded. So having this value returned means that

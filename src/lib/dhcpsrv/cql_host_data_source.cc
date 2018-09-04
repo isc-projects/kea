@@ -17,15 +17,15 @@
 
 #include <config.h>
 
+#include <cql/cql_exchange.h>
+#include <database/db_exceptions.h>
 #include <dhcpsrv/cql_host_data_source.h>
-
+#include <dhcp/duid.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cql_exchange.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <util/buffer.h>
 #include <util/hash.h>
@@ -44,6 +44,7 @@
 #include <string>  // for std::string
 
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;
@@ -349,6 +350,9 @@ private:
     /// @brief Boot file name (file).
     std::string host_ipv4_boot_file_name_;
 
+    /// @brief Key for authentication
+    std::string auth_key_;
+
     /// @brief Name reserved for the host
     std::string hostname_;
 
@@ -430,6 +434,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -454,7 +459,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       // host
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
       // denormalized reservation, option
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "
      }},
@@ -471,6 +476,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -504,6 +510,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -540,6 +547,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -575,6 +583,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -612,6 +621,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -649,6 +659,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -685,6 +696,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -721,6 +733,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -757,6 +770,7 @@ CqlHostExchange::CqlHostExchange()
       host_ipv6_subnet_id_(0), host_ipv4_address_(0), host_ipv4_next_server_(0),
       host_ipv4_server_hostname_(NULL_DHCP4_SERVER_HOSTNAME),
       host_ipv4_boot_file_name_(NULL_DHCP4_BOOT_FILE_NAME),
+      auth_key_(""),
       user_context_(NULL_USER_CONTEXT),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
@@ -794,6 +808,8 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&host_ipv4_server_hostname_);
     // host_ipv4_boot_file_name: text
     data.add(&host_ipv4_boot_file_name_);
+    // auth_key: text
+    data.add(&auth_key_);
     // hostname: text
     data.add(&hostname_);
     // user_context: text
@@ -887,6 +903,9 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
         // host_ipv4_boot_file_name: text
         host_ipv4_boot_file_name_ = host->getBootFileName();
 
+        // auth_key: varchar
+        auth_key_ = host->getKey().ToText();
+        
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
@@ -1049,6 +1068,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             data.add(&host_ipv4_next_server_);
             data.add(&host_ipv4_server_hostname_);
             data.add(&host_ipv4_boot_file_name_);
+            data.add(&auth_key_);
             data.add(&hostname_);
             data.add(&user_context_);
             data.add(&host_ipv4_client_classes_);
@@ -1167,7 +1187,8 @@ CqlHostExchange::retrieve() {
                           ipv4_reservation, hostname_,
                           host_ipv4_client_classes_, host_ipv6_client_classes_,
                           static_cast<uint32_t>(host_ipv4_next_server_),
-                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_);
+                          host_ipv4_server_hostname_, host_ipv4_boot_file_name_,
+                          AuthKey(auth_key_));
 
     // Set the user context if there is one.
     if (!user_context_.empty()) {
@@ -1354,18 +1375,6 @@ public:
     /// @brief Implementation of @ref CqlHostDataSource::get4()
     ///
     /// See @ref CqlHostDataSource::get4() for parameter details.
-    /// Either hwaddr or DUID must be specified, not both.
-    ///
-    /// @param subnet_id Id of the subnet to look into
-    /// @param hwaddr hardware address
-    /// @param duid DUID of the client
-    virtual ConstHostPtr get4(const SubnetID& subnet_id,
-                              const HWAddrPtr& hwaddr,
-                              const DuidPtr& duid = DuidPtr()) const;
-
-    /// @brief Implementation of @ref CqlHostDataSource::get4()
-    ///
-    /// See @ref CqlHostDataSource::get4() for parameter details.
     ///
     /// @param subnet_id Id of the subnet to look into
     /// @param identifier_type type of the identifier
@@ -1384,18 +1393,6 @@ public:
     /// @param prefix_len length of the prefix (or 128 for address)
     virtual ConstHostPtr get6(const asiolink::IOAddress& prefix,
                               const uint8_t prefix_len) const;
-
-    /// @brief Retrieves a host by DUID or hardware address.
-    ///
-    /// Only one of DUID or hwaddr must be specified, not both.
-    /// See @ref CqlHostDataSource::get6() for parameter details.
-    ///
-    /// @param subnet_id Id of the subnet to look into
-    /// @param duid Searched DUID
-    /// @param hwaddr Searched hwaddr
-    virtual ConstHostPtr get6(const SubnetID& subnet_id,
-                              const DuidPtr& duid,
-                              const HWAddrPtr& hwaddr = HWAddrPtr()) const;
 
     /// @brief Implementation of @ref CqlHostDataSource::get6()
     ///
@@ -1418,19 +1415,6 @@ public:
     /// @param address IPv6 address to be retrieved
     virtual ConstHostPtr get6(const SubnetID& subnet_id,
                               const asiolink::IOAddress& address) const;
-
-    /// @brief Implementation of @ref CqlHostDataSource::getAll()
-    ///
-    /// Returns reservations in all subnets for a given host.
-    /// See @ref CqlHostDataSource::getAll() for parameter details.
-    ///
-    /// Only one of DUID or hwaddr must be specified, not both.
-    /// See @ref CqlHostDataSource::get6() for parameter details.
-    ///
-    /// @param hwaddr
-    /// @param duid
-    virtual ConstHostCollection getAll(const HWAddrPtr& hwaddr,
-                                       const DuidPtr& duid = DuidPtr()) const;
 
     /// @brief Implementation of @ref CqlHostDataSource::getAll()
     ///
@@ -1612,9 +1596,22 @@ CqlHostDataSourceImpl::CqlHostDataSourceImpl(const CqlConnection::ParameterMap& 
     // Open the database.
     dbconn_.openDatabase();
 
+    // Prepare the version exchange first.
+    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
+
+    // Validate the schema version.
+    std::pair<uint32_t, uint32_t> code_version(CQL_SCHEMA_VERSION_MAJOR,
+                                               CQL_SCHEMA_VERSION_MINOR);
+    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    if (code_version != db_version) {
+        isc_throw(DbOpenError, "Cassandra schema version mismatch: need version: "
+                  << code_version.first << "." << code_version.second
+                  << " found version:  " << db_version.first << "."
+                  << db_version.second);
+    }
+
     // Prepare all possible statements.
     dbconn_.prepareStatements(CqlHostExchange::tagged_statements_);
-    dbconn_.prepareStatements(CqlVersionExchange::tagged_statements_);
 }
 
 CqlHostDataSourceImpl::~CqlHostDataSourceImpl() {
@@ -1680,38 +1677,6 @@ CqlHostDataSourceImpl::get4(const SubnetID& subnet_id, const asiolink::IOAddress
     // Run statement.
     ConstHostPtr result = getHost(CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_AND_ADDRESS,
                                   where_values);
-
-    return (result);
-}
-
-ConstHostPtr
-CqlHostDataSourceImpl::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-                            const DuidPtr& duid) const {
-    /// @todo: Rethink the logic in BaseHostDataSource::get4(subnet, hwaddr, duid)
-    if (hwaddr && duid) {
-        isc_throw(BadValue, "CqlHostDataSource::get4(3) called with both "
-                            "hwaddr and duid, only one of them is allowed");
-    } else if (!hwaddr && !duid) {
-        isc_throw(BadValue, "CqlHostDataSource::get4(3) called with neither "
-                            "hwaddr or duid specified, one of them is "
-                            "required");
-    }
-
-    const HostIdentifier* host_identifier;
-    Host::IdentifierType host_identifier_type;
-    if (duid) {
-        host_identifier = &duid->getDuid();
-        host_identifier_type = Host::IDENT_DUID;
-    } else if (hwaddr) {
-        host_identifier = &hwaddr->hwaddr_;
-        host_identifier_type = Host::IDENT_HWADDR;
-    } else {
-        return (ConstHostPtr());
-    }
-
-    // Delegate to get4(4).
-    ConstHostPtr result = get4(subnet_id, host_identifier_type, host_identifier->data(),
-                               host_identifier->size());
 
     return (result);
 }
@@ -1784,39 +1749,6 @@ CqlHostDataSourceImpl::get6(const asiolink::IOAddress& prefix,
 
 ConstHostPtr
 CqlHostDataSourceImpl::get6(const SubnetID& subnet_id,
-                            const DuidPtr& duid,
-                            const HWAddrPtr& hwaddr) const {
-    /// @todo: Rethink the logic in BaseHostDataSource::get6(subnet, hwaddr, duid)
-    if (hwaddr && duid) {
-        isc_throw(BadValue, "CqlHostDataSource::get6(3): both hardware address "
-                            "and DUID are specified, only one of them is "
-                            "allowed");
-    } else if (!hwaddr && !duid) {
-        isc_throw(BadValue, "CqlHostDataSource::get6(3): both hardware address "
-                            "and DUID are specified, one of them is required");
-    }
-
-    const HostIdentifier* host_identifier;
-    Host::IdentifierType host_identifier_type;
-    if (duid) {
-        host_identifier = &duid->getDuid();
-        host_identifier_type = Host::IDENT_DUID;
-    } else if (hwaddr) {
-        host_identifier = &hwaddr->hwaddr_;
-        host_identifier_type = Host::IDENT_HWADDR;
-    } else {
-        return (ConstHostPtr());
-    }
-
-    // Delegate to get6(4).
-    ConstHostPtr result = get6(subnet_id, host_identifier_type, host_identifier->data(),
-                               host_identifier->size());
-
-    return (result);
-}
-
-ConstHostPtr
-CqlHostDataSourceImpl::get6(const SubnetID& subnet_id,
                             const Host::IdentifierType& identifier_type,
                             const uint8_t* identifier_begin,
                             const size_t identifier_len) const {
@@ -1852,36 +1784,6 @@ CqlHostDataSourceImpl::get6(const SubnetID& subnet_id, const IOAddress& address)
     // Run statement.
     ConstHostPtr result = getHost(CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS,
                                   where_values);
-
-    return (result);
-}
-
-ConstHostCollection
-CqlHostDataSourceImpl::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
-    if (!duid && !hwaddr) {
-        return (ConstHostCollection());
-    }
-
-    // Convert to CQL data types.
-    cass_int32_t host_identifier_type;
-    CassBlob host_identifier;
-    if (duid) {
-        HostIdentifier duid_vector = duid->getDuid();
-        host_identifier = CassBlob(duid_vector.begin(), duid_vector.end());
-        host_identifier_type = static_cast<cass_int32_t>(Host::IDENT_DUID);
-    } else if (hwaddr) {
-        host_identifier = CassBlob(hwaddr->hwaddr_.begin(), hwaddr->hwaddr_.end());
-        host_identifier_type = static_cast<cass_int32_t>(Host::IDENT_HWADDR);
-    }
-
-    // Bind to array.
-    AnyArray where_values;
-    where_values.add(&host_identifier);
-    where_values.add(&host_identifier_type);
-
-    // Run statement.
-    ConstHostCollection result = getHostCollection(CqlHostExchange::GET_HOST_BY_HOST_ID,
-                                                   where_values);
 
     return (result);
 }
@@ -2169,13 +2071,6 @@ CqlHostDataSource::del6(const SubnetID& subnet_id, const Host::IdentifierType& i
 }
 
 ConstHostCollection
-CqlHostDataSource::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
-
-    return (impl_->getAll(hwaddr, duid));
-}
-
-ConstHostCollection
 CqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                           const uint8_t* identifier_begin,
                           const size_t identifier_len) const {
@@ -2189,15 +2084,6 @@ CqlHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
 
     return (impl_->getAll4(address));
-}
-
-ConstHostPtr
-CqlHostDataSource::get4(const SubnetID& subnet_id,
-                        const HWAddrPtr& hwaddr,
-                        const DuidPtr& duid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET4);
-
-    return (impl_->get4(subnet_id, hwaddr, duid));
 }
 
 ConstHostPtr
@@ -2217,15 +2103,6 @@ CqlHostDataSource::get4(const SubnetID& subnet_id,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET4);
 
     return (impl_->get4(subnet_id, address));
-}
-
-ConstHostPtr
-CqlHostDataSource::get6(const SubnetID& subnet_id,
-                        const DuidPtr& duid,
-                        const HWAddrPtr& hwaddr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET6);
-
-    return (impl_->get6(subnet_id, duid, hwaddr));
 }
 
 ConstHostPtr

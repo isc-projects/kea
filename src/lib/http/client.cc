@@ -4,10 +4,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/tcp_socket.h>
 #include <http/client.h>
+#include <http/http_log.h>
+#include <http/http_messages.h>
 #include <http/response_json.h>
 #include <http/response_parser.h>
 #include <boost/bind.hpp>
@@ -24,6 +28,11 @@ using namespace isc::asiolink;
 using namespace http;
 
 namespace {
+
+/// @brief Maximum size of the HTTP message that can be logged.
+///
+/// The part of the HTTP message beyond this value is truncated.
+constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
 
 /// @brief TCP socket callback function type.
 typedef boost::function<void(boost::system::error_code ec, size_t length)>
@@ -144,6 +153,11 @@ private:
     void terminate(const boost::system::error_code& ec,
                    const std::string& parsing_error = "");
 
+    /// @brief This method schedules timer or reschedules existing timer.
+    ///
+    /// @param request_timeout New timer interval in milliseconds.
+    void scheduleTimer(const long request_timeout);
+
     /// @brief Asynchronously sends data over the socket.
     ///
     /// The data sent over the socket are stored in the @c buf_.
@@ -216,7 +230,7 @@ private:
     std::string buf_;
 
     /// @brief Input buffer.
-    std::array<char, 4096> input_buf_;
+    std::array<char, 32768> input_buf_;
 };
 
 /// @brief Shared pointer to the connection.
@@ -442,6 +456,17 @@ Connection::doTransaction(const HttpRequestPtr& request,
             socket_.close();
         }
 
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                  HTTP_CLIENT_REQUEST_SEND)
+            .arg(request->toBriefString())
+            .arg(url_.toText());
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                  HTTP_CLIENT_REQUEST_SEND_DETAILS)
+            .arg(url_.toText())
+            .arg(HttpMessageParserBase::logFormatHttpMessage(request->toString(),
+                                                             MAX_LOGGED_MESSAGE_SIZE));
+
         /// @todo We're getting a hostname but in fact it is expected to be an IP address.
         /// We should extend the TCPEndpoint to also accept names. Currently, it will fall
         /// over for names.
@@ -482,6 +507,33 @@ Connection::terminate(const boost::system::error_code& ec,
 
     if (!ec && current_response_->isFinalized()) {
         response = current_response_;
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_SERVER_RESPONSE_RECEIVED)
+            .arg(url_.toText());
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                  HTTP_SERVER_RESPONSE_RECEIVED_DETAILS)
+            .arg(url_.toText())
+            .arg(parser_->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE));
+
+    } else {
+        std::string err = parsing_error.empty() ? ec.message() : parsing_error;
+
+        LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
+                  HTTP_BAD_SERVER_RESPONSE_RECEIVED)
+            .arg(url_.toText())
+            .arg(err);
+
+        // Only log the details if we have received anything and tried
+        // to parse it.
+        if (!parsing_error.empty()) {
+            LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC_DATA,
+                      HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS)
+                .arg(url_.toText())
+                .arg(parser_->getBufferAsString());
+        }
+
     }
 
     try {
@@ -509,6 +561,14 @@ Connection::terminate(const boost::system::error_code& ec,
     if (conn_pool && conn_pool->getNextRequest(url_, request, response, request_timeout,
                                                callback)) {
         doTransaction(request, response, request_timeout, callback);
+    }
+}
+
+void
+Connection::scheduleTimer(const long request_timeout) {
+    if (request_timeout > 0) {
+        timer_.setup(boost::bind(&Connection::timerCallback, this), request_timeout,
+                     IntervalTimer::ONE_SHOT);
     }
 }
 
@@ -551,8 +611,8 @@ Connection::connectCallback(const long request_timeout, const boost::system::err
 
     } else {
         // Setup request timer.
-        timer_.setup(boost::bind(&Connection::timerCallback, this), request_timeout,
-                     IntervalTimer::ONE_SHOT);
+        scheduleTimer(request_timeout);
+
         // Start sending the request asynchronously.
         doSend();
     }
@@ -573,6 +633,9 @@ Connection::sendCallback(const boost::system::error_code& ec, size_t length) {
             return;
         }
     }
+
+    // Sending is in progress, so push back the timeout.
+    scheduleTimer(timer_.getInterval());
 
     // If any data have been sent, remove it from the buffer and only leave the
     // portion that still has to be sent.
@@ -606,6 +669,9 @@ Connection::receiveCallback(const boost::system::error_code& ec, size_t length) 
             length = 0;
         }
     }
+
+    // Receiving is in progress, so push back the timeout.
+    scheduleTimer(timer_.getInterval());
 
     // If we have received any data, let's feed the parser with it.
     if (length != 0) {

@@ -5,4 +5,8 @@ if KEA_SHELL
 SUBDIRS += shell
 endif
 
+if HAVE_SYSREPO
+SUBDIRS += netconf
+endif
+
 check-recursive: all-recursive

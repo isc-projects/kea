@@ -14,22 +14,24 @@
 #include <dhcpsrv/tests/test_utils.h>
 
 #if defined HAVE_MYSQL
-#include <dhcpsrv/testutils/mysql_schema.h>
+#include <mysql/testutils/mysql_schema.h>
 #endif
 
 #if defined HAVE_PGSQL
-#include <dhcpsrv/testutils/pgsql_schema.h>
+#include <pgsql/testutils/pgsql_schema.h>
 #endif
 
 #if defined HAVE_CQL
-#include <dhcpsrv/testutils/cql_schema.h>
+#include <cql/testutils/cql_schema.h>
 #endif
 
 #include <gtest/gtest.h>
 #include <vector>
 
 using namespace isc;
+using namespace isc::db;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 
 namespace {
@@ -187,7 +189,7 @@ HostMgrTest::addHost4(BaseHostDataSource& data_source,
                       const SubnetID& subnet_id,
                       const IOAddress& address) {
     data_source.add(HostPtr(new Host(hwaddr->toText(false),
-                                     "hw-address", subnet_id, SubnetID(0),
+                                     "hw-address", subnet_id, SUBNET_ID_UNUSED,
                                      address)));
 }
 
@@ -210,7 +212,10 @@ void
 HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
                         BaseHostDataSource& data_source2) {
     // Initially, no reservations should be present.
-    ConstHostCollection hosts = HostMgr::instance().getAll(hwaddrs_[0]);
+    ConstHostCollection hosts = 
+        HostMgr::instance().getAll(Host::IDENT_HWADDR,
+                                   &hwaddrs_[1]->hwaddr_[0],
+                                   hwaddrs_[1]->hwaddr_.size());
     ASSERT_TRUE(hosts.empty());
 
     // Add two reservations for the same HW address. They differ by the IP
@@ -293,7 +298,10 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
 void
 HostMgrTest::testGet4(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
-    ConstHostPtr host = HostMgr::instance().get4(SubnetID(1), hwaddrs_[0]);
+    ConstHostPtr host =
+        HostMgr::instance().get4(SubnetID(1), Host::IDENT_HWADDR,
+                                 &hwaddrs_[0]->hwaddr_[0],
+                                 hwaddrs_[0]->hwaddr_.size());
     ASSERT_FALSE(host);
 
     // Add new host to the database.
@@ -324,7 +332,7 @@ HostMgrTest::testGet4Any() {
 
     // Add new host to the database.
     HostPtr new_host(new Host(duids_[0]->toText(), "duid", SubnetID(1),
-                              SubnetID(0), IOAddress("192.0.2.5")));
+                              SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
     // Abuse of the server's configuration.
     getCfgHosts()->add(new_host);
 
@@ -367,7 +375,10 @@ HostMgrTest::testGet4Any() {
 void
 HostMgrTest::testGet6(BaseHostDataSource& data_source) {
     // Initially, no host should be present.
-    ConstHostPtr host = HostMgr::instance().get6(SubnetID(2), duids_[0]);
+    ConstHostPtr host =
+        HostMgr::instance().get6(SubnetID(2), Host::IDENT_DUID,
+                                 &duids_[0]->getDuid()[0],
+                                 duids_[0]->getDuid().size());
     ASSERT_FALSE(host);
 
     // Add new host to the database.
@@ -534,7 +545,7 @@ TEST_F(HostMgrTest, addNoDataSource) {
     HostMgr::create();
 
     HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
-                          SubnetID(1), SubnetID(0), IOAddress("192.0.2.5")));
+                          SubnetID(1), SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
     EXPECT_THROW(HostMgr::instance().add(host), NoHostDataSourceManager);
 }
 
@@ -574,6 +585,7 @@ public:
     /// string
     virtual std::string validConnectString() = 0;
 
+#if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
     /// @brief Verifies the host manager's behavior if DB connection is lost
     ///
     /// This function creates a host manager with an alternate data source
@@ -585,6 +597,7 @@ public:
     /// -# The Query throws  DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     void testDbLostCallback();
+#endif
 
     /// @brief Callback function registered with the host manager
     bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
@@ -595,7 +608,7 @@ public:
     bool callback_called_;
 };
 
-
+#if defined(HAVE_MYSQL) || defined(HAVE_PGSQL)
 void
 HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Create the HostMgr.
@@ -607,13 +620,13 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
 
     // Find the most recently opened socket. Our SQL client's socket should
     // be the next one.
-    int last_open_socket = test::findLastSocketFd();
+    int last_open_socket = findLastSocketFd();
 
     // Connect to the host backend.
     ASSERT_NO_THROW(HostMgr::addBackend(validConnectString()));
 
     // Find the SQL client socket.
-    int sql_socket = test::findLastSocketFd();
+    int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Clear the callback invocation marker.
@@ -633,6 +646,7 @@ HostMgrDbLostCallbackTest::testDbLostCallback() {
     // Our lost connectivity callback should have been invoked.
     EXPECT_TRUE(callback_called_);
 }
+#endif
 
 // The following tests require MySQL enabled.
 #if defined HAVE_MYSQL
@@ -654,12 +668,12 @@ MySQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    test::destroyMySQLSchema();
-    test::createMySQLSchema();
+    db::test::destroyMySQLSchema();
+    db::test::createMySQLSchema();
 
     // Connect to the database
     try {
-        HostMgr::addBackend(test::validMySQLConnectionString());
+        HostMgr::addBackend(db::test::validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -674,7 +688,7 @@ void
 MySQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("mysql");
-    test::destroyMySQLSchema();
+    db::test::destroyMySQLSchema();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
@@ -682,15 +696,15 @@ MySQLHostMgrTest::TearDown() {
 class MySQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyMySQLSchema();
+        db::test::destroyMySQLSchema();
     }
 
     virtual void createSchema() {
-        test::createMySQLSchema();
+        db::test::createMySQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validMySQLConnectionString());
+        return (db::test::validMySQLConnectionString());
     }
 };
 
@@ -751,12 +765,12 @@ PostgreSQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    test::destroyPgSQLSchema();
-    test::createPgSQLSchema();
+    db::test::destroyPgSQLSchema();
+    db::test::createPgSQLSchema();
 
     // Connect to the database
     try {
-        HostMgr::addBackend(test::validPgSQLConnectionString());
+        HostMgr::addBackend(db::test::validPgSQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -771,7 +785,7 @@ void
 PostgreSQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("postgresql");
-    test::destroyPgSQLSchema();
+    db::test::destroyPgSQLSchema();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
@@ -779,15 +793,15 @@ PostgreSQLHostMgrTest::TearDown() {
 class PostgreSQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyPgSQLSchema();
+        db::test::destroyPgSQLSchema();
     }
 
     virtual void createSchema() {
-        test::createPgSQLSchema();
+        db::test::createPgSQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validPgSQLConnectionString());
+        return (db::test::validPgSQLConnectionString());
     }
 };
 
@@ -846,12 +860,12 @@ CQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    test::destroyCqlSchema(false, true);
-    test::createCqlSchema(false, true);
+    db::test::destroyCqlSchema(false, true);
+    db::test::createCqlSchema(false, true);
 
     // Connect to the database
     try {
-        HostMgr::addBackend(test::validCqlConnectionString());
+        HostMgr::addBackend(db::test::validCqlConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
@@ -866,7 +880,7 @@ void
 CQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("cql");
-    test::destroyCqlSchema(false, true);
+    db::test::destroyCqlSchema(false, true);
 }
 
 // This test verifies that reservations for a particular client can

@@ -10,8 +10,8 @@
 
     <info>
       <productname>ISC Kea</productname>
-      <date>May 18, 2018</date>
-      <edition>1.4.0-beta</edition>
+      <date>June 15, 2018</date>
+      <edition>1.4.0</edition>
       <author>
         <personname/>
         <contrib>The Kea software has been written by a number of
@@ -65,6 +65,7 @@
             <arg choice="opt" rep="norepeat"><option>-M <replaceable class="parameter">mac-list-file</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">num-request</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-O <replaceable class="parameter">random-offset</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">code,hexstring</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">test-period</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-P <replaceable class="parameter">preload</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">rate</replaceable></option></arg>
@@ -411,6 +412,28 @@
                       from this list for every new exchange. In the DHCPv6 case, MAC
                       addresses are used to generate DUID-LLs. This parameter must not be
                       used in conjunction with the -b parameter.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-o <replaceable class="parameter">code,hexstring</replaceable></option></term>
+                <listitem>
+                    <para>
+                      This forces perfdhcp to insert specified extra option (or
+                      options if used several times) into packets being
+                      transmitted. The code specifies option code and the
+                      hexstring is a hexadecimal string that defines the content
+                      of the option. Care should be taken as perfdhcp does not
+                      offer any kind of logic behind those options. They're
+                      simply inserted into packets being sent as is. Be careful
+                      not to insert options that are already inserted. For
+                      example, to insert client class identifier (option code
+                      60) with a string 'docsis', you can use -o
+                      60,646f63736973. The <option>-o</option> may be used
+                      multiple times. It is necessary to specify protocol family
+                      (either <option>-4</option> or <option>-6</option>) before
+                      using <option>-o</option>.
                     </para>
                 </listitem>
             </varlistentry>
@@ -933,6 +956,11 @@
 
       <citerefentry>
         <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

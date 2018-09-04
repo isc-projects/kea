@@ -225,6 +225,13 @@ protected:
     void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                      RequirementLevel serverid);
 
+    /// @brief verifies if received DUID option (client-id or server-id) is sane
+    ///
+    /// @param opt option to be checked
+    /// @param opt_name text name to be printed
+    /// @throw RFCViolation if any issues are detected
+    void sanityCheckDUID(const OptionPtr& opt, const std::string& opt_name);
+
     /// @brief Processes incoming Solicit and returns response.
     ///
     /// Processes received Solicit message and verifies that its sender
@@ -673,6 +680,18 @@ protected:
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt6Ptr& pkt);
+
+    /// @brief Evaluate classes.
+    ///
+    /// @note Second part of the classification.
+    ///
+    /// Evaluate expressions of client classes: if it returns true the class
+    /// is added to the incoming packet.
+    ///
+    /// @param pkt packet to be classified.
+    /// @param depend_on_known if false classes depending on the KNOWN or
+    /// UNKNOWN classes are skipped, if true only these classes are evaluated.
+    void evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known);
 
     /// @brief Assigns classes retrieved from host reservation database.
     ///

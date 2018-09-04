@@ -1,3 +1,4 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -17,8 +18,8 @@
 #ifndef CQL_HOST_DATA_SOURCE_H
 #define CQL_HOST_DATA_SOURCE_H
 
+#include <cql/cql_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/cql_connection.h>
 
 #include <string>
 #include <vector>
@@ -77,11 +78,12 @@ public:
     /// @param parameters a data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database or if the
+    /// schema version is invalid.
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     ///
@@ -148,32 +150,6 @@ public:
                       const uint8_t* identifier_begin,
                       const size_t identifier_len) override;
 
-    /// @brief Return all @ref Host objects for the specified @ref HWAddr or
-    /// @ref DUID.
-    ///
-    /// Returns all @ref Host objects which represent reservations
-    /// for the specified HW address or DUID. Note, that this method may
-    /// return multiple reservations because a particular client may have
-    /// reservations in multiple subnets and the same client may be identified
-    /// by HW address or DUID. The server is unable to verify that the specific
-    /// DUID and HW address belong to the same client, until the client sends
-    /// a DHCP message.
-    ///
-    /// Specifying both @ref HWAddr and @ref DUID is allowed for this method
-    /// and results in returning all objects that are associated with hardware
-    /// address OR duid. For example: if one @ref Host is associated with the
-    /// specified @ref HWAddr and another @ref Host is associated with the
-    /// specified @ref DUID, two hosts will be returned.
-    ///
-    /// @param hwaddr HW address of the client or NULL if no HW address
-    /// available.
-    /// @param duid client id or NULL if not available, e.g. DHCPv4 client case.
-    ///
-    /// @return collection of const @ref Host objects.
-    virtual ConstHostCollection
-    getAll(const HWAddrPtr& hwaddr,
-           const DuidPtr& duid = DuidPtr()) const override;
-
     /// @brief Return all hosts connected to any subnet for which reservations
     /// have been made using a specified identifier.
     ///
@@ -202,26 +178,6 @@ public:
     /// @return Collection of const @ref Host objects.
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const override;
-
-    /// @brief Retrieves a single @ref Host connected to an IPv4 subnet.
-    ///
-    /// Implementations of this method should guard against the case when
-    /// multiple instances of the @ref Host are present, e.g. when two @ref
-    /// Host objects are found, one for the @ref DUID, another one for the @ref
-    /// HWAddr. In such case, throw a @ref MultipleRecords exception.
-    ///
-    /// @param subnet_id subnet identifier to filter by
-    /// @param hwaddr hardware address of the client to filter by or NULL if not
-    ///     available
-    /// @param duid client identifier to filter by or NULL if not available
-    ///
-    /// @return @ref ConstHostPtr to a @ref Host object using a specified @ref
-    ///     HWAddr or @ref DUID
-    ///
-    /// @throw BadValue if both or neither of subnet_id and duid are specified
-    virtual ConstHostPtr get4(const SubnetID& subnet_id,
-                              const HWAddrPtr& hwaddr,
-                              const DuidPtr& duid = DuidPtr()) const override;
 
     /// @brief Retrieves a @ref Host connected to an IPv4 subnet.
     ///
@@ -254,26 +210,6 @@ public:
     get4(const SubnetID& subnet_id,
          const asiolink::IOAddress& address) const override;
 
-    /// @brief Retrieves a @ref Host connected to an IPv6 subnet.
-    ///
-    /// Implementations of this method should guard against the case when
-    /// multiple instances of the @ref Host are present, e.g. when two
-    /// @ref Host objects are found, one for the @ref DUID, another one for the
-    /// @ref HWAddr. In such case, throw a @ref MultipleRecords exception.
-    ///
-    /// @param subnet_id subnet identifier to filter by
-    /// @param hwaddr hardware address of the client to filter by or NULL if not
-    ///     available
-    /// @param duid client identifier to filter by or NULL if not available
-    ///
-    /// @return @ref Host object using a specified @ref HWAddr or @ref DUID
-    ///
-    /// @throw BadValue if both or neither of subnet_id and duid are specified
-    virtual ConstHostPtr
-    get6(const SubnetID& subnet_id,
-         const DuidPtr& duid,
-         const HWAddrPtr& hwaddr = HWAddrPtr()) const override;
-
     /// @brief Returns a @ref Host connected to an IPv6 subnet.
     ///
     /// @param subnet_id subnet identifier to filter by
@@ -294,7 +230,7 @@ public:
     /// @param prefix IPv6 prefix for which the @ref Host object is searched.
     /// @param prefix_len IPv6 prefix length.
     ///
-    /// @return Const @ref Host object using a specified HW address or DUID.
+    /// @return Const @ref Host object using a specified IPv6 prefix.
     ///
     /// @throw MultipleRecords if two or more rows are returned from the
     ///     Cassandra database
@@ -343,9 +279,9 @@ public:
     ///         integers. "first" is the major version number, "second" is the
     ///         minor version number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    virtual VersionPair getVersion() const;
+    virtual db::VersionPair getVersion() const;
 
     /// @brief Commit Transactions
     ///

@@ -10,8 +10,8 @@
 <refentry>
   <info>
     <productname>ISC Kea</productname>
-    <date>May 18, 2018</date>
-    <edition>1.4.0-beta</edition>
+    <date>June 15, 2018</date>
+    <edition>1.4.0</edition>
     <author><personname/><contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
         Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
@@ -50,6 +50,7 @@
       <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">scripts directory</replaceable></option></arg>
       <arg choice="opt" rep="norepeat"><option>-4 | -6</option></arg>
       <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">output file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -174,6 +175,15 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>-v|--version</option></term>
+        <listitem>
+          <para>
+            Prints kea-admin version and quits.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-4</option></term>
         <listitem>
           <para>
@@ -220,6 +230,11 @@
 
       <citerefentry>
         <refentrytitle>kea-ctrl-agent</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

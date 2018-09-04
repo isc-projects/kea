@@ -219,16 +219,20 @@ file.</para>
 
 <para>Moving onto the DHCPv4 configuration elements, the first few elements
 define some global parameters. <command>valid-lifetime</command>
-defines for how long the addresses (leases) given out by the
+defines how long the addresses (leases) given out by the
 server are valid. If nothing changes, a client that got an address is allowed to
 use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
 <command>rebind-timer</command> are values (also in seconds) that
 define T1 and T2 timers that govern when the client will begin the renewal and
-rebind procedures. Note that <command>renew-timer</command> and
-<command>rebind-timer</command> are optional. If they are not specified the
-client will select values for T1 and T2 timers according to the
-<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>.</para>
+rebind procedures. <note> Both <command>renew-timer</command> and
+<command>rebind-timer</command> are optional.  The server will only send
+rebind-timer to the client, via DHPv4 option code 59, if it is less than
+valid-lifetime; and it will only send renew-timer, via DHCPv4 option code 58,
+if it is less than rebind-timer (or valid-lifetime if rebind-timer was not
+specified).  In their absence, the client should select values for T1 and T2
+timers according to the <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>.</note></para>
 
 <para>The <command>interfaces-config</command> map specifies the server
 configuration concerning the network interfaces, on which the server should
@@ -982,9 +986,11 @@ temporarily override a list of interface names and listen on all interfaces.
     subnet 4, something that may have unexpected consequences. It is planned
     to implement a mechanism to preserve auto-generated subnet ids in a
     future version of Kea.  However, the only remedy for this issue
-    at present is to
-    manually specify a unique identifier for each subnet.
+    at present is to manually specify a unique identifier for each subnet.
   </para>
+  <note>
+    Subnet IDs must be greater than zero and less than 4294967295.
+  </note>
       <para>
         The following configuration will assign the specified subnet
         identifier to the newly configured subnet:
@@ -1340,6 +1346,14 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       </para>
+     <para>
+       Options can be specified also in class of host reservation scope.
+       In Kea 1.4 options precedence order is (from most important):
+       host reservation, pool, subnet, shared network, class, global.
+       In Kea 1.5 order will be changed to:
+       host reservation, class, pool, subnet, shared network, global OR it will
+       be fully configurable.
+     </para>
 
       <para>
         The currently supported standard DHCPv4 options are
@@ -1575,7 +1589,7 @@ It is merely echoed by the server
             <row><entry>Name</entry><entry>Meaning</entry></row>
           </thead>
           <tbody>
-            <row><entry>hex</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
+            <row><entry>binary</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
             <row><entry>boolean</entry><entry>Boolean value with allowed values true or false</entry></row>
             <row><entry>empty</entry><entry>No value, data is carried in suboptions</entry></row>
             <row><entry>fqdn</entry><entry>Fully qualified domain name (e.g. www.example.com)</entry></row>
@@ -1962,7 +1976,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-      Another possibility, added in Kea 1.3, is to redefine the option,
+      Another possibility, since Kea 1.3, is to redefine the option,
       see <xref linkend="dhcp4-private-opts"/>.
       </para>
     </section>
@@ -2239,11 +2253,26 @@ It is merely echoed by the server
       </para>
 
       <para>
-      The process of doing classification is conducted in several steps. The first step
-      is to assess an incoming packet and assign it to zero or more classes.  The
-      second step is to choose a subnet, possibly based on the class information.
-      The third step is to assign classes from host reservations and
-      evaluate class expressions depending on the "KNOWN" class.
+      In a similar way a pool can be constrained to serve only known
+      clients, i.e. clients which have a reservation, using the
+      built-in "KNOWN" or "UNKNOWN" classes.  One can assign addresses
+      to registered clients without giving a different address per
+      reservations, for instance when there is not enough available
+      addresses. The determination whether there is a reservation
+      for a given client is made after a subnet is selected. As such, it
+      is not possible to use KNOWN/UNKNOWN classes to select a shared
+      network or a subnet.
+      </para>
+
+      <para>
+      The process of doing classification is conducted in five steps.
+      The first step is to assess an incoming packet and assign it to
+      zero or more classes.
+      The second step is to choose a subnet, possibly based on the
+      class information.
+      The next step is to evaluate class expressions depending on the
+      built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
+      using them for pool selection and to assign classes from host reservations.
       After the list of required classes is built and each class of the list
       has its expression evaluated: when it returns true the packet is added
       as a member of the class.
@@ -2554,6 +2583,12 @@ It is merely echoed by the server
       </simpara></listitem>
       <listitem><simpara>
       <command>"generated-prefix": "myhost"</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-set": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-replacement": ""</command>
       </simpara></listitem>
       </itemizedlist>
       </para>
@@ -2881,6 +2916,86 @@ It is merely echoed by the server
         myhost-172-16-1-10.example.com.
       </para>
       </section>
+      <section xml:id="host-name-sanitization">
+        <title>Sanitizing Client Host Name and FQDN Names</title>
+        It may be that some of your DHCP clients provide values in the Host
+        Name option (Option code 12) or FQDN option (Option code 81), that
+        contain undesirable characters.  It is possible to configure kea-dhcp4
+        to sanitize these values.  The most typical use case would be ensuring
+        that only characters that are permitted by RFC 1035 be included:
+        A-Z,a-z,0-9, and '-'.
+
+        This may be accomplished with following two parameters:
+        <itemizedlist>
+        <listitem><simpara>
+        <command>hostname-char-set</command> - a regular expression describing
+        the invalid character set.  This can be any valid, regular expression
+        using POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]"
+        would replace any character other then the letters A through z, digits
+        0 through 9, and '-'.  An empty string, the default value, disables
+        sanitization.
+        </simpara></listitem>
+        <listitem><simpara>
+        <command>hostname-char-replacement</command> - a string of zero or
+        more characters with which to replace each invalid character in the
+        host name.  The default value is an empty string and will cause
+        invalid characters to be OMITTED rather than replaced.
+        </simpara></listitem>
+        </itemizedlist>
+        The following configuration, will replace anything other than a
+        letter, digit, hyphen, or dot with the letter 'x':
+<screen>
+"Dhcp4": {
+    "dhcp-ddns": {
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
+        ...
+    },
+    ...
+}
+</screen>
+        Thus, a client supplied value of "myhost-$[123.org" would become
+        "myhost-xx123.org".  Sanitizing is performed only on the portion of
+        the name supplied by the client and it is performed before applying
+        a qualifying suffix (if one is defined and needed).
+        <note>
+        The following are some considerations to keep in mind:
+        <para>
+        Name sanitizing is meant to catch the more common cases of invalid
+        characters through a relatively simple character replacement scheme.
+        It is difficult to devise a scheme that works well in all cases,
+        for both Host Name and FQDN options.  If you find you have clients
+        that are using odd, corner cases of character combinations that cannot
+        be readily handled with this mechanism, you should consider writing
+        a hook that can carry out sufficiently complex logic to address your
+        needs.
+        </para>
+        <para>
+        If your clients include domain names in the Host Name option and you
+        want these preserved, you will need to make sure that the dot, '.', is
+        considered a valid character by the hostname-char-set expression, such
+        as this: "[^A-Za-z0-9.-]". This will not affect dots in FQDN Option
+        values.  When scrubbing FQDNs, dots are treated as delimiters and used
+        to  separate the option value into individual domain labels that are
+        scrubbed and then re-assembled.
+        </para>
+        <para>
+        If your clients are sending values that differ only by characters
+        considered as invalid by your hostname-char-set, be aware that scrubbing
+        them will yield identical values. In such cases, DDNS conflict rules
+        will permit only one of them from registering the name.
+        </para>
+        <para>
+        Finally, given the latitude clients have in the values they send, it is
+        virtually impossible to guarantee that a combination of these two
+        parameters will always yield a name that is valid for use in DNS. For
+        example, using an empty value for hostname-char-replacment could yield
+        an empty domain label within a name, if that label consists only of
+        invalid characters.
+        </para>
+        </note>
+      </section>
+
     </section>
 
     <section xml:id="dhcp4-next-server">
@@ -3205,7 +3320,110 @@ It is merely echoed by the server
 }
 </screen>
     </para>
-    </section>
+     </section>
+
+
+     <section xml:id="sanity-checks4">
+       <title>Sanity checks in DHCPv4</title>
+
+       <para>
+         An important aspect of a well running DHCP system is an assurance that
+         the data remains consisent. However, in some cases it may be convenient
+         to tolerate certain inconsistent data. For example, a network
+         administrator that temporarily removed a subnet from a configuration
+         wouldn't want all the leases associated with it disappear from the
+         lease database. Kea 1.5 introduced a mechanism to better control sanity
+         checks such as this. While currently the scope of configurable sanity
+         checks is limited and their default value is set low, it is expected
+         that over time the default settings will be set to more aggressive
+         values and more parameters of similar nature will be added in the
+         future.
+       </para>
+
+       <para>
+         Kea now supports a new configuration scope called
+         <command>sanity-checks</command>. It currently allows only a
+         single parameter called <command>lease-checks</command>. It
+         governs what sort of verification is done when a new lease is
+         being loaded from a lease file. With the introduction of
+         sanity checks mechanism, it is now possible to tell Kea to
+         try to correct inconsistent data.
+       </para>
+
+       <para>
+         Every subnet has a subnet-id value. This is how Kea internally
+         identifies subnets. Each lease has a subnet-id parameter as well, which
+         identifies which subnet it belongs to. However, if configuration has
+         changed, it is possible that a lease could exist with a subnet-id
+         without any subnet that matches it. Also, it may be possible that
+         subnets configuration has changed and the subnet-id now belongs to a
+         subnet that does not match the lease. Kea corrective algorithm first
+         checks if there is a subnet with subnet-id specified by the lease. If
+         there is, it checks whether the lease belongs to that subnet. If not,
+         depending on the lease-checks setting, the lease is discarded, a
+         warning is printed or a new subnet is selected for the lease that
+         matches it topologically.
+       </para>
+
+       <para>
+         There are five levels which are supported:
+       </para>
+
+       <itemizedlist>
+         <listitem>
+           <simpara><command>none</command> - do no special checks, accept the
+           lease as is</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>warn</command> - if problems are detected, a
+           warning will be printed, but the lease data will be accepted
+           anyway. This is the default value. If not explicitly configured to
+           some other value, this level will be used.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is
+           not successful, the data will be inserted anyway.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix-del</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is not
+           succesful, the lease will be rejected. This setting ensures the data
+           correctness, but some incorrect data may be lost. Use with
+           care.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>del</command> - This is the strictest mode. If any
+           inconsistency is detected, the lease is rejected. Use with care.
+           </simpara>
+         </listitem>
+       </itemizedlist>
+
+       <para>This feature is currently implemented for memfile backend.</para>
+
+       <para>
+         An example configuration that sets this parameter looks as follows:
+<screen>
+"Dhcp4": {
+    "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        <userinput>"lease-checks": "fix-del"</userinput>
+    },
+    ...
+}</screen>
+
+  </para>
+     </section>
 
   </section> <!-- end of configuring kea-dhcp4 server section -->
 
@@ -3246,7 +3464,7 @@ It is merely echoed by the server
     identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
 
     <para>The following example shows how to reserve addresses for specific
-    hosts:
+    hosts in a subnet:
 
 <screen>
 "subnet4": [
@@ -3325,6 +3543,20 @@ It is merely echoed by the server
       to skip reservation checks when dealing with existing leases. Therefore,
       system administrators are encouraged to use out-of-pool reservations if
       possible.</para>
+      <para>Beginning with Kea 1.5.0, there is now support for global
+      host reservations.  These are reservations that are specified at the
+      global level within the configuration and that do not belong to any
+      specific subnet.  Kea will still match inbound client packets to a
+      subnet as before, but when the subnet's reservation mode is set to
+      <command>"global"</command>, Kea will look for host reservations only
+      among the global reservations defined. Typcially, such resrvations would
+      be used to reserve hostnames for clients which may move from one subnet
+      to another.
+      </para>
+      <note>You can reserve any ip-address in a global reservation. Just keep
+      in mind that Kea will not do any sanity checking on the address and for
+      Kea 1.5.0, support for global reservations should be considered experimental.
+      </note>
     </section>
 
     <section xml:id="reservation4-conflict">
@@ -3402,6 +3634,15 @@ It is merely echoed by the server
       out-of-pool reservations. If the reserved address does not belong to a
       pool, there is no way that other clients could get this address.
       </para>
+
+    <note>
+     <para>The conflict resolution mechanism does not work for global
+     reservations. As of Kea 1.5.0, it is generally recommended to not use
+     global reservations for addresses. If you want to use it anyway,
+     you have to manually ensure that the reserved addressed are not
+     in the dynamic pools.</para>
+    </note>
+
     </section>
 
     <section xml:id="reservation4-hostname">
@@ -3612,9 +3853,9 @@ It is merely echoed by the server
 </screen>
 
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions. The "KNOWN" builtin class is
-    added to the packet and any class depending on it directly or indirectly
-    and not only-if-required is evaluated.
+    with classification using expressions. The "KNOWN" or "UNKNOWN" builtin
+    class is added to the packet and any class depending on it directly or
+    indirectly and not only-if-required is evaluated.
     </para>
 
     <note>
@@ -3668,10 +3909,10 @@ It is merely echoed by the server
       Allowed values are:
 
       <itemizedlist>
-      <listitem><simpara> <command>all</command> - enables all host reservation
-      types. This is the default value. This setting is the safest and the most
-      flexible. It allows in-pool and out-of-pool reservations. As all checks
-      are conducted, it is also the slowest.
+      <listitem><simpara> <command>all</command> - enables both in-pool
+      and out-of-pool host reservation types. This is the default value. This
+      setting is the safest and the most flexible. As all checks are conducted,
+      it is also the slowest. This does not check against global reservations.
       </simpara></listitem>
 
       <listitem><simpara> <command>out-of-pool</command> - allows only out of
@@ -3682,6 +3923,16 @@ It is merely echoed by the server
       if any of your reservations use in-pool address. Caution is advised when
       using this setting: Kea does not sanity check the reservations against
       <command>reservation-mode</command> and misconfiguration may cause problems.
+      </simpara></listitem>
+
+      <listitem><simpara> <command>global</command> - allows only global
+      host reservations.  With this setting in place, the server searches for
+      reservations for a client only among the defined global reservations.
+      If an address is specified, the server will skip the reservation checks
+      done when dealing in other modes, thus improving performance.
+      Caution is advised when using this setting: Kea does not sanity check
+      the reservations when <command>global</command> and
+      misconfiguration may cause problems.
       </simpara></listitem>
 
       <listitem><simpara>
@@ -3695,7 +3946,7 @@ It is merely echoed by the server
       </para>
 
       <para>
-        An example configuration that disables reservation looks like follows:
+        An example configuration that disables reservation appears as follows:
 <screen>
 "Dhcp4": {
     "subnet4": [
@@ -3707,7 +3958,44 @@ It is merely echoed by the server
     ]
 }
 </screen>
+
+
       </para>
+      <para>
+        An example configuration using global reservations is shown below:
+<screen>
+"Dhcp4": {
+
+    <userinput>
+    "reservations": [
+       {
+        "hw-address": "01:bb:cc:dd:ee:ff",
+        "hostname": "host-one"
+       },
+       {
+        "hw-address": "02:bb:cc:dd:ee:ff",
+        "hostname": "host-two"
+       }
+    ],
+    </userinput>
+    "subnet4": [
+    {
+        "subnet": "192.0.2.0/24",
+        <userinput>"reservation-mode": "global"</userinput>,
+        ...
+    },
+    {
+        "subnet": "192.0.8.0/24",
+        <userinput>"reservation-mode": "global"</userinput>,
+        ...
+    }
+    ]
+}
+</screen>
+  For more details regarding global erservations, see <xref linkend="global-reservations4"/>.
+
+      </para>
+
 
       <para>Another aspect of the host reservations are the different types of
       identifiers. Kea 1.1.0 supports four types of identifiers
@@ -3752,7 +4040,84 @@ If not specified, the default value is:
 src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 </para>
-   </section>
+</section>
+
+
+  <section id="global-reservations4">
+    <title>Global reservations in DHCPv4</title>
+
+    <para>In some deployments, such as mobile, clients can roam within the
+    network and there is a desire to specify certain parameters regardless of
+    the client's current location. To facilitate such a need, a global
+    reservation mechanism has been implemented. The idea behind it is that
+    regular host reservations are tied to specific subnets, by using specific
+    subnet-id. Kea 1.5.0 introduced a new capability to specify global
+    reservation that can be used in every subnet that has global reservations
+    enabled.</para>
+
+    <para>This feature can be used to assign certain parameters, such as
+    hostname or other dedicated, host-specific options. It can also be used to
+    assign addresses. However, global reservations that assign addresses bypass
+    the whole topology determination provided by DHCP logic implemented in
+    Kea. It is very easy to misuse this feature and get configuration that is
+    inconsistent. To give a specific example, imagine a global reservation
+    for address 192.0.2.100 and two subnets 192.0.2.0/24 and 192.0.5.0/24. If
+    global reservations are used in both subnets and a device matching global
+    host reservations visits part of the network that is serviced by
+    192.0.5.0/24, it will get an IP address 192.0.2.100, a subnet 192.0.5.0 and
+    a default router 192.0.5.1. Obviously such a configuration is unusable, as
+    the client won't be able to reach its default gateway.</para>
+
+    <para>
+      To use global host reservations a configuration similar to the following
+      can be used:
+
+<screen>
+"Dhcp4:" {
+    // This specify global reservations. They will apply to all subnets that
+    // have global reservations enabled.
+    <userinput>
+    "reservations": [
+    {
+       "hw-address": "aa:bb:cc:dd:ee:ff",
+       "hostname": "hw-host-dynamic"
+    },
+    {
+       "hw-address": "01:02:03:04:05:06",
+       "hostname": "hw-host-fixed",
+
+       // Use of IP address is global reservation is risky. If used outside of
+       // matching subnet, such as 192.0.1.0/24, it will result in a broken
+       // configuration being handled to the client.
+       "ip-address": "192.0.1.77"
+    },
+    {
+       "duid": "01:02:03:04:05",
+       "hostname": "duid-host"
+    },
+    {
+       "circuit-id": "'charter950'",
+       "hostname": "circuit-id-host"
+    },
+    {
+       "client-id": "01:11:22:33:44:55:66",
+       "hostname": "client-id-host"
+    }
+    ]</userinput>,
+    "valid-lifetime": 600,
+    "subnet4": [ {
+        "subnet": "10.0.0.0/24",
+        <userinput>"reservation-mode": "global",</userinput>
+        "pools": [ { "pool": "10.0.0.10-10.0.0.100" } ]
+    } ]
+}
+</screen>
+    </para>
+
+    <para>When using database backends, the global host reservations are
+    distinguished from regular reservations by using subnet-id value of
+    zero.</para>
+  </section> <!-- end of global reservations -->
 
   </section>
   <!-- end of host reservations section -->
@@ -4322,15 +4687,15 @@ autogenerated IDs are not stable across configuration changes.</para>
 
       <para>If "relay" is specified, the "ip-addresses" parameter within
       it is mandatory.</para>
-   
-      <note> 
+
+      <note>
       <para>
-      As of Kea 1.4, the "ip-address" parameter has been deprecated in favor 
-      of "ip-addresses" which supports specifying a list of addresses.  
+      As of Kea 1.4, the "ip-address" parameter has been deprecated in favor
+      of "ip-addresses" which supports specifying a list of addresses.
       Configuration parsing, will honor the singular form for now but users are
       encouraged to migrate.
       </para>
-      </note> 
+      </note>
 
     </section>
 

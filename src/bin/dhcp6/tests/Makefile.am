@@ -130,6 +130,22 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
+
+if HAVE_MYSQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
@@ -144,3 +160,21 @@ dhcp6_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
+
+# Use this target if you want to rebuild the get-config unit-tests.
+#
+# TODO: We could also automate the replacement step with some variation
+# of this: https://stackoverflow.com/questions/6790631
+rebuild-tests:
+	rm -f x u get_config_unittest.cc
+	cp -f get_config_unittest.cc.skel get_config_unittest.cc
+	$(MAKE) CXXFLAGS=-DEXTRACT_CONFIG V=1
+	./dhcp6_unittests --gtest_filter="Dhcp6Parser*" > /dev/null 2> x
+	echo "Please copy content of x file into EXTRACTED_CONFIGS in get_config_unittest.cc"
+	read -p "Press ENTER when ready"
+	$(MAKE) CXXFLAGS=-DGENERATE_ACTION V=1
+	./dhcp6_unittests --gtest_filter="Dhcp6GetConfig*" > /dev/null 2> u
+	echo "Please copy content of u file into UNPARSED_CONFIGS in get_config_unittest.cc"
+	read -p "Press ENTER when ready"
+	touch get_config_unittest.cc
+	$(MAKE)

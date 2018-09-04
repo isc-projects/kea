@@ -17,7 +17,7 @@ libkea_cc_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cc_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cc_la_LIBADD += $(BOOST_LIBS)
 
-libkea_cc_la_LDFLAGS = -no-undefined -version-info 4:0:0
+libkea_cc_la_LDFLAGS = -no-undefined -version-info 5:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_cc_includedir = $(pkgincludedir)/cc

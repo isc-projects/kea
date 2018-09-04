@@ -826,15 +826,14 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_FALSE(subnet->getT1().unspecified());
+
+    EXPECT_TRUE(subnet->getT1().unspecified());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(900, subnet->getT1()); // that's the default value
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
 
     // Check that subnet-id is 1
     EXPECT_EQ(1, subnet->getID());
-
 }
 
 /// Check that the rebind-timer doesn't have to be specified, in which case
@@ -863,8 +862,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getT1().unspecified());
     EXPECT_EQ(1000, subnet->getT1());
-    EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(1800, subnet->getT2()); // that's the default value
+    EXPECT_TRUE(subnet->getT2().unspecified());
     EXPECT_EQ(4000, subnet->getValid());
 
     // Check that subnet-id is 1
@@ -1817,23 +1815,73 @@ TEST_F(Dhcp4ParserTest, noPools) {
 }
 
 // Goal of this test is to verify that invalid subnet fails to be parsed.
-TEST_F(Dhcp4ParserTest, badSubnet) {
+TEST_F(Dhcp4ParserTest, badSubnetValues) {
 
-    // Configuration string.
-    string config = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"pools\": [ ],"
+    // Contains parts needed for a single test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string config_json_;
+        std::string exp_error_msg_;
+    };
+
+    // Vector of scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+        "IP is not an address",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"not an address/24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Failed to convert string to address 'notanaddress': Invalid argument"
+        },
+        {
+        "IP is Invalid",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"256.16.1.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Failed to convert string to address '256.16.1.0': Invalid argument"
+        },
+        {
+        "Missing prefix",
+        "{ \"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0\" } ],"
-        "\"valid-lifetime\": 4000 }";
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Invalid subnet syntax (prefix/len expected):192.0.2.0 (<string>:1:32)"
+        },
+        {
+        "Prefix not an integer (2 slashes)",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0//24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "prefix length: '/24' is not an integer (<string>:1:32)"
+        },
+        {
+        "Prefix value is insane",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0/45938\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Invalid prefix length specified for subnet: 45938 (<string>:1:32)"
+        }
+    };
 
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config, true));
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
-    checkResult(status, 1);
-    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+    // Iterate over the list of scenarios.  Each should fail to parse with
+    // a specific error message.
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        {
+            SCOPED_TRACE((*scenario).description_);
+            ConstElementPtr config;
+            ASSERT_NO_THROW(config = parseDHCP4((*scenario).config_json_))
+                            << "invalid json, broken test";
+            ConstElementPtr status;
+            EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+            checkResult(status, 1);
+            EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
+        }
+    }
 }
 
 // Goal of this test is to verify that unknown interface fails
@@ -3973,7 +4021,9 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "     \"hostname-char-replacement\" : \"x\" }, "
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
@@ -4421,19 +4471,21 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // Let's create an object holding hardware address of the host having
     // a reservation in the subnet having id of 234. For simplicity the
     // address is a collection of numbers from 1 to 6.
-    std::vector<uint8_t> hwaddr_vec;
+    std::vector<uint8_t> hwaddr;
     for (unsigned int i = 1; i < 7; ++i) {
-        hwaddr_vec.push_back(static_cast<uint8_t>(i));
+        hwaddr.push_back(static_cast<uint8_t>(i));
     }
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     // Retrieve the reservation and sanity check the address reserved.
-    ConstHostPtr host = hosts_cfg->get4(234, hwaddr);
+    ConstHostPtr host = hosts_cfg->get4(234, Host::IDENT_HWADDR,
+                                        &hwaddr[0], hwaddr.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.3.120", host->getIPv4Reservation().toText());
     // This reservation should be solely assigned to the subnet 234,
     // and not to other two.
-    EXPECT_FALSE(hosts_cfg->get4(123, hwaddr));
-    EXPECT_FALSE(hosts_cfg->get4(542, hwaddr));
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
     // Check that options are assigned correctly.
     Option4AddrLstPtr opt_dns =
         retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
@@ -4447,16 +4499,15 @@ TEST_F(Dhcp4ParserTest, reservations) {
     EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
 
     // Do the same test for the DUID based reservation.
-    std::vector<uint8_t> duid_vec;
+    std::vector<uint8_t> duid;
     for (unsigned int i = 1; i < 0xb; ++i) {
-        duid_vec.push_back(static_cast<uint8_t>(i));
+        duid.push_back(static_cast<uint8_t>(i));
     }
-    DuidPtr duid(new DUID(duid_vec));
-    host = hosts_cfg->get4(234, HWAddrPtr(), duid);
+    host = hosts_cfg->get4(234, Host::IDENT_DUID, &duid[0], duid.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
-    EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
-    EXPECT_FALSE(hosts_cfg->get4(542, HWAddrPtr(), duid));
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_DUID, &duid[0], duid.size()));
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_DUID, &duid[0], duid.size()));
     // Check that options are assigned correctly.
     opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
@@ -4470,7 +4521,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     // The circuit-id used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
     // of the address from the previous test.
-    std::vector<uint8_t> circuit_id(hwaddr_vec.rbegin(), hwaddr_vec.rend());
+    std::vector<uint8_t> circuit_id(hwaddr.rbegin(), hwaddr.rend());
     host = hosts_cfg->get4(542, Host::IDENT_CIRCUIT_ID, &circuit_id[0],
                            circuit_id.size());
     EXPECT_TRUE(host);
@@ -4483,13 +4534,14 @@ TEST_F(Dhcp4ParserTest, reservations) {
 
 
     // Repeat the test for the DUID based reservation in this subnet.
-    duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
-                                             duid_vec.rend())));
-    host = hosts_cfg->get4(542, HWAddrPtr(), duid);
+    std::vector<uint8_t> duid_r(duid.rbegin(), duid.rend());
+    host = hosts_cfg->get4(542, Host::IDENT_DUID, &duid_r[0], duid_r.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.4.101", host->getIPv4Reservation().toText());
-    EXPECT_FALSE(hosts_cfg->get4(123, HWAddrPtr(), duid));
-    EXPECT_FALSE(hosts_cfg->get4(234, HWAddrPtr(), duid));
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_DUID,
+                                 &duid_r[0], duid_r.size()));
+    EXPECT_FALSE(hosts_cfg->get4(234, Host::IDENT_DUID,
+                                 &duid_r[0], duid_r.size()));
     // Check that options are assigned correctly.
     opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
@@ -4564,13 +4616,13 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
 
     // Let's create an object holding DUID of the host. For simplicity the
     // address is a collection of numbers from 1 to A.
-    std::vector<uint8_t> duid_vec;
+    std::vector<uint8_t> duid;
     for (unsigned int i = 1; i < 0xB; ++i) {
-        duid_vec.push_back(static_cast<uint8_t>(i));
+        duid.push_back(static_cast<uint8_t>(i));
     }
-    DuidPtr duid(new DUID(duid_vec));
     // Retrieve the reservation and sanity check the address reserved.
-    ConstHostPtr host = hosts_cfg->get4(234, HWAddrPtr(), duid);
+    ConstHostPtr host =
+        hosts_cfg->get4(234, Host::IDENT_DUID, &duid[0], duid.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
 
@@ -5992,15 +6044,15 @@ TEST_F(Dhcp4ParserTest, comments) {
 
     // The subnet has a host reservation.
     uint8_t hw[] = { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF };
-    HWAddrPtr hwaddr(new HWAddr(hw, sizeof(hw), HTYPE_ETHER));
     ConstHostPtr host =
-        CfgMgr::instance().getStagingCfg()->getCfgHosts()->get4(100, hwaddr);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->
+        get4(100, Host::IDENT_HWADDR, &hw[0], sizeof(hw));
     ASSERT_TRUE(host);
     EXPECT_EQ(Host::IDENT_HWADDR, host->getIdentifierType());
     EXPECT_EQ("aa:bb:cc:dd:ee:ff", host->getHWAddress()->toText(false));
     EXPECT_FALSE(host->getDuid());
     EXPECT_EQ(100, host->getIPv4SubnetID());
-    EXPECT_EQ(0, host->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", host->getHostname());
 
     // Check host user context.
@@ -6049,6 +6101,136 @@ TEST_F(Dhcp4ParserTest, comments) {
         "    \"name\": \"kea-dhcp4\"\n"
         "} ]\n";
 #endif
+}
+
+// This test verifies that the global host reservations can be specified
+TEST_F(Dhcp4ParserTest, globalReservations) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"reservations\": [\n"
+        " {\n"
+        "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\",\n"
+        "        \"ip-address\": \"192.0.200.1\",\n"
+        "        \"hostname\": \"global1\",\n"
+        "        \"option-data\": [\n"
+        "        {\n"
+        "          \"name\": \"name-servers\",\n"
+        "          \"data\": \"192.0.3.15\"\n"
+        "        },\n"
+        "        {\n"
+        "          \"name\": \"default-ip-ttl\",\n"
+        "          \"data\": \"32\"\n"
+        "        }\n"
+        "        ]\n"
+        " },\n"
+        " {\n"
+        "        \"hw-address\": \"01:02:03:04:05:06\",\n"
+        "        \"hostname\": \"global2\",\n"
+        "        \"option-data\": [\n"
+        "        {\n"
+        "          \"name\": \"name-servers\",\n"
+        "          \"data\": \"192.0.3.95\"\n"
+        "        },\n"
+        "        {\n"
+        "          \"name\": \"default-ip-ttl\",\n"
+        "          \"data\": \"11\"\n"
+        "        }\n"
+        "        ]\n"
+        " }],\n"
+        "\"subnet4\": [ \n"
+        " { \n"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],\n"
+        "    \"subnet\": \"192.0.2.0/24\", \n"
+        "    \"id\": 123,\n"
+        "    \"reservations\": [\n"
+        "    ]\n"
+        " },\n"
+        " {\n"
+        "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],\n"
+        "    \"subnet\": \"192.0.4.0/24\",\n"
+        "    \"id\": 542\n"
+        " } ],\n"
+        "\"valid-lifetime\": 4000"
+        "}\n";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    checkResult(x, 0);
+
+    // Make sure all subnets have been successfully configured. There is no
+    // need to sanity check the subnet properties because it should have
+    // been already tested by other tests.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(2, subnets->size());
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create a hardware address of the host named "global2"
+    std::vector<uint8_t> hwaddr;
+    for (unsigned int i = 1; i < 7; ++i) {
+        hwaddr.push_back(static_cast<uint8_t>(i));
+    }
+
+    // Retrieve the global reservation and sanity check the  hostname reserved.
+    ConstHostPtr host = hosts_cfg->get4(SUBNET_ID_GLOBAL, Host::IDENT_HWADDR,
+                                        &hwaddr[0], hwaddr.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ("global2", host->getHostname());
+
+    // Check that options are stored correctly.
+    Option4AddrLstPtr opt_dns =
+        retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.95", dns_addrs[0].toText());
+    OptionUint8Ptr opt_ttl =
+        retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
+
+    // This reservation should be global solely and not assigned to
+    // either subnet
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+
+    // Do the same test for the DUID based reservation.
+    std::vector<uint8_t> duid;
+    for (unsigned int i = 1; i < 0xb; ++i) {
+        duid.push_back(static_cast<uint8_t>(i));
+    }
+
+    // Retrieve the global reservation and sanity check the  hostname reserved.
+    host = hosts_cfg->get4(SUBNET_ID_GLOBAL, Host::IDENT_DUID, &duid[0], duid.size());
+    ASSERT_TRUE(host);
+    EXPECT_EQ("global1", host->getHostname());
+
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("192.0.3.15", dns_addrs[0].toText());
+    opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
+    ASSERT_TRUE(opt_ttl);
+    EXPECT_EQ(32, static_cast<int>(opt_ttl->getValue()));
+
+    // This reservation should be global solely and not assigned to
+    // either subnet
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_DUID, &duid[0], duid.size()));
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_DUID, &duid[0], duid.size()));
 }
 
 }

@@ -25,10 +25,24 @@
 #include <time.h>
 
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {
 namespace dhcp {
+
+LeasePageSize::LeasePageSize(const size_t page_size)
+    : page_size_(page_size) {
+
+    if (page_size_ == 0) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be 0");
+    }
+
+    if (page_size_ > std::numeric_limits<uint32_t>::max()) {
+        isc_throw(OutOfRange, "page size of retrieved leases must not be greater than "
+                  << std::numeric_limits<uint32_t>::max());
+    }
+}
 
 Lease6Ptr
 LeaseMgr::getLease6(Lease::Type type, const DUID& duid,

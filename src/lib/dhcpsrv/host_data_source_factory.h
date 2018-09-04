@@ -7,8 +7,8 @@
 #ifndef HOST_DATA_SOURCE_FACTORY_H
 #define HOST_DATA_SOURCE_FACTORY_H
 
+#include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
@@ -79,7 +79,7 @@ public:
     ///
     /// A factory takes a parameter map and returns a pointer to a host
     /// data source. In case of failure it must throw and not return NULL.
-    typedef boost::function<HostDataSourcePtr (const DatabaseConnection::ParameterMap&)> Factory;
+    typedef boost::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Register a host data source factory
     ///

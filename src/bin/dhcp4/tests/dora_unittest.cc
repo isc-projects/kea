@@ -13,9 +13,19 @@
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/testutils/cql_schema.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
+
+#ifdef HAVE_CQL
+#include <cql/testutils/cql_schema.h>
+#endif
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
+
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <boost/shared_ptr.hpp>
@@ -1361,7 +1371,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     HostPtr host(new Host(&client.getHWAddress()->hwaddr_[0],
                           client.getHWAddress()->hwaddr_.size(),
                           Host::IDENT_HWADDR, SubnetID(1),
-                          SubnetID(0), IOAddress("10.0.0.9")));
+                          SUBNET_ID_UNUSED, IOAddress("10.0.0.9")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1440,7 +1450,7 @@ TEST_F(DORATest, reservationsWithConflicts) {
     host.reset(new Host(&clientB.getHWAddress()->hwaddr_[0],
                         clientB.getHWAddress()->hwaddr_.size(),
                         Host::IDENT_HWADDR, SubnetID(1),
-                        SubnetID(0), in_pool_addr));
+                        SUBNET_ID_UNUSED, in_pool_addr));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
 
@@ -1954,15 +1964,15 @@ public:
     ///
     /// Recreates MySQL schema for a test.
     DORAMySQLTest() : DORATest() {
-        destroyMySQLSchema();
-        createMySQLSchema();
+        db::test::destroyMySQLSchema();
+        db::test::createMySQLSchema();
     }
 
     /// @brief Destructor.
     ///
     /// Destroys MySQL schema.
     virtual ~DORAMySQLTest() {
-        destroyMySQLSchema();
+        db::test::destroyMySQLSchema();
     }
 };
 
@@ -1987,15 +1997,15 @@ public:
     ///
     /// Recreates PgSQL schema for a test.
     DORAPgSQLTest() : DORATest() {
-        destroyPgSQLSchema();
-        createPgSQLSchema();
+        db::test::destroyPgSQLSchema();
+	db::test::createPgSQLSchema();
     }
 
     /// @brief Destructor.
     ///
     /// Destroys PgSQL schema.
     virtual ~DORAPgSQLTest() {
-        destroyPgSQLSchema();
+        db::test::destroyPgSQLSchema();
     }
 };
 
@@ -2019,15 +2029,15 @@ public:
     ///
     /// Recreates CQL schema for a test.
     DORACQLTest() : DORATest() {
-        destroyCqlSchema(false, true);
-        createCqlSchema(false, true);
+        db::test::destroyCqlSchema(false, true);
+        db::test::createCqlSchema(false, true);
     }
 
     /// @brief Destructor.
     ///
     /// Destroys CQL schema.
     virtual ~DORACQLTest() {
-        destroyCqlSchema(false, true);
+        db::test::destroyCqlSchema(false, true);
     }
 };
 

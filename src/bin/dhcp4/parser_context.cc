@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <dhcp4/parser_context.h>
 #include <dhcp4/dhcp4_parser.h>
 #include <exceptions/exceptions.h>
@@ -192,6 +194,8 @@ Parser4Context::contextName()
         return ("replace-client-name");
     case SHARED_NETWORK:
         return ("shared-networks");
+    case SANITY_CHECKS:
+        return ("sanity-checks");
     default:
         return ("__unknown__");
     }

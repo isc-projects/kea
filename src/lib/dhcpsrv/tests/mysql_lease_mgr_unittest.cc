@@ -8,12 +8,12 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -25,6 +25,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;
@@ -355,6 +357,11 @@ TEST_F(MySqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(MySqlLeaseMgrTest, getLeases4Paged) {
+    testGetLeases4Paged();
+}
+
 // This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MySqlLeaseMgrTest, getLeases6SubnetId) {
     testGetLeases6SubnetId();
@@ -363,6 +370,11 @@ TEST_F(MySqlLeaseMgrTest, getLeases6SubnetId) {
 // This test checks that all IPv6 leases are returned.
 TEST_F(MySqlLeaseMgrTest, getLeases6) {
     testGetLeases6();
+}
+
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(MySqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
 }
 
 /// @brief Basic Lease4 Checks
@@ -465,6 +477,14 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
 
+// @brief check leases could be retrieved by DUID
+///
+/// Create leases, add them to backend and verify if it can be queried
+/// using DUID index
+TEST_F(MySqlLeaseMgrTest, getLeases6Duid) {
+    testGetLeases6Duid();
+}
+
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -546,15 +566,15 @@ TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
 class MySQLLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyMySQLSchema();
+        destroyMySQLSchema();
     }
 
     virtual void createSchema() {
-        test::createMySQLSchema();
+        createMySQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validMySQLConnectionString());
+        return (validMySQLConnectionString());
     }
 
     virtual std::string invalidConnectString() {

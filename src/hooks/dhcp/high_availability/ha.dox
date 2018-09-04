@@ -1,0 +1,410 @@
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/**
+
+@page libdhcp_ha Kea High Availability Hooks Library
+
+Welcome to Kea High Availability Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+library. This file provides information needed to understand and perhaps
+extend this library.
+
+@section haOverview Overview
+
+The High Availability (HA) hooks library is inteded for DHCP deployments
+in which there is a need to sustain the DHCP service in the event if one
+of the servers becomes unavailable as a result of a crash, power outage or
+other unexpected sitution. The other server belonging to this setup should
+be able to handle the entire DHCP traffic directed to the system, including
+the traffic that would be normally handled by the server which became
+unavailable.
+
+Many of the concepts behind the HA hooks library are derived from the
+DHCP Failover protocol, however this solution has different architecture,
+uses different state machine and different message formats for communication
+between the participating servers. This solution is not a DHCP Failover
+implementation and, therefore, this documentation purposely avoids using
+the word "Failover" in the context of this library.
+
+The HA feature design can be found at
+<a href="https://kea.isc.org/wiki/HADesign">Kea HA Design page</a>.
+
+@section haWhyHookLibrary Why Hook Library?
+
+High Availability is a very important requirement for various DHCP
+deployments. It is a valid question why such a generic feature is
+placed in a hook library rather implemented as an integral part of the
+Kea DHCP servers. If the HA is implemented in the loadable library,
+users who don't use HA or who don't want to use this particular
+solution for HA will simply not load this library. The server code
+without the HA implementation is lighter, easier to understand and
+debug. High Availability is a pretty complex feature and will certainly
+keep growing both in size and complexity. Keeping it in a separate
+code base makes it easier to maintain and use. Also, the HA hooks
+library requires Kea lease_cmds hook library to be loaded on the
+participating servers. It would clearly be a bad design to introduce
+the feature relying on the presence the loadable (lease_cmds)
+module in the main Kea code.
+
+@section haNotableDifferences Notable Differences to ISC DHCP
+
+It is worth to briefly explain what are the major differences between Kea HA
+implementation and the failover implemented in ISC DHCP.
+
+There are two protocols that IETF attempted to standarize:
+<a href="https://datatracker.ietf.org/doc/html/draft-ietf-dhc-failover">
+DHCPv4 Failover draft</a>, which was an Internet Draft status that had
+expired Sept. 2003. The other one is <a href="https://tools.ietf.org/html/rfc8156">
+RFC8156: DHCPv6 Failover</a>, which was published as Proposed Standard.
+ISC DHCP implemented the former, but not the latter. As such, ISC DHCP
+is able to provide failover for DHCPv4 only, not DHCPv6.
+
+The second major difference is that both IETF failover protocols are based on
+MCLT (or Maximum Client Lead Time), sometimes referenced to as lazy
+updates. This mechanism lets a server respond immediately, which improves
+latency, but it does so at the cost of greatly increased complexity. The lease
+is assigned with a very short lifetime, then an update is sent to the other
+server with a lifetime greater than the client requested. Once the other server
+confirms the lease, the client's renewal is being updated with a longer
+lifetime.  This approach generates more traffic and causes lease lifetimes to
+fluctuate greatly, despite an administrator setting it to a specific value. Kea
+HA does not implement this complexity. It is much simpler and easier to use and
+understand its operation, although the price to pay for this relative simplicity
+is a longer response time and somewhat decreased performance.
+
+Third difference is that in ISC DHCP the failover relationship is strictly
+a pair (i.e. two) of servers. On the other hand Kea HA is able to define additional
+backup servers. While they're not technically participating in the HA
+relationship, their databases are kept up to date and can be used are replacements
+that are almost ready to take over the traffic. However, replacing primary
+or secondary server with a backup requires manual administrator's intervention.
+
+The fourth difference is that Kea HA does not support pool rebalancing yet.
+When running in load balancing mode, Kea uses hashing mechanism to segregate
+clients into one of two pools. It is unlikely, but possible that a network
+would be visited by clients that are predominantly assigned to one server.
+As a result, this server could ran out of addresses, while its underutilized
+partner could still have many addresses available. This unfortunate, but
+unlikely limitation will be removed in the future Kea releases.
+
+@section haAyncCommunication Asynchronous Communication with Boost Asio
+
+One of the major technical problems with High Availability is that the
+participating servers must constantly communicate with each other.
+When one of the servers allocates a lease it must notify its peer about
+this allocation and provide it with a full information about the
+allocated lease. The server which has allocated the lease must not
+respond to the client until its partner confirms that it has saved
+the lease in its database. This guarantees that, at any given time,
+both servers hold the most current lease information and any of the
+servers can take responsibility for managing existing leases if the
+partner server becomes unavailable. This is similar to the requirement
+on a single DHCP server which must store the lease information on
+the persistent storage before responding to the client. Failing to do
+so may cause the lease information to get lost if the server crashes
+before writing it to the lease file.
+
+The requirement for the partner to store the lease in its lease database
+and confirming this fact to the server allocating the lease results in
+increased latency of the DHCP responses to the clients. In order to
+minimize the latency the idea of "parking" DHCP packets has been introduced.
+This is a solution for pseudo parallel processing of multiple DHCP packets
+and to prevent blocking wait during the communication with the other server.
+When the HA hooks library needs to send a lease update to the partner,
+the client's packet associated with this lease is "parked", waiting for
+the communication with the partner to complete. Meanwhile, other incoming
+DHCP packets are processed (and also parked if necessary). The client
+which sent the DHCP packet still has to wait for the communication with
+the partner to complete, but it doesn't have to wait for the server to
+receive its packet (and start processing it) while previous DHCP
+transaction is still in progress.
+
+This solution requires that the communication between the servers is
+asynchronous and the most obvious framework for this was Boost ASIO,
+as it is already used in many different areas of the code.
+
+The DHCP servers are processing incoming packets synchronously (in a
+loop), but each loop pass contains a call to:
+
+@code
+getIOService()->poll();
+@endcode
+
+which executes callbacks for completed asynchronous operations, such as
+timers, asynchronous sends and receives. The instance of the IOService
+is owned by the DHCP servers, but hooks libraries must have access to it
+and must use this instance to schedule asynchronous tasks. This is why
+the new hook points "dhcp4_srv_configured" and "dhcp6_srv_configured"
+have been introduced. These hook points are used by the DHCPv4 and the
+DHCPv6 servers respectively, to pass the instance of the IOService
+(via "io_context" argument) to the hooks libraries which require to
+schedule asynchronous tasks.
+
+It is also worth to note that the blocking reception of the DHCP packets
+may cause up to 1 second delays in the asynchronous operations. This is
+due to the structure of the main server loop:
+
+@code
+bool
+Dhcpv4Srv::run() {
+    while (!shutdown_) {
+        try {
+            run_one();
+            getIOService()->poll();
+        } catch (const std::exception& e) {
+            // General catch-all exception that are not caught by more specific
+            // catches. This one is for exceptions derived from std::exception.
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+                .arg(e.what());
+        } catch (...) {
+            // General catch-all exception that are not caught by more specific
+            // catches. This one is for other exceptions, not derived from
+            // std::exception.
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+        }
+    }
+
+    return (true);
+}
+@endcode
+
+The @c run_one() call includes a @c select() invocation with a timeout of
+1 second. The @c poll() is not invoked for at most 1 second while the server
+is performing this blocking @c select(). Future Kea releases should mitigate
+this problem by introducing some mechanisms for concurrent reception and
+processing of the DHCP packets.
+
+
+@section haClientClassification Client Classification in Load Balancing
+
+One of the top requirements for the HA was to support load balancing between
+two participating servers. Even though, current implementation supports
+only 50/50 split of packets between two servers, the implementation can
+easily be extended to support different splits.
+
+Another supported mode of operation is the "hot-standby" mode in which
+one of the servers handles the entire traffic and the other server is
+simply receiving lease updates from it. In case of the failure of the
+first server, the standby server can automatically switch to handle the
+DHCP traffic directed to the system.
+
+The "load-balancing" mode is more complex in that it requires isolation
+of address/prefix pools from which the respective servers are allocating
+leases for the clients. If the two servers were sharing address pools
+they would frequently run into the conflict whereby both of them would
+allocate the same address to different clients. This is not a problem in
+the "hot-standby" mode because there is only one server allocating leases
+at the given time.
+
+The most challenging part in case of load balancing is the configuration
+of the address pools on respective servers. At the time when the HA design
+was created, there was no requirement on the HA hooks library to be able
+to rebalance the pools, e.g. in case one of the pools is nearly exhausted
+and the other pool include many available addresses or prefixes. This
+requirement may come in the future, in which case the current approach
+to the configuration may be enhanced.
+
+The current approach uses existing client classification mechanism to
+statically split allocations accross multiple pools. Client classification
+was designed to serve as a generic framework to support various scenarios
+in which clients need to be segregated and associated with selected
+pools, subnets and shared networks. The load balancing in HA hooks
+library is nothing else but another use case for client classification.
+Should new requirements be created for the HA hooks library in the
+future (e.g. rebalancing), the client classification will need to be
+extended to adopt those requirements.
+
+In fact, client classification was already extended for the Kea 1.4.0
+release to allow for selecting a specific pool based on combinations
+of classes, rather than a single class associated with the server
+by the HA load balancing algorithm. The examples of the pools split
+between different device types (e.g. laptops and telephones) and
+between load balancing servers (e.g. "server1" and "server2") can
+be found in the Kea Administrator's Manual.
+
+@section haCodeStructure HA Hooks Library Code Structure
+
+@subsection haService HA Service Class
+
+The @c isc::ha::HAService class is a heart of the HA system. It implements the
+HA state machine. It is derived from the @c isc::util::StateModel
+class. The states are documented both in the Kea Adminiatrator's
+Manual and the HA design. The declarations of the states can be
+found in the @c ha_service_states.h header file because they are
+used by multiple C++ classes.
+
+Besides running the state machine transitions, the @c HAService
+class serves the following purposes:
+
+- Assigns class to the received DHCP packet appropriate for the server
+  selected to process the DHCP packet as a result of load balancing.
+- Measures the clock skew between the active servers. If the clock skew
+  is too high, it can either log an error or stop the HA function.
+- Sends lease updates to the partner and receives responses.
+- Sends heartbeat command to the partner to verify partner's state
+  and its notion of time (for clock skew).
+- Controls whether the DHCP server should respond to the queries
+  from clients or not.
+- Synchronizes local lease database by fetching the leases from the
+  partner server.
+- Controls which packets the server responds to (HA scopes).
+
+As of Kea 1.4.0 release, there is only one instance of the @c HAService
+class created by the HA hooks library. In the future, multiple
+@c HAService instances may co-exist, each handling an independent HA
+relationship with another server. For example: a server could be
+configured to respond to devices in two subnets and establish a
+connection with two different servers for respective subnets. Lease
+updates pertaining to the first subnet would be sent via first
+connection and those pertaining to the second subnet would be sent
+via the second connection. As of Kea 1.4.0 release, there is exactly
+one relationship that the Kea server instance can participate in.
+
+@subsection haImplementation HA Implementation Class
+
+The @c isc::ha::HAImpl class implements callouts and command handlers supported
+by the HA hooks library. Its methods expect @c isc::hooks::CalloutHandle
+as arguments and are usually directly called by the callout functions
+such as @c pkt4_receive etc. This makes it more natural to unit test
+those implementations because the  tests can invoke methods of the @c HAImpl
+class, rather than the "extern" functions.
+
+Internally, the @c HAImpl class methods call methods of the @c HAService
+class to perform certain actions, such as triggering lease updates,
+sending heatbeat to another server etc. However, the @c HAImpl still
+includes a fair amont of logic to retrive and validate the arguments
+provided within the @c isc::hooks::CalloutHandle.
+
+The @c isc::ha::HAImpl::buffer4Receive and @c isc::ha::HAImpl::buffer6Receive
+functions deserve some detailed explanation, because not only do they retrieve
+the arguments provided to the callouts but also perform parsing of the received
+DHCP queries.
+
+The DHCP query parsing is normally performed by the server. In most
+cases a hooks library would not have to parse the DHCP packets on
+its own. If the hooks library needs to access some information, e.g.
+DHCP options or BOOTP message fields, it is sufficient to
+implement the @c pkt4_receive or @c pkt6_receive callout, which is
+invoked after the server has parsed the packet. However, this
+approach would not work in case of the HA hooks library. This
+library assigns classes as a result of the load balancing to the
+incoming packets. This assignment must take place before the server
+evaluates classes specified in the configuration file, i.e.
+before the @c pkt4_receive and @c pkt6_receive hook point. This
+implies that the HA specific classification must be performed within
+the @c buffer4_receive or @c buffer6_receive callouts. These callouts
+must parse (unpack) the received buffers to have an access into the
+data used by the load balancing algorithm, such as: MAC address, client
+identifier or DUID.
+
+@subsection haQueryFilter Query Filter Class
+
+The @c isc::ha::QueryFilter class is used to control which DHCP queries are
+to be processed by respective servers. It implements the load
+balancing algorithm which is triggered by cooperating servers against
+each incoming packet and results in assigning the packet to one of the
+served "scopes". Scopes are associated with the servers and are named
+after the servers. In the load balancing case there are two scopes,
+e.g. "server1" and "server2". The Load balancing algorithm selects
+one of the scopes for the packet. During the normal operation,
+each server handles its own scope. In the "partner-down" state, the
+surviving server would handle both scopes. The selection of the
+scopes to be served by the server instance is usually made
+automatically as a result of transitioning to some new state within
+the @c HAService class. However, the scopes assignment can also be
+made via control channel as a result of an administrative action.
+
+@subsection haCommunicationState Communication State Class
+
+The @c CommunicationState class is used by the @c HAService to
+control all aspects of the communication between the active servers,
+i.e.:
+
+- Scheduling periodic heartbeat commands using Boost ASIO timers.
+- Holding the state of the partner returned in response to the
+  heartbeat command.
+- Recording when the last successful heartbeat has been sent, i.e.
+  how long the partner server has been unresponsive.
+- Analyzing DHCP queries to detect whether the partner server is
+  not responsive by checking whether the values in the 'secs' field
+  or Elapsed Time option are too high.
+- Monitoring the clocks skew between the active servers, which is
+  calculated by substracting the current time (on the local
+  server) from the time returned by the partner in response to the
+  heartbeat comand.
+
+The large part of this class is common for the DHCPv4 and DHCPv6 servers.
+However, there are differences in how the DHCPv4 and the DHCPv6 messages
+are analyzed to detect whether the partner server has stopped responding:
+
+- The DHCPv4 server uses 'secs' field, while the DHCPv6 server looks
+  into the DHCPv6 specific Elapsed Time option.
+- When the DHCPv4 server records a client information in case if the
+  DHCPv4 server fails to respond the client's query, it records both the
+  client identifier and the MAC address. The DHCPv6 server uses the
+  DUID to record the client.
+
+Those differences led to creation of DHCPv4 and DHCPv6 specific
+derivations of the @c CommunicationState class, which differently
+deal with analysis of the queries.
+
+The clock skew is checked by the @c QueryFilter class every time
+it is updated as a result of receiving a response to the heartbeat.
+If the clock skew is in the range of 30 to 60 seconds, the
+@c clockSkewShouldWarn returns true to indicate to the @c HAService
+that a warning should be logged. In order to prevent too frequent
+warnings (especially when heartbeats are sent frequently), this
+method implements a simple gating algorithm, which would not return
+true (trigger the warning) more often than every 60 seconds.
+
+The @c isc::ha::CommunicationState::clockSkewShouldTerminate informs whether
+the clock skew has exceeded 60 seconds, in which case the
+@c HAService class would transition to the "terminated" state.
+
+@subsection haCommandCreator Command Creator Class
+
+The @c CommandCreator is a collection of static methods which
+create commands issued between the HA-enabled DHCP servers. These
+JSON commands are sent over the @c isc::http::HttpClient from the
+@c HAService class.
+
+@section haShortcomings Future HA Hooks Library Improvement Ideas
+
+The HA hooks library was first released with Kea 1.4.0. There are
+numerous enhancements to this library considered for the future releases.
+Some of them are briefly described in this section.
+
+@subsection haStateMachineControl Controlling State Machine
+
+As of Kea 1.4.0, there are no control commands allowing for setting or
+influencing the transitions between states. In particular, there is no
+way to pause the HA state machine on the selected state to perform
+some administrative actions before transitioning to the normal
+operation state.
+
+@subsection haNameUpdates DNS Updates are not Coordinated
+
+When one of the servers allocates the lease this server is responsible
+or sending a DNS update if configured to send such updates. The partner
+server receives the lease update (including the inserted hostname) so
+it knows that the hostname was stored in the DNS. When this lease
+subsequently expires, the hostname must be removed from the DNS. The
+HA hooks library, however, has no means to record which server has
+allocated this lease in the lease database. If recording such information
+had been possible, the same server which allocated the lease would have
+sent the removal name change request (NCR) to the D2. Because this
+information is unavailable, both servers will send the removal NCRs.
+One of those NCRs will succeed, another one will fail.
+
+Addressing this issue requires two enhancements:
+
+- Implementing "user context" for leases, which could be used for storing
+  custom type of information, e.g. server identifier, along with the leases.
+- Implementing callouts for the "lease4_expire" and "lease6_expire" hook
+  points via which the server removing the lease from the database could
+  notify the partner about such removal.
+
+*/

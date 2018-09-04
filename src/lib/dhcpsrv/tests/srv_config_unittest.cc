@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,11 +67,11 @@ public:
 
         // Build our reference dictionary of client classes
         ref_dictionary_->addClass("cc1", ExpressionPtr(),
-                                  "", false, CfgOptionPtr());
+                                  "", false, false, CfgOptionPtr());
         ref_dictionary_->addClass("cc2", ExpressionPtr(),
-                                  "", false, CfgOptionPtr());
+                                  "", false, false, CfgOptionPtr());
         ref_dictionary_->addClass("cc3", ExpressionPtr(),
-                                  "", false, CfgOptionPtr());
+                                  "", false, false, CfgOptionPtr());
     }
 
 
@@ -431,6 +431,61 @@ TEST_F(SrvConfigTest, hooksLibraries) {
     EXPECT_TRUE(copied.getHooksConfig().equal(conf.getHooksConfig()));
 }
 
+// Verifies basic functions of configured global handling.
+TEST_F(SrvConfigTest, configuredGlobals) {
+    // Create an instance.
+    SrvConfig conf(32);
+
+    // The map of configured globals should be empty.
+    ConstElementPtr srv_globals = conf.getConfiguredGlobals();
+    ASSERT_TRUE(srv_globals);
+    ASSERT_EQ(Element::map, srv_globals->getType());
+    ASSERT_TRUE(srv_globals->mapValue().empty());
+
+    // Attempting to extract globals from a non-map should throw.
+    ASSERT_THROW(conf.extractConfiguredGlobals(Element::create(777)), isc::BadValue);
+
+    // Now let's create a configuration from which to extract global scalars.
+    // Extraction (currently) has no business logic, so the elements we use
+    // can be arbitrary.
+    ConstElementPtr global_cfg;
+    std::string global_cfg_str =
+    "{\n"
+    " \"astring\": \"okay\",\n"
+    " \"amap\": { \"not-this\":777, \"not-that\": \"poo\" },\n"
+    " \"anint\": 444,\n"
+    " \"alist\": [ 1, 2, 3 ],\n"
+    " \"abool\": true\n"
+    "}\n";
+    ASSERT_NO_THROW(global_cfg = Element::fromJSON(global_cfg_str));
+
+    // Extract globals from the config.
+    ASSERT_NO_THROW(conf.extractConfiguredGlobals(global_cfg));
+
+    // Now see if the extract was correct.
+    srv_globals = conf.getConfiguredGlobals();
+    ASSERT_TRUE(srv_globals);
+    ASSERT_EQ(Element::map, srv_globals->getType());
+    ASSERT_FALSE(srv_globals->mapValue().empty());
+
+    // Maps and lists should be excluded.
+    auto globals = srv_globals->mapValue();
+    for (auto global = globals.begin(); global != globals.end(); ++global) {
+        if (global->first == "astring") {
+            ASSERT_EQ(Element::string, global->second->getType());
+            EXPECT_EQ("okay", global->second->stringValue());
+        } else if (global->first == "anint") {
+            ASSERT_EQ(Element::integer, global->second->getType());
+            EXPECT_EQ(444, global->second->intValue());
+        } else if (global->first == "abool") {
+            ASSERT_EQ(Element::boolean, global->second->getType());
+            EXPECT_TRUE(global->second->boolValue());
+        } else {
+            ADD_FAILURE() << "unexpected element found:" << global->first;
+        }
+    }
+}
+
 // Verifies that the toElement method works well (tests limited to
 // direct parameters)
 TEST_F(SrvConfigTest, unparse) {
@@ -448,7 +503,11 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += conf.getCfgExpiration()->toElement()->str() + ",\n";
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
     defaults += "\"hooks-libraries\": [ ],\n";
+    defaults += "\"sanity-checks\": {\n";
+    defaults += "    \"lease-checks\": \"warn\"\n";
+    defaults += "    },\n";
     defaults += "\"dhcp-ddns\": \n";
+
     defaults += conf.getD2ClientConfig()->toElement()->str() + ",\n";
 
     std::string defaults4 = "\"echo-client-id\": true,\n";
@@ -481,19 +540,33 @@ TEST_F(SrvConfigTest, unparse) {
     isc::test::runToElementTest<SrvConfig>
         (header6 + defaults + defaults6 + trailer, conf);
 
-    // Verify direct non-default parameters
+    // Verify direct non-default parameters and configured globals
     CfgMgr::instance().setFamily(AF_INET);
     conf.setEchoClientId(false);
     conf.setDhcp4o6Port(6767);
+    // Add "configured globals"
+    conf.addConfiguredGlobal("renew-timer", Element::create(777));
+    conf.addConfiguredGlobal("foo", Element::create("bar"));
     params = "\"echo-client-id\": false,\n";
-    params += "\"dhcp4o6-port\": 6767\n";
+    params += "\"dhcp4o6-port\": 6767,\n";
+    params += "\"renew-timer\": 777,\n";
+    params += "\"foo\": \"bar\"\n";
     isc::test::runToElementTest<SrvConfig>
         (header4 + defaults + defaults4 + params + trailer, conf);
-}    
+
+    // Verify direct non-default parameters and configured globals
+    CfgMgr::instance().setFamily(AF_INET6);
+    params = ",\"dhcp4o6-port\": 6767,\n";
+    params += "\"renew-timer\": 777,\n";
+    params += "\"foo\": \"bar\"\n";
+    isc::test::runToElementTest<SrvConfig>
+        (header6 + defaults + defaults6 + params + trailer, conf);
+}
 
 // Verifies that the toElement method does not miss host reservations
 TEST_F(SrvConfigTest, unparseHR) {
     // DHCPv4 version
+    CfgMgr::instance().setFamily(AF_INET);
     SrvConfig conf4(32);
 
     // Add a plain subnet
@@ -513,14 +586,20 @@ TEST_F(SrvConfigTest, unparseHR) {
                                     def_triplet, def_triplet, 4000, s_id));
     network4->add(ssubnet4);
 
+    // Add a v4 global host reservation to the plain subnet
+    HostPtr ghost4(new Host("AA:01:02:03:04:05", "hw-address",
+                            SUBNET_ID_GLOBAL, SUBNET_ID_UNUSED, 
+                            IOAddress("192.0.3.1")));
+    conf4.getCfgHosts()->add(ghost4);
+
     // Add a host reservation to the plain subnet
     HostPtr phost4(new Host("00:01:02:03:04:05", "hw-address",
-                            p_id, SubnetID(0), IOAddress("192.0.1.1")));
+                            p_id, SUBNET_ID_UNUSED, IOAddress("192.0.1.1")));
     conf4.getCfgHosts()->add(phost4);
 
     // Add a host reservation to the shared subnet
     HostPtr shost4(new Host("00:05:04:03:02:01", "hw-address",
-                            s_id, SubnetID(0), IOAddress("192.0.2.1")));
+                            s_id, SUBNET_ID_UNUSED, IOAddress("192.0.2.1")));
     conf4.getCfgHosts()->add(shost4);
 
     // Unparse the config
@@ -534,8 +613,25 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_TRUE(dhcp4);
     ASSERT_EQ(Element::map, dhcp4->getType());
 
-    // Get plain subnets
+    // Get global host reservations
     ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp4->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the global host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the reserved address
+    ASSERT_NO_THROW(check = check->get("ip-address"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("192.0.3.1", check->stringValue());
+
+    // Get plain subnets
     ASSERT_NO_THROW(check = dhcp4->get("subnet4"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
@@ -639,14 +735,21 @@ TEST_F(SrvConfigTest, unparseHR) {
                                     1000, 2000, 3000, 4000, s_id));
     network6->add(ssubnet6);
 
+    // Add a v6 global host reservation
+    HostPtr ghost6(new Host("ff:b2:c3:d4:e5:f6", "duid", SUBNET_ID_UNUSED,
+                            SUBNET_ID_GLOBAL, IOAddress::IPV4_ZERO_ADDRESS(),
+                            "global.example.org"));
+    conf6.getCfgHosts()->add(ghost6);
+
     // Add a host reservation to the plain subnet
-    HostPtr phost6(new Host("a1:b2:c3:d4:e5:f6", "duid", SubnetID(0),
+    HostPtr phost6(new Host("a1:b2:c3:d4:e5:f6", "duid", SUBNET_ID_UNUSED,
                             p_id, IOAddress::IPV4_ZERO_ADDRESS(),
                             "foo.example.org"));
+
     conf6.getCfgHosts()->add(phost6);
 
     // Add a host reservation to the shared subnet
-    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SubnetID(0),
+    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SUBNET_ID_UNUSED, 
                             s_id, IOAddress::IPV4_ZERO_ADDRESS(),
                             "bar.example.org"));
     conf6.getCfgHosts()->add(shost6);
@@ -661,6 +764,23 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
     ASSERT_TRUE(dhcp6);
     ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Get global host reservations
+    ASSERT_NO_THROW(check = dhcp6->get("reservations"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::list, check->getType());
+    EXPECT_EQ(1, check->size());
+
+    // Get the global host reservation
+    ASSERT_NO_THROW(check = check->get(0));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Check the host name
+    ASSERT_NO_THROW(check = check->get("hostname"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::string, check->getType());
+    EXPECT_EQ("global.example.org", check->stringValue());
 
     // Get plain subnets
     ASSERT_NO_THROW(check = dhcp6->get("subnet6"));

@@ -17,7 +17,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
@@ -1531,6 +1531,71 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     // Returned value should be 1 (configuration error)
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+}
+
+// Goal of this test is to verify that invalid subnet fails to be parsed.
+TEST_F(Dhcp6ParserTest, badSubnetValues) {
+
+    // Contains parts needed for a single test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string config_json_;
+        std::string exp_error_msg_;
+    };
+
+    // Vector of scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+        "IP is not an address",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"not an address/64\" } ]}",
+        "subnet configuration failed: "
+        "Failed to convert string to address 'notanaddress': Invalid argument"
+        },
+        {
+        "IP is Invalid",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"200175:db8::/64\" } ]}",
+        "subnet configuration failed: "
+        "Failed to convert string to address '200175:db8::': Invalid argument"
+        },
+        {
+        "Missing prefix",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"2001:db8::\" } ]}",
+        "subnet configuration failed: "
+        "Invalid subnet syntax (prefix/len expected):2001:db8:: (<string>:1:30)"
+        },
+        {
+        "Prefix not an integer (2 slashes)",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"2001:db8:://64\" } ]}",
+        "subnet configuration failed: "
+        "prefix length: '/64' is not an integer (<string>:1:30)"
+        },
+        {
+        "Prefix value is insane",
+        "{ \"subnet6\": [ { "
+        "  \"subnet\": \"2001:db8::/43225\" } ]}",
+        "subnet configuration failed: "
+        "Invalid prefix length specified for subnet: 43225 (<string>:1:30)"
+        }
+    };
+
+    // Iterate over the list of scenarios.  Each should fail to parse with
+    // a specific error message.
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        {
+            SCOPED_TRACE((*scenario).description_);
+            ConstElementPtr config;
+            ASSERT_NO_THROW(config = parseDHCP6((*scenario).config_json_))
+                            << "invalid json, broken test";
+            ConstElementPtr status;
+            EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+            checkResult(status, 1);
+            EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
+        }
+    }
 }
 
 // This test checks the configuration of the Rapid Commit option
@@ -4490,7 +4555,9 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Za-z0-9_-]\", "
+        "     \"hostname-char-replacement\" : \"x\" }, "
         "\"valid-lifetime\": 4000 }";
 
     // Convert the JSON string to configuration elements.
@@ -4527,6 +4594,8 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    EXPECT_EQ("[^A-Za-z0-9_-]", d2_client_config->getHostnameCharSet());
+    EXPECT_EQ("x", d2_client_config->getHostnameCharReplacement());
 }
 
 // This test checks the ability of the server to handle a configuration
@@ -4694,13 +4763,13 @@ TEST_F(Dhcp6ParserTest, reservations) {
     // Let's create an object holding hardware address of the host having
     // a reservation in the subnet having id of 234. For simplicity the
     // address is a collection of numbers from 1 to 6.
-    std::vector<uint8_t> hwaddr_vec;
+    std::vector<uint8_t> hwaddr;
     for (unsigned int i = 1; i < 7; ++i) {
-        hwaddr_vec.push_back(static_cast<uint8_t>(i));
+        hwaddr.push_back(static_cast<uint8_t>(i));
     }
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_vec, HTYPE_ETHER));
     // Retrieve the reservation and sanity check the address reserved.
-    ConstHostPtr host = hosts_cfg->get6(234, DuidPtr(), hwaddr);
+    ConstHostPtr host = hosts_cfg->get6(234, Host::IDENT_HWADDR,
+                                        &hwaddr[0], hwaddr.size());
     ASSERT_TRUE(host);
     IPv6ResrvRange resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
@@ -4709,8 +4778,10 @@ TEST_F(Dhcp6ParserTest, reservations) {
                                   resrv));
     // This reservation should be solely assigned to the subnet 234,
     // and not to other two.
-    EXPECT_FALSE(hosts_cfg->get6(123, DuidPtr(), hwaddr));
-    EXPECT_FALSE(hosts_cfg->get6(542, DuidPtr(), hwaddr));
+    EXPECT_FALSE(hosts_cfg->get6(123, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+    EXPECT_FALSE(hosts_cfg->get6(542, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
     // Check that options are assigned correctly.
     Option6AddrLstPtr opt_dns =
         retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
@@ -4724,20 +4795,19 @@ TEST_F(Dhcp6ParserTest, reservations) {
     EXPECT_EQ(25, static_cast<int>(opt_prf->getValue()));
 
     // Do the same test for the DUID based reservation.
-    std::vector<uint8_t> duid_vec;
+    std::vector<uint8_t> duid;
     for (unsigned int i = 1; i < 0xb; ++i) {
-        duid_vec.push_back(static_cast<uint8_t>(i));
+        duid.push_back(static_cast<uint8_t>(i));
     }
-    DuidPtr duid(new DUID(duid_vec));
-    host = hosts_cfg->get6(234, duid);
+    host = hosts_cfg->get6(234, Host::IDENT_DUID, &duid[0], duid.size());
     ASSERT_TRUE(host);
     resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                             IOAddress("2001:db8:2::1234")),
                                   resrv));
-    EXPECT_FALSE(hosts_cfg->get6(123, duid));
-    EXPECT_FALSE(hosts_cfg->get6(542, duid));
+    EXPECT_FALSE(hosts_cfg->get6(123, Host::IDENT_DUID, &duid[0], duid.size()));
+    EXPECT_FALSE(hosts_cfg->get6(542, Host::IDENT_DUID, &duid[0], duid.size()));
     // Check that options are assigned correctly.
     opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
@@ -4752,9 +4822,10 @@ TEST_F(Dhcp6ParserTest, reservations) {
     // The HW address used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
     // of the address from the previous test.
-    hwaddr->hwaddr_.assign(hwaddr_vec.rbegin(), hwaddr_vec.rend());
-    host = hosts_cfg->get6(542, DuidPtr(), hwaddr);
-    EXPECT_TRUE(host);
+    std::vector<uint8_t> hwaddr_r(hwaddr.rbegin(), hwaddr.rend());
+    host = hosts_cfg->get6(542, Host::IDENT_HWADDR,
+                           &hwaddr_r[0], hwaddr_r.size());
+    ASSERT_TRUE(host);
     resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
     EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_PD,
@@ -4762,13 +4833,14 @@ TEST_F(Dhcp6ParserTest, reservations) {
                                             96), resrv));
 
     // This reservation must not belong to other subnets.
-    EXPECT_FALSE(hosts_cfg->get6(123, DuidPtr(), hwaddr));
-    EXPECT_FALSE(hosts_cfg->get6(234, DuidPtr(), hwaddr));
+    EXPECT_FALSE(hosts_cfg->get6(123, Host::IDENT_HWADDR,
+                                 &hwaddr_r[0], hwaddr_r.size()));
+    EXPECT_FALSE(hosts_cfg->get6(234, Host::IDENT_HWADDR,
+                                 &hwaddr_r[0], hwaddr_r.size()));
 
     // Repeat the test for the DUID based reservation in this subnet.
-    duid.reset(new DUID(std::vector<uint8_t>(duid_vec.rbegin(),
-                                             duid_vec.rend())));
-    host = hosts_cfg->get6(542, duid);
+    std::vector<uint8_t> duid_r(duid.rbegin(), duid.rend());
+    host = hosts_cfg->get6(542, Host::IDENT_DUID, &duid_r[0], duid_r.size());
     ASSERT_TRUE(host);
     resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
@@ -4776,8 +4848,10 @@ TEST_F(Dhcp6ParserTest, reservations) {
                                             IOAddress("2001:db8:3:2::"),
                                             96), resrv));
 
-    EXPECT_FALSE(hosts_cfg->get6(123, duid));
-    EXPECT_FALSE(hosts_cfg->get6(234, duid));
+    EXPECT_FALSE(hosts_cfg->get6(123, Host::IDENT_DUID,
+                                 &duid_r[0], duid_r.size()));
+    EXPECT_FALSE(hosts_cfg->get6(234, Host::IDENT_DUID,
+                                 &duid_r[0], duid_r.size()));
     // Check that options are assigned correctly.
     opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
@@ -4842,13 +4916,13 @@ TEST_F(Dhcp6ParserTest, reservationWithOptionDefinition) {
 
     // Let's create an object holding DUID of the host. For simplicity the
     // address is a collection of numbers from 1 to A.
-    std::vector<uint8_t> duid_vec;
+    std::vector<uint8_t> duid;
     for (unsigned int i = 1; i < 0xB; ++i) {
-        duid_vec.push_back(static_cast<uint8_t>(i));
+        duid.push_back(static_cast<uint8_t>(i));
     }
-    DuidPtr duid(new DUID(duid_vec));
     // Retrieve the reservation and sanity check the address reserved.
-    ConstHostPtr host = hosts_cfg->get6(234, duid);
+    ConstHostPtr host = hosts_cfg->get6(234, Host::IDENT_DUID,
+                                        &duid[0], duid.size());
     ASSERT_TRUE(host);
 
     // Check if the option has been parsed.
@@ -6566,14 +6640,14 @@ TEST_F(Dhcp6ParserTest, comments) {
 
     // The subnet has a host reservation.
     uint8_t hw[] = { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF };
-    HWAddrPtr hwaddr(new HWAddr(hw, sizeof(hw), HTYPE_ETHER));
     ConstHostPtr host =
-        CfgMgr::instance().getStagingCfg()->getCfgHosts()->get6(100, DuidPtr(), hwaddr);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->
+        get6(100, Host::IDENT_HWADDR, &hw[0], sizeof(hw));
     ASSERT_TRUE(host);
     EXPECT_EQ(Host::IDENT_HWADDR, host->getIdentifierType());
     EXPECT_EQ("aa:bb:cc:dd:ee:ff", host->getHWAddress()->toText(false));
     EXPECT_FALSE(host->getDuid());
-    EXPECT_EQ(0, host->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
     EXPECT_EQ(100, host->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", host->getHostname());
 
@@ -6613,6 +6687,145 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, ctx_d2->size());
     ASSERT_TRUE(ctx_d2->get("comment"));
     EXPECT_EQ("\"No dynamic DNS\"", ctx_d2->get("comment")->str());
+}
+
+// This test verifies that the global host reservations can be specified.
+TEST_F(Dhcp6ParserTest, globalReservations) {
+    ConstElementPtr x;
+    string config = "{ " + genIfaceConfig() + ",\n"
+        "\"rebind-timer\": 2000, \n"
+        "\"renew-timer\": 1000, \n"
+        "\"reservations\": [\n"
+        " {\n"
+        "   \"duid\": \"01:02:03:04:05:06:07:08:09:0A\",\n"
+        "   \"ip-addresses\": [ \"2001:db8:2::1234\" ],\n"
+        "   \"hostname\": \"\",\n"
+        "   \"option-data\": [\n"
+        "    {\n"
+        "       \"name\": \"dns-servers\",\n"
+        "       \"data\": \"2001:db8:2::1111\"\n"
+        "    },\n"
+        "    {\n"
+        "       \"name\": \"preference\",\n"
+        "       \"data\": \"11\"\n"
+        "    }\n"
+        "   ]\n"
+        " },\n"
+        " {\n"
+        "   \"hw-address\": \"01:02:03:04:05:06\",\n"
+        "   \"ip-addresses\": [ \"2001:db8:2::abcd\" ],\n"
+        "   \"hostname\": \"\",\n"
+        "   \"option-data\": [\n"
+        "    {\n"
+        "       \"name\": \"dns-servers\",\n"
+        "       \"data\": \"2001:db8:2::abbc\"\n"
+        "    },\n"
+        "    {\n"
+        "       \"name\": \"preference\",\n"
+        "       \"data\": \"25\"\n"
+        "    }\n"
+        "   ]\n"
+        " }\n"
+        "],\n"
+        "\"subnet6\": [ \n"
+        " { \n"
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],\n"
+        "    \"subnet\": \"2001:db8:1::/64\", \n"
+        "    \"id\": 123,\n"
+        "    \"reservations\": [\n"
+        "    ]\n"
+        " },\n"
+        " {\n"
+        "    \"pools\": [ ],\n"
+        "    \"subnet\": \"2001:db8:2::/64\", \n"
+        "    \"id\": 234\n"
+        " },\n"
+        " {\n"
+        "    \"pools\": [ ],\n"
+        "    \"subnet\": \"2001:db8:3::/64\", \n"
+        "    \"id\": 542\n"
+        " }\n"
+        "],\n"
+        "\"preferred-lifetime\": 3000,\n"
+        "\"valid-lifetime\": 4000 }\n";
+
+    ConstElementPtr json;
+    (json = parseDHCP6(config));
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    checkResult(x, 0);
+
+    // Make sure all subnets have been successfully configured. There is no
+    // need to sanity check the subnet properties because it should have
+    // been already tested by other tests.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size());
+
+    // Hosts configuration must be available.
+    CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+    ASSERT_TRUE(hosts_cfg);
+
+    // Let's create an object holding hardware address of the host having
+    // a reservation in the subnet having id of 234. For simplicity the
+    // address is a collection of numbers from 1 to 6.
+    std::vector<uint8_t> hwaddr;
+    for (unsigned int i = 1; i < 7; ++i) {
+        hwaddr.push_back(static_cast<uint8_t>(i));
+    }
+    // Retrieve the reservation and sanity check the address reserved.
+    ConstHostPtr host = hosts_cfg->get6(SUBNET_ID_GLOBAL, Host::IDENT_HWADDR,
+                                        &hwaddr[0], hwaddr.size());
+    ASSERT_TRUE(host);
+    IPv6ResrvRange resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:2::abcd")),
+                                  resrv));
+    // This reservation should be solely assigned to the subnet 234,
+    // and not to other two.
+    EXPECT_FALSE(hosts_cfg->get6(123, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+    EXPECT_FALSE(hosts_cfg->get6(542, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+    // Check that options are assigned correctly.
+    Option6AddrLstPtr opt_dns =
+        retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("2001:db8:2::abbc", dns_addrs[0].toText());
+    OptionUint8Ptr opt_prf =
+        retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(25, static_cast<int>(opt_prf->getValue()));
+
+    // Do the same test for the DUID based reservation.
+    std::vector<uint8_t> duid;
+    for (unsigned int i = 1; i < 0xb; ++i) {
+        duid.push_back(static_cast<uint8_t>(i));
+    }
+    host = hosts_cfg->get6(SUBNET_ID_GLOBAL, Host::IDENT_DUID, &duid[0], duid.size());
+    ASSERT_TRUE(host);
+    resrv = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(1, std::distance(resrv.first, resrv.second));
+    EXPECT_TRUE(reservationExists(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                            IOAddress("2001:db8:2::1234")),
+                                  resrv));
+    EXPECT_FALSE(hosts_cfg->get6(123, Host::IDENT_DUID, &duid[0], duid.size()));
+    EXPECT_FALSE(hosts_cfg->get6(542, Host::IDENT_DUID, &duid[0], duid.size()));
+    // Check that options are assigned correctly.
+    opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt_dns);
+    dns_addrs = opt_dns->getAddresses();
+    ASSERT_EQ(1, dns_addrs.size());
+    EXPECT_EQ("2001:db8:2::1111", dns_addrs[0].toText());
+    opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
+    ASSERT_TRUE(opt_prf);
+    EXPECT_EQ(11, static_cast<int>(opt_prf->getValue()));
 }
 
 };

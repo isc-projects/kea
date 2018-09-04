@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <http/request.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -147,12 +149,22 @@ HttpRequest::getBody() const {
 }
 
 std::string
-HttpRequest::toString() const {
+HttpRequest::toBriefString() const {
     checkFinalized();
 
     std::ostringstream s;
     s << methodToString(getMethod()) << " " << getUri() << " HTTP/" <<
-        getHttpVersion().major_ << "." << getHttpVersion().minor_ << crlf;
+        getHttpVersion().major_ << "." << getHttpVersion().minor_;
+    return (s.str());
+}
+
+std::string
+HttpRequest::toString() const {
+    checkFinalized();
+
+    std::ostringstream s;
+    // HTTP method, URI and version number.
+    s << toBriefString() << crlf;
 
     for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
          ++header_it) {

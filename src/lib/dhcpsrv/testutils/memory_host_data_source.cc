@@ -8,17 +8,12 @@
 
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {
 namespace dhcp {
 namespace test {
-
-ConstHostCollection
-MemHostDataSource::getAll(const HWAddrPtr& /*hwaddr*/,
-                          const DuidPtr& /*duid*/) const {
-    return (ConstHostCollection());
-}
 
 ConstHostCollection
 MemHostDataSource::getAll(const Host::IdentifierType& /*identifier_type*/,
@@ -30,13 +25,6 @@ MemHostDataSource::getAll(const Host::IdentifierType& /*identifier_type*/,
 ConstHostCollection
 MemHostDataSource::getAll4(const asiolink::IOAddress& /*address*/) const {
     return (ConstHostCollection());
-}
-
-ConstHostPtr
-MemHostDataSource::get4(const SubnetID& /*subnet_id*/,
-                        const HWAddrPtr& /*hwaddr*/,
-                        const DuidPtr& /*duid*/) const {
-    return (ConstHostPtr());
 }
 
 ConstHostPtr
@@ -94,13 +82,6 @@ MemHostDataSource::get4(const SubnetID& subnet_id,
         }
     }
 
-    return (ConstHostPtr());
-}
-
-ConstHostPtr
-MemHostDataSource::get6(const SubnetID& /*subnet_id*/,
-                        const DuidPtr& /*duid*/,
-                        const HWAddrPtr& /*hwaddr*/) const {
     return (ConstHostPtr());
 }
 

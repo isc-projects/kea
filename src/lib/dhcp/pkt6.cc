@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -538,6 +538,9 @@ Pkt6::getMACFromDUID() {
     }
 
     uint8_t hlen = opt_duid->getData().size();
+    if (!hlen) {
+        return (mac);
+    }
     vector<uint8_t> hw_addr(hlen, 0);
     std::vector<unsigned char> duid_data = opt_duid->getData();
 
